@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model CCT {
+  id              String   @id @default(cuid())
+  nome            String
+  baseTerritorial String
+  vigenciaInicio  DateTime
+  vigenciaFim     DateTime
+  assiduidade     Float    @default(0)
+  anuenio         Float    @default(0)
+  gratificacoes   Float    @default(0)
+  cargos          Cargo[]
+  propostas       Proposta[]
+
+  @@map("tb_cct")
+}
+
+model Cargo {
+  id              String   @id @default(cuid())
+  nome            String
+  pisoSalarial    Float
+  insalubridade   Float    @default(0) // 10, 20, 40
+  periculosidade  Float    @default(0) // 30
+  adicionalNoturno Float   @default(0)
+  
+  cctId           String
+  cct             CCT      @relation(fields: [cctId], references: [id])
+  propostas       Proposta[]
+
+  @@map("tb_cargos")
+}
+
+model Encargos {
+  id                String   @id @default(cuid())
+  // Grupo A
+  inss              Float
+  fgts              Float
+  sesiSesc          Float
+  sebrae            Float
+  incra             Float
+  salarioEducacao   Float
+  rat               Float
+  seguroAccidente   Float
+  
+  // Grupo B
+  ferias            Float
+  decimoTerceiro    Float
+  dsr               Float
+  feriados          Float
+  auxilioEnfermidade Float
+  
+  // Grupo C
+  avisoPrevio       Float
+  multaFGTS         Float
+  
+  propostas         Proposta[]
+
+  @@map("tb_encargos")
+}
+
+model Beneficio {
+  id                String   @id @default(cuid())
+  nome              String
+  valorMensal       Float
+  diasUteis         Int      @default(22)
+  tetoDescontoFolha Float    @default(0)
+  
+  propostaId        String
+  proposta          Proposta @relation(fields: [propostaId], references: [id])
+
+  @@map("tb_beneficios")
+}
+
+model Proposta {
+  id                String   @id @default(cuid())
+  idRevisaoOriginal String?
+  status            String   @default("Rascunho") // Rascunho, Aprovada
+  dataCriacao       DateTime @default(now())
+  cliente           String
+  escala            String   @default("5x2") // 5x2, 12x36
+  
+  cctId             String
+  cct               CCT      @relation(fields: [cctId], references: [id])
+  
+  cargoId           String
+  cargo             Cargo    @relation(fields: [cargoId], references: [id])
+  
+  encargosId        String
+  encargos          Encargos @relation(fields: [encargosId], references: [id])
+  
+  beneficios        Beneficio[]
+  
+  uniformeEPI       Float    @default(0)
+  reservaTecnica    Float    @default(0)
+  outrosInsumos     Float    @default(0)
+  
+  iss               Float    @default(0)
+  pis               Float    @default(0)
+  cofins            Float    @default(0)
+  cprb              Float    @default(0)
+  
+  margemAdm         Float    @default(0)
+  margemLucro       Float    @default(0)
+
+  @@map("tb_propostas")
+}
