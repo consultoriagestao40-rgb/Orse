@@ -3,6 +3,31 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
+export async function getCurrentUserRole() {
+  try {
+    const user = await prisma.user.findFirst();
+    return user?.role || 'USER';
+  } catch {
+    return 'USER';
+  }
+}
+
+export async function deleteProposta(id: string) {
+  try {
+    // Verifica se o usuário é admin antes de deletar
+    const user = await prisma.user.findFirst();
+    if (user?.role !== 'ADMIN') {
+      return { success: false, error: 'Sem permissão para excluir propostas.' };
+    }
+    await prisma.proposta.delete({ where: { id } });
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao excluir proposta:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 // Ações para gerenciar os Status das Propostas
 export async function getPropostaStatuses() {
   try {

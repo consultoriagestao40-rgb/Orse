@@ -10,7 +10,8 @@ import {
 import { useRouter } from 'next/navigation';
 import { 
   getPropostas, updatePropostaStatus,
-  getPropostaStatuses, createPropostaStatus, deletePropostaStatus
+  getPropostaStatuses, createPropostaStatus, deletePropostaStatus,
+  deleteProposta, getCurrentUserRole
 } from '@/app/propostas/actions';
 
 export default function ProposalsDashboard() {
@@ -21,13 +22,18 @@ export default function ProposalsDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showStatusManager, setShowStatusManager] = useState(false);
   const [newStatusName, setNewStatusName] = useState('');
-  const [editingStatus, setEditingStatus] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>('USER');
 
   const loadData = async () => {
     setLoading(true);
-    const [data, statusData] = await Promise.all([getPropostas(), getPropostaStatuses()]);
+    const [data, statusData, role] = await Promise.all([
+      getPropostas(),
+      getPropostaStatuses(),
+      getCurrentUserRole()
+    ]);
     setProposals(data);
     setStatuses(statusData);
+    setUserRole(role);
     setLoading(false);
   };
 
@@ -265,9 +271,23 @@ export default function ProposalsDashboard() {
                           >
                             <Edit2 size={16} />
                           </button>
-                          <button className="text-slate-400 hover:text-slate-600 transition-colors p-1">
-                            <MoreVertical size={18} />
-                          </button>
+                          {userRole === 'ADMIN' && (
+                            <button
+                              onClick={async () => {
+                                if (!confirm(`Excluir a proposta ${prop.numero} de "${prop.cliente}"? Esta ação não pode ser desfeita.`)) return;
+                                const res = await deleteProposta(prop.id);
+                                if (res.success) {
+                                  loadData();
+                                } else {
+                                  alert('Erro ao excluir: ' + res.error);
+                                }
+                              }}
+                              className="text-slate-400 hover:text-red-600 transition-colors p-1"
+                              title="Excluir Proposta (Admin)"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
