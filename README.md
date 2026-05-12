@@ -1,4 +1,4 @@
-# ORSE - Sistema de Orçamento (Engenharia de Custos FM)
+# SmartBid - Sistema de Orçamento (Engenharia de Custos FM)
 
 ERP especializado em precificação de serviços com foco em "Gross-up" e conformidade trabalhista.
 

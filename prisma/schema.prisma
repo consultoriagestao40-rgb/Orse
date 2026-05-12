@@ -4,110 +4,130 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  nome         String
+  role         UserRole   @default(USER)
+  managerId    String?
+  createdAt    DateTime   @default(now())
+  propostas    Proposta[]
+  manager      User?      @relation("UserToManager", fields: [managerId], references: [id])
+  subordinates User[]     @relation("UserToManager")
+}
+
+model Client {
+  id           String     @id @default(cuid())
+  nomeFantasia String
+  razaoSocial  String?
+  cnpj         String?    @unique
+  email        String?
+  whatsapp     String?
+  endereco     String?
+  contato      String?
+  createdAt    DateTime   @default(now())
+  propostas    Proposta[]
 }
 
 model CCT {
-  id              String   @id @default(cuid())
-  nome            String
-  baseTerritorial String
-  vigenciaInicio  DateTime
-  vigenciaFim     DateTime
-  assiduidade     Float    @default(0)
-  anuenio         Float    @default(0)
-  gratificacoes   Float    @default(0)
-  cargos          Cargo[]
-  propostas       Proposta[]
-
-  @@map("tb_cct")
+  id             String   @id @default(cuid())
+  nome           String
+  uf             String?
+  cidade         String?
+  vigenciaInicio DateTime
+  vigenciaFim    DateTime
+  vaValor        Float    @default(0)
+  vaTipo         String   @default("FIXO")
+  vaProvisFerias Boolean  @default(false)
+  vaDescPercent  Float    @default(0)
+  vtValor        Float    @default(0)
+  vtDescPercent  Float    @default(6)
+  examesMedicos  Float    @default(0)
+  seguroVida     Float    @default(0)
+  cestaBasica    Float    @default(0)
+  provisFerias   Float    @default(11.11)
+  provis13       Float    @default(8.33)
+  provisRescisao Float    @default(0)
+  encargoInss    Float    @default(20)
+  encargoFgts    Float    @default(8)
+  encargoRat     Float    @default(0)
+  pis            Float    @default(0.65)
+  cofins         Float    @default(3)
+  iss            Float    @default(5)
+  margemLucro    Float    @default(10)
+  taxaAdm        Float    @default(5)
+  createdAt      DateTime @default(now())
+  uniformeEpi    Float    @default(0)
+  cargos         Cargo[]
 }
 
 model Cargo {
-  id              String   @id @default(cuid())
-  nome            String
-  pisoSalarial    Float
-  insalubridade   Float    @default(0) // 10, 20, 40
-  periculosidade  Float    @default(0) // 30
-  adicionalNoturno Float   @default(0)
-  
-  cctId           String
-  cct             CCT      @relation(fields: [cctId], references: [id])
-  propostas       Proposta[]
-
-  @@map("tb_cargos")
-}
-
-model Encargos {
-  id                String   @id @default(cuid())
-  // Grupo A
-  inss              Float
-  fgts              Float
-  sesiSesc          Float
-  sebrae            Float
-  incra             Float
-  salarioEducacao   Float
-  rat               Float
-  seguroAccidente   Float
-  
-  // Grupo B
-  ferias            Float
-  decimoTerceiro    Float
-  dsr               Float
-  feriados          Float
-  auxilioEnfermidade Float
-  
-  // Grupo C
-  avisoPrevio       Float
-  multaFGTS         Float
-  
-  propostas         Proposta[]
-
-  @@map("tb_encargos")
-}
-
-model Beneficio {
-  id                String   @id @default(cuid())
-  nome              String
-  valorMensal       Float
-  diasUteis         Int      @default(22)
-  tetoDescontoFolha Float    @default(0)
-  
-  propostaId        String
-  proposta          Proposta @relation(fields: [propostaId], references: [id])
-
-  @@map("tb_beneficios")
+  id             String  @id @default(cuid())
+  cctId          String
+  nome           String
+  pisoSalarial   Float   @default(0)
+  adicionalCopa  Float   @default(0)
+  gratificacoes  Float   @default(0)
+  assiduidade    Float   @default(0)
+  anuenio        Float   @default(0)
+  insalubridade  Float   @default(0)
+  periculosidade Boolean @default(false)
+  epiConfig      Json?
+  cct            CCT     @relation(fields: [cctId], references: [id], onDelete: Cascade)
 }
 
 model Proposta {
-  id                String   @id @default(cuid())
-  idRevisaoOriginal String?
-  status            String   @default("Rascunho") // Rascunho, Aprovada
-  dataCriacao       DateTime @default(now())
-  cliente           String
-  escala            String   @default("5x2") // 5x2, 12x36
-  
-  cctId             String
-  cct               CCT      @relation(fields: [cctId], references: [id])
-  
-  cargoId           String
-  cargo             Cargo    @relation(fields: [cargoId], references: [id])
-  
-  encargosId        String
-  encargos          Encargos @relation(fields: [encargosId], references: [id])
-  
-  beneficios        Beneficio[]
-  
-  uniformeEPI       Float    @default(0)
-  reservaTecnica    Float    @default(0)
-  outrosInsumos     Float    @default(0)
-  
-  iss               Float    @default(0)
-  pis               Float    @default(0)
-  cofins            Float    @default(0)
-  cprb              Float    @default(0)
-  
-  margemAdm         Float    @default(0)
-  margemLucro       Float    @default(0)
+  id        String           @id @default(cuid())
+  numero    Int              @unique @default(autoincrement())
+  userId    String
+  clientId  String?
+  status    String           @default("ATIVO")
+  createdAt DateTime         @default(now())
+  client    Client?          @relation(fields: [clientId], references: [id])
+  user      User             @relation(fields: [userId], references: [id])
+  versoes   PropostaVersao[]
+}
 
-  @@map("tb_propostas")
+model PropostaVersao {
+  id          String         @id @default(cuid())
+  propostaId  String
+  versao      Int            @default(1)
+  impostos    Json
+  margens     Json
+  custoTotal  Float
+  precoVenda  Float
+  dataCriacao DateTime       @default(now())
+  items       PropostaItem[]
+  proposta    Proposta       @relation(fields: [propostaId], references: [id], onDelete: Cascade)
+}
+
+model PropostaItem {
+  id               String         @id @default(cuid())
+  versaoId         String
+  nomeCargo        String
+  quantidade       Int            @default(1)
+  escala           String         @default("5x2")
+  entrada          String?        @default("08:00")
+  saida            String?        @default("17:00")
+  configFinanceira Json
+  ativosConfig     Json
+  custoDireto      Float
+  custoTotalItem   Float
+  versao           PropostaVersao @relation(fields: [versaoId], references: [id], onDelete: Cascade)
+}
+
+model Escala {
+  id                 String   @id @default(cuid())
+  nome               String   @unique
+  diasTrabalhadosMes Int      @default(22)
+  horasMensais       Int      @default(220)
+  createdAt          DateTime @default(now())
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  USER
 }
