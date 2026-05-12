@@ -3,16 +3,59 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
-// Helper to get a default user if none is logged in (simplified for this stage)
+// Ações para gerenciar os Status das Propostas
+export async function getPropostaStatuses() {
+  try {
+    const statuses = await prisma.propostaStatus.findMany({ orderBy: { nome: 'asc' } });
+    if (statuses.length === 0) {
+      // Popula com defaults se a tabela estiver vazia
+      await prisma.propostaStatus.createMany({
+        data: [
+          { nome: 'ATIVO', color: 'bg-sky-100 text-sky-800 border border-sky-200' },
+          { nome: 'EM REVISÃO', color: 'bg-orange-100 text-orange-800 border border-orange-200' },
+          { nome: 'APROVADA', color: 'bg-emerald-100 text-emerald-800 border border-emerald-200' },
+          { nome: 'REJEITADA', color: 'bg-red-100 text-red-800 border border-red-200' },
+          { nome: 'AGUARDANDO CLIENTE', color: 'bg-purple-100 text-purple-800 border border-purple-200' },
+        ],
+        skipDuplicates: true,
+      });
+      return prisma.propostaStatus.findMany({ orderBy: { nome: 'asc' } });
+    }
+    return statuses;
+  } catch (error) {
+    console.error('Erro ao buscar statuses:', error);
+    return [];
+  }
+}
+
+export async function createPropostaStatus(nome: string) {
+  try {
+    const s = await prisma.propostaStatus.create({
+      data: { nome: nome.toUpperCase().trim() },
+    });
+    revalidatePath('/');
+    return { success: true, data: s };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deletePropostaStatus(id: string) {
+  try {
+    await prisma.propostaStatus.delete({ where: { id } });
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// Helpers
 async function getDefaultUser() {
   let user = await prisma.user.findFirst();
   if (!user) {
     user = await prisma.user.create({
-      data: {
-        email: 'admin@smartbid.com',
-        nome: 'Administrador Principal',
-        role: 'ADMIN'
-      }
+      data: { email: 'admin@smartbid.com', nome: 'Administrador Principal', role: 'ADMIN' }
     });
   }
   return user;
@@ -25,9 +68,7 @@ export async function saveProposta(data: any) {
   try {
     let propostaId = id;
 
-    // 1. Create Proposta record if it doesn't exist
     if (!propostaId) {
-      // Find client record by name (simplified)
       const dbClient = await prisma.client.findFirst({
         where: { nomeFantasia: cliente.cliente }
       });
@@ -42,21 +83,21 @@ export async function saveProposta(data: any) {
       propostaId = newProposta.id;
     }
 
-    // 2. Determine Version Number
     const lastVersion = await prisma.propostaVersao.findFirst({
       where: { propostaId },
       orderBy: { versao: 'desc' }
     });
     const nextVersion = lastVersion ? lastVersion.versao + 1 : 1;
 
-    // 3. Create PropostaVersao
     const newVersao = await prisma.propostaVersao.create({
       data: {
         propostaId,
         versao: nextVersion,
         impostos: { list: premissas.tributos, sindicatoId: cliente.sindicatoId } as any,
         margens: { adm: premissas.taxaAdm, lucro: premissas.margemLucro } as any,
-        metadados: { 
+        metadados: {
+          // Salva nome do cliente nos metadados para recuperação
+          clienteNome: cliente.cliente,
           contato: cliente.contato,
           celular: cliente.celular,
           email: cliente.email,
@@ -105,24 +146,29 @@ export async function getPropostas() {
         versoes: {
           orderBy: { versao: 'desc' },
           take: 1,
-          include: {
-             items: true
-          }
+          include: { items: true }
         }
       },
       orderBy: { createdAt: 'desc' }
     });
 
-    return propostas.map(p => ({
-      id: p.id,
-      numero: `FPV-${p.numero.toString().padStart(3, '0')}`,
-      cliente: p.client?.nomeFantasia || 'Cliente não identificado',
-      data: p.createdAt.toLocaleDateString('pt-BR'),
-      valor: p.versoes[0]?.precoVenda || 0,
-      status: p.status,
-      versao: p.versoes[0]?.versao || 1,
-      usuario: p.user.nome
-    }));
+    return propostas.map(p => {
+      const lastVersao = p.versoes[0];
+      const meta = (lastVersao?.metadados as any) || {};
+      // Prioriza nome fantasia do cadastro, depois metadados salvos
+      const clienteNome = p.client?.nomeFantasia || meta.clienteNome || 'Cliente não identificado';
+
+      return {
+        id: p.id,
+        numero: `FPV-${p.numero.toString().padStart(3, '0')}`,
+        cliente: clienteNome,
+        data: p.createdAt.toLocaleDateString('pt-BR'),
+        valor: lastVersao?.precoVenda || 0,
+        status: p.status,
+        versao: lastVersao?.versao || 1,
+        usuario: p.user.nome
+      };
+    });
   } catch (error) {
     console.error('Error fetching propostas:', error);
     return [];
@@ -131,10 +177,7 @@ export async function getPropostas() {
 
 export async function updatePropostaStatus(id: string, status: string) {
   try {
-    await prisma.proposta.update({
-      where: { id },
-      data: { status }
-    });
+    await prisma.proposta.update({ where: { id }, data: { status } });
     revalidatePath('/');
     return { success: true };
   } catch (error: any) {
@@ -164,17 +207,22 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
       valor: v.precoVenda
     }));
 
-    const v = versionId 
+    const v = versionId
       ? proposta.versoes.find(ver => ver.id === versionId) || proposta.versoes[0]
       : proposta.versoes[0];
 
     const meta = (v.metadados as any) || {};
+    const impostos = v.impostos as any;
+    const margens = v.margens as any;
 
     return {
       id: proposta.id,
+      clientId: proposta.clientId,
       availableVersions,
       cliente: {
         id: proposta.clientId,
+        // Retorna nome salvo nos metadados como fallback confiável
+        clienteNome: meta.clienteNome || '',
         contato: meta.contato || '',
         celular: meta.celular || '',
         email: meta.email || '',
@@ -186,21 +234,19 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
         tipoServicos: meta.tipoServicos || ''
       },
       premissas: {
-        taxaAdm: (v.margens as any).adm,
-        margemLucro: (v.margens as any).lucro,
+        taxaAdm: margens?.adm || 5,
+        margemLucro: margens?.lucro || 10,
         tributos: (() => {
-          const imp = v.impostos as any;
-          if (Array.isArray(imp)) return imp;
-          if (imp && typeof imp === 'object') {
-            if (imp.list && Array.isArray(imp.list)) return imp.list;
-            // Fallback for corrupted { "0": {...}, "1": {...}, "sindicatoId": "..." }
-            return Object.keys(imp)
+          if (Array.isArray(impostos)) return impostos;
+          if (impostos && typeof impostos === 'object') {
+            if (impostos.list && Array.isArray(impostos.list)) return impostos.list;
+            return Object.keys(impostos)
               .filter(k => !isNaN(Number(k)))
-              .map(k => imp[k]);
+              .map(k => impostos[k]);
           }
           return [];
         })(),
-        meta: { sindicatoId: (v.impostos as any)?.sindicatoId || '' }
+        meta: { sindicatoId: impostos?.sindicatoId || '' }
       },
       equipe: v.items.map(i => ({
         id: i.id,
@@ -210,8 +256,8 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
         cargo: i.configFinanceira,
         ativosConfig: i.ativosConfig,
         parametrosPosto: {
-           horarioInicio: i.entrada,
-           horarioFim: i.saida
+          horarioInicio: i.entrada,
+          horarioFim: i.saida
         }
       })),
       versao: v.versao

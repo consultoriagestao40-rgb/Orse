@@ -127,6 +127,12 @@ model Escala {
   createdAt          DateTime @default(now())
 }
 
+model PropostaStatus {
+  id    String @id @default(cuid())
+  nome  String @unique
+  color String @default("bg-slate-100 text-slate-600 border border-slate-200")
+}
+
 enum UserRole {
   ADMIN
   MANAGER

@@ -40,7 +40,7 @@ function PropostaEditor() {
     try {
       const fullData = await getPropostaCompleta(id, versionId);
       if (fullData) {
-        const clientObj = (clientesList || []).find((c: any) => c.id === fullData.cliente.id);
+        const clientObj = (clientesList || []).find((c: any) => c.id === fullData.clientId);
         const savedSindicatoId = (fullData.premissas as any)?.meta?.sindicatoId || '';
 
         setProposta({
@@ -48,7 +48,7 @@ function PropostaEditor() {
           id: fullData.id,
           cliente: { 
             ...proposta.cliente, 
-            cliente: clientObj?.nomeFantasia || '', 
+            cliente: clientObj?.nomeFantasia || fullData.cliente.clienteNome || '', 
             sindicatoId: savedSindicatoId,
             contato: fullData.cliente.contato || '',
             celular: fullData.cliente.celular || '',
@@ -132,7 +132,8 @@ function PropostaEditor() {
           const fullData = await getPropostaCompleta(id);
           if (fullData) {
             console.log('Proposta encontrada. Mapeando dados...');
-            const clientObj = (clientesData || []).find((c: any) => c.id === fullData.cliente);
+            // Prioriza cadastro pelo ID, depois usa nome salvo nos metadados
+            const clientObj = (clientesData || []).find((c: any) => c.id === fullData.clientId);
             const savedSindicatoId = (fullData.premissas as any)?.meta?.sindicatoId || '';
             
             setProposta({
@@ -140,7 +141,7 @@ function PropostaEditor() {
                id: fullData.id,
                cliente: { 
                  ...proposta.cliente, 
-                 cliente: clientObj?.nomeFantasia || '', 
+                 cliente: clientObj?.nomeFantasia || fullData.cliente.clienteNome || '', 
                  sindicatoId: savedSindicatoId,
                  contato: fullData.cliente.contato || '',
                  celular: fullData.cliente.celular || '',
