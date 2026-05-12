@@ -47,20 +47,6 @@ function PropostaEditor() {
         setProposta({
           ...proposta,
           id: fullData.id,
-          cliente: { 
-            ...proposta.cliente, 
-            cliente: clientObj?.nomeFantasia || fullData.cliente.clienteNome || '', 
-            sindicatoId: savedSindicatoId,
-            contato: fullData.cliente.contato || '',
-            celular: fullData.cliente.celular || '',
-            email: fullData.cliente.email || '',
-            objetoProposta: fullData.cliente.objetoProposta || '',
-            cidade: fullData.cliente.cidade || '',
-            dataElaboracao: fullData.cliente.dataElaboracao || '',
-            numeroProposta: fullData.cliente.numeroProposta || '',
-            revisao: fullData.cliente.revisao || '',
-            tipoServicos: fullData.cliente.tipoServicos || ''
-          },
           premissas: {
             ...fullData.premissas,
             tributos: Array.isArray(fullData.premissas.tributos) ? fullData.premissas.tributos : []
@@ -71,7 +57,21 @@ function PropostaEditor() {
              cctBase: (ccts || []).find((c: any) => c.id === savedSindicatoId) || {}
           })),
           versao: fullData.versao,
-          insumos: (fullData as any).insumos || { materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0, servicosDescricao: '' }
+          insumos: (fullData as any).insumos || { materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0, servicosDescricao: '' },
+          cliente: {
+            ...proposta.cliente,
+            cliente: clientObj?.nomeFantasia || fullData.cliente.clienteNome || '',
+            sindicatoId: savedSindicatoId,
+            contato: fullData.cliente.contato || '',
+            celular: fullData.cliente.celular || '',
+            email: fullData.cliente.email || '',
+            objetoProposta: fullData.cliente.objetoProposta || '',
+            cidade: fullData.cliente.cidade || '',
+            dataElaboracao: fullData.cliente.dataElaboracao || '',
+            numeroProposta: (fullData as any).numero || '',
+            revisao: `R${String(fullData.versao).padStart(2, '0')}`,
+            tipoServicos: fullData.cliente.tipoServicos || ''
+          },
         });
       }
     } catch (err) {
@@ -81,6 +81,7 @@ function PropostaEditor() {
       setLoading(false);
     }
   };
+
   const [ccts, setCcts] = useState<any[]>([]);
   const [escalasDb, setEscalasDb] = useState<any[]>([]);
   const [clientesList, setClientesList] = useState<any[]>([]);
@@ -230,7 +231,18 @@ function PropostaEditor() {
       const res = await saveProposta({ ...proposta, resultado });
       if (res.success) {
         alert(`Sucesso! Proposta ${proposta.id ? 'atualizada' : 'salva'} como Revisão ${res.versao}.`);
-        setProposta({ ...proposta, id: res.propostaId, versao: res.versao });
+        const novoNumero = res.numeroProposta || proposta.cliente.numeroProposta;
+        const novaRevisao = `R${String(res.versao).padStart(2, '0')}`;
+        setProposta({ 
+          ...proposta, 
+          id: res.propostaId, 
+          versao: res.versao,
+          cliente: {
+            ...proposta.cliente,
+            numeroProposta: novoNumero,
+            revisao: novaRevisao
+          }
+        });
         const updatedData = await getPropostaCompleta(res.propostaId);
         if (updatedData) setVersions(updatedData.availableVersions || []);
         if (!proposta.id) {
@@ -428,14 +440,31 @@ function PropostaEditor() {
                        <input type="date" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]" value={proposta.cliente.dataElaboracao} onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, dataElaboracao: e.target.value}})} />
                     </div>
 
-                    <div className="space-y-1">
-                       <label className="text-xs font-semibold text-slate-700">Nº da Proposta</label>
-                       <input type="text" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]" value={proposta.cliente.numeroProposta} onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, numeroProposta: e.target.value}})} />
-                    </div>
+                     <div className="space-y-1">
+                        <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                          Nº da Proposta
+                          <span className="text-[9px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded font-bold uppercase">Auto</span>
+                        </label>
+                        <input 
+                          type="text" 
+                          readOnly 
+                          className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded text-sm text-slate-600 font-bold outline-none cursor-default select-all" 
+                          value={proposta.cliente.numeroProposta || (proposta.id ? '' : 'Gerado ao salvar')} 
+                          placeholder="Gerado ao salvar"
+                        />
+                     </div>
 
-                    <div className="space-y-1">
-                       <label className="text-xs font-semibold text-slate-700">Revisão</label>
-                       <input type="text" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]" value={proposta.cliente.revisao} onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, revisao: e.target.value}})} />
+                     <div className="space-y-1">
+                        <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                          Revisão
+                          <span className="text-[9px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded font-bold uppercase">Auto</span>
+                        </label>
+                        <input 
+                          type="text" 
+                          readOnly
+                          className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded text-sm text-slate-600 font-bold outline-none cursor-default" 
+                          value={proposta.id ? `R${String(proposta.versao).padStart(2, '0')}` : 'R01 (ao salvar)'} 
+                        />
                      </div>
 
                      <div className="space-y-1">

@@ -155,7 +155,10 @@ export async function saveProposta(data: any) {
     });
 
     revalidatePath('/');
-    return { success: true, propostaId, versaoId: newVersao.id, versao: nextVersion };
+    // Busca o numero sequencial para retornar ao frontend
+    const propostaCompleta = await prisma.proposta.findUnique({ where: { id: propostaId }, select: { numero: true } });
+    const numeroProposta = propostaCompleta ? `FPV-${propostaCompleta.numero.toString().padStart(3, '0')}` : '';
+    return { success: true, propostaId, versaoId: newVersao.id, versao: nextVersion, numeroProposta };
   } catch (error: any) {
     console.error('Error saving proposta:', error);
     return { success: false, error: error.message };
@@ -242,6 +245,7 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
 
     return {
       id: proposta.id,
+      numero: `FPV-${proposta.numero.toString().padStart(3, '0')}`,
       clientId: proposta.clientId,
       availableVersions,
       cliente: {
