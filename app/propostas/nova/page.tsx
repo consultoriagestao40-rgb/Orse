@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
   Building2, TrendingUp, ShieldCheck, UserCheck, 
@@ -10,6 +10,8 @@ import {
 import { calculateEnterprisePrice } from '@/lib/pricingEngine';
 import { getCCTs } from '@/app/ccts/actions';
 import { getEscalas } from '@/app/escalas/actions';
+import { saveProposta, getPropostaCompleta } from '@/app/propostas/actions';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 const TABS = [
   { id: 'dados', label: '1. Cliente', icon: Building2 },
@@ -22,15 +24,21 @@ const TABS = [
 
 const MONTHS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 
-export default function NovaPropostaPage() {
+function PropostaEditor() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const id = searchParams.get('id');
+
   const [activeTab, setActiveTab] = useState('dados');
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [ccts, setCcts] = useState<any[]>([]);
   const [escalasDb, setEscalasDb] = useState<any[]>([]);
   const [clientesList, setClientesList] = useState<any[]>([]);
   const [showClientDropdown, setShowClientDropdown] = useState(false);
 
   const [proposta, setProposta] = useState<any>({
+    id: null,
     cliente: { cliente: '', cidade: '', dataElaboracao: '', numeroProposta: '', revisao: '', tipoServicos: '', contato: '', celular: '', email: '', objetoProposta: '', sindicatoId: '' },
     premissas: { 
       taxaAdm: 5, 
@@ -59,16 +67,40 @@ export default function NovaPropostaPage() {
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
       const [dataCcts, dataEscalas] = await Promise.all([getCCTs(), getEscalas()]);
       setCcts(dataCcts || []);
       setEscalasDb(dataEscalas || []);
+      
       const { getClientes } = await import('@/app/clientes/actions');
       const clientesData = await getClientes();
       setClientesList(clientesData || []);
+
+      if (id) {
+        const fullData = await getPropostaCompleta(id);
+        if (fullData) {
+          // Find the client name from ID if needed, or assume it's stored in cliente object
+          const clientObj = clientesData?.find((c: any) => c.id === fullData.cliente);
+          
+          setProposta({
+             ...proposta,
+             id: fullData.id,
+             cliente: { ...proposta.cliente, cliente: clientObj?.nomeFantasia || '', sindicatoId: fullData.premissas.tributos.sindicatoId || '' },
+             premissas: fullData.premissas,
+             equipe: fullData.equipe.map((e: any) => ({
+                ...e,
+                showConfig: false,
+                cctBase: dataCcts.find((c: any) => c.id === fullData.premissas.tributos.sindicatoId) || {}
+             })),
+             versao: fullData.versao
+          });
+        }
+      }
+      
       setLoading(false);
     }
     load();
-  }, []);
+  }, [id]);
 
   const totalTributos = proposta.premissas.tributos.reduce((acc: any, t: any) => acc + t.percent, 0);
 
@@ -99,6 +131,29 @@ export default function NovaPropostaPage() {
   const updatePosto = (id: string, field: string, val: any) => {
     const newEquipe = proposta.equipe.map((p: any) => p.id === id ? { ...p, [field]: val } : p);
     setProposta({ ...proposta, equipe: newEquipe });
+  };
+
+  const handleSave = async () => {
+    if (!proposta.cliente.cliente) return alert('Por favor, selecione ou informe o cliente.');
+    if (proposta.equipe.length === 0) return alert('Adicione ao menos um posto no quadro de equipe.');
+
+    try {
+      setSaving(true);
+      const res = await saveProposta({ ...proposta, resultado });
+      if (res.success) {
+        alert(`Sucesso! Proposta ${proposta.id ? 'atualizada' : 'salva'} como Revisão ${res.versao}.`);
+        setProposta({ ...proposta, id: res.propostaId, versao: res.versao });
+        if (!proposta.id) {
+           router.push(`/propostas/nova?id=${res.propostaId}`);
+        }
+      } else {
+        alert('Erro ao salvar: ' + res.error);
+      }
+    } catch (e: any) {
+      alert('Erro inesperado: ' + e.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const formatCurrency = (val: number) => 
@@ -137,6 +192,17 @@ export default function NovaPropostaPage() {
      );
   };
 
+  if (loading) {
+     return (
+        <div className="flex min-h-screen bg-slate-50">
+           <Sidebar />
+           <main className="flex-1 flex items-center justify-center">
+              <div className="text-[#1B4D3E] font-bold animate-pulse">Carregando Editor FPV...</div>
+           </main>
+        </div>
+     );
+  }
+
   return (
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
@@ -152,8 +218,12 @@ export default function NovaPropostaPage() {
            </div>
            <div className="flex items-center gap-4">
               <span className="text-xs text-slate-500 bg-slate-200 px-3 py-1 rounded-full font-medium">Revisão {proposta.versao}</span>
-              <button className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-sm font-semibold py-2 px-6 rounded shadow-sm transition-colors flex items-center gap-2">
-                 <Save size={16} /> Salvar FPV
+              <button 
+                onClick={handleSave}
+                disabled={saving}
+                className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-sm font-semibold py-2 px-6 rounded shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                 <Save size={16} /> {saving ? 'Salvando...' : 'Salvar FPV'}
               </button>
            </div>
         </header>
@@ -190,7 +260,7 @@ export default function NovaPropostaPage() {
                        <FileText size={16} /> Identificação do Projeto
                     </h2>
                  </div>
-                         <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                 <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                     <div className="space-y-1 relative">
                        <label className="text-xs font-semibold text-slate-700">Cliente (Buscar Cadastrado)</label>
                        <input 
@@ -444,7 +514,7 @@ export default function NovaPropostaPage() {
                                                   <option key={cg.id} value={`${c.id}|${cg.id}`}>{cg.nome} - R$ {cg.pisoSalarial}</option>
                                                ))}
                                             </optgroup>
-                                         ))}
+                                          ))}
                                       </select>
                                    </td>
                                    <td className="px-6 py-4">
@@ -780,5 +850,13 @@ export default function NovaPropostaPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function NovaPropostaPage() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <PropostaEditor />
+    </Suspense>
   );
 }

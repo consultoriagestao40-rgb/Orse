@@ -18,6 +18,7 @@ export default function ClienteEditPage({ params }: { params: Promise<{ id: stri
     email: '',
     whatsapp: '',
     endereco: '',
+    contato: '',
   });
 
   const [loading, setLoading] = useState(!isNew);

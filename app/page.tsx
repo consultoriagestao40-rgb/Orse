@@ -1,21 +1,31 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
   FileText, Plus, Search, Filter, 
   Users, TrendingUp, Clock,
-  MoreVertical, FileStack
+  MoreVertical, FileStack, Edit2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { getPropostas } from '@/app/propostas/actions';
 
 export default function ProposalsDashboard() {
   const router = useRouter();
-  const [proposals, setProposals] = useState<any[]>([
-    { id: '1', numero: '2024-001', cliente: 'Hospital Santa Cruz', data: '12/05/2024', valor: 85400.50, status: 'APROVADA', versao: 2, usuario: 'Ricardo Silva' },
-    { id: '2', numero: '2024-002', cliente: 'Condomínio Plaza', data: '11/05/2024', valor: 12400.00, status: 'EM REVISÃO', versao: 3, usuario: 'Ana Paula' },
-    { id: '3', numero: '2024-003', cliente: 'Indústria MetalMAX', data: '10/05/2024', valor: 245000.00, status: 'RASCUNHO', versao: 1, usuario: 'Ricardo Silva' },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [proposals, setProposals] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const loadData = async () => {
+    setLoading(true);
+    const data = await getPropostas();
+    setProposals(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch(status) {
@@ -24,6 +34,17 @@ export default function ProposalsDashboard() {
       default: return 'bg-slate-100 text-slate-600 border border-slate-200';
     }
   };
+
+  const filteredProposals = proposals.filter(p => 
+    p.numero.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    p.cliente.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Dynamic Stats
+  const activeCount = proposals.length;
+  const monthlyVolume = proposals.reduce((acc, p) => acc + p.valor, 0);
+  const clientsCount = new Set(proposals.map(p => p.cliente)).size;
+  const revisionCount = proposals.filter(p => p.status === 'EM REVISÃO').length;
 
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
@@ -44,13 +65,13 @@ export default function ProposalsDashboard() {
             </button>
           </header>
 
-          {/* Indicadores Rápidos */}
+          {/* Indicadores Rápidos Dinâmicos */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[
-              { label: 'Propostas Ativas', value: '24', icon: FileText, color: 'text-blue-600' },
-              { label: 'Volume Mensal', value: 'R$ 1.2M', icon: TrendingUp, color: 'text-[#1B4D3E]' },
-              { label: 'Clientes Base', value: '18', icon: Users, color: 'text-indigo-600' },
-              { label: 'Aguardando Revisão', value: '05', icon: Clock, color: 'text-orange-600' },
+              { label: 'Propostas Ativas', value: activeCount.toString(), icon: FileText, color: 'text-blue-600' },
+              { label: 'Volume Mensal', value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(monthlyVolume), icon: TrendingUp, color: 'text-[#1B4D3E]' },
+              { label: 'Clientes Base', value: clientsCount.toString(), icon: Users, color: 'text-indigo-600' },
+              { label: 'Aguardando Revisão', value: revisionCount.toString().padStart(2, '0'), icon: Clock, color: 'text-orange-600' },
             ].map((stat, i) => (
               <div key={i} className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
                 <div className="p-3 bg-slate-50 rounded border border-slate-200">
@@ -69,7 +90,7 @@ export default function ProposalsDashboard() {
             <div className="p-4 border-b border-slate-300 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50">
               <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
                 <FileText size={16} /> Pipeline de Orçamentos
-                <span className="text-[10px] bg-white border border-slate-300 text-slate-500 px-2 py-0.5 rounded ml-2 font-bold">Total: 142</span>
+                <span className="text-[10px] bg-white border border-slate-300 text-slate-500 px-2 py-0.5 rounded ml-2 font-bold">Total: {proposals.length}</span>
               </h2>
               
               <div className="flex gap-2 w-full md:w-auto">
@@ -79,6 +100,8 @@ export default function ProposalsDashboard() {
                     type="text" 
                     placeholder="Buscar proposta ou cliente..."
                     className="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-300 rounded text-sm focus:ring-1 focus:ring-[#1B4D3E] focus:outline-none"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
                 <button className="px-3 py-1.5 bg-white border border-slate-300 text-slate-500 rounded hover:bg-slate-50 transition-colors flex items-center shadow-sm">
@@ -100,7 +123,15 @@ export default function ProposalsDashboard() {
                   </tr>
                 </thead>
                 <tbody className="text-sm">
-                  {proposals.map((prop) => (
+                  {loading ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center text-slate-400">Carregando pipeline...</td>
+                    </tr>
+                  ) : filteredProposals.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center text-slate-400">Nenhuma proposta encontrada.</td>
+                    </tr>
+                  ) : filteredProposals.map((prop) => (
                     <tr key={prop.id} className="border-b border-slate-200 hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-3">
                         <div className="flex items-center gap-3">
@@ -130,9 +161,18 @@ export default function ProposalsDashboard() {
                         </div>
                       </td>
                       <td className="px-6 py-3 text-center">
-                        <button className="text-slate-400 hover:text-[#1B4D3E] transition-colors p-1">
-                          <MoreVertical size={18} />
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                           <button 
+                              onClick={() => router.push(`/propostas/nova?id=${prop.id}`)}
+                              className="text-slate-400 hover:text-[#1B4D3E] transition-colors p-1"
+                              title="Editar Proposta"
+                           >
+                              <Edit2 size={16} />
+                           </button>
+                           <button className="text-slate-400 hover:text-slate-600 transition-colors p-1">
+                              <MoreVertical size={18} />
+                           </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
