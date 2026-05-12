@@ -56,7 +56,7 @@ export async function saveProposta(data: any) {
       data: {
         propostaId,
         versao: nextVersion,
-        impostos: premissas.tributos as any,
+        impostos: { ...premissas.tributos, sindicatoId: cliente.sindicatoId } as any,
         margens: { adm: premissas.taxaAdm, lucro: premissas.margemLucro } as any,
         custoTotal: resultado.custoDiretoTotal || 0,
         precoVenda: resultado.faturamentoBruto || 0,

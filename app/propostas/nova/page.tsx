@@ -85,12 +85,16 @@ function PropostaEditor() {
           setProposta({
              ...proposta,
              id: fullData.id,
-             cliente: { ...proposta.cliente, cliente: clientObj?.nomeFantasia || '', sindicatoId: fullData.premissas.tributos.sindicatoId || '' },
+             cliente: { 
+               ...proposta.cliente, 
+               cliente: clientObj?.nomeFantasia || '', 
+               sindicatoId: (fullData.premissas.tributos as any)?.sindicatoId || '' 
+             },
              premissas: fullData.premissas,
              equipe: fullData.equipe.map((e: any) => ({
                 ...e,
                 showConfig: false,
-                cctBase: dataCcts.find((c: any) => c.id === fullData.premissas.tributos.sindicatoId) || {}
+                cctBase: dataCcts.find((c: any) => c.id === (fullData.premissas.tributos as any)?.sindicatoId) || {}
              })),
              versao: fullData.versao
           });
