@@ -67,41 +67,45 @@ function PropostaEditor() {
 
   useEffect(() => {
     async function load() {
-      setLoading(true);
-      const [dataCcts, dataEscalas] = await Promise.all([getCCTs(), getEscalas()]);
-      setCcts(dataCcts || []);
-      setEscalasDb(dataEscalas || []);
-      
-      const { getClientes } = await import('@/app/clientes/actions');
-      const clientesData = await getClientes();
-      setClientesList(clientesData || []);
+      try {
+        setLoading(true);
+        const [dataCcts, dataEscalas] = await Promise.all([getCCTs(), getEscalas()]);
+        setCcts(dataCcts || []);
+        setEscalasDb(dataEscalas || []);
+        
+        const { getClientes } = await import('@/app/clientes/actions');
+        const clientesData = await getClientes();
+        setClientesList(clientesData || []);
 
-      if (id) {
-        const fullData = await getPropostaCompleta(id);
-        if (fullData) {
-          // Find the client name from ID if needed, or assume it's stored in cliente object
-          const clientObj = clientesData?.find((c: any) => c.id === fullData.cliente);
-          
-          setProposta({
-             ...proposta,
-             id: fullData.id,
-             cliente: { 
-               ...proposta.cliente, 
-               cliente: clientObj?.nomeFantasia || '', 
-               sindicatoId: (fullData.premissas.tributos as any)?.sindicatoId || '' 
-             },
-             premissas: fullData.premissas,
-             equipe: fullData.equipe.map((e: any) => ({
-                ...e,
-                showConfig: false,
-                cctBase: dataCcts.find((c: any) => c.id === (fullData.premissas.tributos as any)?.sindicatoId) || {}
-             })),
-             versao: fullData.versao
-          });
+        if (id) {
+          const fullData = await getPropostaCompleta(id);
+          if (fullData) {
+            const clientObj = clientesData?.find((c: any) => c.id === fullData.cliente);
+            
+            setProposta({
+               ...proposta,
+               id: fullData.id,
+               cliente: { 
+                 ...proposta.cliente, 
+                 cliente: clientObj?.nomeFantasia || '', 
+                 sindicatoId: (fullData.premissas.tributos as any)?.sindicatoId || '' 
+               },
+               premissas: fullData.premissas,
+               equipe: fullData.equipe.map((e: any) => ({
+                  ...e,
+                  showConfig: false,
+                  cctBase: dataCcts.find((c: any) => c.id === (fullData.premissas.tributos as any)?.sindicatoId) || {}
+               })),
+               versao: fullData.versao
+            });
+          }
         }
+      } catch (err) {
+        console.error('Erro ao carregar dados do editor:', err);
+        alert('Houve um erro ao carregar os dados. Por favor, tente novamente.');
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     }
     load();
   }, [id]);
