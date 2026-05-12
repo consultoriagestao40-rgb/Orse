@@ -68,19 +68,24 @@ function PropostaEditor() {
   useEffect(() => {
     async function load() {
       try {
+        console.log('Iniciando carregamento do Editor FPV...');
         setLoading(true);
         const [dataCcts, dataEscalas] = await Promise.all([getCCTs(), getEscalas()]);
         setCcts(dataCcts || []);
         setEscalasDb(dataEscalas || []);
+        console.log('CCTs e Escalas carregadas.');
         
         const { getClientes } = await import('@/app/clientes/actions');
         const clientesData = await getClientes();
         setClientesList(clientesData || []);
+        console.log('Clientes carregados:', clientesData?.length || 0);
 
         if (id) {
+          console.log('Buscando proposta ID:', id);
           const fullData = await getPropostaCompleta(id);
           if (fullData) {
-            const clientObj = clientesData?.find((c: any) => c.id === fullData.cliente);
+            console.log('Proposta encontrada. Mapeando dados...');
+            const clientObj = (clientesData || []).find((c: any) => c.id === fullData.cliente);
             
             setProposta({
                ...proposta,
@@ -91,18 +96,21 @@ function PropostaEditor() {
                  sindicatoId: (fullData.premissas.tributos as any)?.sindicatoId || '' 
                },
                premissas: fullData.premissas,
-               equipe: fullData.equipe.map((e: any) => ({
+               equipe: (fullData.equipe || []).map((e: any) => ({
                   ...e,
                   showConfig: false,
-                  cctBase: dataCcts.find((c: any) => c.id === (fullData.premissas.tributos as any)?.sindicatoId) || {}
+                  cctBase: (dataCcts || []).find((c: any) => c.id === (fullData.premissas.tributos as any)?.sindicatoId) || {}
                })),
                versao: fullData.versao
             });
+            console.log('Estado da proposta atualizado.');
+          } else {
+             console.warn('Proposta não encontrada no banco.');
           }
         }
       } catch (err) {
-        console.error('Erro ao carregar dados do editor:', err);
-        alert('Houve um erro ao carregar os dados. Por favor, tente novamente.');
+        console.error('CRITICAL ERROR no Editor FPV:', err);
+        alert('Erro ao carregar editor. Verifique o console ou contate o suporte.');
       } finally {
         setLoading(false);
       }
