@@ -54,8 +54,19 @@ export async function saveProposta(data: any) {
       data: {
         propostaId,
         versao: nextVersion,
-        impostos: { ...premissas.tributos, sindicatoId: cliente.sindicatoId } as any,
+        impostos: { list: premissas.tributos, sindicatoId: cliente.sindicatoId } as any,
         margens: { adm: premissas.taxaAdm, lucro: premissas.margemLucro } as any,
+        metadados: { 
+          contato: cliente.contato,
+          celular: cliente.celular,
+          email: cliente.email,
+          objetoProposta: cliente.objetoProposta,
+          cidade: cliente.cidade,
+          dataElaboracao: cliente.dataElaboracao,
+          numeroProposta: cliente.numeroProposta,
+          revisao: cliente.revisao,
+          tipoServicos: cliente.tipoServicos
+        } as any,
         custoTotal: resultado.custoDiretoTotal || 0,
         precoVenda: resultado.faturamentoBruto || 0,
         items: {
@@ -118,31 +129,78 @@ export async function getPropostas() {
   }
 }
 
-export async function getPropostaCompleta(id: string) {
+export async function updatePropostaStatus(id: string, status: string) {
+  try {
+    await prisma.proposta.update({
+      where: { id },
+      data: { status }
+    });
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error updating status:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getPropostaCompleta(id: string, versionId?: string) {
   try {
     const proposta = await prisma.proposta.findUnique({
       where: { id },
       include: {
         versoes: {
           orderBy: { versao: 'desc' },
-          take: 1,
-          include: {
-            items: true
-          }
+          include: { items: true }
         }
       }
     });
 
-    if (!proposta || !proposta.versoes[0]) return null;
+    if (!proposta || !proposta.versoes.length) return null;
 
-    const v = proposta.versoes[0];
+    const availableVersions = proposta.versoes.map(v => ({
+      id: v.id,
+      versao: v.versao,
+      data: v.dataCriacao.toLocaleDateString('pt-BR'),
+      valor: v.precoVenda
+    }));
+
+    const v = versionId 
+      ? proposta.versoes.find(ver => ver.id === versionId) || proposta.versoes[0]
+      : proposta.versoes[0];
+
+    const meta = (v.metadados as any) || {};
+
     return {
       id: proposta.id,
-      cliente: proposta.clientId, // Placeholder if needed
+      availableVersions,
+      cliente: {
+        id: proposta.clientId,
+        contato: meta.contato || '',
+        celular: meta.celular || '',
+        email: meta.email || '',
+        objetoProposta: meta.objetoProposta || '',
+        cidade: meta.cidade || '',
+        dataElaboracao: meta.dataElaboracao || '',
+        numeroProposta: meta.numeroProposta || '',
+        revisao: meta.revisao || '',
+        tipoServicos: meta.tipoServicos || ''
+      },
       premissas: {
         taxaAdm: (v.margens as any).adm,
         margemLucro: (v.margens as any).lucro,
-        tributos: v.impostos
+        tributos: (() => {
+          const imp = v.impostos as any;
+          if (Array.isArray(imp)) return imp;
+          if (imp && typeof imp === 'object') {
+            if (imp.list && Array.isArray(imp.list)) return imp.list;
+            // Fallback for corrupted { "0": {...}, "1": {...}, "sindicatoId": "..." }
+            return Object.keys(imp)
+              .filter(k => !isNaN(Number(k)))
+              .map(k => imp[k]);
+          }
+          return [];
+        })(),
+        meta: { sindicatoId: (v.impostos as any)?.sindicatoId || '' }
       },
       equipe: v.items.map(i => ({
         id: i.id,

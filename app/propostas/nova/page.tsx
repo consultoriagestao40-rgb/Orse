@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import { 
   Building2, TrendingUp, ShieldCheck, UserCheck, 
   FileText, PieChart, Save, Plus, Trash2, 
-  Calculator, Phone, Mail, MapPin, User, Briefcase, Calendar, Hash, History, AlignLeft, ChevronRight, CheckCircle2, DollarSign
+  Calculator, Phone, Mail, MapPin, User, Briefcase, Calendar, Hash, History, AlignLeft, ChevronRight, CheckCircle2, DollarSign, Info, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { calculateEnterprisePrice } from '@/lib/pricingEngine';
 import { getCCTs } from '@/app/ccts/actions';
@@ -32,6 +32,53 @@ function PropostaEditor() {
   const [activeTab, setActiveTab] = useState('dados');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [versions, setVersions] = useState<any[]>([]);
+
+  const handleVersionChange = async (versionId: string) => {
+    if (!id) return;
+    setLoading(true);
+    try {
+      const fullData = await getPropostaCompleta(id, versionId);
+      if (fullData) {
+        const clientObj = (clientesList || []).find((c: any) => c.id === fullData.cliente.id);
+        const savedSindicatoId = (fullData.premissas as any)?.meta?.sindicatoId || '';
+
+        setProposta({
+          ...proposta,
+          id: fullData.id,
+          cliente: { 
+            ...proposta.cliente, 
+            cliente: clientObj?.nomeFantasia || '', 
+            sindicatoId: savedSindicatoId,
+            contato: fullData.cliente.contato || '',
+            celular: fullData.cliente.celular || '',
+            email: fullData.cliente.email || '',
+            objetoProposta: fullData.cliente.objetoProposta || '',
+            cidade: fullData.cliente.cidade || '',
+            dataElaboracao: fullData.cliente.dataElaboracao || '',
+            numeroProposta: fullData.cliente.numeroProposta || '',
+            revisao: fullData.cliente.revisao || '',
+            tipoServicos: fullData.cliente.tipoServicos || ''
+          },
+          premissas: {
+            ...fullData.premissas,
+            tributos: Array.isArray(fullData.premissas.tributos) ? fullData.premissas.tributos : []
+          },
+          equipe: (fullData.equipe || []).map((e: any) => ({
+             ...e,
+             showConfig: false,
+             cctBase: (ccts || []).find((c: any) => c.id === savedSindicatoId) || {}
+          })),
+          versao: fullData.versao
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao trocar versão:', err);
+      alert('Erro ao carregar versão selecionada.');
+    } finally {
+      setLoading(false);
+    }
+  };
   const [ccts, setCcts] = useState<any[]>([]);
   const [escalasDb, setEscalasDb] = useState<any[]>([]);
   const [clientesList, setClientesList] = useState<any[]>([]);
@@ -86,6 +133,7 @@ function PropostaEditor() {
           if (fullData) {
             console.log('Proposta encontrada. Mapeando dados...');
             const clientObj = (clientesData || []).find((c: any) => c.id === fullData.cliente);
+            const savedSindicatoId = (fullData.premissas as any)?.meta?.sindicatoId || '';
             
             setProposta({
                ...proposta,
@@ -93,16 +141,29 @@ function PropostaEditor() {
                cliente: { 
                  ...proposta.cliente, 
                  cliente: clientObj?.nomeFantasia || '', 
-                 sindicatoId: (fullData.premissas.tributos as any)?.sindicatoId || '' 
+                 sindicatoId: savedSindicatoId,
+                 contato: fullData.cliente.contato || '',
+                 celular: fullData.cliente.celular || '',
+                 email: fullData.cliente.email || '',
+                 objetoProposta: fullData.cliente.objetoProposta || '',
+                 cidade: fullData.cliente.cidade || '',
+                 dataElaboracao: fullData.cliente.dataElaboracao || '',
+                 numeroProposta: fullData.cliente.numeroProposta || '',
+                 revisao: fullData.cliente.revisao || '',
+                 tipoServicos: fullData.cliente.tipoServicos || ''
                },
-               premissas: fullData.premissas,
+               premissas: {
+                 ...fullData.premissas,
+                 tributos: Array.isArray(fullData.premissas.tributos) ? fullData.premissas.tributos : []
+               },
                equipe: (fullData.equipe || []).map((e: any) => ({
                   ...e,
                   showConfig: false,
-                  cctBase: (dataCcts || []).find((c: any) => c.id === (fullData.premissas.tributos as any)?.sindicatoId) || {}
+                  cctBase: (dataCcts || []).find((c: any) => c.id === savedSindicatoId) || {}
                })),
                versao: fullData.versao
             });
+            setVersions(fullData.availableVersions || []);
             console.log('Estado da proposta atualizado.');
           } else {
              console.warn('Proposta não encontrada no banco.');
@@ -118,7 +179,7 @@ function PropostaEditor() {
     load();
   }, [id]);
 
-  const totalTributos = proposta.premissas.tributos.reduce((acc: any, t: any) => acc + t.percent, 0);
+  const totalTributos = (proposta.premissas.tributos || []).reduce((acc: any, t: any) => acc + (t.percent || 0), 0);
 
   useEffect(() => {
     if (proposta.equipe.length > 0) {
@@ -159,6 +220,8 @@ function PropostaEditor() {
       if (res.success) {
         alert(`Sucesso! Proposta ${proposta.id ? 'atualizada' : 'salva'} como Revisão ${res.versao}.`);
         setProposta({ ...proposta, id: res.propostaId, versao: res.versao });
+        const updatedData = await getPropostaCompleta(res.propostaId);
+        if (updatedData) setVersions(updatedData.availableVersions || []);
         if (!proposta.id) {
            router.push(`/propostas/nova?id=${res.propostaId}`);
         }
@@ -226,22 +289,44 @@ function PropostaEditor() {
         
         {/* HEADER ENTERPRISE */}
         <header className="w-full max-w-7xl flex justify-between items-end mb-6 border-b border-slate-300 pb-4">
-           <div>
-              <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Módulo de Engenharia e Controladoria</p>
-              <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
-                 FPV - Formação de Preço de Vendas
-              </h1>
-           </div>
-           <div className="flex items-center gap-4">
-              <span className="text-xs text-slate-500 bg-slate-200 px-3 py-1 rounded-full font-medium">Revisão {proposta.versao}</span>
-              <button 
-                onClick={handleSave}
-                disabled={saving}
-                className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-sm font-semibold py-2 px-6 rounded shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50"
-              >
-                 <Save size={16} /> {saving ? 'Salvando...' : 'Salvar FPV'}
-              </button>
-           </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+                   FPV - Formação de Preço de Vendas
+                </h1>
+                {id && versions.length > 1 && (
+                  <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 ml-4">
+                    <History size={16} className="text-slate-500" />
+                    <select 
+                      className="bg-transparent text-xs font-black text-slate-700 uppercase outline-none cursor-pointer"
+                      value={versions.find(v => v.versao === proposta.versao)?.id || ''}
+                      onChange={(e) => handleVersionChange(e.target.value)}
+                    >
+                      {versions.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          Versão {v.versao} ({v.data})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+               {id && versions.length <= 1 && (
+                 <span className="text-xs text-slate-500 bg-slate-200 px-3 py-1 rounded-full font-medium">Revisão {proposta.versao}</span>
+               )}
+               {!id && (
+                 <span className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full font-medium">Nova Proposta</span>
+               )}
+               <button 
+                 onClick={handleSave}
+                 disabled={saving}
+                 className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-sm font-semibold py-2 px-6 rounded shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50"
+               >
+                  <Save size={16} /> {saving ? 'Salvando...' : 'Salvar FPV'}
+               </button>
+            </div>
         </header>
 
         {/* NAVEGAÇÃO POR ABAS - ESTILO ERP CLASSICO */}

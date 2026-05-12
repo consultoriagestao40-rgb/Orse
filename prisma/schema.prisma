@@ -96,6 +96,7 @@ model PropostaVersao {
   versao      Int            @default(1)
   impostos    Json
   margens     Json
+  metadados   Json?
   custoTotal  Float
   precoVenda  Float
   dataCriacao DateTime       @default(now())

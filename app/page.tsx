@@ -8,7 +8,7 @@ import {
   MoreVertical, FileStack, Edit2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { getPropostas } from '@/app/propostas/actions';
+import { getPropostas, updatePropostaStatus } from '@/app/propostas/actions';
 
 export default function ProposalsDashboard() {
   const router = useRouter();
@@ -150,9 +150,30 @@ export default function ProposalsDashboard() {
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(prop.valor)}
                       </td>
                       <td className="px-6 py-3 text-center">
-                        <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider ${getStatusColor(prop.status)}`}>
-                          {prop.status}
-                        </span>
+                        <input 
+                          list={`status-options-${prop.id}`}
+                          value={prop.status}
+                          onChange={(e) => {
+                            setProposals(proposals.map(p => p.id === prop.id ? {...p, status: e.target.value.toUpperCase()} : p));
+                          }}
+                          onBlur={async (e) => {
+                            await updatePropostaStatus(prop.id, e.target.value.toUpperCase());
+                            loadData();
+                          }}
+                          onKeyDown={async (e: any) => {
+                             if (e.key === 'Enter') {
+                                e.target.blur();
+                             }
+                          }}
+                          className={`w-28 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border outline-none text-center ${getStatusColor(prop.status)}`}
+                        />
+                        <datalist id={`status-options-${prop.id}`}>
+                          <option value="ATIVO" />
+                          <option value="EM REVISÃO" />
+                          <option value="APROVADA" />
+                          <option value="REJEITADA" />
+                          <option value="AGUARDANDO CLIENTE" />
+                        </datalist>
                       </td>
                       <td className="px-6 py-3 text-center">
                         <div className="flex items-center justify-center gap-1 text-slate-500">
