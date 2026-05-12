@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
   Building2, TrendingUp, ShieldCheck, UserCheck, 
-  FileText, PieChart, Save, Plus, Trash2, 
+  FileText, PieChart, Save, Plus, Trash2, ClipboardList,
   Calculator, Phone, Mail, MapPin, User, Briefcase, Calendar, Hash, History, AlignLeft, ChevronRight, CheckCircle2, DollarSign, Info, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { calculateEnterprisePrice } from '@/lib/pricingEngine';
@@ -19,7 +19,8 @@ const TABS = [
   { id: 'encargos', label: '3. Encargos CLT', icon: ShieldCheck },
   { id: 'quadro', label: '4. Quadro Equipe', icon: UserCheck },
   { id: 'extrato', label: '5. Extrato de Custos', icon: FileText },
-  { id: 'dre', label: '6. DRE Projeto', icon: PieChart }
+  { id: 'resumo', label: '6. Resumo da Proposta', icon: ClipboardList },
+  { id: 'dre', label: '7. DRE Projeto', icon: PieChart }
 ];
 
 const MONTHS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
@@ -69,7 +70,8 @@ function PropostaEditor() {
              showConfig: false,
              cctBase: (ccts || []).find((c: any) => c.id === savedSindicatoId) || {}
           })),
-          versao: fullData.versao
+          versao: fullData.versao,
+          insumos: (fullData as any).insumos || { materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0, servicosDescricao: '' }
         });
       }
     } catch (err) {
@@ -107,7 +109,14 @@ function PropostaEditor() {
       grupoF: { incidenciaCumulativa: 0.00 }
     },
     equipe: [],
-    versao: 1
+    versao: 1,
+    insumos: {
+      materiais: 0,
+      maquinas: 0,
+      descartaveis: 0,
+      servicos: 0,
+      servicosDescricao: ''
+    }
   });
 
   const [resultado, setResultado] = useState<any>(null);
@@ -162,7 +171,8 @@ function PropostaEditor() {
                   showConfig: false,
                   cctBase: (dataCcts || []).find((c: any) => c.id === savedSindicatoId) || {}
                })),
-               versao: fullData.versao
+               versao: fullData.versao,
+               insumos: (fullData as any).insumos || { materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0, servicosDescricao: '' }
             });
             setVersions(fullData.availableVersions || []);
             console.log('Estado da proposta atualizado.');
@@ -925,7 +935,169 @@ function PropostaEditor() {
               </div>
            )}
 
-           {/* ABA 6: DRE */}
+         {/* ABA 6: RESUMO DA PROPOSTA */}
+           {activeTab === 'resumo' && (() => {
+             const fc = formatCurrency;
+             const totalTributosResumo = (proposta.premissas.tributos || []).reduce((acc: number, t: any) => acc + (t.percent || 0), 0);
+             const divisorResumo = 1 - ((totalTributosResumo + proposta.premissas.taxaAdm + proposta.premissas.margemLucro) / 100);
+
+             // Custo total MO direto (sem markup)
+             const custoDiretoMO = resultado?.custoDiretoTotal || 0;
+
+             // Markup dos insumos: aplica o mesmo gross-up
+             const totalInsumosDireto = 
+               Number(proposta.insumos.materiais || 0) + 
+               Number(proposta.insumos.maquinas || 0) + 
+               Number(proposta.insumos.descartaveis || 0) + 
+               Number(proposta.insumos.servicos || 0);
+             const totalInsumosComMarkup = divisorResumo > 0 ? totalInsumosDireto / divisorResumo : totalInsumosDireto;
+             const totalGeralProposta = (resultado?.faturamentoBruto || 0) + totalInsumosComMarkup;
+
+             return (
+               <div className="space-y-6">
+
+                 {/* BLOCO 1: MÃO DE OBRA */}
+                 <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden">
+                   <div className="bg-[#1B4D3E] px-6 py-3 flex items-center gap-2">
+                     <UserCheck size={16} className="text-emerald-300" />
+                     <h2 className="text-xs font-black text-white uppercase tracking-widest">1) Mão de Obra — Quadro de Colaboradores</h2>
+                   </div>
+                   <div className="overflow-x-auto">
+                     <table className="w-full text-left border-collapse text-xs">
+                       <thead>
+                         <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
+                           <th className="px-4 py-2 w-10 text-center">Item</th>
+                           <th className="px-4 py-2">Descrição — Mão de Obra</th>
+                           <th className="px-4 py-2 text-center">Qtd.</th>
+                           <th className="px-4 py-2 text-right">Custo Unit.</th>
+                           <th className="px-4 py-2 text-right">Total</th>
+                         </tr>
+                       </thead>
+                       <tbody>
+                         {proposta.equipe.length === 0 ? (
+                           <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-400 italic">Nenhum colaborador no Quadro de Equipe (Aba 4).</td></tr>
+                         ) : (
+                           proposta.equipe.map((p: any, idx: number) => {
+                             const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
+                             const custoTotalItem = itemRes?.custoTotal || 0;
+                             const custoUnitario = p.quantidade > 0 ? custoTotalItem / p.quantidade : 0;
+                             return (
+                               <tr key={p.id} className={`border-b border-slate-200 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
+                                 <td className="px-4 py-2 text-center font-bold text-slate-500">{idx + 1}</td>
+                                 <td className="px-4 py-2 font-semibold text-slate-800">{p.nomeCargo}</td>
+                                 <td className="px-4 py-2 text-center font-bold">{p.quantidade}</td>
+                                 <td className="px-4 py-2 text-right text-slate-700">{fc(custoUnitario)}</td>
+                                 <td className="px-4 py-2 text-right font-semibold bg-emerald-50">{fc(custoTotalItem)}</td>
+                               </tr>
+                             );
+                           })
+                         )}
+                       </tbody>
+                       <tfoot>
+                         <tr className="bg-[#1B4D3E] text-white font-black">
+                           <td colSpan={4} className="px-4 py-2.5 text-right uppercase tracking-wider text-xs">Subtotal Mão de Obra (com encargos, benefícios e markup)</td>
+                           <td className="px-4 py-2.5 text-right text-emerald-300">{fc(resultado?.faturamentoBruto || 0)}</td>
+                         </tr>
+                       </tfoot>
+                     </table>
+                   </div>
+                 </div>
+
+                 {/* BLOCO 2: INSUMOS */}
+                 <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden">
+                   <div className="bg-slate-700 px-6 py-3 flex items-center gap-2">
+                     <ClipboardList size={16} className="text-slate-300" />
+                     <h2 className="text-xs font-black text-white uppercase tracking-widest">2) Materiais, Equipamentos e Insumos</h2>
+                   </div>
+                   <div className="overflow-x-auto">
+                     <table className="w-full text-left border-collapse text-xs">
+                       <thead>
+                         <tr className="bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200">
+                           <th className="px-6 py-2 w-10 text-center">Item</th>
+                           <th className="px-6 py-2">Descrição</th>
+                           <th className="px-6 py-2 text-right w-48">Valor (R$)</th>
+                         </tr>
+                       </thead>
+                       <tbody>
+                         <tr className="border-b border-slate-200 hover:bg-slate-50">
+                           <td className="px-6 py-2.5 text-center font-bold text-slate-500">2</td>
+                           <td className="px-6 py-2.5 font-semibold text-slate-700">Materiais e produtos de limpeza</td>
+                           <td className="px-6 py-2.5 text-right">
+                             <input type="number" step="0.01" min="0"
+                               className="w-36 text-right bg-white border border-slate-300 rounded px-2 py-1 text-sm font-medium text-slate-800 focus:border-[#1B4D3E] outline-none"
+                               value={proposta.insumos.materiais}
+                               onChange={e => setProposta({...proposta, insumos: {...proposta.insumos, materiais: e.target.value}})}
+                             />
+                           </td>
+                         </tr>
+                         <tr className="border-b border-slate-200 hover:bg-slate-50">
+                           <td className="px-6 py-2.5 text-center font-bold text-slate-500">3</td>
+                           <td className="px-6 py-2.5 font-semibold text-slate-700">Máquinas e equipamentos</td>
+                           <td className="px-6 py-2.5 text-right">
+                             <input type="number" step="0.01" min="0"
+                               className="w-36 text-right bg-white border border-slate-300 rounded px-2 py-1 text-sm font-medium text-slate-800 focus:border-[#1B4D3E] outline-none"
+                               value={proposta.insumos.maquinas}
+                               onChange={e => setProposta({...proposta, insumos: {...proposta.insumos, maquinas: e.target.value}})}
+                             />
+                           </td>
+                         </tr>
+                         <tr className="border-b border-slate-200 hover:bg-slate-50">
+                           <td className="px-6 py-2.5 text-center font-bold text-slate-500">4</td>
+                           <td className="px-6 py-2.5 font-semibold text-slate-700">Descartáveis</td>
+                           <td className="px-6 py-2.5 text-right">
+                             <input type="number" step="0.01" min="0"
+                               className="w-36 text-right bg-white border border-slate-300 rounded px-2 py-1 text-sm font-medium text-slate-800 focus:border-[#1B4D3E] outline-none"
+                               value={proposta.insumos.descartaveis}
+                               onChange={e => setProposta({...proposta, insumos: {...proposta.insumos, descartaveis: e.target.value}})}
+                             />
+                           </td>
+                         </tr>
+                         <tr className="border-b border-slate-200 hover:bg-slate-50">
+                           <td className="px-6 py-2.5 text-center font-bold text-slate-500">5</td>
+                           <td className="px-6 py-2.5">
+                             <div className="space-y-1">
+                               <span className="font-semibold text-slate-700">Serviços</span>
+                               <input type="text"
+                                 placeholder="Discriminar os serviços..."
+                                 className="block w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-600 focus:border-[#1B4D3E] outline-none"
+                                 value={proposta.insumos.servicosDescricao}
+                                 onChange={e => setProposta({...proposta, insumos: {...proposta.insumos, servicosDescricao: e.target.value}})}
+                               />
+                             </div>
+                           </td>
+                           <td className="px-6 py-2.5 text-right">
+                             <input type="number" step="0.01" min="0"
+                               className="w-36 text-right bg-white border border-slate-300 rounded px-2 py-1 text-sm font-medium text-slate-800 focus:border-[#1B4D3E] outline-none"
+                               value={proposta.insumos.servicos}
+                               onChange={e => setProposta({...proposta, insumos: {...proposta.insumos, servicos: e.target.value}})}
+                             />
+                           </td>
+                         </tr>
+                       </tbody>
+                       <tfoot>
+                         <tr className="bg-slate-700 text-white font-black">
+                           <td colSpan={2} className="px-6 py-2.5 text-right uppercase tracking-wider text-xs">Subtotal Materiais e Insumos (com markup)</td>
+                           <td className="px-6 py-2.5 text-right">{fc(totalInsumosComMarkup)}</td>
+                         </tr>
+                       </tfoot>
+                     </table>
+                   </div>
+                 </div>
+
+                 {/* TOTAL GERAL */}
+                 <div className="bg-[#1B4D3E] text-white rounded-md shadow-lg p-6 flex items-center justify-between">
+                   <div>
+                     <p className="text-xs font-bold uppercase tracking-widest text-emerald-300">Total Geral da Proposta</p>
+                     <p className="text-[10px] text-emerald-200 mt-0.5">MO + Insumos — após impostos, encargos e taxas</p>
+                   </div>
+                   <p className="text-3xl font-black text-emerald-300">{fc(totalGeralProposta)}</p>
+                 </div>
+
+               </div>
+             );
+           })()}
+
+           {/* ABA 7: DRE */}
            {activeTab === 'dre' && (
               <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden overflow-x-auto">
                  <div className="bg-[#1B4D3E] px-6 py-4">

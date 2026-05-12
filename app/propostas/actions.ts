@@ -121,7 +121,6 @@ export async function saveProposta(data: any) {
         impostos: { list: premissas.tributos, sindicatoId: cliente.sindicatoId } as any,
         margens: { adm: premissas.taxaAdm, lucro: premissas.margemLucro } as any,
         metadados: {
-          // Salva nome do cliente nos metadados para recuperação
           clienteNome: cliente.cliente,
           contato: cliente.contato,
           celular: cliente.celular,
@@ -131,7 +130,8 @@ export async function saveProposta(data: any) {
           dataElaboracao: cliente.dataElaboracao,
           numeroProposta: cliente.numeroProposta,
           revisao: cliente.revisao,
-          tipoServicos: cliente.tipoServicos
+          tipoServicos: cliente.tipoServicos,
+          insumos: data.insumos || {}
         } as any,
         custoTotal: resultado.custoDiretoTotal || 0,
         precoVenda: resultado.faturamentoBruto || 0,
@@ -258,6 +258,7 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
         revisao: meta.revisao || '',
         tipoServicos: meta.tipoServicos || ''
       },
+      insumos: meta.insumos || { materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0, servicosDescricao: '' },
       premissas: {
         taxaAdm: margens?.adm || 5,
         margemLucro: margens?.lucro || 10,
