@@ -146,6 +146,12 @@ model Produto {
   updatedAt      DateTime @updatedAt
 }
 
+model UnidadeMedida {
+  id    String @id @default(cuid())
+  nome  String @unique
+  sigla String @unique
+}
+
 enum UserRole {
   ADMIN
   MANAGER

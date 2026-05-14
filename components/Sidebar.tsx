@@ -13,11 +13,9 @@ const Sidebar = () => {
     { icon: Briefcase, label: 'Regras (CCT)', href: '/admin/ccts' },
     { icon: Users, label: 'Clientes', href: '/clientes' },
     { icon: ShoppingCart, label: 'Produtos e Insumos', href: '/produtos' },
-    { icon: CalendarDays, label: 'Escalas', href: '/admin/escalas' },
     { icon: BarChart2, label: 'Controladoria', href: '#' },
-    { icon: Settings, label: 'Configurações', href: '#' },
+    { icon: Settings, label: 'Configurações', href: '/admin/settings' },
   ];
-
   return (
     <aside className="w-64 bg-white border-r border-slate-200 h-screen sticky top-0 flex flex-col shadow-sm">
       <div className="p-8 border-b border-slate-50">

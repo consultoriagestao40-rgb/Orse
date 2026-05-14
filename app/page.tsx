@@ -79,12 +79,6 @@ export default function ProposalsDashboard() {
               <p className="text-slate-500 text-sm mt-1">Engenharia de Custos e Controladoria de Facilities</p>
             </div>
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowStatusManager(true)}
-                className="border border-slate-300 bg-white hover:bg-slate-50 text-slate-600 font-bold py-2.5 px-4 rounded text-sm flex items-center gap-2 shadow-sm transition-colors"
-              >
-                <Settings size={16} /> Gerenciar Status
-              </button>
               <button 
                 onClick={() => router.push('/propostas/nova')}
                 className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold py-2.5 px-6 rounded text-sm flex items-center gap-2 shadow-sm transition-colors"
@@ -93,71 +87,6 @@ export default function ProposalsDashboard() {
               </button>
             </div>
           </header>
-
-          {/* Modal Gerenciar Status */}
-          {showStatusManager && (
-            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-lg shadow-2xl w-full max-w-md">
-                <div className="flex items-center justify-between p-5 border-b border-slate-200">
-                  <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                    <Settings size={18} className="text-[#1B4D3E]" /> Gerenciar Status de Propostas
-                  </h2>
-                  <button onClick={() => setShowStatusManager(false)} className="text-slate-400 hover:text-slate-600">
-                    <X size={20} />
-                  </button>
-                </div>
-                <div className="p-5 space-y-4">
-                  {/* Adicionar novo */}
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Nome do novo status..."
-                      value={newStatusName}
-                      onChange={e => setNewStatusName(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && handleAddStatus()}
-                      className="flex-1 px-3 py-2 border border-slate-300 rounded text-sm outline-none focus:border-[#1B4D3E] uppercase"
-                    />
-                    <button
-                      onClick={handleAddStatus}
-                      className="bg-[#1B4D3E] text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-1 hover:bg-[#13382d]"
-                    >
-                      <Plus size={16} /> Adicionar
-                    </button>
-                  </div>
-
-                  {/* Lista de status existentes */}
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {statuses.map(s => (
-                      <div key={s.id} className="flex items-center justify-between p-3 bg-slate-50 rounded border border-slate-200">
-                        <span className={`text-xs font-bold px-3 py-1 rounded uppercase tracking-wider ${s.color}`}>
-                          {s.nome}
-                        </span>
-                        <button
-                          onClick={() => handleDeleteStatus(s.id)}
-                          className="text-slate-400 hover:text-red-600 transition-colors p-1"
-                          title="Remover status"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    ))}
-                    {statuses.length === 0 && (
-                      <p className="text-center text-slate-400 text-sm py-4 italic">Nenhum status cadastrado.</p>
-                    )}
-                  </div>
-                </div>
-                <div className="px-5 pb-5">
-                  <button
-                    onClick={() => setShowStatusManager(false)}
-                    className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded transition-colors"
-                  >
-                    Fechar
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Indicadores */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[
