@@ -865,9 +865,9 @@ function PropostaEditor() {
                           { label: '5) Serviços (Descriminar)', val: 0 },
                        ].map((row, i) => (
                           <tr key={i} className="border-b border-slate-200 border-dotted">
-                                       <td colSpan={row.pct !== undefined ? 2 : 3} className={"py-1 px-6 font-bold " + (row.red ? "text-red-600" : "")}>{row.label}</td>
-                                       {row.pct !== undefined && (
-                                          <td className="py-1 px-6 text-center font-bold bg-slate-50 text-slate-500">{row.pct.toFixed(2)}%</td>
+                                       <td colSpan=(row as any).pct !== undefined ? 2 : 3 className={"py-1 px-6 font-bold " + (row.red ? "text-red-600" : "")}>{row.label}</td>
+                                       {(row as any).pct !== undefined && (
+                                          <td className="py-1 px-6 text-center font-bold bg-slate-50 text-slate-500">{(row as any).pct.toFixed(2)}%</td>
                                        )}
                                        <td className={"py-1 px-6 text-right bg-emerald-100/50 font-semibold " + (row.red ? "text-red-600" : "")}>
                                           {row.val < 0 ? "-" + formatCurrency(Math.abs(row.val)) : formatCurrency(row.val)}
@@ -923,11 +923,14 @@ function PropostaEditor() {
                              <>
                                 {rows.map((row, i) => (
                                    <tr key={i} className="border-b border-slate-200 border-dotted">
-                                      <td colSpan={3} className={"py-1 px-6 font-bold " + (row.red ? "text-red-600" : "")}>{row.label}</td>
-                                      <td className={"py-1 px-6 text-right bg-emerald-100/50 font-semibold " + (row.red ? "text-red-600" : "")}>
-                                         {row.val < 0 ? "-" + formatCurrency(Math.abs(row.val)) : formatCurrency(row.val)}
-                                      </td>
-                                   </tr>
+                                       <td colSpan={row.pct !== undefined ? 2 : 3} className={"py-1 px-6 font-bold " + (row.red ? "text-red-600" : "")}>{row.label}</td>
+                                       {row.pct !== undefined && (
+                                          <td className="py-1 px-6 text-center font-bold bg-slate-50 text-slate-500">{row.pct.toFixed(2)}%</td>
+                                       )}
+                                       <td className={"py-1 px-6 text-right bg-emerald-100/50 font-semibold " + (row.red ? "text-red-600" : "")}>
+                                          {row.val < 0 ? "-" + formatCurrency(Math.abs(row.val)) : formatCurrency(row.val)}
+                                       </td>
+                                    </tr>
                                 ))}
                                 <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
                                    <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "C"</td>
