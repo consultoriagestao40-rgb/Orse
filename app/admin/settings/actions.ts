@@ -6,22 +6,22 @@ import { revalidatePath } from 'next/cache';
 // UNIDADES DE MEDIDA
 export async function getUnidadesMedida() {
   try {
-    const unidades = await prisma.unidadeMedida.findMany({ orderBy: { sigla: 'asc' } });
+    const unidades = await prisma.unidadeMedida.findMany({ orderBy: { nome: 'asc' } });
     if (unidades.length === 0) {
       // Popula com defaults se estiver vazio
       await prisma.unidadeMedida.createMany({
         data: [
-          { nome: 'Unidade', sigla: 'UN' },
-          { nome: 'Quilograma', sigla: 'KG' },
-          { nome: 'Litro', sigla: 'L' },
-          { nome: 'Metro', sigla: 'MT' },
-          { nome: 'Metro Quadrado', sigla: 'M²' },
-          { nome: 'Par', sigla: 'PAR' },
-          { nome: 'Caixa', sigla: 'CX' },
+          { nome: 'UN' },
+          { nome: 'KG' },
+          { nome: 'L' },
+          { nome: 'MT' },
+          { nome: 'M²' },
+          { nome: 'PAR' },
+          { nome: 'CX' },
         ],
         skipDuplicates: true
       });
-      return await prisma.unidadeMedida.findMany({ orderBy: { sigla: 'asc' } });
+      return await prisma.unidadeMedida.findMany({ orderBy: { nome: 'asc' } });
     }
     return unidades;
   } catch (error) {
@@ -30,10 +30,10 @@ export async function getUnidadesMedida() {
   }
 }
 
-export async function createUnidadeMedida(nome: string, sigla: string) {
+export async function createUnidadeMedida(nome: string) {
   try {
     const res = await prisma.unidadeMedida.create({
-      data: { nome, sigla: sigla.toUpperCase().trim() }
+      data: { nome: nome.trim() }
     });
     revalidatePath('/admin/settings');
     return { success: true, data: res };

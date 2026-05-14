@@ -34,7 +34,7 @@ export default function SettingsPage() {
 
   // Unidades State
   const [unidades, setUnidades] = useState<any[]>([]);
-  const [newUnidade, setNewUnidade] = useState({ nome: '', sigla: '' });
+  const [newUnidade, setNewUnidade] = useState({ nome: '' });
 
   // Categorias State
   const [categorias, setCategorias] = useState<any[]>([]);
@@ -121,13 +121,13 @@ export default function SettingsPage() {
 
   // HANDLERS UNIDADES
   const handleAddUnidade = async () => {
-    if (!newUnidade.nome.trim() || !newUnidade.sigla.trim()) {
-      alert('Preencha o nome e a sigla da unidade.');
+    if (!newUnidade.nome.trim()) {
+      alert('Preencha o nome da unidade.');
       return;
     }
-    const res = await createUnidadeMedida(newUnidade.nome, newUnidade.sigla);
+    const res = await createUnidadeMedida(newUnidade.nome);
     if (res.success) {
-      setNewUnidade({ nome: '', sigla: '' });
+      setNewUnidade({ nome: '' });
       loadData();
     } else {
       alert('Erro ao adicionar unidade: ' + res.error);
@@ -204,7 +204,7 @@ export default function SettingsPage() {
           </div>
 
           {/* CONTEÚDO EM CARD PADRÃO */}
-          <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden min-h-[500px]">
+          <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden min-h-[500px] relative">
             
             {/* 1. ABA STATUS */}
             {activeTab === 'status' && (
@@ -311,17 +311,11 @@ export default function SettingsPage() {
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      placeholder="Descrição (Ex: QUILOGRAMA)"
+                      placeholder="Unidade de Medida (Ex: UN, KG, LITRO)"
                       value={newUnidade.nome}
-                      onChange={e => setNewUnidade({...newUnidade, nome: e.target.value})}
+                      onChange={e => setNewUnidade({nome: e.target.value})}
+                      onKeyDown={e => e.key === 'Enter' && handleAddUnidade()}
                       className="flex-1 px-3 py-2 border border-slate-300 rounded text-sm outline-none focus:border-[#1B4D3E] font-bold uppercase"
-                    />
-                    <input
-                      type="text"
-                      placeholder="SIGLA (Ex: KG)"
-                      value={newUnidade.sigla}
-                      onChange={e => setNewUnidade({...newUnidade, sigla: e.target.value})}
-                      className="w-32 px-3 py-2 border border-slate-300 rounded text-sm outline-none focus:border-[#1B4D3E] font-black uppercase text-center"
                     />
                     <button 
                       onClick={handleAddUnidade}
@@ -334,8 +328,7 @@ export default function SettingsPage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {unidades.map(u => (
                       <div key={u.id} className="p-4 bg-slate-50 border border-slate-200 rounded relative group hover:bg-white hover:shadow-sm transition-all">
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">{u.nome}</p>
-                        <p className="text-lg font-black text-slate-800">{u.sigla}</p>
+                        <p className="text-lg font-black text-slate-800 uppercase">{u.nome}</p>
                         <button 
                           onClick={() => handleDeleteUnidade(u.id)}
                           className="absolute top-2 right-2 p-1 text-slate-300 hover:text-red-600 transition-colors"
