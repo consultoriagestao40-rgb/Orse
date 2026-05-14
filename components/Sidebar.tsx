@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, FileText, Settings, Users, BarChart2, Briefcase, PlusCircle, CalendarDays } from 'lucide-react';
+import { Home, FileText, Settings, Users, BarChart2, Briefcase, PlusCircle, CalendarDays, ShoppingCart } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 const Sidebar = () => {
@@ -12,6 +12,7 @@ const Sidebar = () => {
     { icon: PlusCircle, label: 'Nova Proposta', href: '/propostas/nova' },
     { icon: Briefcase, label: 'Regras (CCT)', href: '/admin/ccts' },
     { icon: Users, label: 'Clientes', href: '/clientes' },
+    { icon: ShoppingCart, label: 'Produtos e Insumos', href: '/produtos' },
     { icon: CalendarDays, label: 'Escalas', href: '/admin/escalas' },
     { icon: BarChart2, label: 'Controladoria', href: '#' },
     { icon: Settings, label: 'Configurações', href: '#' },

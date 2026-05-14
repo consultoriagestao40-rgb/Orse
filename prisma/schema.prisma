@@ -133,6 +133,19 @@ model PropostaStatus {
   color String @default("bg-slate-100 text-slate-600 border border-slate-200")
 }
 
+
+model Produto {
+  id             String   @id @default(cuid())
+  codigo         Int      @unique @default(autoincrement())
+  descricao      String
+  unidade        String   @default("UN")
+  precoUnitario  Float    @default(0)
+  categoria      String   @default("Geral")
+  ativo          Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
 enum UserRole {
   ADMIN
   MANAGER

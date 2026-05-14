@@ -75,8 +75,8 @@ function PropostaEditor() {
         });
       }
     } catch (err) {
-      console.error('Erro ao trocar versÃ£o:', err);
-      alert('Erro ao carregar versÃ£o selecionada.');
+      console.error('Erro ao trocar versão:', err);
+      alert('Erro ao carregar versão selecionada.');
     } finally {
       setLoading(false);
     }
@@ -178,7 +178,7 @@ function PropostaEditor() {
             setVersions(fullData.availableVersions || []);
             console.log('Estado da proposta atualizado.');
           } else {
-             console.warn('Proposta nÃ£o encontrada no banco.');
+             console.warn('Proposta não encontrada no banco.');
           }
         }
       } catch (err) {
@@ -230,7 +230,7 @@ function PropostaEditor() {
       setSaving(true);
       const res = await saveProposta({ ...proposta, resultado });
       if (res.success) {
-        alert(`Sucesso! Proposta ${proposta.id ? 'atualizada' : 'salva'} como RevisÃ£o ${res.versao}.`);
+        alert(`Sucesso! Proposta ${proposta.id ? 'atualizada' : 'salva'} como Revisão ${res.versao}.`);
         const novoNumero = res.numeroProposta || proposta.cliente.numeroProposta;
         const novaRevisao = `R${String(res.versao).padStart(2, '0')}`;
         setProposta({ 
@@ -315,7 +315,7 @@ function PropostaEditor() {
             <div className="flex flex-col">
               <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
-                   FPV - FormaÃ§Ã£o de PreÃ§o de Vendas
+                   FPV - Formação de Preço de Vendas
                 </h1>
                 {id && versions.length > 1 && (
                   <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 ml-4">
@@ -327,7 +327,7 @@ function PropostaEditor() {
                     >
                       {versions.map((v) => (
                         <option key={v.id} value={v.id}>
-                          VersÃ£o {v.versao} ({v.data})
+                          Versão {v.versao} ({v.data})
                         </option>
                       ))}
                     </select>
@@ -337,7 +337,7 @@ function PropostaEditor() {
             </div>
             <div className="flex items-center gap-4">
                {id && versions.length <= 1 && (
-                 <span className="text-xs text-slate-500 bg-slate-200 px-3 py-1 rounded-full font-medium">RevisÃ£o {proposta.versao}</span>
+                 <span className="text-xs text-slate-500 bg-slate-200 px-3 py-1 rounded-full font-medium">Revisão {proposta.versao}</span>
                )}
                {!id && (
                  <span className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full font-medium">Nova Proposta</span>
@@ -352,7 +352,7 @@ function PropostaEditor() {
             </div>
         </header>
 
-        {/* NAVEGAÃ‡ÃƒO POR ABAS - ESTILO ERP CLASSICO */}
+        {/* NAVEGAÃ‡ÃO POR ABAS - ESTILO ERP CLASSICO */}
         <div className="w-full max-w-7xl mb-6 border-b border-slate-300">
            <nav className="-mb-px flex space-x-8 overflow-x-auto">
               {TABS.map((tab) => (
@@ -381,7 +381,7 @@ function PropostaEditor() {
               <div className="bg-white border border-slate-300 rounded-md shadow-sm">
                  <div className="bg-[#1B4D3E] px-6 py-3 border-b border-[#13382D] rounded-t-md">
                     <h2 className="text-white text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                       <FileText size={16} /> IdentificaÃ§Ã£o do Projeto
+                       <FileText size={16} /> Identificação do Projeto
                     </h2>
                  </div>
                  <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
@@ -436,13 +436,13 @@ function PropostaEditor() {
                     </div>
 
                     <div className="space-y-1">
-                       <label className="text-xs font-semibold text-slate-700">Data de ElaboraÃ§Ã£o</label>
+                       <label className="text-xs font-semibold text-slate-700">Data de Elaboração</label>
                        <input type="date" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]" value={proposta.cliente.dataElaboracao} onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, dataElaboracao: e.target.value}})} />
                     </div>
 
                      <div className="space-y-1">
                         <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                          NÂº da Proposta
+                          Nº da Proposta
                           <span className="text-[9px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded font-bold uppercase">Auto</span>
                         </label>
                         <input 
@@ -456,7 +456,7 @@ function PropostaEditor() {
 
                      <div className="space-y-1">
                         <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                          RevisÃ£o
+                          Revisão
                           <span className="text-[9px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded font-bold uppercase">Auto</span>
                         </label>
                         <input 
@@ -468,7 +468,7 @@ function PropostaEditor() {
                      </div>
 
                      <div className="space-y-1">
-                        <label className="text-xs font-semibold text-slate-700">Sindicato / Regra TÃ©cnica</label>
+                        <label className="text-xs font-semibold text-slate-700">Sindicato / Regra Técnica</label>
                         <select 
                            className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium"
                            value={proposta.cliente.sindicatoId}
@@ -482,12 +482,12 @@ function PropostaEditor() {
                      </div>
 
                     <div className="space-y-1">
-                       <label className="text-xs font-semibold text-slate-700">Tipo dos ServiÃ§os</label>
+                       <label className="text-xs font-semibold text-slate-700">Tipo dos Serviços</label>
                        <input type="text" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]" value={proposta.cliente.tipoServicos} onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, tipoServicos: e.target.value}})} />
                     </div>
 
                     <div className="space-y-1">
-                       <label className="text-xs font-semibold text-slate-700">Contato / ResponsÃ¡vel</label>
+                       <label className="text-xs font-semibold text-slate-700">Contato / Responsável</label>
                        <input type="text" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]" value={proposta.cliente.contato} onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, contato: e.target.value}})} />
                     </div>
 
@@ -525,13 +525,13 @@ function PropostaEditor() {
 
                  <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden">
                     <div className="bg-slate-50 border-b border-slate-300 px-6 py-4 flex justify-between items-center">
-                       <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">ComposiÃ§Ã£o TributÃ¡ria</h3>
+                       <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Composição Tributária</h3>
                        <button onClick={addTributo} className="text-[#1B4D3E] hover:text-[#13382D] text-xs font-semibold flex items-center gap-1"><Plus size={14}/> Nova Linha</button>
                     </div>
                     <div className="p-6 space-y-3">
                        {proposta.premissas.tributos.map((t: any) => (
                           <div key={t.id} className="flex gap-4 items-center">
-                             <input type="text" className="flex-1 bg-white border border-slate-300 rounded px-3 py-2 text-sm text-slate-800 focus:border-[#1B4D3E] outline-none" placeholder="DescriÃ§Ã£o do Imposto..." value={t.nome} onChange={(e) => {
+                             <input type="text" className="flex-1 bg-white border border-slate-300 rounded px-3 py-2 text-sm text-slate-800 focus:border-[#1B4D3E] outline-none" placeholder="Descrição do Imposto..." value={t.nome} onChange={(e) => {
                                 const newT = proposta.premissas.tributos.map((x: any) => x.id === t.id ? {...x, nome: e.target.value} : x);
                                 setProposta({...proposta, premissas: {...proposta.premissas, tributos: newT}});
                              }} />
@@ -547,7 +547,7 @@ function PropostaEditor() {
                        ))}
                     </div>
                     <div className="bg-[#1B4D3E] text-white px-6 py-4 flex justify-between items-center">
-                       <span className="font-bold uppercase text-xs tracking-wider">Carga TributÃ¡ria Consolidada</span>
+                       <span className="font-bold uppercase text-xs tracking-wider">Carga Tributária Consolidada</span>
                        <span className="text-xl font-bold">{totalTributos.toFixed(2)}%</span>
                     </div>
                  </div>
@@ -559,19 +559,19 @@ function PropostaEditor() {
               <div className="space-y-6">
                  <div className="flex items-center gap-2 mb-4">
                     <ShieldCheck size={20} className="text-[#1B4D3E]" />
-                    <h2 className="text-lg font-bold text-slate-800">ParÃ¢metros Sociais e Trabalhistas</h2>
+                    <h2 className="text-lg font-bold text-slate-800">Parâmetros Sociais e Trabalhistas</h2>
                  </div>
                  
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6">
                     <div>
-                       {renderEncargoTable('Grupo A', 'Encargos Sociais - Grupo A', 'ObrigaÃ§Ãµes que incidem diretamente sobre a folha de pagamento', proposta.encargos.grupoA, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoA: val}}))}
-                       {renderEncargoTable('Grupo B', 'Encargos Sociais - Grupo B', 'OcorrÃªncias de faltas / ausÃªncias justificadas. Incide o Grupo A', proposta.encargos.grupoB, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoB: val}}))}
-                       {renderEncargoTable('Grupo C', 'Encargos Sociais - Grupo C', 'Provisionamento de 13Âº e fÃ©rias. Incide o Grupo A', proposta.encargos.grupoC, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoC: val}}))}
+                       {renderEncargoTable('Grupo A', 'Encargos Sociais - Grupo A', 'Obrigações que incidem diretamente sobre a folha de pagamento', proposta.encargos.grupoA, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoA: val}}))}
+                       {renderEncargoTable('Grupo B', 'Encargos Sociais - Grupo B', 'Ocorrências de faltas / ausências justificadas. Incide o Grupo A', proposta.encargos.grupoB, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoB: val}}))}
+                       {renderEncargoTable('Grupo C', 'Encargos Sociais - Grupo C', 'Provisionamento de 13º e férias. Incide o Grupo A', proposta.encargos.grupoC, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoC: val}}))}
                     </div>
                     <div>
-                       {renderEncargoTable('Grupo D', 'Encargos Sociais - Grupo D', 'DemissÃ£o sem justa causa e indenizaÃ§Ãµes', proposta.encargos.grupoD, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoD: val}}))}
+                       {renderEncargoTable('Grupo D', 'Encargos Sociais - Grupo D', 'Demissão sem justa causa e indenizações', proposta.encargos.grupoD, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoD: val}}))}
                        {renderEncargoTable('Grupo E', 'Encargos Sociais - Grupo E', 'Provisionamento de casos especiais (maternidade, etc)', proposta.encargos.grupoE, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoE: val}}))}
-                       {renderEncargoTable('Grupo F', 'Encargos Sociais - Grupo F', 'IncidÃªncias cumulativas do Grupo A sobre B e C', proposta.encargos.grupoF, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoF: val}}))}
+                       {renderEncargoTable('Grupo F', 'Encargos Sociais - Grupo F', 'Incidências cumulativas do Grupo A sobre B e C', proposta.encargos.grupoF, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoF: val}}))}
                     </div>
                  </div>
 
@@ -593,7 +593,7 @@ function PropostaEditor() {
                            ...proposta, 
                            equipe: [...proposta.equipe, { 
                               id: newId, 
-                              nomeCargo: 'Selecione a FunÃ§Ã£o', 
+                              nomeCargo: 'Selecione a Função', 
                               quantidade: 1, 
                               escala: '', 
                               cargo: {}, 
@@ -620,9 +620,9 @@ function PropostaEditor() {
                        <thead>
                           <tr className="bg-slate-100 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
                              <th className="px-6 py-3 w-16 text-center">Qtd.</th>
-                             <th className="px-6 py-3">FunÃ§Ã£o Vinculada Ã  CCT</th>
+                             <th className="px-6 py-3">Função Vinculada Ã  CCT</th>
                              <th className="px-6 py-3">Escala</th>
-                             <th className="px-6 py-3 text-right">AÃ§Ã£o</th>
+                             <th className="px-6 py-3 text-right">Ação</th>
                           </tr>
                        </thead>
                        <tbody>
@@ -645,7 +645,7 @@ function PropostaEditor() {
                                             }
                                          }
                                       }}>
-                                         <option value="">Selecione a FunÃ§Ã£o...</option>
+                                         <option value="">Selecione a Função...</option>
                                          {!proposta.cliente.sindicatoId && (
                                              <option value="" disabled className="text-red-500 font-bold italic">âš ï¸ Selecione o Sindicato na Aba 1 primeiro</option>
                                           )}
@@ -695,7 +695,7 @@ function PropostaEditor() {
                                       <td colSpan={4} className="p-6">
                                          <div className="bg-white border border-emerald-100 rounded-lg p-6 shadow-sm">
                                             <h3 className="text-[#1B4D3E] font-bold text-sm uppercase mb-4 flex items-center gap-2">
-                                               âš™ï¸ ParÃ¢metros EspecÃ­ficos do Posto
+                                               âš™ï¸ Parâmetros Específicos do Posto
                                             </h3>
                                             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
                                                <div className="space-y-1">
@@ -704,7 +704,7 @@ function PropostaEditor() {
                                                      const param = {...p.parametrosPosto, periculosidade: e.target.value === 'SIM'};
                                                      updatePosto(p.id, 'parametrosPosto', param);
                                                   }}>
-                                                     <option value="NAO">NÃ£o</option>
+                                                     <option value="NAO">Não</option>
                                                      <option value="SIM">Sim (30%)</option>
                                                   </select>
                                                </div>
@@ -715,20 +715,20 @@ function PropostaEditor() {
                                                      updatePosto(p.id, 'parametrosPosto', param);
                                                   }}>
                                                      <option value={0}>0%</option>
-                                                     <option value={10}>10% (MÃ­nimo)</option>
-                                                     <option value={20}>20% (MÃ©dio)</option>
-                                                     <option value={40}>40% (MÃ¡ximo)</option>
+                                                     <option value={10}>10% (Mínimo)</option>
+                                                     <option value={20}>20% (Médio)</option>
+                                                     <option value={40}>40% (Máximo)</option>
                                                   </select>
                                                </div>
                                                <div className="space-y-1">
-                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Horas Noturnas (MÃªs)</label>
+                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Horas Noturnas (Mês)</label>
                                                   <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.adicionalNoturnoHoras || 0} onChange={(e) => {
                                                      const param = {...p.parametrosPosto, adicionalNoturnoHoras: Number(e.target.value)};
                                                      updatePosto(p.id, 'parametrosPosto', param);
                                                   }} />
                                                </div>
                                                <div className="space-y-1">
-                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Intrajornada (Horas/MÃªs)</label>
+                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Intrajornada (Horas/Mês)</label>
                                                   <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.intrajornadaHoras || 0} onChange={(e) => {
                                                      const param = {...p.parametrosPosto, intrajornadaHoras: Number(e.target.value)};
                                                      updatePosto(p.id, 'parametrosPosto', param);
@@ -744,21 +744,21 @@ function PropostaEditor() {
                                             </div>
                                             <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-4">
                                                <div className="space-y-1">
-                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">HorÃ¡rio de InÃ­cio</label>
+                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Horário de Início</label>
                                                   <input type="time" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.horarioInicio || '08:00'} onChange={(e) => {
                                                      const param = {...p.parametrosPosto, horarioInicio: e.target.value};
                                                      updatePosto(p.id, 'parametrosPosto', param);
                                                   }} />
                                                </div>
                                                <div className="space-y-1">
-                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">HorÃ¡rio de SaÃ­da</label>
+                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Horário de Saída</label>
                                                   <input type="time" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.horarioFim || '17:00'} onChange={(e) => {
                                                      const param = {...p.parametrosPosto, horarioFim: e.target.value};
                                                      updatePosto(p.id, 'parametrosPosto', param);
                                                   }} />
                                                </div>
                                                <div className="space-y-1">
-                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Dias Trab. / MÃªs</label>
+                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Dias Trab. / Mês</label>
                                                   <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.diasTrabalhadosMes || 22} onChange={(e) => {
                                                      const param = {...p.parametrosPosto, diasTrabalhadosMes: Number(e.target.value)};
                                                      updatePosto(p.id, 'parametrosPosto', param);
@@ -774,7 +774,7 @@ function PropostaEditor() {
                           {proposta.equipe.length === 0 && (
                              <tr>
                                 <td colSpan={4} className="px-6 py-12 text-center text-slate-400 text-sm">
-                                   Nenhum posto adicionado. Clique em "Inserir Posto" para comeÃ§ar.
+                                   Nenhum posto adicionado. Clique em "Inserir Posto" para começar.
                                 </td>
                              </tr>
                           )}
@@ -796,10 +796,10 @@ function PropostaEditor() {
                     <thead>
                        {/* MONTANTE A */}
                        <tr className="bg-[#1B4D3E] text-white border-b border-white/20">
-                          <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "A" - MÃ£o-de-obra</th>
+                          <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "A" - Mão-de-obra</th>
                        </tr>
                        <tr className="bg-slate-100 font-bold border-b border-slate-300 text-[10px] uppercase tracking-wider">
-                          <th className="py-2 px-6 w-[50%]">1) FunÃ§Ã£o</th>
+                          <th className="py-2 px-6 w-[50%]">1) Função</th>
                           <th className="py-2 px-6 text-center">Qtd.</th>
                           <th className="py-2 px-6 text-right">Custo Unit</th>
                           <th className="py-2 px-6 text-right">Total</th>
@@ -808,7 +808,7 @@ function PropostaEditor() {
                     <tbody>
                        {proposta.equipe.map((p: any, idx: number) => {
                           const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
-                          // O custo unitÃ¡rio da funÃ§Ã£o Ã© apenas o salÃ¡rio/remuneraÃ§Ã£o
+                          // O custo unitário da função é apenas o salário/remuneração
                           const custoUnitario = itemRes?.detalhes?.remuneracao || 0;
                           const totalLinha = custoUnitario * p.quantidade;
                           return (
@@ -821,9 +821,9 @@ function PropostaEditor() {
                           );
                        })}
                        
-                       {/* Total FunÃ§Ã£o */}
+                       {/* Total Função */}
                        <tr className="bg-[#3b8026] text-white font-bold border-y border-[#2d631d]">
-                          <td colSpan={3} className="py-1.5 px-6 text-right">Total FunÃ§Ã£o</td>
+                          <td colSpan={3} className="py-1.5 px-6 text-right">Total Função</td>
                           <td className="py-1.5 px-6 text-right">
                              {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.remuneracao || 0) * i.quantidade), 0) || 0)}
                           </td>
@@ -860,9 +860,9 @@ function PropostaEditor() {
                        {[
                           { label: '1) Uniformes / Epi\'s', val: resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.ativos || 0) * i.quantidade), 0) || 0 },
                           { label: '2) Materiais e produtos de limpeza', val: 0 },
-                          { label: '3) MÃ¡quinas e equipamentos', val: 0 },
-                          { label: '4) DescartÃ¡veis', val: 0 },
-                          { label: '5) ServiÃ§os (Descriminar)', val: 0 },
+                          { label: '3) Máquinas e equipamentos', val: 0 },
+                          { label: '4) Descartáveis', val: 0 },
+                          { label: '5) Serviços (Descriminar)', val: 0 },
                        ].map((row, i) => (
                           <tr key={i} className="border-b border-slate-200 border-dotted">
                              <td colSpan={3} className="py-1 px-6 font-bold">{row.label}</td>
@@ -878,14 +878,14 @@ function PropostaEditor() {
 
                        {/* MONTANTE C */}
                        <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
-                          <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "C" - BenefÃ­cios</th>
+                          <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "C" - Benefícios</th>
                        </tr>
                        {[
-                          { label: '1) Vale AlimentaÃ§Ã£o', val: resultado?.items?.reduce((acc: any, i: any) => acc + (((i.cctBase?.vaValor || 0) * (i.parametrosPosto?.diasTrabalhadosMes || (i.escala === '5x2' ? 22 : 26))) * i.quantidade), 0) || 0 },
+                          { label: '1) Vale Alimentação', val: resultado?.items?.reduce((acc: any, i: any) => acc + (((i.cctBase?.vaValor || 0) * (i.parametrosPosto?.diasTrabalhadosMes || (i.escala === '5x2' ? 22 : 26))) * i.quantidade), 0) || 0 },
                           { label: '2) Vale Transporte', val: resultado?.items?.reduce((acc: any, i: any) => acc + (((i.cctBase?.vtValor || 0) * (i.parametrosPosto?.diasTrabalhadosMes || (i.escala === '5x2' ? 22 : 26))) * i.quantidade), 0) || 0 },
-                          { label: '3) AssistÃªncia MÃ©dica / Social Familiar', val: 0 },
-                          { label: '4) Fundo de FormaÃ§Ã£o Profissional', val: 0 },
-                          { label: '5) Cesta BÃ¡sica Assiduidade(+)', val: 0 },
+                          { label: '3) Assistência Médica / Social Familiar', val: 0 },
+                          { label: '4) Fundo de Formação Profissional', val: 0 },
+                          { label: '5) Cesta Básica Assiduidade(+)', val: 0 },
                        ].map((row, i) => (
                           <tr key={i} className="border-b border-slate-200 border-dotted">
                              <td colSpan={3} className="py-1 px-6 font-bold">{row.label}</td>
@@ -910,7 +910,7 @@ function PropostaEditor() {
                           <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "D" - BDI</th>
                        </tr>
                        <tr className="border-b border-slate-200 border-dotted">
-                          <td className="py-1.5 px-6 font-bold w-[50%]">AdministraÃ§Ã£o</td>
+                          <td className="py-1.5 px-6 font-bold w-[50%]">Administração</td>
                           <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{proposta.premissas.taxaAdm.toFixed(2)}%</td>
                           <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
                              {formatCurrency((resultado?.faturamentoBruto || 0) * (proposta.premissas.taxaAdm / 100))}
@@ -985,18 +985,18 @@ function PropostaEditor() {
              return (
                <div className="space-y-6">
 
-                 {/* BLOCO 1: MÃƒO DE OBRA */}
+                 {/* BLOCO 1: MÃO DE OBRA */}
                  <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden">
                    <div className="bg-[#1B4D3E] px-6 py-3 flex items-center gap-2">
                      <UserCheck size={16} className="text-emerald-300" />
-                     <h2 className="text-xs font-black text-white uppercase tracking-widest">1) MÃ£o de Obra â€” Quadro de Colaboradores</h2>
+                     <h2 className="text-xs font-black text-white uppercase tracking-widest">1) Mão de Obra — Quadro de Colaboradores</h2>
                    </div>
                    <div className="overflow-x-auto">
                      <table className="w-full text-left border-collapse text-xs">
                        <thead>
                          <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
                            <th className="px-4 py-2 w-10 text-center">Item</th>
-                           <th className="px-4 py-2">DescriÃ§Ã£o â€” MÃ£o de Obra</th>
+                           <th className="px-4 py-2">Descrição — Mão de Obra</th>
                            <th className="px-4 py-2 text-center">Qtd.</th>
                            <th className="px-4 py-2 text-right">Custo Unit.</th>
                            <th className="px-4 py-2 text-right">Total</th>
@@ -1024,7 +1024,7 @@ function PropostaEditor() {
                        </tbody>
                        <tfoot>
                          <tr className="bg-[#1B4D3E] text-white font-black">
-                           <td colSpan={4} className="px-4 py-2.5 text-right uppercase tracking-wider text-xs">Subtotal MÃ£o de Obra (com encargos, benefÃ­cios e markup)</td>
+                           <td colSpan={4} className="px-4 py-2.5 text-right uppercase tracking-wider text-xs">Subtotal Mão de Obra (com encargos, benefícios e markup)</td>
                            <td className="px-4 py-2.5 text-right text-emerald-300">{fc(resultado?.faturamentoBruto || 0)}</td>
                          </tr>
                        </tfoot>
@@ -1043,7 +1043,7 @@ function PropostaEditor() {
                        <thead>
                          <tr className="bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200">
                            <th className="px-6 py-2 w-10 text-center">Item</th>
-                           <th className="px-6 py-2">DescriÃ§Ã£o</th>
+                           <th className="px-6 py-2">Descrição</th>
                            <th className="px-6 py-2 text-right w-48">Valor (R$)</th>
                          </tr>
                        </thead>
@@ -1061,7 +1061,7 @@ function PropostaEditor() {
                          </tr>
                          <tr className="border-b border-slate-200 hover:bg-slate-50">
                            <td className="px-6 py-2.5 text-center font-bold text-slate-500">3</td>
-                           <td className="px-6 py-2.5 font-semibold text-slate-700">MÃ¡quinas e equipamentos</td>
+                           <td className="px-6 py-2.5 font-semibold text-slate-700">Máquinas e equipamentos</td>
                            <td className="px-6 py-2.5 text-right">
                              <input type="number" step="0.01" min="0"
                                className="w-36 text-right bg-white border border-slate-300 rounded px-2 py-1 text-sm font-medium text-slate-800 focus:border-[#1B4D3E] outline-none"
@@ -1072,7 +1072,7 @@ function PropostaEditor() {
                          </tr>
                          <tr className="border-b border-slate-200 hover:bg-slate-50">
                            <td className="px-6 py-2.5 text-center font-bold text-slate-500">4</td>
-                           <td className="px-6 py-2.5 font-semibold text-slate-700">DescartÃ¡veis</td>
+                           <td className="px-6 py-2.5 font-semibold text-slate-700">Descartáveis</td>
                            <td className="px-6 py-2.5 text-right">
                              <input type="number" step="0.01" min="0"
                                className="w-36 text-right bg-white border border-slate-300 rounded px-2 py-1 text-sm font-medium text-slate-800 focus:border-[#1B4D3E] outline-none"
@@ -1085,9 +1085,9 @@ function PropostaEditor() {
                            <td className="px-6 py-2.5 text-center font-bold text-slate-500">5</td>
                            <td className="px-6 py-2.5">
                              <div className="space-y-1">
-                               <span className="font-semibold text-slate-700">ServiÃ§os</span>
+                               <span className="font-semibold text-slate-700">Serviços</span>
                                <input type="text"
-                                 placeholder="Discriminar os serviÃ§os..."
+                                 placeholder="Discriminar os serviços..."
                                  className="block w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-600 focus:border-[#1B4D3E] outline-none"
                                  value={proposta.insumos.servicosDescricao}
                                  onChange={e => setProposta({...proposta, insumos: {...proposta.insumos, servicosDescricao: e.target.value}})}
@@ -1117,7 +1117,7 @@ function PropostaEditor() {
                  <div className="bg-[#1B4D3E] text-white rounded-md shadow-lg p-6 flex items-center justify-between">
                    <div>
                      <p className="text-xs font-bold uppercase tracking-widest text-emerald-300">Total Geral da Proposta</p>
-                     <p className="text-[10px] text-emerald-200 mt-0.5">MO + Insumos â€” apÃ³s impostos, encargos e taxas</p>
+                     <p className="text-[10px] text-emerald-200 mt-0.5">MO + Insumos — após impostos, encargos e taxas</p>
                    </div>
                    <p className="text-3xl font-black text-emerald-300">{fc(totalGeralProposta)}</p>
                  </div>
