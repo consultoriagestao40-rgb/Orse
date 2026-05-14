@@ -62,9 +62,7 @@ model CCT {
   uniformeEpi        Float    @default(0)
   
   // BLOCO C - BENEFICIOS (PLANILHA)
-  assistenciaMedica      Float @default(0)
-  assistenciaSocial      Float @default(0)
-  fundoFormacao          Float @default(0)
+  custosSindicato        Float @default(0)
   vaSobreFerias          Float @default(0)
   reservaTecnica         Float @default(0) // %
   manutencaoEquipamentos Float @default(0) // %

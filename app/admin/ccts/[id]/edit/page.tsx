@@ -47,10 +47,8 @@ export default function CCTEditorPage() {
     iss: 5,
     margemLucro: 10,
     taxaAdm: 5,
-    assistenciaMedica: 0,
-    assistenciaSocial: 0,
-    fundoFormacao: 0,
-    vaSobreFerias: 0,
+    custosSindicato: 0,
+    
     reservaTecnica: 0,
     manutencaoEquipamentos: 0,
     outrosBeneficios: 0
@@ -321,64 +319,20 @@ export default function CCTEditorPage() {
                 />
               </div>
 
-              {/* Assistência Médica */}
+                            {/* Custos com Sindicatos */}
               <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className={labelClass}>Assistência Médica (Mês)</label>
-                  <span className="text-[9px] text-emerald-600 font-bold uppercase">Soma no "Custos com Sindicatos"</span>
-                </div>
+                <label className={labelClass}>Custos com Sindicatos (Mês)</label>
                 <input
                   type="number"
                   step="0.01"
                   className={inputClass}
-                  value={formData.assistenciaMedica}
-                  onChange={e => setFormData({ ...formData, assistenciaMedica: e.target.value })}
+                  value={formData.custosSindicato}
+                  onChange={e => setFormData({ ...formData, custosSindicato: e.target.value })}
                 />
+                <p className="text-[10px] text-slate-400 italic">Soma de Assistência Médica, Social e Fundo de Formação conforme CCT</p>
               </div>
 
-              {/* Assistência Social */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className={labelClass}>Assistência Social Familiar (Mês)</label>
-                  <span className="text-[9px] text-emerald-600 font-bold uppercase">Soma no "Custos com Sindicatos"</span>
-                </div>
-                <input
-                  type="number"
-                  step="0.01"
-                  className={inputClass}
-                  value={formData.assistenciaSocial}
-                  onChange={e => setFormData({ ...formData, assistenciaSocial: e.target.value })}
-                />
-              </div>
-
-              {/* Fundo de Formação */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className={labelClass}>Fundo de Formação Profissional (Mês)</label>
-                  <span className="text-[9px] text-emerald-600 font-bold uppercase">Soma no "Custos com Sindicatos"</span>
-                </div>
-                <input
-                  type="number"
-                  step="0.01"
-                  className={inputClass}
-                  value={formData.fundoFormacao}
-                  onChange={e => setFormData({ ...formData, fundoFormacao: e.target.value })}
-                />
-              </div>
-
-              {/* VA sobre Férias */}
-              <div className="space-y-1">
-                <label className={labelClass}>VA Sobre Férias (Fixo/Mês)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className={inputClass}
-                  value={formData.vaSobreFerias}
-                  onChange={e => setFormData({ ...formData, vaSobreFerias: e.target.value })}
-                />
-              </div>
-
-              {/* Reserva Técnica */}
+{/* Reserva Técnica */}
               <div className="space-y-1">
                 <label className={labelClass}>Reserva Técnica (% do Bloco A)</label>
                 <input

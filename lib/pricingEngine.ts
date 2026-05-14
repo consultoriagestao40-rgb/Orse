@@ -75,17 +75,11 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   // 2) Vale Transporte Bruto
   const custoVTBruto = (cct.vtValor || 0) * diasEscala;
   
-  // 3) Assistência Médica
-  const assistenciaMedica = cct.assistenciaMedica || 0;
+  // 3) Custos com Sindicatos
+  const custosSindicato = cct.custosSindicato || 0;
   
-  // 4) Assistência Social Familiar
-  const assistenciaSocial = cct.assistenciaSocial || 0;
-  
-  // 5) Fundo de Formação Profissional
-  const fundoFormacao = cct.fundoFormacao || 0;
-  
-  // 6) Vale Alimentação Sobre Férias
-  const vaSobreFerias = cct.vaSobreFerias || (cct.vaProvisFerias ? custoVABruto / 12 : 0);
+  // 6) Vale Alimentação Sobre Férias (Vinculado ao Checkbox de Provisão)
+  const vaSobreFerias = cct.vaProvisFerias ? (custoVABruto / 12) : 0;
   
   // 7) Cesta Básica Assiduidade(+)
   const cestaBasica = cct.cestaBasica || 0;
@@ -127,9 +121,10 @@ export function calculateLaborCost(colab: any, premissas: any): any {
 
   // SOMA TOTAL BLOCO C
   const totalBlocoC = 
-    custoVABruto + custoVTBruto + assistenciaMedica + assistenciaSocial + 
-    fundoFormacao + vaSobreFerias + cestaBasica - descontoVA - descontoVT + 
-    examesMedicos + reservaTecnica + manutencaoEquipamentos + outrosBeneficios;
+    custoVABruto + custoVTBruto + custosSindicato + 
+    vaSobreFerias + cestaBasica + examesMedicos + 
+    reservaTecnica + manutencaoEquipamentos + outrosBeneficios - 
+    descontoVA - descontoVT;
 
   const custoTotalDireto = totalBlocoA + totalBlocoC + custoAtivosMensal;
 
@@ -142,7 +137,7 @@ export function calculateLaborCost(colab: any, premissas: any): any {
     detalheBlocoC: {
       va: custoVABruto,
       vt: custoVTBruto,
-      custosSindicato: assistenciaMedica + assistenciaSocial + fundoFormacao,
+      custosSindicato: custosSindicato,
       vaFerias: vaSobreFerias,
       cestaBasica: cestaBasica,
       descontoVA: -descontoVA,
