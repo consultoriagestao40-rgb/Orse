@@ -10,20 +10,35 @@ datasource db {
   provider = "postgresql"
 }
 
-model UnidadeMedida {
-  id    String @id @default(cuid())
-  nome  String @unique
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  nome         String
+  role         UserRole   @default(USER)
+  managerId    String?
+  createdAt    DateTime   @default(now())
+  propostas    Proposta[]
+  manager      User?      @relation("UserToManager", fields: [managerId], references: [id])
+  subordinates User[]     @relation("UserToManager")
 }
 
-model Status {
-  id    String @id @default(cuid())
-  nome  String @unique
+model Client {
+  id           String     @id @default(cuid())
+  nomeFantasia String
+  razaoSocial  String?
+  cnpj         String?    @unique
+  email        String?
+  whatsapp     String?
+  endereco     String?
+  contato      String?
+  createdAt    DateTime   @default(now())
+  propostas    Proposta[]
 }
 
 model CCT {
   id                     String   @id @default(cuid())
   nome                   String
-  uf                     String
+  uf                     String   @default("PR")
   cidade                 String?
   vigenciaInicio         DateTime
   vigenciaFim            DateTime
@@ -57,14 +72,81 @@ model CCT {
 }
 
 model Cargo {
-  id             String  @id @default(cuid())
-  cctId          String
-  nome           String
-  pisoSalarial   Float   @default(0)
-  adicionalCopa  Float   @default(0)
-  gratificacoes  Float   @default(0)
-  assiduidade    Float   @default(0)
-  cct            CCT     @relation(fields: [cctId], references: [id], onDelete: Cascade)
+  id            String @id @default(cuid())
+  cctId         String
+  nome          String
+  pisoSalarial  Float  @default(0)
+  adicionalCopa Float  @default(0)
+  gratificacoes Float  @default(0)
+  assiduidade   Float  @default(0)
+  cct           CCT    @relation(fields: [cctId], references: [id], onDelete: Cascade)
+}
+
+model Proposta {
+  id        String           @id @default(cuid())
+  numero    Int              @unique @default(autoincrement())
+  userId    String
+  clientId  String?
+  status    String           @default("ATIVO")
+  createdAt DateTime         @default(now())
+  client    Client?          @relation(fields: [clientId], references: [id])
+  user      User             @relation(fields: [userId], references: [id])
+  versoes   PropostaVersao[]
+}
+
+model PropostaVersao {
+  id          String         @id @default(cuid())
+  propostaId  String
+  versao      Int            @default(1)
+  impostos    Json
+  margens     Json
+  metadados   Json?
+  custoTotal  Float
+  precoVenda  Float
+  dataCriacao DateTime       @default(now())
+  items       PropostaItem[]
+  proposta    Proposta       @relation(fields: [propostaId], references: [id], onDelete: Cascade)
+}
+
+model PropostaItem {
+  id               String         @id @default(cuid())
+  versaoId         String
+  nomeCargo        String
+  quantidade       Int            @default(1)
+  escala           String         @default("5x2")
+  entrada          String?        @default("08:00")
+  saida            String?        @default("17:00")
+  configFinanceira Json
+  ativosConfig     Json
+  custoDireto      Float
+  custoTotalItem   Float
+  versao           PropostaVersao @relation(fields: [versaoId], references: [id], onDelete: Cascade)
+}
+
+model Escala {
+  id                 String   @id @default(cuid())
+  nome               String   @unique
+  diasTrabalhadosMes Int      @default(22)
+  horasMensais       Int      @default(220)
+  createdAt          DateTime @default(now())
+}
+
+model PropostaStatus {
+  id    String @id @default(cuid())
+  nome  String @unique
+  color String @default("bg-slate-100 text-slate-600 border border-slate-200")
+}
+
+model Produto {
+  id            String   @id @default(cuid())
+  codigo        Int      @unique @default(autoincrement())
+  descricao     String
+  unidade       String   @default("UN")
+  precoUnitario Float    @default(0)
+  categoria     String   @default("Geral")
+  ativo         Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Categoria {
@@ -72,21 +154,13 @@ model Categoria {
   nome String @unique
 }
 
-model ProdutoInsumo {
-  id            String    @id @default(cuid())
-  codigo        String    @unique
-  descricao     String
-  unidadeMedida String
-  precoUnitario Float
-  categoria     String?
-  tipo          String    @default("PRODUTO") // PRODUTO ou EQUIPAMENTO
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+model UnidadeMedida {
+  id   String @id @default(cuid())
+  nome String @unique
 }
 
-model EscalaTrabalho {
-  id           String @id @default(cuid())
-  nome         String @unique // Ex: 5x2, 12x36, 6x1
-  diasTrabalho Int
-  diasFolga    Int
+enum UserRole {
+  ADMIN
+  MANAGER
+  USER
 }
