@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
   Plus, Search, Edit2, Trash2, X, Save, 
-  Filter, Boxes 
+  Boxes 
 } from 'lucide-react';
 import { getProdutos, createProduto, updateProduto, deleteProduto } from './actions';
+import { getCategorias } from '../admin/settings/actions';
 
 export default function ProdutosPage() {
   const [produtos, setProdutos] = useState<any[]>([]);
+  const [categorias, setCategorias] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -19,17 +21,26 @@ export default function ProdutosPage() {
     descricao: '',
     unidade: 'UN',
     precoUnitario: 0,
-    categoria: 'Materiais de Limpeza'
+    categoria: ''
   });
 
   useEffect(() => {
-    loadProdutos();
+    loadData();
   }, []);
 
-  const loadProdutos = async () => {
+  const loadData = async () => {
     setLoading(true);
-    const data = await getProdutos();
-    setProdutos(data);
+    const [prodData, catData] = await Promise.all([
+      getProdutos(),
+      getCategorias()
+    ]);
+    setProdutos(prodData);
+    setCategorias(catData);
+
+    if (catData.length > 0 && !formData.categoria) {
+      setFormData(prev => ({ ...prev, categoria: catData[0].nome }));
+    }
+    
     setLoading(false);
   };
 
@@ -54,7 +65,7 @@ export default function ProdutosPage() {
         descricao: '',
         unidade: 'UN',
         precoUnitario: 0,
-        categoria: 'Materiais de Limpeza'
+        categoria: categorias.length > 0 ? categorias[0].nome : 'Geral'
       });
     }
     setIsModalOpen(true);
@@ -69,7 +80,7 @@ export default function ProdutosPage() {
     } else {
       await createProduto(formData);
     }
-    await loadProdutos();
+    await loadData();
     setIsModalOpen(false);
   };
 
@@ -77,7 +88,7 @@ export default function ProdutosPage() {
     if (confirm('Tem certeza que deseja excluir este item?')) {
       setLoading(true);
       await deleteProduto(id);
-      await loadProdutos();
+      await loadData();
     }
   };
 
@@ -241,17 +252,19 @@ export default function ProdutosPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Categoria</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Categoria do Produto</label>
                   <select
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-sm font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-sm font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase"
                     value={formData.categoria}
                     onChange={(e) => setFormData({...formData, categoria: e.target.value})}
                   >
-                    <option value="Materiais de Limpeza">Materiais de Limpeza</option>
-                    <option value="Máquinas e Equipamentos">Máquinas e Equipamentos</option>
-                    <option value="Descartáveis">Descartáveis</option>
-                    <option value="EPIs e Uniformes">EPIs e Uniformes</option>
-                    <option value="Serviços Terceirizados">Serviços Terceirizados</option>
+                    {categorias.length === 0 ? (
+                      <option value="Geral">GERAL (CADASTRE EM CONFIGURAÇÕES)</option>
+                    ) : (
+                      categorias.map(c => (
+                        <option key={c.id} value={c.nome}>{c.nome}</option>
+                      ))
+                    )}
                   </select>
                 </div>
 

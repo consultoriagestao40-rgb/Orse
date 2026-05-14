@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
   Settings, Layers, CalendarDays, Ruler, Plus, Trash2, 
-  Save, X, Check, Search, Hash, Tag, Clock, Edit2
+  Save, X, Tag, Edit2
 } from 'lucide-react';
 import { 
   getPropostaStatuses, createPropostaStatus, deletePropostaStatus 
@@ -13,10 +13,11 @@ import {
   getEscalas, createEscala, updateEscala, deleteEscala 
 } from '@/app/escalas/actions';
 import { 
-  getUnidadesMedida, createUnidadeMedida, deleteUnidadeMedida 
+  getUnidadesMedida, createUnidadeMedida, deleteUnidadeMedida,
+  getCategorias, createCategoria, deleteCategoria
 } from './actions';
 
-type Tab = 'status' | 'escalas' | 'unidades';
+type Tab = 'status' | 'escalas' | 'unidades' | 'categorias';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('status');
@@ -35,6 +36,10 @@ export default function SettingsPage() {
   const [unidades, setUnidades] = useState<any[]>([]);
   const [newUnidade, setNewUnidade] = useState({ nome: '', sigla: '' });
 
+  // Categorias State
+  const [categorias, setCategorias] = useState<any[]>([]);
+  const [newCategoriaNome, setNewCategoriaNome] = useState('');
+
   useEffect(() => {
     loadData();
   }, [activeTab]);
@@ -51,6 +56,9 @@ export default function SettingsPage() {
       } else if (activeTab === 'unidades') {
         const data = await getUnidadesMedida();
         setUnidades(data || []);
+      } else if (activeTab === 'categorias') {
+        const data = await getCategorias();
+        setCategorias(data || []);
       }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -133,6 +141,28 @@ export default function SettingsPage() {
     else alert('Erro ao excluir: ' + res.error);
   };
 
+  // HANDLERS CATEGORIAS
+  const handleAddCategoria = async () => {
+    if (!newCategoriaNome.trim()) {
+      alert('Preencha o nome da categoria.');
+      return;
+    }
+    const res = await createCategoria(newCategoriaNome);
+    if (res.success) {
+      setNewCategoriaNome('');
+      loadData();
+    } else {
+      alert('Erro ao adicionar categoria: ' + res.error);
+    }
+  };
+
+  const handleDeleteCategoria = async (id: string) => {
+    if (!confirm('Remover esta categoria?')) return;
+    const res = await deleteCategoria(id);
+    if (res.success) loadData();
+    else alert('Erro ao excluir: ' + res.error);
+  };
+
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
@@ -156,6 +186,7 @@ export default function SettingsPage() {
               { id: 'status', label: 'Status de Proposta', icon: Layers },
               { id: 'escalas', label: 'Escalas de Trabalho', icon: CalendarDays },
               { id: 'unidades', label: 'Unidades de Medida', icon: Ruler },
+              { id: 'categorias', label: 'Categorias', icon: Tag },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -310,6 +341,51 @@ export default function SettingsPage() {
                           className="absolute top-2 right-2 p-1 text-slate-300 hover:text-red-600 transition-colors"
                         >
                           <Trash2 size={13} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 4. ABA CATEGORIAS */}
+            {activeTab === 'categorias' && (
+              <div>
+                <div className="bg-[#1B4D3E] px-6 py-3 border-b border-[#13382D]">
+                  <h2 className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                    <Tag size={14} /> Gestão de Categorias Geral
+                  </h2>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Nome da Categoria (Ex: MATERIAL DE LIMPEZA)"
+                      value={newCategoriaNome}
+                      onChange={e => setNewCategoriaNome(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleAddCategoria()}
+                      className="flex-1 px-3 py-2 border border-slate-300 rounded text-sm outline-none focus:border-[#1B4D3E] font-bold uppercase"
+                    />
+                    <button 
+                      onClick={handleAddCategoria}
+                      className="bg-[#1B4D3E] hover:bg-emerald-900 text-white px-6 py-2 rounded text-sm font-bold flex items-center gap-2 shadow-sm transition-all"
+                    >
+                      <Plus size={16} /> Adicionar
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {categorias.map(c => (
+                      <div key={c.id} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded hover:bg-white hover:shadow-sm transition-all group">
+                        <span className="text-xs font-bold text-slate-700 uppercase">{c.nome}</span>
+                        <button 
+                          onClick={() => handleDeleteCategoria(c.id)}
+                          className="text-slate-400 hover:text-red-600 transition-colors"
+                          title="Remover"
+                        >
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     ))}

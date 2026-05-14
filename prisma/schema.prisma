@@ -146,6 +146,11 @@ model Produto {
   updatedAt      DateTime @updatedAt
 }
 
+model Categoria {
+  id    String @id @default(cuid())
+  nome  String @unique
+}
+
 model UnidadeMedida {
   id    String @id @default(cuid())
   nome  String @unique

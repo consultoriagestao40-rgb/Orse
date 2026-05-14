@@ -51,3 +51,39 @@ export async function deleteUnidadeMedida(id: string) {
     return { success: false, error: error.message };
   }
 }
+
+// CATEGORIAS
+export async function getCategorias() {
+  try {
+    return await prisma.categoria.findMany({ 
+      orderBy: { nome: 'asc' } 
+    });
+  } catch (error) {
+    console.error('Erro ao buscar categorias:', error);
+    return [];
+  }
+}
+
+export async function createCategoria(nome: string) {
+  try {
+    const res = await prisma.categoria.create({
+      data: { nome: nome.trim() }
+    });
+    revalidatePath('/admin/settings');
+    revalidatePath('/produtos');
+    return { success: true, data: res };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteCategoria(id: string) {
+  try {
+    await prisma.categoria.delete({ where: { id } });
+    revalidatePath('/admin/settings');
+    revalidatePath('/produtos');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
