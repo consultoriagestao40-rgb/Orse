@@ -905,7 +905,7 @@ function PropostaEditor() {
                               };
                            }, { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 });
 
-                          const rows = [
+                          const rows: any[] = [
                               { label: '1) Vale Alimentação', val: b.va },
                               { label: '2) Vale Transporte', val: b.vt },
                               { label: '3) Custos com Sindicatos (Assist. Médica/Social/Fundo Formação)', val: b.custosSindicato },
