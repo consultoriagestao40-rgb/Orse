@@ -144,7 +144,9 @@ export function calculateLaborCost(colab: any, premissas: any): any {
       descontoVT: -descontoVT,
       exames: examesMedicos,
       reservaTecnica: reservaTecnica,
+      reservaTecnicaPct: cct.reservaTecnica || 0,
       manutencao: manutencaoEquipamentos,
+      manutencaoPct: cct.manutencaoEquipamentos || 0,
       outros: outrosBeneficios,
       total: totalBlocoC
     },
