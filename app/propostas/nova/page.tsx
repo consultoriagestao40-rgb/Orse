@@ -881,7 +881,7 @@ function PropostaEditor() {
                           <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "C" - Benefícios Detalhados (13 Itens)</th>
                        </tr>
                        {(() => {
-                          const b = resultado?.items?.reduce((acc, i) => {
+                          const b = resultado?.items?.reduce((acc: any, i: any) => {
                              const d = i.detalhes?.detalheBlocoC;
                              return {
                                 va: acc.va + (d?.va || 0) * i.quantidade,
