@@ -925,7 +925,7 @@ function PropostaEditor() {
                                 <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
                                    <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "C"</td>
                                    <td className="py-2.5 px-6 text-right">
-                                      {formatCurrency(resultado?.items?.reduce((acc, i) => acc + ((i.detalhes?.beneficios || 0) * i.quantidade), 0) || 0)}
+                                      {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.beneficios || 0) * i.quantidade), 0) || 0)}
                                    </td>
                                 </tr>
                              </>
