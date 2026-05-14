@@ -46,7 +46,14 @@ export default function CCTEditorPage() {
     cofins: 3,
     iss: 5,
     margemLucro: 10,
-    taxaAdm: 5
+    taxaAdm: 5,
+    assistenciaMedica: 0,
+    assistenciaSocial: 0,
+    fundoFormacao: 0,
+    vaSobreFerias: 0,
+    reservaTecnica: 0,
+    manutencaoEquipamentos: 0,
+    outrosBeneficios: 0
   });
 
   const [cargos, setCargos] = useState<any[]>([]);
@@ -311,6 +318,99 @@ export default function CCTEditorPage() {
                   className={inputClass}
                   value={formData.examesMedicos}
                   onChange={e => setFormData({ ...formData, examesMedicos: e.target.value })}
+                />
+              </div>
+
+              {/* Assistência Médica */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className={labelClass}>Assistência Médica (Mês)</label>
+                  <span className="text-[9px] text-emerald-600 font-bold uppercase">Soma no "Custos com Sindicatos"</span>
+                </div>
+                <input
+                  type="number"
+                  step="0.01"
+                  className={inputClass}
+                  value={formData.assistenciaMedica}
+                  onChange={e => setFormData({ ...formData, assistenciaMedica: e.target.value })}
+                />
+              </div>
+
+              {/* Assistência Social */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className={labelClass}>Assistência Social Familiar (Mês)</label>
+                  <span className="text-[9px] text-emerald-600 font-bold uppercase">Soma no "Custos com Sindicatos"</span>
+                </div>
+                <input
+                  type="number"
+                  step="0.01"
+                  className={inputClass}
+                  value={formData.assistenciaSocial}
+                  onChange={e => setFormData({ ...formData, assistenciaSocial: e.target.value })}
+                />
+              </div>
+
+              {/* Fundo de Formação */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className={labelClass}>Fundo de Formação Profissional (Mês)</label>
+                  <span className="text-[9px] text-emerald-600 font-bold uppercase">Soma no "Custos com Sindicatos"</span>
+                </div>
+                <input
+                  type="number"
+                  step="0.01"
+                  className={inputClass}
+                  value={formData.fundoFormacao}
+                  onChange={e => setFormData({ ...formData, fundoFormacao: e.target.value })}
+                />
+              </div>
+
+              {/* VA sobre Férias */}
+              <div className="space-y-1">
+                <label className={labelClass}>VA Sobre Férias (Fixo/Mês)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className={inputClass}
+                  value={formData.vaSobreFerias}
+                  onChange={e => setFormData({ ...formData, vaSobreFerias: e.target.value })}
+                />
+              </div>
+
+              {/* Reserva Técnica */}
+              <div className="space-y-1">
+                <label className={labelClass}>Reserva Técnica (% do Bloco A)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className={inputClass}
+                  value={formData.reservaTecnica}
+                  onChange={e => setFormData({ ...formData, reservaTecnica: e.target.value })}
+                />
+              </div>
+
+              {/* Manutenção Equipamentos */}
+              <div className="space-y-1">
+                <label className={labelClass}>Manutenção Equipamentos (% dos Ativos)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className={inputClass}
+                  value={formData.manutencaoEquipamentos}
+                  onChange={e => setFormData({ ...formData, manutencaoEquipamentos: e.target.value })}
+                />
+              </div>
+
+              {/* Outros Benefícios */}
+              <div className="space-y-1">
+                <label className={labelClass}>Outros Benefícios (Mês)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className={inputClass}
+                  value={formData.outrosBeneficios}
+                  onChange={e => setFormData({ ...formData, outrosBeneficios: e.target.value })}
                 />
               </div>
             </div>

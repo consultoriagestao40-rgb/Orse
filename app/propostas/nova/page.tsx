@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Sidebar from '@/components/Sidebar';
@@ -847,9 +847,9 @@ function PropostaEditor() {
                        
                        {/* Total Montante A */}
                        <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
-                          <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "A"</td>
+                          <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "A" (Bloco A)</td>
                           <td className="py-2.5 px-6 text-right">
-                             {formatCurrency((resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.remuneracao || 0) * i.quantidade), 0) || 0) + (resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.encargos || 0) * i.quantidade), 0) || 0))}
+                             {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.blocoA || 0) * i.quantidade), 0) || 0)}
                           </td>
                        </tr>
 
@@ -877,34 +877,60 @@ function PropostaEditor() {
                        </tr>
 
                        {/* MONTANTE C */}
-                       <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
-                          <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "C" - Benefícios</th>
+<tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
+                          <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "C" - Benefícios Detalhados (13 Itens)</th>
                        </tr>
-                       {[
-                          { label: '1) Vale Alimentação', val: resultado?.items?.reduce((acc: any, i: any) => acc + (((i.cctBase?.vaValor || 0) * (i.parametrosPosto?.diasTrabalhadosMes || (i.escala === '5x2' ? 22 : 26))) * i.quantidade), 0) || 0 },
-                          { label: '2) Vale Transporte', val: resultado?.items?.reduce((acc: any, i: any) => acc + (((i.cctBase?.vtValor || 0) * (i.parametrosPosto?.diasTrabalhadosMes || (i.escala === '5x2' ? 22 : 26))) * i.quantidade), 0) || 0 },
-                          { label: '3) Assistência Médica / Social Familiar', val: 0 },
-                          { label: '4) Fundo de Formação Profissional', val: 0 },
-                          { label: '5) Cesta Básica Assiduidade(+)', val: 0 },
-                       ].map((row, i) => (
-                          <tr key={i} className="border-b border-slate-200 border-dotted">
-                             <td colSpan={3} className="py-1 px-6 font-bold">{row.label}</td>
-                             <td className="py-1 px-6 text-right bg-emerald-100/50 font-semibold">{formatCurrency(row.val)}</td>
-                          </tr>
-                       ))}
-                       <tr className="border-b border-slate-200 border-dotted">
-                          <td colSpan={3} className="py-1 px-6 font-bold text-red-600">6) Desconto de VT(-) / VA(-) CLT</td>
-                          <td className="py-1 px-6 text-right bg-emerald-100/50 font-semibold text-red-600">
-                             -{formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + (Math.max(0, ((i.cctBase?.vtValor || 0) * (i.parametrosPosto?.diasTrabalhadosMes || 22)) - (i.detalhes?.custoVTReal || 0)) * i.quantidade), 0) || 0)}
-                          </td>
-                       </tr>
-                       <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
-                          <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "C"</td>
-                          <td className="py-2.5 px-6 text-right">
-                             {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.beneficios || 0) * i.quantidade), 0) || 0)}
-                          </td>
-                       </tr>
+                       {(() => {
+                          const b = resultado?.items?.reduce((acc, i) => {
+                             const d = i.detalhes?.detalheBlocoC;
+                             return {
+                                va: acc.va + (d?.va || 0) * i.quantidade,
+                                vt: acc.vt + (d?.vt || 0) * i.quantidade,
+                                custosSindicato: acc.custosSindicato + (d?.custosSindicato || 0) * i.quantidade,
+                                vaFerias: acc.vaFerias + (d?.vaFerias || 0) * i.quantidade,
+                                cestaBasica: acc.cestaBasica + (d?.cestaBasica || 0) * i.quantidade,
+                                descontoVA: acc.descontoVA + (d?.descontoVA || 0) * i.quantidade,
+                                descontoVT: acc.descontoVT + (d?.descontoVT || 0) * i.quantidade,
+                                exames: acc.exames + (d?.exames || 0) * i.quantidade,
+                                reservaTecnica: acc.reservaTecnica + (d?.reservaTecnica || 0) * i.quantidade,
+                                manutencao: acc.manutencao + (d?.manutencao || 0) * i.quantidade,
+                                outros: acc.outros + (d?.outros || 0) * i.quantidade,
+                             };
+                          }, { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, manutencao:0, outros:0 });
 
+                          const rows = [
+                             { label: '1) Vale Alimentação', val: b.va },
+                             { label: '2) Vale Transporte', val: b.vt },
+                             { label: '3) Custos com Sindicatos (Assist. Médica/Social/Fundo Formação)', val: b.custosSindicato },
+                             { label: '4) Vale Alimentação Sobre Férias', val: b.vaFerias },
+                             { label: '5) Cesta Básica Assiduidade(+)', val: b.cestaBasica },
+                             { label: '6) Desconto de VA(-)', val: b.descontoVA, red: true },
+                             { label: '7) Desconto de VT(-)', val: b.descontoVT, red: true },
+                             { label: '8) Exames Médicos', val: b.exames },
+                             { label: '9) Reservas Técnicas', val: b.reservaTecnica },
+                             { label: '10) Manutenção Equipamentos', val: b.manutencao },
+                             { label: '11) Outros (especificar)', val: b.outros },
+                          ];
+
+                          return (
+                             <>
+                                {rows.map((row, i) => (
+                                   <tr key={i} className="border-b border-slate-200 border-dotted">
+                                      <td colSpan={3} className={"py-1 px-6 font-bold " + (row.red ? "text-red-600" : "")}>{row.label}</td>
+                                      <td className={"py-1 px-6 text-right bg-emerald-100/50 font-semibold " + (row.red ? "text-red-600" : "")}>
+                                         {row.val < 0 ? "-" + formatCurrency(Math.abs(row.val)) : formatCurrency(row.val)}
+                                      </td>
+                                   </tr>
+                                ))}
+                                <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
+                                   <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "C"</td>
+                                   <td className="py-2.5 px-6 text-right">
+                                      {formatCurrency(resultado?.items?.reduce((acc, i) => acc + ((i.detalhes?.beneficios || 0) * i.quantidade), 0) || 0)}
+                                   </td>
+                                </tr>
+                             </>
+                          );
+                       })()}
                        {/* MONTANTE D - BDI */}
                        <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
                           <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "D" - BDI</th>

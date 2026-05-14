@@ -54,64 +54,105 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   
   const totalRemuneracao = salarioBase + adicionalPericulosidade + adicionalInsalubridade + outrosAdicionais + adicionalNoturno + intrajornada + dsrAdicionais;
 
-  // 2. Encargos e Provisões (Sobre Remuneração)
-  let percentualEncargosGerais = 0;
-  if (premissas && premissas.encargos && premissas.encargos.grupoA) {
-    const e = premissas.encargos;
-    const sumGroup = (g: any) => Object.values(g).reduce((a: any, b: any) => a + Number(b), 0) as number;
-    percentualEncargosGerais = sumGroup(e.grupoA) + sumGroup(e.grupoB) + sumGroup(e.grupoC) + sumGroup(e.grupoD) + sumGroup(e.grupoE) + sumGroup(e.grupoF);
-  } else {
-    percentualEncargosGerais = (cct.encargoInss || 20) + (cct.encargoFgts || 8) + (cct.encargoRat || 0) + (cct.provisFerias || 11.11) + (cct.provis13 || 8.33) + (cct.provisRescisao || 4);
-  }
-
+  // 2. Encargos e Provisões (Bloco A - Encargos)
+  const percentualEncargosGerais = (cct.encargoInss || 20) + (cct.encargoFgts || 8) + (cct.encargoRat || 0) + (cct.provisFerias || 11.11) + (cct.provis13 || 8.33) + (cct.provisRescisao || 0);
   const totalEncargos = totalRemuneracao * (percentualEncargosGerais / 100);
-  const totalProvisoes = 0; // Unificado em totalEncargos
+  
+  const totalBlocoA = totalRemuneracao + totalEncargos;
 
-  // 4. Inteligência de Escalas para Benefícios
+  // 3. Inteligência de Escalas para Benefícios
   let diasEscala = 22;
   if (param.diasTrabalhadosMes) {
-    diasEscala = param.diasTrabalhadosMes; // Se o usuário definiu manualmente
+    diasEscala = param.diasTrabalhadosMes;
   } else {
     diasEscala = colab.escala === '5x2' ? 22 : colab.escala === '6x1' ? 26 : 15.21;
   }
   
-  // VA/VR
-  let custoVA = 0;
-  if (cct.vaTipo === 'DIARIO') {
-    custoVA = (cct.vaValor || 0) * diasEscala;
-  } else {
-    custoVA = (cct.vaValor || 0);
-  }
+  // 4. BLOCO C - BENEFICIOS (DETALHADO CONFORME PLANILHA)
+  // 1) Vale Alimentação
+  const custoVABruto = cct.vaTipo === 'DIARIO' ? (cct.vaValor || 0) * diasEscala : (cct.vaValor || 0);
   
-  // Provisão de VA sobre Férias (1/12)
-  if (cct.vaProvisFerias) {
-    custoVA += (custoVA / 12);
-  }
-
-  // VT com Desconto CLT de 6%
+  // 2) Vale Transporte Bruto
   const custoVTBruto = (cct.vtValor || 0) * diasEscala;
-  const descontoVTMax = salarioBase * ((cct.vtDescPercent || 6) / 100);
-  const custoVTReal = Math.max(0, custoVTBruto - descontoVTMax);
+  
+  // 3) Assistência Médica
+  const assistenciaMedica = cct.assistenciaMedica || 0;
+  
+  // 4) Assistência Social Familiar
+  const assistenciaSocial = cct.assistenciaSocial || 0;
+  
+  // 5) Fundo de Formação Profissional
+  const fundoFormacao = cct.fundoFormacao || 0;
+  
+  // 6) Vale Alimentação Sobre Férias
+  const vaSobreFerias = cct.vaSobreFerias || (cct.vaProvisFerias ? custoVABruto / 12 : 0);
+  
+  // 7) Cesta Básica Assiduidade(+)
+  const cestaBasica = cct.cestaBasica || 0;
+  
+  // 8) Desconto de VA(-)
+  const descontoVA = (salarioBase * (cct.vaDescPercent || 0)) / 100;
+  
+  // 9) Desconto de VT(-)
+  const descontoVT = (salarioBase * (cct.vtDescPercent || 6)) / 100;
+  const custoVTReal = Math.max(0, custoVTBruto - descontoVT);
 
-  // Outros Benefícios Fixos
-  const outrosBeneficios = (cct.cestaBasica || 0) + (cct.seguroVida || 0) + (cct.examesMedicos || 0);
+  // 10) Exames Médicos
+  const examesMedicos = cct.examesMedicos || 0;
 
-  // 5. Custos de Ativos (EPIs/Uniformes)
-  let custoAtivosMensal = cct.uniformeEpi || 0;
+  // 11) Reservas Técnicas (Sobre Bloco A)
+  const reservaTecnica = totalBlocoA * ((cct.reservaTecnica || 0) / 100);
+
+  // 5. Custos de Ativos (EPIs/Uniformes/Máquinas)
+  let custoAtivosMensal = 0;
+  let custoMaquinasEquipamentos = 0;
+
   if (ativos && ativos.uniformes) {
-    custoAtivosMensal = ativos.uniformes.reduce((acc: number, item: any) => {
-      return acc + (item.valor * item.quantidade / (item.vidaUtilMeses || 6));
-    }, 0);
+    ativos.uniformes.forEach((item: any) => {
+      const custoMensal = (item.valor * item.quantidade / (item.vidaUtilMeses || 6));
+      custoAtivosMensal += custoMensal;
+      
+      // Verifica se é Máquina/Equipamento para base da manutenção (Sobre valor TOTAL)
+      if (item.categoria === 'Máquinas e Equipamentos' || item.categoria === 'Equipamentos') {
+        custoMaquinasEquipamentos += (item.valor * item.quantidade);
+      }
+    });
   }
 
-  const custoTotalDireto = totalRemuneracao + totalEncargos + totalProvisoes + custoVA + custoVTReal + outrosBeneficios + custoAtivosMensal;
+  // 12) Manutenção Equipamentos (Sobre Máquinas e Equipamentos)
+  const manutencaoEquipamentos = custoMaquinasEquipamentos * ((cct.manutencaoEquipamentos || 0) / 100);
+
+  // 13) Outros
+  const outrosBeneficios = cct.outrosBeneficios || 0;
+
+  // SOMA TOTAL BLOCO C
+  const totalBlocoC = 
+    custoVABruto + custoVTBruto + assistenciaMedica + assistenciaSocial + 
+    fundoFormacao + vaSobreFerias + cestaBasica - descontoVA - descontoVT + 
+    examesMedicos + reservaTecnica + manutencaoEquipamentos + outrosBeneficios;
+
+  const custoTotalDireto = totalBlocoA + totalBlocoC + custoAtivosMensal;
 
   return {
     remuneracao: totalRemuneracao,
     encargos: totalEncargos,
-    provisoes: totalProvisoes,
-    beneficios: custoVA + custoVTReal + outrosBeneficios,
+    blocoA: totalBlocoA,
+    beneficios: totalBlocoC,
     ativos: custoAtivosMensal,
+    detalheBlocoC: {
+      va: custoVABruto,
+      vt: custoVTBruto,
+      custosSindicato: assistenciaMedica + assistenciaSocial + fundoFormacao,
+      vaFerias: vaSobreFerias,
+      cestaBasica: cestaBasica,
+      descontoVA: -descontoVA,
+      descontoVT: -descontoVT,
+      exames: examesMedicos,
+      reservaTecnica: reservaTecnica,
+      manutencao: manutencaoEquipamentos,
+      outros: outrosBeneficios,
+      total: totalBlocoC
+    },
     custoTotalDireto: custoTotalDireto * colab.quantidade
   };
 }

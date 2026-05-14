@@ -57,9 +57,19 @@ model CCT {
   cofins         Float    @default(3)
   iss            Float    @default(5)
   margemLucro    Float    @default(10)
-  taxaAdm        Float    @default(5)
-  createdAt      DateTime @default(now())
-  uniformeEpi    Float    @default(0)
+  taxaAdm            Float    @default(5)
+  createdAt          DateTime @default(now())
+  uniformeEpi        Float    @default(0)
+  
+  // BLOCO C - BENEFICIOS (PLANILHA)
+  assistenciaMedica      Float @default(0)
+  assistenciaSocial      Float @default(0)
+  fundoFormacao          Float @default(0)
+  vaSobreFerias          Float @default(0)
+  reservaTecnica         Float @default(0) // %
+  manutencaoEquipamentos Float @default(0) // %
+  outrosBeneficios       Float @default(0)
+  
   cargos         Cargo[]
 }
 

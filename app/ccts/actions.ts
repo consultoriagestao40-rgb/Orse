@@ -60,6 +60,13 @@ export async function createCCT(data: any) {
         iss: Number(cctData.iss) || 5,
         margemLucro: Number(cctData.margemLucro) || 10,
         taxaAdm: Number(cctData.taxaAdm) || 5,
+        assistenciaMedica: Number(cctData.assistenciaMedica) || 0,
+        assistenciaSocial: Number(cctData.assistenciaSocial) || 0,
+        fundoFormacao: Number(cctData.fundoFormacao) || 0,
+        vaSobreFerias: Number(cctData.vaSobreFerias) || 0,
+        reservaTecnica: Number(cctData.reservaTecnica) || 0,
+        manutencaoEquipamentos: Number(cctData.manutencaoEquipamentos) || 0,
+        outrosBeneficios: Number(cctData.outrosBeneficios) || 0,
 
         cargos: {
           create: (cargos || []).filter((c: any) => c.nome?.trim() !== '').map((c: any) => ({
@@ -125,6 +132,14 @@ export async function updateCCT(id: string, data: any) {
         iss: Number(cctData.iss) || 5,
         margemLucro: Number(cctData.margemLucro) || 10,
         taxaAdm: Number(cctData.taxaAdm) || 5,
+
+        assistenciaMedica: Number(cctData.assistenciaMedica) || 0,
+        assistenciaSocial: Number(cctData.assistenciaSocial) || 0,
+        fundoFormacao: Number(cctData.fundoFormacao) || 0,
+        vaSobreFerias: Number(cctData.vaSobreFerias) || 0,
+        reservaTecnica: Number(cctData.reservaTecnica) || 0,
+        manutencaoEquipamentos: Number(cctData.manutencaoEquipamentos) || 0,
+        outrosBeneficios: Number(cctData.outrosBeneficios) || 0,
 
         cargos: {
           create: (cargos || []).filter((c: any) => c.nome?.trim() !== '').map((c: any) => ({
