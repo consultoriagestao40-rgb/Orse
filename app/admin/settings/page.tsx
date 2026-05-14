@@ -82,10 +82,16 @@ export default function SettingsPage() {
   const handleSaveEscala = async () => {
     if (!escalaForm.nome.trim()) return alert('O nome da escala é obrigatório.');
     setLoading(true);
+    const payload = {
+      nome: escalaForm.nome,
+      diasTrabalhadosMes: escalaForm.diasTrabalhadosMes,
+      horasMensais: escalaForm.horasMensais
+    };
+
     if (escalaForm.id) {
-      await updateEscala(escalaForm.id, escalaForm);
+      await updateEscala(escalaForm.id, payload);
     } else {
-      await createEscala(escalaForm);
+      await createEscala(payload);
     }
     setShowEscalaModal(false);
     loadData();

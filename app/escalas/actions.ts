@@ -60,6 +60,7 @@ export async function deleteEscala(id: string) {
     });
     revalidatePath('/admin/escalas');
     revalidatePath('/propostas/nova');
+    revalidatePath('/admin/settings');
     return { success: true };
   } catch (error) {
     console.error('Error deleting escala:', error);
