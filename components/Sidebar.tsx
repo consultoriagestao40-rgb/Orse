@@ -27,6 +27,7 @@ const Sidebar = () => {
     { icon: PlusCircle, label: 'Nova Proposta', href: '/propostas/nova', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Briefcase, label: 'Regras (CCT)', href: '/admin/ccts', roles: ['ADMIN', 'MANAGER'] },
     { icon: Users, label: 'Clientes', href: '/clientes', roles: ['ADMIN', 'MANAGER', 'USER'] },
+    { icon: ShieldCheck, label: 'Usuários e Permissões', href: '/admin/usuarios', roles: ['ADMIN'] },
     { icon: ShoppingCart, label: 'Produtos e Insumos', href: '/produtos', roles: ['ADMIN', 'MANAGER'] },
     { icon: ShieldCheck, label: 'EPIs e Uniformes', href: '/epis', roles: ['ADMIN', 'MANAGER'] },
     { icon: BarChart2, label: 'Controladoria', href: '#', roles: ['ADMIN'] },
