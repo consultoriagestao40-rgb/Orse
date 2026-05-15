@@ -265,6 +265,44 @@ function PropostaEditor() {
     setProposta({ ...proposta, equipe: newEquipe });
   };
 
+  const calculateAutoNoturno = (hInicio: string, hFim: string, diasMes: number) => {
+    if (!hInicio || !hFim) return 0;
+    
+    try {
+      const getMinutes = (time: string) => {
+        const [h, m] = time.split(':').map(Number);
+        return h * 60 + m;
+      };
+
+      const inicio = getMinutes(hInicio);
+      const fim = getMinutes(hFim);
+      
+      let noturnasMinutos = 0;
+      const NOTURNO_INICIO = 22 * 60; // 22:00
+      const NOTURNO_FIM = 5 * 60;    // 05:00
+
+      if (fim < inicio) {
+        // Cruza a meia-noite
+        noturnasMinutos += Math.max(0, (24 * 60) - Math.max(inicio, NOTURNO_INICIO));
+        noturnasMinutos += Math.max(0, Math.min(fim, NOTURNO_FIM));
+        
+        // Súmula 60 TST: Prorrogação se trabalhou todo o período noturno
+        if (inicio <= NOTURNO_INICIO && fim >= NOTURNO_FIM) {
+          noturnasMinutos += Math.max(0, fim - NOTURNO_FIM);
+        }
+      } else {
+        // Mesmo dia
+        noturnasMinutos += Math.max(0, Math.min(fim, NOTURNO_FIM) - Math.min(inicio, NOTURNO_FIM));
+        noturnasMinutos += Math.max(0, Math.min(fim, 24 * 60) - Math.max(inicio, NOTURNO_INICIO));
+      }
+
+      const horasNoturnasPorDia = (noturnasMinutos / 60) * 1.142857;
+      return Number((horasNoturnasPorDia * diasMes).toFixed(2));
+    } catch (e) {
+      return 0;
+    }
+  };
+
   const handleSave = async () => {
     if (!proposta.cliente.cliente) return alert('Por favor, selecione ou informe o cliente.');
     if (proposta.equipe.length === 0) return alert('Adicione ao menos um posto no quadro de equipe.');
@@ -944,29 +982,52 @@ function PropostaEditor() {
                                                   }} />
                                                </div>
                                             </div>
-                                            <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-4">
-                                               <div className="space-y-1">
-                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Horário de Início</label>
-                                                  <input type="time" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.horarioInicio || '08:00'} onChange={(e) => {
-                                                     const param = {...p.parametrosPosto, horarioInicio: e.target.value};
-                                                     updatePosto(p.id, 'parametrosPosto', param);
-                                                  }} />
-                                               </div>
-                                               <div className="space-y-1">
-                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Horário de Saída</label>
-                                                  <input type="time" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.horarioFim || '17:00'} onChange={(e) => {
-                                                     const param = {...p.parametrosPosto, horarioFim: e.target.value};
-                                                     updatePosto(p.id, 'parametrosPosto', param);
-                                                  }} />
-                                               </div>
-                                               <div className="space-y-1">
-                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Dias Trab. / Mês</label>
-                                                  <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.diasTrabalhadosMes || 22} onChange={(e) => {
-                                                     const param = {...p.parametrosPosto, diasTrabalhadosMes: Number(e.target.value)};
-                                                     updatePosto(p.id, 'parametrosPosto', param);
-                                                  }} />
-                                               </div>
-                                            </div>
+                                            <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                                                <div className="space-y-1">
+                                                   <label className="text-[10px] font-bold text-slate-500 uppercase">Horário de Início</label>
+                                                   <input type="time" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.horarioInicio || '08:00'} onChange={(e) => {
+                                                      const hInicio = e.target.value;
+                                                      const hFim = p.parametrosPosto?.horarioFim || '17:00';
+                                                      const dias = p.parametrosPosto?.diasTrabalhadosMes || 22;
+                                                      const noturnoAuto = calculateAutoNoturno(hInicio, hFim, dias);
+                                                      const param = {...p.parametrosPosto, horarioInicio: hInicio, adicionalNoturnoHoras: noturnoAuto};
+                                                      updatePosto(p.id, 'parametrosPosto', param);
+                                                   }} />
+                                                </div>
+                                                <div className="space-y-1">
+                                                   <label className="text-[10px] font-bold text-slate-500 uppercase">Horário de Saída</label>
+                                                   <input type="time" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.horarioFim || '17:00'} onChange={(e) => {
+                                                      const hFim = e.target.value;
+                                                      const hInicio = p.parametrosPosto?.horarioInicio || '08:00';
+                                                      const dias = p.parametrosPosto?.diasTrabalhadosMes || 22;
+                                                      const noturnoAuto = calculateAutoNoturno(hInicio, hFim, dias);
+                                                      const param = {...p.parametrosPosto, horarioFim: hFim, adicionalNoturnoHoras: noturnoAuto};
+                                                      updatePosto(p.id, 'parametrosPosto', param);
+                                                   }} />
+                                                </div>
+                                                <div className="space-y-1">
+                                                   <label className="text-[10px] font-bold text-slate-500 uppercase">Dias Trab. / Mês</label>
+                                                   <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.diasTrabalhadosMes || 22} onChange={(e) => {
+                                                      const dias = Number(e.target.value);
+                                                      const hInicio = p.parametrosPosto?.horarioInicio || '08:00';
+                                                      const hFim = p.parametrosPosto?.horarioFim || '17:00';
+                                                      const noturnoAuto = calculateAutoNoturno(hInicio, hFim, dias);
+                                                      const param = {...p.parametrosPosto, diasTrabalhadosMes: dias, adicionalNoturnoHoras: noturnoAuto};
+                                                      updatePosto(p.id, 'parametrosPosto', param);
+                                                   }} />
+                                                </div>
+                                                <div className="pb-[1px]">
+                                                   <button 
+                                                      onClick={() => {
+                                                         const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, showConfig: false} : x);
+                                                         setProposta({...proposta, equipe: newE});
+                                                      }}
+                                                      className="w-full bg-[#1B4D3E] hover:bg-[#2d631d] text-white font-bold py-2 rounded text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-sm"
+                                                   >
+                                                      <Save size={12} /> Salvar Configurações
+                                                   </button>
+                                                </div>
+                                             </div>
                                          </div>
                                       </td>
                                    </tr>
