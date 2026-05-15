@@ -216,11 +216,11 @@ export function calculateEnterprisePrice(proposal: any): any {
 
   let custoDiretoTotal = 0;
   const itemResults = items.map((item: any) => {
-    // Passa premissas para cada item
     const res = calculateLaborCost(item, {
-      reservaTecnicaPct,
-      manutencaoPct,
-      encargos
+      reservaTecnicaPct: margens?.reservaTecnicaPct || reservaTecnicaPct,
+      manutencaoPct: margens?.manutencaoPct || manutencaoPct,
+      encargos,
+      cctGlobal: proposal.cctGlobal
     });
     custoDiretoTotal += res.custoTotalDireto;
     return {

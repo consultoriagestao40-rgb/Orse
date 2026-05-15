@@ -119,7 +119,12 @@ export async function saveProposta(data: any) {
         propostaId,
         versao: nextVersion,
         impostos: { list: premissas.tributos, sindicatoId: cliente.sindicatoId } as any,
-        margens: { adm: premissas.taxaAdm, lucro: premissas.margemLucro } as any,
+        margens: { 
+          adm: premissas.taxaAdm, 
+          lucro: premissas.margemLucro,
+          reservaTecnicaPct: premissas.reservaTecnicaPct,
+          manutencaoPct: premissas.manutencaoPct
+        } as any,
         metadados: {
           clienteNome: cliente.cliente,
           contato: cliente.contato,
@@ -266,6 +271,8 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
       premissas: {
         taxaAdm: margens?.adm || 5,
         margemLucro: margens?.lucro || 10,
+        reservaTecnicaPct: margens?.reservaTecnicaPct || 0,
+        manutencaoPct: margens?.manutencaoPct || 0,
         tributos: (() => {
           if (Array.isArray(impostos)) return impostos;
           if (impostos && typeof impostos === 'object') {
