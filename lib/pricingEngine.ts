@@ -2,12 +2,14 @@ import { EnterpriseCalculationResult } from '@/types/enterprise';
 
 export function calculateLaborCost(colab: any, premissas: any): any {
   // Busca resiliente da CCT e do Cargo
-  // colab.cctBase vem do editor (CCT selecionada na proposta)
-  // colab.cargo contém os dados do cargo (salário, adicionais, etc)
-  // colab.configFinanceira é o fallback de quando a proposta é carregada do banco
+  // Prioridade de CCT: 1. Do colaborador, 2. Global da proposta (selecionada na Aba 1), 3. Config Financeira (backup)
+  const cctGlobal = premissas.cctGlobal || {};
   const cargo = colab.cargo || colab.configFinanceira || {}; 
-  const cctProposta = colab.cctBase || colab.configFinanceira || {};
+  const cctColab = colab.cctBase || {};
   const param = colab.parametrosPosto || {};
+  
+  // A CCT efetiva é a do colab se tiver valores próprios, senão tenta a global da proposta, ou o que estiver no cargo
+  const cctEfetiva = (cctColab.vaValor || cctColab.vtValor) ? cctColab : (cctGlobal.vaValor ? cctGlobal : (cargo.cct || cctColab || cctGlobal));
   
   // Base de Remuneração
   const salarioBase = Number(cargo.pisoSalarial || 0) || 0;

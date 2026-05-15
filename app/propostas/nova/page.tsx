@@ -195,13 +195,16 @@ function PropostaEditor() {
 
   useEffect(() => {
     if (proposta.equipe.length > 0) {
+      const selectedCct = ccts.find(c => c.id === proposta.cliente.sindicatoId);
+
       const calcInput = {
         items: proposta.equipe,
         impostos: { total: totalTributos },
         margens: { adm: proposta.premissas.taxaAdm, lucro: proposta.premissas.margemLucro },
         reservaTecnicaPct: proposta.premissas.reservaTecnicaPct || 0,
         manutencaoPct: proposta.premissas.manutencaoPct || 0,
-        encargos: proposta.encargos
+        encargos: proposta.encargos,
+        cctGlobal: selectedCct // Passa a CCT selecionada como fallback global
       };
       setResultado(calculateEnterprisePrice(calcInput));
     }
