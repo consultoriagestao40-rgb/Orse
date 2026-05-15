@@ -47,15 +47,14 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   const totalRemuneracao = salarioBase + adicionalPericulosidade + adicionalInsalubridade + outrosAdicionais + adicionalNoturno + intrajornada + dsrAdicionais;
 
   // 2. Encargos e Provisões (Bloco A)
-  // Busca encargos da CCT da proposta ou do backup no cargo
-  const cctEncargos = cctProposta;
+  // Usa a CCT efetiva para encargos
   const percentualEncargosGerais = 
-    (cctEncargos.encargoInss || 20) + 
-    (cctEncargos.encargoFgts || 8) + 
-    (cctEncargos.encargoRat || 0) + 
-    (cctEncargos.provisFerias || 11.11) + 
-    (cctEncargos.provis13 || 8.33) + 
-    (cctEncargos.provisRescisao || 0);
+    (cctEfetiva.encargoInss || 20) + 
+    (cctEfetiva.encargoFgts || 8) + 
+    (cctEfetiva.encargoRat || 0) + 
+    (cctEfetiva.provisFerias || 11.11) + 
+    (cctEfetiva.provis13 || 8.33) + 
+    (cctEfetiva.provisRescisao || 0);
     
   const totalEncargos = totalRemuneracao * (percentualEncargosGerais / 100);
   const totalBlocoA = totalRemuneracao + totalEncargos;
@@ -69,17 +68,13 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   }
   
   // 4. BLOCO C - BENEFICIOS
-  // LOGICA DE RESILIÊNCIA: Se a CCT da proposta não tem VA/VT, tenta usar os dados da CCT que é dona do cargo (se existirem)
-  // No banco de dados, o objeto 'cargo' pode vir com a relação 'cct' incluída em alguns contextos
-  const cctEfetiva = (cctProposta.vaValor || cctProposta.vtValor) ? cctProposta : (cargo.cct || cctProposta);
-
   // 1) Vale Alimentação
   const custoVABruto = Number(cctEfetiva.vaTipo === 'DIARIO' ? (cctEfetiva.vaValor || 0) * diasEscala : (cctEfetiva.vaValor || 0)) || 0;
   
   // 2) Vale Transporte Bruto
   const custoVTBruto = Number((cctEfetiva.vtValor || 0) * diasEscala) || 0;
   
-  // 3) Custos com Sindicatos
+  // 3) Custos com Sindicatos (Assitência Médica/Social)
   const custosSindicato = Number(cctEfetiva.custosSindicato || 0) || 0;
   
   // 6) Vale Alimentação Sobre Férias
@@ -88,7 +83,7 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   // 7) Cesta Básica Assiduidade(+)
   const cestaBasica = Number(cctEfetiva.cestaBasica || 0) || 0;
   
-  // 8) Desconto de VA(-) - 20% conforme pedido do usuário
+  // 8) Desconto de VA(-)
   const vaDescPct = Number(cctEfetiva.vaDescPercent || 0) || 0;
   const descontoVA = ((custoVABruto + vaSobreFerias) * vaDescPct) / 100;
   
@@ -99,113 +94,55 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   // 10) Exames Médicos
   const examesMedicos = Number(cctEfetiva.examesMedicos || 0) || 0;
   
-  // 11) Reservas Técnicas (Sobre Bloco A)
-  const reservaTecnicaPct = Number(premissas?.reservaTecnicaPct ?? (cctEfetiva.reservaTecnica || 0)) || 0;
-  const reservaTecnica = totalBlocoA * (reservaTecnicaPct / 100);
+  // 11) Reservas Técnicas e 12) Manutenção (Pega das premissas globais do projeto)
+  const reservaTecnicaPct = Number(premissas.reservaTecnicaPct) || 0;
+  const reservaTecnicaValor = (totalBlocoA + (custoVABruto + custoVTBruto + cestaBasica)) * (reservaTecnicaPct / 100);
   
-  // 5. Custos de Ativos (EPIs/Uniformes/Máquinas)
-  let custoAtivosMensal = 0;
-  let custoMaquinasEquipamentos = 0;
-  
-  const ativosDet = {
-    uniformes: 0,
-    epis: 0,
-    materiais: 0,
-    maquinas: 0,
-    descartaveis: 0,
-    servicos: 0
-  };
+  const manutencaoPct = Number(premissas.manutencaoPct) || 0;
+  const manutencaoValor = (totalBlocoA) * (manutencaoPct / 100);
 
-  // Soma ativos do CARGO (Composição técnica)
-  let temComposicaoTecnica = false;
-  if (cargo.episConfig && Array.isArray(cargo.episConfig) && cargo.episConfig.length > 0) {
-    temComposicaoTecnica = true;
-    cargo.episConfig.forEach((item: any) => {
-      const pUnit = Number(item.precoUnitario) || 0;
-      const q = Number(item.quantidade) || 0;
-      const vUtil = Number(item.vidaUtil) || 1;
-      const cMensal = (pUnit * q) / vUtil;
-      custoAtivosMensal += cMensal;
-      
-      if (item.descricao?.toLowerCase().includes('uniforme')) {
-        ativosDet.uniformes += cMensal;
-      } else {
-        ativosDet.epis += cMensal;
-      }
-    });
-  }
-
-  // Se não houver composição técnica detalhada, usa o valor global 'uniformeEpi' da CCT (Fallback)
-  if (!temComposicaoTecnica) {
-     const valorGlobalAtivos = Number(cctEfetiva.uniformeEpi || 0);
-     if (valorGlobalAtivos > 0) {
-        ativosDet.epis = valorGlobalAtivos;
-        custoAtivosMensal = valorGlobalAtivos;
-     }
-  }
- 
-  // Soma custos extras da PROPOSTA (Lançados na engrenagem)
-  const ativosProposta = colab.ativosConfig;
-  if (ativosProposta && ativosProposta.uniformes) {
-    ativosProposta.uniformes.forEach((item: any) => {
-      const v = Number(item.valor) || 0;
-      const q = Number(item.quantidade) || 0;
-      const vUM = Number(item.vidaUtilMeses) || 6;
-      const cMensal = (v * q / vUM);
-      custoAtivosMensal += cMensal;
-      
-      if (item.categoria === 'Uniformes') ativosDet.uniformes += cMensal;
-      else if (item.categoria === 'EPIs e Uniformes' || item.categoria === 'EPI') ativosDet.epis += cMensal;
-      else if (item.categoria === 'Materiais') ativosDet.materiais += cMensal;
-      else if (item.categoria === 'Máquinas e Equipamentos' || item.categoria === 'Equipamentos') {
-        ativosDet.maquinas += cMensal;
-        custoMaquinasEquipamentos += (v * q);
-      }
-      else if (item.categoria === 'Descartáveis') ativosDet.descartaveis += cMensal;
-      else ativosDet.servicos += cMensal;
-    });
-  }
- 
-  // 12) Manutenção Equipamentos
-  const manutencaoPct = Number(premissas?.manutencaoPct ?? (cctEfetiva.manutencaoEquipamentos || 0)) || 0;
-  const manutencaoEquipamentos = custoMaquinasEquipamentos * (manutencaoPct / 100);
- 
-  // 13) Outros
   const outrosBeneficios = Number(cctEfetiva.outrosBeneficios || 0) || 0;
- 
-  // SOMA TOTAL BLOCO C
-  const totalBlocoC = 
-    custoVABruto + custoVTBruto + custosSindicato + 
-    vaSobreFerias + cestaBasica + examesMedicos + 
-    reservaTecnica + manutencaoEquipamentos + outrosBeneficios - 
-    descontoVA - descontoVT;
- 
-  const custoTotalDireto = (Number(totalBlocoA) || 0) + (Number(totalBlocoC) || 0) + (Number(custoAtivosMensal) || 0);
- 
+  
+  const totalBeneficios = (custoVABruto + custoVTBruto + custosSindicato + vaSobreFerias + cestaBasica + examesMedicos + reservaTecnicaValor + manutencaoValor + outrosBeneficios) - (descontoVA + descontoVT);
+
+  // 5. BLOCO B - INSUMOS (Unificado para manter extrato limpo)
+  // Unifica todos os ativos (EPI, Uniforme, Materiais) para exibir na linha de Uniforme/EPI do extrato
+  const ativosCustoMensal = Number(colab.ativosCustoMensal) || Number(cctEfetiva.uniformeEpi) || 0;
+  const totalAtivos = ativosCustoMensal;
+
+  const custoTotalDireto = totalBlocoA + totalBeneficios + totalAtivos;
+
   return {
     remuneracao: totalRemuneracao,
     encargos: totalEncargos,
     blocoA: totalBlocoA,
-    beneficios: totalBlocoC,
-    ativos: custoAtivosMensal,
-    detalheBlocoB: ativosDet,
+    beneficios: totalBeneficios,
+    ativos: totalAtivos,
+    custoTotal: custoTotalDireto,
+    detalheBlocoB: {
+      uniformes: totalAtivos,
+      epis: 0,
+      materiais: 0,
+      maquinas: 0,
+      descartaveis: 0,
+      servicos: 0
+    },
     detalheBlocoC: {
       va: custoVABruto,
       vt: custoVTBruto,
-      assistenciaMedica: custosSindicato * 0.6,
-      assistenciaSocial: custosSindicato * 0.2,
-      fundoFormacao: custosSindicato * 0.2,
+      assistenciaMedica: custosSindicato / 2,
+      assistenciaSocial: custosSindicato / 2,
+      fundoFormacao: 0,
       vaFerias: vaSobreFerias,
       cestaBasica: cestaBasica,
       descontoVA: -descontoVA,
       descontoVT: -descontoVT,
       exames: examesMedicos,
-      reservaTecnica: reservaTecnica,
+      reservaTecnica: reservaTecnicaValor,
       reservaTecnicaPct: reservaTecnicaPct,
-      manutencao: manutencaoEquipamentos,
+      manutencao: manutencaoValor,
       manutencaoPct: manutencaoPct,
-      outros: outrosBeneficios,
-      total: totalBlocoC
+      outros: outrosBeneficios
     },
     custoTotalDireto: custoTotalDireto * (Number(colab.quantidade) || 1)
   };
