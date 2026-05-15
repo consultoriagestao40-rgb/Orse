@@ -980,9 +980,7 @@ function PropostaEditor() {
                                                      const param = {...p.parametrosPosto, dsrPercent: Number(e.target.value)};
                                                      updatePosto(p.id, 'parametrosPosto', param);
                                                   }} />
-                                               </div>
-                                            </div>
-                                            <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                                             <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                                                 <div className="space-y-1">
                                                    <label className="text-[10px] font-bold text-slate-500 uppercase">Horário de Início</label>
                                                    <input type="time" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.horarioInicio || '08:00'} onChange={(e) => {
@@ -1017,16 +1015,137 @@ function PropostaEditor() {
                                                    }} />
                                                 </div>
                                                 <div className="pb-[1px]">
+                                                   <p className="text-[9px] text-slate-400 italic mb-1">Cálculo noturno automático</p>
+                                                   <div className="bg-emerald-50 text-[#1B4D3E] px-3 py-1.5 rounded text-xs font-bold border border-emerald-100 flex justify-between">
+                                                      <span>Noturnas:</span>
+                                                      <span>{p.parametrosPosto?.adicionalNoturnoHoras || 0}h</span>
+                                                   </div>
+                                                </div>
+                                             </div>
+
+                                             <div className="mt-6 pt-6 border-t border-slate-100">
+                                                <div className="flex items-center justify-between mb-3">
+                                                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                      🛡️ EPIs Adicionais do Posto
+                                                   </h4>
+                                                   <button 
+                                                      onClick={() => {
+                                                         const epis = p.parametrosPosto?.episAdicionais || [];
+                                                         const param = {...p.parametrosPosto, episAdicionais: [...epis, { id: Math.random().toString(), descricao: '', quantidade: 1, precoUnitario: 0, vidaUtil: 6 }]};
+                                                         updatePosto(p.id, 'parametrosPosto', param);
+                                                      }}
+                                                      className="bg-emerald-50 text-[#1B4D3E] hover:bg-emerald-100 px-3 py-1 rounded text-[10px] font-bold flex items-center gap-1 transition-colors border border-emerald-100"
+                                                   >
+                                                      <Plus size={12} /> Inserir Item
+                                                   </button>
+                                                </div>
+
+                                                {(p.parametrosPosto?.episAdicionais || []).length > 0 ? (
+                                                   <div className="overflow-hidden border border-slate-200 rounded">
+                                                      <table className="w-full text-[10px]">
+                                                         <thead className="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
+                                                            <tr>
+                                                               <th className="px-4 py-2 text-left">Descrição do Item</th>
+                                                               <th className="px-4 py-2 text-center w-20">Qtd</th>
+                                                               <th className="px-4 py-2 text-center w-28">Preço (R$)</th>
+                                                               <th className="px-4 py-2 text-center w-24">Vida Útil (m)</th>
+                                                               <th className="px-4 py-2 text-center w-24">Custo/Mês</th>
+                                                               <th className="px-4 py-2 text-center w-12"></th>
+                                                            </tr>
+                                                         </thead>
+                                                         <tbody className="divide-y divide-slate-100">
+                                                            {p.parametrosPosto.episAdicionais.map((epi: any, epiIdx: number) => (
+                                                               <tr key={epi.id || epiIdx}>
+                                                                  <td className="px-4 py-1.5">
+                                                                     <input 
+                                                                        type="text" 
+                                                                        className="w-full bg-transparent outline-none font-bold text-slate-700" 
+                                                                        placeholder="Ex: Roupa Térmica p/ Câmara Fria"
+                                                                        value={epi.descricao}
+                                                                        onChange={(e) => {
+                                                                           const newEpis = [...p.parametrosPosto.episAdicionais];
+                                                                           newEpis[epiIdx].descricao = e.target.value;
+                                                                           updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
+                                                                        }}
+                                                                     />
+                                                                  </td>
+                                                                  <td className="px-4 py-1.5">
+                                                                     <input 
+                                                                        type="number" 
+                                                                        className="w-full bg-transparent outline-none font-bold text-slate-700 text-center" 
+                                                                        value={epi.quantidade}
+                                                                        onChange={(e) => {
+                                                                           const newEpis = [...p.parametrosPosto.episAdicionais];
+                                                                           newEpis[epiIdx].quantidade = Number(e.target.value);
+                                                                           updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
+                                                                        }}
+                                                                     />
+                                                                  </td>
+                                                                  <td className="px-4 py-1.5">
+                                                                     <input 
+                                                                        type="number" 
+                                                                        step="0.01"
+                                                                        className="w-full bg-transparent outline-none font-bold text-slate-700 text-center" 
+                                                                        value={epi.precoUnitario}
+                                                                        onChange={(e) => {
+                                                                           const newEpis = [...p.parametrosPosto.episAdicionais];
+                                                                           newEpis[epiIdx].precoUnitario = Number(e.target.value);
+                                                                           updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
+                                                                        }}
+                                                                     />
+                                                                  </td>
+                                                                  <td className="px-4 py-1.5">
+                                                                     <input 
+                                                                        type="number" 
+                                                                        className="w-full bg-transparent outline-none font-bold text-slate-700 text-center" 
+                                                                        value={epi.vidaUtil}
+                                                                        onChange={(e) => {
+                                                                           const newEpis = [...p.parametrosPosto.episAdicionais];
+                                                                           newEpis[epiIdx].vidaUtil = Number(e.target.value);
+                                                                           updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
+                                                                        }}
+                                                                     />
+                                                                  </td>
+                                                                  <td className="px-4 py-1.5 text-center font-black text-[#1B4D3E]">
+                                                                     R$ {((epi.precoUnitario * epi.quantidade) / (epi.vidaUtil || 1)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                                  </td>
+                                                                  <td className="px-4 py-1.5 text-center">
+                                                                     <button 
+                                                                        onClick={() => {
+                                                                           const newEpis = p.parametrosPosto.episAdicionais.filter((_: any, i: number) => i !== epiIdx);
+                                                                           updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
+                                                                        }}
+                                                                        className="text-slate-300 hover:text-red-500 transition-colors"
+                                                                     >
+                                                                        <Trash2 size={12} />
+                                                                     </button>
+                                                                  </td>
+                                                               </tr>
+                                                            ))}
+                                                         </tbody>
+                                                      </table>
+                                                   </div>
+                                                ) : (
+                                                   <div className="bg-slate-50 border border-dashed border-slate-200 rounded py-4 text-center">
+                                                      <p className="text-[10px] text-slate-400 italic">Nenhum EPI adicional para este posto. Clique em "Inserir Item" se necessário.</p>
+                                                   </div>
+                                                )}
+                                             </div>
+
+                                             <div className="mt-6 pt-6 border-t border-slate-100 flex justify-end">
+                                                <div className="w-full md:w-64">
                                                    <button 
                                                       onClick={() => {
                                                          const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, showConfig: false} : x);
                                                          setProposta({...proposta, equipe: newE});
                                                       }}
-                                                      className="w-full bg-[#1B4D3E] hover:bg-[#2d631d] text-white font-bold py-2 rounded text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-sm"
+                                                      className="w-full bg-[#1B4D3E] hover:bg-[#2d631d] text-white font-bold py-2.5 rounded text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md"
                                                    >
-                                                      <Save size={12} /> Salvar Configurações
+                                                      <Save size={14} /> Salvar Configurações do Posto
                                                    </button>
                                                 </div>
+                                             </div>
+                              </div>
                                              </div>
                                          </div>
                                       </td>

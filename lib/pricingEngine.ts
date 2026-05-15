@@ -146,8 +146,17 @@ export function calculateLaborCost(colab: any, premissas: any): any {
     }, 0);
   };
 
+  const calculateEpiAdicionaisTotal = (p: any) => {
+    if (!p.episAdicionais || !Array.isArray(p.episAdicionais)) return 0;
+    return p.episAdicionais.reduce((acc: number, item: any) => {
+      const custoMensal = (Number(item.precoUnitario || 0) * Number(item.quantidade || 0)) / (Number(item.vidaUtil) || 1);
+      return acc + (custoMensal || 0);
+    }, 0);
+  };
+
   const ativosCustoMensal = Number(colab.ativosCustoMensal) || calculateEpiTotal(cargo) || Number(cctEfetiva.uniformeEpi) || 0;
-  const totalAtivos = ativosCustoMensal;
+  const custoEpiAdicionais = calculateEpiAdicionaisTotal(param);
+  const totalAtivos = ativosCustoMensal + custoEpiAdicionais;
 
   const custoTotalDireto = totalBlocoA + totalBeneficios + totalAtivos;
 
