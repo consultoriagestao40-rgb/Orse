@@ -85,7 +85,7 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   const cestaBasica = cct.cestaBasica || 0;
   
   // 8) Desconto de VA(-)
-  const descontoVA = (salarioBase * (cct.vaDescPercent || 0)) / 100;
+  const descontoVA = ((custoVABruto + vaSobreFerias) * (cct.vaDescPercent || 0)) / 100;
   
   // 9) Desconto de VT(-)
   const descontoVT = (salarioBase * (cct.vtDescPercent || 6)) / 100;
