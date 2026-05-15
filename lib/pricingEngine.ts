@@ -177,13 +177,21 @@ export function calculateEnterprisePrice(proposal: any): any {
   let custoDiretoTotal = 0;
   
   // Soma custos globais de insumos (Materiais, Máquinas, Descartáveis) que não estão vinculados a um cargo específico
-  const custoInsumosGlobais = 
-    (Number(insumosGlobais?.materiais) || 0) + 
-    (Number(insumosGlobais?.maquinas) || 0) + 
-    (Number(insumosGlobais?.descartaveis) || 0) +
-    (Number(insumosGlobais?.servicos) || 0);
+  // 1. Custo dos Insumos Globais (se houver)
+  custoDiretoTotal += (Number(insumosGlobais?.materiais) || 0) + 
+                     (Number(insumosGlobais?.maquinas) || 0) + 
+                     (Number(insumosGlobais?.descartaveis) || 0) +
+                     (Number(insumosGlobais?.servicos) || 0);
 
-  custoDiretoTotal += custoInsumosGlobais;
+  // 2. Parâmetros de Margens e Impostos
+  const txAdm = (Number(margens?.adm) || 0) / 100;
+  const txLucro = (Number(margens?.lucro) || 0) / 100;
+  const totalTributosPct = Array.isArray(impostos?.list) 
+    ? impostos.list.reduce((acc: number, t: any) => acc + (Number(t.percent) || 0), 0)
+    : (Number(impostos?.total) || 0);
+  
+  // Divisor para tributos (por dentro)
+  const divisorTributos = 1 - (totalTributosPct / 100);
 
   const itemResults = items.map((item: any) => {
     const res = calculateLaborCost(item, {
@@ -192,32 +200,43 @@ export function calculateEnterprisePrice(proposal: any): any {
       encargos,
       cctGlobal: proposal.cctGlobal
     });
-    custoDiretoTotal += res.custoTotalDireto;
+    
+    // CÁLCULO EM CASCATA SOLICITADO:
+    // 1. Custo Direto
+    const custoD = res.custoTotalDireto;
+    // 2. Adiciona Taxa Adm sobre o Custo
+    const comAdm = custoD * (1 + txAdm);
+    // 3. Adiciona Lucro sobre (Custo + Adm)
+    const comLucro = comAdm * (1 + txLucro);
+    // 4. Aplica Tributos (Gross-up sobre o montante com margens)
+    const precoVendaItem = divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
+
+    custoDiretoTotal += custoD;
+    
     return {
       ...item,
-      custoTotal: res.custoTotalDireto,
+      custoTotal: custoD,
+      precoVenda: precoVendaItem,
       detalhes: res
     };
   });
 
-  // Divisor de Preço (Gross-up)
-  const totalTributos = Array.isArray(impostos?.list) 
-    ? impostos.list.reduce((acc: number, t: any) => acc + (Number(t.percent) || 0), 0)
-    : (Number(impostos?.total) || 0);
-    
-  const somaMargens = (Number(margens?.adm) || 0) + (Number(margens?.lucro) || 0);
-  const divisor = 1 - ((totalTributos + somaMargens) / 100);
+  // Cálculo do Faturamento Bruto Total seguindo a mesma lógica
+  const totalComAdm = custoDiretoTotal * (1 + txAdm);
+  const totalComLucro = totalComAdm * (1 + txLucro);
+  const faturamentoBruto = divisorTributos > 0 ? (totalComLucro / divisorTributos) : totalComLucro;
 
-  const faturamentoBruto = divisor > 0 ? (custoDiretoTotal / divisor) : custoDiretoTotal;
-  const valorImpostos = faturamentoBruto * (totalTributos / 100);
-  const valorMargens = faturamentoBruto * (somaMargens / 100);
+  const valorImpostos = faturamentoBruto * (totalTributosPct / 100);
+  const valorMargemLucro = faturamentoBruto - valorImpostos - totalComAdm;
+  const valorAdm = totalComAdm - custoDiretoTotal;
 
   return {
     items: itemResults,
     custoDiretoTotal,
     faturamentoBruto,
     impostosTotais: valorImpostos,
-    margemBruta: valorMargens,
-    divisor
+    margemLucro: valorMargemLucro,
+    taxaAdm: valorAdm,
+    divisor: divisorTributos // Agora o divisor é apenas dos tributos
   };
 }

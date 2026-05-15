@@ -1178,60 +1178,60 @@ function PropostaEditor() {
                            );
                         })()}
 
-                       {/* MONTANTE D - BDI */}
-                       <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
-                          <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "D" - BDI</th>
-                       </tr>
-                       <tr className="border-b border-slate-200 border-dotted">
-                          <td className="py-1.5 px-6 font-bold w-[50%]">Administração</td>
-                          <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{proposta.premissas.taxaAdm.toFixed(2)}%</td>
-                          <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
-                             {formatCurrency((resultado?.faturamentoBruto || 0) * (proposta.premissas.taxaAdm / 100))}
-                          </td>
-                       </tr>
-                       <tr className="border-b border-slate-200 border-dotted">
-                          <td className="py-1.5 px-6 font-bold">Lucro</td>
-                          <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{proposta.premissas.margemLucro.toFixed(2)}%</td>
-                          <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
-                             {formatCurrency((resultado?.faturamentoBruto || 0) * (proposta.premissas.margemLucro / 100))}
-                          </td>
-                       </tr>
-                       <tr className="bg-[#599e41] text-white font-bold border-y border-[#488234]">
-                          <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total dos Montantes "A+B+C+D"</td>
-                          <td className="py-2.5 px-6 text-right">
-                             {formatCurrency((resultado?.custoDiretoTotal || 0) + (resultado?.margemBruta || 0))}
-                          </td>
-                       </tr>
+                        {/* MONTANTE D - BDI */}
+                        <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
+                           <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "D" - BDI</th>
+                        </tr>
+                        <tr className="border-b border-slate-200 border-dotted">
+                           <td className="py-1.5 px-6 font-bold w-[50%]">Administração</td>
+                           <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{proposta.premissas.taxaAdm.toFixed(2)}%</td>
+                           <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
+                              {formatCurrency(resultado?.taxaAdm || 0)}
+                           </td>
+                        </tr>
+                        <tr className="border-b border-slate-200 border-dotted">
+                           <td className="py-1.5 px-6 font-bold">Lucro</td>
+                           <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{proposta.premissas.margemLucro.toFixed(2)}%</td>
+                           <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
+                              {formatCurrency(resultado?.margemLucro || 0)}
+                           </td>
+                        </tr>
+                        <tr className="bg-[#599e41] text-white font-bold border-y border-[#488234]">
+                           <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total dos Montantes "A+B+C+D"</td>
+                           <td className="py-2.5 px-6 text-right">
+                              {formatCurrency((resultado?.custoDiretoTotal || 0) + (resultado?.taxaAdm || 0) + (resultado?.margemLucro || 0))}
+                           </td>
+                        </tr>
 
-                       {/* IMPOSTOS */}
-                       <tr className="bg-[#8ec277] text-slate-900 border-b border-white">
-                          <td className="py-2 px-6 font-bold uppercase">Impostos</td>
-                          <td colSpan={2} className="py-2 px-6 text-center font-bold">{totalTributos.toFixed(2)}%</td>
-                          <td className="py-2 px-6 text-right font-bold">{formatCurrency(resultado?.impostosTotais || 0)}</td>
-                       </tr>
-                       {proposta.premissas.tributos.map((t: any, i: number) => (
-                          <tr key={i} className="border-b border-slate-200 border-dotted">
-                             <td className="py-1 px-6 font-bold">{t.nome}</td>
-                             <td colSpan={2} className="py-1 px-6 text-center font-bold bg-slate-50">{t.percent.toFixed(2)}%</td>
-                             <td className="py-1 px-6 text-right bg-emerald-100/50 font-semibold">
-                                {formatCurrency((resultado?.faturamentoBruto || 0) * (t.percent / 100))}
-                             </td>
-                          </tr>
-                       ))}
+                        {/* IMPOSTOS */}
+                        <tr className="bg-[#8ec277] text-slate-900 border-b border-white">
+                           <td className="py-2 px-6 font-bold uppercase">Impostos</td>
+                           <td colSpan={2} className="py-2 px-6 text-center font-bold">{totalTributos.toFixed(2)}%</td>
+                           <td className="py-2 px-6 text-right font-bold">{formatCurrency(resultado?.impostosTotais || 0)}</td>
+                        </tr>
+                        {proposta.premissas.tributos.map((t: any, i: number) => (
+                           <tr key={i} className="border-b border-slate-200 border-dotted">
+                              <td className="py-1 px-6 font-bold">{t.nome}</td>
+                              <td colSpan={2} className="py-1 px-6 text-center font-bold bg-slate-50">{t.percent.toFixed(2)}%</td>
+                              <td className="py-1 px-6 text-right bg-emerald-100/50 font-semibold">
+                                 {formatCurrency((resultado?.faturamentoBruto || 0) * (t.percent / 100))}
+                              </td>
+                           </tr>
+                        ))}
 
-                       {/* TOTAIS FINAIS */}
-                       <tr className="bg-[#1B4D3E] text-white font-black border-t-4 border-white text-sm tracking-widest">
-                          <td colSpan={3} className="py-5 px-6 text-right uppercase">Total dos Montantes "A+B+C+D" + Impostos</td>
-                          <td className="py-5 px-6 text-right text-emerald-400">
-                             {formatCurrency(resultado?.faturamentoBruto || 0)}
-                          </td>
-                       </tr>
-                       <tr className="bg-black text-white font-black border-t border-slate-800 text-xs tracking-widest uppercase">
-                          <td colSpan={3} className="py-4 px-6 text-right">Valor Total Anual do Contrato</td>
-                          <td className="py-4 px-6 text-right text-emerald-500">
-                             {formatCurrency((resultado?.faturamentoBruto || 0) * 12)}
-                          </td>
-                       </tr>
+                        {/* TOTAIS FINAIS */}
+                        <tr className="bg-[#1B4D3E] text-white font-black border-t-4 border-white text-sm tracking-widest">
+                           <td colSpan={3} className="py-5 px-6 text-right uppercase">Total dos Montantes "A+B+C+D" + Impostos</td>
+                           <td className="py-5 px-6 text-right text-emerald-400">
+                              {formatCurrency(resultado?.faturamentoBruto || 0)}
+                           </td>
+                        </tr>
+                        <tr className="bg-black text-white font-black border-t border-slate-800 text-xs tracking-widest uppercase">
+                           <td colSpan={3} className="py-4 px-6 text-right">Valor Total Anual do Contrato</td>
+                           <td className="py-4 px-6 text-right text-emerald-500">
+                              {formatCurrency((resultado?.faturamentoBruto || 0) * 12)}
+                           </td>
+                        </tr>
                     </tbody>
                  </table>
               </div>
@@ -1240,12 +1240,16 @@ function PropostaEditor() {
          {/* ABA 6: RESUMO DA PROPOSTA */}
             {activeTab === 'resumo' && (() => {
               const fc = formatCurrency;
-              const divisorResumo = resultado?.divisor || 1;
+              const divisorTributos = resultado?.divisor || 1;
+              const txAdm = (proposta.premissas.taxaAdm || 0) / 100;
+              const txLucro = (proposta.premissas.margemLucro || 0) / 100;
 
-              // Função auxiliar para aplicar markup (divisor) a um valor de custo
-              const applyMarkup = (val: any) => {
-                const num = Number(val) || 0;
-                return divisorResumo > 0 ? num / divisorResumo : num;
+              // Função auxiliar para aplicar a cascata solicitada a um custo direto
+              const applyCascata = (custo: any) => {
+                const cD = Number(custo) || 0;
+                const comAdm = cD * (1 + txAdm);
+                const comLucro = comAdm * (1 + txLucro);
+                return divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
               };
 
               return (
@@ -1274,15 +1278,15 @@ function PropostaEditor() {
                           ) : (
                             proposta.equipe.map((p: any, idx: number) => {
                               const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
-                              const custoTotalItem = itemRes?.custoTotal || 0;
-                              const custoUnitario = p.quantidade > 0 ? custoTotalItem / p.quantidade : 0;
+                              const precoVendaItem = itemRes?.precoVenda || 0;
+                              const precoUnitario = p.quantidade > 0 ? precoVendaItem / p.quantidade : 0;
                               return (
                                 <tr key={p.id} className={`border-b border-slate-200 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
                                   <td className="px-4 py-2 text-center font-bold text-slate-500">{idx + 1}</td>
                                   <td className="px-4 py-2 font-semibold text-slate-800">{p.nomeCargo}</td>
                                   <td className="px-4 py-2 text-center font-bold">{p.quantidade}</td>
-                                  <td className="px-4 py-2 text-right text-slate-700">{fc(custoUnitario)}</td>
-                                  <td className="px-4 py-2 text-right font-semibold bg-emerald-50">{fc(custoTotalItem)}</td>
+                                  <td className="px-4 py-2 text-right text-slate-700">{fc(precoUnitario)}</td>
+                                  <td className="px-4 py-2 text-right font-semibold bg-emerald-50">{fc(precoVendaItem)}</td>
                                 </tr>
                               );
                             })
@@ -1290,9 +1294,9 @@ function PropostaEditor() {
                         </tbody>
                         <tfoot>
                           <tr className="bg-[#1B4D3E] text-white font-black">
-                            <td colSpan={4} className="px-4 py-2.5 text-right uppercase tracking-wider text-xs">Subtotal Mão de Obra (com encargos, benefícios e markup)</td>
+                            <td colSpan={4} className="px-4 py-2.5 text-right uppercase tracking-wider text-xs">Subtotal Mão de Obra (Preço de Venda Final)</td>
                             <td className="px-4 py-2.5 text-right text-emerald-300">
-                               {fc(resultado?.items?.reduce((acc: any, i: any) => acc + (i.custoTotal || 0), 0) || 0)}
+                               {fc(resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0)}
                             </td>
                           </tr>
                         </tfoot>
@@ -1320,21 +1324,21 @@ function PropostaEditor() {
                             <td className="px-6 py-2.5 text-center font-bold text-slate-500">2</td>
                             <td className="px-6 py-2.5 font-semibold text-slate-700">Materiais e produtos de limpeza</td>
                             <td className="px-6 py-2.5 text-right font-bold text-slate-800">
-                              {fc(applyMarkup(proposta.insumos.materiais))}
+                              {fc(applyCascata(proposta.insumos.materiais))}
                             </td>
                           </tr>
                           <tr className="border-b border-slate-200 hover:bg-slate-50">
                             <td className="px-6 py-2.5 text-center font-bold text-slate-500">3</td>
                             <td className="px-6 py-2.5 font-semibold text-slate-700">Máquinas e equipamentos</td>
                             <td className="px-6 py-2.5 text-right font-bold text-slate-800">
-                              {fc(applyMarkup(proposta.insumos.maquinas))}
+                              {fc(applyCascata(proposta.insumos.maquinas))}
                             </td>
                           </tr>
                           <tr className="border-b border-slate-200 hover:bg-slate-50">
                             <td className="px-6 py-2.5 text-center font-bold text-slate-500">4</td>
                             <td className="px-6 py-2.5 font-semibold text-slate-700">Descartáveis</td>
                             <td className="px-6 py-2.5 text-right font-bold text-slate-800">
-                              {fc(applyMarkup(proposta.insumos.descartaveis))}
+                              {fc(applyCascata(proposta.insumos.descartaveis))}
                             </td>
                           </tr>
                           <tr className="border-b border-slate-200 hover:bg-slate-50">
@@ -1343,15 +1347,15 @@ function PropostaEditor() {
                               Serviços {proposta.insumos.servicosDescricao ? `(${proposta.insumos.servicosDescricao})` : ''}
                             </td>
                             <td className="px-6 py-2.5 text-right font-bold text-slate-800">
-                              {fc(applyMarkup(proposta.insumos.servicos))}
+                              {fc(applyCascata(proposta.insumos.servicos))}
                             </td>
                           </tr>
                         </tbody>
                         <tfoot>
                           <tr className="bg-slate-700 text-white font-black">
-                            <td colSpan={2} className="px-6 py-2.5 text-right uppercase tracking-wider text-xs">Subtotal Materiais e Insumos (com markup)</td>
+                            <td colSpan={2} className="px-6 py-2.5 text-right uppercase tracking-wider text-xs">Subtotal Materiais e Insumos (Preço de Venda Final)</td>
                             <td className="px-6 py-2.5 text-right text-emerald-300">
-                              {fc(applyMarkup(
+                              {fc(applyCascata(
                                 Number(proposta.insumos.materiais || 0) + 
                                 Number(proposta.insumos.maquinas || 0) + 
                                 Number(proposta.insumos.descartaveis || 0) + 
@@ -1368,7 +1372,7 @@ function PropostaEditor() {
                   <div className="bg-[#1B4D3E] p-8 rounded-xl border-t-4 border-emerald-400 flex flex-col md:flex-row justify-between items-center gap-6 shadow-xl">
                     <div className="text-white">
                       <h3 className="text-sm font-black uppercase tracking-widest text-emerald-300 mb-1">Total Geral da Proposta</h3>
-                      <p className="text-[10px] font-bold text-emerald-100/60 uppercase">MO + Insumos — após impostos, encargos e taxas</p>
+                      <p className="text-[10px] font-bold text-emerald-100/60 uppercase">Mão de Obra + Insumos Globais — Valor Final de Venda</p>
                     </div>
                     <div className="text-5xl font-black text-emerald-400 tracking-tighter">
                       {fc(resultado?.faturamentoBruto || 0)}
