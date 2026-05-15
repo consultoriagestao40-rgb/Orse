@@ -50,7 +50,15 @@ export function calculateLaborCost(colab: any, premissas: any): any {
     dsrAdicionais = (adicionalNoturno + intrajornada) * (param.dsrPercent / 100);
   }
   
-  const totalRemuneracao = salarioBase + adicionalPericulosidade + adicionalInsalubridade + outrosAdicionais + adicionalNoturno + intrajornada + dsrAdicionais;
+  const baseRemuneracao = Number(salarioBase) || 0;
+  const remuInsalubridade = Number(adicionalInsalubridade) || 0;
+  const remuPericulosidade = Number(adicionalPericulosidade) || 0;
+  const remuOutros = Number(outrosAdicionais) || 0;
+  const remuNoturno = Number(adicionalNoturno) || 0;
+  const remuIntra = Number(intrajornada) || 0;
+  const remuDsr = Number(dsrAdicionais) || 0;
+
+  const totalRemuneracao = baseRemuneracao + remuInsalubridade + remuPericulosidade + remuOutros + remuNoturno + remuIntra + remuDsr;
 
   // 2. Encargos e Provisões (Bloco A)
   // Se houver estrutura de grupos de encargos detalhada nas premissas, utiliza ela. Senão, usa o fallback da CCT.
