@@ -80,7 +80,7 @@ async function getDefaultUser() {
   let user = await prisma.user.findFirst();
   if (!user) {
     user = await prisma.user.create({
-      data: { email: 'admin@smartbid.com', nome: 'Administrador Principal', role: 'ADMIN' }
+      data: { email: 'admin@smartbid.com', nome: 'Administrador Principal', role: 'ADMIN', password: 'admin' }
     });
   }
   return user;
