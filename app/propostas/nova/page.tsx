@@ -552,21 +552,21 @@ function PropostaEditor() {
             </div>
         </header>
 
-        {/* NAVEGAÇÃO POR ABAS - ESTILO ERP CLASSICO */}
-        <div className="w-full max-w-7xl mb-6 border-b border-slate-300">
-           <nav className="-mb-px flex space-x-8 overflow-x-auto">
+        {/* NAVEGAÇÃO POR ABAS - ESTILO MULTI-LINHA PARA EVITAR SCROLL */}
+        <div className="w-full max-w-7xl mb-8 border-b border-slate-200 pb-2">
+           <nav className="flex flex-wrap gap-x-6 gap-y-2">
               {TABS.map((tab) => (
                  <button 
                     key={tab.id} 
                     onClick={() => setActiveTab(tab.id)} 
                     className={`
-                       whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors
+                       whitespace-nowrap py-3 px-1 border-b-2 font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all duration-200
                        ${activeTab === tab.id 
-                          ? 'border-[#1B4D3E] text-[#1B4D3E]' 
-                          : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}
+                          ? 'border-[#1B4D3E] text-[#1B4D3E] scale-105 opacity-100' 
+                          : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 opacity-80'}
                     `}
                  >
-                    <tab.icon size={16} className={activeTab === tab.id ? 'text-[#1B4D3E]' : 'text-slate-400'} /> 
+                    <tab.icon size={14} className={activeTab === tab.id ? 'text-[#10B981]' : 'text-slate-400'} /> 
                     {tab.label}
                  </button>
               ))}
