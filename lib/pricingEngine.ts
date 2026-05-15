@@ -95,7 +95,8 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   const examesMedicos = cct.examesMedicos || 0;
 
   // 11) Reservas Técnicas (Sobre Bloco A)
-  const reservaTecnica = totalBlocoA * ((cct.reservaTecnica || 0) / 100);
+  const reservaTecnicaPct = premissas?.reservaTecnicaPct ?? (cct.reservaTecnica || 0);
+  const reservaTecnica = totalBlocA * (reservaTecnicaPct / 100);
 
   // 5. Custos de Ativos (EPIs/Uniformes/Máquinas)
   let custoAtivosMensal = 0;
@@ -114,7 +115,8 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   }
 
   // 12) Manutenção Equipamentos (Sobre Máquinas e Equipamentos)
-  const manutencaoEquipamentos = custoMaquinasEquipamentos * ((cct.manutencaoEquipamentos || 0) / 100);
+  const manutencaoPct = premissas?.manutencaoPct ?? (cct.manutencaoEquipamentos || 0);
+  const manutencaoEquipamentos = custoMaquinasEquipamentos * (manutencaoPct / 100);
 
   // 13) Outros
   const outrosBeneficios = cct.outrosBeneficios || 0;
@@ -144,9 +146,9 @@ export function calculateLaborCost(colab: any, premissas: any): any {
       descontoVT: -descontoVT,
       exames: examesMedicos,
       reservaTecnica: reservaTecnica,
-      reservaTecnicaPct: cct.reservaTecnica || 0,
+      reservaTecnicaPct: reservaTecnicaPct,
       manutencao: manutencaoEquipamentos,
-      manutencaoPct: cct.manutencaoEquipamentos || 0,
+      manutencaoPct: manutencaoPct,
       outros: outrosBeneficios,
       total: totalBlocoC
     },

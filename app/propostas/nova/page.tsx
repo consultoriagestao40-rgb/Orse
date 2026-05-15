@@ -83,6 +83,91 @@ function PropostaEditor() {
   };
 
   const [ccts, setCcts] = useState<any[]>([]);
+'use client';
+
+import React, { useState, useEffect, Suspense } from 'react';
+import Sidebar from '@/components/Sidebar';
+import { 
+  Building2, TrendingUp, ShieldCheck, UserCheck, 
+  FileText, PieChart, Save, Plus, Trash2, ClipboardList,
+  Calculator, Phone, Mail, MapPin, User, Briefcase, Calendar, Hash, History, AlignLeft, ChevronRight, CheckCircle2, DollarSign, Info, ChevronDown, ChevronUp
+} from 'lucide-react';
+import { calculateEnterprisePrice } from '@/lib/pricingEngine';
+import { getCCTs } from '@/app/ccts/actions';
+import { getEscalas } from '@/app/escalas/actions';
+import { saveProposta, getPropostaCompleta } from '@/app/propostas/actions';
+import { useSearchParams, useRouter } from 'next/navigation';
+
+const TABS = [
+  { id: 'dados', label: '1. Cliente', icon: Building2 },
+  { id: 'premissas', label: '2. Taxas e Tributos', icon: TrendingUp },
+  { id: 'encargos', label: '3. Encargos CLT', icon: ShieldCheck },
+  { id: 'quadro', label: '4. Quadro Equipe', icon: UserCheck },
+  { id: 'extrato', label: '5. Extrato de Custos', icon: FileText },
+  { id: 'resumo', label: '6. Resumo da Proposta', icon: ClipboardList },
+  { id: 'dre', label: '7. DRE Projeto', icon: PieChart }
+];
+
+const MONTHS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+
+function PropostaEditor() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const id = searchParams.get('id');
+
+  const [activeTab, setActiveTab] = useState('dados');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [versions, setVersions] = useState<any[]>([]);
+
+  const handleVersionChange = async (versionId: string) => {
+    if (!id) return;
+    setLoading(true);
+    try {
+      const fullData = await getPropostaCompleta(id, versionId);
+      if (fullData) {
+        const clientObj = (clientesList || []).find((c: any) => c.id === fullData.clientId);
+        const savedSindicatoId = (fullData.premissas as any)?.meta?.sindicatoId || '';
+
+        setProposta({
+          ...proposta,
+          id: fullData.id,
+          premissas: {
+            ...fullData.premissas,
+            tributos: Array.isArray(fullData.premissas.tributos) ? fullData.premissas.tributos : []
+          },
+          equipe: (fullData.equipe || []).map((e: any) => ({
+             ...e,
+             showConfig: false,
+             cctBase: (ccts || []).find((c: any) => c.id === savedSindicatoId) || {}
+          })),
+          versao: fullData.versao,
+          insumos: (fullData as any).insumos || { materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0, servicosDescricao: '' },
+          cliente: {
+            ...proposta.cliente,
+            cliente: clientObj?.nomeFantasia || fullData.cliente.clienteNome || '',
+            sindicatoId: savedSindicatoId,
+            contato: fullData.cliente.contato || '',
+            celular: fullData.cliente.celular || '',
+            email: fullData.cliente.email || '',
+            objetoProposta: fullData.cliente.objetoProposta || '',
+            cidade: fullData.cliente.cidade || '',
+            dataElaboracao: fullData.cliente.dataElaboracao || '',
+            numeroProposta: (fullData as any).numero || '',
+                  revisao: `R${String(fullData.versao).padStart(2, '0')}`,
+            tipoServicos: fullData.cliente.tipoServicos || ''
+          },
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao trocar versão:', err);
+      alert('Erro ao carregar versão selecionada.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const [ccts, setCcts] = useState<any[]>([]);
   const [escalasDb, setEscalasDb] = useState<any[]>([]);
   const [clientesList, setClientesList] = useState<any[]>([]);
   const [showClientDropdown, setShowClientDropdown] = useState(false);
@@ -99,7 +184,9 @@ function PropostaEditor() {
         { id: '3', nome: 'IR', percent: 1 },
         { id: '4', nome: 'PIS', percent: 1.65 },
         { id: '5', nome: 'COFINS', percent: 7.6 }
-      ]
+      ],
+      reservaTecnicaPct: 0,
+      manutencaoPct: 0
     },
     encargos: { 
       grupoA: { previdenciaSocial: 20.00, fgts: 8.00, sesc: 0.00, senac: 0.00, sebrae: 0.00, incra: 0.00, salarioEducacao: 0.00, seguroAcidenteFap: 0.00 },
@@ -142,7 +229,6 @@ function PropostaEditor() {
           const fullData = await getPropostaCompleta(id);
           if (fullData) {
             console.log('Proposta encontrada. Mapeando dados...');
-            // Prioriza cadastro pelo ID, depois usa nome salvo nos metadados
             const clientObj = (clientesData || []).find((c: any) => c.id === fullData.clientId);
             const savedSindicatoId = (fullData.premissas as any)?.meta?.sindicatoId || '';
             
@@ -199,6 +285,8 @@ function PropostaEditor() {
         items: proposta.equipe,
         impostos: { total: totalTributos },
         margens: { adm: proposta.premissas.taxaAdm, lucro: proposta.premissas.margemLucro },
+        reservaTecnicaPct: proposta.premissas.reservaTecnicaPct || 0,
+        manutencaoPct: proposta.premissas.manutencaoPct || 0,
         encargos: proposta.encargos
       };
       setResultado(calculateEnterprisePrice(calcInput));
@@ -352,7 +440,7 @@ function PropostaEditor() {
             </div>
         </header>
 
-        {/* NAVEGAÃ‡ÃO POR ABAS - ESTILO ERP CLASSICO */}
+        {/* NAVEGAÇÃO POR ABAS - ESTILO ERP CLASSICO */}
         <div className="w-full max-w-7xl mb-6 border-b border-slate-300">
            <nav className="-mb-px flex space-x-8 overflow-x-auto">
               {TABS.map((tab) => (
@@ -373,7 +461,7 @@ function PropostaEditor() {
            </nav>
         </div>
 
-        {/* ÃREA DE CONTEÃšDO */}
+        {/* ÁREA DE CONTEÚDO */}
         <div className="w-full max-w-7xl min-h-[600px]">
            
            {/* ABA 1: CLIENTE (Layout Profissional) */}
@@ -620,7 +708,7 @@ function PropostaEditor() {
                        <thead>
                           <tr className="bg-slate-100 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
                              <th className="px-6 py-3 w-16 text-center">Qtd.</th>
-                             <th className="px-6 py-3">Função Vinculada Ã  CCT</th>
+                             <th className="px-6 py-3">Função Vinculada à CCT</th>
                              <th className="px-6 py-3">Escala</th>
                              <th className="px-6 py-3 text-right">Ação</th>
                           </tr>
@@ -647,7 +735,7 @@ function PropostaEditor() {
                                       }}>
                                          <option value="">Selecione a Função...</option>
                                          {!proposta.cliente.sindicatoId && (
-                                             <option value="" disabled className="text-red-500 font-bold italic">âš ï¸ Selecione o Sindicato na Aba 1 primeiro</option>
+                                             <option value="" disabled className="text-red-500 font-bold italic">⚠️ Selecione o Sindicato na Aba 1 primeiro</option>
                                           )}
                                           {ccts.filter((c: any) => !proposta.cliente.sindicatoId || c.id === proposta.cliente.sindicatoId).map((c: any) => (
                                             <optgroup key={c.id} label={`${c.nome} (${c.uf})`}>
@@ -678,11 +766,10 @@ function PropostaEditor() {
                                    <td className="px-6 py-4 text-right">
                                       <div className="flex justify-end gap-2">
                                          <button onClick={() => {
-                                            // Toggle config panel
                                             const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, showConfig: !x.showConfig} : x);
                                             setProposta({...proposta, equipe: newE});
                                          }} className={`p-2 rounded transition-colors ${p.showConfig ? 'bg-emerald-100 text-[#1B4D3E]' : 'text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100'}`} title="Configurar Posto">
-                                            âš™ï¸ Config
+                                            ⚙️ Config
                                          </button>
                                          <button onClick={() => setProposta({...proposta, equipe: proposta.equipe.filter((x: any) => x.id !== p.id)})} className="text-slate-400 hover:text-red-600 transition-colors p-2 rounded hover:bg-red-50" title="Remover Posto">
                                             <Trash2 size={16}/>
@@ -695,7 +782,7 @@ function PropostaEditor() {
                                       <td colSpan={4} className="p-6">
                                          <div className="bg-white border border-emerald-100 rounded-lg p-6 shadow-sm">
                                             <h3 className="text-[#1B4D3E] font-bold text-sm uppercase mb-4 flex items-center gap-2">
-                                               âš™ï¸ Parâmetros Específicos do Posto
+                                               ⚙️ Parâmetros Específicos do Posto
                                             </h3>
                                             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
                                                <div className="space-y-1">
@@ -787,7 +874,7 @@ function PropostaEditor() {
            {activeTab === 'extrato' && (
               <div className="w-full bg-white border border-[#1B4D3E] shadow-xl text-xs rounded overflow-hidden print:border-none print:shadow-none">
                  
-                 {/* CABEÃ‡ALHO PLANILHA */}
+                 {/* CABEÇALHO PLANILHA */}
                  <div className="bg-[#1B4D3E] text-white flex justify-center items-center px-6 py-4 border-b border-white">
                     <h2 className="font-bold uppercase text-xl tracking-widest">Planilha de Custos</h2>
                  </div>
@@ -808,7 +895,6 @@ function PropostaEditor() {
                     <tbody>
                        {proposta.equipe.map((p: any, idx: number) => {
                           const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
-                          // O custo unitário da função é apenas o salário/remuneração
                           const custoUnitario = itemRes?.detalhes?.remuneracao || 0;
                           const totalLinha = custoUnitario * p.quantidade;
                           return (
@@ -909,9 +995,27 @@ function PropostaEditor() {
                                    <tr key={i} className="border-b border-slate-200 border-dotted">
                                        <td colSpan={row.pct !== undefined ? 2 : 3} className={"py-1 px-6 font-bold " + (row.red ? "text-red-600" : "")}>{row.label}</td>
                                        {row.pct !== undefined && (
-                                          <td className="py-1 px-6 text-center font-bold bg-slate-50 text-slate-500">{row.pct.toFixed(2)}%</td>
+                                          <td className="py-1 px-6 text-center font-bold bg-slate-50 text-slate-500">
+                                             <div className="flex items-center justify-center gap-1">
+                                                <input 
+                                                   type="number" 
+                                                   step="0.01"
+                                                   className="w-14 bg-white border border-slate-300 text-right px-1 py-0.5 rounded outline-none focus:border-[#1B4D3E]"
+                                                   value={i === 8 ? proposta.premissas.reservaTecnicaPct : proposta.premissas.manutencaoPct}
+                                                   onChange={(e) => {
+                                                      const val = Number(e.target.value);
+                                                      if (i === 8) {
+                                                         setProposta({...proposta, premissas: {...proposta.premissas, reservaTecnicaPct: val}});
+                                                      } else {
+                                                         setProposta({...proposta, premissas: {...proposta.premissas, manutencaoPct: val}});
+                                                      }
+                                                   }}
+                                                />
+                                                <span>%</span>
+                                             </div>
+                                          </td>
                                        )}
-                                       <td className={"py-1 px-6 text-right bg-emerald-100/50 font-semibold " + (row.red ? "text-red-600" : "")}>
+                                       <td className={"py-1.5 px-6 text-right bg-emerald-100/50 font-semibold " + (row.red ? "text-red-600" : "")}>
                                           {row.val < 0 ? "-" + formatCurrency(Math.abs(row.val)) : formatCurrency(row.val)}
                                        </td>
                                     </tr>

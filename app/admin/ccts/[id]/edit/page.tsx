@@ -49,8 +49,6 @@ export default function CCTEditorPage() {
     taxaAdm: 5,
     custosSindicato: 0,
     
-    reservaTecnica: 0,
-    manutencaoEquipamentos: 0,
     outrosBeneficios: 0
   });
 
@@ -332,29 +330,7 @@ export default function CCTEditorPage() {
                 <p className="text-[10px] text-slate-400 italic">Soma de Assistência Médica, Social e Fundo de Formação conforme CCT</p>
               </div>
 
-{/* Reserva Técnica */}
-              <div className="space-y-1">
-                <label className={labelClass}>Reserva Técnica (% do Bloco A)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className={inputClass}
-                  value={formData.reservaTecnica}
-                  onChange={e => setFormData({ ...formData, reservaTecnica: e.target.value })}
-                />
-              </div>
 
-              {/* Manutenção Equipamentos */}
-              <div className="space-y-1">
-                <label className={labelClass}>Manutenção Equipamentos (% dos Ativos)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className={inputClass}
-                  value={formData.manutencaoEquipamentos}
-                  onChange={e => setFormData({ ...formData, manutencaoEquipamentos: e.target.value })}
-                />
-              </div>
 
               {/* Outros Benefícios */}
               <div className="space-y-1">
