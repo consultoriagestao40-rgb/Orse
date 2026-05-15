@@ -79,6 +79,7 @@ model Cargo {
   adicionalCopa Float  @default(0)
   gratificacoes Float  @default(0)
   assiduidade   Float  @default(0)
+  episConfig    Json?
   cct           CCT    @relation(fields: [cctId], references: [id], onDelete: Cascade)
 }
 

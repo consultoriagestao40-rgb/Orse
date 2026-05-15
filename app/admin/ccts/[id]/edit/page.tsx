@@ -4,10 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
   ArrowLeft, Save, Plus, Trash2, 
-  MapPin, Briefcase, HeartPulse, Calendar
+  MapPin, Briefcase, HeartPulse, Calendar, Settings, Search, X
 } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { getCCTs, createCCT, updateCCT } from '@/app/ccts/actions';
+import { getProdutos } from '@/app/produtos/actions';
 
 const ESTADOS_BRASIL = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 
@@ -35,7 +36,6 @@ export default function CCTEditorPage() {
     vtValor: 0,
     vtDescPercent: 6,
     cestaBasica: 0,
-    uniformeEpi: 0,
     examesMedicos: 0,
     seguroVida: 0,
     provisFerias: 11.11,
@@ -54,6 +54,20 @@ export default function CCTEditorPage() {
 
   const [cargos, setCargos] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  
+  // Estados para Modal de EPI
+  const [allEpis, setAllEpis] = useState<any[]>([]);
+  const [showEpiModal, setShowEpiModal] = useState(false);
+  const [activeCargoIdx, setActiveCargoIdx] = useState<number | null>(null);
+  const [epiSearch, setEpiSearch] = useState('');
+
+  useEffect(() => {
+    async function loadEpis() {
+      const data = await getProdutos();
+      setAllEpis(data.filter((p: any) => p.categoria === 'EPIs e Uniformes'));
+    }
+    loadEpis();
+  }, []);
 
   useEffect(() => {
     if (!isNew) {
@@ -89,6 +103,59 @@ export default function CCTEditorPage() {
 
   const removeCargo = (idx: number) => {
     setCargos(cargos.filter((_, i) => i !== idx));
+  };
+
+  const openEpiModal = (idx: number) => {
+    setActiveCargoIdx(idx);
+    setShowEpiModal(true);
+  };
+
+  const addEpiToCargo = (epi: any) => {
+    if (activeCargoIdx === null) return;
+    const newCargos = [...cargos];
+    const cargo = newCargos[activeCargoIdx];
+    const currentEpis = Array.isArray(cargo.episConfig) ? cargo.episConfig : [];
+    
+    // Evita duplicados (opcional, mas bom ter)
+    if (currentEpis.find((e: any) => e.produtoId === epi.id)) {
+      alert('Este item já está na composição.');
+      return;
+    }
+
+    const newItem = {
+      produtoId: epi.id,
+      descricao: epi.descricao,
+      precoUnitario: epi.precoUnitario,
+      quantidade: 1,
+      vidaUtil: 6 // Padrão 6 meses
+    };
+
+    newCargos[activeCargoIdx].episConfig = [...currentEpis, newItem];
+    setCargos(newCargos);
+  };
+
+  const updateEpiItem = (epiIdx: number, field: string, val: any) => {
+    if (activeCargoIdx === null) return;
+    const newCargos = [...cargos];
+    const currentEpis = [...newCargos[activeCargoIdx].episConfig];
+    currentEpis[epiIdx][field] = val;
+    newCargos[activeCargoIdx].episConfig = currentEpis;
+    setCargos(newCargos);
+  };
+
+  const removeEpiItem = (epiIdx: number) => {
+    if (activeCargoIdx === null) return;
+    const newCargos = [...cargos];
+    newCargos[activeCargoIdx].episConfig = newCargos[activeCargoIdx].episConfig.filter((_: any, i: number) => i !== epiIdx);
+    setCargos(newCargos);
+  };
+
+  const calculateCargoEpiTotal = (cargo: any) => {
+    if (!cargo.episConfig || !Array.isArray(cargo.episConfig)) return 0;
+    return cargo.episConfig.reduce((acc: number, item: any) => {
+      const custoMensal = (item.precoUnitario * item.quantidade) / (item.vidaUtil || 1);
+      return acc + custoMensal;
+    }, 0);
   };
 
   const handleSave = async () => {
@@ -293,17 +360,7 @@ export default function CCTEditorPage() {
                 />
               </div>
 
-              {/* Uniforme EPI */}
-              <div className="space-y-1">
-                <label className={labelClass}>Uniforme e EPI (Mês)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className={inputClass}
-                  value={formData.uniformeEpi}
-                  onChange={e => setFormData({ ...formData, uniformeEpi: e.target.value })}
-                />
-              </div>
+
 
               {/* Exames Médicos */}
               <div className="space-y-1">
@@ -369,6 +426,7 @@ export default function CCTEditorPage() {
                     <th className="px-6 py-3 text-center">Gratif. (R$)</th>
                     <th className="px-6 py-3 text-center">Assid. (R$)</th>
                     <th className="px-6 py-3 text-center">Adic. Copa (R$)</th>
+                    <th className="px-6 py-3 text-center">EPI / Mensal</th>
                     <th className="px-6 py-3 text-center">Ações</th>
                   </tr>
                 </thead>
@@ -403,6 +461,20 @@ export default function CCTEditorPage() {
                         </td>
                       ))}
                       <td className="px-6 py-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => openEpiModal(idx)}
+                            className="flex items-center gap-1 px-2 py-1 bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 rounded border border-slate-200 hover:border-emerald-200 transition-all group"
+                            title="Configurar Composição de EPI"
+                          >
+                            <Settings size={14} className="group-hover:rotate-90 transition-transform duration-500" />
+                            <span className="text-[10px] font-black">
+                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(calculateCargoEpiTotal(cargo))}
+                            </span>
+                          </button>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-center">
                         <button
                           onClick={() => removeCargo(idx)}
                           className="text-slate-300 hover:text-red-500 transition-colors"
@@ -418,7 +490,136 @@ export default function CCTEditorPage() {
           </div>
 
         </div>
+        </div>
+
+        {/* Modal de Composição de EPI */}
+        {showEpiModal && activeCargoIdx !== null && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-md shadow-2xl w-full max-w-4xl overflow-hidden border border-slate-300 flex flex-col max-h-[90vh]">
+              {/* Header Modal */}
+              <div className="bg-[#1B4D3E] px-6 py-4 flex justify-between items-center border-b border-[#13382D]">
+                <div>
+                  <h2 className="text-white text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                    <Settings size={14} className="text-emerald-400" />
+                    Composição de EPI e Uniformes
+                  </h2>
+                  <p className="text-[10px] text-emerald-200 uppercase font-bold mt-0.5">
+                    Função: {cargos[activeCargoIdx]?.nome || 'Não definida'}
+                  </p>
+                </div>
+                <button onClick={() => setShowEpiModal(false)} className="text-white/60 hover:text-white transition-colors">
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
+                {/* Lado Esquerdo: Buscador e Catálogo */}
+                <div className="w-full md:w-1/2 p-6 border-r border-slate-200 flex flex-col bg-slate-50">
+                  <div className="mb-4 relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <input 
+                      type="text" 
+                      placeholder="Pesquisar item no catálogo..." 
+                      className="w-full bg-white border border-slate-300 rounded pl-10 pr-4 py-2 text-xs font-bold uppercase focus:border-[#1B4D3E] outline-none shadow-sm"
+                      value={epiSearch}
+                      onChange={(e) => setEpiSearch(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                    {allEpis
+                      .filter(e => e.descricao.toLowerCase().includes(epiSearch.toLowerCase()))
+                      .map(epi => (
+                        <div key={epi.id} className="bg-white p-3 border border-slate-200 rounded hover:border-emerald-500 hover:shadow-md transition-all group flex justify-between items-center">
+                          <div>
+                            <p className="text-[10px] font-black text-slate-800 uppercase">{epi.descricao}</p>
+                            <p className="text-[10px] text-emerald-600 font-bold mt-0.5">
+                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(epi.precoUnitario)} / {epi.unidade}
+                            </p>
+                          </div>
+                          <button 
+                            onClick={() => addEpiToCargo(epi)}
+                            className="p-1.5 bg-emerald-50 text-emerald-600 rounded hover:bg-emerald-500 hover:text-white transition-colors border border-emerald-100"
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+                {/* Lado Direito: Composição Selecionada */}
+                <div className="w-full md:w-1/2 p-6 flex flex-col bg-white overflow-y-auto">
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Itens Selecionados na Composição</h3>
+                  
+                  <div className="space-y-4">
+                    {!cargos[activeCargoIdx]?.episConfig || cargos[activeCargoIdx].episConfig.length === 0 ? (
+                      <div className="text-center py-20 bg-slate-50 rounded border border-dashed border-slate-300">
+                        <p className="text-xs text-slate-400 font-bold uppercase italic">Nenhum item selecionado</p>
+                      </div>
+                    ) : (
+                      cargos[activeCargoIdx].episConfig.map((item: any, epiIdx: number) => (
+                        <div key={item.produtoId} className="border border-slate-200 rounded-md overflow-hidden shadow-sm">
+                          <div className="bg-slate-50 px-3 py-2 flex justify-between items-center border-b border-slate-200">
+                            <span className="text-[10px] font-black text-slate-700 uppercase truncate pr-4">{item.descricao}</span>
+                            <button onClick={() => removeEpiItem(epiIdx)} className="text-red-400 hover:text-red-600 transition-colors">
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                          <div className="p-3 grid grid-cols-2 gap-4 bg-white">
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-black text-slate-400 uppercase">Quantidade</label>
+                              <div className="flex items-center gap-2">
+                                <input 
+                                  type="number" 
+                                  className="w-full border border-slate-200 rounded px-2 py-1 text-xs font-bold text-center outline-none focus:border-[#1B4D3E]"
+                                  value={item.quantidade}
+                                  onChange={(e) => updateEpiItem(epiIdx, 'quantidade', Number(e.target.value))}
+                                />
+                                <span className="text-[9px] font-bold text-slate-400 uppercase">UN</span>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-black text-slate-400 uppercase">Vida Útil (Meses)</label>
+                              <input 
+                                type="number" 
+                                className="w-full border border-slate-200 rounded px-2 py-1 text-xs font-bold text-center outline-none focus:border-[#1B4D3E]"
+                                value={item.vidaUtil}
+                                onChange={(e) => updateEpiItem(epiIdx, 'vidaUtil', Number(e.target.value))}
+                              />
+                            </div>
+                            <div className="col-span-2 pt-2 border-t border-slate-100 flex justify-between items-center">
+                              <span className="text-[9px] font-black text-slate-400 uppercase">Custo Mensal:</span>
+                              <span className="text-xs font-black text-emerald-700">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((item.precoUnitario * item.quantidade) / (item.vidaUtil || 1))}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Rodapé do Modal com Total */}
+                  <div className="mt-8 pt-6 border-t border-slate-200 flex flex-col items-end">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Mensal de EPI/Uniforme</p>
+                    <div className="text-2xl font-black text-[#1B4D3E]">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(calculateCargoEpiTotal(cargos[activeCargoIdx]))}
+                    </div>
+                    <button 
+                      onClick={() => setShowEpiModal(false)}
+                      className="mt-6 w-full bg-[#1B4D3E] text-white py-3 rounded font-black text-xs uppercase tracking-widest shadow-xl hover:bg-[#13382D] transition-all active:scale-[0.98]"
+                    >
+                      Concluir Composição
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
 }
+

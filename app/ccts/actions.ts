@@ -72,7 +72,8 @@ export async function createCCT(data: any) {
             pisoSalarial: Number(c.pisoSalarial) || 0,
             gratificacoes: Number(c.gratificacoes) || 0,
             assiduidade: Number(c.assiduidade) || 0,
-            adicionalCopa: Number(c.adicionalCopa) || 0
+            adicionalCopa: Number(c.adicionalCopa) || 0,
+            episConfig: c.episConfig || []
           }))
         }
       }
@@ -143,7 +144,8 @@ export async function updateCCT(id: string, data: any) {
             pisoSalarial: Number(c.pisoSalarial) || 0,
             gratificacoes: Number(c.gratificacoes) || 0,
             assiduidade: Number(c.assiduidade) || 0,
-            adicionalCopa: Number(c.adicionalCopa) || 0
+            adicionalCopa: Number(c.adicionalCopa) || 0,
+            episConfig: c.episConfig || []
           }))
         }
       }

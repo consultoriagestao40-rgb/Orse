@@ -102,6 +102,15 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   let custoAtivosMensal = 0;
   let custoMaquinasEquipamentos = 0;
 
+  // Soma custo de EPIs da composição técnica do CARGO (Regra Sindicato)
+  if (cargo.episConfig && Array.isArray(cargo.episConfig)) {
+    cargo.episConfig.forEach((item: any) => {
+      const custoMensal = (item.precoUnitario * item.quantidade) / (item.vidaUtil || 1);
+      custoAtivosMensal += custoMensal;
+    });
+  }
+
+  // Soma custos extras de ativos da PROPOSTA (Se houver)
   if (ativos && ativos.uniformes) {
     ativos.uniformes.forEach((item: any) => {
       const custoMensal = (item.valor * item.quantidade / (item.vidaUtilMeses || 6));
