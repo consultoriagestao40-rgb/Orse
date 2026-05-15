@@ -15,9 +15,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SmartBid | Inteligência em Facilities & Serviços",
   description: "Plataforma de engenharia de custos e gestão comercial do Grupo JVS.",
-  icons: {
-    icon: "/favicon.svg",
-  },
 };
 
 export default function RootLayout({
