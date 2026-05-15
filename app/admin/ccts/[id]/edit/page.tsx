@@ -490,7 +490,6 @@ export default function CCTEditorPage() {
           </div>
 
         </div>
-        </div>
 
         {/* Modal de Composição de EPI */}
         {showEpiModal && activeCargoIdx !== null && (
