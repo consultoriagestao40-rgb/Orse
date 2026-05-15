@@ -69,19 +69,22 @@ model CCT {
   manutencaoEquipamentos Float    @default(0)
   outrosBeneficios       Float    @default(0)
   reservaTecnica         Float    @default(0)
+  insalubridadeBase      String   @default("MINIMO") // "SALARIO" ou "MINIMO"
+  salarioMinimo          Float    @default(1412)
   cargos                 Cargo[]
 }
 
 model Cargo {
-  id            String @id @default(cuid())
-  cctId         String
-  nome          String
-  pisoSalarial  Float  @default(0)
-  adicionalCopa Float  @default(0)
-  gratificacoes Float  @default(0)
-  assiduidade   Float  @default(0)
-  episConfig    Json?
-  cct           CCT    @relation(fields: [cctId], references: [id], onDelete: Cascade)
+  id                   String @id @default(cuid())
+  cctId                String
+  nome                 String
+  pisoSalarial         Float  @default(0)
+  adicionalCopa        Float  @default(0)
+  gratificacoes        Float  @default(0)
+  assiduidade          Float  @default(0)
+  insalubridadePercent Float  @default(0)
+  episConfig           Json?
+  cct                  CCT    @relation(fields: [cctId], references: [id], onDelete: Cascade)
 }
 
 model Proposta {

@@ -48,7 +48,8 @@ export default function CCTEditorPage() {
     margemLucro: 10,
     taxaAdm: 5,
     custosSindicato: 0,
-    
+    insalubridadeBase: 'MINIMO',
+    salarioMinimo: 1412,
     outrosBeneficios: 0
   });
 
@@ -407,6 +408,52 @@ export default function CCTEditorPage() {
                   onChange={e => setFormData({ ...formData, outrosBeneficios: e.target.value })}
                 />
               </div>
+
+              {/* Regra de Insalubridade */}
+              <div className="md:col-span-2 border-t border-slate-200 pt-6 mt-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <label className={labelClass}>Base p/ Cálculo de Insalubridade</label>
+                  <div className="flex gap-4 items-center mt-2">
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input 
+                        type="radio" 
+                        name="insal_base" 
+                        className="w-4 h-4 text-[#1B4D3E] focus:ring-[#1B4D3E]"
+                        checked={formData.insalubridadeBase === 'MINIMO'}
+                        onChange={() => setFormData({...formData, insalubridadeBase: 'MINIMO'})}
+                      />
+                      <span className="text-xs font-bold text-slate-700 group-hover:text-[#1B4D3E]">Salário Mínimo</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input 
+                        type="radio" 
+                        name="insal_base" 
+                        className="w-4 h-4 text-[#1B4D3E] focus:ring-[#1B4D3E]"
+                        checked={formData.insalubridadeBase === 'SALARIO'}
+                        onChange={() => setFormData({...formData, insalubridadeBase: 'SALARIO'})}
+                      />
+                      <span className="text-xs font-bold text-slate-700 group-hover:text-[#1B4D3E]">Salário da Função</span>
+                    </label>
+                  </div>
+                </div>
+
+                {formData.insalubridadeBase === 'MINIMO' && (
+                  <div className="space-y-1 animate-in fade-in slide-in-from-left-2">
+                    <label className={labelClass}>Valor Salário Mínimo Vigente</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-400 font-bold text-xs">R$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        className={inputClass}
+                        value={formData.salarioMinimo}
+                        onChange={e => setFormData({ ...formData, salarioMinimo: e.target.value })}
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-400 italic">O percentual escolhido no cargo incidirá sobre este valor.</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -432,7 +479,8 @@ export default function CCTEditorPage() {
                     <th className="px-6 py-3 text-center">Piso (R$)</th>
                     <th className="px-6 py-3 text-center">Gratif. (R$)</th>
                     <th className="px-6 py-3 text-center">Assid. (R$)</th>
-                    <th className="px-6 py-3 text-center">Adic. Copa (R$)</th>
+                    <th className="px-6 py-3 text-center">Copa (R$)</th>
+                    <th className="px-6 py-3 text-center">Insal. (%)</th>
                     <th className="px-6 py-3 text-center">EPI / Mensal</th>
                     <th className="px-6 py-3 text-center">Ações</th>
                   </tr>
@@ -456,15 +504,18 @@ export default function CCTEditorPage() {
                           onChange={e => updateCargo(idx, 'nome', e.target.value)}
                         />
                       </td>
-                      {(['pisoSalarial', 'gratificacoes', 'assiduidade', 'adicionalCopa'] as const).map(field => (
-                        <td key={field} className="px-6 py-3">
-                          <input
-                            type="number"
-                            step="0.01"
-                            className="w-24 bg-white border border-slate-200 rounded px-2 py-1 text-center text-slate-700 focus:border-[#1B4D3E] outline-none font-medium"
-                            value={(cargo as any)[field]}
-                            onChange={e => updateCargo(idx, field, e.target.value)}
-                          />
+                      {(['pisoSalarial', 'gratificacoes', 'assiduidade', 'adicionalCopa', 'insalubridadePercent'] as const).map(field => (
+                        <td key={field} className="px-6 py-3 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <input
+                              type="number"
+                              step="0.01"
+                              className="w-20 bg-white border border-slate-200 rounded px-2 py-1 text-center text-slate-700 focus:border-[#1B4D3E] outline-none font-medium text-xs"
+                              value={(cargo as any)[field]}
+                              onChange={e => updateCargo(idx, field, e.target.value)}
+                            />
+                            {field === 'insalubridadePercent' && <span className="text-slate-400 font-bold">%</span>}
+                          </div>
                         </td>
                       ))}
                       <td className="px-6 py-3 text-center">

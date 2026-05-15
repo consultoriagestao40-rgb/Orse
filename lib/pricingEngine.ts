@@ -19,8 +19,14 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   const adicionalPericulosidade = temPericulosidade ? salarioBase * 0.3 : 0;
   
   // Insalubridade: Pega do parâmetro manual ou do cargo
-  const pctInsalubridade = param.insalubridadePercent !== undefined ? param.insalubridadePercent : (cargo.insalubridade || 0);
-  const adicionalInsalubridade = salarioBase * (pctInsalubridade / 100);
+  const pctInsalubridade = param.insalubridadePercent !== undefined ? param.insalubridadePercent : (cargo.insalubridadePercent || 0);
+  
+  // Base de cálculo da insalubridade (Mínimo vs Salário da Função)
+  const baseInsalubridade = cctEfetiva.insalubridadeBase === 'SALARIO' 
+    ? salarioBase 
+    : (Number(cctEfetiva.salarioMinimo) || 1412);
+
+  const adicionalInsalubridade = baseInsalubridade * (pctInsalubridade / 100);
   
   const outrosAdicionais = Number(cargo.adicionalCopa || 0) + Number(cargo.gratificacoes || 0) + Number(cargo.assiduidade || 0) + Number(cargo.anuenio || 0);
   
