@@ -96,7 +96,7 @@ export function calculateLaborCost(colab: any, premissas: any): any {
 
   // 11) Reservas Técnicas (Sobre Bloco A)
   const reservaTecnicaPct = premissas?.reservaTecnicaPct ?? (cct.reservaTecnica || 0);
-  const reservaTecnica = totalBlocA * (reservaTecnicaPct / 100);
+  const reservaTecnica = totalBlocoA * (reservaTecnicaPct / 100);
 
   // 5. Custos de Ativos (EPIs/Uniformes/Máquinas)
   let custoAtivosMensal = 0;
