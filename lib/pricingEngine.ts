@@ -14,8 +14,8 @@ import {
 
 export function calculateLaborCost(colab: any, premissas: any): any {
   // O sistema agora separa o Cargo (salário/adicionais básicos) da CCT (benefícios/encargos)
-  const cargo = colab.cargo || colab.configFinanceira; 
-  const cct = colab.cctBase || colab.configFinanceira;
+  const cargo = colab.cargo || colab.configFinanceira || {}; 
+  const cct = colab.cctBase || colab.configFinanceira || {};
   const ativos = colab.ativosConfig;
   const param = colab.parametrosPosto || {}; // Novos parâmetros manuais
   
@@ -193,7 +193,7 @@ export function calculateLaborCost(colab: any, premissas: any): any {
     detalheBlocoC: {
       va: custoVABruto,
       vt: custoVTBruto,
-      assistenciaMedica: custosSindicato * 0.6, // Aproximação se não houver quebra no banco
+      assistenciaMedica: custosSindicato * 0.6,
       assistenciaSocial: custosSindicato * 0.2,
       fundoFormacao: custosSindicato * 0.2,
       vaFerias: vaSobreFerias,

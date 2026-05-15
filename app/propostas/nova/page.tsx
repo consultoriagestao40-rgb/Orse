@@ -871,12 +871,11 @@ function PropostaEditor() {
                            }, { uniformes:0, epis:0, materiais:0, maquinas:0, descartaveis:0, servicos:0 });
 
                            const rows = [
-                              { label: '1) Uniformes', val: b.uniformes },
-                              { label: '1) Epi\'s', val: b.epis },
+                              { label: '1) Uniformes e EPI\'s', val: b.uniformes + b.epis },
                               { label: '2) Materiais e produtos de limpeza', val: b.materiais },
                               { label: '3) Máquinas e equipamentos', val: b.maquinas },
                               { label: '4) Descartáveis', val: b.descartaveis },
-                              { label: '4) Serviços (Descriminar)', val: b.servicos },
+                              { label: '5) Serviços (Descriminar)', val: b.servicos },
                            ];
 
                            return rows.map((row, i) => (
