@@ -24,6 +24,7 @@ export async function createProduto(data: {
   try {
     const produto = await prisma.produto.create({ data });
     revalidatePath('/produtos');
+    revalidatePath('/epis');
     return { success: true, produto };
   } catch (error: any) {
     console.error('Erro ao criar produto:', error);
@@ -43,6 +44,7 @@ export async function updateProduto(
   try {
     const produto = await prisma.produto.update({ where: { id }, data });
     revalidatePath('/produtos');
+    revalidatePath('/epis');
     return { success: true, produto };
   } catch (error: any) {
     console.error('Erro ao atualizar produto:', error);
@@ -54,6 +56,7 @@ export async function deleteProduto(id: string) {
   try {
     await prisma.produto.update({ where: { id }, data: { ativo: false } });
     revalidatePath('/produtos');
+    revalidatePath('/epis');
     return { success: true };
   } catch (error: any) {
     console.error('Erro ao excluir produto:', error);
