@@ -10,17 +10,22 @@ import {
 import { calculateEnterprisePrice } from '@/lib/pricingEngine';
 import { getCCTs } from '@/app/ccts/actions';
 import { getEscalas } from '@/app/escalas/actions';
+import { getProdutos } from '@/app/produtos/actions';
 import { saveProposta, getPropostaCompleta } from '@/app/propostas/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { Box, Drill, Trash } from 'lucide-react';
 
 const TABS = [
   { id: 'dados', label: '1. Cliente', icon: Building2 },
   { id: 'premissas', label: '2. Taxas e Tributos', icon: TrendingUp },
   { id: 'encargos', label: '3. Encargos CLT', icon: ShieldCheck },
   { id: 'quadro', label: '4. Quadro Equipe', icon: UserCheck },
-  { id: 'extrato', label: '5. Extrato de Custos', icon: FileText },
-  { id: 'resumo', label: '6. Resumo da Proposta', icon: ClipboardList },
-  { id: 'dre', label: '7. DRE Projeto', icon: PieChart }
+  { id: 'materiais', label: '5. Materiais', icon: Box },
+  { id: 'maquinas', label: '6. Máquinas', icon: Drill },
+  { id: 'descartaveis', label: '7. Descartáveis', icon: Trash },
+  { id: 'extrato', label: '8. Extrato de Custos', icon: FileText },
+  { id: 'resumo', label: '9. Resumo da Proposta', icon: ClipboardList },
+  { id: 'dre', label: '10. DRE Projeto', icon: PieChart }
 ];
 
 const MONTHS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
@@ -83,6 +88,7 @@ function PropostaEditor() {
   };
   const [ccts, setCcts] = useState<any[]>([]);
   const [escalasDb, setEscalasDb] = useState<any[]>([]);
+  const [produtosDb, setProdutosDb] = useState<any[]>([]);
   const [clientesList, setClientesList] = useState<any[]>([]);
   const [showClientDropdown, setShowClientDropdown] = useState(false);
 
@@ -117,7 +123,10 @@ function PropostaEditor() {
       maquinas: 0,
       descartaveis: 0,
       servicos: 0,
-      servicosDescricao: ''
+      servicosDescricao: '',
+      detalheMateriais: [],
+      detalheMaquinas: [],
+      detalheDescartaveis: []
     }
   });
 
@@ -128,9 +137,10 @@ function PropostaEditor() {
       try {
         console.log('Iniciando carregamento do Editor FPV...');
         setLoading(true);
-        const [dataCcts, dataEscalas] = await Promise.all([getCCTs(), getEscalas()]);
+        const [dataCcts, dataEscalas, dataProdutos] = await Promise.all([getCCTs(), getEscalas(), getProdutos()]);
         setCcts(dataCcts || []);
         setEscalasDb(dataEscalas || []);
+        setProdutosDb(dataProdutos || []);
         console.log('CCTs e Escalas carregadas.');
         
         const { getClientes } = await import('@/app/clientes/actions');
@@ -144,7 +154,12 @@ function PropostaEditor() {
           if (fullData) {
             console.log('Proposta encontrada. Mapeando dados...');
             const clientObj = (clientesData || []).find((c: any) => c.id === fullData.clientId);
-            const savedSindicatoId = (fullData.premissas as any)?.meta?.sindicatoId || '';
+            let savedSindicatoId = (fullData.premissas as any)?.meta?.sindicatoId || '';
+            
+            // Fallback para propostas antigas: Se não houver sindicatoId no meta, pega do primeiro cargo
+            if (!savedSindicatoId && fullData.equipe?.[0]?.cargo?.cctId) {
+               savedSindicatoId = fullData.equipe[0].cargo.cctId;
+            }
             
             setProposta({
                ...proposta,
@@ -204,11 +219,17 @@ function PropostaEditor() {
         reservaTecnicaPct: proposta.premissas.reservaTecnicaPct || 0,
         manutencaoPct: proposta.premissas.manutencaoPct || 0,
         encargos: proposta.encargos,
-        cctGlobal: selectedCct // Passa a CCT selecionada como fallback global
+        cctGlobal: selectedCct,
+        insumosGlobais: {
+          materiais: proposta.insumos.materiais,
+          maquinas: proposta.insumos.maquinas,
+          descartaveis: proposta.insumos.descartaveis,
+          servicos: proposta.insumos.servicos
+        }
       };
       setResultado(calculateEnterprisePrice(calcInput));
     }
-  }, [proposta, totalTributos]);
+  }, [proposta, totalTributos, ccts]);
 
   // Sincroniza a CCTBase de toda a equipe quando o sindicato principal muda
   useEffect(() => {
@@ -285,6 +306,156 @@ function PropostaEditor() {
 
   const sumGroup = (g: any) => Object.values(g).reduce((a: any, b: any) => a + Number(b), 0) as number;
   const totalGeralEncargos = proposta.encargos.grupoA ? (sumGroup(proposta.encargos.grupoA) + sumGroup(proposta.encargos.grupoB) + sumGroup(proposta.encargos.grupoC) + sumGroup(proposta.encargos.grupoD) + sumGroup(proposta.encargos.grupoE) + sumGroup(proposta.encargos.grupoF)) : 0;
+
+  const addInsumoItem = (tipo: 'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis', produto: any) => {
+    const current = proposta.insumos[tipo] || [];
+    if (current.find((x: any) => x.id === produto.id)) return;
+    const newItem = {
+      id: produto.id,
+      codigo: produto.codigo,
+      descricao: produto.descricao,
+      precoUnitario: produto.precoUnitario,
+      quantidade: 1,
+      vidaUtil: 1,
+      custoMensal: produto.precoUnitario
+    };
+    const newList = [...current, newItem];
+    const total = newList.reduce((acc, x) => acc + x.custoMensal, 0);
+    const tipoTotal = tipo.replace('detalhe', '').toLowerCase();
+    setProposta({
+      ...proposta,
+      insumos: {
+        ...proposta.insumos,
+        [tipo]: newList,
+        [tipoTotal]: total
+      }
+    });
+  };
+
+  const removeInsumoItem = (tipo: 'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis', id: string) => {
+    const newList = (proposta.insumos[tipo] || []).filter((x: any) => x.id !== id);
+    const total = newList.reduce((acc: number, x: any) => acc + x.custoMensal, 0);
+    const tipoTotal = tipo.replace('detalhe', '').toLowerCase();
+    setProposta({
+      ...proposta,
+      insumos: {
+        ...proposta.insumos,
+        [tipo]: newList,
+        [tipoTotal]: total
+      }
+    });
+  };
+
+  const updateInsumoItem = (tipo: 'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis', id: string, field: string, value: any) => {
+    const newList = (proposta.insumos[tipo] || []).map((x: any) => {
+      if (x.id === id) {
+        const updated = { ...x, [field]: value };
+        updated.custoMensal = (updated.quantidade * updated.precoUnitario) / (updated.vidaUtil || 1);
+        return updated;
+      }
+      return x;
+    });
+    const total = newList.reduce((acc: number, x: any) => acc + x.custoMensal, 0);
+    const tipoTotal = tipo.replace('detalhe', '').toLowerCase();
+    setProposta({
+      ...proposta,
+      insumos: {
+        ...proposta.insumos,
+        [tipo]: newList,
+        [tipoTotal]: total
+      }
+    });
+  };
+
+  const renderInsumosTab = (tipo: 'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis', categorias: string[], titulo: string) => {
+    const itens = proposta.insumos[tipo] || [];
+    const total = proposta.insumos[tipo.replace('detalhe', '').toLowerCase()] || 0;
+    const produtosFiltrados = produtosDb.filter(p => categorias.includes(p.categoria.toUpperCase()));
+
+    return (
+      <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden">
+        <div className="bg-[#1B4D3E] px-6 py-4 flex justify-between items-center border-b border-[#13382D]">
+          <h2 className="text-white text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+            <Box size={16} /> {titulo}
+          </h2>
+          <div className="text-white font-bold text-lg">
+            Total Mensal: {formatCurrency(total)}
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="mb-6">
+            <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Adicionar Item da Tabela de Produtos</label>
+            <select 
+              className="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2 text-sm outline-none focus:border-[#1B4D3E]"
+              value=""
+              onChange={(e) => {
+                const prod = produtosDb.find(p => p.id === e.target.value);
+                if (prod) addInsumoItem(tipo, prod);
+              }}
+            >
+              <option value="">Selecione um produto para adicionar...</option>
+              {produtosFiltrados.map(p => (
+                <option key={p.id} value={p.id}>[{p.codigo}] {p.descricao} - {formatCurrency(p.precoUnitario)}</option>
+              ))}
+            </select>
+          </div>
+
+          <table className="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr className="bg-slate-100 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
+                <th className="px-4 py-2 w-20">Cód.</th>
+                <th className="px-4 py-2">Descrição</th>
+                <th className="px-4 py-2 text-right">Preço Unit.</th>
+                <th className="px-4 py-2 text-center w-20">Qtd.</th>
+                <th className="px-4 py-2 text-center w-24">Vida Útil (Meses)</th>
+                <th className="px-4 py-2 text-right">Custo Mensal</th>
+                <th className="px-4 py-2 text-center w-16">Ação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {itens.map((item: any) => (
+                <tr key={item.id} className="border-b border-slate-200 hover:bg-slate-50">
+                  <td className="px-4 py-2 font-mono text-xs text-slate-500">{item.codigo}</td>
+                  <td className="px-4 py-2 font-medium text-slate-800">{item.descricao}</td>
+                  <td className="px-4 py-2 text-right text-slate-600">{formatCurrency(item.precoUnitario)}</td>
+                  <td className="px-4 py-2">
+                    <input 
+                      type="number" 
+                      className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold outline-none focus:border-[#1B4D3E]"
+                      value={item.quantidade}
+                      onChange={(e) => updateInsumoItem(tipo, item.id, 'quantidade', Number(e.target.value))}
+                    />
+                  </td>
+                  <td className="px-4 py-2">
+                    <input 
+                      type="number" 
+                      className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold outline-none focus:border-[#1B4D3E]"
+                      value={item.vidaUtil}
+                      onChange={(e) => updateInsumoItem(tipo, item.id, 'vidaUtil', Number(e.target.value))}
+                    />
+                  </td>
+                  <td className="px-4 py-2 text-right font-bold text-[#1B4D3E] bg-emerald-50">
+                    {formatCurrency(item.custoMensal)}
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <button onClick={() => removeInsumoItem(tipo, item.id)} className="text-slate-400 hover:text-red-600 transition-colors">
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {itens.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-6 py-8 text-center text-slate-400 italic">Nenhum item adicionado. Selecione um produto acima.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
 
   const renderEncargoTable = (grupoNome: string, titulo: string, descricao: string, dados: Record<string, number>, setDados: any) => {
      return (
@@ -807,7 +978,11 @@ function PropostaEditor() {
                  </div>
               </div>
            )}
-{/* ABA 5: EXTRATO (100% IGUAL AO PRINT - PLANILHA DE CUSTOS) */}
+            {activeTab === 'materiais' && renderInsumosTab('detalheMateriais', ['MATERIAIS E INSUMOS'], 'Materiais e Produtos de Limpeza')}
+            {activeTab === 'maquinas' && renderInsumosTab('detalheMaquinas', ['EQUIPAMENTOS LOCADOS', 'EQUIPAMENTOS DEPRECIADOS'], 'Máquinas e Equipamentos')}
+            {activeTab === 'descartaveis' && renderInsumosTab('detalheDescartaveis', ['DESCARTAVEIS'], 'Descartáveis')}
+
+            {/* ABA 5: EXTRATO (100% IGUAL AO PRINT - PLANILHA DE CUSTOS) */}
            {activeTab === 'extrato' && (
               <div className="w-full bg-white border border-[#1B4D3E] shadow-xl text-xs rounded overflow-hidden print:border-none print:shadow-none">
                  
@@ -895,10 +1070,10 @@ function PropostaEditor() {
 
                            const rows = [
                               { label: '1) Uniformes e EPI\'s', val: b.uniformes + b.epis },
-                              { label: '2) Materiais e produtos de limpeza', val: b.materiais },
-                              { label: '3) Máquinas e equipamentos', val: b.maquinas },
-                              { label: '4) Descartáveis', val: b.descartaveis },
-                              { label: '5) Serviços (Descriminar)', val: b.servicos },
+                              { label: '2) Materiais e produtos de limpeza', val: proposta.insumos.materiais },
+                              { label: '3) Máquinas e equipamentos', val: proposta.insumos.maquinas },
+                              { label: '4) Descartáveis', val: proposta.insumos.descartaveis },
+                              { label: '5) Serviços (Descriminar)', val: proposta.insumos.servicos },
                            ];
 
                            return rows.map((row, i) => (
@@ -912,7 +1087,13 @@ function PropostaEditor() {
                         <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
                            <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "B"</td>
                            <td className="py-2.5 px-6 text-right">
-                              {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.ativos || 0) * i.quantidade), 0) || 0)}
+                              {formatCurrency(
+                                 resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.ativos || 0) * i.quantidade), 0) + 
+                                 proposta.insumos.materiais + 
+                                 proposta.insumos.maquinas + 
+                                 proposta.insumos.descartaveis + 
+                                 proposta.insumos.servicos
+                              )}
                            </td>
                         </tr>
 

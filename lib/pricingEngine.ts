@@ -149,9 +149,19 @@ export function calculateLaborCost(colab: any, premissas: any): any {
 }
 
 export function calculateEnterprisePrice(proposal: any): any {
-  const { items, impostos, margens, reservaTecnicaPct, manutencaoPct, encargos } = proposal;
+  const { items, impostos, margens, reservaTecnicaPct, manutencaoPct, encargos, insumosGlobais } = proposal;
 
   let custoDiretoTotal = 0;
+  
+  // Soma custos globais de insumos (Materiais, Máquinas, Descartáveis) que não estão vinculados a um cargo específico
+  const custoInsumosGlobais = 
+    (Number(insumosGlobais?.materiais) || 0) + 
+    (Number(insumosGlobais?.maquinas) || 0) + 
+    (Number(insumosGlobais?.descartaveis) || 0) +
+    (Number(insumosGlobais?.servicos) || 0);
+
+  custoDiretoTotal += custoInsumosGlobais;
+
   const itemResults = items.map((item: any) => {
     const res = calculateLaborCost(item, {
       reservaTecnicaPct: margens?.reservaTecnicaPct || reservaTecnicaPct,

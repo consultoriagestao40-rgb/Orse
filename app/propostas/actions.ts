@@ -136,7 +136,12 @@ export async function saveProposta(data: any) {
           numeroProposta: cliente.numeroProposta,
           revisao: cliente.revisao,
           tipoServicos: cliente.tipoServicos,
-          insumos: data.insumos || {}
+          insumos: {
+            ...data.insumos,
+            detalheMateriais: data.insumos.detalheMateriais || [],
+            detalheMaquinas: data.insumos.detalheMaquinas || [],
+            detalheDescartaveis: data.insumos.detalheDescartaveis || []
+          } || {}
         } as any,
         custoTotal: resultado.custoDiretoTotal || 0,
         precoVenda: resultado.faturamentoBruto || 0,
@@ -267,7 +272,16 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
         revisao: meta.revisao || '',
         tipoServicos: meta.tipoServicos || ''
       },
-      insumos: meta.insumos || { materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0, servicosDescricao: '' },
+      insumos: {
+        materiais: meta.insumos?.materiais || 0,
+        maquinas: meta.insumos?.maquinas || 0,
+        descartaveis: meta.insumos?.descartaveis || 0,
+        servicos: meta.insumos?.servicos || 0,
+        servicosDescricao: meta.insumos?.servicosDescricao || '',
+        detalheMateriais: meta.insumos?.detalheMateriais || [],
+        detalheMaquinas: meta.insumos?.detalheMaquinas || [],
+        detalheDescartaveis: meta.insumos?.detalheDescartaveis || []
+      },
       premissas: {
         taxaAdm: margens?.adm || 5,
         margemLucro: margens?.lucro || 10,
