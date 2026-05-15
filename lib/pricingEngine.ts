@@ -47,14 +47,31 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   const totalRemuneracao = salarioBase + adicionalPericulosidade + adicionalInsalubridade + outrosAdicionais + adicionalNoturno + intrajornada + dsrAdicionais;
 
   // 2. Encargos e Provisões (Bloco A)
-  // Usa a CCT efetiva para encargos
-  const percentualEncargosGerais = 
-    (cctEfetiva.encargoInss || 20) + 
-    (cctEfetiva.encargoFgts || 8) + 
-    (cctEfetiva.encargoRat || 0) + 
-    (cctEfetiva.provisFerias || 11.11) + 
-    (cctEfetiva.provis13 || 8.33) + 
-    (cctEfetiva.provisRescisao || 0);
+  // Se houver estrutura de grupos de encargos detalhada nas premissas, utiliza ela. Senão, usa o fallback da CCT.
+  let percentualEncargosGerais = 0;
+  const pEnc = premissas.encargos;
+
+  if (pEnc && typeof pEnc === 'object') {
+    // Soma todos os valores de todos os grupos (A, B, C, D, E, F)
+    Object.values(pEnc).forEach((grupo: any) => {
+      if (grupo && typeof grupo === 'object') {
+        Object.values(grupo).forEach((val: any) => {
+          percentualEncargosGerais += Number(val) || 0;
+        });
+      }
+    });
+  }
+
+  // Se a soma for zero (ou não houver objeto), usa os campos individuais da CCT/Default como fallback
+  if (percentualEncargosGerais === 0) {
+    percentualEncargosGerais = 
+      (cctEfetiva.encargoInss || 20) + 
+      (cctEfetiva.encargoFgts || 8) + 
+      (cctEfetiva.encargoRat || 0) + 
+      (cctEfetiva.provisFerias || 11.11) + 
+      (cctEfetiva.provis13 || 8.33) + 
+      (cctEfetiva.provisRescisao || 0);
+  }
     
   const totalEncargos = totalRemuneracao * (percentualEncargosGerais / 100);
   const totalBlocoA = totalRemuneracao + totalEncargos;
