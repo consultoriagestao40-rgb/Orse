@@ -985,9 +985,9 @@ function PropostaEditor() {
                  </div>
               </div>
            )}
-            {activeTab === 'materiais' && renderInsumosTab('detalheMateriais', ['MATERIAIS E INSUMOS', 'MATERIAIS', 'INSUMOS', 'PRODUTOS DE LIMPEZA'], 'Materiais e Produtos de Limpeza')}
-            {activeTab === 'maquinas' && renderInsumosTab('detalheMaquinas', ['EQUIPAMENTOS LOCADOS', 'EQUIPAMENTOS DEPRECIADOS', 'MAQUINAS', 'EQUIPAMENTOS'], 'Máquinas e Equipamentos')}
-            {activeTab === 'descartaveis' && renderInsumosTab('detalheDescartaveis', ['DESCARTAVEIS', 'DESCARTÁVEIS'], 'Descartáveis')}
+            {activeTab === 'materiais' && renderInsumosTab('detalheMateriais', ['MATERIAIS E INSUMO', 'PRODUTOS E INSUMOS', 'MATERIAIS', 'INSUMOS', 'PRODUTOS DE LIMPEZA'], 'Materiais e Produtos de Limpeza')}
+            {activeTab === 'maquinas' && renderInsumosTab('detalheMaquinas', ['EQUIPAMENTOS LOCADO', 'EQUIPAMENTOS DEPRECIADOS', 'MAQUINAS', 'EQUIPAMENTOS'], 'Máquinas e Equipamentos')}
+            {activeTab === 'descartaveis' && renderInsumosTab('detalheDescartaveis', ['DESCARTÁVEIS', 'DESCARTAVEIS'], 'Descartáveis')}
 
             {/* ABA 5: EXTRATO (100% IGUAL AO PRINT - PLANILHA DE CUSTOS) */}
            {activeTab === 'extrato' && (
@@ -1133,13 +1133,15 @@ function PropostaEditor() {
                            const rows: any[] = [
                                { label: '1) Vale Alimentação', val: b.va },
                                { label: '2) Vale Transporte', val: b.vt },
-                               { 
-                                 label: '3) Benefícios e Obrigações (Sindicato)', 
-                                 val: b.assistenciaMedica + b.assistenciaSocial + b.fundoFormacao + b.vaFerias + b.cestaBasica - b.descontoVA - b.descontoVT + b.outros 
-                               },
-                               { label: '4) Exames Médicos', val: b.exames },
-                               { label: '5) Reservas Técnicas', val: b.reservaTecnica, pct: b.reservaTecnicaPct },
-                               { label: '6) Manutenção Equipamentos', val: b.manutencao, pct: b.manutencaoPct },
+                               { label: '3) Assistência Médica', val: b.assistenciaMedica },
+                               { label: 'Custos com Sindicatos', val: b.assistenciaSocial + b.fundoFormacao + b.vaFerias },
+                               { label: '7) Cesta Básica Assiduidade(+)', val: b.cestaBasica },
+                               { label: '8) Desconto de VA(-)', val: b.descontoVA, red: true },
+                               { label: '9) Desconto de VT(-)', val: b.descontoVT, red: true },
+                               { label: '10) Exames Médicos', val: b.exames },
+                               { label: '11) Reservas Técnicas', val: b.reservaTecnica, pct: b.reservaTecnicaPct, field: 'reservaTecnicaPct' },
+                               { label: '12) Manutenção Equipamentos', val: b.manutencao, pct: b.manutencaoPct, field: 'manutencaoPct' },
+                               { label: '13) Outros (especificar)', val: b.outros },
                             ];
 
                            return (
@@ -1147,21 +1149,17 @@ function PropostaEditor() {
                                  {rows.map((row, i) => (
                                     <tr key={i} className="border-b border-slate-200 border-dotted">
                                         <td colSpan={row.pct !== undefined ? 2 : 3} className={"py-1 px-6 font-bold " + (row.red ? "text-red-600" : "")}>{row.label}</td>
-                                        {row.pct !== undefined && (
+                                        {row.field !== undefined && (
                                            <td className="py-1 px-6 text-center font-bold bg-slate-50 text-slate-500">
                                               <div className="flex items-center justify-center gap-1">
                                                  <input 
                                                     type="number" 
                                                     step="0.01"
                                                     className="w-14 bg-white border border-slate-300 text-right px-1 py-0.5 rounded outline-none focus:border-[#1B4D3E]"
-                                                    value={i === 10 ? proposta.premissas.reservaTecnicaPct : proposta.premissas.manutencaoPct}
+                                                    value={(proposta.premissas as any)[row.field]}
                                                     onChange={(e) => {
                                                        const val = Number(e.target.value);
-                                                       if (i === 10) {
-                                                          setProposta({...proposta, premissas: {...proposta.premissas, reservaTecnicaPct: val}});
-                                                       } else {
-                                                          setProposta({...proposta, premissas: {...proposta.premissas, manutencaoPct: val}});
-                                                       }
+                                                       setProposta({...proposta, premissas: {...proposta.premissas, [row.field]: val}});
                                                     }}
                                                  />
                                                  <span>%</span>
