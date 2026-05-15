@@ -1131,20 +1131,16 @@ function PropostaEditor() {
                             }, { va:0, vt:0, assistenciaMedica:0, assistenciaSocial:0, fundoFormacao:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 });
 
                            const rows: any[] = [
-                              { label: '1) Vale Alimentação', val: b.va },
-                              { label: '2) Vale Transporte', val: b.vt },
-                              { label: '3) Assistencia Médica', val: b.assistenciaMedica },
-                              { label: '4) Assistencia Social Familiar', val: b.assistenciaSocial },
-                              { label: '5) Fundo de Formação Profissional', val: b.fundoFormacao },
-                              { label: '6) Vale Alimentação Sobre Férias', val: b.vaFerias },
-                              { label: '7) Cesta Básica Assiduidade(+)', val: b.cestaBasica },
-                              { label: '8) Desconto de VA(-)', val: b.descontoVA, red: true },
-                              { label: '9) Desconto de VT(-)', val: b.descontoVT, red: true },
-                              { label: '10) Exames Médicos', val: b.exames },
-                              { label: '11) Reservas Técnicas', val: b.reservaTecnica, pct: b.reservaTecnicaPct },
-                              { label: '12) Manutenção Equipamentos', val: b.manutencao, pct: b.manutencaoPct },
-                              { label: '13) Outros (especificar)', val: b.outros },
-                           ];
+                               { label: '1) Vale Alimentação', val: b.va },
+                               { label: '2) Vale Transporte', val: b.vt },
+                               { 
+                                 label: '3) Benefícios e Obrigações (Sindicato)', 
+                                 val: b.assistenciaMedica + b.assistenciaSocial + b.fundoFormacao + b.vaFerias + b.cestaBasica - b.descontoVA - b.descontoVT + b.outros 
+                               },
+                               { label: '4) Exames Médicos', val: b.exames },
+                               { label: '5) Reservas Técnicas', val: b.reservaTecnica, pct: b.reservaTecnicaPct },
+                               { label: '6) Manutenção Equipamentos', val: b.manutencao, pct: b.manutencaoPct },
+                            ];
 
                            return (
                               <>
