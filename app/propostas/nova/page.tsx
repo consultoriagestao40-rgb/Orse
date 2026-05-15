@@ -69,7 +69,7 @@ function PropostaEditor() {
             cidade: fullData.cliente.cidade || '',
             dataElaboracao: fullData.cliente.dataElaboracao || '',
             numeroProposta: (fullData as any).numero || '',
-                  revisao: `R${String(fullData.versao).padStart(2, '0')}`,
+            revisao: `R${String(fullData.versao).padStart(2, '0')}`,
             tipoServicos: fullData.cliente.tipoServicos || ''
           },
         });
@@ -160,7 +160,7 @@ function PropostaEditor() {
                  cidade: fullData.cliente.cidade || '',
                  dataElaboracao: fullData.cliente.dataElaboracao || '',
                  numeroProposta: (fullData as any).numero || '',
-                  revisao: `R${String(fullData.versao).padStart(2, '0')}`,
+                 revisao: `R${String(fullData.versao).padStart(2, '0')}`,
                  tipoServicos: fullData.cliente.tipoServicos || ''
                },
                premissas: {
@@ -853,96 +853,130 @@ function PropostaEditor() {
                           </td>
                        </tr>
 
-                       {/* MONTANTE B */}
-                       <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
-                          <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "B" - Insumos</th>
-                       </tr>
+                        {/* MONTANTE B */}
+                        <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
+                           <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "B" - Insumos</th>
+                        </tr>
+                        {(() => {
+                           const b = resultado?.items?.reduce((acc: any, i: any) => {
+                               const d = i.detalhes?.detalheBlocoB;
+                               return {
+                                  uniformes: acc.uniformes + (d?.uniformes || 0) * i.quantidade,
+                                  epis: acc.epis + (d?.epis || 0) * i.quantidade,
+                                  materiais: acc.materiais + (d?.materiais || 0) * i.quantidade,
+                                  maquinas: acc.maquinas + (d?.maquinas || 0) * i.quantidade,
+                                  descartaveis: acc.descartaveis + (d?.descartaveis || 0) * i.quantidade,
+                                  servicos: acc.servicos + (d?.servicos || 0) * i.quantidade,
+                               };
+                           }, { uniformes:0, epis:0, materiais:0, maquinas:0, descartaveis:0, servicos:0 });
 
-                       <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
-                          <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "B"</td>
-                          <td className="py-2.5 px-6 text-right">
-                             {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.ativos || 0) * i.quantidade), 0) || 0)}
-                          </td>
-                       </tr>
-
-                       {/* MONTANTE C */}
-<tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
-                          <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "C" - Benefícios Detalhados (13 Itens)</th>
-                       </tr>
-                       {(() => {
-                          const b = resultado?.items?.reduce((acc: any, i: any) => {
-                              const d = i.detalhes?.detalheBlocoC;
-                              return {
-                                 va: acc.va + (d?.va || 0) * i.quantidade,
-                                 vt: acc.vt + (d?.vt || 0) * i.quantidade,
-                                 custosSindicato: acc.custosSindicato + (d?.custosSindicato || 0) * i.quantidade,
-                                 vaFerias: acc.vaFerias + (d?.vaFerias || 0) * i.quantidade,
-                                 cestaBasica: acc.cestaBasica + (d?.cestaBasica || 0) * i.quantidade,
-                                 descontoVA: acc.descontoVA + (d?.descontoVA || 0) * i.quantidade,
-                                 descontoVT: acc.descontoVT + (d?.descontoVT || 0) * i.quantidade,
-                                 exames: acc.exames + (d?.exames || 0) * i.quantidade,
-                                 reservaTecnica: acc.reservaTecnica + (d?.reservaTecnica || 0) * i.quantidade,
-                                 reservaTecnicaPct: d?.reservaTecnicaPct || acc.reservaTecnicaPct,
-                                 manutencao: acc.manutencao + (d?.manutencao || 0) * i.quantidade,
-                                 manutencaoPct: d?.manutencaoPct || acc.manutencaoPct,
-                                 outros: acc.outros + (d?.outros || 0) * i.quantidade,
-                              };
-                           }, { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 });
-
-                          const rows: any[] = [
-                              { label: '1) Vale Alimentação', val: b.va },
-                              { label: '2) Vale Transporte', val: b.vt },
-                              { label: '3) Custos com Sindicatos (Assist. Médica/Social/Fundo Formação)', val: b.custosSindicato },
-                              { label: '4) Vale Alimentação Sobre Férias', val: b.vaFerias },
-                              { label: '5) Cesta Básica Assiduidade(+)', val: b.cestaBasica },
-                              { label: '6) Desconto de VA(-)', val: b.descontoVA, red: true },
-                              { label: '7) Desconto de VT(-)', val: b.descontoVT, red: true },
-                              { label: '8) Exames Médicos', val: b.exames },
-                              { label: '9) Reservas Técnicas', val: b.reservaTecnica, pct: b.reservaTecnicaPct },
-                              { label: '10) Manutenção Equipamentos', val: b.manutencao, pct: b.manutencaoPct },
-                              { label: '11) Outros (especificar)', val: b.outros },
+                           const rows = [
+                              { label: '1) Uniformes', val: b.uniformes },
+                              { label: '1) Epi\'s', val: b.epis },
+                              { label: '2) Materiais e produtos de limpeza', val: b.materiais },
+                              { label: '3) Máquinas e equipamentos', val: b.maquinas },
+                              { label: '4) Descartáveis', val: b.descartaveis },
+                              { label: '4) Serviços (Descriminar)', val: b.servicos },
                            ];
 
-                          return (
-                             <>
-                                {rows.map((row, i) => (
-                                   <tr key={i} className="border-b border-slate-200 border-dotted">
-                                       <td colSpan={row.pct !== undefined ? 2 : 3} className={"py-1 px-6 font-bold " + (row.red ? "text-red-600" : "")}>{row.label}</td>
-                                       {row.pct !== undefined && (
-                                          <td className="py-1 px-6 text-center font-bold bg-slate-50 text-slate-500">
-                                             <div className="flex items-center justify-center gap-1">
-                                                <input 
-                                                   type="number" 
-                                                   step="0.01"
-                                                   className="w-14 bg-white border border-slate-300 text-right px-1 py-0.5 rounded outline-none focus:border-[#1B4D3E]"
-                                                   value={i === 8 ? proposta.premissas.reservaTecnicaPct : proposta.premissas.manutencaoPct}
-                                                   onChange={(e) => {
-                                                      const val = Number(e.target.value);
-                                                      if (i === 8) {
-                                                         setProposta({...proposta, premissas: {...proposta.premissas, reservaTecnicaPct: val}});
-                                                      } else {
-                                                         setProposta({...proposta, premissas: {...proposta.premissas, manutencaoPct: val}});
-                                                      }
-                                                   }}
-                                                />
-                                                <span>%</span>
-                                             </div>
-                                          </td>
-                                       )}
-                                       <td className={"py-1.5 px-6 text-right bg-emerald-100/50 font-semibold " + (row.red ? "text-red-600" : "")}>
-                                          {row.val < 0 ? "-" + formatCurrency(Math.abs(row.val)) : formatCurrency(row.val)}
-                                       </td>
+                           return rows.map((row, i) => (
+                              <tr key={i} className="border-b border-slate-200 border-dotted">
+                                 <td colSpan={3} className="py-1 px-6 font-bold">{row.label}</td>
+                                 <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">{formatCurrency(row.val)}</td>
+                              </tr>
+                           ));
+                        })()}
+
+                        <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
+                           <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "B"</td>
+                           <td className="py-2.5 px-6 text-right">
+                              {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.ativos || 0) * i.quantidade), 0) || 0)}
+                           </td>
+                        </tr>
+
+                        {/* MONTANTE C */}
+                        <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
+                           <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "C" - Benefícios Detalhados (13 Itens)</th>
+                        </tr>
+                        {(() => {
+                           const b = resultado?.items?.reduce((acc: any, i: any) => {
+                               const d = i.detalhes?.detalheBlocoC;
+                               return {
+                                  va: acc.va + (d?.va || 0) * i.quantidade,
+                                  vt: acc.vt + (d?.vt || 0) * i.quantidade,
+                                  assistenciaMedica: acc.assistenciaMedica + (d?.assistenciaMedica || 0) * i.quantidade,
+                                  assistenciaSocial: acc.assistenciaSocial + (d?.assistenciaSocial || 0) * i.quantidade,
+                                  fundoFormacao: acc.fundoFormacao + (d?.fundoFormacao || 0) * i.quantidade,
+                                  vaFerias: acc.vaFerias + (d?.vaFerias || 0) * i.quantidade,
+                                  cestaBasica: acc.cestaBasica + (d?.cestaBasica || 0) * i.quantidade,
+                                  descontoVA: acc.descontoVA + (d?.descontoVA || 0) * i.quantidade,
+                                  descontoVT: acc.descontoVT + (d?.descontoVT || 0) * i.quantidade,
+                                  exames: acc.exames + (d?.exames || 0) * i.quantidade,
+                                  reservaTecnica: acc.reservaTecnica + (d?.reservaTecnica || 0) * i.quantidade,
+                                  reservaTecnicaPct: d?.reservaTecnicaPct || acc.reservaTecnicaPct,
+                                  manutencao: acc.manutencao + (d?.manutencao || 0) * i.quantidade,
+                                  manutencaoPct: d?.manutencaoPct || acc.manutencaoPct,
+                                  outros: acc.outros + (d?.outros || 0) * i.quantidade,
+                               };
+                            }, { va:0, vt:0, assistenciaMedica:0, assistenciaSocial:0, fundoFormacao:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 });
+
+                           const rows: any[] = [
+                              { label: '1) Vale Alimentação', val: b.va },
+                              { label: '2) Vale Transporte', val: b.vt },
+                              { label: '3) Assistencia Médica', val: b.assistenciaMedica },
+                              { label: '4) Assistencia Social Familiar', val: b.assistenciaSocial },
+                              { label: '5) Fundo de Formação Profissional', val: b.fundoFormacao },
+                              { label: '6) Vale Alimentação Sobre Férias', val: b.vaFerias },
+                              { label: '7) Cesta Básica Assiduidade(+)', val: b.cestaBasica },
+                              { label: '8) Desconto de VA(-)', val: b.descontoVA, red: true },
+                              { label: '9) Desconto de VT(-)', val: b.descontoVT, red: true },
+                              { label: '10) Exames Médicos', val: b.exames },
+                              { label: '11) Reservas Técnicas', val: b.reservaTecnica, pct: b.reservaTecnicaPct },
+                              { label: '12) Manutenção Equipamentos', val: b.manutencao, pct: b.manutencaoPct },
+                              { label: '13) Outros (especificar)', val: b.outros },
+                           ];
+
+                           return (
+                              <>
+                                 {rows.map((row, i) => (
+                                    <tr key={i} className="border-b border-slate-200 border-dotted">
+                                        <td colSpan={row.pct !== undefined ? 2 : 3} className={"py-1 px-6 font-bold " + (row.red ? "text-red-600" : "")}>{row.label}</td>
+                                        {row.pct !== undefined && (
+                                           <td className="py-1 px-6 text-center font-bold bg-slate-50 text-slate-500">
+                                              <div className="flex items-center justify-center gap-1">
+                                                 <input 
+                                                    type="number" 
+                                                    step="0.01"
+                                                    className="w-14 bg-white border border-slate-300 text-right px-1 py-0.5 rounded outline-none focus:border-[#1B4D3E]"
+                                                    value={i === 10 ? proposta.premissas.reservaTecnicaPct : proposta.premissas.manutencaoPct}
+                                                    onChange={(e) => {
+                                                       const val = Number(e.target.value);
+                                                       if (i === 10) {
+                                                          setProposta({...proposta, premissas: {...proposta.premissas, reservaTecnicaPct: val}});
+                                                       } else {
+                                                          setProposta({...proposta, premissas: {...proposta.premissas, manutencaoPct: val}});
+                                                       }
+                                                    }}
+                                                 />
+                                                 <span>%</span>
+                                              </div>
+                                           </td>
+                                        )}
+                                        <td className={"py-1.5 px-6 text-right bg-emerald-100/50 font-semibold " + (row.red ? "text-red-600" : "")}>
+                                           {row.val < 0 ? "-" + formatCurrency(Math.abs(row.val)) : formatCurrency(row.val)}
+                                        </td>
                                     </tr>
-                                ))}
-                                <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
-                                   <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "C"</td>
-                                   <td className="py-2.5 px-6 text-right">
-                                      {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.beneficios || 0) * i.quantidade), 0) || 0)}
-                                   </td>
-                                </tr>
-                             </>
-                          );
-                       })()}
+                                 ))}
+                                 <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
+                                    <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "C"</td>
+                                    <td className="py-2.5 px-6 text-right">
+                                       {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.beneficios || 0) * i.quantidade), 0) || 0)}
+                                    </td>
+                                 </tr>
+                              </>
+                           );
+                        })()}
+
                        {/* MONTANTE D - BDI */}
                        <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
                           <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "D" - BDI</th>
@@ -1011,7 +1045,7 @@ function PropostaEditor() {
              // Custo total MO direto (sem markup)
              const custoDiretoMO = resultado?.custoDiretoTotal || 0;
 
-             // Markup dos insumos: aplica o mesmo gross-up
+             // Markup dos insumos: aplica le mesmo gross-up
              const totalInsumosDireto = 
                Number(proposta.insumos.materiais || 0) + 
                Number(proposta.insumos.maquinas || 0) + 

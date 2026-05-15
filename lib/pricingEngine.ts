@@ -147,16 +147,55 @@ export function calculateLaborCost(colab: any, premissas: any): any {
  
   const custoTotalDireto = (Number(totalBlocoA) || 0) + (Number(totalBlocoC) || 0) + (Number(custoAtivosMensal) || 0);
  
+  // Detalhamento de Ativos (Bloco B)
+  const ativosDet = {
+    uniformes: 0,
+    epis: 0,
+    materiais: 0,
+    maquinas: 0,
+    descartaveis: 0,
+    servicos: 0
+  };
+
+  // Soma ativos do CARGO
+  if (cargo.episConfig && Array.isArray(cargo.episConfig)) {
+    cargo.episConfig.forEach((item: any) => {
+      const cMensal = (Number(item.precoUnitario) * Number(item.quantidade)) / (Number(item.vidaUtil) || 1);
+      // Se for EPI ou Uniforme, separa (pode usar categoria se houver, ou tratar como EPI por padrão)
+      if (item.descricao?.toLowerCase().includes('uniforme')) {
+        ativosDet.uniformes += cMensal;
+      } else {
+        ativosDet.epis += cMensal;
+      }
+    });
+  }
+
+  // Soma ativos da PROPOSTA
+  if (ativos && ativos.uniformes) {
+    ativos.uniformes.forEach((item: any) => {
+      const cMensal = (Number(item.valor) * Number(item.quantidade) / (Number(item.vidaUtilMeses) || 6));
+      if (item.categoria === 'Uniformes') ativosDet.uniformes += cMensal;
+      else if (item.categoria === 'EPIs e Uniformes' || item.categoria === 'EPI') ativosDet.epis += cMensal;
+      else if (item.categoria === 'Materiais') ativosDet.materiais += cMensal;
+      else if (item.categoria === 'Máquinas e Equipamentos' || item.categoria === 'Equipamentos') ativosDet.maquinas += cMensal;
+      else if (item.categoria === 'Descartáveis') ativosDet.descartaveis += cMensal;
+      else ativosDet.servicos += cMensal;
+    });
+  }
+
   return {
     remuneracao: totalRemuneracao,
     encargos: totalEncargos,
     blocoA: totalBlocoA,
     beneficios: totalBlocoC,
     ativos: custoAtivosMensal,
+    detalheBlocoB: ativosDet,
     detalheBlocoC: {
       va: custoVABruto,
       vt: custoVTBruto,
-      custosSindicato: custosSindicato,
+      assistenciaMedica: custosSindicato * 0.6, // Aproximação se não houver quebra no banco
+      assistenciaSocial: custosSindicato * 0.2,
+      fundoFormacao: custosSindicato * 0.2,
       vaFerias: vaSobreFerias,
       cestaBasica: cestaBasica,
       descontoVA: -descontoVA,
