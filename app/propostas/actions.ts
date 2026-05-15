@@ -141,7 +141,7 @@ export async function saveProposta(data: any) {
             detalheMateriais: data.insumos.detalheMateriais || [],
             detalheMaquinas: data.insumos.detalheMaquinas || [],
             detalheDescartaveis: data.insumos.detalheDescartaveis || []
-          } || {}
+          }
         } as any,
         custoTotal: resultado.custoDiretoTotal || 0,
         precoVenda: resultado.faturamentoBruto || 0,
