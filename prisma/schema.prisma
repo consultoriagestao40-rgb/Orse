@@ -14,7 +14,7 @@ model User {
   id           String     @id @default(cuid())
   email        String     @unique
   nome         String
-  password     String
+  password     String     @default("123456")
   role         UserRole   @default(USER)
   managerId    String?
   createdAt    DateTime   @default(now())
