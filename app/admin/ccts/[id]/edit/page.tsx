@@ -162,7 +162,14 @@ export default function CCTEditorPage() {
     if (!formData.nome?.trim()) return alert('Informe o nome da regra técnica.');
     try {
       setSaving(true);
-      const dataToSave = { ...formData, cargos };
+      
+      // Sincroniza o uniformeEpi de cada cargo com o total da composição antes de salvar
+      const cargosSincronizados = cargos.map(c => ({
+        ...c,
+        uniformeEpi: calculateCargoEpiTotal(c)
+      }));
+
+      const dataToSave = { ...formData, cargos: cargosSincronizados };
       let res: any;
       if (isNew) {
         res = await createCCT(dataToSave);

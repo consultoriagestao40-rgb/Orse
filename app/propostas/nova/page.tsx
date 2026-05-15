@@ -1113,9 +1113,7 @@ function PropostaEditor() {
                                return {
                                   va: acc.va + (d?.va || 0) * i.quantidade,
                                   vt: acc.vt + (d?.vt || 0) * i.quantidade,
-                                  assistenciaMedica: acc.assistenciaMedica + (d?.assistenciaMedica || 0) * i.quantidade,
-                                  assistenciaSocial: acc.assistenciaSocial + (d?.assistenciaSocial || 0) * i.quantidade,
-                                  fundoFormacao: acc.fundoFormacao + (d?.fundoFormacao || 0) * i.quantidade,
+                                  custosSindicato: acc.custosSindicato + (d?.custosSindicato || 0) * i.quantidade,
                                   vaFerias: acc.vaFerias + (d?.vaFerias || 0) * i.quantidade,
                                   cestaBasica: acc.cestaBasica + (d?.cestaBasica || 0) * i.quantidade,
                                   descontoVA: acc.descontoVA + (d?.descontoVA || 0) * i.quantidade,
@@ -1127,21 +1125,20 @@ function PropostaEditor() {
                                   manutencaoPct: d?.manutencaoPct || acc.manutencaoPct,
                                   outros: acc.outros + (d?.outros || 0) * i.quantidade,
                                };
-                            }, { va:0, vt:0, assistenciaMedica:0, assistenciaSocial:0, fundoFormacao:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 });
+                            }, { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 });
 
                            const rows: any[] = [
                                { label: '1) Vale Alimentação', val: b.va },
                                { label: '2) Vale Transporte', val: b.vt },
-                               { label: '3) Assistência Médica', val: b.assistenciaMedica },
-                               { label: '4) Custos com Sindicatos', val: b.assistenciaSocial + b.fundoFormacao },
-                               { label: '5) Vale Alimentação Sobre Férias', val: b.vaFerias },
-                               { label: '6) Cesta Básica Assiduidade(+)', val: b.cestaBasica },
-                               { label: '7) Desconto de VA(-)', val: b.descontoVA, red: true },
-                               { label: '8) Desconto de VT(-)', val: b.descontoVT, red: true },
-                               { label: '9) Exames Médicos', val: b.exames },
-                               { label: '10) Reservas Técnicas', val: b.reservaTecnica, pct: b.reservaTecnicaPct, field: 'reservaTecnicaPct' },
-                               { label: '11) Manutenção Equipamentos', val: b.manutencao, pct: b.manutencaoPct, field: 'manutencaoPct' },
-                               { label: '12) Outros (especificar)', val: b.outros },
+                               { label: '3) Custos com Sindicatos', val: b.custosSindicato },
+                               { label: '4) Vale Alimentação Sobre Férias', val: b.vaFerias },
+                               { label: '5) Cesta Básica Assiduidade(+)', val: b.cestaBasica },
+                               { label: '6) Desconto de VA(-)', val: b.descontoVA, red: true },
+                               { label: '7) Desconto de VT(-)', val: b.descontoVT, red: true },
+                               { label: '8) Exames Médicos', val: b.exames },
+                               { label: '9) Reservas Técnicas', val: b.reservaTecnica, pct: b.reservaTecnicaPct, field: 'reservaTecnicaPct' },
+                               { label: '10) Manutenção Equipamentos', val: b.manutencao, pct: b.manutencaoPct, field: 'manutencaoPct' },
+                               { label: '11) Outros (especificar)', val: b.outros },
                              ];
 
                            return (

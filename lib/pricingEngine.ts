@@ -106,8 +106,16 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   const totalBeneficios = (custoVABruto + custoVTBruto + custosSindicato + vaSobreFerias + cestaBasica + examesMedicos + reservaTecnicaValor + manutencaoValor + outrosBeneficios) - (descontoVA + descontoVT);
 
   // 5. BLOCO B - INSUMOS (Unificado para manter extrato limpo)
-  // Unifica todos os ativos (EPI, Uniforme, Materiais) para exibir na linha de Uniforme/EPI do extrato
-  const ativosCustoMensal = Number(colab.ativosCustoMensal) || Number(cctEfetiva.uniformeEpi) || 0;
+  // Calcula o total de ativos priorizando o valor manual do colaborador, depois a composição detalhada do cargo, e por fim o valor fixo.
+  const calculateEpiTotal = (c: any) => {
+    if (!c.episConfig || !Array.isArray(c.episConfig)) return Number(c.uniformeEpi || 0);
+    return c.episConfig.reduce((acc: number, item: any) => {
+      const custoMensal = (Number(item.precoUnitario || 0) * Number(item.quantidade || 0)) / (Number(item.vidaUtil) || 1);
+      return acc + custoMensal;
+    }, 0);
+  };
+
+  const ativosCustoMensal = Number(colab.ativosCustoMensal) || calculateEpiTotal(cargo) || Number(cctEfetiva.uniformeEpi) || 0;
   const totalAtivos = ativosCustoMensal;
 
   const custoTotalDireto = totalBlocoA + totalBeneficios + totalAtivos;
@@ -130,9 +138,7 @@ export function calculateLaborCost(colab: any, premissas: any): any {
     detalheBlocoC: {
       va: custoVABruto,
       vt: custoVTBruto,
-      assistenciaMedica: custosSindicato / 2,
-      assistenciaSocial: custosSindicato / 2,
-      fundoFormacao: 0,
+      custosSindicato: custosSindicato,
       vaFerias: vaSobreFerias,
       cestaBasica: cestaBasica,
       descontoVA: -descontoVA,
