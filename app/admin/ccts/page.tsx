@@ -71,7 +71,7 @@ export default async function AdminCCTPage() {
                 <tr className="bg-[#1B4D3E] text-white uppercase text-[10px] font-black tracking-widest">
                   <th className="px-6 py-4">Sindicato / Região</th>
                   <th className="px-6 py-4">Função Principal</th>
-                  <th className="px-6 py-4 text-center">Encargos Totais</th>
+
                   <th className="px-6 py-4 text-center">Cargos</th>
                   <th className="px-6 py-4 text-center">Última Atualização</th>
                   <th className="px-6 py-4 text-right">Ações</th>
@@ -80,7 +80,7 @@ export default async function AdminCCTPage() {
               <tbody className="divide-y divide-slate-100">
                 {ccts.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-20 text-center text-slate-400 font-medium italic">
+                    <td colSpan={5} className="px-6 py-20 text-center text-slate-400 font-medium italic">
                       Nenhuma regra técnica cadastrada no sistema.
                     </td>
                   </tr>
@@ -105,12 +105,7 @@ export default async function AdminCCTPage() {
                           Múltiplos
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="text-center">
-                          <p className="text-sm font-black text-slate-700">{(Number(cct.encargoInss || 0) + Number(cct.encargoFgts || 0)).toFixed(2)}%</p>
-                          <p className="text-[9px] font-bold text-slate-400 uppercase">INSS/FGTS</p>
-                        </div>
-                      </td>
+
                       <td className="px-6 py-4">
                         <div className="flex flex-col items-center justify-center">
                           <div className="flex items-center gap-1.5 text-slate-500">
