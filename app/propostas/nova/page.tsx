@@ -306,6 +306,11 @@ function PropostaEditor() {
 
   const sumGroup = (g: any) => Object.values(g).reduce((a: any, b: any) => a + Number(b), 0) as number;
   const totalGeralEncargos = proposta.encargos.grupoA ? (sumGroup(proposta.encargos.grupoA) + sumGroup(proposta.encargos.grupoB) + sumGroup(proposta.encargos.grupoC) + sumGroup(proposta.encargos.grupoD) + sumGroup(proposta.encargos.grupoE) + sumGroup(proposta.encargos.grupoF)) : 0;
+ 
+  const normalizeText = (text: string) => {
+    if (!text) return "";
+    return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  };
 
   const addInsumoItem = (tipo: 'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis', produto: any) => {
     const current = proposta.insumos[tipo] || [];
@@ -370,7 +375,9 @@ function PropostaEditor() {
   const renderInsumosTab = (tipo: 'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis', categorias: string[], titulo: string) => {
     const itens = proposta.insumos[tipo] || [];
     const total = proposta.insumos[tipo.replace('detalhe', '').toLowerCase()] || 0;
-    const produtosFiltrados = produtosDb.filter(p => categorias.includes(p.categoria.toUpperCase()));
+    
+    const normalizedCats = categorias.map(c => normalizeText(c));
+    const produtosFiltrados = produtosDb.filter(p => normalizedCats.includes(normalizeText(p.categoria)));
 
     return (
       <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden">
@@ -978,9 +985,9 @@ function PropostaEditor() {
                  </div>
               </div>
            )}
-            {activeTab === 'materiais' && renderInsumosTab('detalheMateriais', ['MATERIAIS E INSUMOS'], 'Materiais e Produtos de Limpeza')}
-            {activeTab === 'maquinas' && renderInsumosTab('detalheMaquinas', ['EQUIPAMENTOS LOCADOS', 'EQUIPAMENTOS DEPRECIADOS'], 'Máquinas e Equipamentos')}
-            {activeTab === 'descartaveis' && renderInsumosTab('detalheDescartaveis', ['DESCARTAVEIS'], 'Descartáveis')}
+            {activeTab === 'materiais' && renderInsumosTab('detalheMateriais', ['MATERIAIS E INSUMOS', 'MATERIAIS', 'INSUMOS', 'PRODUTOS DE LIMPEZA'], 'Materiais e Produtos de Limpeza')}
+            {activeTab === 'maquinas' && renderInsumosTab('detalheMaquinas', ['EQUIPAMENTOS LOCADOS', 'EQUIPAMENTOS DEPRECIADOS', 'MAQUINAS', 'EQUIPAMENTOS'], 'Máquinas e Equipamentos')}
+            {activeTab === 'descartaveis' && renderInsumosTab('detalheDescartaveis', ['DESCARTAVEIS', 'DESCARTÁVEIS'], 'Descartáveis')}
 
             {/* ABA 5: EXTRATO (100% IGUAL AO PRINT - PLANILHA DE CUSTOS) */}
            {activeTab === 'extrato' && (
