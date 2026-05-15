@@ -157,8 +157,8 @@ function PropostaEditor() {
             let savedSindicatoId = (fullData.premissas as any)?.meta?.sindicatoId || '';
             
             // Fallback para propostas antigas: Se não houver sindicatoId no meta, pega do primeiro cargo
-            if (!savedSindicatoId && fullData.equipe?.[0]?.cargo?.cctId) {
-               savedSindicatoId = fullData.equipe[0].cargo.cctId;
+            if (!savedSindicatoId && (fullData.equipe?.[0] as any)?.cargo?.cctId) {
+               savedSindicatoId = (fullData.equipe[0] as any).cargo.cctId;
             }
             
             setProposta({
