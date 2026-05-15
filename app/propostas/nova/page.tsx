@@ -207,6 +207,23 @@ function PropostaEditor() {
     }
   }, [proposta, totalTributos]);
 
+  // Sincroniza a CCTBase de toda a equipe quando o sindicato principal muda
+  useEffect(() => {
+    if (proposta.cliente.sindicatoId && ccts.length > 0) {
+      const selectedCct = ccts.find(c => c.id === proposta.cliente.sindicatoId);
+      if (selectedCct) {
+        const needsUpdate = proposta.equipe.some((p: any) => p.cctBase?.id !== selectedCct.id);
+        if (needsUpdate) {
+          const newEquipe = proposta.equipe.map((p: any) => ({
+            ...p,
+            cctBase: selectedCct
+          }));
+          setProposta((prev: any) => ({...prev, equipe: newEquipe}));
+        }
+      }
+    }
+  }, [proposta.cliente.sindicatoId, ccts]);
+
   const addTributo = () => {
     setProposta({ ...proposta, premissas: { ...proposta.premissas, tributos: [...proposta.premissas.tributos, { id: Math.random().toString(), nome: '', percent: 0 }] } });
   };
@@ -683,7 +700,10 @@ function PropostaEditor() {
                                             const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, showConfig: !x.showConfig} : x);
                                             setProposta({...proposta, equipe: newE});
                                          }} className={`p-2 rounded transition-colors ${p.showConfig ? 'bg-emerald-100 text-[#1B4D3E]' : 'text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100'}`} title="Configurar Posto">
-                                            ⚙️ Config
+                                                                                         ⚙️ R$ {(() => {
+                                                const res = resultado?.items?.find((i: any) => i.id === p.id);
+                                                return (res?.detalhes?.ativos || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                             })()}
                                          </button>
                                          <button onClick={() => setProposta({...proposta, equipe: proposta.equipe.filter((x: any) => x.id !== p.id)})} className="text-slate-400 hover:text-red-600 transition-colors p-2 rounded hover:bg-red-50" title="Remover Posto">
                                             <Trash2 size={16}/>
