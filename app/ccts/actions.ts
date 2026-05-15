@@ -65,6 +65,8 @@ export async function createCCT(data: any) {
         reservaTecnica: Number(cctData.reservaTecnica) || 0,
         manutencaoEquipamentos: Number(cctData.manutencaoEquipamentos) || 0,
         outrosBeneficios: Number(cctData.outrosBeneficios) || 0,
+        insalubridadeBase: cctData.insalubridadeBase || 'MINIMO',
+        salarioMinimo: Number(cctData.salarioMinimo) || 1412,
 
         cargos: {
           create: (cargos || []).filter((c: any) => c.nome?.trim() !== '').map((c: any) => ({
@@ -73,6 +75,7 @@ export async function createCCT(data: any) {
             gratificacoes: Number(c.gratificacoes) || 0,
             assiduidade: Number(c.assiduidade) || 0,
             adicionalCopa: Number(c.adicionalCopa) || 0,
+            insalubridadePercent: Number(c.insalubridadePercent) || 0,
             episConfig: c.episConfig || []
           }))
         }
@@ -137,6 +140,8 @@ export async function updateCCT(id: string, data: any) {
         reservaTecnica: Number(cctData.reservaTecnica) || 0,
         manutencaoEquipamentos: Number(cctData.manutencaoEquipamentos) || 0,
         outrosBeneficios: Number(cctData.outrosBeneficios) || 0,
+        insalubridadeBase: cctData.insalubridadeBase || 'MINIMO',
+        salarioMinimo: Number(cctData.salarioMinimo) || 1412,
 
         cargos: {
           create: (cargos || []).filter((c: any) => c.nome?.trim() !== '').map((c: any) => ({
@@ -145,6 +150,7 @@ export async function updateCCT(id: string, data: any) {
             gratificacoes: Number(c.gratificacoes) || 0,
             assiduidade: Number(c.assiduidade) || 0,
             adicionalCopa: Number(c.adicionalCopa) || 0,
+            insalubridadePercent: Number(c.insalubridadePercent) || 0,
             episConfig: c.episConfig || []
           }))
         }
