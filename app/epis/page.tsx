@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
@@ -65,14 +66,26 @@ export default function EpisPage() {
   const handleSave = async () => {
     if (!formData.descricao) return alert('A descrição é obrigatória.');
     
-    setLoading(true);
-    if (formData.id) {
-      await updateProduto(formData.id, formData);
-    } else {
-      await createProduto(formData);
+    try {
+      setLoading(true);
+      let res;
+      if (formData.id) {
+        res = await updateProduto(formData.id, formData);
+      } else {
+        res = await createProduto(formData);
+      }
+      
+      if (res && !res.success) {
+        alert('Erro ao salvar: ' + (res.error || 'Desconhecido'));
+      } else {
+        await loadData();
+        setIsModalOpen(false);
+      }
+    } catch (err: any) {
+      alert('Erro inesperado: ' + err.message);
+    } finally {
+      setLoading(false);
     }
-    await loadData();
-    setIsModalOpen(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -242,9 +255,10 @@ export default function EpisPage() {
                   </button>
                   <button 
                     onClick={handleSave}
-                    className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382d] text-white py-3 rounded text-sm font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98]"
+                    disabled={loading}
+                    className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382d] disabled:opacity-50 text-white py-3 rounded text-sm font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98]"
                   >
-                    <Save size={18} /> Salvar Item
+                    <Save size={18} /> {loading ? 'Salvando...' : 'Salvar Item'}
                   </button>
                 </div>
               </div>

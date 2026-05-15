@@ -15,14 +15,11 @@ export async function getProdutos() {
   }
 }
 
-export async function createProduto(data: {
-  descricao: string;
-  unidade: string;
-  precoUnitario: number;
-  categoria: string;
-}) {
+export async function createProduto(data: any) {
   try {
-    const produto = await prisma.produto.create({ data });
+    // Remove o ID se vier vazio do formulário para o Prisma gerar um novo
+    const { id, ...rest } = data;
+    const produto = await prisma.produto.create({ data: rest });
     revalidatePath('/produtos');
     revalidatePath('/epis');
     return { success: true, produto };
