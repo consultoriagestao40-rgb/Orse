@@ -222,10 +222,33 @@ export async function getPropostas() {
 export async function updatePropostaStatus(id: string, status: string) {
   try {
     await prisma.proposta.update({ where: { id }, data: { status } });
+
+    // Registra a data de transição para "ACEITA" ou similar em metadados da última versão
+    const lastVersion = await prisma.propostaVersao.findFirst({
+      where: { propostaId: id },
+      orderBy: { versao: 'desc' }
+    });
+
+    if (lastVersion) {
+      const meta = (lastVersion.metadados as any) || {};
+      meta.statusHistory = meta.statusHistory || [];
+      meta.statusHistory.push({
+        status,
+        date: new Date().toISOString()
+      });
+      if (status.toUpperCase().startsWith('ACEIT') || status.toUpperCase().startsWith('APROV')) {
+        meta.dataAceitacao = new Date().toISOString();
+      }
+      await prisma.propostaVersao.update({
+        where: { id: lastVersion.id },
+        data: { metadados: meta }
+      });
+    }
+
     revalidatePath('/');
     return { success: true };
   } catch (error: any) {
-    console.error('Error updating status:', error);
+    console.error('Error updating proposta status:', error);
     return { success: false, error: error.message };
   }
 }
@@ -340,3 +363,102 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
     return null;
   }
 }
+
+export async function getKPIs() {
+  try {
+    const propostas = await prisma.proposta.findMany({
+      include: {
+        client: true,
+        user: true,
+        versoes: {
+          orderBy: { versao: 'desc' },
+          include: { items: true }
+        }
+      }
+    });
+
+    let totalVolume = 0;
+    let totalAceito = 0;
+    let totalPropostas = propostas.length;
+    let totalAceitasCount = 0;
+
+    const volumePorUsuario: Record<string, { totalVal: number, count: number }> = {};
+    const volumePorServico: Record<string, { totalVal: number, count: number }> = {};
+    
+    let somaDiasCiclo = 0;
+    let countDiasCiclo = 0;
+
+    propostas.forEach(p => {
+      const lastVersao = p.versoes[0];
+      if (!lastVersao) return;
+
+      const meta = (lastVersao.metadados as any) || {};
+      const valor = lastVersao.precoVenda || 0;
+      const statusUpper = p.status.toUpperCase();
+      const isAceito = statusUpper.startsWith('ACEIT') || statusUpper.startsWith('APROV');
+
+      totalVolume += valor;
+      if (isAceito) {
+        totalAceito += valor;
+        totalAceitasCount++;
+
+        // Ciclo de fechamento
+        const start = new Date(p.createdAt);
+        const end = meta.dataAceitacao 
+          ? new Date(meta.dataAceitacao) 
+          : new Date(lastVersao.dataCriacao);
+        
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const dias = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        somaDiasCiclo += dias;
+        countDiasCiclo++;
+      }
+
+      // Por usuário
+      const usuario = p.user.nome;
+      if (!volumePorUsuario[usuario]) {
+        volumePorUsuario[usuario] = { totalVal: 0, count: 0 };
+      }
+      volumePorUsuario[usuario].totalVal += valor;
+      volumePorUsuario[usuario].count += 1;
+
+      // Por tipo de serviço
+      const servico = meta.tipoServicos || 'Outros';
+      if (!volumePorServico[servico]) {
+        volumePorServico[servico] = { totalVal: 0, count: 0 };
+      }
+      volumePorServico[servico].totalVal += valor;
+      volumePorServico[servico].count += 1;
+    });
+
+    const ticketMedio = totalPropostas > 0 ? totalVolume / totalPropostas : 0;
+    const taxaConversao = totalVolume > 0 ? (totalAceito / totalVolume) * 100 : 0;
+    const cicloMedio = countDiasCiclo > 0 ? somaDiasCiclo / countDiasCiclo : 0;
+
+    return {
+      ticketMedio,
+      totalVolume,
+      totalAceito,
+      taxaConversao,
+      cicloMedio,
+      totalPropostas,
+      totalAceitasCount,
+      usuarioStats: Object.entries(volumePorUsuario).map(([nome, data]) => ({
+        nome,
+        volume: data.totalVal,
+        quantidade: data.count,
+        ticketMedio: data.count > 0 ? data.totalVal / data.count : 0
+      })),
+      servicoStats: Object.entries(volumePorServico).map(([nome, data]) => ({
+        nome,
+        volume: data.totalVal,
+        quantidade: data.count,
+        ticketMedio: data.count > 0 ? data.totalVal / data.count : 0
+      }))
+    };
+  } catch (error) {
+    console.error('Error calculating KPIs:', error);
+    return null;
+  }
+}
+

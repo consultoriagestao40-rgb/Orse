@@ -49,7 +49,7 @@ const Sidebar = () => {
     { icon: ShieldCheck, label: 'Usuários e Permissões', href: '/admin/usuarios', roles: ['ADMIN'] },
     { icon: ShoppingCart, label: 'Produtos e Insumos', href: '/produtos', roles: ['ADMIN', 'MANAGER'] },
     { icon: ShieldCheck, label: 'EPIs e Uniformes', href: '/epis', roles: ['ADMIN', 'MANAGER'] },
-    { icon: BarChart2, label: 'Controladoria', href: '#', roles: ['ADMIN'] },
+    { icon: BarChart2, label: 'Controladoria', href: '/admin/controladoria', roles: ['ADMIN'] },
     { icon: Settings, label: 'Configurações', href: '/admin/settings', roles: ['ADMIN'] },
   ];
  
