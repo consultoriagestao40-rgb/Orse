@@ -239,7 +239,7 @@ export default function ControladoriaPage() {
   // =========================================================================
   const uniqueMonths = new Set<string>();
   
-  // Garantir que os últimos 6 meses estejam sempre na escala
+  // Garantir que os últimos 6 meses estejam na escala
   const today = new Date();
   for (let i = 5; i >= 0; i--) {
     const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
@@ -248,40 +248,59 @@ export default function ControladoriaPage() {
     uniqueMonths.add(`${y}-${m}`);
   }
   
-  // Adicionar meses das propostas
+  // Adicionar meses das propostas filtradas (apenas filtro de vendedor)
   propostasList.forEach((p: any) => {
+    // Aplicamos o filtro de usuário nas propostas para determinar os meses relevantes
+    if (userFilter !== 'ALL' && p.usuario !== userFilter) return;
+    
     if (p.dataCriacao) {
       const d = new Date(p.dataCriacao);
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, '0');
-      uniqueMonths.add(`${y}-${m}`);
+      const monthStr = `${y}-${m}`;
+      uniqueMonths.add(monthStr);
     }
   });
   
-  // Ordenar cronologicamente e pegar os últimos 6 meses
+  // Ordenar cronologicamente e pegar os últimos 6 meses para histórico contínuo estável
   const sortedMonths = Array.from(uniqueMonths).sort();
   const chartMonths = sortedMonths.slice(-6);
   
-  // Mapeamento dos valores de cada mês
+  // Mapeamento dos valores de cada mês respeitando filtros
   const chartData = chartMonths.map((mKey: string) => {
     let realizado = 0;
+    
     propostasList.forEach((p: any) => {
       if (p.dataCriacao) {
         const d = new Date(p.dataCriacao);
         const y = d.getFullYear();
         const m = String(d.getMonth() + 1).padStart(2, '0');
         const pKey = `${y}-${m}`;
-        if (pKey === mKey && p.isAceito) {
-          realizado += p.valor || 0;
+        
+        if (pKey === mKey) {
+          // Filtro por Usuário
+          if (userFilter !== 'ALL' && p.usuario !== userFilter) return;
+          
+          if (p.isAceito) {
+            realizado += p.valor || 0;
+          }
         }
       }
     });
 
+    // Previsto (Meta) para esse mês:
     let previsto = 0;
-    totalSellers.forEach((nome: string) => {
-      const key = `${nome}_${mKey}`;
-      previsto += metas[key] !== undefined ? metas[key] : 100000;
-    });
+    if (userFilter !== 'ALL') {
+      // Apenas a meta do vendedor selecionado
+      const key = `${userFilter}_${mKey}`;
+      previsto = metas[key] !== undefined ? metas[key] : 100000;
+    } else {
+      // Meta consolidada de todos os vendedores do sistema
+      totalSellers.forEach((nome: string) => {
+        const key = `${nome}_${mKey}`;
+        previsto += metas[key] !== undefined ? metas[key] : 100000;
+      });
+    }
     if (previsto === 0) previsto = 100000;
 
     const atingidoPct = previsto > 0 ? (realizado / previsto) * 100 : 0;
@@ -926,8 +945,8 @@ export default function ControladoriaPage() {
 
                 {/* SVG Combo Chart Canvas */}
                 <div className="w-full overflow-x-auto select-none">
-                  <div className="min-w-[620px] h-[260px] relative px-2">
-                    <svg className="w-full h-full overflow-visible" viewBox="0 0 600 240">
+                  <div className="min-w-[920px] h-[260px] relative px-2">
+                    <svg className="w-full h-full overflow-visible" viewBox="0 0 1000 240">
                       
                       {/* Grid Lines Horizontais e Eixos Y */}
                       {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
@@ -938,9 +957,9 @@ export default function ControladoriaPage() {
                           <g key={index}>
                             {/* Linha pontilhada */}
                             <line 
-                              x1="55" 
+                              x1="70" 
                               y1={yCoord} 
-                              x2="545" 
+                              x2="930" 
                               y2={yCoord} 
                               stroke="#E2E8F0" 
                               strokeWidth="1" 
@@ -948,7 +967,7 @@ export default function ControladoriaPage() {
                             />
                             {/* Texto Eixo Y Esquerdo (Faturamento) */}
                             <text 
-                              x="45" 
+                              x="60" 
                               y={yCoord + 3} 
                               textAnchor="end" 
                               className="fill-slate-400 text-[8px] font-bold tracking-tight"
@@ -957,7 +976,7 @@ export default function ControladoriaPage() {
                             </text>
                             {/* Texto Eixo Y Direito (Atingimento %) */}
                             <text 
-                              x="555" 
+                              x="940" 
                               y={yCoord + 3} 
                               textAnchor="start" 
                               className="fill-amber-500 text-[8px] font-black tracking-tight"
@@ -969,12 +988,12 @@ export default function ControladoriaPage() {
                       })}
 
                       {/* Eixo Base X */}
-                      <line x1="55" y1="200" x2="545" y2="200" stroke="#CBD5E1" strokeWidth="1.5" />
+                      <line x1="70" y1="200" x2="930" y2="200" stroke="#CBD5E1" strokeWidth="1.5" />
 
                       {/* Renderização das Colunas (Previsto e Realizado) */}
                       {chartData.map((d, i) => {
-                        const gap = 490 / chartData.length;
-                        const xCenter = 55 + (i * gap) + (gap / 2);
+                        const gap = 860 / chartData.length;
+                        const xCenter = 70 + (i * gap) + (gap / 2);
                         
                         // Previsto (Indigo)
                         const hPrevisto = (d.previsto / maxValY) * 180;
@@ -988,31 +1007,50 @@ export default function ControladoriaPage() {
                           <g key={`bar-${i}`} className="group">
                             {/* Previsto Rect */}
                             <rect
-                              x={xCenter - 14}
+                              x={xCenter - 26}
                               y={yPrevisto}
-                              width="11"
+                              width="22"
                               height={Math.max(1, hPrevisto)}
                               fill="#6366F1"
                               rx="2"
                               className="transition-all duration-300 hover:fill-indigo-600 cursor-pointer"
                             />
+                            {/* Rótulo de Valor Previsto sobre a barra */}
+                            <text
+                              x={xCenter - 15}
+                              y={yPrevisto - 6}
+                              textAnchor="middle"
+                              className="fill-indigo-600 text-[8px] font-black"
+                            >
+                              {formatShortCurrency(d.previsto)}
+                            </text>
+
                             {/* Realizado Rect */}
                             <rect
-                              x={xCenter + 3}
+                              x={xCenter + 4}
                               y={yRealizado}
-                              width="11"
+                              width="22"
                               height={Math.max(1, hRealizado)}
                               fill="#10B981"
                               rx="2"
                               className="transition-all duration-300 hover:fill-emerald-600 cursor-pointer"
                             />
+                            {/* Rótulo de Valor Realizado sobre a barra */}
+                            <text
+                              x={xCenter + 15}
+                              y={yRealizado - 6}
+                              textAnchor="middle"
+                              className="fill-emerald-600 text-[8px] font-black"
+                            >
+                              {formatShortCurrency(d.realizado)}
+                            </text>
                             
                             {/* Rótulo de Mês no Eixo X */}
                             <text 
                               x={xCenter} 
                               y="218" 
                               textAnchor="middle" 
-                              className="fill-slate-500 text-[8px] font-black uppercase tracking-tighter"
+                              className="fill-slate-500 text-[9px] font-black uppercase tracking-tighter"
                             >
                               {formatMonthYear(d.monthKey).split(' de ')[0]}
                             </text>
@@ -1030,9 +1068,9 @@ export default function ControladoriaPage() {
 
                       {/* Linha do Gráfico de Percentual de Atingimento */}
                       {(() => {
-                        const gap = 490 / chartData.length;
+                        const gap = 860 / chartData.length;
                         const points = chartData.map((d, i) => {
-                          const xCenter = 55 + (i * gap) + (gap / 2);
+                          const xCenter = 70 + (i * gap) + (gap / 2);
                           const hPct = (d.atingidoPct / maxPctY) * 180;
                           const yCoord = 200 - hPct;
                           return `${xCenter},${yCoord}`;
@@ -1053,7 +1091,7 @@ export default function ControladoriaPage() {
                             
                             {/* Círculos e Rótulos Flutuantes em cada Data Point */}
                             {chartData.map((d, i) => {
-                              const xCenter = 55 + (i * gap) + (gap / 2);
+                              const xCenter = 70 + (i * gap) + (gap / 2);
                               const hPct = (d.atingidoPct / maxPctY) * 180;
                               const yCoord = 200 - hPct;
                               
@@ -1089,39 +1127,6 @@ export default function ControladoriaPage() {
 
                     </svg>
                   </div>
-                </div>
-
-                {/* Audit Grid - Mini Cards Exibindo Valores Exatos */}
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-3 border-t border-slate-100 pt-5 mt-4 select-none">
-                  {chartData.map((d, i) => (
-                    <div 
-                      key={i} 
-                      className="bg-slate-50/50 hover:bg-slate-50 border border-slate-200/50 hover:border-slate-300/80 p-3 rounded-2xl transition-all flex flex-col justify-between"
-                    >
-                      <div className="border-b border-slate-200/40 pb-1.5 mb-2">
-                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block leading-none">
-                          {formatMonthYear(d.monthKey).split(' de ')[0]}
-                        </span>
-                        <span className="text-[7px] font-bold text-slate-400/80 uppercase tracking-wider block mt-0.5">
-                          {formatMonthYear(d.monthKey).split(' de ')[1]}
-                        </span>
-                      </div>
-                      <div className="space-y-1.5">
-                        <div>
-                          <span className="text-[7px] font-black text-indigo-400 uppercase tracking-wider block leading-none">Previsto</span>
-                          <span className="text-[10px] font-black text-slate-700 block mt-0.5 leading-tight">{formatCurrency(d.previsto)}</span>
-                        </div>
-                        <div>
-                          <span className="text-[7px] font-black text-emerald-400 uppercase tracking-wider block leading-none">Realizado</span>
-                          <span className="text-[10px] font-black text-slate-800 block mt-0.5 leading-tight">{formatCurrency(d.realizado)}</span>
-                        </div>
-                        <div className="bg-amber-50/70 border border-amber-100/50 rounded-lg p-1.5 mt-2 flex items-center justify-between">
-                          <span className="text-[7px] font-black text-amber-600 uppercase tracking-widest block">Ating.</span>
-                          <span className="text-[10px] font-black text-amber-600 block">{d.atingidoPct.toFixed(1)}%</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
                 </div>
 
               </div>
