@@ -134,6 +134,86 @@ function PropostaEditor() {
   const [activeAdicionaisPostoId, setActiveAdicionaisPostoId] = useState<string | null>(null);
   const [activeEpisPostoId, setActiveEpisPostoId] = useState<string | null>(null);
 
+  // =========================================================================
+  // ESTADOS DA DRE PARAMETRIZADA E EDITÁVEL
+  // =========================================================================
+  const [dreTaxPercent, setDreTaxPercent] = useState<number>(12.5);
+  const [dreEncargos, setDreEncargos] = useState({
+     fgts: 8.00,
+     decimoTerceiro: 9.39,
+     ferias: 9.35,
+     fgtsRescisorio: 0.99,
+     outros: 2.71,
+     inss: 20.00
+  });
+
+  // Estado para controlar a expansão e retração das contas do DRE
+  const [dreExpandedRows, setDreExpandedRows] = useState<Record<string, boolean>>({
+     '01': true,
+     '01.1': false,
+     '01.2': false,
+     '02': true,
+     '02.1': false,
+     '03': true,
+     '03.1': false,
+     '03.2': false,
+     '03.3': false,
+     '03.4': false,
+     '03.5': false,
+     '03.6': false,
+     '03.7': false,
+     '03.8': false,
+     '03.9': false
+  });
+
+  // Sincroniza parâmetros padrão do DRE com os dados da Proposta quando carregada
+  useEffect(() => {
+     if (proposta && proposta.id) {
+        // Tributos padrão (soma de todos os impostos)
+        const totalTributos = (proposta.premissas?.tributos || []).reduce((acc: number, t: any) => acc + (t.percent || 0), 0);
+        if (totalTributos > 0) {
+           setDreTaxPercent(totalTributos);
+        }
+
+        // Encargos padrão dos grupos
+        const fgtsVal = proposta.encargos?.grupoA?.fgts ?? 8.00;
+        const inssVal = proposta.encargos?.grupoA?.previdenciaSocial ?? 20.00;
+        const decimoTerceiroVal = proposta.encargos?.grupoC?.decimoTerceiro ?? 9.39;
+        const feriasVal = proposta.encargos?.grupoB?.ferias ?? 9.35;
+        const fgtsRescisorioVal = proposta.encargos?.grupoD?.indenizacaoSemJustaCausa ?? 0.99;
+        
+        // Outros encargos sum
+        let outrosSoma = 0;
+        const pEnc = proposta.encargos;
+        if (pEnc && typeof pEnc === 'object') {
+           Object.entries(pEnc).forEach(([grupoNome, grupo]: [string, any]) => {
+              if (grupo && typeof grupo === 'object') {
+                 Object.entries(grupo).forEach(([key, val]: [string, any]) => {
+                    if (
+                       !(grupoNome === 'grupoA' && key === 'fgts') &&
+                       !(grupoNome === 'grupoA' && key === 'previdenciaSocial') &&
+                       !(grupoNome === 'grupoC' && key === 'decimoTerceiro') &&
+                       !(grupoNome === 'grupoB' && key === 'ferias') &&
+                       !(grupoNome === 'grupoD' && key === 'indenizacaoSemJustaCausa')
+                    ) {
+                       outrosSoma += Number(val) || 0;
+                    }
+                 });
+              }
+           });
+        }
+
+        setDreEncargos({
+           fgts: fgtsVal,
+           decimoTerceiro: decimoTerceiroVal,
+           ferias: feriasVal,
+           fgtsRescisorio: fgtsRescisorioVal,
+           outros: Number(outrosSoma.toFixed(2)) || 2.71,
+           inss: inssVal
+        });
+     }
+  }, [proposta.id]);
+
   useEffect(() => {
     async function load() {
       try {
@@ -1360,29 +1440,616 @@ function PropostaEditor() {
               );
             })()}
 
-           {/* ABA 7: DRE */}
-           {activeTab === 'dre' && (
-              <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden overflow-x-auto">
-                 <div className="bg-[#1B4D3E] px-6 py-4">
-                    <h2 className="text-white text-sm font-bold uppercase tracking-wider">DRE - Demonstrativo de Resultados</h2>
-                 </div>
-                 <table className="w-full text-[10px] border-collapse">
-                    <thead>
-                       <tr className="bg-slate-100 text-slate-600 uppercase tracking-wider border-b border-slate-300">
-                          <th className="p-4 text-left font-bold">Indicador</th>
-                          {MONTHS.map(m => <th key={m} className="p-4 text-right font-semibold">{m}</th>)}
-                          <th className="p-4 text-right bg-emerald-50 text-[#1B4D3E] font-bold">ANUAL</th>
-                       </tr>
-                    </thead>
-                    <tbody>
-                       <tr className="border-b border-slate-200 hover:bg-slate-50"><td className="p-4 font-bold text-slate-800">Receita Bruta</td>{MONTHS.map(m => <td key={m} className="p-4 text-right text-slate-700">{formatCurrency(resultado?.faturamentoBruto || 0)}</td>)}<td className="p-4 text-right font-bold bg-emerald-50 text-[#1B4D3E]">{formatCurrency((resultado?.faturamentoBruto || 0) * 12)}</td></tr>
-                       <tr className="border-b border-slate-200 hover:bg-slate-50"><td className="p-4 font-bold text-slate-800">Impostos</td>{MONTHS.map(m => <td key={m} className="p-4 text-right text-red-600">-{formatCurrency(resultado?.impostosTotais || 0)}</td>)}<td className="p-4 text-right font-bold bg-red-50 text-red-700">-{formatCurrency((resultado?.impostosTotais || 0) * 12)}</td></tr>
-                       <tr className="border-b border-slate-200 hover:bg-slate-50"><td className="p-4 font-bold text-slate-800">Custos Diretos (A+B+C)</td>{MONTHS.map(m => <td key={m} className="p-4 text-right text-slate-700">-{formatCurrency(resultado?.custoDiretoTotal || 0)}</td>)}<td className="p-4 text-right font-bold bg-slate-100">-{formatCurrency((resultado?.custoDiretoTotal || 0) * 12)}</td></tr>
-                       <tr className="bg-emerald-50"><td className="p-4 font-bold text-[#1B4D3E]">Margem Operacional (Lucro)</td>{MONTHS.map(m => <td key={m} className="p-4 text-right font-bold text-[#1B4D3E]">{formatCurrency(resultado?.margemBruta || 0)}</td>)}<td className="p-4 text-right font-bold bg-[#1B4D3E] text-emerald-400">{formatCurrency((resultado?.margemBruta || 0) * 12)}</td></tr>
-                    </tbody>
-                 </table>
-              </div>
-           )}
+           {/* ABA 7: DRE - ORÇAMENTO EXECUTIVO E DRE ULTRA PREMIUM */}
+            {activeTab === 'dre' && (() => {
+               // 1. Cálculos de Remuneração e Adicionais dos Colaboradores
+               let totalSalarios = 0;
+               let totalInsalubridade = 0;
+               let totalPericulosidade = 0;
+               let totalNoturno = 0;
+               let totalIntrajornada = 0;
+               let totalDsr = 0;
+
+               proposta.equipe.forEach((colab: any) => {
+                  const qty = Number(colab.quantidade) || 1;
+                  const cargo = colab.cargo || {};
+                  const param = colab.parametrosPosto || {};
+                  const cctEfetiva = colab.cctBase || {};
+                  const salarioBase = Number(cargo.pisoSalarial || 0) || 0;
+                  
+                  const temPericulosidade = param.periculosidade !== undefined ? param.periculosidade : (cargo.periculosidade || false);
+                  const adicionalPericulosidade = temPericulosidade ? salarioBase * 0.3 : 0;
+                  
+                  const pctInsalubridade = param.insalubridadePercent !== undefined ? param.insalubridadePercent : (cargo.insalubridadePercent || 0);
+                  const baseInsalubridade = cctEfetiva.insalubridadeBase === 'SALARIO' ? salarioBase : (Number(cctEfetiva.salarioMinimo) || 1412);
+                  const adicionalInsalubridade = baseInsalubridade * (pctInsalubridade / 100);
+                  
+                  let adicionalNoturno = 0;
+                  if (param.adicionalNoturnoHoras > 0) {
+                    const valorHora = salarioBase / 220; 
+                    adicionalNoturno = (valorHora * 0.2) * param.adicionalNoturnoHoras;
+                  }
+                  
+                  let intrajornada = 0;
+                  if (param.intrajornadaHoras > 0) {
+                    const valorHora = salarioBase / 220;
+                    intrajornada = (valorHora * 1.5) * param.intrajornadaHoras;
+                  }
+
+                  let dsrAdicionais = 0;
+                  if (param.dsrPercent > 0) {
+                    dsrAdicionais = (adicionalNoturno + intrajornada) * (param.dsrPercent / 100);
+                  }
+
+                  totalSalarios += salarioBase * qty;
+                  totalInsalubridade += adicionalInsalubridade * qty;
+                  totalPericulosidade += adicionalPericulosidade * qty;
+                  totalNoturno += adicionalNoturno * qty;
+                  totalIntrajornada += intrajornada * qty;
+                  totalDsr += dsrAdicionais * qty;
+               });
+
+               const totalRemuneracaoBase = totalSalarios + totalInsalubridade + totalPericulosidade + totalNoturno + totalIntrajornada + totalDsr;
+
+               // 2. Cálculos de Encargos Parametrizados na Tela
+               const encargosValores = {
+                  fgts: totalRemuneracaoBase * (dreEncargos.fgts / 100),
+                  decimoTerceiro: totalRemuneracaoBase * (dreEncargos.decimoTerceiro / 100),
+                  ferias: totalRemuneracaoBase * (dreEncargos.ferias / 100),
+                  fgtsRescisorio: totalRemuneracaoBase * (dreEncargos.fgtsRescisorio / 100),
+                  outros: totalRemuneracaoBase * (dreEncargos.outros / 100),
+                  inss: totalRemuneracaoBase * (dreEncargos.inss / 100)
+               };
+               const totalEncargosSociais = Object.values(encargosValores).reduce((a, b) => a + b, 0);
+
+               // 3. Cálculos de Benefícios a partir do Pricing Engine
+               const totalVT = resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.detalheBlocoC?.vt || 0) * i.quantidade), 0) || 0;
+               const totalVA = resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.detalheBlocoC?.va || 0) * i.quantidade), 0) || 0;
+               const totalVAFerias = resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.detalheBlocoC?.vaFerias || 0) * i.quantidade), 0) || 0;
+               const totalCesta = resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.detalheBlocoC?.cestaBasica || 0) * i.quantidade), 0) || 0;
+               const totalSindicato = resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.detalheBlocoC?.custosSindicato || 0) * i.quantidade), 0) || 0;
+               const totalOutrosBen = resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.detalheBlocoC?.outros || 0) * i.quantidade), 0) || 0;
+               const totalDescontoVA = Math.abs(resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.detalheBlocoC?.descontoVA || 0) * i.quantidade), 0) || 0);
+               const totalDescontoVT = Math.abs(resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.detalheBlocoC?.descontoVT || 0) * i.quantidade), 0) || 0);
+
+               const totalBeneficiosSubtotal = (totalVT + totalVA + totalVAFerias + totalCesta + totalSindicato + totalOutrosBen) - (totalDescontoVA + totalDescontoVT);
+
+               // 4. Cálculos de SSMA
+               const totalEpi = resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.ativos || 0) * i.quantidade), 0) || 0;
+               const totalExames = resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.detalheBlocoC?.exames || 0) * i.quantidade), 0) || 0;
+               const totalSSMASubtotal = totalEpi + totalExames;
+
+               // 5. Materiais e Equipamentos
+               const totalMateriais = proposta.insumos.materiais || 0;
+               const totalMaquinas = proposta.insumos.maquinas || 0;
+
+               // 6. Valores Totais Mensais e Anuais
+               const receitaMensal = resultado?.faturamentoBruto || 0;
+               const tributosMensal = receitaMensal * (dreTaxPercent / 100);
+               const receitaLiquidaMensal = receitaMensal - tributosMensal;
+
+               const custoOperacionalMensal = totalRemuneracaoBase + totalEncargosSociais + totalBeneficiosSubtotal + totalSSMASubtotal + totalMateriais + totalMaquinas;
+               const margemBrutaMensal = receitaLiquidaMensal - custoOperacionalMensal;
+
+               // Função de renderização de célula de moeda e percentual vertical
+               const renderValueCell = (value: number, baseValue: number, isMargem = false) => {
+                  const pct = baseValue > 0 ? (value / baseValue) * 100 : 0;
+                  return (
+                     <td className="p-3 text-right whitespace-nowrap">
+                        <div className={`font-bold text-xs ${isMargem ? 'text-[#1B4D3E]' : 'text-slate-700'}`}>
+                           {formatCurrency(value)}
+                        </div>
+                        <div className="text-[9px] font-bold text-slate-400 block mt-0.5">
+                           {pct.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
+                        </div>
+                     </td>
+                  );
+               };
+
+               const toggleRow = (id: string) => {
+                  setDreExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
+               };
+
+               return (
+                  <div className="w-full bg-white border border-slate-100 shadow-[0_20px_50px_rgba(27,77,62,0.06)] rounded-2xl overflow-hidden flex flex-col">
+                     {/* Cabeçalho da DRE */}
+                     <div className="bg-gradient-to-r from-[#1B4D3E] via-[#215E4C] to-[#12362b] text-white p-5 flex items-center justify-between border-b border-emerald-500/20">
+                        <div className="flex items-center gap-3">
+                           <div className="bg-white/10 p-2.5 rounded-xl border border-white/10 shadow-inner">
+                              <PieChart className="text-emerald-400" size={18} />
+                           </div>
+                           <div>
+                              <h3 className="font-extrabold text-xs uppercase tracking-widest text-emerald-100/90">DRE do Projeto</h3>
+                              <p className="text-[10px] text-emerald-200 uppercase font-bold tracking-wider mt-0.5">Demonstração do Resultado & Orçamento Executivo</p>
+                           </div>
+                        </div>
+                        <div className="text-right">
+                           <span className="bg-[#D4AF37]/15 text-[#e5c158] border border-[#D4AF37]/35 text-[9px] px-3 py-1 rounded-full font-black tracking-widest uppercase shadow-sm">
+                              Margem Bruta Proposta: {((margemBrutaMensal / (receitaMensal || 1)) * 100).toFixed(1)}%
+                           </span>
+                        </div>
+                     </div>
+
+                     {/* Planilha de Cálculo */}
+                     <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse min-w-[1400px]">
+                           <thead>
+                              <tr className="bg-[#F8FAFC] text-slate-400 uppercase text-[9px] tracking-wider font-black border-b border-slate-200/80">
+                                 <th className="p-4 text-left w-96">Estrutura DRE</th>
+                                 {MONTHS.map(m => (
+                                    <th key={m} className="p-4 text-right w-28 font-extrabold">{m}</th>
+                                 ))}
+                                 <th className="p-4 text-right w-36 bg-emerald-50/50 text-[#1B4D3E] font-black border-l border-slate-200/60">TOTAL ANUAL</th>
+                              </tr>
+                           </thead>
+                           <tbody className="divide-y divide-slate-100">
+                              
+                              {/* 01. RECEITA BRUTA */}
+                              <tr className="bg-slate-50/60 font-bold border-b border-slate-200/60 hover:bg-slate-100/40 transition-colors">
+                                 <td className="p-3 pl-4 flex items-center gap-2">
+                                    <button onClick={() => toggleRow('01')} className="text-slate-400 hover:text-[#1B4D3E] p-1 rounded hover:bg-slate-200/50 transition-colors">
+                                       <span className="text-xs transition-transform duration-200 block">{dreExpandedRows['01'] ? '▼' : '►'}</span>
+                                    </button>
+                                    <span className="text-xs uppercase tracking-wider font-extrabold text-blue-700">01. RECEITA BRUTA</span>
+                                 </td>
+                                 {MONTHS.map(m => renderValueCell(receitaMensal, receitaMensal))}
+                                 <td className="p-3 text-right bg-emerald-50/20 font-black border-l border-slate-200/60 text-blue-800">
+                                    <div className="text-xs">{formatCurrency(receitaMensal * 12)}</div>
+                                    <div className="text-[9px] text-slate-400 mt-0.5">100.0%</div>
+                                 </td>
+                              </tr>
+
+                              {/* 01.1 - Receita de Serviços */}
+                              {dreExpandedRows['01'] && (
+                                 <tr className="bg-slate-50/30 font-semibold border-b border-slate-100">
+                                    <td className="p-2.5 pl-8 flex items-center gap-1.5">
+                                       <button onClick={() => toggleRow('01.1')} className="text-slate-400 hover:text-[#1B4D3E] p-0.5 rounded">
+                                          <span className="text-[10px]">{dreExpandedRows['01.1'] ? '▼' : '►'}</span>
+                                       </button>
+                                       <span className="text-xs text-slate-700">01.1 - Receita de Serviços</span>
+                                    </td>
+                                    {MONTHS.map(m => renderValueCell(receitaMensal, receitaMensal))}
+                                    <td className="p-2.5 text-right bg-slate-50/50 font-bold border-l border-slate-200/40">
+                                       <div className="text-xs">{formatCurrency(receitaMensal * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">100.0%</div>
+                                    </td>
+                                 </tr>
+                              )}
+
+                              {/* 01.1.1 - Serviços Vendidos */}
+                              {dreExpandedRows['01'] && dreExpandedRows['01.1'] && (
+                                 <tr className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
+                                    <td className="p-2 pl-14 text-xs text-slate-500 font-medium">01.1.1 - Serviços Vendidos</td>
+                                    {MONTHS.map(m => renderValueCell(receitaMensal, receitaMensal))}
+                                    <td className="p-2 text-right font-semibold border-l border-slate-100 text-slate-600">
+                                       <div className="text-[11px]">{formatCurrency(receitaMensal * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">100.0%</div>
+                                    </td>
+                                 </tr>
+                              )}
+
+                              {/* 01.1.2 a 01.1.5 (Zeradões) */}
+                              {dreExpandedRows['01'] && dreExpandedRows['01.1'] && ['01.1.2 - Serviços Extras', '01.1.3 - Assistência Técnica', '01.1.4 - Vendas de Produtos', '01.1.5 - Comissão de Vendas'].map(lbl => (
+                                 <tr key={lbl} className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors text-slate-400">
+                                    <td className="p-2 pl-14 text-xs font-medium">{lbl}</td>
+                                    {MONTHS.map(m => <td key={m} className="p-2 text-right">-</td>)}
+                                    <td className="p-2 text-right font-semibold border-l border-slate-100">-</td>
+                                 </tr>
+                              ))}
+
+                              {/* 01.2 - Receita de Vendas */}
+                              {dreExpandedRows['01'] && (
+                                 <tr className="bg-slate-50/30 font-semibold border-b border-slate-100 text-slate-400">
+                                    <td className="p-2.5 pl-8 flex items-center gap-1.5">
+                                       <button onClick={() => toggleRow('01.2')} className="text-slate-300 p-0.5 rounded">
+                                          <span className="text-[10px]">{dreExpandedRows['01.2'] ? '▼' : '►'}</span>
+                                       </button>
+                                       <span className="text-xs">01.2 - Receita de Vendas</span>
+                                    </td>
+                                    {MONTHS.map(m => <td key={m} className="p-2.5 text-right">-</td>)}
+                                    <td className="p-2.5 text-right font-bold border-l border-slate-200/40">-</td>
+                                 </tr>
+                              )}
+
+                              {/* 1.3 - Garantia */}
+                              {dreExpandedRows['01'] && (
+                                 <tr className="border-b border-slate-100 text-slate-400">
+                                    <td className="p-2 pl-12 text-xs font-semibold">1.3 - Garantia</td>
+                                    {MONTHS.map(m => <td key={m} className="p-2 text-right">-</td>)}
+                                    <td className="p-2 text-right font-bold border-l border-slate-200/40">-</td>
+                                 </tr>
+                              )}
+
+                              {/* 02. TRIBUTO SOBRE FATURAMENTO */}
+                              <tr className="bg-slate-50/60 font-bold border-b border-slate-200/60 hover:bg-slate-100/40 transition-colors">
+                                 <td className="p-3 pl-4 flex items-center gap-2">
+                                    <button onClick={() => toggleRow('02')} className="text-slate-400 hover:text-[#1B4D3E] p-1 rounded hover:bg-slate-200/50 transition-colors">
+                                       <span className="text-xs transition-transform duration-200 block">{dreExpandedRows['02'] ? '▼' : '►'}</span>
+                                    </button>
+                                    <span className="text-xs uppercase tracking-wider font-extrabold text-red-600">02. TRIBUTO SOBRE FATURAMENTO</span>
+                                 </td>
+                                 {MONTHS.map(m => renderValueCell(tributosMensal, receitaMensal))}
+                                 <td className="p-3 text-right bg-red-50/20 font-black border-l border-slate-200/60 text-red-800">
+                                    <div className="text-xs">{formatCurrency(tributosMensal * 12)}</div>
+                                    <div className="text-[9px] text-slate-400 mt-0.5">
+                                       {((tributosMensal / (receitaMensal || 1)) * 100).toFixed(1)}%
+                                    </div>
+                                 </td>
+                              </tr>
+
+                              {/* 02.1 - Tributos */}
+                              {dreExpandedRows['02'] && (
+                                 <tr className="bg-slate-50/30 font-semibold border-b border-slate-100">
+                                    <td className="p-2.5 pl-8 flex items-center gap-1.5">
+                                       <button onClick={() => toggleRow('02.1')} className="text-slate-400 hover:text-[#1B4D3E] p-0.5 rounded">
+                                          <span className="text-[10px]">{dreExpandedRows['02.1'] ? '▼' : '►'}</span>
+                                       </button>
+                                       <span className="text-xs text-slate-700">02.1 - Tributos</span>
+                                    </td>
+                                    {MONTHS.map(m => renderValueCell(tributosMensal, receitaMensal))}
+                                    <td className="p-2.5 text-right bg-slate-50/50 font-bold border-l border-slate-200/40">
+                                       <div className="text-xs">{formatCurrency(tributosMensal * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">
+                                          {((tributosMensal / (receitaMensal || 1)) * 100).toFixed(1)}%
+                                       </div>
+                                    </td>
+                                 </tr>
+                              )}
+
+                              {/* 02.1.1 - Simples Nacional - DAS (EDITÁVEL NA TELA!) */}
+                              {dreExpandedRows['02'] && dreExpandedRows['02.1'] && (
+                                 <tr className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
+                                    <td className="p-3 pl-14">
+                                       <div className="text-xs font-bold text-slate-700">02.1.1 - Simples Nacional - DAS</div>
+                                       <div className="flex items-center gap-1 text-[9px] text-slate-400 mt-1">
+                                          Taxa Real: 
+                                          <input 
+                                             type="number" 
+                                             step="0.01" 
+                                             value={dreTaxPercent} 
+                                             onChange={(e) => setDreTaxPercent(Number(e.target.value))} 
+                                             className="w-12 py-0.5 border border-slate-200 rounded text-center text-[10px] font-black text-[#1B4D3E] bg-[#F8FAFC] focus:bg-white focus:ring-2 focus:ring-emerald-500/10 outline-none" 
+                                          /> %
+                                       </div>
+                                    </td>
+                                    {MONTHS.map(m => renderValueCell(tributosMensal, receitaMensal))}
+                                    <td className="p-3 text-right font-semibold border-l border-slate-100 text-slate-600">
+                                       <div className="text-[11px]">{formatCurrency(tributosMensal * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">
+                                          {((tributosMensal / (receitaMensal || 1)) * 100).toFixed(1)}%
+                                       </div>
+                                    </td>
+                                 </tr>
+                              )}
+
+                              {/* 02.1.2 e 02.1.3 (Zeradões) */}
+                              {dreExpandedRows['02'] && dreExpandedRows['02.1'] && ['02.1.2 - Sefaz', '02.1.3 - Retenção na fonte'].map(lbl => (
+                                 <tr key={lbl} className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors text-slate-400">
+                                    <td className="p-2 pl-14 text-xs font-medium">{lbl}</td>
+                                    {MONTHS.map(m => <td key={m} className="p-2 text-right">-</td>)}
+                                    <td className="p-2 text-right font-semibold border-l border-slate-100">-</td>
+                                 </tr>
+                              ))}
+
+                              {/* (=) RECEITA LÍQUIDA */}
+                              <tr className="bg-blue-50/40 font-black border-y border-slate-200/80 text-blue-900">
+                                 <td className="p-3.5 pl-6 text-xs uppercase tracking-wider">(=) RECEITA LÍQUIDA</td>
+                                 {MONTHS.map(m => renderValueCell(receitaLiquidaMensal, receitaMensal))}
+                                 <td className="p-3.5 text-right bg-blue-100/20 font-black border-l border-slate-300">
+                                    <div className="text-xs">{formatCurrency(receitaLiquidaMensal * 12)}</div>
+                                    <div className="text-[9px] text-blue-800/80 mt-0.5">
+                                       {((receitaLiquidaMensal / (receitaMensal || 1)) * 100).toFixed(1)}%
+                                    </div>
+                                 </td>
+                              </tr>
+
+                              {/* 03. CUSTO OPERACIONAL */}
+                              <tr className="bg-slate-50/60 font-bold border-b border-slate-200/60 hover:bg-slate-100/40 transition-colors">
+                                 <td className="p-3 pl-4 flex items-center gap-2">
+                                    <button onClick={() => toggleRow('03')} className="text-slate-400 hover:text-[#1B4D3E] p-1 rounded hover:bg-slate-200/50 transition-colors">
+                                       <span className="text-xs transition-transform duration-200 block">{dreExpandedRows['03'] ? '▼' : '►'}</span>
+                                    </button>
+                                    <span className="text-xs uppercase tracking-wider font-extrabold text-[#1B4D3E]">03. CUSTO OPERACIONAL</span>
+                                 </td>
+                                 {MONTHS.map(m => renderValueCell(custoOperacionalMensal, receitaMensal))}
+                                 <td className="p-3 text-right bg-emerald-50/20 font-black border-l border-slate-200/60 text-[#1B4D3E]">
+                                    <div className="text-xs">{formatCurrency(custoOperacionalMensal * 12)}</div>
+                                    <div className="text-[9px] text-slate-400 mt-0.5">
+                                       {((custoOperacionalMensal / (receitaMensal || 1)) * 100).toFixed(1)}%
+                                    </div>
+                                 </td>
+                              </tr>
+
+                              {/* 03.1 - Salários e Remuneração */}
+                              {dreExpandedRows['03'] && (
+                                 <tr className="bg-slate-50/30 font-semibold border-b border-slate-100">
+                                    <td className="p-2.5 pl-8 flex items-center gap-1.5">
+                                       <button onClick={() => toggleRow('03.1')} className="text-slate-400 hover:text-[#1B4D3E] p-0.5 rounded">
+                                          <span className="text-[10px]">{dreExpandedRows['03.1'] ? '▼' : '►'}</span>
+                                       </button>
+                                       <span className="text-xs text-slate-700">03.1 - Salários e Remuneração</span>
+                                    </td>
+                                    {MONTHS.map(m => renderValueCell(totalRemuneracaoBase, receitaMensal))}
+                                    <td className="p-2.5 text-right bg-slate-50/50 font-bold border-l border-slate-200/40">
+                                       <div className="text-xs">{formatCurrency(totalRemuneracaoBase * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">
+                                          {((totalRemuneracaoBase / (receitaMensal || 1)) * 100).toFixed(1)}%
+                                       </div>
+                                    </td>
+                                 </tr>
+                              )}
+
+                              {/* 03.1.1 - Salários */}
+                              {dreExpandedRows['03'] && dreExpandedRows['03.1'] && (
+                                 <tr className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
+                                    <td className="p-2 pl-14 text-xs text-slate-500 font-medium">03.1.1 - Salários</td>
+                                    {MONTHS.map(m => renderValueCell(totalSalarios, receitaMensal))}
+                                    <td className="p-2 text-right font-semibold border-l border-slate-100 text-slate-600">
+                                       <div className="text-[11px]">{formatCurrency(totalSalarios * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">{((totalSalarios / (receitaMensal || 1)) * 100).toFixed(1)}%</div>
+                                    </td>
+                                 </tr>
+                              )}
+
+                              {/* 03.1.2 - Insalubridade */}
+                              {dreExpandedRows['03'] && dreExpandedRows['03.1'] && totalInsalubridade > 0 && (
+                                 <tr className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
+                                    <td className="p-2 pl-14 text-xs text-slate-500 font-medium">03.1.2 - Insalubridade</td>
+                                    {MONTHS.map(m => renderValueCell(totalInsalubridade, receitaMensal))}
+                                    <td className="p-2 text-right font-semibold border-l border-slate-100 text-slate-600">
+                                       <div className="text-[11px]">{formatCurrency(totalInsalubridade * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">{((totalInsalubridade / (receitaMensal || 1)) * 100).toFixed(1)}%</div>
+                                    </td>
+                                 </tr>
+                              )}
+
+                              {/* 03.1.3 - Periculosidade */}
+                              {dreExpandedRows['03'] && dreExpandedRows['03.1'] && totalPericulosidade > 0 && (
+                                 <tr className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
+                                    <td className="p-2 pl-14 text-xs text-slate-500 font-medium">03.1.3 - Periculosidade</td>
+                                    {MONTHS.map(m => renderValueCell(totalPericulosidade, receitaMensal))}
+                                    <td className="p-2 text-right font-semibold border-l border-slate-100 text-slate-600">
+                                       <div className="text-[11px]">{formatCurrency(totalPericulosidade * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">{((totalPericulosidade / (receitaMensal || 1)) * 100).toFixed(1)}%</div>
+                                    </td>
+                                 </tr>
+                              )}
+
+                              {/* 03.1.9 - Adicional Noturno */}
+                              {dreExpandedRows['03'] && dreExpandedRows['03.1'] && (totalNoturno + totalIntrajornada + totalDsr) > 0 && (
+                                 <tr className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
+                                    <td className="p-2 pl-14 text-xs text-slate-500 font-medium">03.1.10 - Adicional Noturno & DSR</td>
+                                    {MONTHS.map(m => renderValueCell(totalNoturno + totalIntrajornada + totalDsr, receitaMensal))}
+                                    <td className="p-2 text-right font-semibold border-l border-slate-100 text-slate-600">
+                                       <div className="text-[11px]">{formatCurrency((totalNoturno + totalIntrajornada + totalDsr) * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">{(((totalNoturno + totalIntrajornada + totalDsr) / (receitaMensal || 1)) * 100).toFixed(1)}%</div>
+                                    </td>
+                                 </tr>
+                              )}
+
+                              {/* 03.2 - Encargos Sociais (EDITÁVEL NA TELA!) */}
+                              {dreExpandedRows['03'] && (
+                                 <tr className="bg-slate-50/30 font-semibold border-b border-slate-100">
+                                    <td className="p-2.5 pl-8 flex items-center gap-1.5">
+                                       <button onClick={() => toggleRow('03.2')} className="text-slate-400 hover:text-[#1B4D3E] p-0.5 rounded">
+                                          <span className="text-[10px]">{dreExpandedRows['03.2'] ? '▼' : '►'}</span>
+                                       </button>
+                                       <span className="text-xs text-slate-700">03.2 - Encargos Sociais</span>
+                                    </td>
+                                    {MONTHS.map(m => renderValueCell(totalEncargosSociais, receitaMensal))}
+                                    <td className="p-2.5 text-right bg-slate-50/50 font-bold border-l border-slate-200/40">
+                                       <div className="text-xs">{formatCurrency(totalEncargosSociais * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">
+                                          {((totalEncargosSociais / (receitaMensal || 1)) * 100).toFixed(1)}%
+                                       </div>
+                                    </td>
+                                 </tr>
+                              )}
+
+                              {/* Sub-itens de encargos editáveis */}
+                              {dreExpandedRows['03'] && dreExpandedRows['03.2'] && [
+                                 { key: 'fgts', lbl: '03.2.1 - Recolhimento FGTS', val: encargosValores.fgts },
+                                 { key: 'decimoTerceiro', lbl: '03.2.2 - 13º Salário', val: encargosValores.decimoTerceiro },
+                                 { key: 'ferias', lbl: '03.2.3 - Férias', val: encargosValores.ferias },
+                                 { key: 'fgtsRescisorio', lbl: '03.2.4 - FGTS Rescisório', val: encargosValores.fgtsRescisorio },
+                                 { key: 'outros', lbl: '03.2.5 - Outros Encargos', val: encargosValores.outros },
+                                 { key: 'inss', lbl: '03.2.6 - INSS', val: encargosValores.inss }
+                              ].map(item => (
+                                 <tr key={item.key} className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
+                                    <td className="p-3 pl-14">
+                                       <div className="text-xs font-bold text-slate-700">{item.lbl}</div>
+                                       <div className="flex items-center gap-1 text-[9px] text-slate-400 mt-1">
+                                          Taxa Real: 
+                                          <input 
+                                             type="number" 
+                                             step="0.01" 
+                                             value={(dreEncargos as any)[item.key]} 
+                                             onChange={(e) => setDreEncargos({ ...dreEncargos, [item.key]: Number(e.target.value) })} 
+                                             className="w-12 py-0.5 border border-slate-200 rounded text-center text-[10px] font-black text-[#1B4D3E] bg-[#F8FAFC] focus:bg-white focus:ring-2 focus:ring-emerald-500/10 outline-none" 
+                                          /> %
+                                       </div>
+                                    </td>
+                                    {MONTHS.map(m => renderValueCell(item.val, receitaMensal))}
+                                    <td className="p-3 text-right font-semibold border-l border-slate-100 text-slate-600">
+                                       <div className="text-[11px]">{formatCurrency(item.val * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">
+                                          {((item.val / (receitaMensal || 1)) * 100).toFixed(1)}%
+                                       </div>
+                                    </td>
+                                 </tr>
+                              ))}
+
+                              {/* 03.3 - Benefícios */}
+                              {dreExpandedRows['03'] && (
+                                 <tr className="bg-slate-50/30 font-semibold border-b border-slate-100">
+                                    <td className="p-2.5 pl-8 flex items-center gap-1.5">
+                                       <button onClick={() => toggleRow('03.3')} className="text-slate-400 hover:text-[#1B4D3E] p-0.5 rounded">
+                                          <span className="text-[10px]">{dreExpandedRows['03.3'] ? '▼' : '►'}</span>
+                                       </button>
+                                       <span className="text-xs text-slate-700">03.3 - Benefícios</span>
+                                    </td>
+                                    {MONTHS.map(m => renderValueCell(totalBeneficiosSubtotal, receitaMensal))}
+                                    <td className="p-2.5 text-right bg-slate-50/50 font-bold border-l border-slate-200/40">
+                                       <div className="text-xs">{formatCurrency(totalBeneficiosSubtotal * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">
+                                          {((totalBeneficiosSubtotal / (receitaMensal || 1)) * 100).toFixed(1)}%
+                                       </div>
+                                    </td>
+                                 </tr>
+                              )}
+
+                              {/* Sub-itens de Benefícios */}
+                              {dreExpandedRows['03'] && dreExpandedRows['03.3'] && [
+                                 { lbl: '03.3.1 - Vale Transporte', val: totalVT - totalDescontoVT },
+                                 { lbl: '03.3.2 - Vale Alimentação', val: totalVA - totalDescontoVA },
+                                 { lbl: '03.3.3 - Vale Alimentação Sobre Férias', val: totalVAFerias },
+                                 { lbl: '03.3.4 - Cesta Básica / Benefícios CCT', val: totalCesta + totalSindicato + totalOutrosBen }
+                              ].map(item => (
+                                 <tr key={item.lbl} className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
+                                    <td className="p-2 pl-14 text-xs text-slate-500 font-medium">{item.lbl}</td>
+                                    {MONTHS.map(m => renderValueCell(item.val, receitaMensal))}
+                                    <td className="p-2 text-right font-semibold border-l border-slate-100 text-slate-600">
+                                       <div className="text-[11px]">{formatCurrency(item.val * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">
+                                          {((item.val / (receitaMensal || 1)) * 100).toFixed(1)}%
+                                       </div>
+                                    </td>
+                                 </tr>
+                              ))}
+
+                              {/* 03.4 - Diárias (Zeradão) */}
+                              {dreExpandedRows['03'] && (
+                                 <tr className="bg-slate-50/30 font-semibold border-b border-slate-100 text-slate-400">
+                                    <td className="p-2.5 pl-8 flex items-center gap-1.5">
+                                       <button onClick={() => toggleRow('03.4')} className="text-slate-300 p-0.5 rounded">
+                                          <span className="text-[10px]">{dreExpandedRows['03.4'] ? '▼' : '►'}</span>
+                                       </button>
+                                       <span className="text-xs">03.4 - Diárias</span>
+                                    </td>
+                                    {MONTHS.map(m => <td key={m} className="p-2.5 text-right">-</td>)}
+                                    <td className="p-2.5 text-right font-bold border-l border-slate-200/40">-</td>
+                                 </tr>
+                              )}
+
+                              {/* 03.5 - SSMA */}
+                              {dreExpandedRows['03'] && (
+                                 <tr className="bg-slate-50/30 font-semibold border-b border-slate-100">
+                                    <td className="p-2.5 pl-8 flex items-center gap-1.5">
+                                       <button onClick={() => toggleRow('03.5')} className="text-slate-400 hover:text-[#1B4D3E] p-0.5 rounded">
+                                          <span className="text-[10px]">{dreExpandedRows['03.5'] ? '▼' : '►'}</span>
+                                       </button>
+                                       <span className="text-xs text-slate-700">03.5 - SSMA</span>
+                                    </td>
+                                    {MONTHS.map(m => renderValueCell(totalSSMASubtotal, receitaMensal))}
+                                    <td className="p-2.5 text-right bg-slate-50/50 font-bold border-l border-slate-200/40">
+                                       <div className="text-xs">{formatCurrency(totalSSMASubtotal * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">
+                                          {((totalSSMASubtotal / (receitaMensal || 1)) * 100).toFixed(1)}%
+                                       </div>
+                                    </td>
+                                 </tr>
+                              )}
+
+                              {/* Sub-itens SSMA */}
+                              {dreExpandedRows['03'] && dreExpandedRows['03.5'] && [
+                                 { lbl: '03.5.1 - Equipamento de Proteção Individual (EPI)', val: totalEpi },
+                                 { lbl: '03.5.3 - Exames Médicos / Periódicos', val: totalExames }
+                              ].map(item => (
+                                 <tr key={item.lbl} className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
+                                    <td className="p-2 pl-14 text-xs text-slate-500 font-medium">{item.lbl}</td>
+                                    {MONTHS.map(m => renderValueCell(item.val, receitaMensal))}
+                                    <td className="p-2 text-right font-semibold border-l border-slate-100 text-slate-600">
+                                       <div className="text-[11px]">{formatCurrency(item.val * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">
+                                          {((item.val / (receitaMensal || 1)) * 100).toFixed(1)}%
+                                       </div>
+                                    </td>
+                                 </tr>
+                              ))}
+
+                              {/* 03.6 - Materiais */}
+                              {dreExpandedRows['03'] && (
+                                 <tr className="bg-slate-50/30 font-semibold border-b border-slate-100">
+                                    <td className="p-2.5 pl-8 flex items-center gap-1.5">
+                                       <button onClick={() => toggleRow('03.6')} className="text-slate-400 hover:text-[#1B4D3E] p-0.5 rounded">
+                                          <span className="text-[10px]">{dreExpandedRows['03.6'] ? '▼' : '►'}</span>
+                                       </button>
+                                       <span className="text-xs text-slate-700">03.6 - Materiais</span>
+                                    </td>
+                                    {MONTHS.map(m => renderValueCell(totalMateriais, receitaMensal))}
+                                    <td className="p-2.5 text-right bg-slate-50/50 font-bold border-l border-slate-200/40">
+                                       <div className="text-xs">{formatCurrency(totalMateriais * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">
+                                          {((totalMateriais / (receitaMensal || 1)) * 100).toFixed(1)}%
+                                       </div>
+                                    </td>
+                                 </tr>
+                              )}
+
+                              {/* Sub-itens Materiais */}
+                              {dreExpandedRows['03'] && dreExpandedRows['03.6'] && (
+                                 <tr className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
+                                    <td className="p-2 pl-14 text-xs text-slate-500 font-medium">03.6.1 - Materiais de Limpeza e de Higiene</td>
+                                    {MONTHS.map(m => renderValueCell(totalMateriais, receitaMensal))}
+                                    <td className="p-2 text-right font-semibold border-l border-slate-100 text-slate-600">
+                                       <div className="text-[11px]">{formatCurrency(totalMateriais * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">{((totalMateriais / (receitaMensal || 1)) * 100).toFixed(1)}%</div>
+                                    </td>
+                                 </tr>
+                              )}
+
+                              {/* 03.7 - Equipamentos */}
+                              {dreExpandedRows['03'] && (
+                                 <tr className="bg-slate-50/30 font-semibold border-b border-slate-100">
+                                    <td className="p-2.5 pl-8 flex items-center gap-1.5">
+                                       <button onClick={() => toggleRow('03.7')} className="text-slate-400 hover:text-[#1B4D3E] p-0.5 rounded">
+                                          <span className="text-[10px]">{dreExpandedRows['03.7'] ? '▼' : '►'}</span>
+                                       </button>
+                                       <span className="text-xs text-slate-700">03.7 - Equipamentos</span>
+                                    </td>
+                                    {MONTHS.map(m => renderValueCell(totalMaquinas, receitaMensal))}
+                                    <td className="p-2.5 text-right bg-slate-50/50 font-bold border-l border-slate-200/40">
+                                       <div className="text-xs">{formatCurrency(totalMaquinas * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">
+                                          {((totalMaquinas / (receitaMensal || 1)) * 100).toFixed(1)}%
+                                       </div>
+                                    </td>
+                                 </tr>
+                              )}
+
+                              {/* Sub-itens Equipamentos */}
+                              {dreExpandedRows['03'] && dreExpandedRows['03.7'] && (
+                                 <tr className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
+                                    <td className="p-2 pl-14 text-xs text-slate-500 font-medium">03.7.2 - Depreciação / Locação de Equipamentos</td>
+                                    {MONTHS.map(m => renderValueCell(totalMaquinas, receitaMensal))}
+                                    <td className="p-2 text-right font-semibold border-l border-slate-100 text-slate-600">
+                                       <div className="text-[11px]">{formatCurrency(totalMaquinas * 12)}</div>
+                                       <div className="text-[9px] text-slate-400 mt-0.5">{((totalMaquinas / (receitaMensal || 1)) * 100).toFixed(1)}%</div>
+                                    </td>
+                                 </tr>
+                              )}
+
+                              {/* (=) MARGEM BRUTA */}
+                              <tr className="bg-emerald-50 font-black border-t-2 border-emerald-500/30 text-[#1B4D3E]">
+                                 <td className="p-3.5 pl-6 text-xs uppercase tracking-widest flex items-center gap-2">
+                                    <span>📈</span> (=) MARGEM BRUTA
+                                 </td>
+                                 {MONTHS.map(m => renderValueCell(margemBrutaMensal, receitaMensal, true))}
+                                 <td className="p-3.5 text-right bg-[#1B4D3E] font-black text-emerald-300 border-l border-emerald-700 shadow-inner">
+                                    <div className="text-xs">{formatCurrency(margemBrutaMensal * 12)}</div>
+                                    <div className="text-[9px] text-emerald-200 mt-0.5">
+                                       {((margemBrutaMensal / (receitaMensal || 1)) * 100).toFixed(1)}%
+                                    </div>
+                                 </td>
+                              </tr>
+
+                           </tbody>
+                        </table>
+                     </div>
+                  </div>
+               );
+            })()}
+
 
         </div>
       
