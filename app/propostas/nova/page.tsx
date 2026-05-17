@@ -14,7 +14,8 @@ import { getProdutos } from '@/app/produtos/actions';
 import { saveProposta, getPropostaCompleta, getLoggedUser } from '@/app/propostas/actions';
 import { getTiposServico } from '@/app/admin/settings/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Box, Drill, Trash, Presentation } from 'lucide-react';
+import { Box, Drill, Trash, Presentation, Award, Sparkles, Users } from 'lucide-react';
+import BrazilMap from '@/components/BrazilMap';
 
 const TABS = [
   { id: 'dados', label: '1. Cliente', icon: Building2 },
@@ -2230,13 +2231,19 @@ function PropostaEditor() {
                               onClick={() => setCurrentSlide(1)}
                               className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${currentSlide === 1 ? 'bg-white text-[#1B4D3E] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
                            >
-                              Slide 01 (Capa)
+                              Slide 01 (Mensagem)
                            </button>
                            <button 
                               onClick={() => setCurrentSlide(2)}
                               className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${currentSlide === 2 ? 'bg-white text-[#1B4D3E] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
                            >
-                              Slide 02 (Mensagem)
+                              Slide 02 (Capa)
+                           </button>
+                           <button 
+                              onClick={() => setCurrentSlide(3)}
+                              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${currentSlide === 3 ? 'bg-white text-[#1B4D3E] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                           >
+                              Slide 03 (Presença)
                            </button>
                         </div>
                         <button
@@ -2252,65 +2259,8 @@ function PropostaEditor() {
                   <div className="w-full bg-slate-900/5 rounded-3xl p-8 border border-slate-200/40 flex justify-center items-center overflow-x-auto">
                      <div className="w-full max-w-[960px] aspect-[16/9] min-w-[760px] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative select-none flex flex-col justify-between p-12">
                         
-                        {/* SLIDE 01 (CAPA DO PRINT - COM FOTO E FILTRO AZUL) */}
+                        {/* SLIDE 01 (MENSAGEM DE VISITA E AGRADECIMENTO) */}
                         {currentSlide === 1 && (
-                           <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 text-white overflow-hidden bg-slate-950">
-                              {/* Imagem de Fundo (Workers cleaning office windows) */}
-                              <div 
-                                 className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-40 scale-105 filter blur-[0.5px]"
-                                 style={{ backgroundImage: `url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200')` }}
-                              ></div>
-                              
-                              {/* Overlay Azul Escuro do Print */}
-                              <div className="absolute inset-0 bg-[#1e4480]/85 backdrop-blur-[1px]"></div>
-
-                              {/* Conteúdo Central */}
-                              <div className="relative z-20 flex flex-col justify-center items-center h-full w-full space-y-12">
-                                 {/* Logo JVS Facilities em Branco Puro */}
-                                 <div className="flex flex-col items-center space-y-4 animate-fadeIn">
-                                    <img 
-                                       src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                       alt="JVS Facilities Logo" 
-                                       className="max-h-32 w-auto object-contain brightness-0 invert drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
-                                    />
-                                    <div className="text-[11px] font-black tracking-[0.3em] text-white/90 uppercase pl-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">FACILITIES</div>
-                                 </div>
-
-                                 {/* Caixa de Texto Pílula "PROPOSTA COMERCIAL" idêntica ao Print */}
-                                 <div className="w-full max-w-2xl border-2 border-white rounded-full bg-white/10 px-12 py-4 shadow-xl backdrop-blur-md text-center hover:bg-white/15 transition-all duration-300 transform hover:scale-[1.01]">
-                                    <span className="text-white text-base font-black tracking-[0.25em] uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.15)]">
-                                       PROPOSTA COMERCIAL
-                                    </span>
-                                 </div>
-                              </div>
-                              {/* Rodapé Interno do Slide */}
-                              <div className="relative z-20 flex justify-start items-end gap-16 text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-24">
-                                 <div className="space-y-1">
-                                    <div>Cliente: <strong className="text-white">{proposta.cliente.cliente || "Nome do Cliente"}</strong></div>
-                                    <div>Nº Proposta: <strong className="text-white">{proposta.cliente.numeroProposta || "FPV-XXXX"}</strong></div>
-                                 </div>
-                                 <div className="space-y-1">
-                                    <div>Data: <strong className="text-white">
-                                       {proposta.cliente.dataElaboracao 
-                                          ? new Date(proposta.cliente.dataElaboracao + 'T12:00:00').toLocaleDateString('pt-BR') 
-                                          : new Date().toLocaleDateString('pt-BR')}
-                                    </strong></div>
-                                    <div>Revisão: <strong className="text-white">{proposta.cliente.revisao || "R01"}</strong></div>
-                                 </div>
-                              </div>
-
-                              {/* Botão de Avanço idêntico ao Print circular no canto direito */}
-                              <button 
-                                 onClick={() => setCurrentSlide(2)}
-                                 className="absolute right-12 bottom-12 border-2 border-white rounded-full p-3.5 text-white hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center justify-center w-12 h-12 cursor-pointer z-30"
-                              >
-                                 <ChevronRight size={22} className="stroke-[3]" />
-                              </button>
-                           </div>
-                        )}
-
-                        {/* SLIDE 02 (MENSAGEM DE VISITA E AGRADECIMENTO) */}
-                        {currentSlide === 2 && (
                            <div className="h-full w-full flex flex-col justify-between relative z-10 animate-fadeIn">
                               {/* Linhas diagonais decorativas */}
                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" xmlns="http://www.w3.org/2000/svg">
@@ -2353,7 +2303,7 @@ function PropostaEditor() {
                                     </div>
                                  </div>
 
-                                 {/* Logo JVS no Slide 2 */}
+                                 {/* Logo JVS no Slide 1 */}
                                  <div className="col-span-4 flex flex-col justify-center items-center pl-8 border-l border-slate-100 h-full">
                                     <img 
                                        src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
@@ -2366,10 +2316,191 @@ function PropostaEditor() {
 
                               <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                                 <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded">SLIDE 02</span>
+                                 <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">01</span>
                               </div>
+
+                              {/* Botão de Avanço */}
+                              <button 
+                                 onClick={() => setCurrentSlide(2)}
+                                 className="absolute right-12 bottom-12 border-2 border-[#1E3A8A] rounded-full p-3.5 text-[#1E3A8A] hover:bg-[#1E3A8A]/10 hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center justify-center w-12 h-12 cursor-pointer z-30"
+                              >
+                                 <ChevronRight size={22} className="stroke-[3]" />
+                              </button>
                            </div>
                         )}
+
+                        {/* SLIDE 02 (CAPA DA PROPOSTA - COM FOTO E FILTRO AZUL) */}
+                        {currentSlide === 2 && (
+                           <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 text-white overflow-hidden bg-slate-950">
+                              {/* Imagem de Fundo (Workers cleaning office windows) */}
+                              <div 
+                                 className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-40 scale-105 filter blur-[0.5px]"
+                                 style={{ backgroundImage: `url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200')` }}
+                              ></div>
+                              
+                              {/* Overlay Azul Escuro do Print */}
+                              <div className="absolute inset-0 bg-[#1e4480]/85 backdrop-blur-[1px]"></div>
+
+                              {/* Conteúdo Central */}
+                              <div className="relative z-20 flex flex-col justify-center items-center h-full w-full space-y-12">
+                                 {/* Logo JVS Facilities em Branco Puro */}
+                                 <div className="flex flex-col items-center space-y-4 animate-fadeIn">
+                                    <img 
+                                       src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
+                                       alt="JVS Facilities Logo" 
+                                       className="max-h-32 w-auto object-contain brightness-0 invert drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
+                                    />
+                                    <div className="text-[11px] font-black tracking-[0.3em] text-white/90 uppercase pl-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">FACILITIES</div>
+                                 </div>
+
+                                 {/* Caixa de Texto Pílula "PROPOSTA COMERCIAL" idêntica ao Print */}
+                                 <div className="w-full max-w-2xl border-2 border-white rounded-full bg-white/10 px-12 py-4 shadow-xl backdrop-blur-md text-center hover:bg-white/15 transition-all duration-300 transform hover:scale-[1.01]">
+                                    <span className="text-white text-base font-black tracking-[0.25em] uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.15)]">
+                                       PROPOSTA COMERCIAL
+                                    </span>
+                                 </div>
+                              </div>
+                              {/* Rodapé Interno do Slide */}
+                              <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-4">
+                                 <div className="flex gap-16">
+                                    <div className="space-y-1">
+                                       <div>Cliente: <strong className="text-white">{proposta.cliente.cliente || "Nome do Cliente"}</strong></div>
+                                       <div>Nº Proposta: <strong className="text-white">{proposta.cliente.numeroProposta || "FPV-XXXX"}</strong></div>
+                                    </div>
+                                    <div className="space-y-1">
+                                       <div>Data: <strong className="text-white">
+                                          {proposta.cliente.dataElaboracao 
+                                             ? new Date(proposta.cliente.dataElaboracao + 'T12:00:00').toLocaleDateString('pt-BR') 
+                                             : new Date().toLocaleDateString('pt-BR')}
+                                       </strong></div>
+                                       <div>Revisão: <strong className="text-white">{proposta.cliente.revisao || "R01"}</strong></div>
+                                    </div>
+                                 </div>
+                                 <span className="text-[9px] font-black text-white/80 bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">02</span>
+                              </div>
+
+                              {/* Botão de Avanço idêntico ao Print circular no canto direito */}
+                              <button 
+                                 onClick={() => setCurrentSlide(3)}
+                                 className="absolute right-12 bottom-12 border-2 border-white rounded-full p-3.5 text-white hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center justify-center w-12 h-12 cursor-pointer z-30"
+                              >
+                                 <ChevronRight size={22} className="stroke-[3]" />
+                              </button>
+                           </div>
+                        )}
+
+                        {/* SLIDE 03 (NOSSA PRESENÇA - QUEM SOMOS E COBERTURA SUL) */}
+                         {currentSlide === 3 && (
+                            <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 text-white overflow-hidden bg-[#1e4480]">
+                               {/* Linhas diagonais decorativas da marca */}
+                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                                  <line x1="-50" y1="150" x2="350" y2="-250" stroke="#FFFFFF" strokeWidth="10" />
+                                  <line x1="-50" y1="200" x2="400" y2="-250" stroke="#FFFFFF" strokeWidth="6" />
+                                  <line x1="-50" y1="250" x2="450" y2="-250" stroke="#FFFFFF" strokeWidth="3" />
+                                  
+                                  <line x1="600" y1="800" x2="1100" y2="300" stroke="#FFFFFF" strokeWidth="10" />
+                                  <line x1="650" y1="800" x2="1150" y2="300" stroke="#FFFFFF" strokeWidth="6" />
+                                  <line x1="700" y1="800" x2="1200" y2="300" stroke="#FFFFFF" strokeWidth="3" />
+                               </svg>
+
+                               <div className="grid grid-cols-12 gap-8 items-center h-[calc(100%-40px)] relative z-10">
+                                  {/* Coluna de Texto e KPIs (Esquerda) */}
+                                  <div className="col-span-7 flex flex-col justify-center space-y-4 pl-2 h-full">
+                                     <div>
+                                        <h2 className="text-3xl font-black text-white tracking-tight leading-none uppercase">
+                                           QUEM SOMOS
+                                        </h2>
+                                        <p className="text-white/90 text-[10px] font-semibold leading-relaxed mt-3 max-w-xl">
+                                           Há mais de 30 anos no mercado de Facilities, somos especialistas em prestações de serviços de limpeza profissional e similares.
+                                        </p>
+                                     </div>
+
+                                     {/* Grid de KPIs Ultra Premium */}
+                                     <div className="grid grid-cols-5 gap-1.5 pt-4 border-t border-white/10">
+                                        {/* Anos de atuação */}
+                                        <div className="flex flex-col items-center text-center">
+                                           <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 hover:bg-white/20 transition-all duration-200">
+                                              <Award size={18} className="text-white shrink-0" />
+                                           </div>
+                                           <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap">+de <strong className="text-sm font-black">30</strong></span>
+                                           <span className="text-[7.5px] font-black text-white/80 uppercase mt-1 leading-normal tracking-tight block max-w-[65px]">
+                                              Anos de atuação em Facilities e Serviços
+                                           </span>
+                                        </div>
+
+                                        {/* Postos ativos */}
+                                        <div className="flex flex-col items-center text-center">
+                                           <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 hover:bg-white/20 transition-all duration-200">
+                                              <MapPin size={18} className="text-white shrink-0" />
+                                           </div>
+                                           <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap">+ <strong className="text-sm font-black">100</strong></span>
+                                           <span className="text-[7.5px] font-black text-white/80 uppercase mt-1 leading-normal tracking-tight block max-w-[65px]">
+                                              postos ativos
+                                           </span>
+                                        </div>
+
+                                        {/* Clientes atendidos */}
+                                        <div className="flex flex-col items-center text-center">
+                                           <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 hover:bg-white/20 transition-all duration-200">
+                                              <Users size={18} className="text-white shrink-0" />
+                                           </div>
+                                           <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap">+ <strong className="text-sm font-black">200</strong></span>
+                                           <span className="text-[7.5px] font-black text-white/80 uppercase mt-1 leading-normal tracking-tight block max-w-[65px]">
+                                              Clientes atendidos
+                                           </span>
+                                        </div>
+
+                                        {/* Limpeza em altura */}
+                                        <div className="flex flex-col items-center text-center">
+                                           <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 hover:bg-white/20 transition-all duration-200">
+                                              <ShieldCheck size={18} className="text-white shrink-0" />
+                                           </div>
+                                           <span className="text-[9px] font-black text-white leading-none mt-0.5 whitespace-nowrap">+100.000m²</span>
+                                           <span className="text-[7.5px] font-black text-white/80 uppercase mt-1 leading-normal tracking-tight block max-w-[65px]">
+                                              de limpeza em altura executados
+                                           </span>
+                                        </div>
+
+                                        {/* Pisos tratados */}
+                                        <div className="flex flex-col items-center text-center">
+                                           <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 hover:bg-white/20 transition-all duration-200">
+                                              <Sparkles size={18} className="text-white shrink-0" />
+                                           </div>
+                                           <span className="text-[9px] font-black text-white leading-none mt-0.5 whitespace-nowrap">+500.000m²</span>
+                                           <span className="text-[7.5px] font-black text-white/80 uppercase mt-1 leading-normal tracking-tight block max-w-[65px]">
+                                              de Pisos tratados.
+                                           </span>
+                                        </div>
+                                     </div>
+                                  </div>
+
+                                  {/* Coluna do Mapa (Direita) */}
+                                  <div className="col-span-5 h-full flex flex-col justify-center items-center relative pr-2">
+                                     <div className="w-full max-w-[260px] aspect-square">
+                                        <BrazilMap highlightedStates={['PR', 'SC', 'RS']} className="w-full h-full" />
+                                     </div>
+                                     <div className="text-[10px] font-extrabold text-white uppercase tracking-widest mt-2 animate-pulse">
+                                        Atendimento em toda Região Sul
+                                     </div>
+                                  </div>
+                               </div>
+
+                               {/* Rodapé do Slide 3 */}
+                               <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-4 mt-auto">
+                                  <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                  <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">03</span>
+                               </div>
+
+                               {/* Botão de Avanço voltando para o Slide 01 */}
+                               <button 
+                                  onClick={() => setCurrentSlide(1)}
+                                  className="absolute right-12 bottom-12 border-2 border-white rounded-full p-3.5 text-white hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center justify-center w-12 h-12 cursor-pointer z-30"
+                               >
+                                  <ChevronRight size={22} className="stroke-[3]" />
+                               </button>
+                            </div>
+                         )}
+
                      </div>
                   </div>
 
@@ -2463,48 +2594,7 @@ function PropostaEditor() {
                   </div>
 
                   <div className="hidden print-slide-deck">
-                     {/* SLIDE 01 PRINT */}
-                     <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-slate-950 p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
-                        {/* Imagem de Fundo */}
-                        <div 
-                           className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-40 scale-105 filter blur-[0.5px]"
-                           style={{ backgroundImage: `url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200')` }}
-                        ></div>
-                        {/* Overlay Azul */}
-                        <div className="absolute inset-0 bg-[#1e4480]/85 backdrop-blur-[1px]"></div>
-                        
-                        <div className="relative z-20 flex flex-col justify-center items-center h-full w-full space-y-12">
-                           <div className="flex flex-col items-center space-y-4">
-                              <img 
-                                 src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                 alt="JVS Facilities Logo" 
-                                 className="max-h-32 w-auto object-contain brightness-0 invert drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
-                              />
-                              <div className="text-[11px] font-black tracking-[0.3em] text-white/90 uppercase pl-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">FACILITIES</div>
-                           </div>
-                           <div className="w-full max-w-2xl border-2 border-white rounded-full bg-white/10 px-12 py-4 shadow-xl backdrop-blur-md text-center">
-                              <span className="text-white text-base font-black tracking-[0.25em] uppercase">
-                                 PROPOSTA COMERCIAL
-                              </span>
-                           </div>
-                        </div>
-                        <div className="relative z-20 flex justify-start items-end gap-16 text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-24">
-                           <div className="space-y-1">
-                              <div>Cliente: <strong className="text-white">{proposta.cliente.cliente || "Nome do Cliente"}</strong></div>
-                              <div>Nº Proposta: <strong className="text-white">{proposta.cliente.numeroProposta || "FPV-XXXX"}</strong></div>
-                           </div>
-                           <div className="space-y-1">
-                              <div>Data: <strong className="text-white">
-                                 {proposta.cliente.dataElaboracao 
-                                    ? new Date(proposta.cliente.dataElaboracao + 'T12:00:00').toLocaleDateString('pt-BR') 
-                                    : new Date().toLocaleDateString('pt-BR')}
-                              </strong></div>
-                              <div>Revisão: <strong className="text-white">{proposta.cliente.revisao || "R01"}</strong></div>
-                           </div>
-                        </div>
-                     </div>
-
-                     {/* SLIDE 02 PRINT */}
+                     {/* SLIDE 01 PRINT - MENSAGEM COMERCIAL */}
                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
                         {/* Stripes de fundo */}
                         <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" xmlns="http://www.w3.org/2000/svg">
@@ -2550,7 +2640,153 @@ function PropostaEditor() {
                         </div>
                         <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                           <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded">SLIDE 02</span>
+                           <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">01</span>
+                        </div>
+                     </div>
+
+                     {/* SLIDE 02 PRINT - CAPA COMERCIAL */}
+                     <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-slate-950 p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
+                        {/* Imagem de Fundo */}
+                        <div 
+                           className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-40 scale-105 filter blur-[0.5px]"
+                           style={{ backgroundImage: `url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200')` }}
+                        ></div>
+                        {/* Overlay Azul */}
+                        <div className="absolute inset-0 bg-[#1e4480]/85 backdrop-blur-[1px]"></div>
+                        
+                        <div className="relative z-20 flex flex-col justify-center items-center h-full w-full space-y-12">
+                           <div className="flex flex-col items-center space-y-4">
+                              <img 
+                                 src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
+                                 alt="JVS Facilities Logo" 
+                                 className="max-h-32 w-auto object-contain brightness-0 invert drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
+                              />
+                              <div className="text-[11px] font-black tracking-[0.3em] text-white/90 uppercase pl-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">FACILITIES</div>
+                           </div>
+                           <div className="w-full max-w-2xl border-2 border-white rounded-full bg-white/10 px-12 py-4 shadow-xl backdrop-blur-md text-center">
+                              <span className="text-white text-base font-black tracking-[0.25em] uppercase">
+                                 PROPOSTA COMERCIAL
+                              </span>
+                           </div>
+                        </div>
+                        <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-4 mt-auto">
+                           <div className="flex justify-start gap-16 text-white/70 text-[10px] font-extrabold uppercase tracking-wider">
+                              <div className="space-y-1">
+                                 <div>Cliente: <strong className="text-white">{proposta.cliente.cliente || "Nome do Cliente"}</strong></div>
+                                 <div>Nº Proposta: <strong className="text-white">{proposta.cliente.numeroProposta || "FPV-XXXX"}</strong></div>
+                              </div>
+                              <div className="space-y-1">
+                                 <div>Data: <strong className="text-white">
+                                    {proposta.cliente.dataElaboracao 
+                                       ? new Date(proposta.cliente.dataElaboracao + 'T12:00:00').toLocaleDateString('pt-BR') 
+                                       : new Date().toLocaleDateString('pt-BR')}
+                                 </strong></div>
+                                 <div>Revisão: <strong className="text-white">{proposta.cliente.revisao || "R01"}</strong></div>
+                              </div>
+                           </div>
+                           <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">02</span>
+                        </div>
+                     </div>
+
+                     {/* SLIDE 03 PRINT - NOSSA PRESENÇA / QUEM SOMOS */}
+                     <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-[#1e4480] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-white">
+                        {/* Linhas diagonais decorativas da marca */}
+                        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                           <line x1="-50" y1="150" x2="350" y2="-250" stroke="#FFFFFF" strokeWidth="10" />
+                           <line x1="-50" y1="200" x2="400" y2="-250" stroke="#FFFFFF" strokeWidth="6" />
+                           <line x1="-50" y1="250" x2="450" y2="-250" stroke="#FFFFFF" strokeWidth="3" />
+                           
+                           <line x1="600" y1="800" x2="1100" y2="300" stroke="#FFFFFF" strokeWidth="10" />
+                           <line x1="650" y1="800" x2="1150" y2="300" stroke="#FFFFFF" strokeWidth="6" />
+                           <line x1="700" y1="800" x2="1200" y2="300" stroke="#FFFFFF" strokeWidth="3" />
+                        </svg>
+
+                        <div className="grid grid-cols-12 gap-8 items-center h-[calc(100%-40px)] relative z-10">
+                           {/* Coluna de Texto e KPIs (Esquerda) */}
+                           <div className="col-span-7 flex flex-col justify-center space-y-4 pl-2 h-full text-white">
+                              <div>
+                                 <h2 className="text-3xl font-black text-white tracking-tight leading-none uppercase">
+                                    QUEM SOMOS
+                                 </h2>
+                                 <p className="text-white/90 text-[10px] font-semibold leading-relaxed mt-3 max-w-xl">
+                                    Há mais de 30 anos no mercado de Facilities, somos especialistas em prestações de serviços de limpeza profissional e similares.
+                                 </p>
+                              </div>
+
+                              {/* Grid de KPIs */}
+                              <div className="grid grid-cols-5 gap-1.5 pt-4 border-t border-white/10">
+                                 {/* Anos de atuação */}
+                                 <div className="flex flex-col items-center text-center">
+                                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2">
+                                       <Award size={18} className="text-white shrink-0" />
+                                    </div>
+                                    <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap">+de <strong className="text-sm font-black">30</strong></span>
+                                    <span className="text-[7.5px] font-black text-white/80 uppercase mt-1 leading-normal tracking-tight block max-w-[65px]">
+                                       Anos de atuação em Facilities e Serviços
+                                    </span>
+                                 </div>
+
+                                 {/* Postos ativos */}
+                                 <div className="flex flex-col items-center text-center">
+                                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2">
+                                       <MapPin size={18} className="text-white shrink-0" />
+                                    </div>
+                                    <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap">+ <strong className="text-sm font-black">100</strong></span>
+                                    <span className="text-[7.5px] font-black text-white/80 uppercase mt-1 leading-normal tracking-tight block max-w-[65px]">
+                                       postos ativos
+                                    </span>
+                                 </div>
+
+                                 {/* Clientes atendidos */}
+                                 <div className="flex flex-col items-center text-center">
+                                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2">
+                                       <Users size={18} className="text-white shrink-0" />
+                                    </div>
+                                    <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap">+ <strong className="text-sm font-black">200</strong></span>
+                                    <span className="text-[7.5px] font-black text-white/80 uppercase mt-1 leading-normal tracking-tight block max-w-[65px]">
+                                       Clientes atendidos
+                                    </span>
+                                 </div>
+
+                                 {/* Limpeza em altura */}
+                                 <div className="flex flex-col items-center text-center">
+                                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2">
+                                       <ShieldCheck size={18} className="text-white shrink-0" />
+                                    </div>
+                                    <span className="text-[9px] font-black text-white leading-none mt-0.5 whitespace-nowrap">+100.000m²</span>
+                                    <span className="text-[7.5px] font-black text-white/80 uppercase mt-1 leading-normal tracking-tight block max-w-[65px]">
+                                       de limpeza em altura executados
+                                    </span>
+                                 </div>
+
+                                 {/* Pisos tratados */}
+                                 <div className="flex flex-col items-center text-center">
+                                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2">
+                                       <Sparkles size={18} className="text-white shrink-0" />
+                                    </div>
+                                    <span className="text-[9px] font-black text-white leading-none mt-0.5 whitespace-nowrap">+500.000m²</span>
+                                    <span className="text-[7.5px] font-black text-white/80 uppercase mt-1 leading-normal tracking-tight block max-w-[65px]">
+                                       de Pisos tratados.
+                                    </span>
+                                 </div>
+                              </div>
+                           </div>
+
+                           {/* Coluna do Mapa (Direita) */}
+                           <div className="col-span-5 h-full flex flex-col justify-center items-center relative pr-2">
+                              <div className="w-full max-w-[260px] aspect-square">
+                                 <BrazilMap highlightedStates={['PR', 'SC', 'RS']} className="w-full h-full" />
+                              </div>
+                              <div className="text-[10px] font-extrabold text-white uppercase tracking-widest mt-2">
+                                 Atendimento em toda Região Sul
+                              </div>
+                           </div>
+                        </div>
+
+                        {/* Rodapé do Slide 3 */}
+                        <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-4 mt-auto">
+                           <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                           <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">03</span>
                         </div>
                      </div>
                   </div>
