@@ -237,34 +237,32 @@ export default function ControladoriaPage() {
   // =========================================================================
   // CÁLCULOS DO GRÁFICO HISTÓRICO DE DESEMPENHO MENSAL (COMBO BAR + LINE)
   // =========================================================================
-  const uniqueMonths = new Set<string>();
-  
-  // Garantir que os últimos 6 meses estejam na escala
-  const today = new Date();
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    uniqueMonths.add(`${y}-${m}`);
+  // Gerar exatamente os 12 meses do ano vigente (corrente)
+  const currentYear = new Date().getFullYear();
+  const chartMonths: string[] = [];
+  for (let i = 0; i < 12; i++) {
+    const monthKey = `${currentYear}-${String(i + 1).padStart(2, '0')}`;
+    chartMonths.push(monthKey);
   }
-  
-  // Adicionar meses das propostas filtradas (apenas filtro de vendedor)
-  propostasList.forEach((p: any) => {
-    // Aplicamos o filtro de usuário nas propostas para determinar os meses relevantes
-    if (userFilter !== 'ALL' && p.usuario !== userFilter) return;
-    
-    if (p.dataCriacao) {
-      const d = new Date(p.dataCriacao);
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const monthStr = `${y}-${m}`;
-      uniqueMonths.add(monthStr);
-    }
-  });
-  
-  // Ordenar cronologicamente e pegar os últimos 6 meses para histórico contínuo estável
-  const sortedMonths = Array.from(uniqueMonths).sort();
-  const chartMonths = sortedMonths.slice(-6);
+
+  const getShortMonthName = (monthKey: string) => {
+    const m = monthKey.split('-')[1];
+    const months: Record<string, string> = {
+      '01': 'JAN',
+      '02': 'FEV',
+      '03': 'MAR',
+      '04': 'ABR',
+      '05': 'MAI',
+      '06': 'JUN',
+      '07': 'JUL',
+      '08': 'AGO',
+      '09': 'SET',
+      '10': 'OUT',
+      '11': 'NOV',
+      '12': 'DEZ'
+    };
+    return months[m] || m;
+  };
   
   // Mapeamento dos valores de cada mês respeitando filtros
   const chartData = chartMonths.map((mKey: string) => {
@@ -1007,40 +1005,40 @@ export default function ControladoriaPage() {
                           <g key={`bar-${i}`} className="group">
                             {/* Previsto Rect */}
                             <rect
-                              x={xCenter - 26}
+                              x={xCenter - 11}
                               y={yPrevisto}
-                              width="22"
+                              width="10"
                               height={Math.max(1, hPrevisto)}
                               fill="#6366F1"
-                              rx="2"
+                              rx="1.5"
                               className="transition-all duration-300 hover:fill-indigo-600 cursor-pointer"
                             />
                             {/* Rótulo de Valor Previsto sobre a barra */}
                             <text
-                              x={xCenter - 15}
+                              x={xCenter - 6}
                               y={yPrevisto - 6}
                               textAnchor="middle"
-                              className="fill-indigo-600 text-[8px] font-black"
+                              className="fill-indigo-600 text-[7px] font-black"
                             >
                               {formatShortCurrency(d.previsto)}
                             </text>
 
                             {/* Realizado Rect */}
                             <rect
-                              x={xCenter + 4}
+                              x={xCenter + 1}
                               y={yRealizado}
-                              width="22"
+                              width="10"
                               height={Math.max(1, hRealizado)}
                               fill="#10B981"
-                              rx="2"
+                              rx="1.5"
                               className="transition-all duration-300 hover:fill-emerald-600 cursor-pointer"
                             />
                             {/* Rótulo de Valor Realizado sobre a barra */}
                             <text
-                              x={xCenter + 15}
+                              x={xCenter + 6}
                               y={yRealizado - 6}
                               textAnchor="middle"
-                              className="fill-emerald-600 text-[8px] font-black"
+                              className="fill-emerald-600 text-[7px] font-black"
                             >
                               {formatShortCurrency(d.realizado)}
                             </text>
@@ -1050,9 +1048,9 @@ export default function ControladoriaPage() {
                               x={xCenter} 
                               y="218" 
                               textAnchor="middle" 
-                              className="fill-slate-500 text-[9px] font-black uppercase tracking-tighter"
+                              className="fill-slate-500 text-[9px] font-black uppercase tracking-wider"
                             >
-                              {formatMonthYear(d.monthKey).split(' de ')[0]}
+                              {getShortMonthName(d.monthKey)}
                             </text>
                             <text 
                               x={xCenter} 
@@ -1060,7 +1058,7 @@ export default function ControladoriaPage() {
                               textAnchor="middle" 
                               className="fill-slate-400 text-[7px] font-bold tracking-tight"
                             >
-                              {formatMonthYear(d.monthKey).split(' de ')[1]}
+                              {d.monthKey.split('-')[0]}
                             </text>
                           </g>
                         );
@@ -1082,7 +1080,7 @@ export default function ControladoriaPage() {
                             <polyline
                               fill="none"
                               stroke="#F59E0B"
-                              strokeWidth="2.5"
+                              strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               points={points.join(' ')}
@@ -1101,11 +1099,11 @@ export default function ControladoriaPage() {
                                   <circle
                                     cx={xCenter}
                                     cy={yCoord}
-                                    r="4"
+                                    r="3.5"
                                     fill="#F59E0B"
                                     stroke="#FFFFFF"
                                     strokeWidth="1.5"
-                                    className="transition-all duration-300 group-hover:r-5 group-hover:stroke-amber-600"
+                                    className="transition-all duration-300 group-hover:r-4.5 group-hover:stroke-amber-600"
                                   />
                                   
                                   {/* Rótulo com % acima da Linha */}
@@ -1113,7 +1111,7 @@ export default function ControladoriaPage() {
                                     x={xCenter}
                                     y={yCoord - 8}
                                     textAnchor="middle"
-                                    className="fill-amber-600 text-[8px] font-black bg-white"
+                                    className="fill-amber-600 text-[7px] font-black bg-white"
                                     style={{ filter: 'drop-shadow(0px 1px 1px rgba(255, 255, 255, 0.9))' }}
                                   >
                                     {d.atingidoPct.toFixed(1)}%
