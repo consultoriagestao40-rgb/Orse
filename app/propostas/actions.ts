@@ -158,7 +158,10 @@ export async function saveProposta(data: any) {
               entrada: item.parametrosPosto?.horarioInicio || '08:00',
               saida: item.parametrosPosto?.horarioFim || '17:00',
               configFinanceira: item.cargo as any,
-              ativosConfig: item.ativosConfig as any,
+              ativosConfig: { 
+                ...(item.ativosConfig || {}), 
+                parametrosPosto: item.parametrosPosto 
+              } as any,
               custoDireto: itemRes?.detalhes?.remuneracao || 0,
               custoTotalItem: itemRes?.custoTotal || 0
             };
@@ -306,18 +309,28 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
         })(),
         meta: { sindicatoId: impostos?.sindicatoId || '' }
       },
-      equipe: v.items.map(i => ({
-        id: i.id,
-        nomeCargo: i.nomeCargo,
-        quantidade: i.quantidade,
-        escala: i.escala,
-        cargo: i.configFinanceira,
-        ativosConfig: i.ativosConfig,
-        parametrosPosto: {
-          horarioInicio: i.entrada,
-          horarioFim: i.saida
-        }
-      })),
+      equipe: v.items.map(i => {
+        const itemAtivosConfig = (i.ativosConfig as any) || {};
+        return {
+          id: i.id,
+          nomeCargo: i.nomeCargo,
+          quantidade: i.quantidade,
+          escala: i.escala,
+          cargo: i.configFinanceira,
+          ativosConfig: itemAtivosConfig,
+          parametrosPosto: itemAtivosConfig.parametrosPosto || {
+            horarioInicio: i.entrada || '08:00',
+            horarioFim: i.saida || '17:00',
+            insalubridadePercent: 0,
+            periculosidade: false,
+            adicionalNoturnoHoras: 0,
+            diasTrabalhadosMes: 22,
+            intrajornadaHoras: 0,
+            dsrPercent: 0,
+            episAdicionais: []
+          }
+        };
+      }),
       versao: v.versao,
       dreTaxPercent: meta.dreTaxPercent !== undefined ? meta.dreTaxPercent : null,
       dreEncargos: meta.dreEncargos || null
