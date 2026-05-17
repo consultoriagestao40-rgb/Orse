@@ -15,7 +15,10 @@ export default function ControladoriaPage() {
 
   // Filtros
   const [userFilter, setUserFilter] = useState<string>('ALL');
-  const [period, setPeriod] = useState<'7' | '30' | 'mes' | 'ano' | 'custom'>('30');
+  const [period, setPeriod] = useState<'7' | '30' | 'mes' | 'ano' | 'custom'>('mes');
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    return new Date().toISOString().substring(0, 7); // Ex: "2026-05"
+  });
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -40,7 +43,7 @@ export default function ControladoriaPage() {
     loadData();
   }, []);
 
-  // Sincroniza datas pré-definidas ao alterar o período
+  // Sincroniza datas pré-definidas ao alterar o período ou o mês selecionado
   useEffect(() => {
     const today = new Date();
     let start = new Date();
@@ -54,15 +57,28 @@ export default function ControladoriaPage() {
       setStartDate(start.toISOString().split('T')[0]);
       setEndDate(today.toISOString().split('T')[0]);
     } else if (period === 'mes') {
-      start = new Date(today.getFullYear(), today.getMonth(), 1);
-      setStartDate(start.toISOString().split('T')[0]);
-      setEndDate(today.toISOString().split('T')[0]);
+      if (selectedMonth) {
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const firstDay = new Date(year, month - 1, 1);
+        const lastDay = new Date(year, month, 0);
+        
+        const formatLocal = (d: Date) => {
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${y}-${m}-${day}`;
+        };
+        
+        setStartDate(formatLocal(firstDay));
+        setEndDate(formatLocal(lastDay));
+      }
     } else if (period === 'ano') {
       start = new Date(today.getFullYear(), 0, 1);
       setStartDate(start.toISOString().split('T')[0]);
       setEndDate(today.toISOString().split('T')[0]);
     }
-  }, [period]);
+  }, [period, selectedMonth]);
+
 
   // Carrega metas do localStorage
   useEffect(() => {
@@ -249,37 +265,64 @@ export default function ControladoriaPage() {
                 value={period}
                 onChange={e => setPeriod(e.target.value as any)}
               >
+                <option value="mes">📅 Mensal (Escolher Mês)</option>
                 <option value="7">📅 Últimos 07 dias</option>
                 <option value="30">📅 Últimos 30 dias</option>
-                <option value="mes">📅 Este Mês</option>
                 <option value="ano">📅 Este Ano</option>
                 <option value="custom">⚙️ Período Personalizado</option>
               </select>
             </div>
 
-            {/* Data Início (datepicker) */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Início</label>
-              <input 
-                type="date"
-                disabled={period !== 'custom'}
-                className="w-full bg-slate-50 disabled:bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all cursor-pointer"
-                value={startDate}
-                onChange={e => setStartDate(e.target.value)}
-              />
-            </div>
+            {/* Condicionais de Data/Mês */}
+            {period === 'mes' ? (
+              <>
+                {/* Escolher Mês */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Escolher Mês (Meta)</label>
+                  <input 
+                    type="month"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all cursor-pointer"
+                    value={selectedMonth}
+                    onChange={e => setSelectedMonth(e.target.value)}
+                  />
+                </div>
 
-            {/* Data Fim (datepicker) */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Fim</label>
-              <input 
-                type="date"
-                disabled={period !== 'custom'}
-                className="w-full bg-slate-50 disabled:bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all cursor-pointer"
-                value={endDate}
-                onChange={e => setEndDate(e.target.value)}
-              />
-            </div>
+                {/* Período Selecionado Read-only */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Período Ativo</label>
+                  <div className="w-full bg-slate-100 border border-slate-200/60 rounded-xl px-3.5 py-2.5 text-xs font-extrabold text-slate-500 select-none">
+                    {startDate ? new Date(startDate + 'T00:00:00').toLocaleDateString('pt-BR') : ''} a {endDate ? new Date(endDate + 'T00:00:00').toLocaleDateString('pt-BR') : ''}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Data Início (datepicker) */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Início</label>
+                  <input 
+                    type="date"
+                    disabled={period !== 'custom'}
+                    className="w-full bg-slate-50 disabled:bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all cursor-pointer"
+                    value={startDate}
+                    onChange={e => setStartDate(e.target.value)}
+                  />
+                </div>
+
+                {/* Data Fim (datepicker) */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Fim</label>
+                  <input 
+                    type="date"
+                    disabled={period !== 'custom'}
+                    className="w-full bg-slate-50 disabled:bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all cursor-pointer"
+                    value={endDate}
+                    onChange={e => setEndDate(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
+
 
           </div>
 
@@ -461,41 +504,10 @@ export default function ControladoriaPage() {
                                   {formatCurrency(stats.totalAceito)}
                                 </td>
                                 
-                                <td className="px-5 py-4.5 text-right">
-                                  {editingUserId === nome ? (
-                                    <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-                                      <input 
-                                        type="number"
-                                        className="w-24 bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-black text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
-                                        value={editGoalValue}
-                                        onChange={e => setEditGoalValue(e.target.value)}
-                                        onKeyDown={e => e.key === 'Enter' && saveGoal(nome, Number(editGoalValue))}
-                                        onBlur={() => saveGoal(nome, Number(editGoalValue))}
-                                        autoFocus
-                                      />
-                                      <button 
-                                        onClick={() => saveGoal(nome, Number(editGoalValue))}
-                                        className="p-1 bg-[#1B4D3E] text-white rounded-lg cursor-pointer"
-                                      >
-                                        <Check size={12} />
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <div 
-                                      onClick={() => {
-                                        setEditingUserId(nome);
-                                        setEditGoalValue(String(metaVal));
-                                      }}
-                                      className="flex items-center justify-end gap-1.5 cursor-pointer hover:text-[#1B4D3E] transition-all group/goal"
-                                      title="Clique para editar a meta"
-                                    >
-                                      <span className="font-extrabold text-slate-600 border-b border-dashed border-slate-300 group-hover/goal:border-[#1B4D3E] transition-all">
-                                        {formatCurrency(metaVal)}
-                                      </span>
-                                      <Edit2 size={12} className="text-slate-400 group-hover/goal:text-[#1B4D3E] transition-all shrink-0" />
-                                    </div>
-                                  )}
+                                <td className="px-5 py-4.5 text-right font-extrabold text-slate-600">
+                                  {formatCurrency(metaVal)}
                                 </td>
+
                                 
                                 <td className="px-5 py-4.5">
                                   <div className="flex flex-col items-center justify-center">
