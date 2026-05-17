@@ -14,7 +14,7 @@ import { getProdutos } from '@/app/produtos/actions';
 import { saveProposta, getPropostaCompleta, getLoggedUser } from '@/app/propostas/actions';
 import { getTiposServico } from '@/app/admin/settings/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, ChevronLeft, Factory, Store, Bus, Building, Hospital, ShoppingBag, GraduationCap } from 'lucide-react';
+import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, ChevronLeft, Factory, Store, Bus, Building, Hospital, ShoppingBag, GraduationCap, Share2, Clock, Smartphone, Cpu } from 'lucide-react';
 import BrazilMap from '@/components/BrazilMap';
 
 const TABS = [
@@ -2233,7 +2233,8 @@ function PropostaEditor() {
                                { id: 3, label: 'Slide 03 (Presença)' },
                                { id: 4, label: 'Slide 04 (Valores)' },
                                { id: 5, label: 'Slide 05 (Serviços)' },
-                               { id: 6, label: 'Slide 06 (Setores)' }
+                               { id: 6, label: 'Slide 06 (Setores)' },
+                               { id: 7, label: 'Slide 07 (Ferramentas)' }
                             ].map((slide) => (
                                <button 
                                   key={slide.id}
@@ -2318,13 +2319,6 @@ function PropostaEditor() {
                                  <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">02</span>
                               </div>
 
-                              {/* Botão de Avanço */}
-                              <button 
-                                 onClick={() => setCurrentSlide(3)}
-                                 className="absolute right-12 bottom-12 border-2 border-[#1E3A8A] rounded-full p-3.5 text-[#1E3A8A] hover:bg-[#1E3A8A]/10 hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center justify-center w-12 h-12 cursor-pointer z-30"
-                              >
-                                 <ChevronRight size={22} className="stroke-[3]" />
-                              </button>
                            </div>
                         )}
 
@@ -2378,13 +2372,6 @@ function PropostaEditor() {
                                  <span className="text-[9px] font-black text-white/80 bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">01</span>
                               </div>
 
-                              {/* Botão de Avanço idêntico ao Print circular no canto direito */}
-                              <button 
-                                 onClick={() => setCurrentSlide(2)}
-                                 className="absolute right-12 bottom-12 border-2 border-white rounded-full p-3.5 text-white hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center justify-center w-12 h-12 cursor-pointer z-30"
-                              >
-                                 <ChevronRight size={22} className="stroke-[3]" />
-                              </button>
                            </div>
                         )}
 
@@ -2490,13 +2477,6 @@ function PropostaEditor() {
                                   <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">03</span>
                                </div>
 
-                               {/* Botão de Avanço indo para o Slide 04 */}
-                               <button 
-                                  onClick={() => setCurrentSlide(4)}
-                                  className="absolute right-12 bottom-12 border-2 border-white rounded-full p-3.5 text-white hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center justify-center w-12 h-12 cursor-pointer z-30"
-                               >
-                                  <ChevronRight size={22} className="stroke-[3]" />
-                               </button>
                             </div>
                          )}
 
@@ -2800,6 +2780,159 @@ function PropostaEditor() {
                             </div>
                          )}
 
+                         {/* SLIDE 07 (PRINCIPAIS FERRAMENTAS - DIVIDIDO LADO A LADO) */}
+                         {currentSlide === 7 && (
+                            <div className="h-full w-full grid grid-cols-2 relative z-10 animate-fadeIn bg-white rounded-2xl overflow-hidden">
+                               {/* Metade Esquerda (Branca) */}
+                               <div className="col-span-1 bg-white p-12 flex flex-col justify-between relative h-full text-slate-800 border-r border-slate-100">
+                                  {/* Stripes de fundo no topo esquerdo */}
+                                  <svg className="absolute top-0 left-0 w-64 h-64 pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                                     <line x1="-50" y1="150" x2="150" y2="-50" stroke="#1e4480" strokeWidth="10" />
+                                     <line x1="-50" y1="200" x2="200" y2="-50" stroke="#1e4480" strokeWidth="6" />
+                                     <line x1="-50" y1="250" x2="250" y2="-50" stroke="#1e4480" strokeWidth="3" />
+                                  </svg>
+
+                                  <div className="relative z-10 flex flex-col h-full justify-between">
+                                     {/* Título */}
+                                     <div>
+                                        <h2 className="text-3xl font-black text-[#1e4480] uppercase tracking-tight leading-none mb-8">
+                                           PRINCIPAIS<br />
+                                           FERRAMENTAS
+                                        </h2>
+                                     </div>
+
+                                     {/* Itens da esquerda */}
+                                     <div className="space-y-6 my-auto">
+                                        {/* Bitrix24 */}
+                                        <div className="flex gap-4 items-start">
+                                           <div className="bg-[#1e4480]/10 p-2 rounded-xl text-[#1e4480] shrink-0 mt-1">
+                                              <Share2 size={20} className="stroke-[2.5]" />
+                                           </div>
+                                           <div className="space-y-1">
+                                              <h3 className="text-[#1e4480] text-xs font-black tracking-wider uppercase">BITRIX24</h3>
+                                              <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
+                                                 CRM, armazenamento de dados e documentos, gestão de resultados, planejamento estratégico.
+                                              </p>
+                                              {/* Logo Bitrix24 */}
+                                              <div className="pt-2 flex items-center gap-1 select-none">
+                                                 <span className="text-[#00A4E4] font-black text-sm tracking-tight">Bitrix</span>
+                                                 <span className="text-[#435560] font-black text-sm tracking-tight">24</span>
+                                                 <div className="w-3.5 h-3.5 rounded-full border-2 border-[#00A4E4] flex items-center justify-center text-[7px] text-[#00A4E4] font-black ml-0.5">L</div>
+                                              </div>
+                                           </div>
+                                        </div>
+
+                                        {/* Secullum */}
+                                        <div className="flex gap-4 items-start">
+                                           <div className="bg-[#1e4480]/10 p-2 rounded-xl text-[#1e4480] shrink-0 mt-1">
+                                              <Clock size={20} className="stroke-[2.5]" />
+                                           </div>
+                                           <div className="space-y-1">
+                                              <h3 className="text-[#1e4480] text-xs font-black tracking-wider uppercase">SECULLUM</h3>
+                                              <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
+                                                 Controle de ponto digital, envio e assinatura de holerites e documentos administrativos, controle e gestão de turnover.
+                                              </p>
+                                              {/* Logo Secullum */}
+                                              <div className="pt-2 flex flex-col select-none">
+                                                 <div className="flex items-center gap-1">
+                                                    <Award size={14} className="text-amber-500 shrink-0" />
+                                                    <span className="text-slate-700 font-black text-xs tracking-tight lowercase">secullum</span>
+                                                 </div>
+                                                 <span className="text-slate-400 text-[7px] font-bold pl-5 leading-none">Ser fácil para ser humano.</span>
+                                              </div>
+                                           </div>
+                                        </div>
+                                     </div>
+
+                                     {/* Rodapé Esquerdo */}
+                                     <div className="pt-4 border-t border-slate-100 flex items-center text-slate-400 text-[9px] font-bold uppercase tracking-widest">
+                                        <span>www.grupojvsserv.com.br</span>
+                                     </div>
+                                  </div>
+                               </div>
+
+                               {/* Metade Direita (Azul) */}
+                               <div className="col-span-1 bg-[#1e4480] p-12 flex flex-col justify-between relative h-full text-white">
+                                  {/* Stripes de fundo */}
+                                  <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                                     <line x1="150" y1="400" x2="400" y2="150" stroke="#FFFFFF" strokeWidth="10" />
+                                     <line x1="200" y1="400" x2="450" y2="150" stroke="#FFFFFF" strokeWidth="6" />
+                                     <line x1="250" y1="400" x2="500" y2="150" stroke="#FFFFFF" strokeWidth="3" />
+                                  </svg>
+
+                                  <div className="relative z-10 flex flex-col h-full justify-between">
+                                     {/* Espaço superior para alinhar com o título da esquerda */}
+                                     <div className="h-12"></div>
+
+                                     {/* Itens da direita */}
+                                     <div className="space-y-4 my-auto">
+                                        {/* Nexus Operacional (IA Core - Destaque Principal) */}
+                                        <div className="flex gap-4 items-start border-b border-white/10 pb-3">
+                                           <div className="bg-emerald-500/20 p-2 rounded-xl text-emerald-400 shrink-0 mt-1 border border-emerald-500/30">
+                                              <Cpu size={20} className="stroke-[2.5] animate-pulse" />
+                                           </div>
+                                           <div className="space-y-1">
+                                              <div className="flex items-center gap-2">
+                                                 <h3 className="text-white text-xs font-black tracking-wider uppercase">NEXUS OPERACIONAL</h3>
+                                                 <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[7px] px-1.5 py-0.5 rounded-full font-black tracking-widest uppercase">IA CORE</span>
+                                              </div>
+                                              <p className="text-white/80 text-[8px] font-semibold leading-relaxed">
+                                                 Mesa de operação inteligente baseada em IA, otimizando agendamentos de frotas, distribuição de escalas e monitoramento de serviços em tempo real.
+                                              </p>
+                                              {/* Logo Nexus */}
+                                              <div className="pt-1 flex items-center gap-1 select-none">
+                                                 <span className="text-emerald-400 font-black text-xs tracking-tight">Nexus</span>
+                                                 <span className="text-white font-extrabold text-xs tracking-tight">Operacional</span>
+                                              </div>
+                                           </div>
+                                        </div>
+
+                                        {/* Onvio */}
+                                        <div className="flex gap-4 items-start">
+                                           <div className="bg-white/10 p-2 rounded-xl text-white shrink-0 mt-1">
+                                              <User size={20} className="stroke-[2.5]" />
+                                           </div>
+                                           <div className="space-y-1">
+                                              <h3 className="text-white text-xs font-black tracking-wider uppercase">ONVIO</h3>
+                                              <p className="text-white/80 text-[8px] font-semibold leading-relaxed">
+                                                 Registro e gestão de documentação de funcionários.
+                                              </p>
+                                              {/* Logo Onvio */}
+                                              <div className="pt-1.5 flex flex-col select-none">
+                                                 <span className="text-orange-400/80 text-[6px] font-extrabold tracking-widest uppercase">THOMSON REUTERS</span>
+                                                 <span className="text-orange-500 font-black text-sm tracking-tight leading-none mt-0.5">ONVIO</span>
+                                              </div>
+                                           </div>
+                                        </div>
+
+                                        {/* Check-List Fácil */}
+                                        <div className="flex gap-4 items-start">
+                                           <div className="bg-white/10 p-2 rounded-xl text-white shrink-0 mt-1">
+                                              <Smartphone size={20} className="stroke-[2.5]" />
+                                           </div>
+                                           <div className="space-y-1">
+                                              <h3 className="text-white text-xs font-black tracking-wider uppercase">CHECK-LIST FÁCIL</h3>
+                                              <p className="text-white/80 text-[8px] font-semibold leading-relaxed">
+                                                 Plataforma digital de desenvolvimento e gestão de processos internos com registro fotográfico, SLA's etc.
+                                              </p>
+                                              {/* Logo Check-List Fácil */}
+                                              <div className="pt-1.5 flex items-center gap-1 select-none text-[#10B981]">
+                                                 <span className="text-sm font-black tracking-tight flex items-center gap-1">✔ checklistfácil</span>
+                                              </div>
+                                           </div>
+                                        </div>
+                                     </div>
+
+                                     {/* Rodapé Direito */}
+                                     <div className="pt-4 border-t border-white/20 flex justify-between items-center text-white/60 text-[9px] font-bold">
+                                        <span className="uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                        <span className="text-white/80 bg-white/10 px-2.5 py-0.5 rounded font-black">07</span>
+                                     </div>
+                                  </div>
+                               </div>
+                            </div>
+                         )}
+
                      </div>
                   </div>
                    {/* CONTROLES DE NAVEGAÇÃO DOS SLIDES (PADRONIZADOS FORA DO SLIDE E DO NÚMERO) */}
@@ -2807,14 +2940,14 @@ function PropostaEditor() {
                       <div className="flex justify-center items-center gap-6">
                          <button
                             type="button"
-                            onClick={() => setCurrentSlide(currentSlide === 1 ? 6 : currentSlide - 1)}
+                            onClick={() => setCurrentSlide(currentSlide === 1 ? 7 : currentSlide - 1)}
                             className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold text-xs uppercase tracking-wider hover:bg-slate-50 hover:border-slate-300 active:scale-95 transition-all shadow-sm cursor-pointer z-30"
                          >
                             <ChevronLeft size={16} className="stroke-[3]" /> Voltar
                          </button>
                          
                          <div className="flex gap-2 bg-slate-100 p-1.5 rounded-full border border-slate-200">
-                            {[1, 2, 3, 4, 5, 6].map((num) => (
+                            {[1, 2, 3, 4, 5, 6, 7].map((num) => (
                                <button
                                   key={num}
                                   type="button"
@@ -2828,14 +2961,14 @@ function PropostaEditor() {
 
                          <button
                             type="button"
-                            onClick={() => setCurrentSlide(currentSlide === 6 ? 1 : currentSlide + 1)}
+                            onClick={() => setCurrentSlide(currentSlide === 7 ? 1 : currentSlide + 1)}
                             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1e4480] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#1e4480]/90 active:scale-95 transition-all shadow-md cursor-pointer z-30"
                          >
                             Avançar <ChevronRight size={16} className="stroke-[3]" />
                          </button>
                       </div>
                       <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                         Visualizando Slide {currentSlide} de 6
+                         Visualizando Slide {currentSlide} de 7
                       </div>
                    </div>
 
@@ -3411,6 +3544,146 @@ function PropostaEditor() {
                          <div className="flex justify-between items-center border-t border-white/20 pt-4 mt-auto">
                             <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest">www.grupojvsserv.com.br</span>
                             <span className="text-[9px] font-black text-white/80 bg-white/10 px-2.5 py-0.5 rounded">06</span>
+                         </div>
+                      </div>
+
+                      {/* SLIDE 07 PRINT - PRINCIPAIS FERRAMENTAS */}
+                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white grid grid-cols-2 relative overflow-hidden h-[100vh] text-slate-800">
+                         {/* Metade Esquerda (Branca) */}
+                         <div className="col-span-1 bg-white p-16 flex flex-col justify-between relative h-full border-r border-slate-100">
+                            {/* Stripes de fundo */}
+                            <svg className="absolute top-0 left-0 w-64 h-64 pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                               <line x1="-50" y1="150" x2="150" y2="-50" stroke="#1e4480" strokeWidth="10" />
+                               <line x1="-50" y1="200" x2="200" y2="-50" stroke="#1e4480" strokeWidth="6" />
+                               <line x1="-50" y1="250" x2="250" y2="-50" stroke="#1e4480" strokeWidth="3" />
+                            </svg>
+                            
+                            <div className="relative z-10 flex flex-col h-full justify-between">
+                               <div>
+                                  <h2 className="text-3xl font-black text-[#1e4480] uppercase tracking-tight leading-none mb-8">
+                                     PRINCIPAIS<br />
+                                     FERRAMENTAS
+                                  </h2>
+                               </div>
+                               
+                               <div className="space-y-6 my-auto">
+                                  {/* Bitrix24 */}
+                                  <div className="flex gap-4 items-start">
+                                     <div className="bg-[#1e4480]/10 p-2 rounded-xl text-[#1e4480] shrink-0 mt-1">
+                                        <Share2 size={20} className="stroke-[2.5]" />
+                                     </div>
+                                     <div className="space-y-1">
+                                        <h3 className="text-[#1e4480] text-xs font-black tracking-wider uppercase">BITRIX24</h3>
+                                        <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
+                                           CRM, armazenamento de dados e documentos, gestão de resultados, planejamento estratégico.
+                                        </p>
+                                        <div className="pt-2 flex items-center gap-1 select-none">
+                                           <span className="text-[#00A4E4] font-black text-sm tracking-tight">Bitrix</span>
+                                           <span className="text-[#435560] font-black text-sm tracking-tight">24</span>
+                                           <div className="w-3.5 h-3.5 rounded-full border-2 border-[#00A4E4] flex items-center justify-center text-[7px] text-[#00A4E4] font-black ml-0.5">L</div>
+                                        </div>
+                                     </div>
+                                  </div>
+                                  
+                                  {/* Secullum */}
+                                  <div className="flex gap-4 items-start">
+                                     <div className="bg-[#1e4480]/10 p-2 rounded-xl text-[#1e4480] shrink-0 mt-1">
+                                        <Clock size={20} className="stroke-[2.5]" />
+                                     </div>
+                                     <div className="space-y-1">
+                                        <h3 className="text-[#1e4480] text-xs font-black tracking-wider uppercase">SECULLUM</h3>
+                                        <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
+                                           Controle de ponto digital, envio e assinatura de holerites e documentos administrativos, controle e gestão de turnover.
+                                        </p>
+                                        <div className="pt-2 flex flex-col select-none">
+                                           <div className="flex items-center gap-1">
+                                              <Award size={14} className="text-amber-500 shrink-0" />
+                                              <span className="text-slate-700 font-black text-xs tracking-tight lowercase">secullum</span>
+                                           </div>
+                                           <span className="text-slate-400 text-[7px] font-bold pl-5 leading-none">Ser fácil para ser humano.</span>
+                                        </div>
+                                     </div>
+                                  </div>
+                               </div>
+                               
+                               <div className="pt-4 border-t border-slate-100 flex items-center text-slate-400 text-[9px] font-bold uppercase tracking-widest">
+                                  <span>www.grupojvsserv.com.br</span>
+                                </div>
+                            </div>
+                         </div>
+                         
+                         {/* Metade Direita (Azul) */}
+                         <div className="col-span-1 bg-[#1e4480] p-16 flex flex-col justify-between relative h-full text-white">
+                            {/* Stripes de fundo */}
+                            <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                               <line x1="150" y1="400" x2="400" y2="150" stroke="#FFFFFF" strokeWidth="10" />
+                               <line x1="200" y1="400" x2="450" y2="150" stroke="#FFFFFF" strokeWidth="6" />
+                               <line x1="250" y1="400" x2="500" y2="150" stroke="#FFFFFF" strokeWidth="3" />
+                            </svg>
+                            
+                            <div className="relative z-10 flex flex-col h-full justify-between">
+                               <div className="h-12"></div>
+                               
+                               <div className="space-y-4 my-auto">
+                                  {/* Nexus Operacional (IA Core - Destaque Principal) */}
+                                  <div className="flex gap-4 items-start border-b border-white/10 pb-3">
+                                     <div className="bg-emerald-500/20 p-2 rounded-xl text-emerald-400 shrink-0 mt-1 border border-emerald-500/30">
+                                        <Cpu size={20} className="stroke-[2.5] animate-pulse" />
+                                     </div>
+                                     <div className="space-y-1">
+                                        <div className="flex items-center gap-2">
+                                           <h3 className="text-white text-xs font-black tracking-wider uppercase">NEXUS OPERACIONAL</h3>
+                                           <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[7px] px-1.5 py-0.5 rounded-full font-black tracking-widest uppercase">IA CORE</span>
+                                        </div>
+                                        <p className="text-white/80 text-[8px] font-semibold leading-relaxed">
+                                           Mesa de operação inteligente baseada em IA, otimizando agendamentos de frotas, distribuição de escalas e monitoramento de services em tempo real.
+                                        </p>
+                                        <div className="pt-1 flex items-center gap-1 select-none">
+                                           <span className="text-emerald-400 font-black text-xs tracking-tight">Nexus</span>
+                                           <span className="text-white font-extrabold text-xs tracking-tight">Operacional</span>
+                                        </div>
+                                     </div>
+                                  </div>
+                                  
+                                  {/* Onvio */}
+                                  <div className="flex gap-4 items-start">
+                                     <div className="bg-white/10 p-2 rounded-xl text-white shrink-0 mt-1">
+                                        <User size={20} className="stroke-[2.5]" />
+                                     </div>
+                                     <div className="space-y-1">
+                                        <h3 className="text-white text-xs font-black tracking-wider uppercase">ONVIO</h3>
+                                        <p className="text-white/80 text-[8.5px] font-semibold leading-relaxed">
+                                           Registro e gestão de documentação de funcionários.
+                                        </p>
+                                        <div className="pt-1.5 flex flex-col select-none">
+                                           <span className="text-orange-400/80 text-[6px] font-extrabold tracking-widest uppercase">THOMSON REUTERS</span>
+                                           <span className="text-orange-500 font-black text-sm tracking-tight leading-none mt-0.5">ONVIO</span>
+                                        </div>
+                                     </div>
+                                  </div>
+                                  
+                                  {/* Check-List Fácil */}
+                                  <div className="flex gap-4 items-start">
+                                     <div className="bg-white/10 p-2 rounded-xl text-white shrink-0 mt-1">
+                                        <Smartphone size={20} className="stroke-[2.5]" />
+                                     </div>
+                                     <div className="space-y-1">
+                                        <h3 className="text-white text-xs font-black tracking-wider uppercase">CHECK-LIST FÁCIL</h3>
+                                        <p className="text-white/80 text-[8.5px] font-semibold leading-relaxed">
+                                           Plataforma digital de desenvolvimento e gestão de processos internos com registro fotográfico, SLA's etc.
+                                        </p>
+                                        <div className="pt-1.5 flex items-center gap-1 select-none text-[#10B981]">
+                                           <span className="text-sm font-black tracking-tight flex items-center gap-1">✔ checklistfácil</span>
+                                        </div>
+                                     </div>
+                                  </div>
+                               </div>
+                               
+                               <div className="pt-4 border-t border-white/20 flex justify-between items-center text-white/60 text-[9px] font-bold">
+                                  <span className="uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                  <span className="text-white/80 bg-white/10 px-2.5 py-0.5 rounded font-black">07</span>
+                               </div>
+                            </div>
                          </div>
                       </div>
                   </div>
