@@ -78,8 +78,12 @@ const Sidebar = () => {
         </div>
         
         <button 
-          onClick={() => {
-            document.cookie = "sb_session=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+          onClick={async () => {
+            try {
+              await fetch('/api/auth/logout', { method: 'POST' });
+            } catch (err) {
+              console.error('Logout failed:', err);
+            }
             window.location.href = '/login';
           }}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all font-bold text-xs uppercase tracking-widest border border-transparent hover:border-red-100"
