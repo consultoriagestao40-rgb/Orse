@@ -14,7 +14,7 @@ import { getProdutos } from '@/app/produtos/actions';
 import { saveProposta, getPropostaCompleta, getLoggedUser } from '@/app/propostas/actions';
 import { getTiposServico } from '@/app/admin/settings/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb } from 'lucide-react';
+import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell } from 'lucide-react';
 import BrazilMap from '@/components/BrazilMap';
 
 const TABS = [
@@ -2320,7 +2320,7 @@ function PropostaEditor() {
                                  </div>
                               </div>
 
-                              <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto pr-24">
+                              <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto pr-28">
                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
                                  <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">02</span>
                               </div>
@@ -2354,7 +2354,7 @@ function PropostaEditor() {
                                     <img 
                                        src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
                                        alt="JVS Facilities Logo" 
-                                       className="max-h-32 w-auto object-contain brightness-0 invert drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
+                                       className="max-h-32 w-auto object-contain"
                                     />
                                     <div className="text-[11px] font-black tracking-[0.3em] text-white/90 uppercase pl-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">FACILITIES</div>
                                  </div>
@@ -2367,7 +2367,7 @@ function PropostaEditor() {
                                  </div>
                               </div>
                               {/* Rodapé Interno do Slide */}
-                              <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-4">
+                              <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-28">
                                  <div className="flex gap-16">
                                     <div className="space-y-1">
                                        <div>Cliente: <strong className="text-white">{proposta.cliente.cliente || "Nome do Cliente"}</strong></div>
@@ -2492,7 +2492,7 @@ function PropostaEditor() {
                                </div>
 
                                {/* Rodapé do Slide 3 */}
-                               <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-24 mt-auto">
+                               <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-28 mt-auto">
                                   <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.grupojvsserv.com.br</span>
                                   <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">03</span>
                                </div>
@@ -2924,6 +2924,118 @@ function PropostaEditor() {
                         <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
                            <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">04</span>
+                        </div>
+                     </div>
+
+                     {/* SLIDE 05 PRINT - PRINCIPAIS SERVIÇOS PRESTADOS */}
+                     <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
+                        {/* Stripes de fundo */}
+                        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" xmlns="http://www.w3.org/2000/svg">
+                           <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
+                           <line x1="-50" y1="200" x2="400" y2="-250" stroke="#E2E8F0" strokeWidth="6" />
+                           <line x1="-50" y1="250" x2="450" y2="-250" stroke="#E2E8F0" strokeWidth="3" />
+                           <line x1="600" y1="800" x2="1100" y2="300" stroke="#E2E8F0" strokeWidth="10" />
+                           <line x1="650" y1="800" x2="1150" y2="300" stroke="#E2E8F0" strokeWidth="6" />
+                           <line x1="700" y1="800" x2="1200" y2="300" stroke="#E2E8F0" strokeWidth="3" />
+                        </svg>
+                        
+                        <div className="grid grid-cols-12 gap-6 items-center h-[calc(100%-110px)] relative z-10">
+                           {/* Coluna do Título (Esquerda) */}
+                           <div className="col-span-4 flex flex-col justify-center h-full pr-2">
+                              <h2 className="text-3xl font-black text-[#1e4480] uppercase tracking-tight leading-none">
+                                 PRINCIPAIS<br />
+                                 SERVIÇOS<br />
+                                 PRESTADOS
+                              </h2>
+                           </div>
+
+                           {/* Coluna 1 (Centro) - Terceirização */}
+                           <div className="col-span-4 flex flex-col space-y-2 h-full justify-center">
+                              <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                                 <span className="text-[#1e4480] text-[10px] font-black tracking-wide uppercase leading-tight max-w-[150px]">
+                                    TERCEIRIZAÇÃO DE SERVIÇOS DE FACILITIES
+                                 </span>
+                                 <div className="bg-[#1e4480]/10 p-1.5 rounded-xl text-[#1e4480] shrink-0">
+                                    <Building2 size={18} className="stroke-[2.5]" />
+                                 </div>
+                              </div>
+                              <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
+                                 Gestão e execução de serviços essenciais, como limpeza, manutenção e segurança, que garantem o bom funcionamento e organização de um ambiente de trabalho. Nossa função é cuidar de tudo isso para que a empresa possa focar no que faz de melhor, enquanto oferecemos um espaço eficiente, seguro e bem cuidado.
+                              </p>
+                           </div>
+
+                           {/* Coluna 2 (Direita) - Limpeza em Altura */}
+                           <div className="col-span-4 flex flex-col space-y-2 h-full justify-center pl-2">
+                              <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                                 <span className="text-[#1e4480] text-[10px] font-black tracking-wide uppercase leading-tight">
+                                    LIMPEZA EM ALTURA
+                                 </span>
+                                 <div className="bg-[#1e4480]/10 p-1.5 rounded-xl text-[#1e4480] shrink-0">
+                                    <HardHat size={18} className="stroke-[2.5]" />
+                                 </div>
+                              </div>
+                              <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
+                                 Serviço que é realizado em áreas de difícil acesso, como fachadas de prédios, janelas externas e estruturas elevadas. Usamos equipamentos específicos e técnicas seguras para garantir que essas superfícies sejam limpas de maneira eficiente, mantendo a estética e a segurança dos espaços altos, onde o cuidado e a precisão são essenciais.
+                              </p>
+                           </div>
+                        </div>
+
+                        {/* Painel inferior com as 5 categorias de serviços */}
+                        <div className="flex justify-around items-center w-full pt-4 mt-auto border-t border-slate-100 relative z-20">
+                           {/* Categoria 1: Limpeza */}
+                           <div className="flex flex-col items-center justify-center">
+                              <div className="bg-[#1e4480] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-md">
+                                 <Sparkles size={20} className="stroke-[2]" />
+                              </div>
+                              <span className="text-[#1e4480] text-[9px] font-black tracking-wider uppercase mt-2">
+                                 LIMPEZA
+                              </span>
+                           </div>
+
+                           {/* Categoria 2: Portaria */}
+                           <div className="flex flex-col items-center justify-center">
+                              <div className="bg-[#1e4480] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-md">
+                                 <ShieldCheck size={20} className="stroke-[2]" />
+                              </div>
+                              <span className="text-[#1e4480] text-[9px] font-black tracking-wider uppercase mt-2">
+                                 PORTARIA
+                              </span>
+                           </div>
+
+                           {/* Categoria 3: Recepção */}
+                           <div className="flex flex-col items-center justify-center">
+                              <div className="bg-[#1e4480] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-md">
+                                 <ConciergeBell size={20} className="stroke-[2]" />
+                              </div>
+                              <span className="text-[#1e4480] text-[9px] font-black tracking-wider uppercase mt-2">
+                                 RECEPÇÃO
+                              </span>
+                           </div>
+
+                           {/* Categoria 4: Manutenção */}
+                           <div className="flex flex-col items-center justify-center">
+                              <div className="bg-[#1e4480] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-md">
+                                 <Wrench size={20} className="stroke-[2]" />
+                              </div>
+                              <span className="text-[#1e4480] text-[9px] font-black tracking-wider uppercase mt-2">
+                                 MANUTENÇÃO
+                              </span>
+                           </div>
+
+                           {/* Categoria 5: Jardinagem */}
+                           <div className="flex flex-col items-center justify-center">
+                              <div className="bg-[#1e4480] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-md">
+                                 <Trees size={20} className="stroke-[2]" />
+                              </div>
+                              <span className="text-[#1e4480] text-[9px] font-black tracking-wider uppercase mt-2">
+                                 JARDINAGEM
+                              </span>
+                           </div>
+                        </div>
+
+                        <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
+                           <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                           <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">05</span>
                         </div>
                      </div>
                   </div>
