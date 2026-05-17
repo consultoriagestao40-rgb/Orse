@@ -449,88 +449,161 @@ export default function ControladoriaPage() {
               </div>
 
               {/* STATS CARDS */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                 
                 {/* TICKET MÉDIO */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all h-[190px]">
                   <div className="flex justify-between items-start">
-                    <div className="p-3 bg-emerald-50 text-[#1B4D3E] rounded-xl border border-emerald-100">
-                      <DollarSign size={20} />
+                    <div className="p-2.5 bg-emerald-50 text-[#1B4D3E] rounded-xl border border-emerald-100 shrink-0">
+                      <DollarSign size={18} />
                     </div>
-                    <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full uppercase tracking-tighter">Ticket Médio</span>
+                    <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">Ticket Médio</span>
                   </div>
-                  <div className="mt-4">
-                    <p className="text-2xl font-black text-slate-800 tracking-tight leading-none">
+                  <div className="mt-2 flex-1 flex flex-col justify-end">
+                    <p className="text-xl font-black text-slate-800 tracking-tight leading-none">
                       {formatCurrency(ticketMedio)}
                     </p>
-                    <p className="text-[10px] text-slate-400 mt-2 font-bold uppercase tracking-wider">Média geral por proposta</p>
+                    <p className="text-[9px] text-slate-400 mt-2 font-bold uppercase tracking-wider">Média geral por proposta</p>
                   </div>
                 </div>
 
-                {/* TAXA DE CONVERSÃO */}
-                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
-                   <div className="flex justify-between items-start">
-                     <div className="p-3 bg-blue-50 text-blue-600 rounded-xl border border-blue-100">
-                       <Percent size={20} />
-                     </div>
-                     <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full uppercase tracking-tighter">Conversão</span>
-                   </div>
-                   <div className="mt-4 space-y-3">
-                     {/* Conversão em Volume */}
-                     <div>
-                       <div className="flex justify-between text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">
-                         <span>Em Volume (R$)</span>
-                         <span className="text-blue-600 font-extrabold">{taxaConversao.toFixed(1)}%</span>
-                       </div>
-                       <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                         <div className="bg-blue-600 h-1.5 rounded-full transition-all duration-500" style={{ width: `${taxaConversao}%` }}></div>
-                       </div>
-                     </div>
-                     
-                     {/* Conversão em Quantidade */}
-                     <div>
-                       <div className="flex justify-between text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">
-                         <span>Em Propostas (Qtd)</span>
-                         <span className="text-emerald-600 font-extrabold">{conversaoQuantidade.toFixed(1)}%</span>
-                       </div>
-                       <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                         <div className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500" style={{ width: `${conversaoQuantidade}%` }}></div>
-                       </div>
-                     </div>
-                   </div>
-                 </div>
+                {/* TAXA DE CONVERSÃO VOLUME (R$) */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all h-[190px]">
+                  <div className="flex justify-between items-start">
+                    <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 shrink-0">
+                      <Percent size={18} />
+                    </div>
+                    <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">Conversão R$ (Volume)</span>
+                  </div>
+                  
+                  <div className="relative flex flex-col items-center justify-center select-none h-20 mt-1">
+                    <svg className="w-28 h-14 overflow-visible" viewBox="0 0 100 50">
+                      <path
+                        d="M 10 50 A 40 40 0 0 1 90 50"
+                        fill="none"
+                        stroke="#F1F5F9"
+                        strokeWidth="8"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M 10 50 A 40 40 0 0 1 90 50"
+                        fill="none"
+                        stroke="#2563EB"
+                        strokeWidth="8"
+                        strokeLinecap="round"
+                        strokeDasharray="125.66"
+                        strokeDashoffset={125.66 - (125.66 * Math.min(100, taxaConversao)) / 100}
+                        className="transition-all duration-1000 ease-out"
+                        style={{ filter: 'drop-shadow(0px 2px 4px rgba(37, 99, 235, 0.3))' }}
+                      />
+                      <line
+                        x1="50"
+                        y1="50"
+                        x2="50"
+                        y2="15"
+                        stroke="#F59E0B"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        transform={`rotate(${((Math.min(100, taxaConversao) / 100) * 180) - 90} 50 50)`}
+                        className="transition-all duration-1000 ease-out"
+                        style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.2))', transformOrigin: '50px 50px' }}
+                      />
+                      <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
+                      <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
+                    </svg>
+                    
+                    <div className="absolute -bottom-1 text-center">
+                      <span className="text-lg font-black text-slate-800 leading-none">
+                        {taxaConversao.toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* TAXA DE CONVERSÃO PROPOSTAS (QTD) */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all h-[190px]">
+                  <div className="flex justify-between items-start">
+                    <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 shrink-0">
+                      <Percent size={18} />
+                    </div>
+                    <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">Conversão Qtd (Propostas)</span>
+                  </div>
+                  
+                  <div className="relative flex flex-col items-center justify-center select-none h-20 mt-1">
+                    <svg className="w-28 h-14 overflow-visible" viewBox="0 0 100 50">
+                      <path
+                        d="M 10 50 A 40 40 0 0 1 90 50"
+                        fill="none"
+                        stroke="#F1F5F9"
+                        strokeWidth="8"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M 10 50 A 40 40 0 0 1 90 50"
+                        fill="none"
+                        stroke="#10B981"
+                        strokeWidth="8"
+                        strokeLinecap="round"
+                        strokeDasharray="125.66"
+                        strokeDashoffset={125.66 - (125.66 * Math.min(100, conversaoQuantidade)) / 100}
+                        className="transition-all duration-1000 ease-out"
+                        style={{ filter: 'drop-shadow(0px 2px 4px rgba(16, 185, 129, 0.3))' }}
+                      />
+                      <line
+                        x1="50"
+                        y1="50"
+                        x2="50"
+                        y2="15"
+                        stroke="#F59E0B"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        transform={`rotate(${((Math.min(100, conversaoQuantidade) / 100) * 180) - 90} 50 50)`}
+                        className="transition-all duration-1000 ease-out"
+                        style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.2))', transformOrigin: '50px 50px' }}
+                      />
+                      <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
+                      <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
+                    </svg>
+                    
+                    <div className="absolute -bottom-1 text-center">
+                      <span className="text-lg font-black text-slate-800 leading-none">
+                        {conversaoQuantidade.toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
                 {/* VOLUME TOTAL */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all h-[190px]">
                   <div className="flex justify-between items-start">
-                    <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100">
-                      <TrendingUp size={20} />
+                    <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100 shrink-0">
+                      <TrendingUp size={18} />
                     </div>
-                    <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full uppercase tracking-tighter">Volume Total</span>
+                    <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">Volume Total</span>
                   </div>
-                  <div className="mt-4">
-                    <p className="text-2xl font-black text-slate-800 tracking-tight leading-none">
+                  <div className="mt-2 flex-1 flex flex-col justify-end">
+                    <p className="text-xl font-black text-slate-800 tracking-tight leading-none">
                       {formatCurrency(totalVolume)}
                     </p>
-                    <p className="text-[10px] text-slate-400 mt-2 font-bold uppercase tracking-wider">
+                    <p className="text-[9px] text-slate-400 mt-2 font-bold uppercase tracking-wider">
                       Aceito: {formatCurrency(totalAceito)} ({totalAceitasCount} de {totalPropostasCount})
                     </p>
                   </div>
                 </div>
 
                 {/* CICLO DE FECHAMENTO */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all h-[190px]">
                   <div className="flex justify-between items-start">
-                    <div className="p-3 bg-amber-50 text-amber-600 rounded-xl border border-amber-100">
-                      <Clock size={20} />
+                    <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl border border-amber-100 shrink-0">
+                      <Clock size={18} />
                     </div>
-                    <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full uppercase tracking-tighter">Ciclo Médio</span>
+                    <span className="text-[9px] font-black text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full uppercase tracking-tighter">Ciclo Médio</span>
                   </div>
-                  <div className="mt-4">
-                    <p className="text-2xl font-black text-slate-800 tracking-tight leading-none">
+                  <div className="mt-2 flex-1 flex flex-col justify-end">
+                    <p className="text-xl font-black text-slate-800 tracking-tight leading-none">
                       {cicloMedio.toFixed(1)} <span className="text-xs font-semibold text-slate-400">dias</span>
                     </p>
-                    <p className="text-[10px] text-slate-400 mt-2 font-bold uppercase tracking-wider">Criação até Aceitação</p>
+                    <p className="text-[9px] text-slate-400 mt-2 font-bold uppercase tracking-wider">Criação até Aceitação</p>
                   </div>
                 </div>
 
