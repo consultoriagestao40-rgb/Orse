@@ -107,15 +107,15 @@ export default function ControladoriaPage() {
 
     // 2. Filtro por Data de Início
     if (startDate) {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
+      const [y, m, d] = startDate.split('-').map(Number);
+      const start = new Date(y, m - 1, d, 0, 0, 0, 0);
       if (dataCriacao < start) return false;
     }
 
     // 3. Filtro por Data de Fim
     if (endDate) {
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
+      const [y, m, d] = endDate.split('-').map(Number);
+      const end = new Date(y, m - 1, d, 23, 59, 59, 999);
       if (dataCriacao > end) return false;
     }
 
@@ -448,35 +448,36 @@ export default function ControladoriaPage() {
                                 
                                 <td className="px-5 py-4.5 text-right">
                                   {editingUserId === nome ? (
-                                    <div className="flex items-center justify-end gap-1.5">
+                                    <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
                                       <input 
                                         type="number"
-                                        className="w-24 bg-white border border-slate-300 rounded px-2 py-1 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
+                                        className="w-24 bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-black text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
                                         value={editGoalValue}
                                         onChange={e => setEditGoalValue(e.target.value)}
                                         onKeyDown={e => e.key === 'Enter' && saveGoal(nome, Number(editGoalValue))}
+                                        onBlur={() => saveGoal(nome, Number(editGoalValue))}
                                         autoFocus
                                       />
                                       <button 
                                         onClick={() => saveGoal(nome, Number(editGoalValue))}
-                                        className="p-1 bg-[#1B4D3E] hover:bg-emerald-800 text-white rounded cursor-pointer"
+                                        className="p-1 bg-[#1B4D3E] text-white rounded-lg cursor-pointer"
                                       >
                                         <Check size={12} />
                                       </button>
                                     </div>
                                   ) : (
-                                    <div className="flex items-center justify-end gap-1.5 group/goal">
-                                      <span className="font-extrabold text-slate-600">{formatCurrency(metaVal)}</span>
-                                      <button 
-                                        onClick={() => {
-                                          setEditingUserId(nome);
-                                          setEditGoalValue(String(metaVal));
-                                        }}
-                                        className="opacity-0 group-hover/goal:opacity-100 p-1 text-slate-400 hover:text-[#1B4D3E] rounded transition-opacity cursor-pointer"
-                                        title="Editar Meta"
-                                      >
-                                        <Edit2 size={12} />
-                                      </button>
+                                    <div 
+                                      onClick={() => {
+                                        setEditingUserId(nome);
+                                        setEditGoalValue(String(metaVal));
+                                      }}
+                                      className="flex items-center justify-end gap-1.5 cursor-pointer hover:text-[#1B4D3E] transition-all group/goal"
+                                      title="Clique para editar a meta"
+                                    >
+                                      <span className="font-extrabold text-slate-600 border-b border-dashed border-slate-300 group-hover/goal:border-[#1B4D3E] transition-all">
+                                        {formatCurrency(metaVal)}
+                                      </span>
+                                      <Edit2 size={12} className="text-slate-400 group-hover/goal:text-[#1B4D3E] transition-all shrink-0" />
                                     </div>
                                   )}
                                 </td>

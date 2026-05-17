@@ -396,9 +396,14 @@ export async function getKPIs() {
       };
     });
 
+    // Busca todos os usuários do sistema
+    const users = await prisma.user.findMany({
+      orderBy: { nome: 'asc' }
+    });
+
     return {
       propostas: mappedPropostas,
-      usuarios: Array.from(new Set(mappedPropostas.map(p => p.usuario)))
+      usuarios: users.map(u => u.nome)
     };
   } catch (error) {
     console.error('Error fetching raw KPIs data:', error);
