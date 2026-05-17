@@ -597,6 +597,7 @@ export default function ControladoriaPage() {
                 </div>
 
                 {/* CICLO DE FECHAMENTO */}
+                {/* CICLO DE FECHAMENTO (VELOCÍMETRO) */}
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all h-[190px]">
                   <div className="flex justify-between items-start">
                     <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl border border-amber-100 shrink-0">
@@ -604,11 +605,50 @@ export default function ControladoriaPage() {
                     </div>
                     <span className="text-[9px] font-black text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full uppercase tracking-tighter">Ciclo Médio</span>
                   </div>
-                  <div className="mt-2 flex-1 flex flex-col justify-end">
-                    <p className="text-xl font-black text-slate-800 tracking-tight leading-none">
-                      {cicloMedio.toFixed(1)} <span className="text-xs font-semibold text-slate-400">dias</span>
-                    </p>
-                    <p className="text-[9px] text-slate-400 mt-2 font-bold uppercase tracking-wider">Criação até Aceitação</p>
+                  
+                  <div className="flex flex-col items-center select-none mt-1">
+                    <div className="w-28 h-12 overflow-hidden relative">
+                      <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
+                        <path
+                          d="M 10 50 A 40 40 0 0 1 90 50"
+                          fill="none"
+                          stroke="#F1F5F9"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M 10 50 A 40 40 0 0 1 90 50"
+                          fill="none"
+                          stroke="#F59E0B"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                          strokeDasharray="125.66"
+                          strokeDashoffset={125.66 - (125.66 * Math.min(100, cicloMedio)) / 100}
+                          className="transition-all duration-1000 ease-out"
+                          style={{ filter: 'drop-shadow(0px 2px 4px rgba(245, 158, 11, 0.3))' }}
+                        />
+                        <line
+                          x1="50"
+                          y1="50"
+                          x2="50"
+                          y2="18"
+                          stroke="#EF4444"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          transform={`rotate(${((Math.min(100, cicloMedio) / 100) * 180) - 90} 50 50)`}
+                          style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.2))' }}
+                        />
+                        <circle cx="50" cy="50" r="4.5" fill="#EF4444" />
+                        <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
+                      </svg>
+                    </div>
+                    
+                    {/* Texto com Dias Totalmente Livre de Overlaps */}
+                    <div className="text-center mt-1.5 z-10">
+                      <span className="text-lg font-black text-slate-800 leading-none block">
+                        {cicloMedio.toFixed(1)} <span className="text-xs font-semibold text-slate-400">dias</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
 
