@@ -14,7 +14,7 @@ import { getProdutos } from '@/app/produtos/actions';
 import { saveProposta, getPropostaCompleta, getLoggedUser } from '@/app/propostas/actions';
 import { getTiposServico } from '@/app/admin/settings/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Box, Drill, Trash, Presentation, Award, Sparkles, Users } from 'lucide-react';
+import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb } from 'lucide-react';
 import BrazilMap from '@/components/BrazilMap';
 
 const TABS = [
@@ -2231,19 +2231,25 @@ function PropostaEditor() {
                               onClick={() => setCurrentSlide(1)}
                               className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${currentSlide === 1 ? 'bg-white text-[#1B4D3E] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
                            >
-                              Slide 01 (Mensagem)
+                              Slide 01 (Capa)
                            </button>
                            <button 
                               onClick={() => setCurrentSlide(2)}
                               className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${currentSlide === 2 ? 'bg-white text-[#1B4D3E] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
                            >
-                              Slide 02 (Capa)
+                              Slide 02 (Mensagem)
                            </button>
                            <button 
                               onClick={() => setCurrentSlide(3)}
                               className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${currentSlide === 3 ? 'bg-white text-[#1B4D3E] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
                            >
                               Slide 03 (Presença)
+                           </button>
+                           <button 
+                              onClick={() => setCurrentSlide(4)}
+                              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${currentSlide === 4 ? 'bg-white text-[#1B4D3E] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                           >
+                              Slide 04 (Valores)
                            </button>
                         </div>
                         <button
@@ -2260,7 +2266,7 @@ function PropostaEditor() {
                      <div className="w-full max-w-[960px] aspect-[16/9] min-w-[760px] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative select-none flex flex-col justify-between p-12">
                         
                         {/* SLIDE 01 (MENSAGEM DE VISITA E AGRADECIMENTO) */}
-                        {currentSlide === 1 && (
+                        {currentSlide === 2 && (
                            <div className="h-full w-full flex flex-col justify-between relative z-10 animate-fadeIn">
                               {/* Linhas diagonais decorativas */}
                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" xmlns="http://www.w3.org/2000/svg">
@@ -2314,14 +2320,14 @@ function PropostaEditor() {
                                  </div>
                               </div>
 
-                              <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
+                              <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto pr-24">
                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                                 <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">01</span>
+                                 <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">02</span>
                               </div>
 
                               {/* Botão de Avanço */}
                               <button 
-                                 onClick={() => setCurrentSlide(2)}
+                                 onClick={() => setCurrentSlide(3)}
                                  className="absolute right-12 bottom-12 border-2 border-[#1E3A8A] rounded-full p-3.5 text-[#1E3A8A] hover:bg-[#1E3A8A]/10 hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center justify-center w-12 h-12 cursor-pointer z-30"
                               >
                                  <ChevronRight size={22} className="stroke-[3]" />
@@ -2330,7 +2336,7 @@ function PropostaEditor() {
                         )}
 
                         {/* SLIDE 02 (CAPA DA PROPOSTA - COM FOTO E FILTRO AZUL) */}
-                        {currentSlide === 2 && (
+                        {currentSlide === 1 && (
                            <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 text-white overflow-hidden bg-slate-950">
                               {/* Imagem de Fundo (Workers cleaning office windows) */}
                               <div 
@@ -2376,12 +2382,12 @@ function PropostaEditor() {
                                        <div>Revisão: <strong className="text-white">{proposta.cliente.revisao || "R01"}</strong></div>
                                     </div>
                                  </div>
-                                 <span className="text-[9px] font-black text-white/80 bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">02</span>
+                                 <span className="text-[9px] font-black text-white/80 bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">01</span>
                               </div>
 
                               {/* Botão de Avanço idêntico ao Print circular no canto direito */}
                               <button 
-                                 onClick={() => setCurrentSlide(3)}
+                                 onClick={() => setCurrentSlide(2)}
                                  className="absolute right-12 bottom-12 border-2 border-white rounded-full p-3.5 text-white hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center justify-center w-12 h-12 cursor-pointer z-30"
                               >
                                  <ChevronRight size={22} className="stroke-[3]" />
@@ -2486,20 +2492,91 @@ function PropostaEditor() {
                                </div>
 
                                {/* Rodapé do Slide 3 */}
-                               <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-4 mt-auto">
+                               <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-24 mt-auto">
                                   <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.grupojvsserv.com.br</span>
                                   <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">03</span>
                                </div>
 
-                               {/* Botão de Avanço voltando para o Slide 01 */}
+                               {/* Botão de Avanço indo para o Slide 04 */}
                                <button 
-                                  onClick={() => setCurrentSlide(1)}
+                                  onClick={() => setCurrentSlide(4)}
                                   className="absolute right-12 bottom-12 border-2 border-white rounded-full p-3.5 text-white hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center justify-center w-12 h-12 cursor-pointer z-30"
                                >
                                   <ChevronRight size={22} className="stroke-[3]" />
                                </button>
                             </div>
                          )}
+
+                         {/* SLIDE 04 (NOSSOS VALORES - COM AS TRÊS ESFERAS DE VALORES E A MÃO DE SUPORTE) */}
+                         {currentSlide === 4 && (
+                            <div className="h-full w-full flex flex-col justify-between relative z-10 animate-fadeIn bg-white rounded-2xl overflow-hidden p-12">
+                               {/* Linhas diagonais decorativas da marca */}
+                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
+                                  <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
+                                  <line x1="-50" y1="200" x2="400" y2="-250" stroke="#E2E8F0" strokeWidth="6" />
+                                  <line x1="-50" y1="250" x2="450" y2="-250" stroke="#E2E8F0" strokeWidth="3" />
+                                  
+                                  <line x1="600" y1="800" x2="1100" y2="300" stroke="#E2E8F0" strokeWidth="10" />
+                                  <line x1="650" y1="800" x2="1150" y2="300" stroke="#E2E8F0" strokeWidth="6" />
+                                  <line x1="700" y1="800" x2="1200" y2="300" stroke="#E2E8F0" strokeWidth="3" />
+                               </svg>
+
+                               <div className="grid grid-cols-12 gap-8 items-center h-[calc(100%-40px)] relative z-10">
+                                  {/* Coluna de Texto (Esquerda) */}
+                                  <div className="col-span-7 flex flex-col justify-center space-y-4 pl-2 h-full">
+                                     <div>
+                                        <h2 className="text-3xl font-black text-[#1E3A8A] tracking-tight leading-none uppercase">
+                                           NOSSOS VALORES
+                                        </h2>
+                                        <p className="text-slate-600 text-[10px] font-semibold leading-relaxed mt-4">
+                                           Nosso compromisso é guiado por princípios sólidos: agimos com <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">ética</strong>, mantendo a integridade acima de benefícios momentâneos. Buscamos <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">agilidade</strong>, <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">eficiência</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">excelência</strong> através do aprimoramento contínuo de processos e sistemas. <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">Valorizamos nossas pessoas</strong>, promovendo um ambiente humanizado e soluções que garantem a satisfação e a permanência dos colaboradores. Somos comprometidos com a <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">entrega</strong> dos nossos acordos, mesmo diante de desafios. Além disso, investimos em <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">inovação</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">tecnologia</strong> para otimizar a automação, produtividade e eficiência.
+                                        </p>
+                                     </div>
+                                  </div>
+
+                                  {/* Coluna Gráfica (Direita - Esferas e Mão de Suporte) */}
+                                  <div className="col-span-5 h-full w-full flex items-center justify-center relative">
+                                     {/* Imagem da mão recortada no canto inferior direito */}
+                                     <div 
+                                        className="absolute right-0 bottom-0 w-[320px] h-[180px] bg-contain bg-right-bottom bg-no-repeat pointer-events-none opacity-90 z-10"
+                                        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?q=80&w=800')" }}
+                                     ></div>
+
+                                     {/* As 3 Esferas de Valores flutuando de forma harmoniosa */}
+                                     <div className="relative w-full h-[220px] z-20">
+                                        {/* Esfera 1 (Trophy / Topo Centro) */}
+                                        <div className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center justify-center w-16 h-16 rounded-full bg-[#1e4480] text-white shadow-xl hover:scale-105 transition-all duration-300">
+                                           <Trophy size={28} className="text-white shrink-0" />
+                                        </div>
+
+                                        {/* Esfera 2 (Lightbulb / Esquerda) */}
+                                        <div className="absolute bottom-16 left-4 flex items-center justify-center w-16 h-16 rounded-full bg-[#1e4480] text-white shadow-xl hover:scale-105 transition-all duration-300">
+                                           <Lightbulb size={28} className="text-white shrink-0" />
+                                        </div>
+
+                                        {/* Esfera 3 (Users / Direita) */}
+                                        <div className="absolute bottom-16 right-4 flex items-center justify-center w-16 h-16 rounded-full bg-[#1e4480] text-white shadow-xl hover:scale-105 transition-all duration-300">
+                                           <Users size={28} className="text-white shrink-0" />
+                                        </div>
+                                     </div>
+                                  </div>
+                                </div>
+
+                                {/* Rodapé do Slide 4 */}
+                                <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto pr-24 relative z-20">
+                                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                   <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">04</span>
+                                </div>
+
+                                {/* Botão de Avanço voltando para o Slide 01 */}
+                                <button 
+                                   onClick={() => setCurrentSlide(1)}
+                                   className="absolute right-12 bottom-12 border-2 border-[#1E3A8A] rounded-full p-3.5 text-[#1E3A8A] hover:bg-[#1E3A8A]/10 hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center justify-center w-12 h-12 cursor-pointer z-30"
+                                >
+                                   <ChevronRight size={22} className="stroke-[3]" />
+                                </button>
+                             </div>
+                          )}
 
                      </div>
                   </div>
@@ -2594,7 +2671,51 @@ function PropostaEditor() {
                   </div>
 
                   <div className="hidden print-slide-deck">
-                     {/* SLIDE 01 PRINT - MENSAGEM COMERCIAL */}
+                     {/* SLIDE 01 PRINT - CAPA COMERCIAL */}
+                     <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-slate-950 p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
+                        {/* Imagem de Fundo */}
+                        <div 
+                           className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-40 scale-105 filter blur-[0.5px]"
+                           style={{ backgroundImage: `url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200')` }}
+                        ></div>
+                        {/* Overlay Azul */}
+                        <div className="absolute inset-0 bg-[#1e4480]/85 backdrop-blur-[1px]"></div>
+                        
+                        <div className="relative z-20 flex flex-col justify-center items-center h-full w-full space-y-12">
+                           <div className="flex flex-col items-center space-y-4">
+                              <img 
+                                 src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
+                                 alt="JVS Facilities Logo" 
+                                 className="max-h-32 w-auto object-contain brightness-0 invert drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
+                              />
+                              <div className="text-[11px] font-black tracking-[0.3em] text-white/90 uppercase pl-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">FACILITIES</div>
+                           </div>
+                           <div className="w-full max-w-2xl border-2 border-white rounded-full bg-white/10 px-12 py-4 shadow-xl backdrop-blur-md text-center">
+                              <span className="text-white text-base font-black tracking-[0.25em] uppercase">
+                                 PROPOSTA COMERCIAL
+                              </span>
+                           </div>
+                        </div>
+                        <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-4 mt-auto">
+                           <div className="flex justify-start gap-16 text-white/70 text-[10px] font-extrabold uppercase tracking-wider">
+                              <div className="space-y-1">
+                                 <div>Cliente: <strong className="text-white">{proposta.cliente.cliente || "Nome do Cliente"}</strong></div>
+                                 <div>Nº Proposta: <strong className="text-white">{proposta.cliente.numeroProposta || "FPV-XXXX"}</strong></div>
+                              </div>
+                              <div className="space-y-1">
+                                 <div>Data: <strong className="text-white">
+                                    {proposta.cliente.dataElaboracao 
+                                       ? new Date(proposta.cliente.dataElaboracao + 'T12:00:00').toLocaleDateString('pt-BR') 
+                                       : new Date().toLocaleDateString('pt-BR')}
+                                 </strong></div>
+                                 <div>Revisão: <strong className="text-white">{proposta.cliente.revisao || "R01"}</strong></div>
+                              </div>
+                           </div>
+                           <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">01</span>
+                        </div>
+                     </div>
+
+                     {/* SLIDE 02 PRINT - MENSAGEM COMERCIAL */}
                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
                         {/* Stripes de fundo */}
                         <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" xmlns="http://www.w3.org/2000/svg">
@@ -2640,51 +2761,7 @@ function PropostaEditor() {
                         </div>
                         <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                           <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">01</span>
-                        </div>
-                     </div>
-
-                     {/* SLIDE 02 PRINT - CAPA COMERCIAL */}
-                     <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-slate-950 p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
-                        {/* Imagem de Fundo */}
-                        <div 
-                           className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-40 scale-105 filter blur-[0.5px]"
-                           style={{ backgroundImage: `url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200')` }}
-                        ></div>
-                        {/* Overlay Azul */}
-                        <div className="absolute inset-0 bg-[#1e4480]/85 backdrop-blur-[1px]"></div>
-                        
-                        <div className="relative z-20 flex flex-col justify-center items-center h-full w-full space-y-12">
-                           <div className="flex flex-col items-center space-y-4">
-                              <img 
-                                 src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                 alt="JVS Facilities Logo" 
-                                 className="max-h-32 w-auto object-contain brightness-0 invert drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
-                              />
-                              <div className="text-[11px] font-black tracking-[0.3em] text-white/90 uppercase pl-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">FACILITIES</div>
-                           </div>
-                           <div className="w-full max-w-2xl border-2 border-white rounded-full bg-white/10 px-12 py-4 shadow-xl backdrop-blur-md text-center">
-                              <span className="text-white text-base font-black tracking-[0.25em] uppercase">
-                                 PROPOSTA COMERCIAL
-                              </span>
-                           </div>
-                        </div>
-                        <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-4 mt-auto">
-                           <div className="flex justify-start gap-16 text-white/70 text-[10px] font-extrabold uppercase tracking-wider">
-                              <div className="space-y-1">
-                                 <div>Cliente: <strong className="text-white">{proposta.cliente.cliente || "Nome do Cliente"}</strong></div>
-                                 <div>Nº Proposta: <strong className="text-white">{proposta.cliente.numeroProposta || "FPV-XXXX"}</strong></div>
-                              </div>
-                              <div className="space-y-1">
-                                 <div>Data: <strong className="text-white">
-                                    {proposta.cliente.dataElaboracao 
-                                       ? new Date(proposta.cliente.dataElaboracao + 'T12:00:00').toLocaleDateString('pt-BR') 
-                                       : new Date().toLocaleDateString('pt-BR')}
-                                 </strong></div>
-                                 <div>Revisão: <strong className="text-white">{proposta.cliente.revisao || "R01"}</strong></div>
-                              </div>
-                           </div>
-                           <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">02</span>
+                           <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">02</span>
                         </div>
                      </div>
 
@@ -2787,6 +2864,66 @@ function PropostaEditor() {
                         <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-4 mt-auto">
                            <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.grupojvsserv.com.br</span>
                            <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">03</span>
+                        </div>
+                     </div>
+
+                     {/* SLIDE 04 PRINT - NOSSOS VALORES */}
+                     <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
+                        {/* Stripes de fundo */}
+                        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" xmlns="http://www.w3.org/2000/svg">
+                           <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
+                           <line x1="-50" y1="200" x2="400" y2="-250" stroke="#E2E8F0" strokeWidth="6" />
+                           <line x1="-50" y1="250" x2="450" y2="-250" stroke="#E2E8F0" strokeWidth="3" />
+                           
+                           <line x1="600" y1="800" x2="1100" y2="300" stroke="#E2E8F0" strokeWidth="10" />
+                           <line x1="650" y1="800" x2="1150" y2="300" stroke="#E2E8F0" strokeWidth="6" />
+                           <line x1="700" y1="800" x2="1200" y2="300" stroke="#E2E8F0" strokeWidth="3" />
+                        </svg>
+                        
+                        <div className="grid grid-cols-12 gap-8 items-center h-[calc(100%-40px)] relative z-10">
+                           {/* Coluna de Texto (Esquerda) */}
+                           <div className="col-span-7 flex flex-col justify-center space-y-4 pl-2 h-full">
+                              <div>
+                                 <h2 className="text-3xl font-black text-[#1E3A8A] tracking-tight leading-none uppercase">
+                                    NOSSOS VALORES
+                                 </h2>
+                                 <p className="text-slate-600 text-[10px] font-semibold leading-relaxed mt-4">
+                                    Nosso compromisso é guiado por princípios sólidos: agimos com <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">ética</strong>, mantendo a integridade acima de benefícios momentâneos. Buscamos <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">agilidade</strong>, <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">eficiência</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">excelência</strong> através do aprimoramento contínuo de processos e sistemas. <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">Valorizamos nossas pessoas</strong>, promovendo um ambiente humanizado e soluções que garantem a satisfação e a permanência dos colaboradores. Somos comprometidos com a <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">entrega</strong> dos nossos acordos, mesmo diante de desafios. Além disso, investimos em <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">inovação</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">tecnologia</strong> para otimizar a automação, produtividade e eficiência.
+                                 </p>
+                              </div>
+                           </div>
+
+                           {/* Coluna Gráfica (Direita) */}
+                           <div className="col-span-5 h-full w-full flex items-center justify-center relative">
+                              {/* Imagem da mão recortada no canto inferior direito */}
+                              <div 
+                                 className="absolute right-0 bottom-0 w-[320px] h-[180px] bg-contain bg-right-bottom bg-no-repeat pointer-events-none opacity-90 z-10"
+                                 style={{ backgroundImage: "url('https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?q=80&w=800')" }}
+                              ></div>
+
+                              {/* As 3 Esferas de Valores */}
+                              <div className="relative w-full h-[220px] z-20">
+                                 {/* Esfera 1 (Trophy) */}
+                                 <div className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center justify-center w-16 h-16 rounded-full bg-[#1e4480] text-white shadow-xl">
+                                    <Trophy size={28} className="text-white shrink-0" />
+                                 </div>
+
+                                 {/* Esfera 2 (Lightbulb) */}
+                                 <div className="absolute bottom-16 left-4 flex items-center justify-center w-16 h-16 rounded-full bg-[#1e4480] text-white shadow-xl">
+                                    <Lightbulb size={28} className="text-white shrink-0" />
+                                 </div>
+
+                                 {/* Esfera 3 (Users) */}
+                                 <div className="absolute bottom-16 right-4 flex items-center justify-center w-16 h-16 rounded-full bg-[#1e4480] text-white shadow-xl">
+                                    <Users size={28} className="text-white shrink-0" />
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+
+                        <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
+                           <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                           <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">04</span>
                         </div>
                      </div>
                   </div>
