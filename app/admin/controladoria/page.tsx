@@ -79,7 +79,8 @@ export default function ControladoriaPage() {
   }, []);
 
   const saveGoal = (userName: string, val: number) => {
-    const updated = { ...metas, [userName]: val };
+    const activeMonthKey = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
+    const updated = { ...metas, [`${userName}_${activeMonthKey}`]: val };
     setMetas(updated);
     if (typeof window !== 'undefined') {
       localStorage.setItem('sb_kpi_goals', JSON.stringify(updated));
@@ -165,8 +166,8 @@ export default function ControladoriaPage() {
     }
     volumePorUsuario[usuario].count += 1;
 
-    // Por tipo de serviço
-    const servico = p.tipoServicos || 'Outros';
+    // Por tipo de serviço (normalizado com trim e uppercase para agrupamento correto)
+    const servico = (p.tipoServicos || 'Outros').trim().toUpperCase();
     if (!volumePorServico[servico]) {
       volumePorServico[servico] = { totalVal: 0, count: 0 };
     }
@@ -178,9 +179,22 @@ export default function ControladoriaPage() {
   const taxaConversao = totalVolume > 0 ? (totalAceito / totalVolume) * 100 : 0;
   const cicloMedio = countDiasCiclo > 0 ? somaDiasCiclo / countDiasCiclo : 0;
 
-  // Meta global e geral da empresa
+  const activeMonthKey = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
+
+  const formatMonthYear = (monthKey: string) => {
+    try {
+      const [year, month] = monthKey.split('-');
+      const date = new Date(Number(year), Number(month) - 1, 1);
+      return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    } catch {
+      return monthKey;
+    }
+  };
+
+  // Meta global e geral da empresa (por mês)
   const totalMetasEmpresa = totalSellers.reduce((acc: number, nome: string) => {
-    const m = metas[nome] !== undefined ? metas[nome] : 100000; // Default 100k
+    const key = `${nome}_${activeMonthKey}`;
+    const m = metas[key] !== undefined ? metas[key] : 100000; // Default 100k
     return acc + m;
   }, 0);
 
@@ -287,7 +301,7 @@ export default function ControladoriaPage() {
                   <span className="text-[10px] font-black uppercase text-emerald-400 tracking-widest flex items-center justify-center md:justify-start gap-1">
                     <Target size={12} /> Meta Geral da Empresa (Mês)
                   </span>
-                  <h2 className="text-xl font-black tracking-tight">Desempenho Comercial Corporativo</h2>
+                  <h2 className="text-xl font-black tracking-tight">Desempenho Comercial Corporativo - {formatMonthYear(activeMonthKey)}</h2>
                   <p className="text-xs text-slate-300 font-medium">
                     Soma de todas as metas individuais vs. Volume convertido nesta consulta.
                   </p>
@@ -401,7 +415,7 @@ export default function ControladoriaPage() {
                           <th className="px-5 py-3.5">Nome do Vendedor</th>
                           <th className="px-5 py-3.5 text-center">Propostas</th>
                           <th className="px-5 py-3.5 text-right">Volume Aceito</th>
-                          <th className="px-5 py-3.5 text-right">Meta Individual</th>
+                          <th className="px-5 py-3.5 text-right">Meta Individual ({formatMonthYear(activeMonthKey)})</th>
                           <th className="px-5 py-3.5 text-center w-1/4">Atingimento Meta</th>
                         </tr>
                       </thead>
@@ -413,7 +427,8 @@ export default function ControladoriaPage() {
                         ) : (
                           totalSellers.map((nome: string) => {
                             const stats = volumePorUsuario[nome] || { totalVal: 0, totalAceito: 0, count: 0 };
-                            const metaVal = metas[nome] !== undefined ? metas[nome] : 100000; // Default 100k
+                            const goalKey = `${nome}_${activeMonthKey}`;
+                            const metaVal = metas[goalKey] !== undefined ? metas[goalKey] : 100000; // Default 100k
                             const atingidoPct = metaVal > 0 ? (stats.totalAceito / metaVal) * 100 : 0;
                             const isFiltered = userFilter === nome;
 

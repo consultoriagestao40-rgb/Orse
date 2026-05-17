@@ -87,3 +87,50 @@ export async function deleteCategoria(id: string) {
     return { success: false, error: error.message };
   }
 }
+
+// TIPOS DE SERVIÇO
+export async function getTiposServico() {
+  try {
+    const tipos = await prisma.tipoServico.findMany({ orderBy: { nome: 'asc' } });
+    if (tipos.length === 0) {
+      // Popula com defaults se estiver vazio
+      await prisma.tipoServico.createMany({
+        data: [
+          { nome: 'Limpeza e Conservação' },
+          { nome: 'Portaria' },
+          { nome: 'Jardinagem' },
+          { nome: 'Manutenção Predial' },
+          { nome: 'Full Service' }
+        ],
+        skipDuplicates: true
+      });
+      return await prisma.tipoServico.findMany({ orderBy: { nome: 'asc' } });
+    }
+    return tipos;
+  } catch (error) {
+    console.error('Erro ao buscar tipos de serviço:', error);
+    return [];
+  }
+}
+
+export async function createTipoServico(nome: string) {
+  try {
+    const res = await prisma.tipoServico.create({
+      data: { nome: nome.trim() }
+    });
+    revalidatePath('/admin/settings');
+    return { success: true, data: res };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteTipoServico(id: string) {
+  try {
+    await prisma.tipoServico.delete({ where: { id } });
+    revalidatePath('/admin/settings');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

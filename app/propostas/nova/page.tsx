@@ -12,6 +12,7 @@ import { getCCTs } from '@/app/ccts/actions';
 import { getEscalas } from '@/app/escalas/actions';
 import { getProdutos } from '@/app/produtos/actions';
 import { saveProposta, getPropostaCompleta } from '@/app/propostas/actions';
+import { getTiposServico } from '@/app/admin/settings/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Box, Drill, Trash } from 'lucide-react';
 
@@ -92,6 +93,7 @@ function PropostaEditor() {
   const [escalasDb, setEscalasDb] = useState<any[]>([]);
   const [produtosDb, setProdutosDb] = useState<any[]>([]);
   const [clientesList, setClientesList] = useState<any[]>([]);
+  const [tiposServico, setTiposServico] = useState<any[]>([]);
   const [showClientDropdown, setShowClientDropdown] = useState(false);
 
   const [proposta, setProposta] = useState<any>({
@@ -231,11 +233,12 @@ function PropostaEditor() {
       try {
         console.log('Iniciando carregamento do Editor FPV...');
         setLoading(true);
-        const [dataCcts, dataEscalas, dataProdutos] = await Promise.all([getCCTs(), getEscalas(), getProdutos()]);
+        const [dataCcts, dataEscalas, dataProdutos, dataTipos] = await Promise.all([getCCTs(), getEscalas(), getProdutos(), getTiposServico()]);
         setCcts(dataCcts || []);
         setEscalasDb(dataEscalas || []);
         setProdutosDb(dataProdutos || []);
-        console.log('CCTs e Escalas carregadas.');
+        setTiposServico(dataTipos || []);
+        console.log('CCTs, Escalas e Tipos de Serviço carregados.');
         
         const { getClientes } = await import('@/app/clientes/actions');
         const clientesData = await getClientes();
@@ -841,7 +844,16 @@ function PropostaEditor() {
 
                     <div className="space-y-1">
                        <label className="text-xs font-semibold text-slate-700">Tipo dos Serviços</label>
-                       <input type="text" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]" value={proposta.cliente.tipoServicos} onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, tipoServicos: e.target.value}})} />
+                       <select 
+                          className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium"
+                          value={proposta.cliente.tipoServicos}
+                          onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, tipoServicos: e.target.value}})}
+                       >
+                          <option value="">Selecione o Tipo...</option>
+                          {tiposServico.map((t: any) => (
+                             <option key={t.id} value={t.nome}>{t.nome}</option>
+                          ))}
+                       </select>
                     </div>
 
                     <div className="space-y-1">

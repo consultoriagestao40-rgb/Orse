@@ -14,10 +14,11 @@ import {
 } from '@/app/escalas/actions';
 import { 
   getUnidadesMedida, createUnidadeMedida, deleteUnidadeMedida,
-  getCategorias, createCategoria, deleteCategoria
+  getCategorias, createCategoria, deleteCategoria,
+  getTiposServico, createTipoServico, deleteTipoServico
 } from './actions';
 
-type Tab = 'status' | 'escalas' | 'unidades' | 'categorias';
+type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('status');
@@ -26,6 +27,10 @@ export default function SettingsPage() {
   // Status State
   const [statuses, setStatuses] = useState<any[]>([]);
   const [newStatusName, setNewStatusName] = useState('');
+
+  // Tipos State
+  const [tipos, setTipos] = useState<any[]>([]);
+  const [newTipoNome, setNewTipoNome] = useState('');
 
   // Escalas State
   const [escalas, setEscalas] = useState<any[]>([]);
@@ -59,12 +64,37 @@ export default function SettingsPage() {
       } else if (activeTab === 'categorias') {
         const data = await getCategorias();
         setCategorias(data || []);
+      } else if (activeTab === 'tipos') {
+        const data = await getTiposServico();
+        setTipos(data || []);
       }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  // HANDLERS TIPOS
+  const handleAddTipo = async () => {
+    if (!newTipoNome.trim()) {
+      alert('Preencha o nome do tipo de serviço.');
+      return;
+    }
+    const res = await createTipoServico(newTipoNome);
+    if (res.success) {
+      setNewTipoNome('');
+      loadData();
+    } else {
+      alert('Erro ao adicionar tipo de serviço: ' + res.error);
+    }
+  };
+
+  const handleDeleteTipo = async (id: string) => {
+    if (!confirm('Remover este tipo de serviço?')) return;
+    const res = await deleteTipoServico(id);
+    if (res.success) loadData();
+    else alert('Erro ao excluir: ' + res.error);
   };
 
   // HANDLERS STATUS
@@ -187,6 +217,7 @@ export default function SettingsPage() {
               { id: 'escalas', label: 'Escalas de Trabalho', icon: CalendarDays },
               { id: 'unidades', label: 'Unidades de Medida', icon: Ruler },
               { id: 'categorias', label: 'Categorias', icon: Tag },
+              { id: 'tipos', label: 'Tipos de Serviço', icon: Settings },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -375,6 +406,51 @@ export default function SettingsPage() {
                         <span className="text-xs font-bold text-slate-700 uppercase">{c.nome}</span>
                         <button 
                           onClick={() => handleDeleteCategoria(c.id)}
+                          className="text-slate-400 hover:text-red-600 transition-colors"
+                          title="Remover"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 5. ABA TIPOS DE SERVIÇO */}
+            {activeTab === 'tipos' && (
+              <div>
+                <div className="bg-[#1B4D3E] px-6 py-3 border-b border-[#13382D]">
+                  <h2 className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                    <Settings size={14} /> Gestão de Tipos de Serviço
+                  </h2>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Nome do Tipo de Serviço (Ex: Limpeza e Conservação)"
+                      value={newTipoNome}
+                      onChange={e => setNewTipoNome(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleAddTipo()}
+                      className="flex-1 px-3 py-2 border border-slate-300 rounded text-sm outline-none focus:border-[#1B4D3E] font-bold"
+                    />
+                    <button 
+                      onClick={handleAddTipo}
+                      className="bg-[#1B4D3E] hover:bg-emerald-900 text-white px-6 py-2 rounded text-sm font-bold flex items-center gap-2 shadow-sm transition-all"
+                    >
+                      <Plus size={16} /> Adicionar
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {tipos.map(t => (
+                      <div key={t.id} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded hover:bg-white hover:shadow-sm transition-all group">
+                        <span className="text-xs font-bold text-slate-700">{t.nome}</span>
+                        <button 
+                          onClick={() => handleDeleteTipo(t.id)}
                           className="text-slate-400 hover:text-red-600 transition-colors"
                           title="Remover"
                         >

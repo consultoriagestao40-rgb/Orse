@@ -169,3 +169,8 @@ enum UserRole {
   MANAGER
   USER
 }
+
+model TipoServico {
+  id   String @id @default(cuid())
+  nome String @unique
+}
