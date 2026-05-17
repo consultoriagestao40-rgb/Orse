@@ -397,52 +397,54 @@ export default function ControladoriaPage() {
                   </div>
                   
                   {/* Speedometer (Velocímetro) Gauge */}
-                  <div className="relative flex flex-col items-center justify-center shrink-0 w-44 h-24 mt-2 md:mt-0 select-none">
-                    <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
-                      {/* Semicírculo de Fundo */}
-                      <path
-                        d="M 10 50 A 40 40 0 0 1 90 50"
-                        fill="none"
-                        stroke="#0D2C22"
-                        strokeWidth="8"
-                        strokeLinecap="round"
-                      />
-                      {/* Semicírculo Ativo (Preenchimento) */}
-                      <path
-                        d="M 10 50 A 40 40 0 0 1 90 50"
-                        fill="none"
-                        stroke="#34D399"
-                        strokeWidth="8"
-                        strokeLinecap="round"
-                        strokeDasharray="125.66"
-                        strokeDashoffset={125.66 - (125.66 * Math.min(100, atingidoGeralPct)) / 100}
-                        className="transition-all duration-1000 ease-out"
-                        style={{ filter: 'drop-shadow(0px 2px 4px rgba(52, 211, 153, 0.4))' }}
-                      />
-                      {/* Ponteiro do Velocímetro */}
-                      <line
-                        x1="50"
-                        y1="50"
-                        x2="50"
-                        y2="15"
-                        stroke="#F59E0B"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        transform={`rotate(${((Math.min(100, atingidoGeralPct) / 100) * 180) - 90} 50 50)`}
-                        className="transition-all duration-1000 ease-out"
-                        style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3))', transformOrigin: '50px 50px' }}
-                      />
-                      {/* Pinos Centrais do Eixo */}
-                      <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
-                      <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
-                    </svg>
+                  <div className="flex flex-col items-center shrink-0 select-none mt-2 md:mt-0">
+                    <div className="w-44 h-20 overflow-hidden relative">
+                      <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
+                        {/* Semicírculo de Fundo */}
+                        <path
+                          d="M 10 50 A 40 40 0 0 1 90 50"
+                          fill="none"
+                          stroke="#0D2C22"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                        />
+                        {/* Semicírculo Ativo (Preenchimento) */}
+                        <path
+                          d="M 10 50 A 40 40 0 0 1 90 50"
+                          fill="none"
+                          stroke="#34D399"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                          strokeDasharray="125.66"
+                          strokeDashoffset={125.66 - (125.66 * Math.min(100, atingidoGeralPct)) / 100}
+                          className="transition-all duration-1000 ease-out"
+                          style={{ filter: 'drop-shadow(0px 2px 4px rgba(52, 211, 153, 0.4))' }}
+                        />
+                        {/* Ponteiro do Velocímetro */}
+                        <line
+                          x1="50"
+                          y1="50"
+                          x2="50"
+                          y2="18"
+                          stroke="#F59E0B"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          transform={`rotate(${((Math.min(100, atingidoGeralPct) / 100) * 180) - 90} 50 50)`}
+                          className="transition-all duration-1000 ease-out"
+                          style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3))' }}
+                        />
+                        {/* Pinos Centrais do Eixo */}
+                        <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
+                        <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
+                      </svg>
+                    </div>
                     
-                    {/* Texto com Percentual Flutuante */}
-                    <div className="absolute -bottom-1 text-center">
-                      <span className="text-xl font-extrabold text-white leading-none">
+                    {/* Rótulos e Percentuais Totalmente Livres de Conflito de Posição */}
+                    <div className="text-center mt-2 z-10">
+                      <span className="text-xl font-extrabold text-white leading-none block">
                         {atingidoGeralPct.toFixed(1)}%
                       </span>
-                      <p className="text-[7px] text-emerald-400 uppercase tracking-widest font-black mt-0.5">Meta Atingida</p>
+                      <p className="text-[7px] text-emerald-400 uppercase tracking-widest font-black mt-1">Meta Atingida</p>
                     </div>
                   </div>
                 </div>
@@ -476,44 +478,47 @@ export default function ControladoriaPage() {
                     <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">Conversão R$ (Volume)</span>
                   </div>
                   
-                  <div className="relative flex flex-col items-center justify-center select-none h-20 mt-1">
-                    <svg className="w-28 h-14 overflow-visible" viewBox="0 0 100 50">
-                      <path
-                        d="M 10 50 A 40 40 0 0 1 90 50"
-                        fill="none"
-                        stroke="#F1F5F9"
-                        strokeWidth="8"
-                        strokeLinecap="round"
-                      />
-                      <path
-                        d="M 10 50 A 40 40 0 0 1 90 50"
-                        fill="none"
-                        stroke="#2563EB"
-                        strokeWidth="8"
-                        strokeLinecap="round"
-                        strokeDasharray="125.66"
-                        strokeDashoffset={125.66 - (125.66 * Math.min(100, taxaConversao)) / 100}
-                        className="transition-all duration-1000 ease-out"
-                        style={{ filter: 'drop-shadow(0px 2px 4px rgba(37, 99, 235, 0.3))' }}
-                      />
-                      <line
-                        x1="50"
-                        y1="50"
-                        x2="50"
-                        y2="15"
-                        stroke="#F59E0B"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        transform={`rotate(${((Math.min(100, taxaConversao) / 100) * 180) - 90} 50 50)`}
-                        className="transition-all duration-1000 ease-out"
-                        style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.2))', transformOrigin: '50px 50px' }}
-                      />
-                      <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
-                      <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
-                    </svg>
+                  <div className="flex flex-col items-center select-none mt-1">
+                    <div className="w-28 h-12 overflow-hidden relative">
+                      <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
+                        <path
+                          d="M 10 50 A 40 40 0 0 1 90 50"
+                          fill="none"
+                          stroke="#F1F5F9"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M 10 50 A 40 40 0 0 1 90 50"
+                          fill="none"
+                          stroke="#2563EB"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                          strokeDasharray="125.66"
+                          strokeDashoffset={125.66 - (125.66 * Math.min(100, taxaConversao)) / 100}
+                          className="transition-all duration-1000 ease-out"
+                          style={{ filter: 'drop-shadow(0px 2px 4px rgba(37, 99, 235, 0.3))' }}
+                        />
+                        <line
+                          x1="50"
+                          y1="50"
+                          x2="50"
+                          y2="18"
+                          stroke="#F59E0B"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          transform={`rotate(${((Math.min(100, taxaConversao) / 100) * 180) - 90} 50 50)`}
+                          className="transition-all duration-1000 ease-out"
+                          style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.2))' }}
+                        />
+                        <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
+                        <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
+                      </svg>
+                    </div>
                     
-                    <div className="absolute -bottom-1 text-center">
-                      <span className="text-lg font-black text-slate-800 leading-none">
+                    {/* Texto com Percentual Totalmente Livre de Overlaps */}
+                    <div className="text-center mt-1.5 z-10">
+                      <span className="text-lg font-black text-slate-800 leading-none block">
                         {taxaConversao.toFixed(1)}%
                       </span>
                     </div>
@@ -529,44 +534,47 @@ export default function ControladoriaPage() {
                     <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">Conversão Qtd (Propostas)</span>
                   </div>
                   
-                  <div className="relative flex flex-col items-center justify-center select-none h-20 mt-1">
-                    <svg className="w-28 h-14 overflow-visible" viewBox="0 0 100 50">
-                      <path
-                        d="M 10 50 A 40 40 0 0 1 90 50"
-                        fill="none"
-                        stroke="#F1F5F9"
-                        strokeWidth="8"
-                        strokeLinecap="round"
-                      />
-                      <path
-                        d="M 10 50 A 40 40 0 0 1 90 50"
-                        fill="none"
-                        stroke="#10B981"
-                        strokeWidth="8"
-                        strokeLinecap="round"
-                        strokeDasharray="125.66"
-                        strokeDashoffset={125.66 - (125.66 * Math.min(100, conversaoQuantidade)) / 100}
-                        className="transition-all duration-1000 ease-out"
-                        style={{ filter: 'drop-shadow(0px 2px 4px rgba(16, 185, 129, 0.3))' }}
-                      />
-                      <line
-                        x1="50"
-                        y1="50"
-                        x2="50"
-                        y2="15"
-                        stroke="#F59E0B"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        transform={`rotate(${((Math.min(100, conversaoQuantidade) / 100) * 180) - 90} 50 50)`}
-                        className="transition-all duration-1000 ease-out"
-                        style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.2))', transformOrigin: '50px 50px' }}
-                      />
-                      <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
-                      <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
-                    </svg>
+                  <div className="flex flex-col items-center select-none mt-1">
+                    <div className="w-28 h-12 overflow-hidden relative">
+                      <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
+                        <path
+                          d="M 10 50 A 40 40 0 0 1 90 50"
+                          fill="none"
+                          stroke="#F1F5F9"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M 10 50 A 40 40 0 0 1 90 50"
+                          fill="none"
+                          stroke="#10B981"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                          strokeDasharray="125.66"
+                          strokeDashoffset={125.66 - (125.66 * Math.min(100, conversaoQuantidade)) / 100}
+                          className="transition-all duration-1000 ease-out"
+                          style={{ filter: 'drop-shadow(0px 2px 4px rgba(16, 185, 129, 0.3))' }}
+                        />
+                        <line
+                          x1="50"
+                          y1="50"
+                          x2="50"
+                          y2="18"
+                          stroke="#F59E0B"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          transform={`rotate(${((Math.min(100, conversaoQuantidade) / 100) * 180) - 90} 50 50)`}
+                          className="transition-all duration-1000 ease-out"
+                          style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.2))' }}
+                        />
+                        <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
+                        <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
+                      </svg>
+                    </div>
                     
-                    <div className="absolute -bottom-1 text-center">
-                      <span className="text-lg font-black text-slate-800 leading-none">
+                    {/* Texto com Percentual Totalmente Livre de Overlaps */}
+                    <div className="text-center mt-1.5 z-10">
+                      <span className="text-lg font-black text-slate-800 leading-none block">
                         {conversaoQuantidade.toFixed(1)}%
                       </span>
                     </div>
@@ -739,11 +747,17 @@ export default function ControladoriaPage() {
                                   {nome}
                                 </span>
                               </td>
-                              <td className="px-5 py-4 text-center font-bold text-slate-500">
-                                {data.count}
+                              <td className="px-5 py-4 text-center">
+                                <p className="font-bold text-slate-500">{data.count}</p>
+                                <p className="text-[9px] text-slate-400 font-semibold mt-0.5">
+                                  {totalPropostasCount > 0 ? ((data.count / totalPropostasCount) * 100).toFixed(1) : 0}%
+                                </p>
                               </td>
-                              <td className="px-5 py-4 text-right font-black text-[#1B4D3E]">
-                                {formatCurrency(data.totalVal)}
+                              <td className="px-5 py-4 text-right">
+                                <p className="font-black text-[#1B4D3E]">{formatCurrency(data.totalVal)}</p>
+                                <p className="text-[9px] text-slate-400 font-bold mt-0.5">
+                                  {totalVolume > 0 ? ((data.totalVal / totalVolume) * 100).toFixed(1) : 0}% do total
+                                </p>
                               </td>
                               <td className="px-5 py-4 text-right font-bold text-slate-500">
                                 {formatCurrency(data.count > 0 ? data.totalVal / data.count : 0)}
