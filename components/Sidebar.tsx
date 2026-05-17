@@ -9,23 +9,22 @@ const Sidebar = () => {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   
-  const [user, setUser] = useState(() => {
+  const [user, setUser] = useState<{ nome: string; role: string; iniciais: string } | null>(null);
+  
+  // Carrega as informações do usuário e o estado recolhido do localStorage
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
       if (cookie) {
         try {
-          return JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+          setUser(JSON.parse(decodeURIComponent(cookie.split('=')[1])));
         } catch (e) {
-          return { nome: 'Cristiano Silva', role: 'ADMIN', iniciais: 'CS' };
+          setUser({ nome: 'Cristiano Silva', role: 'USER', iniciais: 'CS' });
         }
+      } else {
+        setUser({ nome: 'Cristiano Silva', role: 'USER', iniciais: 'CS' });
       }
-    }
-    return { nome: 'Cristiano Silva', role: 'ADMIN', iniciais: 'CS' };
-  });
 
-  // Carrega o estado recolhido do localStorage de forma segura para evitar erros de hidratação no Next.js
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sb_sidebar_collapsed');
       if (saved === 'true') {
         setIsCollapsed(true);
@@ -40,6 +39,7 @@ const Sidebar = () => {
       localStorage.setItem('sb_sidebar_collapsed', String(newState));
     }
   };
+
  
   const menuItems = [
     { icon: Home, label: 'Dashboard CRM', href: '/', roles: ['ADMIN', 'MANAGER', 'USER'] },
@@ -82,7 +82,7 @@ const Sidebar = () => {
       
       {/* Menu de Navegação */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        {menuItems.filter(item => item.roles.includes(user.role)).map((item) => {
+        {menuItems.filter(item => item.roles.includes(user?.role || 'USER')).map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
@@ -108,17 +108,18 @@ const Sidebar = () => {
       <div className="p-4 border-t border-slate-50 space-y-4">
         <div className={`flex items-center gap-3 p-3 bg-slate-50 rounded-[1.5rem] border border-slate-100 group relative ${isCollapsed ? 'justify-center' : ''}`}>
           <div className="w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white font-black text-xs shadow-md shrink-0">
-            {user.iniciais}
+            {user?.iniciais || 'US'}
           </div>
           {!isCollapsed && (
             <div className="overflow-hidden">
-              <p className="text-xs font-black text-slate-800 truncate">{user.nome}</p>
+              <p className="text-xs font-black text-slate-800 truncate">{user?.nome || 'Carregando...'}</p>
               <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">
-                {user.role === 'ADMIN' ? 'Administrador' : user.role === 'MANAGER' ? 'Gestor Comercial' : 'Vendedor'}
+                {user?.role === 'ADMIN' ? 'Administrador' : user?.role === 'MANAGER' ? 'Gestor Comercial' : 'Vendedor'}
               </p>
             </div>
           )}
         </div>
+
         
         <button 
           onClick={async () => {

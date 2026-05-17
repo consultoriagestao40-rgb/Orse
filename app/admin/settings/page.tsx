@@ -23,8 +23,41 @@ type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'metas';
 
 
 export default function SettingsPage() {
+  const [isAdmin, setIsAdmin] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<Tab>('status');
   const [loading, setLoading] = useState(true);
+
+  // Verificação de Perfil Administrador (bloqueia acesso direto via URL)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
+      if (cookie) {
+        try {
+          const parsed = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+          if (parsed.role !== 'ADMIN') {
+            setIsAdmin(false);
+            window.location.href = '/'; // Redireciona para o CRM
+          }
+        } catch (e) {
+          window.location.href = '/';
+        }
+      } else {
+        window.location.href = '/login';
+      }
+    }
+  }, []);
+
+  if (!isAdmin) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-[#F8FAFC]">
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-8 h-8 border-4 border-[#1B4D3E] border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-xs font-bold text-[#1B4D3E] uppercase tracking-widest">Verificando permissões...</span>
+        </div>
+      </div>
+    );
+  }
+
 
   // Status State
   const [statuses, setStatuses] = useState<any[]>([]);
