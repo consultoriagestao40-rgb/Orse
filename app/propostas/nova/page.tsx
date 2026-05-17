@@ -14,7 +14,7 @@ import { getProdutos } from '@/app/produtos/actions';
 import { saveProposta, getPropostaCompleta, getLoggedUser } from '@/app/propostas/actions';
 import { getTiposServico } from '@/app/admin/settings/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, ChevronLeft } from 'lucide-react';
+import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, ChevronLeft, Factory, Store, Bus, Building, Hospital, ShoppingBag, GraduationCap } from 'lucide-react';
 import BrazilMap from '@/components/BrazilMap';
 
 const TABS = [
@@ -2226,32 +2226,25 @@ function PropostaEditor() {
                         <p className="text-xs text-slate-400 mt-1 font-medium">Visualize, edite e exporte a proposta comercial em formato de slides de apresentação.</p>
                      </div>
                      <div className="flex items-center gap-3">
-                        <div className="bg-slate-100 p-1 rounded-xl flex gap-1">
-                           <button 
-                              onClick={() => setCurrentSlide(1)}
-                              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${currentSlide === 1 ? 'bg-white text-[#1B4D3E] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-                           >
-                              Slide 01 (Capa)
-                           </button>
-                           <button 
-                              onClick={() => setCurrentSlide(2)}
-                              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${currentSlide === 2 ? 'bg-white text-[#1B4D3E] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-                           >
-                              Slide 02 (Mensagem)
-                           </button>
-                           <button 
-                              onClick={() => setCurrentSlide(3)}
-                              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${currentSlide === 3 ? 'bg-white text-[#1B4D3E] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-                           >
-                              Slide 03 (Presença)
-                           </button>
-                           <button 
-                              onClick={() => setCurrentSlide(4)}
-                              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${currentSlide === 4 ? 'bg-white text-[#1B4D3E] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-                           >
-                              Slide 04 (Valores)
-                           </button>
-                        </div>
+                         <div className="bg-slate-100 p-1 rounded-xl flex gap-1 flex-wrap">
+                            {[
+                               { id: 1, label: 'Slide 01 (Capa)' },
+                               { id: 2, label: 'Slide 02 (Mensagem)' },
+                               { id: 3, label: 'Slide 03 (Presença)' },
+                               { id: 4, label: 'Slide 04 (Valores)' },
+                               { id: 5, label: 'Slide 05 (Serviços)' },
+                               { id: 6, label: 'Slide 06 (Setores)' }
+                            ].map((slide) => (
+                               <button 
+                                  key={slide.id}
+                                  type="button"
+                                  onClick={() => setCurrentSlide(slide.id)}
+                                  className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${currentSlide === slide.id ? 'bg-white text-[#1B4D3E] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                               >
+                                  {slide.label}
+                               </button>
+                            ))}
+                         </div>
                         <button
                            onClick={() => window.print()}
                            className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
@@ -2687,22 +2680,141 @@ function PropostaEditor() {
                             </div>
                          )}
 
+                         {/* SLIDE 06 (SETORES ATENDIDOS - COM OS ICONS E COLUNAS DE INDUSTRIA E VAREJO) */}
+                         {currentSlide === 6 && (
+                            <div className="h-full w-full flex flex-col justify-between relative z-10 animate-fadeIn bg-[#1e4480] text-white rounded-2xl overflow-hidden p-12">
+                               {/* Linhas diagonais decorativas da marca */}
+                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                                  <line x1="-50" y1="150" x2="350" y2="-250" stroke="#FFFFFF" strokeWidth="10" />
+                                  <line x1="-50" y1="200" x2="400" y2="-250" stroke="#FFFFFF" strokeWidth="6" />
+                                  <line x1="-50" y1="250" x2="450" y2="-250" stroke="#FFFFFF" strokeWidth="3" />
+                                  <line x1="600" y1="800" x2="1100" y2="300" stroke="#FFFFFF" strokeWidth="10" />
+                                  <line x1="650" y1="800" x2="1150" y2="300" stroke="#FFFFFF" strokeWidth="6" />
+                                  <line x1="700" y1="800" x2="1200" y2="300" stroke="#FFFFFF" strokeWidth="3" />
+                               </svg>
+
+                               <div className="grid grid-cols-12 gap-6 items-center h-[calc(100%-110px)] relative z-10">
+                                  {/* Coluna do Título (Esquerda) */}
+                                  <div className="col-span-4 flex flex-col justify-center h-full pr-2">
+                                     <h2 className="text-3xl font-black text-white uppercase tracking-tight leading-none">
+                                        SETORES<br />
+                                        ATENDIDOS
+                                     </h2>
+                                  </div>
+
+                                  {/* Coluna 1 (Centro) - Industria */}
+                                  <div className="col-span-4 flex flex-col space-y-2 h-full justify-center">
+                                     <div className="flex flex-col border-b border-white/20 pb-2">
+                                        <div className="w-8 h-1 bg-white mb-2"></div>
+                                        <div className="flex items-center justify-between gap-2">
+                                           <span className="text-white text-[10px] font-black tracking-wide uppercase leading-tight">
+                                              INDUSTRIA
+                                           </span>
+                                           <div className="bg-white/10 p-1.5 rounded-xl text-white shrink-0">
+                                              <Factory size={18} className="stroke-[2.5]" />
+                                           </div>
+                                        </div>
+                                     </div>
+                                     <p className="text-white/80 text-[8.5px] font-semibold leading-relaxed">
+                                        Com processos minuciosos e detalhados, o setor industrial trouxe para o escopo da JVS Facilities a capacidade de atender clientes de alta exigência. Possuímos qualidade técnica validada no mercado para atender as mais variadas necessidades da industria.
+                                     </p>
+                                  </div>
+
+                                  {/* Coluna 2 (Direita) - Varejo */}
+                                  <div className="col-span-4 flex flex-col space-y-2 h-full justify-center pl-2">
+                                     <div className="flex flex-col border-b border-white/20 pb-2">
+                                        <div className="w-8 h-1 bg-white mb-2"></div>
+                                        <div className="flex items-center justify-between gap-2">
+                                           <span className="text-white text-[10px] font-black tracking-wide uppercase leading-tight">
+                                              VAREJO
+                                           </span>
+                                           <div className="bg-white/10 p-1.5 rounded-xl text-white shrink-0">
+                                              <Store size={18} className="stroke-[2.5]" />
+                                           </div>
+                                        </div>
+                                     </div>
+                                     <p className="text-white/80 text-[8.5px] font-semibold leading-relaxed">
+                                        Um dos setores com maior participação em nossa carteira de clientes, o varejo exigiu resiliência e trabalho árduo em busca de superar os desafios operacionais, que por fim, resultaram em constantes avaliações positivas de satisfação e controle dos indicadores de rotatividade e absenteísmo.
+                                     </p>
+                                  </div>
+                               </div>
+
+                               {/* Painel inferior com as 5 categorias de setores */}
+                               <div className="flex justify-around items-center w-full pt-4 mt-auto border-t border-white/20 relative z-20">
+                                  {/* Setor 1: Transporte */}
+                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
+                                     <div className="bg-white text-[#1e4480] group-hover:scale-110 transition-all duration-300 shadow-md w-12 h-12 flex items-center justify-center rounded-full">
+                                        <Bus size={20} className="stroke-[2]" />
+                                     </div>
+                                     <span className="text-white text-[8px] font-black tracking-wider uppercase mt-2 text-center max-w-[80px] leading-tight">
+                                        TRANSPORTE<br />E LOGÍSTICA
+                                     </span>
+                                  </div>
+
+                                  {/* Setor 2: Condominios */}
+                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
+                                     <div className="bg-white text-[#1e4480] group-hover:scale-110 transition-all duration-300 shadow-md w-12 h-12 flex items-center justify-center rounded-full">
+                                        <Building size={20} className="stroke-[2]" />
+                                     </div>
+                                     <span className="text-white text-[8px] font-black tracking-wider uppercase mt-2 text-center max-w-[90px] leading-tight">
+                                        CONDOMÍNIOS<br />E EDIFÍCIOS
+                                     </span>
+                                  </div>
+
+                                  {/* Setor 3: Clinicas */}
+                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
+                                     <div className="bg-white text-[#1e4480] group-hover:scale-110 transition-all duration-300 shadow-md w-12 h-12 flex items-center justify-center rounded-full">
+                                        <Hospital size={20} className="stroke-[2]" />
+                                     </div>
+                                     <span className="text-white text-[8px] font-black tracking-wider uppercase mt-2 text-center max-w-[80px] leading-tight">
+                                        CLÍNICAS E<br />HOSPITAIS
+                                     </span>
+                                  </div>
+
+                                  {/* Setor 4: Shoppings */}
+                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
+                                     <div className="bg-white text-[#1e4480] group-hover:scale-110 transition-all duration-300 shadow-md w-12 h-12 flex items-center justify-center rounded-full">
+                                        <ShoppingBag size={20} className="stroke-[2]" />
+                                     </div>
+                                     <span className="text-white text-[8px] font-black tracking-wider uppercase mt-2 text-center max-w-[80px] leading-tight">
+                                        SHOPPING<br />CENTERS
+                                     </span>
+                                  </div>
+
+                                  {/* Setor 5: Educacionais */}
+                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
+                                     <div className="bg-white text-[#1e4480] group-hover:scale-110 transition-all duration-300 shadow-md w-12 h-12 flex items-center justify-center rounded-full">
+                                        <GraduationCap size={20} className="stroke-[2]" />
+                                     </div>
+                                     <span className="text-white text-[8px] font-black tracking-wider uppercase mt-2 text-center max-w-[100px] leading-tight">
+                                        ESTABELECIMENTOS<br />EDUCACIONAIS
+                                     </span>
+                                  </div>
+                               </div>
+
+                               {/* Rodapé do Slide 6 */}
+                               <div className="flex justify-between items-center border-t border-white/20 pt-3 mt-4 pr-28 relative z-20 text-white/60">
+                                  <span className="text-[9px] font-bold uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                  <span className="text-[9px] font-black bg-white/10 px-2.5 py-0.5 rounded">06</span>
+                               </div>
+                            </div>
+                         )}
+
                      </div>
                   </div>
-
                    {/* CONTROLES DE NAVEGAÇÃO DOS SLIDES (PADRONIZADOS FORA DO SLIDE E DO NÚMERO) */}
                    <div className="flex flex-col items-center space-y-4 mt-6">
                       <div className="flex justify-center items-center gap-6">
                          <button
                             type="button"
-                            onClick={() => setCurrentSlide(currentSlide === 1 ? 5 : currentSlide - 1)}
+                            onClick={() => setCurrentSlide(currentSlide === 1 ? 6 : currentSlide - 1)}
                             className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold text-xs uppercase tracking-wider hover:bg-slate-50 hover:border-slate-300 active:scale-95 transition-all shadow-sm cursor-pointer z-30"
                          >
                             <ChevronLeft size={16} className="stroke-[3]" /> Voltar
                          </button>
                          
                          <div className="flex gap-2 bg-slate-100 p-1.5 rounded-full border border-slate-200">
-                            {[1, 2, 3, 4, 5].map((num) => (
+                            {[1, 2, 3, 4, 5, 6].map((num) => (
                                <button
                                   key={num}
                                   type="button"
@@ -2716,14 +2828,14 @@ function PropostaEditor() {
 
                          <button
                             type="button"
-                            onClick={() => setCurrentSlide(currentSlide === 5 ? 1 : currentSlide + 1)}
+                            onClick={() => setCurrentSlide(currentSlide === 6 ? 1 : currentSlide + 1)}
                             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1e4480] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#1e4480]/90 active:scale-95 transition-all shadow-md cursor-pointer z-30"
                          >
                             Avançar <ChevronRight size={16} className="stroke-[3]" />
                          </button>
                       </div>
                       <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                         Visualizando Slide {currentSlide} de 5
+                         Visualizando Slide {currentSlide} de 6
                       </div>
                    </div>
 
@@ -3184,6 +3296,123 @@ function PropostaEditor() {
                            <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">05</span>
                         </div>
                      </div>
+
+                      {/* SLIDE 06 PRINT - SETORES ATENDIDOS */}
+                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-[#1e4480] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-white">
+                         {/* Stripes de fundo */}
+                         <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                            <line x1="-50" y1="150" x2="350" y2="-250" stroke="#FFFFFF" strokeWidth="10" />
+                            <line x1="-50" y1="200" x2="400" y2="-250" stroke="#FFFFFF" strokeWidth="6" />
+                            <line x1="-50" y1="250" x2="450" y2="-250" stroke="#FFFFFF" strokeWidth="3" />
+                            <line x1="600" y1="800" x2="1100" y2="300" stroke="#FFFFFF" strokeWidth="10" />
+                            <line x1="650" y1="800" x2="1150" y2="300" stroke="#FFFFFF" strokeWidth="6" />
+                            <line x1="700" y1="800" x2="1200" y2="300" stroke="#FFFFFF" strokeWidth="3" />
+                         </svg>
+                         
+                         <div className="grid grid-cols-12 gap-6 items-center h-[calc(100%-110px)] relative z-10">
+                            {/* Coluna do Título (Esquerda) */}
+                            <div className="col-span-4 flex flex-col justify-center h-full pr-2">
+                               <h2 className="text-3xl font-black text-white uppercase tracking-tight leading-none">
+                                  SETORES<br />
+                                  ATENDIDOS
+                               </h2>
+                            </div>
+
+                            {/* Coluna 1 (Centro) - Industria */}
+                            <div className="col-span-4 flex flex-col space-y-2 h-full justify-center">
+                               <div className="flex flex-col border-b border-white/20 pb-2">
+                                  <div className="w-8 h-1 bg-white mb-2"></div>
+                                  <div className="flex items-center justify-between gap-2">
+                                     <span className="text-white text-[10px] font-black tracking-wide uppercase leading-tight">
+                                        INDUSTRIA
+                                     </span>
+                                     <div className="bg-white/10 p-1.5 rounded-xl text-white shrink-0">
+                                        <Factory size={18} className="stroke-[2.5]" />
+                                     </div>
+                                  </div>
+                               </div>
+                               <p className="text-white/80 text-[8.5px] font-semibold leading-relaxed">
+                                  Com processos minuciosos e detalhados, o setor industrial trouxe para o escopo da JVS Facilities a capacidade de atender clientes de alta exigência. Possuímos qualidade técnica validada no mercado para atender as mais variadas necessidades da industria.
+                               </p>
+                            </div>
+
+                            {/* Coluna 2 (Direita) - Varejo */}
+                            <div className="col-span-4 flex flex-col space-y-2 h-full justify-center pl-2">
+                               <div className="flex flex-col border-b border-white/20 pb-2">
+                                  <div className="w-8 h-1 bg-white mb-2"></div>
+                                  <div className="flex items-center justify-between gap-2">
+                                     <span className="text-white text-[10px] font-black tracking-wide uppercase leading-tight">
+                                        VAREJO
+                                     </span>
+                                     <div className="bg-white/10 p-1.5 rounded-xl text-white shrink-0">
+                                        <Store size={18} className="stroke-[2.5]" />
+                                     </div>
+                                  </div>
+                               </div>
+                               <p className="text-white/80 text-[8.5px] font-semibold leading-relaxed">
+                                  Um dos setores com maior participação em nossa carteira de clientes, o varejo exigiu resiliência e trabalho árduo em busca de superar os desafios operacionais, que por fim, resultaram em constantes avaliações positivas de satisfação e controle dos indicadores de rotatividade e absenteísmo.
+                               </p>
+                            </div>
+                         </div>
+
+                         {/* Painel inferior com as 5 categorias de setores */}
+                         <div className="flex justify-around items-center w-full pt-4 mt-auto border-t border-white/20 relative z-20">
+                            {/* Setor 1: Transporte */}
+                            <div className="flex flex-col items-center justify-center">
+                               <div className="bg-white text-[#1e4480] shadow-md w-12 h-12 flex items-center justify-center rounded-full">
+                                  <Bus size={20} className="stroke-[2]" />
+                               </div>
+                               <span className="text-white text-[8px] font-black tracking-wider uppercase mt-2 text-center max-w-[80px] leading-tight">
+                                  TRANSPORTE<br />E LOGÍSTICA
+                               </span>
+                            </div>
+
+                            {/* Setor 2: Condominios */}
+                            <div className="flex flex-col items-center justify-center">
+                               <div className="bg-white text-[#1e4480] shadow-md w-12 h-12 flex items-center justify-center rounded-full">
+                                  <Building size={20} className="stroke-[2]" />
+                               </div>
+                               <span className="text-white text-[8px] font-black tracking-wider uppercase mt-2 text-center max-w-[90px] leading-tight">
+                                  CONDOMÍNIOS<br />E EDIFÍCIOS
+                               </span>
+                            </div>
+
+                            {/* Setor 3: Clinicas */}
+                            <div className="flex flex-col items-center justify-center">
+                               <div className="bg-white text-[#1e4480] shadow-md w-12 h-12 flex items-center justify-center rounded-full">
+                                  <Hospital size={20} className="stroke-[2]" />
+                               </div>
+                               <span className="text-white text-[8px] font-black tracking-wider uppercase mt-2 text-center max-w-[80px] leading-tight">
+                                  CLÍNICAS E<br />HOSPITAIS
+                               </span>
+                            </div>
+
+                            {/* Setor 4: Shoppings */}
+                            <div className="flex flex-col items-center justify-center">
+                               <div className="bg-white text-[#1e4480] shadow-md w-12 h-12 flex items-center justify-center rounded-full">
+                                  <ShoppingBag size={20} className="stroke-[2]" />
+                               </div>
+                               <span className="text-white text-[8px] font-black tracking-wider uppercase mt-2 text-center max-w-[80px] leading-tight">
+                                  SHOPPING<br />CENTERS
+                               </span>
+                            </div>
+
+                            {/* Setor 5: Educacionais */}
+                            <div className="flex flex-col items-center justify-center">
+                               <div className="bg-white text-[#1e4480] shadow-md w-12 h-12 flex items-center justify-center rounded-full">
+                                  <GraduationCap size={20} className="stroke-[2]" />
+                               </div>
+                               <span className="text-white text-[8px] font-black tracking-wider uppercase mt-2 text-center max-w-[100px] leading-tight">
+                                  ESTABELECIMENTOS<br />EDUCACIONAIS
+                               </span>
+                            </div>
+                         </div>
+
+                         <div className="flex justify-between items-center border-t border-white/20 pt-4 mt-auto">
+                            <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                            <span className="text-[9px] font-black text-white/80 bg-white/10 px-2.5 py-0.5 rounded">06</span>
+                         </div>
+                      </div>
                   </div>
                </div>
             )}
