@@ -16,7 +16,7 @@ export default function ControladoriaPage() {
 
   // Filtros
   const [userFilter, setUserFilter] = useState<string>('ALL');
-  const [period, setPeriod] = useState<'7' | '30' | 'mes' | 'ano' | 'custom'>('mes');
+  const [period, setPeriod] = useState<'all' | '7' | '30' | 'mes' | 'ano' | 'custom'>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
     return new Date().toISOString().substring(0, 7); // Ex: "2026-05"
   });
@@ -81,7 +81,10 @@ export default function ControladoriaPage() {
     const today = new Date();
     let start = new Date();
     
-    if (period === '7') {
+    if (period === 'all') {
+      setStartDate('');
+      setEndDate('');
+    } else if (period === '7') {
       start.setDate(today.getDate() - 7);
       setStartDate(start.toISOString().split('T')[0]);
       setEndDate(today.toISOString().split('T')[0]);
@@ -303,6 +306,7 @@ export default function ControladoriaPage() {
                 value={period}
                 onChange={e => setPeriod(e.target.value as any)}
               >
+                <option value="all">📅 Todos os Períodos (Sem Filtro)</option>
                 <option value="mes">📅 Mensal (Escolher Mês)</option>
                 <option value="7">📅 Últimos 07 dias</option>
                 <option value="30">📅 Últimos 30 dias</option>
@@ -712,11 +716,17 @@ export default function ControladoriaPage() {
                                 </td>
                                 
                                 <td className="px-5 py-4.5 text-center font-bold text-slate-500">
-                                  {stats.count}
+                                  <div>{stats.count}</div>
+                                  <div className="text-[9px] text-slate-400 font-medium mt-0.5">
+                                    {totalPropostasCount > 0 ? ((stats.count / totalPropostasCount) * 100).toFixed(1) : 0}%
+                                  </div>
                                 </td>
                                 
                                 <td className="px-5 py-4.5 text-right font-black text-slate-800">
-                                  {formatCurrency(stats.totalAceito)}
+                                  <div>{formatCurrency(stats.totalAceito)}</div>
+                                  <div className="text-[9px] text-slate-400 font-medium mt-0.5">
+                                    {totalAceito > 0 ? `${((stats.totalAceito / totalAceito) * 100).toFixed(1)}% do total` : '0%'}
+                                  </div>
                                 </td>
                                 
                                 <td className="px-5 py-4.5 text-right font-extrabold text-slate-600">
