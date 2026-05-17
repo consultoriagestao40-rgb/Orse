@@ -1,12 +1,13 @@
 'use client';
-
-import React, { useState } from 'react';
+ 
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Home, FileText, Settings, Users, BarChart2, Briefcase, PlusCircle, CalendarDays, ShoppingCart, ShieldCheck } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-
+ 
 const Sidebar = () => {
   const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState(false);
   
   const [user, setUser] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -22,6 +23,24 @@ const Sidebar = () => {
     return { nome: 'Cristiano Silva', role: 'ADMIN', iniciais: 'CS' };
   });
 
+  // Carrega o estado recolhido do localStorage de forma segura para evitar erros de hidratação no Next.js
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sb_sidebar_collapsed');
+      if (saved === 'true') {
+        setIsCollapsed(true);
+      }
+    }
+  }, []);
+
+  const toggleCollapse = () => {
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sb_sidebar_collapsed', String(newState));
+    }
+  };
+ 
   const menuItems = [
     { icon: Home, label: 'Dashboard CRM', href: '/', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: PlusCircle, label: 'Nova Proposta', href: '/propostas/nova', roles: ['ADMIN', 'MANAGER', 'USER'] },
@@ -33,48 +52,72 @@ const Sidebar = () => {
     { icon: BarChart2, label: 'Controladoria', href: '#', roles: ['ADMIN'] },
     { icon: Settings, label: 'Configurações', href: '/admin/settings', roles: ['ADMIN'] },
   ];
-
+ 
   return (
-    <aside className="w-64 bg-white border-r border-slate-200 h-screen sticky top-0 flex flex-col shadow-sm">
-      <div className="p-8 border-b border-slate-50">
-        <h1 className="text-xl font-black text-slate-900 flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-sm font-black shadow-lg shadow-emerald-200">S</div>
-          SmartBid
-        </h1>
-        <p className="text-[9px] text-slate-400 mt-2 font-black uppercase tracking-[0.2em]">Enterprise FM System</p>
+    <aside className={`bg-white border-r border-slate-200 h-screen sticky top-0 flex flex-col shadow-sm transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+      {/* Header */}
+      <div className="p-6 border-b border-slate-50 relative flex items-center justify-between min-h-[96px]">
+        {!isCollapsed ? (
+          <div>
+            <h1 className="text-xl font-black text-slate-900 flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-sm font-black shadow-lg shadow-emerald-200 shrink-0">S</div>
+              SmartBid
+            </h1>
+            <p className="text-[9px] text-slate-400 mt-2 font-black uppercase tracking-[0.2em] whitespace-nowrap">Enterprise FM System</p>
+          </div>
+        ) : (
+          <div className="w-full flex justify-center">
+            <div className="w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-base font-black shadow-lg shadow-emerald-200 transition-all shrink-0">S</div>
+          </div>
+        )}
+        
+        {/* Botão de Recolher Flutuante */}
+        <button 
+          onClick={toggleCollapse} 
+          className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-[#1B4D3E] hover:border-[#1B4D3E]/40 hover:shadow-md transition-all z-50 cursor-pointer shadow-sm"
+        >
+          {isCollapsed ? <ChevronRight size={12} className="stroke-[3]" /> : <ChevronLeft size={12} className="stroke-[3]" />}
+        </button>
       </div>
       
-      <nav className="flex-1 p-6 space-y-2">
+      {/* Menu de Navegação */}
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {menuItems.filter(item => item.roles.includes(user.role)).map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
               key={item.label}
               href={item.href}
-              className={`flex items-center gap-3 px-5 py-4 rounded-2xl transition-all ${
+              title={isCollapsed ? item.label : undefined}
+              className={`flex items-center gap-3 rounded-2xl transition-all ${
+                isCollapsed ? 'justify-center p-3.5' : 'px-5 py-4'
+              } ${
                 isActive 
                   ? 'bg-slate-900 text-white shadow-xl shadow-slate-200' 
                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-bold'
               }`}
             >
-              <item.icon size={20} className={isActive ? 'text-emerald-400' : 'text-slate-400'} />
-              <span className="text-sm">{item.label}</span>
+              <item.icon size={20} className={isActive ? 'text-emerald-400 shrink-0' : 'text-slate-400 shrink-0'} />
+              {!isCollapsed && <span className="text-sm truncate">{item.label}</span>}
             </Link>
           );
         })}
       </nav>
       
-      <div className="p-6 border-t border-slate-50 space-y-4">
-        <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-[1.5rem] border border-slate-100 group relative">
-          <div className="w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white font-black text-xs shadow-md">
+      {/* Footer do Usuário */}
+      <div className="p-4 border-t border-slate-50 space-y-4">
+        <div className={`flex items-center gap-3 p-3 bg-slate-50 rounded-[1.5rem] border border-slate-100 group relative ${isCollapsed ? 'justify-center' : ''}`}>
+          <div className="w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white font-black text-xs shadow-md shrink-0">
             {user.iniciais}
           </div>
-          <div className="overflow-hidden">
-            <p className="text-xs font-black text-slate-800 truncate">{user.nome}</p>
-            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">
-              {user.role === 'ADMIN' ? 'Administrador' : user.role === 'MANAGER' ? 'Gestor Comercial' : 'Vendedor'}
-            </p>
-          </div>
+          {!isCollapsed && (
+            <div className="overflow-hidden">
+              <p className="text-xs font-black text-slate-800 truncate">{user.nome}</p>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">
+                {user.role === 'ADMIN' ? 'Administrador' : user.role === 'MANAGER' ? 'Gestor Comercial' : 'Vendedor'}
+              </p>
+            </div>
+          )}
         </div>
         
         <button 
@@ -86,14 +129,15 @@ const Sidebar = () => {
             }
             window.location.href = '/login';
           }}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all font-bold text-xs uppercase tracking-widest border border-transparent hover:border-red-100"
+          title={isCollapsed ? "Sair do Sistema" : undefined}
+          className={`w-full flex items-center justify-center gap-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all font-bold text-xs uppercase tracking-widest border border-transparent hover:border-red-100 ${isCollapsed ? 'p-3' : 'py-3'}`}
         >
-          <BarChart2 size={14} className="rotate-90" />
-          Sair do Sistema
+          <BarChart2 size={14} className="rotate-90 shrink-0" />
+          {!isCollapsed && <span className="truncate">Sair</span>}
         </button>
       </div>
     </aside>
   );
 };
-
+ 
 export default Sidebar;
