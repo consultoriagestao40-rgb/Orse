@@ -11,7 +11,7 @@ import { calculateEnterprisePrice } from '@/lib/pricingEngine';
 import { getCCTs } from '@/app/ccts/actions';
 import { getEscalas } from '@/app/escalas/actions';
 import { getProdutos } from '@/app/produtos/actions';
-import { saveProposta, getPropostaCompleta } from '@/app/propostas/actions';
+import { saveProposta, getPropostaCompleta, getLoggedUser } from '@/app/propostas/actions';
 import { getTiposServico } from '@/app/admin/settings/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Box, Drill, Trash, Presentation } from 'lucide-react';
@@ -259,7 +259,13 @@ function PropostaEditor() {
       try {
         console.log('Iniciando carregamento do Editor FPV...');
         setLoading(true);
-        const [dataCcts, dataEscalas, dataProdutos, dataTipos] = await Promise.all([getCCTs(), getEscalas(), getProdutos(), getTiposServico()]);
+        const [dataCcts, dataEscalas, dataProdutos, dataTipos, loggedUser] = await Promise.all([
+          getCCTs(), 
+          getEscalas(), 
+          getProdutos(), 
+          getTiposServico(),
+          getLoggedUser()
+        ]);
         setCcts(dataCcts || []);
         setEscalasDb(dataEscalas || []);
         setProdutosDb(dataProdutos || []);
@@ -302,10 +308,10 @@ function PropostaEditor() {
                  numeroProposta: (fullData as any).numero || '',
                  revisao: `R${String(fullData.versao).padStart(2, '0')}`,
                  tipoServicos: fullData.cliente.tipoServicos || '',
-                 vendedorNome: fullData.cliente.vendedorNome || 'Ádamo Quadros',
-                 vendedorCargo: fullData.cliente.vendedorCargo || 'Novos Negócios',
+                 vendedorNome: fullData.cliente.vendedorNome || loggedUser?.nome || 'Ádamo Quadros',
+                 vendedorCargo: fullData.cliente.vendedorCargo || (loggedUser?.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser?.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios'),
                  vendedorTelefone: fullData.cliente.vendedorTelefone || '(41) 9 9737-0880',
-                 vendedorEmail: fullData.cliente.vendedorEmail || 'adamo@grupojvsserv.com.br'
+                 vendedorEmail: fullData.cliente.vendedorEmail || loggedUser?.email || 'adamo@grupojvsserv.com.br'
                },
                premissas: {
                  ...fullData.premissas,
@@ -326,6 +332,17 @@ function PropostaEditor() {
           } else {
              console.warn('Proposta não encontrada no banco.');
           }
+        } else if (loggedUser) {
+           console.log('Nova proposta: inicializando com o perfil do vendedor logado...');
+           setProposta((prev: any) => ({
+              ...prev,
+              cliente: {
+                 ...prev.cliente,
+                 vendedorNome: loggedUser.nome,
+                 vendedorCargo: loggedUser.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios',
+                 vendedorEmail: loggedUser.email
+              }
+           }));
         }
       } catch (err) {
         console.error('CRITICAL ERROR no Editor FPV:', err);
@@ -2266,14 +2283,13 @@ function PropostaEditor() {
                                     </span>
                                  </div>
                               </div>
-
                               {/* Rodapé Interno do Slide */}
-                              <div className="relative z-20 flex justify-between items-end text-white/70 text-[10px] font-extrabold uppercase tracking-wider">
+                              <div className="relative z-20 flex justify-start items-end gap-16 text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-24">
                                  <div className="space-y-1">
                                     <div>Cliente: <strong className="text-white">{proposta.cliente.cliente || "Nome do Cliente"}</strong></div>
                                     <div>Nº Proposta: <strong className="text-white">{proposta.cliente.numeroProposta || "FPV-XXXX"}</strong></div>
                                  </div>
-                                 <div className="space-y-1 text-right">
+                                 <div className="space-y-1">
                                     <div>Data: <strong className="text-white">
                                        {proposta.cliente.dataElaboracao 
                                           ? new Date(proposta.cliente.dataElaboracao + 'T12:00:00').toLocaleDateString('pt-BR') 
@@ -2357,54 +2373,95 @@ function PropostaEditor() {
                      </div>
                   </div>
 
-                  {/* FORMULÁRIO DE ATUALIZAÇÃO DOS DADOS DO VENDEDOR */}
-                  <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm">
-                     <div className="bg-[#1B4D3E] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
-                        <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
-                           👤 Personalizar Dados do Emissor / Vendedor Comercial
-                        </h3>
+                  {/* FORMULÁRIO DE ATUALIZAÇÃO DOS DADOS DOS SLIDES E DO VENDEDOR */}
+                  <div className="space-y-6">
+                     {/* SEÇÃO 1: DADOS DO CLIENTE E CONTEÚDO */}
+                     <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm">
+                        <div className="bg-slate-800 -mx-8 -mt-8 px-6 py-4 border-b border-slate-700 rounded-t-2xl mb-6">
+                           <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
+                              📝 Personalizar Conteúdo dos Slides (Dados do Cliente)
+                           </h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                           <div className="space-y-1">
+                              <label className="text-xs font-semibold text-slate-700">Nome do Cliente</label>
+                              <input 
+                                 type="text" 
+                                 className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
+                                 value={proposta.cliente.cliente || ''} 
+                                 onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, cliente: e.target.value}})} 
+                              />
+                           </div>
+                           <div className="space-y-1">
+                              <label className="text-xs font-semibold text-slate-700">Nome do Contato</label>
+                              <input 
+                                 type="text" 
+                                 className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
+                                 value={proposta.cliente.contato || ''} 
+                                 onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, contato: e.target.value}})} 
+                              />
+                           </div>
+                           <div className="space-y-1">
+                              <label className="text-xs font-semibold text-slate-700">Serviços / Escopo da Proposta</label>
+                              <input 
+                                 type="text" 
+                                 className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
+                                 value={proposta.cliente.tipoServicos || ''} 
+                                 placeholder="ex: Limpeza e conservação, Portaria"
+                                 onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, tipoServicos: e.target.value}})} 
+                              />
+                           </div>
+                        </div>
                      </div>
-                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <div className="space-y-1">
-                           <label className="text-xs font-semibold text-slate-700">Nome do Vendedor</label>
-                           <input 
-                              type="text" 
-                              className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
-                              value={proposta.cliente.vendedorNome || ''} 
-                              onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, vendedorNome: e.target.value}})} 
-                           />
+
+                     {/* SEÇÃO 2: DADOS DO VENDEDOR */}
+                     <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm">
+                        <div className="bg-[#1B4D3E] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
+                           <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
+                              👤 Personalizar Dados do Emissor / Vendedor Comercial
+                           </h3>
                         </div>
-                        <div className="space-y-1">
-                           <label className="text-xs font-semibold text-slate-700">Cargo / Departamento</label>
-                           <input 
-                              type="text" 
-                              className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
-                              value={proposta.cliente.vendedorCargo || ''} 
-                              onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, vendedorCargo: e.target.value}})} 
-                           />
-                        </div>
-                        <div className="space-y-1">
-                           <label className="text-xs font-semibold text-slate-700">Telefone / WhatsApp</label>
-                           <input 
-                              type="text" 
-                              className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
-                              value={proposta.cliente.vendedorTelefone || ''} 
-                              onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, vendedorTelefone: e.target.value}})} 
-                           />
-                        </div>
-                        <div className="space-y-1">
-                           <label className="text-xs font-semibold text-slate-700">E-mail Comercial</label>
-                           <input 
-                              type="email" 
-                              className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
-                              value={proposta.cliente.vendedorEmail || ''} 
-                              onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, vendedorEmail: e.target.value}})} 
-                           />
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                           <div className="space-y-1">
+                              <label className="text-xs font-semibold text-slate-700">Nome do Vendedor</label>
+                              <input 
+                                 type="text" 
+                                 className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
+                                 value={proposta.cliente.vendedorNome || ''} 
+                                 onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, vendedorNome: e.target.value}})} 
+                              />
+                           </div>
+                           <div className="space-y-1">
+                              <label className="text-xs font-semibold text-slate-700">Cargo / Departamento</label>
+                              <input 
+                                 type="text" 
+                                 className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
+                                 value={proposta.cliente.vendedorCargo || ''} 
+                                 onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, vendedorCargo: e.target.value}})} 
+                              />
+                           </div>
+                           <div className="space-y-1">
+                              <label className="text-xs font-semibold text-slate-700">Telefone / WhatsApp</label>
+                              <input 
+                                 type="text" 
+                                 className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
+                                 value={proposta.cliente.vendedorTelefone || ''} 
+                                 onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, vendedorTelefone: e.target.value}})} 
+                              />
+                           </div>
+                           <div className="space-y-1">
+                              <label className="text-xs font-semibold text-slate-700">E-mail Comercial</label>
+                              <input 
+                                 type="email" 
+                                 className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
+                                 value={proposta.cliente.vendedorEmail || ''} 
+                                 onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, vendedorEmail: e.target.value}})} 
+                              />
+                           </div>
                         </div>
                      </div>
                   </div>
 
-                  {/* SEÇÃO PRINT-ONLY (OCULTA NA TELA, VISÍVEL APENAS NA IMPRESSÃO DO NAVEGADOR) */}
                   <div className="hidden print-slide-deck">
                      {/* SLIDE 01 PRINT */}
                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-slate-950 p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
@@ -2431,12 +2488,12 @@ function PropostaEditor() {
                               </span>
                            </div>
                         </div>
-                        <div className="relative z-20 flex justify-between items-end text-white/70 text-[10px] font-extrabold uppercase tracking-wider">
+                        <div className="relative z-20 flex justify-start items-end gap-16 text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-24">
                            <div className="space-y-1">
                               <div>Cliente: <strong className="text-white">{proposta.cliente.cliente || "Nome do Cliente"}</strong></div>
                               <div>Nº Proposta: <strong className="text-white">{proposta.cliente.numeroProposta || "FPV-XXXX"}</strong></div>
                            </div>
-                           <div className="space-y-1 text-right">
+                           <div className="space-y-1">
                               <div>Data: <strong className="text-white">
                                  {proposta.cliente.dataElaboracao 
                                     ? new Date(proposta.cliente.dataElaboracao + 'T12:00:00').toLocaleDateString('pt-BR') 

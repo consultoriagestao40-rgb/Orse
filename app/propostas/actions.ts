@@ -12,6 +12,24 @@ export async function getCurrentUserRole() {
   }
 }
 
+export async function getLoggedUser() {
+  try {
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    const sbUser = cookieStore.get('sb_user')?.value;
+    if (sbUser) {
+      const data = JSON.parse(sbUser);
+      const user = await prisma.user.findFirst({
+        where: { nome: data.nome }
+      });
+      return user;
+    }
+  } catch (error) {
+    console.error('Erro ao obter usuario logado:', error);
+  }
+  return null;
+}
+
 export async function deleteProposta(id: string) {
   try {
     // Verifica se o usuário é admin antes de deletar
