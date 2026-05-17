@@ -14,7 +14,7 @@ import { getProdutos } from '@/app/produtos/actions';
 import { saveProposta, getPropostaCompleta } from '@/app/propostas/actions';
 import { getTiposServico } from '@/app/admin/settings/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Box, Drill, Trash } from 'lucide-react';
+import { Box, Drill, Trash, Presentation } from 'lucide-react';
 
 const TABS = [
   { id: 'dados', label: '1. Cliente', icon: Building2 },
@@ -26,7 +26,8 @@ const TABS = [
   { id: 'descartaveis', label: '7. Descartáveis', icon: Trash },
   { id: 'extrato', label: '8. Extrato de Custos', icon: FileText },
   { id: 'resumo', label: '9. Resumo da Proposta', icon: ClipboardList },
-  { id: 'dre', label: '10. DRE Projeto', icon: PieChart }
+  { id: 'dre', label: '10. DRE Projeto', icon: PieChart },
+  { id: 'comercial', label: '11. Proposta Comercial', icon: Presentation }
 ];
 
 const MONTHS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
@@ -72,11 +73,17 @@ function PropostaEditor() {
             celular: fullData.cliente.celular || '',
             email: fullData.cliente.email || '',
             objetoProposta: fullData.cliente.objetoProposta || '',
+            hasEscopoTecnico: fullData.cliente.hasEscopoTecnico || false,
+            escopoTecnico: fullData.cliente.escopoTecnico || '',
             cidade: fullData.cliente.cidade || '',
             dataElaboracao: fullData.cliente.dataElaboracao || '',
             numeroProposta: (fullData as any).numero || '',
             revisao: `R${String(fullData.versao).padStart(2, '0')}`,
-            tipoServicos: fullData.cliente.tipoServicos || ''
+            tipoServicos: fullData.cliente.tipoServicos || '',
+            vendedorNome: fullData.cliente.vendedorNome || 'Ádamo Quadros',
+            vendedorCargo: fullData.cliente.vendedorCargo || 'Novos Negócios',
+            vendedorTelefone: fullData.cliente.vendedorTelefone || '(41) 9 9737-0880',
+            vendedorEmail: fullData.cliente.vendedorEmail || 'adamo@grupojvsserv.com.br'
           },
           dreTaxPercent: (fullData as any).dreTaxPercent,
           dreEncargos: (fullData as any).dreEncargos,
@@ -98,7 +105,25 @@ function PropostaEditor() {
 
   const [proposta, setProposta] = useState<any>({
     id: null,
-    cliente: { cliente: '', cidade: '', dataElaboracao: '', numeroProposta: '', revisao: '', tipoServicos: '', contato: '', celular: '', email: '', objetoProposta: '', sindicatoId: '' },
+    cliente: { 
+      cliente: '', 
+      cidade: '', 
+      dataElaboracao: '', 
+      numeroProposta: '', 
+      revisao: '', 
+      tipoServicos: '', 
+      contato: '', 
+      celular: '', 
+      email: '', 
+      objetoProposta: '', 
+      hasEscopoTecnico: false, 
+      escopoTecnico: '', 
+      sindicatoId: '',
+      vendedorNome: 'Ádamo Quadros',
+      vendedorCargo: 'Novos Negócios',
+      vendedorTelefone: '(41) 9 9737-0880',
+      vendedorEmail: 'adamo@grupojvsserv.com.br'
+    },
     premissas: { 
       taxaAdm: 5, 
       margemLucro: 10,
@@ -137,6 +162,7 @@ function PropostaEditor() {
   const [resultado, setResultado] = useState<any>(null);
   const [activeAdicionaisPostoId, setActiveAdicionaisPostoId] = useState<string | null>(null);
   const [activeEpisPostoId, setActiveEpisPostoId] = useState<string | null>(null);
+  const [currentSlide, setCurrentSlide] = useState(1);
 
   // =========================================================================
   // ESTADOS DA DRE PARAMETRIZADA E EDITÁVEL
@@ -269,11 +295,17 @@ function PropostaEditor() {
                  celular: fullData.cliente.celular || '',
                  email: fullData.cliente.email || '',
                  objetoProposta: fullData.cliente.objetoProposta || '',
+                 hasEscopoTecnico: fullData.cliente.hasEscopoTecnico || false,
+                 escopoTecnico: fullData.cliente.escopoTecnico || '',
                  cidade: fullData.cliente.cidade || '',
                  dataElaboracao: fullData.cliente.dataElaboracao || '',
                  numeroProposta: (fullData as any).numero || '',
                  revisao: `R${String(fullData.versao).padStart(2, '0')}`,
-                 tipoServicos: fullData.cliente.tipoServicos || ''
+                 tipoServicos: fullData.cliente.tipoServicos || '',
+                 vendedorNome: fullData.cliente.vendedorNome || 'Ádamo Quadros',
+                 vendedorCargo: fullData.cliente.vendedorCargo || 'Novos Negócios',
+                 vendedorTelefone: fullData.cliente.vendedorTelefone || '(41) 9 9737-0880',
+                 vendedorEmail: fullData.cliente.vendedorEmail || 'adamo@grupojvsserv.com.br'
                },
                premissas: {
                  ...fullData.premissas,
@@ -875,6 +907,31 @@ function PropostaEditor() {
                        <label className="text-xs font-semibold text-slate-700">Objeto da Proposta</label>
                        <textarea className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] resize-none min-h-[80px]" value={proposta.cliente.objetoProposta} onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, objetoProposta: e.target.value}})}></textarea>
                     </div>
+
+                    <div className="md:col-span-2 flex items-center gap-2 pt-2 pb-1">
+                       <input 
+                          type="checkbox" 
+                          id="hasEscopoTecnico"
+                          className="w-4 h-4 text-[#1B4D3E] border-slate-300 rounded focus:ring-[#1B4D3E] cursor-pointer"
+                          checked={proposta.cliente.hasEscopoTecnico || false}
+                          onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, hasEscopoTecnico: e.target.checked}})}
+                       />
+                       <label htmlFor="hasEscopoTecnico" className="text-xs font-bold text-slate-700 cursor-pointer select-none">
+                          📋 Incluir Escopo Técnico na Proposta
+                       </label>
+                    </div>
+
+                    {proposta.cliente.hasEscopoTecnico && (
+                       <div className="md:col-span-2 space-y-1">
+                          <label className="text-xs font-semibold text-slate-700">Detalhamento do Escopo Técnico</label>
+                          <textarea 
+                             className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] min-h-[120px]" 
+                             value={proposta.cliente.escopoTecnico || ''} 
+                             placeholder="Descreva aqui de forma detalhada o escopo técnico a ser executado..."
+                             onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, escopoTecnico: e.target.value}})}
+                          ></textarea>
+                       </div>
+                    )}
                  </div>
               </div>
            )}
@@ -2099,6 +2156,349 @@ function PropostaEditor() {
                   </div>
                );
             })()}
+
+            {activeTab === 'comercial' && (
+               <div className="space-y-8 animate-fadeIn">
+                  {/* ESTILOS DE IMPRESSÃO EXCLUSIVOS PARA O SLIDE DECK */}
+                  <style>{`
+                     @media print {
+                        /* Oculta tudo na página para a impressão */
+                        body, html, #root, [class*="layout"], [class*="sidebar"], [class*="main"], header, nav, button, div:not(.print-slide-deck):not(.print-slide-deck *) {
+                           display: none !important;
+                           height: 0 !important;
+                           overflow: hidden !important;
+                        }
+                        
+                        /* Mostra apenas a print-slide-deck */
+                        .print-slide-deck {
+                           display: block !important;
+                           position: absolute !important;
+                           left: 0 !important;
+                           top: 0 !important;
+                           width: 100% !important;
+                           background: white !important;
+                           visibility: visible !important;
+                        }
+                        
+                        .print-slide-deck * {
+                           visibility: visible !important;
+                        }
+                        
+                        .print-slide {
+                           display: flex !important;
+                           page-break-after: always !important;
+                           break-after: page !important;
+                           width: 100% !important;
+                           height: 100vh !important;
+                           box-sizing: border-box !important;
+                           margin: 0 !important;
+                           padding: 4rem !important;
+                           position: relative !important;
+                           background: white !important;
+                        }
+                     }
+                  `}</style>
+
+                  {/* CONTROLES E AÇÕES */}
+                  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row justify-between items-center gap-4">
+                     <div>
+                        <h2 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2">
+                           <Presentation className="text-[#10B981]" size={18} /> Proposta Comercial (Slide Deck)
+                        </h2>
+                        <p className="text-xs text-slate-400 mt-1 font-medium">Visualize, edite e exporte a proposta comercial em formato de slides de apresentação.</p>
+                     </div>
+                     <div className="flex items-center gap-3">
+                        <div className="bg-slate-100 p-1 rounded-xl flex gap-1">
+                           <button 
+                              onClick={() => setCurrentSlide(1)}
+                              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${currentSlide === 1 ? 'bg-white text-[#1B4D3E] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                           >
+                              Slide 01 (Capa)
+                           </button>
+                           <button 
+                              onClick={() => setCurrentSlide(2)}
+                              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${currentSlide === 2 ? 'bg-white text-[#1B4D3E] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                           >
+                              Slide 02 (Mensagem)
+                           </button>
+                        </div>
+                        <button
+                           onClick={() => window.print()}
+                           className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
+                        >
+                           <span>🖨️</span> Salvar PDF / Imprimir
+                        </button>
+                     </div>
+                  </div>
+
+                  {/* CONTAINER DOS SLIDES PARA VISUALIZAÇÃO EM TELA */}
+                  <div className="w-full bg-slate-900/5 rounded-3xl p-8 border border-slate-200/40 flex justify-center items-center overflow-x-auto">
+                     <div className="w-full max-w-[960px] aspect-[16/9] min-w-[760px] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative select-none flex flex-col justify-between p-12">
+                        
+                        {/* SLIDE 01 (CAPA DO PRINT - COM FOTO E FILTRO AZUL) */}
+                        {currentSlide === 1 && (
+                           <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 text-white overflow-hidden bg-slate-950">
+                              {/* Imagem de Fundo (Workers cleaning office windows) */}
+                              <div 
+                                 className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-40 scale-105 filter blur-[0.5px]"
+                                 style={{ backgroundImage: `url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200')` }}
+                              ></div>
+                              
+                              {/* Overlay Azul Escuro do Print */}
+                              <div className="absolute inset-0 bg-[#1e4480]/85 backdrop-blur-[1px]"></div>
+
+                              {/* Conteúdo Central */}
+                              <div className="relative z-20 flex flex-col justify-center items-center h-full w-full space-y-12">
+                                 {/* Logo JVS Facilities em Branco Puro */}
+                                 <div className="flex flex-col items-center space-y-4 animate-fadeIn">
+                                    <img 
+                                       src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
+                                       alt="JVS Facilities Logo" 
+                                       className="max-h-32 w-auto object-contain brightness-0 invert drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
+                                    />
+                                    <div className="text-[11px] font-black tracking-[0.3em] text-white/90 uppercase pl-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">FACILITIES</div>
+                                 </div>
+
+                                 {/* Caixa de Texto Pílula "PROPOSTA COMERCIAL" idêntica ao Print */}
+                                 <div className="w-full max-w-2xl border-2 border-white rounded-full bg-white/10 px-12 py-4 shadow-xl backdrop-blur-md text-center hover:bg-white/15 transition-all duration-300 transform hover:scale-[1.01]">
+                                    <span className="text-white text-base font-black tracking-[0.25em] uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.15)]">
+                                       PROPOSTA COMERCIAL
+                                    </span>
+                                 </div>
+                              </div>
+
+                              {/* Rodapé Interno do Slide */}
+                              <div className="relative z-20 flex justify-between items-end text-white/70 text-[10px] font-extrabold uppercase tracking-wider">
+                                 <div className="space-y-1">
+                                    <div>Cliente: <strong className="text-white">{proposta.cliente.cliente || "Nome do Cliente"}</strong></div>
+                                    <div>Nº Proposta: <strong className="text-white">{proposta.cliente.numeroProposta || "FPV-XXXX"}</strong></div>
+                                 </div>
+                                 <div className="space-y-1 text-right">
+                                    <div>Data: <strong className="text-white">
+                                       {proposta.cliente.dataElaboracao 
+                                          ? new Date(proposta.cliente.dataElaboracao + 'T12:00:00').toLocaleDateString('pt-BR') 
+                                          : new Date().toLocaleDateString('pt-BR')}
+                                    </strong></div>
+                                    <div>Revisão: <strong className="text-white">{proposta.cliente.revisao || "R01"}</strong></div>
+                                 </div>
+                              </div>
+
+                              {/* Botão de Avanço idêntico ao Print circular no canto direito */}
+                              <button 
+                                 onClick={() => setCurrentSlide(2)}
+                                 className="absolute right-12 bottom-12 border-2 border-white rounded-full p-3.5 text-white hover:bg-white/20 hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center justify-center w-12 h-12 cursor-pointer z-30"
+                              >
+                                 <ChevronRight size={22} className="stroke-[3]" />
+                              </button>
+                           </div>
+                        )}
+
+                        {/* SLIDE 02 (MENSAGEM DE VISITA E AGRADECIMENTO) */}
+                        {currentSlide === 2 && (
+                           <div className="h-full w-full flex flex-col justify-between relative z-10 animate-fadeIn">
+                              {/* Linhas diagonais decorativas */}
+                              <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" xmlns="http://www.w3.org/2000/svg">
+                                 <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
+                                 <line x1="-50" y1="200" x2="400" y2="-250" stroke="#E2E8F0" strokeWidth="6" />
+                                 <line x1="-50" y1="250" x2="450" y2="-250" stroke="#E2E8F0" strokeWidth="3" />
+                                 
+                                 <line x1="600" y1="800" x2="1100" y2="300" stroke="#E2E8F0" strokeWidth="10" />
+                                 <line x1="650" y1="800" x2="1150" y2="300" stroke="#E2E8F0" strokeWidth="6" />
+                                 <line x1="700" y1="800" x2="1200" y2="300" stroke="#E2E8F0" strokeWidth="3" />
+                              </svg>
+
+                              <div className="grid grid-cols-12 gap-8 items-center h-full relative z-10">
+                                 <div className="col-span-8 flex flex-col justify-center space-y-5 pr-4">
+                                    {/* Olá, Karin! */}
+                                    <h2 className="text-3xl font-black text-[#1E3A8A] tracking-tight leading-none">
+                                       Olá, {proposta.cliente.contato || "Karin"}!
+                                    </h2>
+
+                                    {/* Mensagem Principal */}
+                                    <div className="text-slate-600 text-xs leading-relaxed space-y-4 font-medium">
+                                       <p>
+                                          O desenvolvimento deste projeto teve como base as informações reunidas por meio da visita técnica realizada, com o objetivo de corresponder, da forma mais eficaz possível, às necessidades do <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> no que se refere aos serviços de <strong className="font-extrabold text-slate-800">{proposta.cliente.tipoServicos || proposta.cliente.objetoProposta || "Limpeza e conservação"}</strong>.
+                                       </p>
+                                       <p className="font-semibold text-slate-700">
+                                          Estamos imensamente gratos desde já pela oportunidade!
+                                       </p>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                       <span className="text-xs font-bold text-slate-500 block">Att,</span>
+                                       
+                                       {/* Seller Card (Pill card) */}
+                                       <div className="bg-[#2B547E] text-white px-5 py-3 rounded-2xl inline-flex flex-col space-y-0.5 shadow-md max-w-sm">
+                                          <span className="text-sm font-black tracking-tight">{proposta.cliente.vendedorNome || "Ádamo Quadros"}</span>
+                                          <span className="text-[10px] text-slate-200/80 font-bold uppercase tracking-wider">{proposta.cliente.vendedorCargo || "Novos Negócios"}</span>
+                                          <span className="text-[10px] text-slate-200/80 font-bold">{proposta.cliente.vendedorTelefone || "(41) 9 9737-0880"}</span>
+                                          <span className="text-[10px] text-slate-200/80 font-bold truncate">{proposta.cliente.vendedorEmail || "adamo@grupojvsserv.com.br"}</span>
+                                       </div>
+                                    </div>
+                                 </div>
+
+                                 {/* Logo JVS no Slide 2 */}
+                                 <div className="col-span-4 flex flex-col justify-center items-center pl-8 border-l border-slate-100 h-full">
+                                    <img 
+                                       src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
+                                       alt="JVS Facilities" 
+                                       className="max-h-24 w-auto object-contain mb-4"
+                                    />
+                                    <div className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">FACILITIES</div>
+                                 </div>
+                              </div>
+
+                              <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
+                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                 <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded">SLIDE 02</span>
+                              </div>
+                           </div>
+                        )}
+                     </div>
+                  </div>
+
+                  {/* FORMULÁRIO DE ATUALIZAÇÃO DOS DADOS DO VENDEDOR */}
+                  <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm">
+                     <div className="bg-[#1B4D3E] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
+                        <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
+                           👤 Personalizar Dados do Emissor / Vendedor Comercial
+                        </h3>
+                     </div>
+                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div className="space-y-1">
+                           <label className="text-xs font-semibold text-slate-700">Nome do Vendedor</label>
+                           <input 
+                              type="text" 
+                              className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
+                              value={proposta.cliente.vendedorNome || ''} 
+                              onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, vendedorNome: e.target.value}})} 
+                           />
+                        </div>
+                        <div className="space-y-1">
+                           <label className="text-xs font-semibold text-slate-700">Cargo / Departamento</label>
+                           <input 
+                              type="text" 
+                              className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
+                              value={proposta.cliente.vendedorCargo || ''} 
+                              onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, vendedorCargo: e.target.value}})} 
+                           />
+                        </div>
+                        <div className="space-y-1">
+                           <label className="text-xs font-semibold text-slate-700">Telefone / WhatsApp</label>
+                           <input 
+                              type="text" 
+                              className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
+                              value={proposta.cliente.vendedorTelefone || ''} 
+                              onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, vendedorTelefone: e.target.value}})} 
+                           />
+                        </div>
+                        <div className="space-y-1">
+                           <label className="text-xs font-semibold text-slate-700">E-mail Comercial</label>
+                           <input 
+                              type="email" 
+                              className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
+                              value={proposta.cliente.vendedorEmail || ''} 
+                              onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, vendedorEmail: e.target.value}})} 
+                           />
+                        </div>
+                     </div>
+                  </div>
+
+                  {/* SEÇÃO PRINT-ONLY (OCULTA NA TELA, VISÍVEL APENAS NA IMPRESSÃO DO NAVEGADOR) */}
+                  <div className="hidden print-slide-deck">
+                     {/* SLIDE 01 PRINT */}
+                     <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-slate-950 p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
+                        {/* Imagem de Fundo */}
+                        <div 
+                           className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-40 scale-105 filter blur-[0.5px]"
+                           style={{ backgroundImage: `url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200')` }}
+                        ></div>
+                        {/* Overlay Azul */}
+                        <div className="absolute inset-0 bg-[#1e4480]/85 backdrop-blur-[1px]"></div>
+                        
+                        <div className="relative z-20 flex flex-col justify-center items-center h-full w-full space-y-12">
+                           <div className="flex flex-col items-center space-y-4">
+                              <img 
+                                 src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
+                                 alt="JVS Facilities Logo" 
+                                 className="max-h-32 w-auto object-contain brightness-0 invert drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
+                              />
+                              <div className="text-[11px] font-black tracking-[0.3em] text-white/90 uppercase pl-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">FACILITIES</div>
+                           </div>
+                           <div className="w-full max-w-2xl border-2 border-white rounded-full bg-white/10 px-12 py-4 shadow-xl backdrop-blur-md text-center">
+                              <span className="text-white text-base font-black tracking-[0.25em] uppercase">
+                                 PROPOSTA COMERCIAL
+                              </span>
+                           </div>
+                        </div>
+                        <div className="relative z-20 flex justify-between items-end text-white/70 text-[10px] font-extrabold uppercase tracking-wider">
+                           <div className="space-y-1">
+                              <div>Cliente: <strong className="text-white">{proposta.cliente.cliente || "Nome do Cliente"}</strong></div>
+                              <div>Nº Proposta: <strong className="text-white">{proposta.cliente.numeroProposta || "FPV-XXXX"}</strong></div>
+                           </div>
+                           <div className="space-y-1 text-right">
+                              <div>Data: <strong className="text-white">
+                                 {proposta.cliente.dataElaboracao 
+                                    ? new Date(proposta.cliente.dataElaboracao + 'T12:00:00').toLocaleDateString('pt-BR') 
+                                    : new Date().toLocaleDateString('pt-BR')}
+                              </strong></div>
+                              <div>Revisão: <strong className="text-white">{proposta.cliente.revisao || "R01"}</strong></div>
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* SLIDE 02 PRINT */}
+                     <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
+                        {/* Stripes de fundo */}
+                        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" xmlns="http://www.w3.org/2000/svg">
+                           <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
+                           <line x1="-50" y1="200" x2="400" y2="-250" stroke="#E2E8F0" strokeWidth="6" />
+                           <line x1="-50" y1="250" x2="450" y2="-250" stroke="#E2E8F0" strokeWidth="3" />
+                           <line x1="600" y1="800" x2="1100" y2="300" stroke="#E2E8F0" strokeWidth="10" />
+                           <line x1="650" y1="800" x2="1150" y2="300" stroke="#E2E8F0" strokeWidth="6" />
+                           <line x1="700" y1="800" x2="1200" y2="300" stroke="#E2E8F0" strokeWidth="3" />
+                        </svg>
+                        
+                        <div className="grid grid-cols-12 gap-8 items-center h-full relative z-10">
+                           <div className="col-span-8 flex flex-col justify-center space-y-6 pr-4">
+                              <h2 className="text-3xl font-black text-[#1E3A8A] tracking-tight leading-none">
+                                 Olá, {proposta.cliente.contato || "Karin"}!
+                              </h2>
+                              <div className="text-slate-600 text-xs leading-relaxed space-y-4 font-medium">
+                                 <p>
+                                    O desenvolvimento deste projeto teve como base as informações reunidas por meio da visita técnica realizada, com o objetivo de corresponder, da forma mais eficaz possível, às necessidades do <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> no que se refere aos serviços de <strong className="font-extrabold text-slate-800">{proposta.cliente.tipoServicos || proposta.cliente.objetoProposta || "Limpeza e conservação"}</strong>.
+                                 </p>
+                                 <p className="font-semibold text-slate-700">
+                                    Estamos imensamente gratos desde já pela oportunidade!
+                                 </p>
+                              </div>
+                              <div className="space-y-4">
+                                 <span className="text-xs font-bold text-slate-500 block">Att,</span>
+                                 <div className="bg-[#2B547E] text-white px-5 py-3 rounded-2xl inline-flex flex-col space-y-0.5 shadow-md max-w-sm">
+                                    <span className="text-sm font-black tracking-tight">{proposta.cliente.vendedorNome || "Ádamo Quadros"}</span>
+                                    <span className="text-[10px] text-slate-200/80 font-bold uppercase tracking-wider">{proposta.cliente.vendedorCargo || "Novos Negócios"}</span>
+                                    <span className="text-[10px] text-slate-200/80 font-bold">{proposta.cliente.vendedorTelefone || "(41) 9 9737-0880"}</span>
+                                    <span className="text-[10px] text-slate-200/80 font-bold truncate">{proposta.cliente.vendedorEmail || "adamo@grupojvsserv.com.br"}</span>
+                                 </div>
+                              </div>
+                           </div>
+                           <div className="col-span-4 flex flex-col justify-center items-center pl-8 border-l border-slate-100 h-full">
+                              <img 
+                                 src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
+                                 alt="JVS Facilities" 
+                                 className="max-h-24 w-auto object-contain mb-4"
+                              />
+                              <div className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">FACILITIES</div>
+                           </div>
+                        </div>
+                        <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
+                           <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                           <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded">SLIDE 02</span>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            )}
 
 
         </div>
