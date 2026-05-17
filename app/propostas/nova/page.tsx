@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
   Building2, TrendingUp, ShieldCheck, UserCheck, 
-  FileText, PieChart, Save, Plus, Trash2, ClipboardList,
+  FileText, PieChart, Save, Plus, Trash2, ClipboardList, X,
   Calculator, Phone, Mail, MapPin, User, Briefcase, Calendar, Hash, History, AlignLeft, ChevronRight, CheckCircle2, DollarSign, Info, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { calculateEnterprisePrice } from '@/lib/pricingEngine';
@@ -131,6 +131,8 @@ function PropostaEditor() {
   });
 
   const [resultado, setResultado] = useState<any>(null);
+  const [activeAdicionaisPostoId, setActiveAdicionaisPostoId] = useState<string | null>(null);
+  const [activeEpisPostoId, setActiveEpisPostoId] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -913,244 +915,39 @@ function PropostaEditor() {
                                          ))}
                                       </select>
                                    </td>
-                                   <td className="px-6 py-4 text-right">
-                                      <div className="flex justify-end gap-2">
-                                         <button onClick={() => {
-                                            const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, showConfig: !x.showConfig} : x);
-                                            setProposta({...proposta, equipe: newE});
-                                         }} className={`p-2 rounded transition-colors ${p.showConfig ? 'bg-emerald-100 text-[#1B4D3E]' : 'text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100'}`} title="Configurar Posto">
-                                                                                         ⚙️ R$ {(() => {
-                                                const res = resultado?.items?.find((i: any) => i.id === p.id);
-                                                return (res?.detalhes?.ativos || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                                             })()}
-                                         </button>
-                                         <button onClick={() => setProposta({...proposta, equipe: proposta.equipe.filter((x: any) => x.id !== p.id)})} className="text-slate-400 hover:text-red-600 transition-colors p-2 rounded hover:bg-red-50" title="Remover Posto">
-                                            <Trash2 size={16}/>
-                                         </button>
-                                      </div>
-                                   </td>
+                                    <td className="px-6 py-4 text-right">
+                                       <div className="flex justify-end items-center gap-2">
+                                          <button 
+                                             onClick={() => setActiveAdicionaisPostoId(p.id)}
+                                             className="px-3 py-1.5 rounded-lg border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 text-slate-700 hover:text-[#1B4D3E] font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm"
+                                             title="Configurar Adicionais e Jornada"
+                                          >
+                                             <span>⚙️</span> Adicionais
+                                          </button>
+                                          
+                                          <button 
+                                             onClick={() => setActiveEpisPostoId(p.id)}
+                                             className="px-3 py-1.5 rounded-lg border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 text-slate-700 hover:text-blue-700 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm"
+                                             title="Configurar EPIs Especiais do Posto"
+                                          >
+                                             <span>🛡️</span> EPIs Especiais
+                                             {((p.parametrosPosto?.episAdicionais || []).length > 0) && (
+                                                <span className="bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.2 rounded-full font-black ml-1">
+                                                   {(p.parametrosPosto?.episAdicionais || []).length}
+                                                </span>
+                                             )}
+                                          </button>
+
+                                          <button 
+                                             onClick={() => setProposta({...proposta, equipe: proposta.equipe.filter((x: any) => x.id !== p.id)})} 
+                                             className="text-slate-400 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50" 
+                                             title="Remover Posto"
+                                          >
+                                             <Trash2 size={16}/>
+                                          </button>
+                                       </div>
+                                    </td>
                                 </tr>
-                                {p.showConfig && (
-                                   <tr className="bg-slate-50 border-b border-slate-200">
-                                      <td colSpan={4} className="p-6">
-                                         <div className="bg-white border border-emerald-100 rounded-lg p-6 shadow-sm">
-                                            <h3 className="text-[#1B4D3E] font-bold text-sm uppercase mb-4 flex items-center gap-2">
-                                               ⚙️ Parâmetros Específicos do Posto
-                                            </h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                                               <div className="space-y-1">
-                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Periculosidade</label>
-                                                  <select className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.periculosidade ? 'SIM' : 'NAO'} onChange={(e) => {
-                                                     const param = {...p.parametrosPosto, periculosidade: e.target.value === 'SIM'};
-                                                     updatePosto(p.id, 'parametrosPosto', param);
-                                                  }}>
-                                                     <option value="NAO">Não</option>
-                                                     <option value="SIM">Sim (30%)</option>
-                                                  </select>
-                                               </div>
-                                               <div className="space-y-1">
-                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Insalubridade (%)</label>
-                                                  <select className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.insalubridadePercent || 0} onChange={(e) => {
-                                                     const param = {...p.parametrosPosto, insalubridadePercent: Number(e.target.value)};
-                                                     updatePosto(p.id, 'parametrosPosto', param);
-                                                  }}>
-                                                     <option value={0}>0%</option>
-                                                     <option value={10}>10% (Mínimo)</option>
-                                                     <option value={20}>20% (Médio)</option>
-                                                     <option value={40}>40% (Máximo)</option>
-                                                  </select>
-                                               </div>
-                                               <div className="space-y-1">
-                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Horas Noturnas (Mês)</label>
-                                                  <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.adicionalNoturnoHoras || 0} onChange={(e) => {
-                                                     const param = {...p.parametrosPosto, adicionalNoturnoHoras: Number(e.target.value)};
-                                                     updatePosto(p.id, 'parametrosPosto', param);
-                                                  }} />
-                                               </div>
-                                               <div className="space-y-1">
-                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">Intrajornada (Horas/Mês)</label>
-                                                  <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.intrajornadaHoras || 0} onChange={(e) => {
-                                                     const param = {...p.parametrosPosto, intrajornadaHoras: Number(e.target.value)};
-                                                     updatePosto(p.id, 'parametrosPosto', param);
-                                                  }} />
-                                               </div>
-                                               <div className="space-y-1">
-                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">DSR s/ Adicionais (%)</label>
-                                                  <input type="number" step="0.01" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.dsrPercent || 0} onChange={(e) => {
-                                                     const param = {...p.parametrosPosto, dsrPercent: Number(e.target.value)};
-                                                     updatePosto(p.id, 'parametrosPosto', param);
-                                                  }} />
-                                             <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                                                <div className="space-y-1">
-                                                   <label className="text-[10px] font-bold text-slate-500 uppercase">Horário de Início</label>
-                                                   <input type="time" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.horarioInicio || '08:00'} onChange={(e) => {
-                                                      const hInicio = e.target.value;
-                                                      const hFim = p.parametrosPosto?.horarioFim || '17:00';
-                                                      const dias = p.parametrosPosto?.diasTrabalhadosMes || 22;
-                                                      const noturnoAuto = calculateAutoNoturno(hInicio, hFim, dias);
-                                                      const param = {...p.parametrosPosto, horarioInicio: hInicio, adicionalNoturnoHoras: noturnoAuto};
-                                                      updatePosto(p.id, 'parametrosPosto', param);
-                                                   }} />
-                                                </div>
-                                                <div className="space-y-1">
-                                                   <label className="text-[10px] font-bold text-slate-500 uppercase">Horário de Saída</label>
-                                                   <input type="time" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.horarioFim || '17:00'} onChange={(e) => {
-                                                      const hFim = e.target.value;
-                                                      const hInicio = p.parametrosPosto?.horarioInicio || '08:00';
-                                                      const dias = p.parametrosPosto?.diasTrabalhadosMes || 22;
-                                                      const noturnoAuto = calculateAutoNoturno(hInicio, hFim, dias);
-                                                      const param = {...p.parametrosPosto, horarioFim: hFim, adicionalNoturnoHoras: noturnoAuto};
-                                                      updatePosto(p.id, 'parametrosPosto', param);
-                                                   }} />
-                                                </div>
-                                                <div className="space-y-1">
-                                                   <label className="text-[10px] font-bold text-slate-500 uppercase">Dias Trab. / Mês</label>
-                                                   <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-bold text-slate-700 outline-none" value={p.parametrosPosto?.diasTrabalhadosMes || 22} onChange={(e) => {
-                                                      const dias = Number(e.target.value);
-                                                      const hInicio = p.parametrosPosto?.horarioInicio || '08:00';
-                                                      const hFim = p.parametrosPosto?.horarioFim || '17:00';
-                                                      const noturnoAuto = calculateAutoNoturno(hInicio, hFim, dias);
-                                                      const param = {...p.parametrosPosto, diasTrabalhadosMes: dias, adicionalNoturnoHoras: noturnoAuto};
-                                                      updatePosto(p.id, 'parametrosPosto', param);
-                                                   }} />
-                                                </div>
-                                                <div className="pb-[1px]">
-                                                   <p className="text-[9px] text-slate-400 italic mb-1">Cálculo noturno automático</p>
-                                                   <div className="bg-emerald-50 text-[#1B4D3E] px-3 py-1.5 rounded text-xs font-bold border border-emerald-100 flex justify-between">
-                                                      <span>Noturnas:</span>
-                                                      <span>{p.parametrosPosto?.adicionalNoturnoHoras || 0}h</span>
-                                                   </div>
-                                                </div>
-                                             </div>
-
-                                             <div className="mt-6 pt-6 border-t border-slate-100">
-                                                <div className="flex items-center justify-between mb-3">
-                                                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                                      🛡️ EPIs Adicionais do Posto
-                                                   </h4>
-                                                   <button 
-                                                      onClick={() => {
-                                                         const epis = p.parametrosPosto?.episAdicionais || [];
-                                                         const param = {...p.parametrosPosto, episAdicionais: [...epis, { id: Math.random().toString(), descricao: '', quantidade: 1, precoUnitario: 0, vidaUtil: 6 }]};
-                                                         updatePosto(p.id, 'parametrosPosto', param);
-                                                      }}
-                                                      className="bg-emerald-50 text-[#1B4D3E] hover:bg-emerald-100 px-3 py-1 rounded text-[10px] font-bold flex items-center gap-1 transition-colors border border-emerald-100"
-                                                   >
-                                                      <Plus size={12} /> Inserir Item
-                                                   </button>
-                                                </div>
-
-                                                {(p.parametrosPosto?.episAdicionais || []).length > 0 ? (
-                                                   <div className="overflow-hidden border border-slate-200 rounded">
-                                                      <table className="w-full text-[10px]">
-                                                         <thead className="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
-                                                            <tr>
-                                                               <th className="px-4 py-2 text-left">Descrição do Item</th>
-                                                               <th className="px-4 py-2 text-center w-20">Qtd</th>
-                                                               <th className="px-4 py-2 text-center w-28">Preço (R$)</th>
-                                                               <th className="px-4 py-2 text-center w-24">Vida Útil (m)</th>
-                                                               <th className="px-4 py-2 text-center w-24">Custo/Mês</th>
-                                                               <th className="px-4 py-2 text-center w-12"></th>
-                                                            </tr>
-                                                         </thead>
-                                                         <tbody className="divide-y divide-slate-100">
-                                                            {p.parametrosPosto.episAdicionais.map((epi: any, epiIdx: number) => (
-                                                               <tr key={epi.id || epiIdx}>
-                                                                  <td className="px-4 py-1.5">
-                                                                     <input 
-                                                                        type="text" 
-                                                                        className="w-full bg-transparent outline-none font-bold text-slate-700" 
-                                                                        placeholder="Ex: Roupa Térmica p/ Câmara Fria"
-                                                                        value={epi.descricao}
-                                                                        onChange={(e) => {
-                                                                           const newEpis = [...p.parametrosPosto.episAdicionais];
-                                                                           newEpis[epiIdx].descricao = e.target.value;
-                                                                           updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
-                                                                        }}
-                                                                     />
-                                                                  </td>
-                                                                  <td className="px-4 py-1.5">
-                                                                     <input 
-                                                                        type="number" 
-                                                                        className="w-full bg-transparent outline-none font-bold text-slate-700 text-center" 
-                                                                        value={epi.quantidade}
-                                                                        onChange={(e) => {
-                                                                           const newEpis = [...p.parametrosPosto.episAdicionais];
-                                                                           newEpis[epiIdx].quantidade = Number(e.target.value);
-                                                                           updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
-                                                                        }}
-                                                                     />
-                                                                  </td>
-                                                                  <td className="px-4 py-1.5">
-                                                                     <input 
-                                                                        type="number" 
-                                                                        step="0.01"
-                                                                        className="w-full bg-transparent outline-none font-bold text-slate-700 text-center" 
-                                                                        value={epi.precoUnitario}
-                                                                        onChange={(e) => {
-                                                                           const newEpis = [...p.parametrosPosto.episAdicionais];
-                                                                           newEpis[epiIdx].precoUnitario = Number(e.target.value);
-                                                                           updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
-                                                                        }}
-                                                                     />
-                                                                  </td>
-                                                                  <td className="px-4 py-1.5">
-                                                                     <input 
-                                                                        type="number" 
-                                                                        className="w-full bg-transparent outline-none font-bold text-slate-700 text-center" 
-                                                                        value={epi.vidaUtil}
-                                                                        onChange={(e) => {
-                                                                           const newEpis = [...p.parametrosPosto.episAdicionais];
-                                                                           newEpis[epiIdx].vidaUtil = Number(e.target.value);
-                                                                           updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
-                                                                        }}
-                                                                     />
-                                                                  </td>
-                                                                  <td className="px-4 py-1.5 text-center font-black text-[#1B4D3E]">
-                                                                     R$ {((epi.precoUnitario * epi.quantidade) / (epi.vidaUtil || 1)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                                                  </td>
-                                                                  <td className="px-4 py-1.5 text-center">
-                                                                     <button 
-                                                                        onClick={() => {
-                                                                           const newEpis = p.parametrosPosto.episAdicionais.filter((_: any, i: number) => i !== epiIdx);
-                                                                           updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
-                                                                        }}
-                                                                        className="text-slate-300 hover:text-red-500 transition-colors"
-                                                                     >
-                                                                        <Trash2 size={12} />
-                                                                     </button>
-                                                                  </td>
-                                                               </tr>
-                                                            ))}
-                                                         </tbody>
-                                                      </table>
-                                                   </div>
-                                                ) : (
-                                                   <div className="bg-slate-50 border border-dashed border-slate-200 rounded py-4 text-center">
-                                                      <p className="text-[10px] text-slate-400 italic">Nenhum EPI adicional para este posto. Clique em "Inserir Item" se necessário.</p>
-                                                   </div>
-                                                )}
-                                             </div>
-
-                                             <div className="mt-6 pt-6 border-t border-slate-100 flex justify-end">
-                                                <div className="w-full md:w-64">
-                                                   <button 
-                                                      onClick={() => {
-                                                         const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, showConfig: false} : x);
-                                                         setProposta({...proposta, equipe: newE});
-                                                      }}
-                                                      className="w-full bg-[#1B4D3E] hover:bg-[#2d631d] text-white font-bold py-2.5 rounded text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md"
-                                                   >
-                                                      <Save size={14} /> Salvar Configurações do Posto
-                                                   </button>
-                                                </div>
-                                             </div>
-                              </div>
-                                             </div>
-                                         </div>
-                                      </td>
-                                   </tr>
-                                )}
                              </React.Fragment>
                           ))}
                           {proposta.equipe.length === 0 && (
@@ -1252,7 +1049,7 @@ function PropostaEditor() {
                                   descartaveis: acc.descartaveis + (d?.descartaveis || 0) * i.quantidade,
                                   servicos: acc.servicos + (d?.servicos || 0) * i.quantidade,
                                };
-                           }, { ativos: 0, materiais:0, maquinas:0, descartaveis:0, servicos:0 });
+                           }, { ativos: 0, materiais:0, maquinas:0, descartaveis:0, servicos:0 }) || { ativos: 0, materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0 };
 
                            const rows = [
                               { label: '1) Uniformes e EPI\'s', val: b.ativos },
@@ -1305,7 +1102,7 @@ function PropostaEditor() {
                                   manutencaoPct: d?.manutencaoPct || acc.manutencaoPct,
                                   outros: acc.outros + (d?.outros || 0) * i.quantidade,
                                };
-                            }, { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 });
+                            }, { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 }) || { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 };
 
                            const rows: any[] = [
                                { label: '1) Vale Alimentação', val: b.va },
@@ -1588,7 +1385,350 @@ function PropostaEditor() {
            )}
 
         </div>
-      </main>
+      
+         {/* ========================================================================= */}
+         {/* MODAL 1: PARAMETROS & JORNADA DO POSTO                                    */}
+         {/* ========================================================================= */}
+         {(() => {
+            if (!activeAdicionaisPostoId) return null;
+            const p = proposta.equipe.find((x: any) => x.id === activeAdicionaisPostoId);
+            if (!p) return null;
+            return (
+               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn">
+                  <div className="bg-white rounded-xl shadow-2xl border border-emerald-100 max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+                     {/* Cabeçalho */}
+                     <div className="bg-[#1B4D3E] text-white p-5 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                           <span className="text-xl">⚙️</span>
+                           <div>
+                              <h3 className="font-bold text-sm uppercase tracking-wider">Parâmetros & Jornada</h3>
+                              <p className="text-[10px] text-emerald-200 uppercase font-semibold">Posto: {p.nomeCargo}</p>
+                           </div>
+                        </div>
+                        <button 
+                           onClick={() => setActiveAdicionaisPostoId(null)}
+                           className="text-white/85 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
+                        >
+                           <X size={18} />
+                        </button>
+                     </div>
+
+                     {/* Conteúdo */}
+                     <div className="p-6 overflow-y-auto space-y-6">
+                        {/* Grid 1: Adicionais */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Periculosidade</label>
+                              <select 
+                                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all" 
+                                 value={p.parametrosPosto?.periculosidade ? 'SIM' : 'NAO'} 
+                                 onChange={(e) => {
+                                    const param = {...p.parametrosPosto, periculosidade: e.target.value === 'SIM'};
+                                    updatePosto(p.id, 'parametrosPosto', param);
+                                 }}
+                              >
+                                 <option value="NAO">Não</option>
+                                 <option value="SIM">Sim (30%)</option>
+                              </select>
+                           </div>
+
+                           <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Insalubridade (%)</label>
+                              <select 
+                                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all" 
+                                 value={p.parametrosPosto?.insalubridadePercent || 0} 
+                                 onChange={(e) => {
+                                    const param = {...p.parametrosPosto, insalubridadePercent: Number(e.target.value)};
+                                    updatePosto(p.id, 'parametrosPosto', param);
+                                 }}
+                              >
+                                 <option value={0}>0%</option>
+                                 <option value={10}>10% (Mínimo)</option>
+                                 <option value={20}>20% (Médio)</option>
+                                 <option value={40}>40% (Máximo)</option>
+                              </select>
+                           </div>
+
+                           <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Horas Noturnas (Mês)</label>
+                              <input 
+                                 type="number" 
+                                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all" 
+                                 value={p.parametrosPosto?.adicionalNoturnoHoras || 0} 
+                                 onChange={(e) => {
+                                    const param = {...p.parametrosPosto, adicionalNoturnoHoras: Number(e.target.value)};
+                                    updatePosto(p.id, 'parametrosPosto', param);
+                                 }} 
+                              />
+                           </div>
+
+                           <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Intrajornada (Horas/Mês)</label>
+                              <input 
+                                 type="number" 
+                                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all" 
+                                 value={p.parametrosPosto?.intrajornadaHoras || 0} 
+                                 onChange={(e) => {
+                                    const param = {...p.parametrosPosto, intrajornadaHoras: Number(e.target.value)};
+                                    updatePosto(p.id, 'parametrosPosto', param);
+                                 }} 
+                              />
+                           </div>
+
+                           <div className="space-y-1.5 md:col-span-2">
+                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">DSR s/ Adicionais (%)</label>
+                              <input 
+                                 type="number" 
+                                 step="0.01"
+                                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all" 
+                                 value={p.parametrosPosto?.dsrPercent || 0} 
+                                 onChange={(e) => {
+                                    const param = {...p.parametrosPosto, dsrPercent: Number(e.target.value)};
+                                    updatePosto(p.id, 'parametrosPosto', param);
+                                 }} 
+                              />
+                           </div>
+                        </div>
+
+                        {/* Seção de Jornada */}
+                        <div className="bg-slate-50 rounded-xl p-5 border border-slate-100 space-y-4">
+                           <h4 className="text-xs font-bold text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-200 pb-2">
+                              <span>📅</span> Horários & Dias Trabalhados
+                           </h4>
+                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="space-y-1.5">
+                                 <label className="text-[10px] font-bold text-slate-500 uppercase">Horário de Início</label>
+                                 <input 
+                                    type="time" 
+                                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" 
+                                    value={p.parametrosPosto?.horarioInicio || '08:00'} 
+                                    onChange={(e) => {
+                                       const hInicio = e.target.value;
+                                       const hFim = p.parametrosPosto?.horarioFim || '17:00';
+                                       const dias = p.parametrosPosto?.diasTrabalhadosMes || 22;
+                                       const noturnoAuto = calculateAutoNoturno(hInicio, hFim, dias);
+                                       const param = {...p.parametrosPosto, horarioInicio: hInicio, adicionalNoturnoHoras: noturnoAuto};
+                                       updatePosto(p.id, 'parametrosPosto', param);
+                                    }} 
+                                 />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                 <label className="text-[10px] font-bold text-slate-500 uppercase">Horário de Saída</label>
+                                 <input 
+                                    type="time" 
+                                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" 
+                                    value={p.parametrosPosto?.horarioFim || '17:00'} 
+                                    onChange={(e) => {
+                                       const hFim = e.target.value;
+                                       const hInicio = p.parametrosPosto?.horarioInicio || '08:00';
+                                       const dias = p.parametrosPosto?.diasTrabalhadosMes || 22;
+                                       const noturnoAuto = calculateAutoNoturno(hInicio, hFim, dias);
+                                       const param = {...p.parametrosPosto, horarioFim: hFim, adicionalNoturnoHoras: noturnoAuto};
+                                       updatePosto(p.id, 'parametrosPosto', param);
+                                    }} 
+                                 />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                 <label className="text-[10px] font-bold text-slate-500 uppercase">Dias Trab. / Mês</label>
+                                 <input 
+                                    type="number" 
+                                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" 
+                                    value={p.parametrosPosto?.diasTrabalhadosMes || 22} 
+                                    onChange={(e) => {
+                                       const dias = Number(e.target.value);
+                                       const hInicio = p.parametrosPosto?.horarioInicio || '08:00';
+                                       const hFim = p.parametrosPosto?.horarioFim || '17:00';
+                                       const noturnoAuto = calculateAutoNoturno(hInicio, hFim, dias);
+                                       const param = {...p.parametrosPosto, diasTrabalhadosMes: dias, adicionalNoturnoHoras: noturnoAuto};
+                                       updatePosto(p.id, 'parametrosPosto', param);
+                                    }} 
+                                 />
+                              </div>
+                           </div>
+
+                           <div className="bg-emerald-50 text-[#1B4D3E] p-3 rounded-lg text-[11px] font-bold border border-emerald-100 flex items-center justify-between">
+                              <span className="flex items-center gap-1">⏰ Cálculo automático de adicionais:</span>
+                              <span className="bg-[#1B4D3E] text-white px-2 py-0.5 rounded font-black">{p.parametrosPosto?.adicionalNoturnoHoras || 0}h / mês</span>
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* Rodapé */}
+                     <div className="bg-slate-50 px-6 py-4 flex justify-end border-t border-slate-100">
+                        <button 
+                           onClick={() => setActiveAdicionaisPostoId(null)}
+                           className="bg-[#1B4D3E] hover:bg-[#153a2f] text-white font-bold px-6 py-2.5 rounded-lg text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md"
+                        >
+                           <Save size={14} /> Fechar & Salvar
+                        </button>
+                     </div>
+                  </div>
+               </div>
+            );
+         })()}
+
+         {/* ========================================================================= */}
+         {/* MODAL 2: EPIS & UNIFORMES ADICIONAIS DO POSTO                              */}
+         {/* ========================================================================= */}
+         {(() => {
+            if (!activeEpisPostoId) return null;
+            const p = proposta.equipe.find((x: any) => x.id === activeEpisPostoId);
+            if (!p) return null;
+            return (
+               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn">
+                  <div className="bg-white rounded-xl shadow-2xl border border-emerald-100 max-w-4xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+                     {/* Cabeçalho */}
+                     <div className="bg-[#1B4D3E] text-white p-5 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                           <span className="text-xl">🛡️</span>
+                           <div>
+                              <h3 className="font-bold text-sm uppercase tracking-wider">EPIs & Uniformes Especiais</h3>
+                              <p className="text-[10px] text-emerald-200 uppercase font-semibold">Posto: {p.nomeCargo}</p>
+                           </div>
+                        </div>
+                        <button 
+                           onClick={() => setActiveEpisPostoId(null)}
+                           className="text-white/85 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
+                        >
+                           <X size={18} />
+                        </button>
+                     </div>
+
+                     {/* Conteúdo */}
+                     <div className="p-6 overflow-y-auto space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                           <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Cadastre itens adicionais específicos para este posto</p>
+                           <button 
+                              onClick={() => {
+                                 const epis = p.parametrosPosto?.episAdicionais || [];
+                                 const param = {...p.parametrosPosto, episAdicionais: [...epis, { id: Math.random().toString(), descricao: '', quantidade: 1, precoUnitario: 0, vidaUtil: 6 }]};
+                                 updatePosto(p.id, 'parametrosPosto', param);
+                              }}
+                              className="bg-emerald-50 hover:bg-emerald-100 text-[#1B4D3E] px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors border border-emerald-100 shadow-sm"
+                           >
+                              <Plus size={14} /> Inserir Item
+                           </button>
+                        </div>
+
+                        {(p.parametrosPosto?.episAdicionais || []).length > 0 ? (
+                           <div className="overflow-hidden border border-slate-200 rounded-lg shadow-sm">
+                              <table className="w-full text-xs">
+                                 <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider font-bold border-b border-slate-200">
+                                    <tr>
+                                       <th className="px-6 py-3 text-left">Descrição do Item</th>
+                                       <th className="px-6 py-3 text-center w-24">Qtd</th>
+                                       <th className="px-6 py-3 text-center w-36">Preço Unitário (R$)</th>
+                                       <th className="px-6 py-3 text-center w-32">Vida Útil (meses)</th>
+                                       <th className="px-6 py-3 text-right w-36">Custo / Mês</th>
+                                       <th className="px-6 py-3 text-center w-16"></th>
+                                    </tr>
+                                 </thead>
+                                 <tbody className="divide-y divide-slate-100">
+                                    {p.parametrosPosto.episAdicionais.map((epi: any, epiIdx: number) => (
+                                       <tr key={epi.id || epiIdx} className="hover:bg-slate-50 transition-colors">
+                                          <td className="px-6 py-3">
+                                             <input 
+                                                type="text" 
+                                                className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:border-[#1B4D3E] outline-none transition-all" 
+                                                placeholder="Ex: Roupa Térmica p/ Câmara Fria"
+                                                value={epi.descricao}
+                                                onChange={(e) => {
+                                                   const newEpis = [...p.parametrosPosto.episAdicionais];
+                                                   newEpis[epiIdx].descricao = e.target.value;
+                                                   updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
+                                                }}
+                                             />
+                                          </td>
+                                          <td className="px-6 py-3">
+                                             <input 
+                                                type="number" 
+                                                className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs font-bold text-slate-800 text-center focus:border-[#1B4D3E] outline-none transition-all" 
+                                                value={epi.quantidade}
+                                                onChange={(e) => {
+                                                   const newEpis = [...p.parametrosPosto.episAdicionais];
+                                                   newEpis[epiIdx].quantidade = Number(e.target.value);
+                                                   updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
+                                                }}
+                                             />
+                                          </td>
+                                          <td className="px-6 py-3">
+                                             <div className="relative">
+                                                <span className="absolute left-2.5 top-2 text-slate-400 text-xs">R$</span>
+                                                <input 
+                                                   type="number" 
+                                                   step="0.01"
+                                                   className="w-full bg-white border border-slate-200 rounded pl-8 pr-2.5 py-1.5 text-xs font-bold text-slate-800 text-center focus:border-[#1B4D3E] outline-none transition-all" 
+                                                   value={epi.precoUnitario}
+                                                   onChange={(e) => {
+                                                      const newEpis = [...p.parametrosPosto.episAdicionais];
+                                                      newEpis[epiIdx].precoUnitario = Number(e.target.value);
+                                                      updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
+                                                   }}
+                                                />
+                                             </div>
+                                          </td>
+                                          <td className="px-6 py-3">
+                                             <input 
+                                                type="number" 
+                                                className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs font-bold text-slate-800 text-center focus:border-[#1B4D3E] outline-none transition-all" 
+                                                value={epi.vidaUtil}
+                                                onChange={(e) => {
+                                                   const newEpis = [...p.parametrosPosto.episAdicionais];
+                                                   newEpis[epiIdx].vidaUtil = Number(e.target.value);
+                                                   updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
+                                                }}
+                                             />
+                                          </td>
+                                          <td className="px-6 py-3 text-right font-black text-[#1B4D3E]">
+                                             R$ {((epi.precoUnitario * epi.quantidade) / (epi.vidaUtil || 1)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                          </td>
+                                          <td className="px-6 py-3 text-center">
+                                             <button 
+                                                onClick={() => {
+                                                   const newEpis = p.parametrosPosto.episAdicionais.filter((_: any, i: number) => i !== epiIdx);
+                                                   updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
+                                                }}
+                                                className="text-slate-300 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50"
+                                                title="Excluir EPI"
+                                             >
+                                                <Trash2 size={16} />
+                                             </button>
+                                          </td>
+                                       </tr>
+                                    ))}
+                                 </tbody>
+                              </table>
+                           </div>
+                        ) : (
+                           <div className="bg-slate-50 border border-dashed border-slate-200 rounded-xl py-12 text-center">
+                              <p className="text-sm text-slate-400 font-medium italic">Nenhum EPI ou uniforme especial adicionado a este posto.</p>
+                              <p className="text-xs text-slate-300 mt-1">Clique em "Inserir Item" no canto superior direito para começar.</p>
+                           </div>
+                        )}
+                     </div>
+
+                     {/* Rodapé */}
+                     <div className="bg-slate-50 px-6 py-4 flex justify-between items-center border-t border-slate-100">
+                        <div>
+                           <span className="text-[10px] font-bold text-slate-400 uppercase block">Custo Total dos EPIs</span>
+                           <span className="text-lg font-black text-[#1B4D3E]">
+                              R$ {((p.parametrosPosto?.episAdicionais || []).reduce((acc: number, item: any) => acc + ((item.precoUnitario * item.quantidade) / (item.vidaUtil || 1)), 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mês
+                           </span>
+                        </div>
+                        <button 
+                           onClick={() => setActiveEpisPostoId(null)}
+                           className="bg-[#1B4D3E] hover:bg-[#153a2f] text-white font-bold px-6 py-2.5 rounded-lg text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md"
+                        >
+                           <Save size={14} /> Fechar & Salvar
+                        </button>
+                     </div>
+                  </div>
+               </div>
+            );
+         })()}
+</main>
     </div>
   );
 }
