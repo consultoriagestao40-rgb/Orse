@@ -391,12 +391,53 @@ export default function ControladoriaPage() {
                     </p>
                   </div>
                   
-                  <div className="w-full md:w-48 text-center shrink-0">
-                    <span className="text-3xl font-black text-emerald-400 leading-none">
-                      {atingidoGeralPct.toFixed(1)}%
-                    </span>
-                    <div className="w-full bg-emerald-950/60 h-2 rounded-full mt-2 overflow-hidden border border-emerald-800">
-                      <div className="bg-emerald-400 h-2 rounded-full transition-all duration-500" style={{ width: `${Math.min(100, atingidoGeralPct)}%` }}></div>
+                  {/* Speedometer (Velocímetro) Gauge */}
+                  <div className="relative flex flex-col items-center justify-center shrink-0 w-44 h-24 mt-2 md:mt-0 select-none">
+                    <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
+                      {/* Semicírculo de Fundo */}
+                      <path
+                        d="M 10 50 A 40 40 0 0 1 90 50"
+                        fill="none"
+                        stroke="#0D2C22"
+                        strokeWidth="8"
+                        strokeLinecap="round"
+                      />
+                      {/* Semicírculo Ativo (Preenchimento) */}
+                      <path
+                        d="M 10 50 A 40 40 0 0 1 90 50"
+                        fill="none"
+                        stroke="#34D399"
+                        strokeWidth="8"
+                        strokeLinecap="round"
+                        strokeDasharray="125.66"
+                        strokeDashoffset={125.66 - (125.66 * Math.min(100, atingidoGeralPct)) / 100}
+                        className="transition-all duration-1000 ease-out"
+                        style={{ filter: 'drop-shadow(0px 2px 4px rgba(52, 211, 153, 0.4))' }}
+                      />
+                      {/* Ponteiro do Velocímetro */}
+                      <line
+                        x1="50"
+                        y1="50"
+                        x2="50"
+                        y2="15"
+                        stroke="#F59E0B"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        transform={`rotate(${((Math.min(100, atingidoGeralPct) / 100) * 180) - 90} 50 50)`}
+                        className="transition-all duration-1000 ease-out"
+                        style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3))', transformOrigin: '50px 50px' }}
+                      />
+                      {/* Pinos Centrais do Eixo */}
+                      <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
+                      <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
+                    </svg>
+                    
+                    {/* Texto com Percentual Flutuante */}
+                    <div className="absolute -bottom-1 text-center">
+                      <span className="text-xl font-extrabold text-white leading-none">
+                        {atingidoGeralPct.toFixed(1)}%
+                      </span>
+                      <p className="text-[7px] text-emerald-400 uppercase tracking-widest font-black mt-0.5">Meta Atingida</p>
                     </div>
                   </div>
                 </div>
