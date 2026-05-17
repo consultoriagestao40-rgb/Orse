@@ -148,7 +148,12 @@ export default function ControladoriaPage() {
   const totalSellers = kpis?.usuarios || [];
 
   const filteredPropostas = propostasList.filter((p: any) => {
-    const dataCriacao = new Date(p.dataCriacao);
+    // Converter dataCriacao (UTC/ISO) para string local "YYYY-MM-DD"
+    const d = new Date(p.dataCriacao);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dataCriacaoStr = `${y}-${m}-${day}`;
     
     // 1. Filtro por Usuário
     if (userFilter !== 'ALL' && p.usuario !== userFilter) {
@@ -156,17 +161,13 @@ export default function ControladoriaPage() {
     }
 
     // 2. Filtro por Data de Início
-    if (startDate) {
-      const [y, m, d] = startDate.split('-').map(Number);
-      const start = new Date(y, m - 1, d, 0, 0, 0, 0);
-      if (dataCriacao < start) return false;
+    if (startDate && dataCriacaoStr < startDate) {
+      return false;
     }
 
     // 3. Filtro por Data de Fim
-    if (endDate) {
-      const [y, m, d] = endDate.split('-').map(Number);
-      const end = new Date(y, m - 1, d, 23, 59, 59, 999);
-      if (dataCriacao > end) return false;
+    if (endDate && dataCriacaoStr > endDate) {
+      return false;
     }
 
     return true;
@@ -178,7 +179,7 @@ export default function ControladoriaPage() {
   let totalPropostasCount = filteredPropostas.length;
   let totalAceitasCount = 0;
 
-  const volumePorUsuario: Record<string, { totalVal: number, totalAceito: number, count: number }> = {};
+  const volumePorUsuario: Record<string, { totalVal: number, totalAceito: number, count: number, totalAceitasCount: number }> = {};
   const volumePorServico: Record<string, { totalVal: number, count: number }> = {};
   
   let somaDiasCiclo = 0;
@@ -207,11 +208,12 @@ export default function ControladoriaPage() {
     // Por usuário
     const usuario = p.usuario;
     if (!volumePorUsuario[usuario]) {
-      volumePorUsuario[usuario] = { totalVal: 0, totalAceito: 0, count: 0 };
+      volumePorUsuario[usuario] = { totalVal: 0, totalAceito: 0, count: 0, totalAceitasCount: 0 };
     }
     volumePorUsuario[usuario].totalVal += valor;
     if (isAceito) {
       volumePorUsuario[usuario].totalAceito += valor;
+      volumePorUsuario[usuario].totalAceitasCount += 1;
     }
     volumePorUsuario[usuario].count += 1;
 
@@ -226,7 +228,9 @@ export default function ControladoriaPage() {
 
   const ticketMedio = totalPropostasCount > 0 ? totalVolume / totalPropostasCount : 0;
   const taxaConversao = totalVolume > 0 ? (totalAceito / totalVolume) * 100 : 0;
+  const conversaoQuantidade = totalPropostasCount > 0 ? (totalAceitasCount / totalPropostasCount) * 100 : 0;
   const cicloMedio = countDiasCiclo > 0 ? somaDiasCiclo / countDiasCiclo : 0;
+
 
   const activeMonthKey = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
 
@@ -240,8 +244,9 @@ export default function ControladoriaPage() {
     }
   };
 
-  // Meta global e geral da empresa (por mês)
+  // Meta global e geral da empresa (por mês) ou do vendedor selecionado
   const totalMetasEmpresa = totalSellers.reduce((acc: number, nome: string) => {
+    if (userFilter !== 'ALL' && nome !== userFilter) return acc;
     const key = `${nome}_${activeMonthKey}`;
     const m = metas[key] !== undefined ? metas[key] : 100000; // Default 100k
     return acc + m;
@@ -268,7 +273,7 @@ export default function ControladoriaPage() {
               onClick={loadData}
               className="bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-extrabold py-2 px-5 rounded-xl text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer active:scale-[0.98]"
             >
-              Recarregar
+              Atualizar
             </button>
           </header>
 
@@ -463,22 +468,37 @@ export default function ControladoriaPage() {
                 </div>
 
                 {/* TAXA DE CONVERSÃO */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
-                  <div className="flex justify-between items-start">
-                    <div className="p-3 bg-blue-50 text-blue-600 rounded-xl border border-blue-100">
-                      <Percent size={20} />
-                    </div>
-                    <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full uppercase tracking-tighter">Conversão</span>
-                  </div>
-                  <div className="mt-4">
-                    <p className="text-2xl font-black text-slate-800 tracking-tight leading-none">
-                      {taxaConversao.toFixed(1)}%
-                    </p>
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
-                      <div className="bg-blue-600 h-1.5 rounded-full transition-all duration-500" style={{ width: `${taxaConversao}%` }}></div>
-                    </div>
-                  </div>
-                </div>
+                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
+                   <div className="flex justify-between items-start">
+                     <div className="p-3 bg-blue-50 text-blue-600 rounded-xl border border-blue-100">
+                       <Percent size={20} />
+                     </div>
+                     <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full uppercase tracking-tighter">Conversão</span>
+                   </div>
+                   <div className="mt-4 space-y-3">
+                     {/* Conversão em Volume */}
+                     <div>
+                       <div className="flex justify-between text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                         <span>Em Volume (R$)</span>
+                         <span className="text-blue-600 font-extrabold">{taxaConversao.toFixed(1)}%</span>
+                       </div>
+                       <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                         <div className="bg-blue-600 h-1.5 rounded-full transition-all duration-500" style={{ width: `${taxaConversao}%` }}></div>
+                       </div>
+                     </div>
+                     
+                     {/* Conversão em Quantidade */}
+                     <div>
+                       <div className="flex justify-between text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                         <span>Em Propostas (Qtd)</span>
+                         <span className="text-emerald-600 font-extrabold">{conversaoQuantidade.toFixed(1)}%</span>
+                       </div>
+                       <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                         <div className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500" style={{ width: `${conversaoQuantidade}%` }}></div>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
 
                 {/* VOLUME TOTAL */}
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
@@ -542,8 +562,10 @@ export default function ControladoriaPage() {
                             <td colSpan={5} className="px-5 py-8 text-center text-slate-400 font-medium italic">Nenhum vendedor encontrado.</td>
                           </tr>
                         ) : (
-                          totalSellers.map((nome: string) => {
-                            const stats = volumePorUsuario[nome] || { totalVal: 0, totalAceito: 0, count: 0 };
+                          totalSellers
+                            .filter((nome: string) => userFilter === 'ALL' || nome === userFilter)
+                            .map((nome: string) => {
+                            const stats = volumePorUsuario[nome] || { totalVal: 0, totalAceito: 0, count: 0, totalAceitasCount: 0 };
                             const goalKey = `${nome}_${activeMonthKey}`;
                             const metaVal = metas[goalKey] !== undefined ? metas[goalKey] : 100000; // Default 100k
                             const atingidoPct = metaVal > 0 ? (stats.totalAceito / metaVal) * 100 : 0;
@@ -564,8 +586,9 @@ export default function ControladoriaPage() {
                                   </div>
                                   <div>
                                     <span className="font-extrabold text-slate-800">{nome}</span>
-                                    <div className="text-[9px] text-slate-400 uppercase tracking-wider font-semibold mt-0.5">
-                                      Conversão: {stats.totalVal > 0 ? ((stats.totalAceito / stats.totalVal) * 100).toFixed(1) : 0}%
+                                    <div className="text-[9px] uppercase tracking-wider font-black mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5">
+                                      <span className="text-blue-600">💰 Conv. R$: {stats.totalVal > 0 ? ((stats.totalAceito / stats.totalVal) * 100).toFixed(1) : 0}%</span>
+                                      <span className="text-emerald-600">📄 Conv. Qtd: {stats.count > 0 ? ((stats.totalAceitasCount / stats.count) * 100).toFixed(1) : 0}%</span>
                                     </div>
                                   </div>
                                 </td>
