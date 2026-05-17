@@ -234,6 +234,78 @@ export default function ControladoriaPage() {
   const conversaoQuantidade = totalPropostasCount > 0 ? (totalAceitasCount / totalPropostasCount) * 100 : 0;
   const cicloMedio = countDiasCiclo > 0 ? somaDiasCiclo / countDiasCiclo : 0;
 
+  // =========================================================================
+  // CÁLCULOS DO GRÁFICO HISTÓRICO DE DESEMPENHO MENSAL (COMBO BAR + LINE)
+  // =========================================================================
+  const uniqueMonths = new Set<string>();
+  
+  // Garantir que os últimos 6 meses estejam sempre na escala
+  const today = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    uniqueMonths.add(`${y}-${m}`);
+  }
+  
+  // Adicionar meses das propostas
+  propostasList.forEach((p: any) => {
+    if (p.dataCriacao) {
+      const d = new Date(p.dataCriacao);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      uniqueMonths.add(`${y}-${m}`);
+    }
+  });
+  
+  // Ordenar cronologicamente e pegar os últimos 6 meses
+  const sortedMonths = Array.from(uniqueMonths).sort();
+  const chartMonths = sortedMonths.slice(-6);
+  
+  // Mapeamento dos valores de cada mês
+  const chartData = chartMonths.map((mKey: string) => {
+    let realizado = 0;
+    propostasList.forEach((p: any) => {
+      if (p.dataCriacao) {
+        const d = new Date(p.dataCriacao);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const pKey = `${y}-${m}`;
+        if (pKey === mKey && p.isAceito) {
+          realizado += p.valor || 0;
+        }
+      }
+    });
+
+    let previsto = 0;
+    totalSellers.forEach((nome: string) => {
+      const key = `${nome}_${mKey}`;
+      previsto += metas[key] !== undefined ? metas[key] : 100000;
+    });
+    if (previsto === 0) previsto = 100000;
+
+    const atingidoPct = previsto > 0 ? (realizado / previsto) * 100 : 0;
+    
+    return {
+      monthKey: mKey,
+      monthLabel: mKey, // Será formatado pelo formatMonthYear
+      previsto,
+      realizado,
+      atingidoPct
+    };
+  });
+
+  const maxFaturamento = Math.max(...chartData.map(d => Math.max(d.previsto, d.realizado)), 50000);
+  const maxValY = maxFaturamento * 1.15;
+  
+  const maxPct = Math.max(...chartData.map(d => d.atingidoPct), 100);
+  const maxPctY = maxPct * 1.15;
+
+  const formatShortCurrency = (val: number) => {
+    if (val >= 1000000) return `R$ ${(val / 1000000).toFixed(1)}M`;
+    if (val >= 1000) return `R$ ${(val / 1000).toFixed(0)}k`;
+    return `R$ ${val}`;
+  };
 
   const activeMonthKey = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
 
@@ -818,6 +890,242 @@ export default function ControladoriaPage() {
                 </div>
 
               </div>
+
+              {/* GRÁFICO HISTÓRICO DE DESEMPENHO MENSAL (COMBO CHART: PREVISTO VS REALIZADO & %) */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mt-8 flex flex-col hover:shadow-md transition-shadow">
+                
+                {/* Cabeçalho do Gráfico com Título e Legenda */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-slate-100 pb-5">
+                  <div>
+                    <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                      <BarChart2 size={16} className="text-[#1B4D3E]" /> Acompanhamento de Metas Mensais
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-wide">
+                      Histórico de Meta (Previsto) vs Faturamento Aceito (Realizado) e Percentual de Atingimento (%)
+                    </p>
+                  </div>
+                  
+                  {/* Legenda do Gráfico */}
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[9px] font-black uppercase tracking-wider select-none bg-slate-50 border border-slate-200/60 px-4 py-2 rounded-xl">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 bg-indigo-500 rounded-md block"></span>
+                      <span className="text-slate-500">Previsto (Meta)</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 bg-emerald-500 rounded-md block"></span>
+                      <span className="text-slate-500">Realizado (Aceito)</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-6 h-0.5 bg-amber-500 relative flex items-center justify-center">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 absolute border border-white"></span>
+                      </span>
+                      <span className="text-slate-500">Atingimento (%)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SVG Combo Chart Canvas */}
+                <div className="w-full overflow-x-auto select-none">
+                  <div className="min-w-[620px] h-[260px] relative px-2">
+                    <svg className="w-full h-full overflow-visible" viewBox="0 0 600 240">
+                      
+                      {/* Grid Lines Horizontais e Eixos Y */}
+                      {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
+                        const yCoord = 200 - (ratio * 180);
+                        const leftVal = ratio * maxFaturamento;
+                        const rightPctVal = ratio * maxPct;
+                        return (
+                          <g key={index}>
+                            {/* Linha pontilhada */}
+                            <line 
+                              x1="55" 
+                              y1={yCoord} 
+                              x2="545" 
+                              y2={yCoord} 
+                              stroke="#E2E8F0" 
+                              strokeWidth="1" 
+                              strokeDasharray="4 4" 
+                            />
+                            {/* Texto Eixo Y Esquerdo (Faturamento) */}
+                            <text 
+                              x="45" 
+                              y={yCoord + 3} 
+                              textAnchor="end" 
+                              className="fill-slate-400 text-[8px] font-bold tracking-tight"
+                            >
+                              {formatShortCurrency(leftVal)}
+                            </text>
+                            {/* Texto Eixo Y Direito (Atingimento %) */}
+                            <text 
+                              x="555" 
+                              y={yCoord + 3} 
+                              textAnchor="start" 
+                              className="fill-amber-500 text-[8px] font-black tracking-tight"
+                            >
+                              {rightPctVal.toFixed(0)}%
+                            </text>
+                          </g>
+                        );
+                      })}
+
+                      {/* Eixo Base X */}
+                      <line x1="55" y1="200" x2="545" y2="200" stroke="#CBD5E1" strokeWidth="1.5" />
+
+                      {/* Renderização das Colunas (Previsto e Realizado) */}
+                      {chartData.map((d, i) => {
+                        const gap = 490 / chartData.length;
+                        const xCenter = 55 + (i * gap) + (gap / 2);
+                        
+                        // Previsto (Indigo)
+                        const hPrevisto = (d.previsto / maxValY) * 180;
+                        const yPrevisto = 200 - hPrevisto;
+                        
+                        // Realizado (Emerald)
+                        const hRealizado = (d.realizado / maxValY) * 180;
+                        const yRealizado = 200 - hRealizado;
+
+                        return (
+                          <g key={`bar-${i}`} className="group">
+                            {/* Previsto Rect */}
+                            <rect
+                              x={xCenter - 14}
+                              y={yPrevisto}
+                              width="11"
+                              height={Math.max(1, hPrevisto)}
+                              fill="#6366F1"
+                              rx="2"
+                              className="transition-all duration-300 hover:fill-indigo-600 cursor-pointer"
+                            />
+                            {/* Realizado Rect */}
+                            <rect
+                              x={xCenter + 3}
+                              y={yRealizado}
+                              width="11"
+                              height={Math.max(1, hRealizado)}
+                              fill="#10B981"
+                              rx="2"
+                              className="transition-all duration-300 hover:fill-emerald-600 cursor-pointer"
+                            />
+                            
+                            {/* Rótulo de Mês no Eixo X */}
+                            <text 
+                              x={xCenter} 
+                              y="218" 
+                              textAnchor="middle" 
+                              className="fill-slate-500 text-[8px] font-black uppercase tracking-tighter"
+                            >
+                              {formatMonthYear(d.monthKey).split(' de ')[0]}
+                            </text>
+                            <text 
+                              x={xCenter} 
+                              y="227" 
+                              textAnchor="middle" 
+                              className="fill-slate-400 text-[7px] font-bold tracking-tight"
+                            >
+                              {formatMonthYear(d.monthKey).split(' de ')[1]}
+                            </text>
+                          </g>
+                        );
+                      })}
+
+                      {/* Linha do Gráfico de Percentual de Atingimento */}
+                      {(() => {
+                        const gap = 490 / chartData.length;
+                        const points = chartData.map((d, i) => {
+                          const xCenter = 55 + (i * gap) + (gap / 2);
+                          const hPct = (d.atingidoPct / maxPctY) * 180;
+                          const yCoord = 200 - hPct;
+                          return `${xCenter},${yCoord}`;
+                        });
+                        
+                        return (
+                          <>
+                            {/* Linha Principal Conectora */}
+                            <polyline
+                              fill="none"
+                              stroke="#F59E0B"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              points={points.join(' ')}
+                              style={{ filter: 'drop-shadow(0px 2px 4px rgba(245, 158, 11, 0.4))' }}
+                            />
+                            
+                            {/* Círculos e Rótulos Flutuantes em cada Data Point */}
+                            {chartData.map((d, i) => {
+                              const xCenter = 55 + (i * gap) + (gap / 2);
+                              const hPct = (d.atingidoPct / maxPctY) * 180;
+                              const yCoord = 200 - hPct;
+                              
+                              return (
+                                <g key={`dot-${i}`} className="group cursor-pointer">
+                                  {/* Círculo Principal */}
+                                  <circle
+                                    cx={xCenter}
+                                    cy={yCoord}
+                                    r="4"
+                                    fill="#F59E0B"
+                                    stroke="#FFFFFF"
+                                    strokeWidth="1.5"
+                                    className="transition-all duration-300 group-hover:r-5 group-hover:stroke-amber-600"
+                                  />
+                                  
+                                  {/* Rótulo com % acima da Linha */}
+                                  <text
+                                    x={xCenter}
+                                    y={yCoord - 8}
+                                    textAnchor="middle"
+                                    className="fill-amber-600 text-[8px] font-black bg-white"
+                                    style={{ filter: 'drop-shadow(0px 1px 1px rgba(255, 255, 255, 0.9))' }}
+                                  >
+                                    {d.atingidoPct.toFixed(1)}%
+                                  </text>
+                                </g>
+                              );
+                            })}
+                          </>
+                        );
+                      })()}
+
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Audit Grid - Mini Cards Exibindo Valores Exatos */}
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-3 border-t border-slate-100 pt-5 mt-4 select-none">
+                  {chartData.map((d, i) => (
+                    <div 
+                      key={i} 
+                      className="bg-slate-50/50 hover:bg-slate-50 border border-slate-200/50 hover:border-slate-300/80 p-3 rounded-2xl transition-all flex flex-col justify-between"
+                    >
+                      <div className="border-b border-slate-200/40 pb-1.5 mb-2">
+                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block leading-none">
+                          {formatMonthYear(d.monthKey).split(' de ')[0]}
+                        </span>
+                        <span className="text-[7px] font-bold text-slate-400/80 uppercase tracking-wider block mt-0.5">
+                          {formatMonthYear(d.monthKey).split(' de ')[1]}
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div>
+                          <span className="text-[7px] font-black text-indigo-400 uppercase tracking-wider block leading-none">Previsto</span>
+                          <span className="text-[10px] font-black text-slate-700 block mt-0.5 leading-tight">{formatCurrency(d.previsto)}</span>
+                        </div>
+                        <div>
+                          <span className="text-[7px] font-black text-emerald-400 uppercase tracking-wider block leading-none">Realizado</span>
+                          <span className="text-[10px] font-black text-slate-800 block mt-0.5 leading-tight">{formatCurrency(d.realizado)}</span>
+                        </div>
+                        <div className="bg-amber-50/70 border border-amber-100/50 rounded-lg p-1.5 mt-2 flex items-center justify-between">
+                          <span className="text-[7px] font-black text-amber-600 uppercase tracking-widest block">Ating.</span>
+                          <span className="text-[10px] font-black text-amber-600 block">{d.atingidoPct.toFixed(1)}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+              </div>
+
             </>
           )}
 
