@@ -88,7 +88,7 @@ async function getDefaultUser() {
 
 export async function saveProposta(data: any) {
   const user = await getDefaultUser();
-  const { id, cliente, premissas, encargos, equipe, resultado, dreTaxPercent, dreEncargos } = data;
+  const { id, cliente, premissas, encargos, equipe, resultado, dreTaxPercent, dreEncargos, changelog } = data;
 
   try {
     let propostaId = id;
@@ -143,7 +143,8 @@ export async function saveProposta(data: any) {
             detalheDescartaveis: data.insumos.detalheDescartaveis || []
           },
           dreTaxPercent: dreTaxPercent !== undefined ? dreTaxPercent : null,
-          dreEncargos: dreEncargos || null
+          dreEncargos: dreEncargos || null,
+          changelog: changelog || 'Criação inicial da proposta'
         } as any,
         custoTotal: resultado.custoDiretoTotal || 0,
         precoVenda: resultado.faturamentoBruto || 0,
@@ -240,12 +241,16 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
 
     if (!proposta || !proposta.versoes.length) return null;
 
-    const availableVersions = proposta.versoes.map(v => ({
-      id: v.id,
-      versao: v.versao,
-      data: v.dataCriacao.toLocaleDateString('pt-BR'),
-      valor: v.precoVenda
-    }));
+    const availableVersions = proposta.versoes.map(v => {
+      const meta = (v.metadados as any) || {};
+      return {
+        id: v.id,
+        versao: v.versao,
+        data: v.dataCriacao.toLocaleDateString('pt-BR'),
+        valor: v.precoVenda,
+        changelog: meta.changelog || 'Criação inicial da proposta'
+      };
+    });
 
     const v = versionId
       ? proposta.versoes.find(ver => ver.id === versionId) || proposta.versoes[0]

@@ -140,6 +140,8 @@ function PropostaEditor() {
   // ESTADOS DA DRE PARAMETRIZADA E EDITÁVEL
   // =========================================================================
   const [dreTaxPercent, setDreTaxPercent] = useState<number>(12.5);
+  const [showChangelogModal, setShowChangelogModal] = useState(false);
+  const [changelogText, setChangelogText] = useState('');
   const [dreEncargos, setDreEncargos] = useState({
      fgts: 8.00,
      decimoTerceiro: 9.39,
@@ -401,9 +403,21 @@ function PropostaEditor() {
     if (!proposta.cliente.cliente) return alert('Por favor, selecione ou informe o cliente.');
     if (proposta.equipe.length === 0) return alert('Adicione ao menos um posto no quadro de equipe.');
 
+    // Se for uma revisão (versão >= 2), abre o modal obrigatório de changelog
+    if (proposta.id) {
+      setChangelogText('');
+      setShowChangelogModal(true);
+      return;
+    }
+
+    // Se for a primeira versão (v1), salva diretamente
+    await executeSave('Criação inicial da proposta');
+  };
+
+  const executeSave = async (changelog: string) => {
     try {
       setSaving(true);
-      const res = await saveProposta({ ...proposta, resultado, dreTaxPercent, dreEncargos });
+      const res = await saveProposta({ ...proposta, resultado, dreTaxPercent, dreEncargos, changelog });
       if (res.success) {
         alert(`Sucesso! Proposta ${proposta.id ? 'atualizada' : 'salva'} como Revisão ${res.versao}.`);
         const novoNumero = res.numeroProposta || proposta.cliente.numeroProposta;
@@ -422,6 +436,8 @@ function PropostaEditor() {
         });
         const updatedData = await getPropostaCompleta(res.propostaId);
         if (updatedData) setVersions(updatedData.availableVersions || []);
+        setShowChangelogModal(false);
+        setChangelogText('');
         if (!proposta.id) {
            router.push(`/propostas/nova?id=${res.propostaId}`);
         }
@@ -652,19 +668,27 @@ function PropostaEditor() {
                    FPV - Formação de Preço de Vendas
                 </h1>
                 {id && versions.length > 1 && (
-                  <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 ml-4">
-                    <History size={16} className="text-slate-500" />
-                    <select 
-                      className="bg-transparent text-xs font-black text-slate-700 uppercase outline-none cursor-pointer"
-                      value={versions.find(v => v.versao === proposta.versao)?.id || ''}
-                      onChange={(e) => handleVersionChange(e.target.value)}
+                  <div className="flex flex-col ml-4">
+                    <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1">
+                      <History size={16} className="text-slate-500 shrink-0" />
+                      <select 
+                        className="bg-transparent text-xs font-black text-slate-700 uppercase outline-none cursor-pointer"
+                        value={versions.find(v => v.versao === proposta.versao)?.id || ''}
+                        onChange={(e) => handleVersionChange(e.target.value)}
+                      >
+                        {versions.map((v) => (
+                          <option key={v.id} value={v.id}>
+                            Versão {v.versao} ({v.data})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div 
+                      className="text-[9px] text-slate-400 mt-1 max-w-[280px] truncate hover:text-slate-700 hover:whitespace-normal transition-all font-semibold uppercase tracking-tighter"
+                      title={versions.find(v => v.versao === proposta.versao)?.changelog || 'Sem descrição.'}
                     >
-                      {versions.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          Versão {v.versao} ({v.data})
-                        </option>
-                      ))}
-                    </select>
+                      💡 {versions.find(v => v.versao === proposta.versao)?.changelog || 'Criação inicial da proposta'}
+                    </div>
                   </div>
                 )}
               </div>
@@ -2439,6 +2463,59 @@ function PropostaEditor() {
                </div>
             );
          })()}
+
+      {/* MODAL OBRIGATÓRIO DE CHANGELOG PARA REVISÕES */}
+      {showChangelogModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 transform scale-100 transition-all duration-300">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-amber-50 border border-amber-200 rounded-full flex items-center justify-center text-amber-600 mb-4 shadow-sm">
+                <History size={24} />
+              </div>
+              <h2 className="text-xl font-black text-slate-800 tracking-tight">Descrever Alterações da Versão</h2>
+              <p className="text-xs text-slate-400 mt-2 font-medium">
+                Como você está salvando a <strong className="text-amber-600 font-extrabold">Revisão R${String(proposta.versao + 1).padStart(2, '0')}</strong>, descreva de forma clara e obrigatória o que foi alterado nesta versão para fins de histórico.
+              </p>
+            </div>
+            
+            <div className="mt-6">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Resumo das Mudanças</label>
+              <textarea 
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#1B4D3E] focus:border-[#1B4D3E] focus:bg-white transition-all resize-none h-32"
+                placeholder="Ex: Ajuste na taxa tributária da DRE, aumento do percentual de férias dos colaboradores, correção de insumos de limpeza..."
+                value={changelogText}
+                onChange={(e) => setChangelogText(e.target.value)}
+              />
+              <div className="flex justify-between items-center mt-2 px-1">
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">Mínimo 5 caracteres</span>
+                <span className={`text-[10px] font-extrabold uppercase ${changelogText.trim().length >= 5 ? 'text-emerald-500' : 'text-amber-500'}`}>
+                  {changelogText.trim().length} caracteres
+                </span>
+              </div>
+            </div>
+            
+            <div className="mt-8 flex gap-3">
+              <button 
+                onClick={() => {
+                  setShowChangelogModal(false);
+                  setChangelogText('');
+                }}
+                disabled={saving}
+                className="flex-1 py-3.5 bg-slate-50 hover:bg-slate-100 text-slate-500 font-extrabold rounded-2xl text-xs uppercase tracking-wider transition-colors border border-slate-200/60 active:scale-[0.98] cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => executeSave(changelogText.trim())}
+                disabled={saving || changelogText.trim().length < 5}
+                className="flex-1 py-3.5 bg-[#1B4D3E] hover:bg-[#13382d] disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-extrabold rounded-2xl text-xs uppercase tracking-wider transition-colors active:scale-[0.98] cursor-pointer shadow-[0_4px_14px_rgba(27,77,62,0.2)]"
+              >
+                {saving ? 'Salvando...' : 'Salvar Versão'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
 </main>
     </div>
