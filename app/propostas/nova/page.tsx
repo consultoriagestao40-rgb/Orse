@@ -916,10 +916,10 @@ function PropostaEditor() {
                                       </select>
                                    </td>
                                     <td className="px-6 py-4 text-right">
-                                       <div className="flex justify-end items-center gap-2">
+                                       <div className="flex justify-end items-center gap-2.5">
                                           <button 
                                              onClick={() => setActiveAdicionaisPostoId(p.id)}
-                                             className="px-3 py-1.5 rounded-lg border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 text-slate-700 hover:text-[#1B4D3E] font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm"
+                                             className="px-3.5 py-2 rounded-xl border border-slate-200/80 bg-white hover:border-[#1B4D3E] hover:bg-emerald-50/30 text-slate-700 hover:text-[#1B4D3E] font-extrabold text-xs flex items-center gap-2 transition-all shadow-xs active:scale-[0.97]"
                                              title="Configurar Adicionais e Jornada"
                                           >
                                              <span>⚙️</span> Adicionais
@@ -927,12 +927,12 @@ function PropostaEditor() {
                                           
                                           <button 
                                              onClick={() => setActiveEpisPostoId(p.id)}
-                                             className="px-3 py-1.5 rounded-lg border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 text-slate-700 hover:text-blue-700 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm"
+                                             className="px-3.5 py-2 rounded-xl border border-slate-200/80 bg-white hover:border-[#1B4D3E] hover:bg-emerald-50/30 text-slate-700 hover:text-[#1B4D3E] font-extrabold text-xs flex items-center gap-2 transition-all shadow-xs active:scale-[0.97]"
                                              title="Configurar EPIs Especiais do Posto"
                                           >
                                              <span>🛡️</span> EPIs Especiais
                                              {((p.parametrosPosto?.episAdicionais || []).length > 0) && (
-                                                <span className="bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.2 rounded-full font-black ml-1">
+                                                <span className="bg-[#1B4D3E] text-white text-[9px] px-2 py-0.5 rounded-full font-black shadow-xs">
                                                    {(p.parametrosPosto?.episAdicionais || []).length}
                                                 </span>
                                              )}
@@ -940,10 +940,10 @@ function PropostaEditor() {
 
                                           <button 
                                              onClick={() => setProposta({...proposta, equipe: proposta.equipe.filter((x: any) => x.id !== p.id)})} 
-                                             className="text-slate-400 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50" 
+                                             className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-2.5 rounded-xl transition-all active:scale-95" 
                                              title="Remover Posto"
                                           >
-                                             <Trash2 size={16}/>
+                                             <Trash2 size={15}/>
                                           </button>
                                        </div>
                                     </td>
@@ -1386,6 +1386,20 @@ function PropostaEditor() {
 
         </div>
       
+         
+         {/* ========================================================================= */}
+         {/* ESTILOS DE ANIMAÇÃO PARA OS MODAIS ULTRA PREMIUM                          */}
+         {/* ========================================================================= */}
+         <style>{`
+            @keyframes modalFadeIn {
+               from { opacity: 0; transform: scale(0.97) translateY(8px); }
+               to { opacity: 1; transform: scale(1) translateY(0); }
+            }
+            .animate-modal-in {
+               animation: modalFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+         `}</style>
+
          {/* ========================================================================= */}
          {/* MODAL 1: PARAMETROS & JORNADA DO POSTO                                    */}
          {/* ========================================================================= */}
@@ -1394,20 +1408,26 @@ function PropostaEditor() {
             const p = proposta.equipe.find((x: any) => x.id === activeAdicionaisPostoId);
             if (!p) return null;
             return (
-               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn">
-                  <div className="bg-white rounded-xl shadow-2xl border border-emerald-100 max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+               <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 transition-all duration-300">
+                  <div className="bg-white/95 rounded-2xl border border-slate-100 shadow-[0_25px_60px_-15px_rgba(27,77,62,0.18)] max-w-2xl w-full flex flex-col max-h-[90vh] overflow-hidden animate-modal-in">
                      {/* Cabeçalho */}
-                     <div className="bg-[#1B4D3E] text-white p-5 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                           <span className="text-xl">⚙️</span>
+                     <div className="bg-gradient-to-r from-[#1B4D3E] via-[#215E4C] to-[#12362b] text-white p-5 flex items-center justify-between border-b-2 border-emerald-500/20">
+                        <div className="flex items-center gap-3">
+                           <div className="bg-white/10 p-2 rounded-xl border border-white/10">
+                              <span className="text-lg">⚙️</span>
+                           </div>
                            <div>
-                              <h3 className="font-bold text-sm uppercase tracking-wider">Parâmetros & Jornada</h3>
-                              <p className="text-[10px] text-emerald-200 uppercase font-semibold">Posto: {p.nomeCargo}</p>
+                              <h3 className="font-extrabold text-xs uppercase tracking-widest text-emerald-100/90">Parâmetros & Jornada</h3>
+                              <div className="mt-1 flex items-center gap-2">
+                                 <span className="bg-[#D4AF37]/15 text-[#e5c158] border border-[#D4AF37]/35 text-[9px] px-2 py-0.5 rounded-full font-black tracking-wider uppercase">
+                                    Posto: {p.nomeCargo}
+                                 </span>
+                              </div>
                            </div>
                         </div>
                         <button 
                            onClick={() => setActiveAdicionaisPostoId(null)}
-                           className="text-white/85 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
+                           className="text-white/80 hover:text-white transition-all p-2 rounded-xl hover:bg-white/10 active:scale-95"
                         >
                            <X size={18} />
                         </button>
@@ -1416,11 +1436,11 @@ function PropostaEditor() {
                      {/* Conteúdo */}
                      <div className="p-6 overflow-y-auto space-y-6">
                         {/* Grid 1: Adicionais */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Periculosidade</label>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Periculosidade</label>
                               <select 
-                                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all" 
+                                 className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
                                  value={p.parametrosPosto?.periculosidade ? 'SIM' : 'NAO'} 
                                  onChange={(e) => {
                                     const param = {...p.parametrosPosto, periculosidade: e.target.value === 'SIM'};
@@ -1433,9 +1453,9 @@ function PropostaEditor() {
                            </div>
 
                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Insalubridade (%)</label>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Insalubridade (%)</label>
                               <select 
-                                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all" 
+                                 className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
                                  value={p.parametrosPosto?.insalubridadePercent || 0} 
                                  onChange={(e) => {
                                     const param = {...p.parametrosPosto, insalubridadePercent: Number(e.target.value)};
@@ -1450,10 +1470,10 @@ function PropostaEditor() {
                            </div>
 
                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Horas Noturnas (Mês)</label>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Horas Noturnas (Mês)</label>
                               <input 
                                  type="number" 
-                                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all" 
+                                 className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
                                  value={p.parametrosPosto?.adicionalNoturnoHoras || 0} 
                                  onChange={(e) => {
                                     const param = {...p.parametrosPosto, adicionalNoturnoHoras: Number(e.target.value)};
@@ -1463,10 +1483,10 @@ function PropostaEditor() {
                            </div>
 
                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Intrajornada (Horas/Mês)</label>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Intrajornada (Horas/Mês)</label>
                               <input 
                                  type="number" 
-                                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all" 
+                                 className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
                                  value={p.parametrosPosto?.intrajornadaHoras || 0} 
                                  onChange={(e) => {
                                     const param = {...p.parametrosPosto, intrajornadaHoras: Number(e.target.value)};
@@ -1476,11 +1496,11 @@ function PropostaEditor() {
                            </div>
 
                            <div className="space-y-1.5 md:col-span-2">
-                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">DSR s/ Adicionais (%)</label>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">DSR s/ Adicionais (%)</label>
                               <input 
                                  type="number" 
                                  step="0.01"
-                                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all" 
+                                 className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
                                  value={p.parametrosPosto?.dsrPercent || 0} 
                                  onChange={(e) => {
                                     const param = {...p.parametrosPosto, dsrPercent: Number(e.target.value)};
@@ -1491,16 +1511,16 @@ function PropostaEditor() {
                         </div>
 
                         {/* Seção de Jornada */}
-                        <div className="bg-slate-50 rounded-xl p-5 border border-slate-100 space-y-4">
-                           <h4 className="text-xs font-bold text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-200 pb-2">
+                        <div className="bg-[#F8FAFC]/80 border border-slate-100 rounded-2xl p-5 shadow-xs space-y-4 relative overflow-hidden">
+                           <h4 className="text-xs font-extrabold text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2 border-b border-slate-200/60 pb-2.5">
                               <span>📅</span> Horários & Dias Trabalhados
                            </h4>
                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               <div className="space-y-1.5">
-                                 <label className="text-[10px] font-bold text-slate-500 uppercase">Horário de Início</label>
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Horário de Início</label>
                                  <input 
                                     type="time" 
-                                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" 
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] transition-all" 
                                     value={p.parametrosPosto?.horarioInicio || '08:00'} 
                                     onChange={(e) => {
                                        const hInicio = e.target.value;
@@ -1514,10 +1534,10 @@ function PropostaEditor() {
                               </div>
 
                               <div className="space-y-1.5">
-                                 <label className="text-[10px] font-bold text-slate-500 uppercase">Horário de Saída</label>
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Horário de Saída</label>
                                  <input 
                                     type="time" 
-                                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" 
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] transition-all" 
                                     value={p.parametrosPosto?.horarioFim || '17:00'} 
                                     onChange={(e) => {
                                        const hFim = e.target.value;
@@ -1531,10 +1551,10 @@ function PropostaEditor() {
                               </div>
 
                               <div className="space-y-1.5">
-                                 <label className="text-[10px] font-bold text-slate-500 uppercase">Dias Trab. / Mês</label>
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Dias Trab. / Mês</label>
                                  <input 
                                     type="number" 
-                                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]" 
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] transition-all" 
                                     value={p.parametrosPosto?.diasTrabalhadosMes || 22} 
                                     onChange={(e) => {
                                        const dias = Number(e.target.value);
@@ -1548,18 +1568,20 @@ function PropostaEditor() {
                               </div>
                            </div>
 
-                           <div className="bg-emerald-50 text-[#1B4D3E] p-3 rounded-lg text-[11px] font-bold border border-emerald-100 flex items-center justify-between">
-                              <span className="flex items-center gap-1">⏰ Cálculo automático de adicionais:</span>
-                              <span className="bg-[#1B4D3E] text-white px-2 py-0.5 rounded font-black">{p.parametrosPosto?.adicionalNoturnoHoras || 0}h / mês</span>
+                           <div className="bg-emerald-50/50 text-[#1B4D3E] p-4 rounded-xl text-xs font-bold border border-emerald-100/50 flex items-center justify-between shadow-xs">
+                              <span className="flex items-center gap-1.5 text-emerald-950 font-bold">⏰ Cálculo automático de adicionais:</span>
+                              <span className="bg-[#1B4D3E] text-white px-3 py-1 rounded-lg font-black text-xs shadow-sm">
+                                 {p.parametrosPosto?.adicionalNoturnoHoras || 0}h / mês
+                              </span>
                            </div>
                         </div>
                      </div>
 
                      {/* Rodapé */}
-                     <div className="bg-slate-50 px-6 py-4 flex justify-end border-t border-slate-100">
+                     <div className="bg-[#F8FAFC] px-6 py-4.5 flex justify-end border-t border-slate-100/60 rounded-b-2xl">
                         <button 
                            onClick={() => setActiveAdicionaisPostoId(null)}
-                           className="bg-[#1B4D3E] hover:bg-[#153a2f] text-white font-bold px-6 py-2.5 rounded-lg text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md"
+                           className="bg-gradient-to-r from-[#1B4D3E] to-[#12362b] hover:from-[#153a2f] hover:to-[#0f2a22] text-white font-extrabold px-6 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-[0_4px_14px_rgba(27,77,62,0.25)] hover:shadow-[0_6px_20px_rgba(27,77,62,0.35)] active:scale-[0.98] cursor-pointer"
                         >
                            <Save size={14} /> Fechar & Salvar
                         </button>
@@ -1577,20 +1599,26 @@ function PropostaEditor() {
             const p = proposta.equipe.find((x: any) => x.id === activeEpisPostoId);
             if (!p) return null;
             return (
-               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn">
-                  <div className="bg-white rounded-xl shadow-2xl border border-emerald-100 max-w-4xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+               <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 transition-all duration-300">
+                  <div className="bg-white/95 rounded-2xl border border-slate-100 shadow-[0_25px_60px_-15px_rgba(27,77,62,0.18)] max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden animate-modal-in">
                      {/* Cabeçalho */}
-                     <div className="bg-[#1B4D3E] text-white p-5 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                           <span className="text-xl">🛡️</span>
+                     <div className="bg-gradient-to-r from-[#1B4D3E] via-[#215E4C] to-[#12362b] text-white p-5 flex items-center justify-between border-b-2 border-emerald-500/20">
+                        <div className="flex items-center gap-3">
+                           <div className="bg-white/10 p-2 rounded-xl border border-white/10">
+                              <span className="text-lg">🛡️</span>
+                           </div>
                            <div>
-                              <h3 className="font-bold text-sm uppercase tracking-wider">EPIs & Uniformes Especiais</h3>
-                              <p className="text-[10px] text-emerald-200 uppercase font-semibold">Posto: {p.nomeCargo}</p>
+                              <h3 className="font-extrabold text-xs uppercase tracking-widest text-emerald-100/90">EPIs & Uniformes Especiais</h3>
+                              <div className="mt-1 flex items-center gap-2">
+                                 <span className="bg-[#D4AF37]/15 text-[#e5c158] border border-[#D4AF37]/35 text-[9px] px-2 py-0.5 rounded-full font-black tracking-wider uppercase">
+                                    Posto: {p.nomeCargo}
+                                 </span>
+                              </div>
                            </div>
                         </div>
                         <button 
                            onClick={() => setActiveEpisPostoId(null)}
-                           className="text-white/85 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
+                           className="text-white/80 hover:text-white transition-all p-2 rounded-xl hover:bg-white/10 active:scale-95"
                         >
                            <X size={18} />
                         </button>
@@ -1599,39 +1627,41 @@ function PropostaEditor() {
                      {/* Conteúdo */}
                      <div className="p-6 overflow-y-auto space-y-4">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                           <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Cadastre itens adicionais específicos para este posto</p>
+                           <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+                              Cadastre itens adicionais específicos para este posto
+                           </p>
                            <button 
                               onClick={() => {
                                  const epis = p.parametrosPosto?.episAdicionais || [];
                                  const param = {...p.parametrosPosto, episAdicionais: [...epis, { id: Math.random().toString(), descricao: '', quantidade: 1, precoUnitario: 0, vidaUtil: 6 }]};
                                  updatePosto(p.id, 'parametrosPosto', param);
                               }}
-                              className="bg-emerald-50 hover:bg-emerald-100 text-[#1B4D3E] px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors border border-emerald-100 shadow-sm"
+                              className="bg-emerald-50 hover:bg-emerald-100/80 text-[#1B4D3E] px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all border border-emerald-100/50 shadow-xs hover:shadow-sm"
                            >
                               <Plus size={14} /> Inserir Item
                            </button>
                         </div>
 
                         {(p.parametrosPosto?.episAdicionais || []).length > 0 ? (
-                           <div className="overflow-hidden border border-slate-200 rounded-lg shadow-sm">
+                           <div className="overflow-hidden border border-slate-100 rounded-2xl shadow-xs bg-white">
                               <table className="w-full text-xs">
-                                 <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider font-bold border-b border-slate-200">
+                                 <thead className="bg-[#F8FAFC] text-slate-400 uppercase text-[9px] tracking-wider font-extrabold border-b border-slate-100">
                                     <tr>
-                                       <th className="px-6 py-3 text-left">Descrição do Item</th>
-                                       <th className="px-6 py-3 text-center w-24">Qtd</th>
-                                       <th className="px-6 py-3 text-center w-36">Preço Unitário (R$)</th>
-                                       <th className="px-6 py-3 text-center w-32">Vida Útil (meses)</th>
-                                       <th className="px-6 py-3 text-right w-36">Custo / Mês</th>
-                                       <th className="px-6 py-3 text-center w-16"></th>
+                                       <th className="px-5 py-3 text-left">Descrição do Item</th>
+                                       <th className="px-5 py-3 text-center w-24">Qtd</th>
+                                       <th className="px-5 py-3 text-center w-36">Preço Unitário</th>
+                                       <th className="px-5 py-3 text-center w-32">Vida Útil (meses)</th>
+                                       <th className="px-5 py-3 text-right w-36">Custo / Mês</th>
+                                       <th className="px-5 py-3 text-center w-16"></th>
                                     </tr>
                                  </thead>
                                  <tbody className="divide-y divide-slate-100">
                                     {p.parametrosPosto.episAdicionais.map((epi: any, epiIdx: number) => (
-                                       <tr key={epi.id || epiIdx} className="hover:bg-slate-50 transition-colors">
-                                          <td className="px-6 py-3">
+                                       <tr key={epi.id || epiIdx} className="hover:bg-[#F8FAFC]/40 transition-colors">
+                                          <td className="px-5 py-3">
                                              <input 
                                                 type="text" 
-                                                className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:border-[#1B4D3E] outline-none transition-all" 
+                                                className="w-full bg-slate-50/40 border border-slate-200/60 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:bg-white focus:border-[#1B4D3E] focus:ring-2 focus:ring-emerald-500/5 outline-none transition-all" 
                                                 placeholder="Ex: Roupa Térmica p/ Câmara Fria"
                                                 value={epi.descricao}
                                                 onChange={(e) => {
@@ -1641,10 +1671,10 @@ function PropostaEditor() {
                                                 }}
                                              />
                                           </td>
-                                          <td className="px-6 py-3">
+                                          <td className="px-5 py-3">
                                              <input 
                                                 type="number" 
-                                                className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs font-bold text-slate-800 text-center focus:border-[#1B4D3E] outline-none transition-all" 
+                                                className="w-full bg-slate-50/40 border border-slate-200/60 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 text-center focus:bg-white focus:border-[#1B4D3E] outline-none transition-all" 
                                                 value={epi.quantidade}
                                                 onChange={(e) => {
                                                    const newEpis = [...p.parametrosPosto.episAdicionais];
@@ -1653,13 +1683,13 @@ function PropostaEditor() {
                                                 }}
                                              />
                                           </td>
-                                          <td className="px-6 py-3">
+                                          <td className="px-5 py-3">
                                              <div className="relative">
                                                 <span className="absolute left-2.5 top-2 text-slate-400 text-xs">R$</span>
                                                 <input 
                                                    type="number" 
                                                    step="0.01"
-                                                   className="w-full bg-white border border-slate-200 rounded pl-8 pr-2.5 py-1.5 text-xs font-bold text-slate-800 text-center focus:border-[#1B4D3E] outline-none transition-all" 
+                                                   className="w-full bg-slate-50/40 border border-slate-200/60 rounded-lg pl-8 pr-2.5 py-1.5 text-xs font-bold text-slate-800 text-center focus:bg-white focus:border-[#1B4D3E] outline-none transition-all" 
                                                    value={epi.precoUnitario}
                                                    onChange={(e) => {
                                                       const newEpis = [...p.parametrosPosto.episAdicionais];
@@ -1669,10 +1699,10 @@ function PropostaEditor() {
                                                 />
                                              </div>
                                           </td>
-                                          <td className="px-6 py-3">
+                                          <td className="px-5 py-3">
                                              <input 
                                                 type="number" 
-                                                className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs font-bold text-slate-800 text-center focus:border-[#1B4D3E] outline-none transition-all" 
+                                                className="w-full bg-slate-50/40 border border-slate-200/60 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 text-center focus:bg-white focus:border-[#1B4D3E] outline-none transition-all" 
                                                 value={epi.vidaUtil}
                                                 onChange={(e) => {
                                                    const newEpis = [...p.parametrosPosto.episAdicionais];
@@ -1681,19 +1711,19 @@ function PropostaEditor() {
                                                 }}
                                              />
                                           </td>
-                                          <td className="px-6 py-3 text-right font-black text-[#1B4D3E]">
+                                          <td className="px-5 py-3 text-right font-black text-[#1B4D3E] text-xs">
                                              R$ {((epi.precoUnitario * epi.quantidade) / (epi.vidaUtil || 1)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                           </td>
-                                          <td className="px-6 py-3 text-center">
+                                          <td className="px-5 py-3 text-center">
                                              <button 
                                                 onClick={() => {
                                                    const newEpis = p.parametrosPosto.episAdicionais.filter((_: any, i: number) => i !== epiIdx);
                                                    updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
                                                 }}
-                                                className="text-slate-300 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50"
+                                                className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"
                                                 title="Excluir EPI"
                                              >
-                                                <Trash2 size={16} />
+                                                <Trash2 size={15} />
                                              </button>
                                           </td>
                                        </tr>
@@ -1702,24 +1732,24 @@ function PropostaEditor() {
                               </table>
                            </div>
                         ) : (
-                           <div className="bg-slate-50 border border-dashed border-slate-200 rounded-xl py-12 text-center">
+                           <div className="bg-[#F8FAFC] border border-dashed border-slate-200 rounded-2xl py-12 text-center">
                               <p className="text-sm text-slate-400 font-medium italic">Nenhum EPI ou uniforme especial adicionado a este posto.</p>
-                              <p className="text-xs text-slate-300 mt-1">Clique em "Inserir Item" no canto superior direito para começar.</p>
+                              <p className="text-xs text-slate-300 mt-1.5">Clique em "Inserir Item" no canto superior direito para começar.</p>
                            </div>
                         )}
                      </div>
 
                      {/* Rodapé */}
-                     <div className="bg-slate-50 px-6 py-4 flex justify-between items-center border-t border-slate-100">
+                     <div className="bg-[#F8FAFC] px-6 py-4.5 flex justify-between items-center border-t border-slate-100/60 rounded-b-2xl">
                         <div>
-                           <span className="text-[10px] font-bold text-slate-400 uppercase block">Custo Total dos EPIs</span>
-                           <span className="text-lg font-black text-[#1B4D3E]">
-                              R$ {((p.parametrosPosto?.episAdicionais || []).reduce((acc: number, item: any) => acc + ((item.precoUnitario * item.quantidade) / (item.vidaUtil || 1)), 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mês
+                           <span className="text-[10px] font-bold text-slate-400 uppercase block tracking-wider">Custo Total Especial</span>
+                           <span className="text-base font-black text-[#1B4D3E]">
+                              R$ {((p.parametrosPosto?.episAdicionais || []).reduce((acc: number, item: any) => acc + ((item.precoUnitario * item.quantidade) / (item.vidaUtil || 1)), 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">/ mês</span>
                            </span>
                         </div>
                         <button 
                            onClick={() => setActiveEpisPostoId(null)}
-                           className="bg-[#1B4D3E] hover:bg-[#153a2f] text-white font-bold px-6 py-2.5 rounded-lg text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md"
+                           className="bg-gradient-to-r from-[#1B4D3E] to-[#12362b] hover:from-[#153a2f] hover:to-[#0f2a22] text-white font-extrabold px-6 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-[0_4px_14px_rgba(27,77,62,0.25)] hover:shadow-[0_6px_20px_rgba(27,77,62,0.35)] active:scale-[0.98] cursor-pointer"
                         >
                            <Save size={14} /> Fechar & Salvar
                         </button>
@@ -1728,6 +1758,7 @@ function PropostaEditor() {
                </div>
             );
          })()}
+
 </main>
     </div>
   );
