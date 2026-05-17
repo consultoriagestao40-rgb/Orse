@@ -430,7 +430,6 @@ export default function ControladoriaPage() {
                           strokeWidth="2.5"
                           strokeLinecap="round"
                           transform={`rotate(${((Math.min(100, atingidoGeralPct) / 100) * 180) - 90} 50 50)`}
-                          className="transition-all duration-1000 ease-out"
                           style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3))' }}
                         />
                         {/* Pinos Centrais do Eixo */}
@@ -508,7 +507,6 @@ export default function ControladoriaPage() {
                           strokeWidth="2.5"
                           strokeLinecap="round"
                           transform={`rotate(${((Math.min(100, taxaConversao) / 100) * 180) - 90} 50 50)`}
-                          className="transition-all duration-1000 ease-out"
                           style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.2))' }}
                         />
                         <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
@@ -564,7 +562,6 @@ export default function ControladoriaPage() {
                           strokeWidth="2.5"
                           strokeLinecap="round"
                           transform={`rotate(${((Math.min(100, conversaoQuantidade) / 100) * 180) - 90} 50 50)`}
-                          className="transition-all duration-1000 ease-out"
                           style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.2))' }}
                         />
                         <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
