@@ -134,3 +134,16 @@ export async function deleteTipoServico(id: string) {
     return { success: false, error: error.message };
   }
 }
+
+export async function getSellers() {
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: { nome: 'asc' },
+      select: { nome: true }
+    });
+    return users.map(u => u.nome);
+  } catch (error) {
+    console.error('Erro ao buscar vendedores:', error);
+    return [];
+  }
+}

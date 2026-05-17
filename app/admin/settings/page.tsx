@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
   Settings, Layers, CalendarDays, Ruler, Plus, Trash2, 
-  Save, X, Tag, Edit2
+  Save, X, Tag, Edit2, Target
 } from 'lucide-react';
 import { 
   getPropostaStatuses, createPropostaStatus, deletePropostaStatus 
@@ -15,10 +15,12 @@ import {
 import { 
   getUnidadesMedida, createUnidadeMedida, deleteUnidadeMedida,
   getCategorias, createCategoria, deleteCategoria,
-  getTiposServico, createTipoServico, deleteTipoServico
+  getTiposServico, createTipoServico, deleteTipoServico,
+  getSellers
 } from './actions';
 
-type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos';
+type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'metas';
+
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('status');
@@ -45,6 +47,39 @@ export default function SettingsPage() {
   const [categorias, setCategorias] = useState<any[]>([]);
   const [newCategoriaNome, setNewCategoriaNome] = useState('');
 
+  // Metas State
+  const [sellers, setSellers] = useState<string[]>([]);
+  const [metas, setMetas] = useState<Record<string, number>>({});
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    return new Date().toISOString().substring(0, 7); // Padrão: YYYY-MM atual
+  });
+
+  const loadMetas = () => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sb_kpi_goals');
+      if (saved) {
+        try {
+          setMetas(JSON.parse(saved));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    loadMetas();
+  }, [selectedMonth]);
+
+  const handleSaveMeta = (sellerName: string, val: number) => {
+    const goalKey = `${sellerName}_${selectedMonth}`;
+    const updated = { ...metas, [goalKey]: val };
+    setMetas(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sb_kpi_goals', JSON.stringify(updated));
+    }
+  };
+
   useEffect(() => {
     loadData();
   }, [activeTab]);
@@ -67,6 +102,10 @@ export default function SettingsPage() {
       } else if (activeTab === 'tipos') {
         const data = await getTiposServico();
         setTipos(data || []);
+      } else if (activeTab === 'metas') {
+        const sellersList = await getSellers();
+        setSellers(sellersList || []);
+        loadMetas();
       }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -74,6 +113,7 @@ export default function SettingsPage() {
       setLoading(false);
     }
   };
+
 
   // HANDLERS TIPOS
   const handleAddTipo = async () => {
@@ -218,7 +258,9 @@ export default function SettingsPage() {
               { id: 'unidades', label: 'Unidades de Medida', icon: Ruler },
               { id: 'categorias', label: 'Categorias', icon: Tag },
               { id: 'tipos', label: 'Tipos de Serviço', icon: Settings },
+              { id: 'metas', label: 'Metas dos Vendedores', icon: Target },
             ].map((tab) => (
+
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as Tab)}
@@ -462,6 +504,74 @@ export default function SettingsPage() {
                 </div>
               </div>
             )}
+
+            {/* 6. ABA METAS DOS VENDEDORES */}
+            {activeTab === 'metas' && (
+              <div>
+                <div className="bg-[#1B4D3E] px-6 py-4 border-b border-[#13382D] flex flex-col md:flex-row justify-between items-center gap-4">
+                  <h2 className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                    <Target size={14} /> Metas Mensais por Vendedor
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-emerald-200 font-bold uppercase">Mês de Referência:</span>
+                    <input
+                      type="month"
+                      value={selectedMonth}
+                      onChange={e => setSelectedMonth(e.target.value)}
+                      className="px-3 py-1.5 bg-white border border-slate-300 rounded text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-bold text-slate-700 uppercase">Como funciona?</p>
+                      <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                        Selecione o mês de referência e insira as metas individuais dos vendedores nos campos abaixo. 
+                        As metas são salvas automaticamente após a alteração dos valores e serão exibidas na aba de <strong>Controladoria</strong> para monitorar o atingimento.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 max-w-2xl">
+                    {sellers.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic">Nenhum vendedor cadastrado no sistema.</p>
+                    ) : (
+                      sellers.map((nome) => {
+                        const goalKey = `${nome}_${selectedMonth}`;
+                        const goalVal = metas[goalKey] !== undefined ? metas[goalKey] : 100000;
+
+                        return (
+                          <div key={nome} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl hover:bg-white hover:shadow-xs transition-all group">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-[#1B4D3E]/10 text-[#1B4D3E] font-black rounded-xl flex items-center justify-center text-xs">
+                                {nome.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()}
+                              </div>
+                              <span className="text-xs font-bold text-slate-700">{nome}</span>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Meta: R$</span>
+                              <input
+                                type="number"
+                                value={goalVal}
+                                onChange={(e) => {
+                                  const newVal = Number(e.target.value);
+                                  handleSaveMeta(nome, newVal);
+                                }}
+                                className="w-36 px-3 py-2 border border-slate-300 rounded text-xs font-extrabold text-slate-800 text-right outline-none focus:border-[#1B4D3E]"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
 
             {loading && (
               <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
