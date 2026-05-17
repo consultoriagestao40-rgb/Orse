@@ -14,7 +14,7 @@ import { getProdutos } from '@/app/produtos/actions';
 import { saveProposta, getPropostaCompleta, getLoggedUser } from '@/app/propostas/actions';
 import { getTiposServico } from '@/app/admin/settings/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell } from 'lucide-react';
+import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, ChevronLeft } from 'lucide-react';
 import BrazilMap from '@/components/BrazilMap';
 
 const TABS = [
@@ -2569,17 +2569,163 @@ function PropostaEditor() {
                                 </div>
 
                                 {/* Botão de Avanço voltando para o Slide 01 */}
-                                <button 
-                                   onClick={() => setCurrentSlide(1)}
-                                   className="absolute right-12 bottom-12 border-2 border-[#1E3A8A] rounded-full p-3.5 text-[#1E3A8A] hover:bg-[#1E3A8A]/10 hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center justify-center w-12 h-12 cursor-pointer z-30"
-                                >
-                                   <ChevronRight size={22} className="stroke-[3]" />
-                                </button>
                              </div>
                           )}
 
+                         {/* SLIDE 05 (PRINCIPAIS SERVIÇOS PRESTADOS - COM AS 5 CATEGORIAS DE SERVIÇOS) */}
+                         {currentSlide === 5 && (
+                            <div className="h-full w-full flex flex-col justify-between relative z-10 animate-fadeIn bg-white rounded-2xl overflow-hidden p-12">
+                               {/* Linhas diagonais decorativas da marca */}
+                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
+                                  <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
+                                  <line x1="-50" y1="200" x2="400" y2="-250" stroke="#E2E8F0" strokeWidth="6" />
+                                  <line x1="-50" y1="250" x2="450" y2="-250" stroke="#E2E8F0" strokeWidth="3" />
+                                  <line x1="600" y1="800" x2="1100" y2="300" stroke="#E2E8F0" strokeWidth="10" />
+                                  <line x1="650" y1="800" x2="1150" y2="300" stroke="#E2E8F0" strokeWidth="6" />
+                                  <line x1="700" y1="800" x2="1200" y2="300" stroke="#E2E8F0" strokeWidth="3" />
+                               </svg>
+
+                               <div className="grid grid-cols-12 gap-6 items-center h-[calc(100%-110px)] relative z-10 text-slate-800">
+                                  {/* Coluna do Título (Esquerda) */}
+                                  <div className="col-span-4 flex flex-col justify-center h-full pr-2">
+                                     <h2 className="text-3xl font-black text-[#1e4480] uppercase tracking-tight leading-none">
+                                        PRINCIPAIS<br />
+                                        SERVIÇOS<br />
+                                        PRESTADOS
+                                     </h2>
+                                  </div>
+
+                                  {/* Coluna 1 (Centro) - Terceirização */}
+                                  <div className="col-span-4 flex flex-col space-y-2 h-full justify-center">
+                                     <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                                        <span className="text-[#1e4480] text-[10px] font-black tracking-wide uppercase leading-tight max-w-[150px]">
+                                           TERCEIRIZAÇÃO DE SERVIÇOS DE FACILITIES
+                                        </span>
+                                        <div className="bg-[#1e4480]/10 p-1.5 rounded-xl text-[#1e4480] shrink-0">
+                                           <Building2 size={18} className="stroke-[2.5]" />
+                                        </div>
+                                     </div>
+                                     <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
+                                        Gestão e execução de serviços essenciais, como limpeza, manutenção e segurança, que garantem o bom funcionamento e organização de um ambiente de trabalho. Nossa função é cuidar de tudo isso para que a empresa possa focar no que faz de melhor, enquanto oferecemos um espaço eficiente, seguro e bem cuidado.
+                                     </p>
+                                  </div>
+
+                                  {/* Coluna 2 (Direita) - Limpeza em Altura */}
+                                  <div className="col-span-4 flex flex-col space-y-2 h-full justify-center pl-2">
+                                     <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                                        <span className="text-[#1e4480] text-[10px] font-black tracking-wide uppercase leading-tight">
+                                           LIMPEZA EM ALTURA
+                                        </span>
+                                        <div className="bg-[#1e4480]/10 p-1.5 rounded-xl text-[#1e4480] shrink-0">
+                                           <HardHat size={18} className="stroke-[2.5]" />
+                                        </div>
+                                     </div>
+                                     <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
+                                        Serviço que é realizado em áreas de difícil acesso, como fachadas de prédios, janelas externas e estruturas elevadas. Usamos equipamentos específicos e técnicas seguras para garantir que essas superfícies sejam limpas de maneira eficiente, mantendo a estética e a segurança dos espaços altos, onde o cuidado e a precisão são essenciais.
+                                     </p>
+                                  </div>
+                               </div>
+
+                               {/* Painel inferior com as 5 categorias de serviços */}
+                               <div className="flex justify-around items-center w-full pt-4 mt-auto border-t border-slate-100 relative z-20">
+                                  {/* Categoria 1: Limpeza */}
+                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
+                                     <div className="bg-[#1e4480] group-hover:bg-[#1B4D3E] group-hover:scale-110 transition-all duration-300 shadow-md text-white w-12 h-12 flex items-center justify-center rounded-full">
+                                        <Sparkles size={20} className="stroke-[2]" />
+                                     </div>
+                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[9px] font-black tracking-wider uppercase mt-2 transition-colors">
+                                        LIMPEZA
+                                     </span>
+                                  </div>
+
+                                  {/* Categoria 2: Portaria */}
+                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
+                                     <div className="bg-[#1e4480] group-hover:bg-[#1B4D3E] group-hover:scale-110 transition-all duration-300 shadow-md text-white w-12 h-12 flex items-center justify-center rounded-full">
+                                        <ShieldCheck size={20} className="stroke-[2]" />
+                                     </div>
+                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[9px] font-black tracking-wider uppercase mt-2 transition-colors">
+                                        PORTARIA
+                                     </span>
+                                  </div>
+
+                                  {/* Categoria 3: Recepção */}
+                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
+                                     <div className="bg-[#1e4480] group-hover:bg-[#1B4D3E] group-hover:scale-110 transition-all duration-300 shadow-md text-white w-12 h-12 flex items-center justify-center rounded-full">
+                                        <ConciergeBell size={20} className="stroke-[2]" />
+                                     </div>
+                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[9px] font-black tracking-wider uppercase mt-2 transition-colors">
+                                        RECEPÇÃO
+                                     </span>
+                                  </div>
+
+                                  {/* Categoria 4: Manutenção */}
+                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
+                                     <div className="bg-[#1e4480] group-hover:bg-[#1B4D3E] group-hover:scale-110 transition-all duration-300 shadow-md text-white w-12 h-12 flex items-center justify-center rounded-full">
+                                        <Wrench size={20} className="stroke-[2]" />
+                                     </div>
+                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[9px] font-black tracking-wider uppercase mt-2 transition-colors">
+                                        MANUTENÇÃO
+                                     </span>
+                                  </div>
+
+                                  {/* Categoria 5: Jardinagem */}
+                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
+                                     <div className="bg-[#1e4480] group-hover:bg-[#1B4D3E] group-hover:scale-110 transition-all duration-300 shadow-md text-white w-12 h-12 flex items-center justify-center rounded-full">
+                                        <Trees size={20} className="stroke-[2]" />
+                                     </div>
+                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[9px] font-black tracking-wider uppercase mt-2 transition-colors">
+                                        JARDINAGEM
+                                     </span>
+                                  </div>
+                               </div>
+
+                               {/* Rodapé do Slide 5 */}
+                               <div className="flex justify-between items-center border-t border-slate-100 pt-3 mt-4 pr-28 relative z-20 text-slate-500">
+                                  <span className="text-[9px] font-bold uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                  <span className="text-[9px] font-black bg-slate-100 px-2.5 py-0.5 rounded">05</span>
+                               </div>
+                            </div>
+                         )}
+
                      </div>
                   </div>
+
+                   {/* CONTROLES DE NAVEGAÇÃO DOS SLIDES (PADRONIZADOS FORA DO SLIDE E DO NÚMERO) */}
+                   <div className="flex flex-col items-center space-y-4 mt-6">
+                      <div className="flex justify-center items-center gap-6">
+                         <button
+                            type="button"
+                            onClick={() => setCurrentSlide(currentSlide === 1 ? 5 : currentSlide - 1)}
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold text-xs uppercase tracking-wider hover:bg-slate-50 hover:border-slate-300 active:scale-95 transition-all shadow-sm cursor-pointer z-30"
+                         >
+                            <ChevronLeft size={16} className="stroke-[3]" /> Voltar
+                         </button>
+                         
+                         <div className="flex gap-2 bg-slate-100 p-1.5 rounded-full border border-slate-200">
+                            {[1, 2, 3, 4, 5].map((num) => (
+                               <button
+                                  key={num}
+                                  type="button"
+                                  onClick={() => setCurrentSlide(num)}
+                                  className={`w-8 h-8 rounded-full text-xs font-black transition-all cursor-pointer flex items-center justify-center ${currentSlide === num ? 'bg-[#1e4480] text-white shadow-md' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-800'}`}
+                               >
+                                  {num}
+                               </button>
+                            ))}
+                         </div>
+
+                         <button
+                            type="button"
+                            onClick={() => setCurrentSlide(currentSlide === 5 ? 1 : currentSlide + 1)}
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1e4480] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#1e4480]/90 active:scale-95 transition-all shadow-md cursor-pointer z-30"
+                         >
+                            Avançar <ChevronRight size={16} className="stroke-[3]" />
+                         </button>
+                      </div>
+                      <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                         Visualizando Slide {currentSlide} de 5
+                      </div>
+                   </div>
 
                   {/* FORMULÁRIO DE ATUALIZAÇÃO DOS DADOS DOS SLIDES E DO VENDEDOR */}
                   <div className="space-y-6">
