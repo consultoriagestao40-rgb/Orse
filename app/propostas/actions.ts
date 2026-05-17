@@ -88,7 +88,7 @@ async function getDefaultUser() {
 
 export async function saveProposta(data: any) {
   const user = await getDefaultUser();
-  const { id, cliente, premissas, encargos, equipe, resultado } = data;
+  const { id, cliente, premissas, encargos, equipe, resultado, dreTaxPercent, dreEncargos } = data;
 
   try {
     let propostaId = id;
@@ -141,7 +141,9 @@ export async function saveProposta(data: any) {
             detalheMateriais: data.insumos.detalheMateriais || [],
             detalheMaquinas: data.insumos.detalheMaquinas || [],
             detalheDescartaveis: data.insumos.detalheDescartaveis || []
-          }
+          },
+          dreTaxPercent: dreTaxPercent !== undefined ? dreTaxPercent : null,
+          dreEncargos: dreEncargos || null
         } as any,
         custoTotal: resultado.custoDiretoTotal || 0,
         precoVenda: resultado.faturamentoBruto || 0,
@@ -311,7 +313,9 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
           horarioFim: i.saida
         }
       })),
-      versao: v.versao
+      versao: v.versao,
+      dreTaxPercent: meta.dreTaxPercent !== undefined ? meta.dreTaxPercent : null,
+      dreEncargos: meta.dreEncargos || null
     };
   } catch (error) {
     console.error('Error fetching full proposta:', error);

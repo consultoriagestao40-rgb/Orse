@@ -77,6 +77,8 @@ function PropostaEditor() {
             revisao: `R${String(fullData.versao).padStart(2, '0')}`,
             tipoServicos: fullData.cliente.tipoServicos || ''
           },
+          dreTaxPercent: (fullData as any).dreTaxPercent,
+          dreEncargos: (fullData as any).dreEncargos,
         });
       }
     } catch (err) {
@@ -169,18 +171,25 @@ function PropostaEditor() {
   // Sincroniza parâmetros padrão do DRE com os dados da Proposta quando carregada
   useEffect(() => {
      if (proposta && proposta.id) {
-        // Tributos padrão (soma de todos os impostos)
-        const totalTributos = (proposta.premissas?.tributos || []).reduce((acc: number, t: any) => acc + (t.percent || 0), 0);
-        if (totalTributos > 0) {
-           setDreTaxPercent(totalTributos);
+        if (proposta.dreTaxPercent !== undefined && proposta.dreTaxPercent !== null) {
+           setDreTaxPercent(proposta.dreTaxPercent);
+        } else {
+           // Tributos padrão (soma de todos os impostos)
+           const totalTributos = (proposta.premissas?.tributos || []).reduce((acc: number, t: any) => acc + (t.percent || 0), 0);
+           if (totalTributos > 0) {
+              setDreTaxPercent(totalTributos);
+           }
         }
 
-        // Encargos padrão dos grupos
-        const fgtsVal = proposta.encargos?.grupoA?.fgts ?? 8.00;
-        const inssVal = proposta.encargos?.grupoA?.previdenciaSocial ?? 20.00;
-        const decimoTerceiroVal = proposta.encargos?.grupoC?.decimoTerceiro ?? 9.39;
-        const feriasVal = proposta.encargos?.grupoB?.ferias ?? 9.35;
-        const fgtsRescisorioVal = proposta.encargos?.grupoD?.indenizacaoSemJustaCausa ?? 0.99;
+        if (proposta.dreEncargos && typeof proposta.dreEncargos === 'object') {
+           setDreEncargos(proposta.dreEncargos);
+        } else {
+           // Encargos padrão dos grupos
+           const fgtsVal = proposta.encargos?.grupoA?.fgts ?? 8.00;
+           const inssVal = proposta.encargos?.grupoA?.previdenciaSocial ?? 20.00;
+           const decimoTerceiroVal = proposta.encargos?.grupoC?.decimoTerceiro ?? 9.39;
+           const feriasVal = proposta.encargos?.grupoB?.ferias ?? 9.35;
+           const fgtsRescisorioVal = proposta.encargos?.grupoD?.indenizacaoSemJustaCausa ?? 0.99;
         
         // Outros encargos sum
         let outrosSoma = 0;
@@ -211,8 +220,9 @@ function PropostaEditor() {
            outros: Number(outrosSoma.toFixed(2)) || 2.71,
            inss: inssVal
         });
-     }
-  }, [proposta.id]);
+         }
+      }
+  }, [proposta.id, proposta.dreTaxPercent, proposta.dreEncargos]);
 
   useEffect(() => {
     async function load() {
@@ -270,7 +280,9 @@ function PropostaEditor() {
                   cctBase: (dataCcts || []).find((c: any) => c.id === savedSindicatoId) || {}
                })),
                versao: fullData.versao,
-               insumos: (fullData as any).insumos || { materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0, servicosDescricao: '' }
+               insumos: (fullData as any).insumos || { materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0, servicosDescricao: '' },
+               dreTaxPercent: (fullData as any).dreTaxPercent,
+               dreEncargos: (fullData as any).dreEncargos
             });
             setVersions(fullData.availableVersions || []);
             console.log('Estado da proposta atualizado.');
@@ -391,7 +403,7 @@ function PropostaEditor() {
 
     try {
       setSaving(true);
-      const res = await saveProposta({ ...proposta, resultado });
+      const res = await saveProposta({ ...proposta, resultado, dreTaxPercent, dreEncargos });
       if (res.success) {
         alert(`Sucesso! Proposta ${proposta.id ? 'atualizada' : 'salva'} como Revisão ${res.versao}.`);
         const novoNumero = res.numeroProposta || proposta.cliente.numeroProposta;
@@ -404,7 +416,9 @@ function PropostaEditor() {
             ...proposta.cliente,
             numeroProposta: novoNumero,
             revisao: novaRevisao
-          }
+          },
+          dreTaxPercent,
+          dreEncargos
         });
         const updatedData = await getPropostaCompleta(res.propostaId);
         if (updatedData) setVersions(updatedData.availableVersions || []);
