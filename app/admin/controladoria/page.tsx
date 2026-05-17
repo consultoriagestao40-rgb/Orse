@@ -22,6 +22,7 @@ export default function ControladoriaPage() {
   });
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [chartViewMode, setChartViewMode] = useState<'mensal' | 'acumulada'>('mensal');
 
   // Verificação de Perfil Administrador (bloqueia acesso direto via URL)
   useEffect(() => {
@@ -264,8 +265,8 @@ export default function ControladoriaPage() {
     return months[m] || m;
   };
   
-  // Mapeamento dos valores de cada mês respeitando filtros
-  const chartData = chartMonths.map((mKey: string) => {
+  // Mapeamento dos valores de cada mês respeitando filtros (mensal bruto)
+  const monthlyData = chartMonths.map((mKey: string) => {
     let realizado = 0;
     
     propostasList.forEach((p: any) => {
@@ -311,6 +312,24 @@ export default function ControladoriaPage() {
       atingidoPct
     };
   });
+
+  // Gerar chartData dependendo do modo de visão selecionado (mensal ou acumulado)
+  let chartData = monthlyData;
+  if (chartViewMode === 'acumulada') {
+    let accPrevisto = 0;
+    let accRealizado = 0;
+    chartData = monthlyData.map((d) => {
+      accPrevisto += d.previsto;
+      accRealizado += d.realizado;
+      const atingidoPct = accPrevisto > 0 ? (accRealizado / accPrevisto) * 100 : 0;
+      return {
+        ...d,
+        previsto: accPrevisto,
+        realizado: accRealizado,
+        atingidoPct
+      };
+    });
+  }
 
   const maxFaturamento = Math.max(...chartData.map(d => Math.max(d.previsto, d.realizado)), 50000);
   const maxValY = maxFaturamento * 1.15;
@@ -922,23 +941,51 @@ export default function ControladoriaPage() {
                     </p>
                   </div>
                   
-                  {/* Legenda do Gráfico */}
-                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[9px] font-black uppercase tracking-wider select-none bg-slate-50 border border-slate-200/60 px-4 py-2 rounded-xl">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-3 h-3 bg-indigo-500 rounded-md block"></span>
-                      <span className="text-slate-500">Previsto (Meta)</span>
+                  {/* Alternador de Visão e Legenda */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    {/* Alternador de Visão (Mensal / Acumulada) */}
+                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/80">
+                      <button
+                        onClick={() => setChartViewMode('mensal')}
+                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
+                          chartViewMode === 'mensal'
+                            ? 'bg-[#1B4D3E] text-white shadow-sm'
+                            : 'text-slate-500 hover:text-slate-750'
+                        }`}
+                      >
+                        📅 Mensal
+                      </button>
+                      <button
+                        onClick={() => setChartViewMode('acumulada')}
+                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
+                          chartViewMode === 'acumulada'
+                            ? 'bg-[#1B4D3E] text-white shadow-sm'
+                            : 'text-slate-500 hover:text-slate-750'
+                        }`}
+                      >
+                        📈 Acumulada
+                      </button>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-3 h-3 bg-emerald-500 rounded-md block"></span>
-                      <span className="text-slate-500">Realizado (Aceito)</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-6 h-0.5 bg-amber-500 relative flex items-center justify-center">
-                        <span className="w-2 h-2 rounded-full bg-amber-500 absolute border border-white"></span>
-                      </span>
-                      <span className="text-slate-500">Atingimento (%)</span>
+
+                    {/* Legenda do Gráfico */}
+                    <div className="flex items-center gap-x-5 text-[9px] font-black uppercase tracking-wider select-none bg-slate-50 border border-slate-200/60 px-4 py-2 rounded-xl h-[34px]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-3 h-3 bg-indigo-500 rounded-md block"></span>
+                        <span className="text-slate-500">Previsto (Meta)</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-3 h-3 bg-emerald-500 rounded-md block"></span>
+                        <span className="text-slate-500">Realizado (Aceito)</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-6 h-0.5 bg-amber-500 relative flex items-center justify-center">
+                          <span className="w-2 h-2 rounded-full bg-amber-500 absolute border border-white"></span>
+                        </span>
+                        <span className="text-slate-500">Atingimento (%)</span>
+                      </div>
                     </div>
                   </div>
+
                 </div>
 
                 {/* SVG Combo Chart Canvas */}
