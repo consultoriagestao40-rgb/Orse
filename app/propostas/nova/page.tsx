@@ -3023,115 +3023,76 @@ function PropostaEditor() {
                          )}
 
                           {currentSlide === 8 && (
-                      <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
-                         <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
-                            <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
-                               ⚙️ Objeto & Escopo Técnico (Slide 8)
-                            </h3>
-                         </div>
-                         
-                         <div className="space-y-4">
-                            <div>
-                               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Objeto da Proposta</label>
-                               <textarea 
-                                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold min-h-[80px] resize-none"
-                                  value={proposta.cliente.objetoProposta}
-                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, objetoProposta: e.target.value}})}
-                               />
-                            </div>
-                            <div className="flex items-center gap-2 py-2">
-                               <input 
-                                  type="checkbox" 
-                                  id="hasEscopoTecnicoSlide"
-                                  className="rounded text-[#1e4480] focus:ring-[#1e4480]"
-                                  checked={proposta.cliente.hasEscopoTecnico}
-                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, hasEscopoTecnico: e.target.checked}})}
-                               />
-                               <label htmlFor="hasEscopoTecnicoSlide" className="text-xs font-bold text-slate-600">Inserir Escopo Técnico</label>
-                            </div>
-                            {proposta.cliente.hasEscopoTecnico && (
-                               <div>
-                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Escopo Técnico Detalhado</label>
-                                  <textarea 
-                                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold min-h-[120px]"
-                                     value={proposta.cliente.escopoTecnico || ''}
-                                     onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, escopoTecnico: e.target.value}})}
-                                     placeholder="Descreva aqui de forma detalhada o escopo técnico a ser executado..."
-                                  />
+                            <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 text-slate-800 overflow-hidden bg-white">
+                               {/* Linhas diagonais decorativas da marca */}
+                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                                  <line x1="-50" y1="150" x2="350" y2="-250" stroke="#1e4480" strokeWidth="10" />
+                                  <line x1="-50" y1="200" x2="400" y2="-250" stroke="#1e4480" strokeWidth="6" />
+                                  <line x1="-50" y1="250" x2="450" y2="-250" stroke="#1e4480" strokeWidth="3" />
+                                  
+                                  <line x1="600" y1="800" x2="1100" y2="300" stroke="#1e4480" strokeWidth="10" />
+                                  <line x1="650" y1="800" x2="1150" y2="300" stroke="#1e4480" strokeWidth="6" />
+                                  <line x1="700" y1="800" x2="1200" y2="300" stroke="#1e4480" strokeWidth="3" />
+                               </svg>
+
+                               <div className="flex flex-col justify-between h-full relative z-10">
+                                  {/* Header */}
+                                  <div className="flex justify-between items-start pb-4 border-b border-slate-100">
+                                     <h2 className="text-3xl font-black text-[#1e4480] tracking-tight leading-none uppercase">
+                                        OBJETO & ESCOPO TÉCNICO
+                                     </h2>
+                                     <img 
+                                        src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
+                                        alt="JVS Facilities Logo" 
+                                        className="max-h-10 w-auto object-contain"
+                                     />
+                                  </div>
+
+                                  {/* Content Area */}
+                                  <div className="my-auto w-full max-w-4xl mx-auto">
+                                     {proposta.cliente.hasEscopoTecnico ? (
+                                        <div className="grid grid-cols-2 gap-8 items-stretch">
+                                           {/* Left: Objeto da Proposta */}
+                                           <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+                                              <div>
+                                                 <span className="text-[10px] font-black text-[#1e4480] uppercase tracking-widest block mb-2">01. OBJETO DA PROPOSTA</span>
+                                                 <p className="text-xs font-semibold leading-relaxed text-slate-700 whitespace-pre-line">
+                                                    {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
+                                                 </p>
+                                              </div>
+                                           </div>
+
+                                           {/* Right: Escopo Técnico */}
+                                           <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+                                              <div>
+                                                 <span className="text-[10px] font-black text-[#1e4480] uppercase tracking-widest block mb-2">02. ESCOPO TÉCNICO</span>
+                                                 <p className="text-xs font-semibold leading-relaxed text-slate-700 whitespace-pre-line overflow-y-auto max-h-[160px]">
+                                                    {proposta.cliente.escopoTecnico || 'Detalhamento das atividades operacionais conforme solicitação e cronograma alinhado.'}
+                                                 </p>
+                                              </div>
+                                           </div>
+                                        </div>
+                                     ) : (
+                                        <div className="max-w-2xl mx-auto bg-slate-50 border border-slate-200/80 rounded-2xl p-8 text-center shadow-sm">
+                                           <span className="text-[10px] font-black text-[#1e4480] uppercase tracking-widest block mb-3">OBJETO DA PROPOSTA</span>
+                                           <p className="text-sm font-bold leading-relaxed text-slate-700 whitespace-pre-line">
+                                              {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
+                                           </p>
+                                        </div>
+                                     )}
+                                  </div>
+
+                                  {/* Footer */}
+                                  <div className="flex justify-between items-center w-full text-slate-400 text-[9px] font-bold uppercase tracking-wider pt-2 border-t border-slate-100">
+                                     <span>www.grupojvsserv.com.br</span>
+                                     <span className="text-[#1e4480] bg-slate-100 px-2.5 py-0.5 rounded font-black">08</span>
+                                  </div>
                                </div>
-                            )}
-                         </div>
-                      </div>
-                     )}
-
-                     {currentSlide === 9 && (
-                             <div className="w-full aspect-[16/9] border border-slate-200 bg-[#1e4480] p-12 flex flex-col justify-between relative overflow-hidden h-full text-white select-none">
-                                {/* Fundo decorativo sutil */}
-                                <div className="absolute inset-0 opacity-10 pointer-events-none">
-                                   <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                                      <line x1="-50" y1="100" x2="400" y2="-200" stroke="white" strokeWidth="8" />
-                                      <line x1="-50" y1="150" x2="450" y2="-200" stroke="white" strokeWidth="4" />
-                                      <line x1="500" y1="600" x2="1000" y2="200" stroke="white" strokeWidth="8" />
-                                      <line x1="550" y1="600" x2="1050" y2="200" stroke="white" strokeWidth="4" />
-                                   </svg>
-                                </div>
-
-                                <div className="relative z-10 flex flex-col h-full justify-between">
-                                   {/* Header */}
-                                   <div className="flex justify-between items-center w-full pb-2 border-b border-white/10">
-                                      <h2 className="text-2xl font-black text-white tracking-widest uppercase">OBJETO & ESCOPO TÉCNICO</h2>
-                                      <img 
-                                         src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                         alt="JVS Facilities Logo" 
-                                         className="max-h-8 w-auto object-contain"
-                                      />
-                                   </div>
-
-                                   {/* Content Area */}
-                                   <div className="my-auto max-w-4xl w-full mx-auto">
-                                      {proposta.cliente.hasEscopoTecnico ? (
-                                         <div className="grid grid-cols-2 gap-8 items-stretch">
-                                            {/* Left: Objeto da Proposta */}
-                                            <div className="bg-white/10 border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
-                                               <div>
-                                                  <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-2">01. OBJETO DA PROPOSTA</span>
-                                                  <p className="text-xs font-semibold leading-relaxed text-white/95 whitespace-pre-line">
-                                                     {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
-                                                  </p>
-                                               </div>
-                                            </div>
-
-                                            {/* Right: Escopo Técnico */}
-                                            <div className="bg-white/10 border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
-                                               <div>
-                                                  <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-2">02. ESCOPO TÉCNICO</span>
-                                                  <p className="text-xs font-semibold leading-relaxed text-white/95 whitespace-pre-line overflow-y-auto max-h-[160px]">
-                                                     {proposta.cliente.escopoTecnico || 'Detalhamento das atividades operacionais conforme solicitação e cronograma alinhado.'}
-                                                  </p>
-                                               </div>
-                                            </div>
-                                         </div>
-                                      ) : (
-                                         <div className="max-w-2xl mx-auto bg-white/10 border border-white/10 rounded-2xl p-8 text-center">
-                                            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-3">OBJETO DA PROPOSTA</span>
-                                            <p className="text-sm font-bold leading-relaxed text-white/95 whitespace-pre-line">
-                                               {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
-                                            </p>
-                                         </div>
-                                      )}
-                                   </div>
-
-                                   {/* Footer */}
-                                   <div className="flex justify-between items-center w-full text-white/60 text-[9px] font-bold uppercase tracking-wider pt-2 border-t border-white/10">
-                                      <span>www.grupojvsserv.com.br</span>
-                                      <span className="text-white/80 bg-white/10 px-2.5 py-0.5 rounded font-black">08</span>
-                                   </div>
-                                </div>
-                             </div>
+                            </div>
                           )}
 
 {/* SLIDE 04 (QUADRO EFETIVO - TABELA AUTOMÁTICA DA ABA 4) */}
-                         {currentSlide === 10 && (
+                         {currentSlide === 9 && (
                             <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 text-slate-800 overflow-hidden bg-white">
                                {/* Linhas diagonais decorativas da marca */}
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
@@ -3220,7 +3181,7 @@ function PropostaEditor() {
                             </div>
                          )}
 
-                          {currentSlide === 11 && (
+                          {currentSlide === 10 && (
                              <div className="w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-full text-slate-800 select-none">
                                 {/* Top Header */}
                                 <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
@@ -3286,7 +3247,7 @@ function PropostaEditor() {
                              </div>
                           )}
 
-                          {currentSlide === 12 && (() => {
+                          {currentSlide === 11 && (() => {
                              const fc = formatCurrency;
                              const divisorTributos = resultado?.divisor || 1;
                              const txAdm = (proposta.premissas.taxaAdm || 0) / 100;
@@ -3430,7 +3391,7 @@ function PropostaEditor() {
                              );
                           })()}
 
-                          {currentSlide === 13 && (
+                          {currentSlide === 12 && (
                              <div className="w-full aspect-[16/9] border border-slate-200 bg-[#1e4480] p-12 flex flex-col justify-between relative overflow-hidden h-full text-white select-none">
                                 {/* Fundo decorativo sutil */}
                                 <div className="absolute inset-0 opacity-10 pointer-events-none">
@@ -3712,6 +3673,48 @@ function PropostaEditor() {
                       <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                          <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#16325e] rounded-t-2xl mb-6">
                             <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
+                               ⚙️ Objeto & Escopo Técnico (Slide 8)
+                            </h3>
+                         </div>
+                         
+                         <div className="space-y-4">
+                            <div>
+                               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Objeto da Proposta</label>
+                               <textarea 
+                                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold min-h-[80px] resize-none"
+                                  value={proposta.cliente.objetoProposta}
+                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, objetoProposta: e.target.value}})}
+                               />
+                            </div>
+                            <div className="flex items-center gap-2 py-2">
+                               <input 
+                                  type="checkbox" 
+                                  id="hasEscopoTecnicoSlide"
+                                  className="rounded text-[#1e4480] focus:ring-[#1e4480]"
+                                  checked={proposta.cliente.hasEscopoTecnico}
+                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, hasEscopoTecnico: e.target.checked}})}
+                               />
+                               <label htmlFor="hasEscopoTecnicoSlide" className="text-xs font-bold text-slate-600">Inserir Escopo Técnico</label>
+                            </div>
+                            {proposta.cliente.hasEscopoTecnico && (
+                               <div>
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Escopo Técnico Detalhado</label>
+                                  <textarea 
+                                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold min-h-[120px]"
+                                     value={proposta.cliente.escopoTecnico || ''}
+                                     onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, escopoTecnico: e.target.value}})}
+                                     placeholder="Descreva aqui de forma detalhada o escopo técnico a ser executado..."
+                                  />
+                               </div>
+                            )}
+                         </div>
+                      </div>
+                     )}
+
+                     {currentSlide === 9 && (
+                      <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
+                         <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#16325e] rounded-t-2xl mb-6">
+                            <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
                                📋 Personalizar Observações do Quadro Efetivo (Slide 08)
                             </h3>
                          </div>
@@ -3756,7 +3759,7 @@ function PropostaEditor() {
                       </div>
                      )}
 
-                     {currentSlide === 9 && (
+                     {currentSlide === 10 && (
                       <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                          <div className="bg-[#1B4D3E] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
                             <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
@@ -3846,7 +3849,7 @@ function PropostaEditor() {
                       </div>
                      )}
 
-                     {currentSlide === 10 && (
+                     {currentSlide === 11 && (
                       <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                          <div className="bg-[#1B4D3E] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
                             <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
@@ -3870,7 +3873,7 @@ function PropostaEditor() {
                       </div>
                      )}
 
-                     {currentSlide === 11 && (
+                     {currentSlide === 12 && (
                       <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                          <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
                             <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
@@ -4075,7 +4078,7 @@ function PropostaEditor() {
                         );
                      })()}
 
-                     {currentSlide === 12 && (
+                     {currentSlide === 13 && (
                       <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                          <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
                             <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
@@ -4768,11 +4771,24 @@ function PropostaEditor() {
                       </div>
 
 {/* SLIDE 08 PRINT - OBJETO E ESCOPO TÉCNICO */}
-                       <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-[#1e4480] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-white">
+                       <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800">
+                          {/* Linhas diagonais decorativas da marca */}
+                          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                             <line x1="-50" y1="150" x2="350" y2="-250" stroke="#1e4480" strokeWidth="10" />
+                             <line x1="-50" y1="200" x2="400" y2="-250" stroke="#1e4480" strokeWidth="6" />
+                             <line x1="-50" y1="250" x2="450" y2="-250" stroke="#1e4480" strokeWidth="3" />
+                             
+                             <line x1="600" y1="800" x2="1100" y2="300" stroke="#1e4480" strokeWidth="10" />
+                             <line x1="650" y1="800" x2="1150" y2="300" stroke="#1e4480" strokeWidth="6" />
+                             <line x1="700" y1="800" x2="1200" y2="300" stroke="#1e4480" strokeWidth="3" />
+                          </svg>
+
                           <div className="relative z-10 flex flex-col h-full justify-between">
                              {/* Header */}
-                             <div className="flex justify-between items-center w-full pb-3 border-b border-white/15">
-                                <h2 className="text-3xl font-black text-white tracking-widest uppercase">OBJETO & ESCOPO TÉCNICO</h2>
+                             <div className="flex justify-between items-start pb-4 border-b border-slate-100">
+                                <h2 className="text-3xl font-black text-[#1e4480] tracking-tight leading-none uppercase">
+                                   OBJETO & ESCOPO TÉCNICO
+                                </h2>
                                 <img 
                                    src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
                                    alt="JVS Facilities Logo" 
@@ -4781,33 +4797,33 @@ function PropostaEditor() {
                              </div>
 
                              {/* Content Area */}
-                             <div className="my-auto max-w-5xl w-full mx-auto">
+                             <div className="my-auto w-full max-w-5xl mx-auto">
                                 {proposta.cliente.hasEscopoTecnico ? (
                                    <div className="grid grid-cols-2 gap-12 items-stretch">
                                       {/* Left: Objeto da Proposta */}
-                                      <div className="bg-white/10 border border-white/10 rounded-2xl p-8 flex flex-col justify-between">
+                                      <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-8 shadow-sm flex flex-col justify-between">
                                          <div>
-                                            <span className="text-[12px] font-black text-emerald-400 uppercase tracking-widest block mb-3">01. OBJETO DA PROPOSTA</span>
-                                            <p className="text-sm font-semibold leading-relaxed text-white/95 whitespace-pre-line">
+                                            <span className="text-[12px] font-black text-[#1e4480] uppercase tracking-widest block mb-3">01. OBJETO DA PROPOSTA</span>
+                                            <p className="text-sm font-semibold leading-relaxed text-slate-700 whitespace-pre-line">
                                                {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
                                             </p>
                                          </div>
                                       </div>
 
                                       {/* Right: Escopo Técnico */}
-                                      <div className="bg-white/10 border border-white/10 rounded-2xl p-8 flex flex-col justify-between">
+                                      <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-8 shadow-sm flex flex-col justify-between">
                                          <div>
-                                            <span className="text-[12px] font-black text-emerald-400 uppercase tracking-widest block mb-3">02. ESCOPO TÉCNICO</span>
-                                            <p className="text-sm font-semibold leading-relaxed text-white/95 whitespace-pre-line overflow-y-auto max-h-[220px]">
+                                            <span className="text-[12px] font-black text-[#1e4480] uppercase tracking-widest block mb-3">02. ESCOPO TÉCNICO</span>
+                                            <p className="text-sm font-semibold leading-relaxed text-slate-700 whitespace-pre-line overflow-y-auto max-h-[220px]">
                                                {proposta.cliente.escopoTecnico || 'Detalhamento das atividades operacionais conforme solicitação e cronograma alinhado.'}
                                             </p>
                                          </div>
                                       </div>
                                    </div>
                                 ) : (
-                                   <div className="max-w-3xl mx-auto bg-white/10 border border-white/10 rounded-2xl p-10 text-center">
-                                      <span className="text-[12px] font-black text-emerald-400 uppercase tracking-widest block mb-4">OBJETO DA PROPOSTA</span>
-                                      <p className="text-base font-bold leading-relaxed text-white/95 whitespace-pre-line">
+                                   <div className="max-w-3xl mx-auto bg-slate-50 border border-slate-200/80 rounded-2xl p-10 text-center shadow-sm">
+                                      <span className="text-[12px] font-black text-[#1e4480] uppercase tracking-widest block mb-4">OBJETO DA PROPOSTA</span>
+                                      <p className="text-base font-bold leading-relaxed text-slate-700 whitespace-pre-line">
                                          {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
                                       </p>
                                    </div>
@@ -4815,14 +4831,14 @@ function PropostaEditor() {
                              </div>
 
                              {/* Footer */}
-                             <div className="flex justify-between items-center border-t border-white/20 pt-4 mt-auto text-white/60 text-[9px] font-bold">
+                             <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto text-slate-400 text-[9px] font-bold">
                                 <span className="uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                                <span className="text-white/80 bg-white/10 px-2.5 py-0.5 rounded font-black">08</span>
+                                <span className="text-[#1e4480] bg-slate-100 px-2.5 py-0.5 rounded font-black">08</span>
                              </div>
                           </div>
                        </div>
 
-{/* SLIDE 09 PRINT - QUADRO EFETIVO */}
+                       {/* SLIDE 09 PRINT - QUADRO EFETIVO */}
                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800">
                         {/* Stripes de fundo */}
                         <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
