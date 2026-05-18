@@ -3342,11 +3342,14 @@ function PropostaEditor() {
                                          </h3>
                                       </div>
                                       <ul className="space-y-1.5 pl-4 text-white/95 text-[10px] font-semibold leading-relaxed">
-                                        {(proposta.cliente.condicoesColaboradores || [
-                                           proposta.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
-                                           proposta.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
-                                           proposta.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.'
-                                        ]).map((cond: string, idx: number) => (
+                                        {((proposta.cliente.condicoesColaboradores && proposta.cliente.condicoesColaboradores.length > 0)
+                                           ? proposta.cliente.condicoesColaboradores
+                                           : [
+                                              proposta.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
+                                              proposta.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
+                                              proposta.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.'
+                                           ]
+                                        ).map((cond: string, idx: number) => (
                                            <li key={idx} className="flex items-start gap-2">
                                               <span className="text-emerald-400 mt-0.5">•</span>
                                               <span>{cond}</span>
@@ -3363,11 +3366,14 @@ function PropostaEditor() {
                                          </h3>
                                       </div>
                                       <ul className="space-y-1.5 pl-4 text-white/95 text-[10px] font-semibold leading-relaxed">
-                                        {(proposta.cliente.condicoesCliente || [
-                                           proposta.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
-                                           proposta.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
-                                           proposta.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.'
-                                        ]).map((cond: string, idx: number) => (
+                                        {((proposta.cliente.condicoesCliente && proposta.cliente.condicoesCliente.length > 0)
+                                           ? proposta.cliente.condicoesCliente
+                                           : [
+                                              proposta.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
+                                              proposta.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
+                                              proposta.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.'
+                                           ]
+                                        ).map((cond: string, idx: number) => (
                                            <li key={idx} className="flex items-start gap-2">
                                               <span className="text-emerald-400 mt-0.5">•</span>
                                               <span className={idx === (proposta.cliente.condicoesCliente || []).length - 1 ? "font-extrabold text-emerald-300" : ""}>{cond}</span>
@@ -3404,7 +3410,7 @@ function PropostaEditor() {
                                       <img 
                                          src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
                                          alt="JVS Facilities Logo" 
-                                         className="max-h-8 w-auto object-contain brightness-0 invert"
+                                         className="max-h-8 w-auto object-contain"
                                       />
                                    </div>
 
@@ -4951,11 +4957,14 @@ function PropostaEditor() {
                                   </h3>
                                </div>
                                <ul className="space-y-2 pl-4 text-white/95 text-xs font-semibold leading-relaxed">
-                                 {(proposta.cliente.condicoesColaboradores || [
-                                    proposta.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
-                                    proposta.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
-                                    proposta.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.'
-                                 ]).map((cond: string, idx: number) => (
+                                 {((proposta.cliente.condicoesColaboradores && proposta.cliente.condicoesColaboradores.length > 0)
+                                    ? proposta.cliente.condicoesColaboradores
+                                    : [
+                                       proposta.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
+                                       proposta.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
+                                       proposta.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.'
+                                    ]
+                                 ).map((cond: string, idx: number) => (
                                     <li key={idx} className="flex items-start gap-2">
                                        <span className="text-emerald-400 mt-0.5">•</span>
                                        <span>{cond}</span>
@@ -4972,11 +4981,14 @@ function PropostaEditor() {
                                   </h3>
                                </div>
                                <ul className="space-y-2 pl-4 text-white/95 text-xs font-semibold leading-relaxed">
-                                 {(proposta.cliente.condicoesCliente || [
-                                    proposta.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
-                                    proposta.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
-                                    proposta.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.'
-                                 ]).map((cond: string, idx: number) => (
+                                 {((proposta.cliente.condicoesCliente && proposta.cliente.condicoesCliente.length > 0)
+                                    ? proposta.cliente.condicoesCliente
+                                    : [
+                                       proposta.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
+                                       proposta.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
+                                       proposta.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.'
+                                    ]
+                                 ).map((cond: string, idx: number) => (
                                     <li key={idx} className="flex items-start gap-2">
                                        <span className="text-emerald-400 mt-0.5">•</span>
                                        <span className={idx === (proposta.cliente.condicoesCliente || []).length - 1 ? "font-extrabold text-emerald-300" : ""}>{cond}</span>
@@ -5002,7 +5014,7 @@ function PropostaEditor() {
                                <img 
                                   src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
                                   alt="JVS Facilities Logo" 
-                                  className="max-h-10 w-auto object-contain brightness-0 invert"
+                                  className="max-h-10 w-auto object-contain"
                                 />
                             </div>
 
