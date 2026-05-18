@@ -3144,8 +3144,11 @@ function PropostaEditor() {
                    </div>
 
                   {/* FORMULÁRIO DE ATUALIZAÇÃO DOS DADOS DOS SLIDES E DO VENDEDOR */}
+                  
                   <div className="space-y-6">
-                     {/* SEÇÃO 1: DADOS DO CLIENTE E CONTEÚDO */}
+                     {currentSlide === 1 && (
+                        <>
+                           {/* SEÇÃO 1: DADOS DO CLIENTE E CONTEÚDO */}
                      <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm">
                         <div className="bg-slate-800 -mx-8 -mt-8 px-6 py-4 border-b border-slate-700 rounded-t-2xl mb-6">
                            <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
@@ -3230,7 +3233,10 @@ function PropostaEditor() {
                            </div>
                         </div>
                      </div>
-                      {/* SEÇÃO 3: DADOS DO QUADRO EFETIVO */}
+                        </>
+                     )}
+
+                     {currentSlide === 8 && (
                       <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                          <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#16325e] rounded-t-2xl mb-6">
                             <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
@@ -3276,8 +3282,9 @@ function PropostaEditor() {
                             </div>
                          </div>
                       </div>
+                     )}
 
-                      {/* SEÇÃO 4: ITENS INCLUSOS E EXCLUSÍDOS */}
+                     {currentSlide === 9 && (
                       <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                          <div className="bg-[#1B4D3E] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
                             <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
@@ -3365,53 +3372,7 @@ function PropostaEditor() {
                             </div>
                          </div>
                       </div>
-                      {/* SEÇÃO 3: DADOS DO QUADRO EFETIVO */}
-                      <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
-                         <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#16325e] rounded-t-2xl mb-6">
-                            <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
-                               📋 Personalizar Observações do Quadro Efetivo (Slide 08)
-                            </h3>
-                         </div>
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-1 md:col-span-2">
-                               <label className="text-xs font-semibold text-slate-700">Subtítulo / Título da Tabela</label>
-                               <input 
-                                  type="text" 
-                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
-                                  value={proposta.cliente.quadroEfetivoSubtitulo || ''} 
-                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, quadroEfetivoSubtitulo: e.target.value}})} 
-                               />
-                            </div>
-                            <div className="space-y-1 md:col-span-2">
-                               <label className="text-xs font-semibold text-slate-700">Cláusula / Observação 1</label>
-                               <textarea 
-                                  rows={2}
-                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium resize-none" 
-                                  value={proposta.cliente.quadroEfetivoClausula1 || ''} 
-                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, quadroEfetivoClausula1: e.target.value}})} 
-                               />
-                            </div>
-                            <div className="space-y-1 md:col-span-2">
-                               <label className="text-xs font-semibold text-slate-700">Cláusula / Observação 2</label>
-                               <textarea 
-                                  rows={2}
-                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium resize-none" 
-                                  value={proposta.cliente.quadroEfetivoClausula2 || ''} 
-                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, quadroEfetivoClausula2: e.target.value}})} 
-                               />
-                            </div>
-                            <div className="space-y-1 md:col-span-2">
-                               <label className="text-xs font-semibold text-slate-700">Cláusula / Observação 3</label>
-                               <textarea 
-                                  rows={2}
-                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium resize-none" 
-                                  value={proposta.cliente.quadroEfetivoClausula3 || ''} 
-                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, quadroEfetivoClausula3: e.target.value}})} 
-                               />
-                            </div>
-                         </div>
-                      </div>
-
+                     )}
                   </div>
 
                   <div className="hidden print-slide-deck">
