@@ -2346,25 +2346,39 @@ function PropostaEditor() {
                         }
 
                         /* ESCALA DE TEXTOS E ELEMENTOS AUMENTADOS PARA ALTA QUALIDADE NO IMPRESSO A4 */
-                        .print-slide-deck .text-[10px] { font-size: 14px !important; }
-                        .print-slide-deck .text-[11px] { font-size: 15px !important; }
-                        .print-slide-deck .text-[13px] { font-size: 18px !important; }
-                        .print-slide-deck .text-[15px] { font-size: 20px !important; }
-                        .print-slide-deck .text-xs { font-size: 15px !important; line-height: 20px !important; }
-                        .print-slide-deck .text-sm { font-size: 17px !important; line-height: 24px !important; }
-                        .print-slide-deck .text-base { font-size: 20px !important; line-height: 28px !important; }
-                        .print-slide-deck .text-lg { font-size: 24px !important; line-height: 32px !important; }
-                        .print-slide-deck .text-xl { font-size: 28px !important; line-height: 36px !important; }
-                        .print-slide-deck .text-2xl { font-size: 34px !important; line-height: 42px !important; }
-                        .print-slide-deck .text-3xl { font-size: 40px !important; line-height: 50px !important; }
-                        .print-slide-deck .text-4xl { font-size: 52px !important; line-height: 60px !important; }
-                        .print-slide-deck .text-5xl { font-size: 64px !important; line-height: 74px !important; }
+                        .print-slide-deck .text-[7.5px] { font-size: 16px !important; line-height: 22px !important; }
+                        .print-slide-deck .text-[8px] { font-size: 17px !important; line-height: 23px !important; }
+                        .print-slide-deck .text-[8.5px] { font-size: 18px !important; line-height: 24px !important; }
+                        .print-slide-deck .text-[9px] { font-size: 19px !important; line-height: 25px !important; }
+                        .print-slide-deck .text-[9.5px] { font-size: 20px !important; line-height: 26px !important; }
+                        .print-slide-deck .text-[10px] { font-size: 21px !important; line-height: 27px !important; }
+                        .print-slide-deck .text-[11px] { font-size: 22px !important; line-height: 28px !important; }
+                        .print-slide-deck .text-[12px] { font-size: 23px !important; line-height: 29px !important; }
+                        .print-slide-deck .text-[13px] { font-size: 24px !important; line-height: 30px !important; }
+                        .print-slide-deck .text-[14px] { font-size: 25px !important; line-height: 31px !important; }
+                        .print-slide-deck .text-[15px] { font-size: 26px !important; line-height: 32px !important; }
+                        
+                        .print-slide-deck .text-xs { font-size: 21px !important; line-height: 28px !important; }
+                        .print-slide-deck .text-sm { font-size: 24px !important; line-height: 32px !important; }
+                        .print-slide-deck .text-base { font-size: 28px !important; line-height: 38px !important; }
+                        .print-slide-deck .text-lg { font-size: 32px !important; line-height: 42px !important; }
+                        .print-slide-deck .text-xl { font-size: 36px !important; line-height: 46px !important; }
+                        .print-slide-deck .text-2xl { font-size: 42px !important; line-height: 52px !important; }
+                        .print-slide-deck .text-3xl { font-size: 50px !important; line-height: 60px !important; }
+                        .print-slide-deck .text-4xl { font-size: 64px !important; line-height: 76px !important; }
+                        .print-slide-deck .text-5xl { font-size: 78px !important; line-height: 90px !important; }
 
                         .print-slide-deck .p-16 { padding: 4.5rem !important; }
                         .print-slide-deck .p-8 { padding: 2.5rem !important; }
                         .print-slide-deck .p-6 { padding: 2rem !important; }
                         .print-slide-deck .gap-8 { gap: 2.5rem !important; }
                         .print-slide-deck .gap-6 { gap: 2rem !important; }
+
+                        /* GENEROSO ESPAÇAMENTO E BORDAS NAS TABELAS NO PRINT */
+                        .print-slide-deck table th, 
+                        .print-slide-deck table td {
+                           padding: 0.75rem 1rem !important;
+                        }
 
                         .print-slide {
                            display: flex !important;
@@ -3230,7 +3244,7 @@ function PropostaEditor() {
                                      />
                                   </div>
 
-                                  <div className="my-auto w-full max-w-2xl mx-auto space-y-4">
+                                  <div className="my-auto w-full max-w-5xl mx-auto space-y-4">
                                      <div className="w-full bg-white rounded-xl border border-slate-200/80 shadow-lg overflow-hidden">
                                         <div className="bg-[#1e4480] text-center py-2">
                                            <h3 className="text-white text-xs font-black tracking-widest uppercase">{proposta.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções'}</h3>
@@ -3278,8 +3292,8 @@ function PropostaEditor() {
                                               proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
                                            ];
                                            return clausulas.map((c: string, cIdx: number) => (
-                                              <div key={cIdx} className="flex items-start gap-2 animate-fadeIn">
-                                                 <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
+                                              <div key={cIdx} className="flex items-start gap-3 animate-fadeIn">
+                                                 <span className="text-[#1e4480] text-[8.5px] font-black mt-0.5 select-none">•</span>
                                                  <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
                                                     {c}
                                                  </p>
