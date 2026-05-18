@@ -127,10 +127,13 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   
   // 11) Reservas Técnicas e 12) Manutenção (Pega das premissas globais do projeto)
   const reservaTecnicaPct = Number(premissas.reservaTecnicaPct) || 0;
-  const reservaTecnicaValor = (totalBlocoA + (custoVABruto + custoVTBruto + cestaBasica)) * (reservaTecnicaPct / 100);
+  const reservaTecnicaValor = totalBlocoA * (reservaTecnicaPct / 100);
   
   const manutencaoPct = Number(premissas.manutencaoPct) || 0;
-  const manutencaoValor = (totalBlocoA) * (manutencaoPct / 100);
+  const maquinasGlobal = Number(premissas.maquinas) || 0;
+  const totalEquipe = Number(premissas.totalEquipeQuantidade) || 1;
+  const totalManutencaoGlobal = maquinasGlobal * (manutencaoPct / 100);
+  const manutencaoValor = totalEquipe > 0 ? (totalManutencaoGlobal / totalEquipe) : 0;
 
   const outrosBeneficios = Number(cctEfetiva.outrosBeneficios || 0) || 0;
   
@@ -216,12 +219,16 @@ export function calculateEnterprisePrice(proposal: any): any {
   // Divisor para tributos (por dentro)
   const divisorTributos = 1 - (totalTributosPct / 100);
 
+  const totalEquipeQtd = items.reduce((acc: number, x: any) => acc + (Number(x.quantidade) || 0), 0);
+
   const itemResults = items.map((item: any) => {
     const res = calculateLaborCost(item, {
       reservaTecnicaPct: margens?.reservaTecnicaPct || reservaTecnicaPct,
       manutencaoPct: margens?.manutencaoPct || manutencaoPct,
       encargos,
-      cctGlobal: proposal.cctGlobal
+      cctGlobal: proposal.cctGlobal,
+      maquinas: Number(proposal.insumosGlobais?.maquinas) || 0,
+      totalEquipeQuantidade: totalEquipeQtd
     });
     
     // CÁLCULO EM CASCATA SOLICITADO:

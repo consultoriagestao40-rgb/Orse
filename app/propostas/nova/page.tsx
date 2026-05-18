@@ -81,10 +81,10 @@ function PropostaEditor() {
             numeroProposta: (fullData as any).numero || '',
             revisao: `R${String(fullData.versao).padStart(2, '0')}`,
             tipoServicos: fullData.cliente.tipoServicos || '',
-            vendedorNome: fullData.cliente.vendedorNome || 'Ádamo Quadros',
-            vendedorCargo: fullData.cliente.vendedorCargo || 'Novos Negócios',
+            vendedorNome: (!fullData.cliente.vendedorNome || fullData.cliente.vendedorNome === 'Ádamo Quadros') ? (currentUser?.nome || 'Ádamo Quadros') : fullData.cliente.vendedorNome,
+            vendedorCargo: (!fullData.cliente.vendedorCargo || fullData.cliente.vendedorCargo === 'Novos Negócios') ? (currentUser?.role === 'ADMIN' ? 'Diretor Comercial' : currentUser?.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios') : fullData.cliente.vendedorCargo,
             vendedorTelefone: fullData.cliente.vendedorTelefone || '(41) 9 9737-0880',
-            vendedorEmail: fullData.cliente.vendedorEmail || 'adamo@grupojvsserv.com.br',
+            vendedorEmail: (!fullData.cliente.vendedorEmail || fullData.cliente.vendedorEmail === 'adamo@grupojvsserv.com.br') ? (currentUser?.email || 'adamo@grupojvsserv.com.br') : fullData.cliente.vendedorEmail,
             quadroEfetivoSubtitulo: fullData.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
             quadroEfetivoClausula1: fullData.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
             quadroEfetivoClausula2: fullData.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
@@ -127,6 +127,8 @@ function PropostaEditor() {
   const [clientesList, setClientesList] = useState<any[]>([]);
   const [tiposServico, setTiposServico] = useState<any[]>([]);
   const [showClientDropdown, setShowClientDropdown] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [presentationMode, setPresentationMode] = useState(false);
 
   const [proposta, setProposta] = useState<any>({
     id: null,
@@ -144,10 +146,10 @@ function PropostaEditor() {
       hasEscopoTecnico: false, 
       escopoTecnico: '', 
       sindicatoId: '',
-      vendedorNome: 'Ádamo Quadros',
-      vendedorCargo: 'Novos Negócios',
-      vendedorTelefone: '(41) 9 9737-0880',
-      vendedorEmail: 'adamo@grupojvsserv.com.br',
+      vendedorNome: '',
+      vendedorCargo: '',
+      vendedorTelefone: '',
+      vendedorEmail: '',
       quadroEfetivoSubtitulo: 'Quadro efetivo - Opções',
       quadroEfetivoClausula1: 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
       quadroEfetivoClausula2: 'Para reduções no efetivo prazo de 30 (trinta) dias;',
@@ -333,6 +335,7 @@ function PropostaEditor() {
         const clientesData = await getClientes();
         setClientesList(clientesData || []);
         console.log('Clientes carregados:', clientesData?.length || 0);
+        setCurrentUser(loggedUser);
 
         if (id) {
           console.log('Buscando proposta ID:', id);
@@ -365,10 +368,10 @@ function PropostaEditor() {
                  numeroProposta: (fullData as any).numero || '',
                  revisao: `R${String(fullData.versao).padStart(2, '0')}`,
                  tipoServicos: fullData.cliente.tipoServicos || '',
-                 vendedorNome: fullData.cliente.vendedorNome || loggedUser?.nome || 'Ádamo Quadros',
-                 vendedorCargo: fullData.cliente.vendedorCargo || (loggedUser?.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser?.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios'),
+                 vendedorNome: (!fullData.cliente.vendedorNome || fullData.cliente.vendedorNome === 'Ádamo Quadros') ? (loggedUser?.nome || 'Ádamo Quadros') : fullData.cliente.vendedorNome,
+                 vendedorCargo: (!fullData.cliente.vendedorCargo || fullData.cliente.vendedorCargo === 'Novos Negócios') ? (loggedUser?.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser?.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios') : fullData.cliente.vendedorCargo,
                  vendedorTelefone: fullData.cliente.vendedorTelefone || '(41) 9 9737-0880',
-                 vendedorEmail: fullData.cliente.vendedorEmail || loggedUser?.email || 'adamo@grupojvsserv.com.br',
+                 vendedorEmail: (!fullData.cliente.vendedorEmail || fullData.cliente.vendedorEmail === 'adamo@grupojvsserv.com.br') ? (loggedUser?.email || 'adamo@grupojvsserv.com.br') : fullData.cliente.vendedorEmail,
                   quadroEfetivoSubtitulo: fullData.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
                   quadroEfetivoClausula1: fullData.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
                   quadroEfetivoClausula2: fullData.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
@@ -476,6 +479,22 @@ function PropostaEditor() {
       }
     }
   }, [proposta.cliente.sindicatoId, ccts]);
+
+  // Atalhos de teclado para o Modo Apresentação
+  useEffect(() => {
+    if (!presentationMode) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        setCurrentSlide(prev => (prev === 13 ? 1 : prev + 1));
+      } else if (e.key === 'ArrowLeft') {
+        setCurrentSlide(prev => (prev === 1 ? 13 : prev - 1));
+      } else if (e.key === 'Escape') {
+        setPresentationMode(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [presentationMode]);
 
   const addTributo = () => {
     setProposta({ ...proposta, premissas: { ...proposta.premissas, tributos: [...proposta.premissas.tributos, { id: Math.random().toString(), nome: '', percent: 0 }] } });
@@ -2262,40 +2281,59 @@ function PropostaEditor() {
                <div className="space-y-8 animate-fadeIn">
                   {/* ESTILOS DE IMPRESSÃO EXCLUSIVOS PARA O SLIDE DECK */}
                   <style>{`
-                     @media print {
-                        /* Oculta tudo na página para a impressão */
-                        body, html, #root, [class*="layout"], [class*="sidebar"], [class*="main"], header, nav, button, div:not(.print-slide-deck):not(.print-slide-deck *) {
+                     @media screen {
+                        .print-slide-deck {
                            display: none !important;
-                           height: 0 !important;
-                           overflow: hidden !important;
+                        }
+                     }
+                     @media print {
+                        @page {
+                           size: A4 landscape !important;
+                           margin: 0 !important;
                         }
                         
-                        /* Mostra apenas a print-slide-deck */
+                        body {
+                           margin: 0 !important;
+                           padding: 0 !important;
+                           background: white !important;
+                           -webkit-print-color-adjust: exact !important;
+                           print-color-adjust: exact !important;
+                        }
+
+                        body * {
+                           visibility: hidden !important;
+                        }
+
+                        .print-slide-deck, .print-slide-deck * {
+                           visibility: visible !important;
+                        }
+
                         .print-slide-deck {
                            display: block !important;
                            position: absolute !important;
                            left: 0 !important;
                            top: 0 !important;
-                           width: 100% !important;
+                           width: 297mm !important;
+                           height: auto !important;
                            background: white !important;
-                           visibility: visible !important;
+                           margin: 0 !important;
+                           padding: 0 !important;
+                           border: none !important;
                         }
-                        
-                        .print-slide-deck * {
-                           visibility: visible !important;
-                        }
-                        
+
                         .print-slide {
                            display: flex !important;
                            page-break-after: always !important;
                            break-after: page !important;
-                           width: 100% !important;
-                           height: 100vh !important;
+                           width: 297mm !important;
+                           height: 210mm !important;
                            box-sizing: border-box !important;
                            margin: 0 !important;
                            padding: 4rem !important;
                            position: relative !important;
                            background: white !important;
+                           overflow: hidden !important;
+                           border: none !important;
                         }
                      }
                   `}</style>
@@ -2335,18 +2373,34 @@ function PropostaEditor() {
                                </button>
                             ))}
                          </div>
-                        <button
-                           onClick={() => window.print()}
-                           className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
-                        >
-                           <span>🖨️</span> Salvar PDF / Imprimir
-                        </button>
+                        <div className="flex gap-3">
+                           <button
+                              type="button"
+                              onClick={() => setPresentationMode(true)}
+                              className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
+                           >
+                              <span>🖥️</span> Apresentar
+                           </button>
+                           <button
+                              type="button"
+                              onClick={() => window.print()}
+                              className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
+                           >
+                              <span>🖨️</span> Salvar PDF / Imprimir
+                           </button>
+                        </div>
                      </div>
                   </div>
 
                   {/* CONTAINER DOS SLIDES PARA VISUALIZAÇÃO EM TELA */}
-                  <div className="w-full bg-slate-900/5 rounded-3xl p-8 border border-slate-200/40 flex justify-center items-center overflow-x-auto">
-                     <div className="w-full max-w-[960px] aspect-[16/9] min-w-[760px] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative select-none flex flex-col justify-between">
+                  <div className={presentationMode 
+                     ? "fixed inset-0 bg-slate-950/98 z-[99999] flex flex-col justify-center items-center select-none p-6" 
+                     : "w-full bg-slate-900/5 rounded-3xl p-8 border border-slate-200/40 flex justify-center items-center overflow-x-auto"
+                  }>
+                     <div className={presentationMode
+                        ? "w-[90vw] h-[50.625vw] max-h-[85vh] max-w-[151.1vh] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative flex flex-col justify-between"
+                        : "w-full max-w-[960px] aspect-[16/9] min-w-[760px] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative select-none flex flex-col justify-between"
+                     }>
                         
                         {/* SLIDE 01 (MENSAGEM DE VISITA E AGRADECIMENTO) */}
                         {currentSlide === 2 && (
@@ -4248,9 +4302,40 @@ function PropostaEditor() {
                          </div>
                       </div>
                      )}
+                     
+                     {/* Floating Controls Dock no Modo Apresentação */}
+                     {presentationMode && (
+                        <div className="absolute bottom-6 bg-slate-900/90 backdrop-blur text-white px-6 py-3 rounded-full flex items-center gap-6 shadow-2xl z-[100000] border border-slate-700/50">
+                           <button 
+                              type="button"
+                              onClick={() => setCurrentSlide(prev => (prev === 1 ? 13 : prev - 1))}
+                              className="hover:text-emerald-400 font-extrabold text-sm transition-all"
+                           >
+                              ◀ Anterior
+                           </button>
+                           <span className="font-extrabold text-xs tracking-widest text-slate-400">
+                              SLIDE {String(currentSlide).padStart(2, '0')} / 13
+                           </span>
+                           <button 
+                              type="button"
+                              onClick={() => setCurrentSlide(prev => (prev === 13 ? 1 : prev + 1))}
+                              className="hover:text-emerald-400 font-extrabold text-sm transition-all"
+                           >
+                              Próximo ▶
+                           </button>
+                           <div className="h-4 w-px bg-slate-700" />
+                           <button 
+                              type="button"
+                              onClick={() => setPresentationMode(false)}
+                              className="text-rose-400 hover:text-rose-300 font-extrabold text-xs uppercase tracking-wider transition-all"
+                           >
+                              Sair (ESC) 🚪
+                           </button>
+                        </div>
+                     )}
                   </div>
 
-                  <div className="hidden print-slide-deck">
+                  <div className="print-slide-deck">
                      {/* SLIDE 01 PRINT - CAPA COMERCIAL */}
                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-slate-950 p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
                         {/* Imagem de Fundo */}
