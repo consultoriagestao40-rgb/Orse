@@ -2346,11 +2346,11 @@ function PropostaEditor() {
 
                   {/* CONTAINER DOS SLIDES PARA VISUALIZAÇÃO EM TELA */}
                   <div className="w-full bg-slate-900/5 rounded-3xl p-8 border border-slate-200/40 flex justify-center items-center overflow-x-auto">
-                     <div className="w-full max-w-[960px] aspect-[16/9] min-w-[760px] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative select-none flex flex-col justify-between p-12">
+                     <div className="w-full max-w-[960px] aspect-[16/9] min-w-[760px] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative select-none flex flex-col justify-between">
                         
                         {/* SLIDE 01 (MENSAGEM DE VISITA E AGRADECIMENTO) */}
                         {currentSlide === 2 && (
-                           <div className="h-full w-full flex flex-col justify-between relative z-10 animate-fadeIn">
+                           <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 animate-fadeIn bg-white overflow-hidden text-slate-800">
                               {/* Linhas diagonais decorativas */}
                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" xmlns="http://www.w3.org/2000/svg">
                                  <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
@@ -2571,7 +2571,7 @@ function PropostaEditor() {
 
                                                   {/* SLIDE 04 (NOSSOS VALORES - COM AS TRÊS ESFERAS DE VALORES E A MÃO DE SUPORTE) */}
                          {currentSlide === 4 && (
-                            <div className="h-full w-full flex flex-col justify-between relative z-10 animate-fadeIn bg-white rounded-2xl overflow-hidden p-12">
+                            <div className="absolute inset-0 w-full h-full flex flex-col justify-between z-10 animate-fadeIn bg-white overflow-hidden p-16">
                                {/* Linhas diagonais decorativas da marca */}
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
                                   <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
@@ -2636,7 +2636,7 @@ function PropostaEditor() {
 
                          {/* SLIDE 05 (PRINCIPAIS SERVIÇOS PRESTADOS - COM AS 5 CATEGORIAS DE SERVIÇOS) */}
                          {currentSlide === 5 && (
-                            <div className="h-full w-full flex flex-col justify-between relative z-10 animate-fadeIn bg-white rounded-2xl overflow-hidden p-12">
+                            <div className="absolute inset-0 w-full h-full flex flex-col justify-between z-10 animate-fadeIn bg-white overflow-hidden p-16">
                                {/* Linhas diagonais decorativas da marca */}
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
                                   <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
@@ -2751,7 +2751,7 @@ function PropostaEditor() {
 
                          {/* SLIDE 06 (SETORES ATENDIDOS - COM OS ICONS E COLUNAS DE INDUSTRIA E VAREJO) */}
                          {currentSlide === 6 && (
-                            <div className="h-full w-full flex flex-col justify-between relative z-10 animate-fadeIn bg-[#1e4480] text-white rounded-2xl overflow-hidden p-12">
+                            <div className="absolute inset-0 w-full h-full flex flex-col justify-between z-10 animate-fadeIn bg-[#1e4480] text-white overflow-hidden p-16">
                                {/* Linhas diagonais decorativas da marca */}
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
                                   <line x1="-50" y1="150" x2="350" y2="-250" stroke="#FFFFFF" strokeWidth="10" />
@@ -2871,9 +2871,9 @@ function PropostaEditor() {
 
                          {/* SLIDE 07 (PRINCIPAIS FERRAMENTAS - DIVIDIDO LADO A LADO) */}
                          {currentSlide === 7 && (
-                            <div className="h-full w-full grid grid-cols-2 relative z-10 animate-fadeIn bg-white rounded-2xl overflow-hidden">
+                            <div className="absolute inset-0 w-full h-full grid grid-cols-2 z-10 animate-fadeIn bg-white overflow-hidden">
                                {/* Metade Esquerda (Branca) */}
-                               <div className="col-span-1 bg-white p-12 flex flex-col justify-between relative h-full text-slate-800 border-r border-slate-100">
+                               <div className="col-span-1 bg-white p-16 flex flex-col justify-between relative h-full text-slate-800 border-r border-slate-100">
                                   {/* Stripes de fundo no topo esquerdo */}
                                   <svg className="absolute top-0 left-0 w-64 h-64 pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
                                      <line x1="-50" y1="150" x2="150" y2="-50" stroke="#1e4480" strokeWidth="10" />
@@ -2941,7 +2941,7 @@ function PropostaEditor() {
                                </div>
 
                                {/* Metade Direita (Azul) */}
-                               <div className="col-span-1 bg-[#1e4480] p-12 flex flex-col justify-between relative h-full text-white">
+                               <div className="col-span-1 bg-[#1e4480] p-16 flex flex-col justify-between relative h-full text-white">
                                   {/* Stripes de fundo */}
                                   <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
                                      <line x1="150" y1="400" x2="400" y2="150" stroke="#FFFFFF" strokeWidth="10" />
