@@ -178,6 +178,13 @@ export async function saveProposta(data: any) {
           condicaoCliente1: cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
           condicaoCliente2: cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
           condicaoCliente3: cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.',
+          razaoSocial: cliente.razaoSocial || '',
+          cnpj: cliente.cnpj || '',
+          dataInicio: cliente.dataInicio || '',
+          dataVencimento: cliente.dataVencimento || '',
+          contatoCargo: cliente.contatoCargo || '',
+          condicoesColaboradores: cliente.condicoesColaboradores || [],
+          condicoesCliente: cliente.condicoesCliente || [],
           itensInclusosExcluidos: data.itensInclusosExcluidos || defaultItensInclusosExcluidos,
           insumos: {
             ...data.insumos,
@@ -363,6 +370,13 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
         condicaoCliente1: meta.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
         condicaoCliente2: meta.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
         condicaoCliente3: meta.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.',
+        razaoSocial: meta.razaoSocial || '',
+        cnpj: meta.cnpj || '',
+        dataInicio: meta.dataInicio || '',
+        dataVencimento: meta.dataVencimento || '',
+        contatoCargo: meta.contatoCargo || '',
+        condicoesColaboradores: meta.condicoesColaboradores || [],
+        condicoesCliente: meta.condicoesCliente || [],
       itensInclusosExcluidos: (() => {
         const rawItens = meta.itensInclusosExcluidos || [];
         const hasMaoDeObra = rawItens.some((item: any) => 

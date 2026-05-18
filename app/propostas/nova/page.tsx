@@ -89,6 +89,13 @@ function PropostaEditor() {
             quadroEfetivoClausula1: fullData.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
             quadroEfetivoClausula2: fullData.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
             quadroEfetivoClausula3: fullData.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
+            condicoesColaboradores: fullData.cliente.condicoesColaboradores || [],
+            condicoesCliente: fullData.cliente.condicoesCliente || [],
+            razaoSocial: fullData.cliente.razaoSocial || '',
+            cnpj: fullData.cliente.cnpj || '',
+            dataInicio: fullData.cliente.dataInicio || '',
+            dataVencimento: fullData.cliente.dataVencimento || '',
+            contatoCargo: fullData.cliente.contatoCargo || '',
             condicaoColaboradores1: fullData.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
             condicaoColaboradores2: fullData.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
             condicaoColaboradores3: fullData.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.',
@@ -145,6 +152,21 @@ function PropostaEditor() {
       quadroEfetivoClausula1: 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
       quadroEfetivoClausula2: 'Para reduções no efetivo prazo de 30 (trinta) dias;',
       quadroEfetivoClausula3: 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
+      condicoesColaboradores: [
+         'Vale alimentação de R$900,00;',
+         'Cesta trimestral de assiduidade;',
+         '2 Vales transporte por dia.'
+      ],
+      condicoesCliente: [
+         'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
+         'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
+         'Próximo reajuste Fevereiro/2026.'
+      ],
+      razaoSocial: '',
+      cnpj: '',
+      dataInicio: '',
+      dataVencimento: '',
+      contatoCargo: '',
       condicaoColaboradores1: 'Vale alimentação de R$900,00;',
       condicaoColaboradores2: 'Cesta trimestral de assiduidade;',
       condicaoColaboradores3: '2 Vales transporte por dia.',
@@ -351,6 +373,13 @@ function PropostaEditor() {
                   quadroEfetivoClausula1: fullData.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
                   quadroEfetivoClausula2: fullData.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
                   quadroEfetivoClausula3: fullData.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
+               condicoesColaboradores: fullData.cliente.condicoesColaboradores || [],
+               condicoesCliente: fullData.cliente.condicoesCliente || [],
+               razaoSocial: fullData.cliente.razaoSocial || '',
+               cnpj: fullData.cliente.cnpj || '',
+               dataInicio: fullData.cliente.dataInicio || '',
+               dataVencimento: fullData.cliente.dataVencimento || '',
+               contatoCargo: fullData.cliente.contatoCargo || '',
                condicaoColaboradores1: fullData.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
                condicaoColaboradores2: fullData.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
                condicaoColaboradores3: fullData.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.',
@@ -868,19 +897,22 @@ function PropostaEditor() {
                                    key={c.id} 
                                    className="px-4 py-2 hover:bg-emerald-50 cursor-pointer text-sm font-medium text-slate-700"
                                    onClick={() => {
-                                      setProposta({
-                                         ...proposta, 
-                                         cliente: {
-                                            ...proposta.cliente, 
-                                            cliente: c.nomeFantasia,
-                                            cidade: c.cidade || '',
-                                            email: c.email || '',
-                                            celular: c.whatsapp || '',
-                                            contato: c.contato || ''
-                                         }
-                                      });
-                                      setShowClientDropdown(false);
-                                   }}
+                                       setProposta({
+                                          ...proposta, 
+                                          cliente: {
+                                             ...proposta.cliente, 
+                                             cliente: c.nomeFantasia,
+                                             razaoSocial: c.razaoSocial || '',
+                                             cnpj: c.cnpj || '',
+                                             cidade: c.cidade || '',
+                                             email: c.email || '',
+                                             celular: c.whatsapp || '',
+                                             contato: c.contato || '',
+                                             contatoCargo: ''
+                                          }
+                                       });
+                                       setShowClientDropdown(false);
+                                    }}
                                 >
                                    {c.nomeFantasia} <span className="text-xs text-slate-400">({c.cnpj})</span>
                                 </div>
@@ -2289,7 +2321,8 @@ function PropostaEditor() {
                                 { id: 8, label: 'Slide 08 (Quadro Efetivo)' },
                                 { id: 9, label: 'Slide 09 (Inclusos/Excluídos)' },
                                 { id: 10, label: 'Slide 10 (Resumo Geral)' },
-                                { id: 11, label: 'Slide 11 (Condições)' }
+                                { id: 11, label: 'Slide 11 (Condições)' },
+                                { id: 12, label: 'Slide 12 (Aceite)' }
                              ].map((slide) => (
                                <button 
                                   key={slide.id}
@@ -3309,24 +3342,16 @@ function PropostaEditor() {
                                          </h3>
                                       </div>
                                       <ul className="space-y-1.5 pl-4 text-white/95 text-[10px] font-semibold leading-relaxed">
-                                         {proposta.cliente.condicaoColaboradores1 && (
-                                            <li className="flex items-start gap-2">
-                                               <span className="text-emerald-400 mt-0.5">•</span>
-                                               <span>{proposta.cliente.condicaoColaboradores1}</span>
-                                            </li>
-                                         )}
-                                         {proposta.cliente.condicaoColaboradores2 && (
-                                            <li className="flex items-start gap-2">
-                                               <span className="text-emerald-400 mt-0.5">•</span>
-                                               <span>{proposta.cliente.condicaoColaboradores2}</span>
-                                            </li>
-                                         )}
-                                         {proposta.cliente.condicaoColaboradores3 && (
-                                            <li className="flex items-start gap-2">
-                                               <span className="text-emerald-400 mt-0.5">•</span>
-                                               <span>{proposta.cliente.condicaoColaboradores3}</span>
-                                            </li>
-                                         )}
+                                        {(proposta.cliente.condicoesColaboradores || [
+                                           proposta.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
+                                           proposta.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
+                                           proposta.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.'
+                                        ]).map((cond: string, idx: number) => (
+                                           <li key={idx} className="flex items-start gap-2">
+                                              <span className="text-emerald-400 mt-0.5">•</span>
+                                              <span>{cond}</span>
+                                           </li>
+                                        ))}
                                       </ul>
                                    </div>
 
@@ -3338,24 +3363,16 @@ function PropostaEditor() {
                                          </h3>
                                       </div>
                                       <ul className="space-y-1.5 pl-4 text-white/95 text-[10px] font-semibold leading-relaxed">
-                                         {proposta.cliente.condicaoCliente1 && (
-                                            <li className="flex items-start gap-2">
-                                               <span className="text-emerald-400 mt-0.5">•</span>
-                                               <span>{proposta.cliente.condicaoCliente1}</span>
-                                            </li>
-                                         )}
-                                         {proposta.cliente.condicaoCliente2 && (
-                                            <li className="flex items-start gap-2">
-                                               <span className="text-emerald-400 mt-0.5">•</span>
-                                               <span>{proposta.cliente.condicaoCliente2}</span>
-                                            </li>
-                                         )}
-                                         {proposta.cliente.condicaoCliente3 && (
-                                            <li className="flex items-start gap-2">
-                                               <span className="text-emerald-400 mt-0.5">•</span>
-                                               <span className="font-extrabold text-emerald-300">{proposta.cliente.condicaoCliente3}</span>
-                                            </li>
-                                         )}
+                                        {(proposta.cliente.condicoesCliente || [
+                                           proposta.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
+                                           proposta.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
+                                           proposta.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.'
+                                        ]).map((cond: string, idx: number) => (
+                                           <li key={idx} className="flex items-start gap-2">
+                                              <span className="text-emerald-400 mt-0.5">•</span>
+                                              <span className={idx === (proposta.cliente.condicoesCliente || []).length - 1 ? "font-extrabold text-emerald-300" : ""}>{cond}</span>
+                                           </li>
+                                        ))}
                                       </ul>
                                    </div>
 
@@ -3363,6 +3380,81 @@ function PropostaEditor() {
                                    <div className="flex justify-between items-center w-full text-white/60 text-[9px] font-bold uppercase tracking-wider pt-2 border-t border-white/10">
                                       <span>www.grupojvsserv.com.br</span>
                                       <span className="text-white/80 bg-white/10 px-2.5 py-0.5 rounded font-black">11</span>
+                                   </div>
+                                </div>
+                             </div>
+                          )}
+
+                          {currentSlide === 12 && (
+                             <div className="w-full aspect-[16/9] border border-slate-200 bg-[#1e4480] p-12 flex flex-col justify-between relative overflow-hidden h-full text-white select-none">
+                                {/* Fundo decorativo sutil */}
+                                <div className="absolute inset-0 opacity-10 pointer-events-none">
+                                   <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                                      <line x1="-50" y1="100" x2="400" y2="-200" stroke="white" strokeWidth="8" />
+                                      <line x1="-50" y1="150" x2="450" y2="-200" stroke="white" strokeWidth="4" />
+                                      <line x1="500" y1="600" x2="1000" y2="200" stroke="white" strokeWidth="8" />
+                                      <line x1="550" y1="600" x2="1050" y2="200" stroke="white" strokeWidth="4" />
+                                   </svg>
+                                </div>
+
+                                <div className="relative z-10 flex flex-col h-full justify-between">
+                                   {/* Header */}
+                                   <div className="flex justify-between items-center w-full pb-2 border-b border-white/10">
+                                      <h2 className="text-2xl font-black text-white tracking-widest uppercase">ACEITE</h2>
+                                      <img 
+                                         src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
+                                         alt="JVS Facilities Logo" 
+                                         className="max-h-8 w-auto object-contain brightness-0 invert"
+                                      />
+                                   </div>
+
+                                   {/* Content Table/Pills Grid */}
+                                   <div className="my-auto max-w-3xl w-full mx-auto grid grid-cols-2 gap-x-8 gap-y-3">
+                                      {/* Left Column: Dados da Empresa */}
+                                      <div className="space-y-1">
+                                         {[
+                                            { label: 'Razão Social', value: proposta.cliente.razaoSocial || proposta.cliente.cliente || '-' },
+                                            { label: 'Nome Fantasia', value: proposta.cliente.cliente || '-' },
+                                            { label: 'CNPJ', value: proposta.cliente.cnpj || '-' },
+                                            { label: 'Valor', value: formatCurrency(resultado?.faturamentoBruto || 0) },
+                                            { label: 'Início', value: proposta.cliente.dataInicio || '-' },
+                                            { label: 'Vencimento', value: proposta.cliente.dataVencimento || '-' }
+                                         ].map((item, idx) => (
+                                            <div key={idx} className="flex gap-2 text-[8px] font-black tracking-wider uppercase">
+                                               <div className="w-24 bg-white text-[#1e4480] py-1 rounded-full text-center shrink-0 shadow-sm flex items-center justify-center font-black">
+                                                  {item.label}
+                                               </div>
+                                               <div className="flex-1 bg-white/20 text-white py-1 px-4 rounded-full font-bold overflow-hidden text-ellipsis whitespace-nowrap flex items-center">
+                                                  {item.value}
+                                               </div>
+                                            </div>
+                                         ))}
+                                      </div>
+
+                                      {/* Right Column: Contato */}
+                                      <div className="space-y-1">
+                                         {[
+                                            { label: 'Contato', value: proposta.cliente.contato || '-' },
+                                            { label: 'Cargo', value: proposta.cliente.contatoCargo || '-' },
+                                            { label: 'Cel', value: proposta.cliente.celular || '-' },
+                                            { label: 'E-mail', value: proposta.cliente.email || '-' }
+                                         ].map((item, idx) => (
+                                            <div key={idx} className="flex gap-2 text-[8px] font-black tracking-wider uppercase">
+                                               <div className="w-24 bg-white text-[#1e4480] py-1 rounded-full text-center shrink-0 shadow-sm flex items-center justify-center font-black">
+                                                  {item.label}
+                                               </div>
+                                               <div className="flex-1 bg-white/20 text-white py-1 px-4 rounded-full font-bold overflow-hidden text-ellipsis whitespace-nowrap flex items-center">
+                                                  {item.value}
+                                               </div>
+                                            </div>
+                                         ))}
+                                      </div>
+                                   </div>
+
+                                   {/* Bottom Signature Area */}
+                                   <div className="flex flex-col items-center pt-2">
+                                      <div className="border-t border-white w-64 my-1"></div>
+                                      <span className="text-[9px] font-black text-white/90 uppercase tracking-widest">Cliente</span>
                                    </div>
                                 </div>
                              </div>
@@ -3376,14 +3468,14 @@ function PropostaEditor() {
                       <div className="flex justify-center items-center gap-6">
                          <button
                             type="button"
-                            onClick={() => setCurrentSlide(currentSlide === 1 ? 11 : currentSlide - 1)}
+                            onClick={() => setCurrentSlide(currentSlide === 1 ? 12 : currentSlide - 1)}
                             className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold text-xs uppercase tracking-wider hover:bg-slate-50 hover:border-slate-300 active:scale-95 transition-all shadow-sm cursor-pointer z-30"
                          >
                             <ChevronLeft size={16} className="stroke-[3]" /> Voltar
                          </button>
                          
                          <div className="flex gap-2 bg-slate-100 p-1.5 rounded-full border border-slate-200">
-                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((num) => (
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
                                <button
                                   key={num}
                                   type="button"
@@ -3397,14 +3489,14 @@ function PropostaEditor() {
 
                          <button
                             type="button"
-                            onClick={() => setCurrentSlide(currentSlide === 11 ? 1 : currentSlide + 1)}
+                            onClick={() => setCurrentSlide(currentSlide === 12 ? 1 : currentSlide + 1)}
                             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1e4480] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#1e4480]/90 active:scale-95 transition-all shadow-md cursor-pointer z-30"
                          >
                             Avançar <ChevronRight size={16} className="stroke-[3]" />
                          </button>
                       </div>
                       <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                         Visualizando Slide {currentSlide} de 11
+                         Visualizando Slide {currentSlide} de 12
                       </div>
                    </div>
 
@@ -3742,6 +3834,192 @@ function PropostaEditor() {
                                      />
                                   </div>
                                </div>
+                            </div>
+                         </div>
+                      </div>
+                     )}
+
+                     {currentSlide === 11 && (() => {
+                        const condsColab = proposta.cliente.condicoesColaboradores || [
+                           proposta.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
+                           proposta.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
+                           proposta.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.'
+                        ];
+                        const condsCli = proposta.cliente.condicoesCliente || [
+                           proposta.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
+                           proposta.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
+                           proposta.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.'
+                        ];
+
+                        return (
+                           <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
+                              <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
+                                 <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
+                                    ⚙️ Condições Gerais da Proposta (Slide 11)
+                                 </h3>
+                              </div>
+                              
+                              <div className="space-y-6">
+                                 {/* Colaboradores */}
+                                 <div>
+                                    <div className="flex justify-between items-center mb-3">
+                                       <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">
+                                          Condições para os Colaboradores
+                                       </h4>
+                                       <button
+                                          type="button"
+                                          className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors border border-emerald-200"
+                                          onClick={() => {
+                                             const newList = [...condsColab, 'Nova condição de colaborador...'];
+                                             setProposta({...proposta, cliente: {...proposta.cliente, condicoesColaboradores: newList}});
+                                          }}
+                                       >
+                                          + Adicionar
+                                       </button>
+                                    </div>
+                                    <div className="space-y-2">
+                                       {condsColab.map((cond: string, idx: number) => (
+                                          <div key={idx} className="flex gap-2 items-center">
+                                             <span className="text-[10px] text-slate-400 font-bold shrink-0">{idx + 1}.</span>
+                                             <input 
+                                                type="text" 
+                                                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
+                                                value={cond}
+                                                onChange={(e) => {
+                                                   const newList = [...condsColab];
+                                                   newList[idx] = e.target.value;
+                                                   setProposta({...proposta, cliente: {...proposta.cliente, condicoesColaboradores: newList}});
+                                                }}
+                                             />
+                                             <button
+                                                type="button"
+                                                className="bg-red-50 text-red-600 hover:bg-red-100 p-1.5 rounded-lg border border-red-200 transition-colors shrink-0"
+                                                onClick={() => {
+                                                   const newList = condsColab.filter((_: string, i: number) => i !== idx);
+                                                   setProposta({...proposta, cliente: {...proposta.cliente, condicoesColaboradores: newList}});
+                                                }}
+                                             >
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                </svg>
+                                             </button>
+                                          </div>
+                                       ))}
+                                    </div>
+                                 </div>
+
+                                 {/* Cliente */}
+                                 <div className="border-t border-slate-150 pt-5">
+                                    <div className="flex justify-between items-center mb-3">
+                                       <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">
+                                          Condições para o Cliente
+                                       </h4>
+                                       <button
+                                          type="button"
+                                          className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors border border-emerald-200"
+                                          onClick={() => {
+                                             const newList = [...condsCli, 'Nova condição de cliente...'];
+                                             setProposta({...proposta, cliente: {...proposta.cliente, condicoesCliente: newList}});
+                                          }}
+                                       >
+                                          + Adicionar
+                                       </button>
+                                    </div>
+                                    <div className="space-y-2">
+                                       {condsCli.map((cond: string, idx: number) => (
+                                          <div key={idx} className="flex gap-2 items-center">
+                                             <span className="text-[10px] text-slate-400 font-bold shrink-0">{idx + 1}.</span>
+                                             <input 
+                                                type="text" 
+                                                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
+                                                value={cond}
+                                                onChange={(e) => {
+                                                   const newList = [...condsCli];
+                                                   newList[idx] = e.target.value;
+                                                   setProposta({...proposta, cliente: {...proposta.cliente, condicoesCliente: newList}});
+                                                }}
+                                             />
+                                             <button
+                                                type="button"
+                                                className="bg-red-50 text-red-600 hover:bg-red-100 p-1.5 rounded-lg border border-red-200 transition-colors shrink-0"
+                                                onClick={() => {
+                                                   const newList = condsCli.filter((_: string, i: number) => i !== idx);
+                                                   setProposta({...proposta, cliente: {...proposta.cliente, condicoesCliente: newList}});
+                                                }}
+                                             >
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                </svg>
+                                             </button>
+                                          </div>
+                                       ))}
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        );
+                     })()}
+
+                     {currentSlide === 12 && (
+                      <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
+                         <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
+                            <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
+                               📝 Informações de Aceite (Slide 12)
+                            </h3>
+                         </div>
+                         
+                         <div className="space-y-4">
+                            <div>
+                               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Razão Social</label>
+                               <input 
+                                  type="text" 
+                                  placeholder="Preenchido automaticamente ao buscar cliente..."
+                                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
+                                  value={proposta.cliente.razaoSocial || proposta.cliente.cliente || ''}
+                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, razaoSocial: e.target.value}})}
+                               />
+                            </div>
+                            <div>
+                               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">CNPJ</label>
+                               <input 
+                                  type="text" 
+                                  placeholder="Preenchido automaticamente ao buscar cliente..."
+                                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
+                                  value={proposta.cliente.cnpj || ''}
+                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, cnpj: e.target.value}})}
+                               />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                               <div>
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Data Início</label>
+                                  <input 
+                                     type="text" 
+                                     placeholder="Ex: 01/06/2026"
+                                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
+                                     value={proposta.cliente.dataInicio || ''}
+                                     onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, dataInicio: e.target.value}})}
+                                  />
+                               </div>
+                               <div>
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Data Vencimento</label>
+                                  <input 
+                                     type="text" 
+                                     placeholder="Ex: 31/05/2027"
+                                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
+                                     value={proposta.cliente.dataVencimento || ''}
+                                     onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, dataVencimento: e.target.value}})}
+                                  />
+                               </div>
+                            </div>
+                            <div className="border-t border-slate-100 pt-4 mt-2">
+                               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Cargo do Contato</label>
+                               <input 
+                                  type="text" 
+                                  placeholder="Ex: Diretor Financeiro"
+                                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
+                                  value={proposta.cliente.contatoCargo || ''}
+                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, contatoCargo: e.target.value}})}
+                               />
                             </div>
                          </div>
                       </div>
@@ -4673,24 +4951,16 @@ function PropostaEditor() {
                                   </h3>
                                </div>
                                <ul className="space-y-2 pl-4 text-white/95 text-xs font-semibold leading-relaxed">
-                                  {proposta.cliente.condicaoColaboradores1 && (
-                                     <li className="flex items-start gap-2">
-                                        <span className="text-emerald-400 mt-0.5">•</span>
-                                        <span>{proposta.cliente.condicaoColaboradores1}</span>
-                                     </li>
-                                  )}
-                                  {proposta.cliente.condicaoColaboradores2 && (
-                                     <li className="flex items-start gap-2">
-                                        <span className="text-emerald-400 mt-0.5">•</span>
-                                        <span>{proposta.cliente.condicaoColaboradores2}</span>
-                                     </li>
-                                  )}
-                                  {proposta.cliente.condicaoColaboradores3 && (
-                                     <li className="flex items-start gap-2">
-                                        <span className="text-emerald-400 mt-0.5">•</span>
-                                        <span>{proposta.cliente.condicaoColaboradores3}</span>
-                                     </li>
-                                  )}
+                                 {(proposta.cliente.condicoesColaboradores || [
+                                    proposta.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
+                                    proposta.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
+                                    proposta.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.'
+                                 ]).map((cond: string, idx: number) => (
+                                    <li key={idx} className="flex items-start gap-2">
+                                       <span className="text-emerald-400 mt-0.5">•</span>
+                                       <span>{cond}</span>
+                                    </li>
+                                 ))}
                                </ul>
                             </div>
 
@@ -4702,24 +4972,16 @@ function PropostaEditor() {
                                   </h3>
                                </div>
                                <ul className="space-y-2 pl-4 text-white/95 text-xs font-semibold leading-relaxed">
-                                  {proposta.cliente.condicaoCliente1 && (
-                                     <li className="flex items-start gap-2">
-                                        <span className="text-emerald-400 mt-0.5">•</span>
-                                        <span>{proposta.cliente.condicaoCliente1}</span>
-                                     </li>
-                                  )}
-                                  {proposta.cliente.condicaoCliente2 && (
-                                     <li className="flex items-start gap-2">
-                                        <span className="text-emerald-400 mt-0.5">•</span>
-                                        <span>{proposta.cliente.condicaoCliente2}</span>
-                                     </li>
-                                  )}
-                                  {proposta.cliente.condicaoCliente3 && (
-                                     <li className="flex items-start gap-2">
-                                        <span className="text-emerald-400 mt-0.5">•</span>
-                                        <span className="font-extrabold text-emerald-300">{proposta.cliente.condicaoCliente3}</span>
-                                     </li>
-                                  )}
+                                 {(proposta.cliente.condicoesCliente || [
+                                    proposta.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
+                                    proposta.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
+                                    proposta.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.'
+                                 ]).map((cond: string, idx: number) => (
+                                    <li key={idx} className="flex items-start gap-2">
+                                       <span className="text-emerald-400 mt-0.5">•</span>
+                                       <span className={idx === (proposta.cliente.condicoesCliente || []).length - 1 ? "font-extrabold text-emerald-300" : ""}>{cond}</span>
+                                    </li>
+                                 ))}
                                </ul>
                             </div>
 
@@ -4727,6 +4989,70 @@ function PropostaEditor() {
                             <div className="flex justify-between items-center border-t border-white/20 pt-4 mt-auto text-white/60 text-[9px] font-bold">
                                <span className="uppercase tracking-widest">www.grupojvsserv.com.br</span>
                                <span className="text-white/80 bg-white/10 px-2.5 py-0.5 rounded font-black">11</span>
+                            </div>
+                         </div>
+                      </div>
+
+                      {/* SLIDE 12 PRINT - ACEITE */}
+                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-[#1e4480] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-white">
+                         <div className="relative z-10 flex flex-col h-full justify-between">
+                            {/* Header */}
+                            <div className="flex justify-between items-center w-full pb-3 border-b border-white/15">
+                               <h2 className="text-3xl font-black text-white tracking-widest uppercase">ACEITE</h2>
+                               <img 
+                                  src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
+                                  alt="JVS Facilities Logo" 
+                                  className="max-h-10 w-auto object-contain brightness-0 invert"
+                                />
+                            </div>
+
+                            {/* Content Table/Pills Grid */}
+                            <div className="my-auto max-w-4xl w-full mx-auto grid grid-cols-2 gap-x-12 gap-y-4">
+                               {/* Left Column: Dados da Empresa */}
+                               <div className="space-y-2">
+                                  {[
+                                     { label: 'Razão Social', value: proposta.cliente.razaoSocial || proposta.cliente.cliente || '-' },
+                                     { label: 'Nome Fantasia', value: proposta.cliente.cliente || '-' },
+                                     { label: 'CNPJ', value: proposta.cliente.cnpj || '-' },
+                                     { label: 'Valor', value: formatCurrency(resultado?.faturamentoBruto || 0) },
+                                     { label: 'Início', value: proposta.cliente.dataInicio || '-' },
+                                     { label: 'Vencimento', value: proposta.cliente.dataVencimento || '-' }
+                                  ].map((item, idx: number) => (
+                                     <div key={idx} className="flex gap-3 text-[10px] font-black tracking-wider uppercase">
+                                        <div className="w-32 bg-white text-[#1e4480] py-1.5 rounded-full text-center shrink-0 shadow-md flex items-center justify-center font-black">
+                                           {item.label}
+                                        </div>
+                                        <div className="flex-1 bg-white/20 text-white py-1.5 px-6 rounded-full font-bold overflow-hidden text-ellipsis whitespace-nowrap flex items-center">
+                                           {item.value}
+                                        </div>
+                                     </div>
+                                  ))}
+                               </div>
+
+                               {/* Right Column: Contato */}
+                               <div className="space-y-2">
+                                  {[
+                                     { label: 'Contato', value: proposta.cliente.contato || '-' },
+                                     { label: 'Cargo', value: proposta.cliente.contatoCargo || '-' },
+                                     { label: 'Cel', value: proposta.cliente.celular || '-' },
+                                     { label: 'E-mail', value: proposta.cliente.email || '-' }
+                                  ].map((item, idx: number) => (
+                                     <div key={idx} className="flex gap-3 text-[10px] font-black tracking-wider uppercase">
+                                        <div className="w-32 bg-white text-[#1e4480] py-1.5 rounded-full text-center shrink-0 shadow-md flex items-center justify-center font-black">
+                                           {item.label}
+                                        </div>
+                                        <div className="flex-1 bg-white/20 text-white py-1.5 px-6 rounded-full font-bold overflow-hidden text-ellipsis whitespace-nowrap flex items-center">
+                                           {item.value}
+                                        </div>
+                                     </div>
+                                  ))}
+                               </div>
+                            </div>
+
+                            {/* Bottom Signature Area */}
+                            <div className="flex flex-col items-center pt-2">
+                               <div className="border-t-2 border-white w-72 my-1"></div>
+                               <span className="text-[10px] font-black text-white/90 uppercase tracking-widest font-black">Cliente</span>
                             </div>
                          </div>
                       </div>
