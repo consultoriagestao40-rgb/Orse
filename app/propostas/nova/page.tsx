@@ -88,7 +88,13 @@ function PropostaEditor() {
             quadroEfetivoSubtitulo: fullData.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
             quadroEfetivoClausula1: fullData.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
             quadroEfetivoClausula2: fullData.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
-            quadroEfetivoClausula3: fullData.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
+            quadroEfetivoClausula3: fullData.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
+            condicaoColaboradores1: fullData.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
+            condicaoColaboradores2: fullData.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
+            condicaoColaboradores3: fullData.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.',
+            condicaoCliente1: fullData.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
+            condicaoCliente2: fullData.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
+            condicaoCliente3: fullData.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.'
           },
           dreTaxPercent: (fullData as any).dreTaxPercent,
           dreEncargos: (fullData as any).dreEncargos,
@@ -138,7 +144,13 @@ function PropostaEditor() {
       quadroEfetivoSubtitulo: 'Quadro efetivo - Opções',
       quadroEfetivoClausula1: 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
       quadroEfetivoClausula2: 'Para reduções no efetivo prazo de 30 (trinta) dias;',
-      quadroEfetivoClausula3: 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
+      quadroEfetivoClausula3: 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
+      condicaoColaboradores1: 'Vale alimentação de R$900,00;',
+      condicaoColaboradores2: 'Cesta trimestral de assiduidade;',
+      condicaoColaboradores3: '2 Vales transporte por dia.',
+      condicaoCliente1: 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
+      condicaoCliente2: 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
+      condicaoCliente3: 'Próximo reajuste Fevereiro/2026.'
     },
     premissas: { 
       taxaAdm: 5, 
@@ -338,7 +350,13 @@ function PropostaEditor() {
                   quadroEfetivoSubtitulo: fullData.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
                   quadroEfetivoClausula1: fullData.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
                   quadroEfetivoClausula2: fullData.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
-                  quadroEfetivoClausula3: fullData.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
+                  quadroEfetivoClausula3: fullData.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
+               condicaoColaboradores1: fullData.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
+               condicaoColaboradores2: fullData.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
+               condicaoColaboradores3: fullData.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.',
+               condicaoCliente1: fullData.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
+               condicaoCliente2: fullData.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
+               condicaoCliente3: fullData.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.'
                },
                premissas: {
                  ...fullData.premissas,
@@ -2270,7 +2288,8 @@ function PropostaEditor() {
                                 { id: 7, label: 'Slide 07 (Ferramentas)' },
                                 { id: 8, label: 'Slide 08 (Quadro Efetivo)' },
                                 { id: 9, label: 'Slide 09 (Inclusos/Excluídos)' },
-                                { id: 10, label: 'Slide 10 (Resumo Geral)' }
+                                { id: 10, label: 'Slide 10 (Resumo Geral)' },
+                                { id: 11, label: 'Slide 11 (Condições)' }
                              ].map((slide) => (
                                <button 
                                   key={slide.id}
@@ -3269,6 +3288,86 @@ function PropostaEditor() {
                              );
                           })()}
 
+                          {currentSlide === 11 && (
+                             <div className="w-full aspect-[16/9] border border-slate-200 bg-[#1e4480] p-12 flex flex-col justify-between relative overflow-hidden h-full text-white select-none">
+                                {/* Fundo decorativo sutil */}
+                                <div className="absolute inset-0 opacity-10 pointer-events-none">
+                                   <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                                      <line x1="-50" y1="100" x2="400" y2="-200" stroke="white" strokeWidth="8" />
+                                      <line x1="-50" y1="150" x2="450" y2="-200" stroke="white" strokeWidth="4" />
+                                      <line x1="500" y1="600" x2="1000" y2="200" stroke="white" strokeWidth="8" />
+                                      <line x1="550" y1="600" x2="1050" y2="200" stroke="white" strokeWidth="4" />
+                                   </svg>
+                                </div>
+
+                                <div className="relative z-10 flex flex-col h-full justify-between gap-4">
+                                   {/* Bloco 1: Condições Colaboradores */}
+                                   <div className="space-y-3">
+                                      <div className="bg-white px-4 py-1.5 inline-block rounded-r-lg shadow-sm border-l-4 border-emerald-500">
+                                         <h3 className="text-[#1e4480] text-xs font-black tracking-widest uppercase">
+                                            CONDIÇÕES PARA OS COLABORADORES
+                                         </h3>
+                                      </div>
+                                      <ul className="space-y-1.5 pl-4 text-white/95 text-[10px] font-semibold leading-relaxed">
+                                         {proposta.cliente.condicaoColaboradores1 && (
+                                            <li className="flex items-start gap-2">
+                                               <span className="text-emerald-400 mt-0.5">•</span>
+                                               <span>{proposta.cliente.condicaoColaboradores1}</span>
+                                            </li>
+                                         )}
+                                         {proposta.cliente.condicaoColaboradores2 && (
+                                            <li className="flex items-start gap-2">
+                                               <span className="text-emerald-400 mt-0.5">•</span>
+                                               <span>{proposta.cliente.condicaoColaboradores2}</span>
+                                            </li>
+                                         )}
+                                         {proposta.cliente.condicaoColaboradores3 && (
+                                            <li className="flex items-start gap-2">
+                                               <span className="text-emerald-400 mt-0.5">•</span>
+                                               <span>{proposta.cliente.condicaoColaboradores3}</span>
+                                            </li>
+                                         )}
+                                      </ul>
+                                   </div>
+
+                                   {/* Bloco 2: Condições Cliente */}
+                                   <div className="space-y-3">
+                                      <div className="bg-white px-4 py-1.5 inline-block rounded-r-lg shadow-sm border-l-4 border-emerald-500">
+                                         <h3 className="text-[#1e4480] text-xs font-black tracking-widest uppercase">
+                                            CONDIÇÕES PARA O CLIENTE
+                                         </h3>
+                                      </div>
+                                      <ul className="space-y-1.5 pl-4 text-white/95 text-[10px] font-semibold leading-relaxed">
+                                         {proposta.cliente.condicaoCliente1 && (
+                                            <li className="flex items-start gap-2">
+                                               <span className="text-emerald-400 mt-0.5">•</span>
+                                               <span>{proposta.cliente.condicaoCliente1}</span>
+                                            </li>
+                                         )}
+                                         {proposta.cliente.condicaoCliente2 && (
+                                            <li className="flex items-start gap-2">
+                                               <span className="text-emerald-400 mt-0.5">•</span>
+                                               <span>{proposta.cliente.condicaoCliente2}</span>
+                                            </li>
+                                         )}
+                                         {proposta.cliente.condicaoCliente3 && (
+                                            <li className="flex items-start gap-2">
+                                               <span className="text-emerald-400 mt-0.5">•</span>
+                                               <span className="font-extrabold text-emerald-300">{proposta.cliente.condicaoCliente3}</span>
+                                            </li>
+                                         )}
+                                      </ul>
+                                   </div>
+
+                                   {/* Footer */}
+                                   <div className="flex justify-between items-center w-full text-white/60 text-[9px] font-bold uppercase tracking-wider pt-2 border-t border-white/10">
+                                      <span>www.grupojvsserv.com.br</span>
+                                      <span className="text-white/80 bg-white/10 px-2.5 py-0.5 rounded font-black">11</span>
+                                   </div>
+                                </div>
+                             </div>
+                          )}
+
 
                      </div>
                   </div>
@@ -3277,14 +3376,14 @@ function PropostaEditor() {
                       <div className="flex justify-center items-center gap-6">
                          <button
                             type="button"
-                            onClick={() => setCurrentSlide(currentSlide === 1 ? 10 : currentSlide - 1)}
+                            onClick={() => setCurrentSlide(currentSlide === 1 ? 11 : currentSlide - 1)}
                             className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold text-xs uppercase tracking-wider hover:bg-slate-50 hover:border-slate-300 active:scale-95 transition-all shadow-sm cursor-pointer z-30"
                          >
                             <ChevronLeft size={16} className="stroke-[3]" /> Voltar
                          </button>
                          
                          <div className="flex gap-2 bg-slate-100 p-1.5 rounded-full border border-slate-200">
-                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((num) => (
                                <button
                                   key={num}
                                   type="button"
@@ -3298,14 +3397,14 @@ function PropostaEditor() {
 
                          <button
                             type="button"
-                            onClick={() => setCurrentSlide(currentSlide === 10 ? 1 : currentSlide + 1)}
+                            onClick={() => setCurrentSlide(currentSlide === 11 ? 1 : currentSlide + 1)}
                             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1e4480] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#1e4480]/90 active:scale-95 transition-all shadow-md cursor-pointer z-30"
                          >
                             Avançar <ChevronRight size={16} className="stroke-[3]" />
                          </button>
                       </div>
                       <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                         Visualizando Slide {currentSlide} de 10
+                         Visualizando Slide {currentSlide} de 11
                       </div>
                    </div>
 
@@ -3559,6 +3658,90 @@ function PropostaEditor() {
                                <p className="mt-2 font-black">
                                   Para modificar qualquer preço de venda ou quantidade, ajuste as respectivas abas do editor à esquerda.
                                </p>
+                            </div>
+                         </div>
+                      </div>
+                     )}
+
+                     {currentSlide === 11 && (
+                      <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
+                         <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
+                            <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
+                               ⚙️ Condições Gerais da Proposta (Slide 11)
+                            </h3>
+                         </div>
+                         
+                         <div className="space-y-6">
+                            {/* Colaboradores */}
+                            <div>
+                               <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider mb-3">
+                                  Condições para os Colaboradores
+                                </h4>
+                               <div className="space-y-3">
+                                  <div>
+                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condição 1</label>
+                                     <input 
+                                        type="text" 
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
+                                        value={proposta.cliente.condicaoColaboradores1 || ''}
+                                        onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, condicaoColaboradores1: e.target.value}})}
+                                     />
+                                  </div>
+                                  <div>
+                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condição 2</label>
+                                     <input 
+                                        type="text" 
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
+                                        value={proposta.cliente.condicaoColaboradores2 || ''}
+                                        onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, condicaoColaboradores2: e.target.value}})}
+                                     />
+                                  </div>
+                                  <div>
+                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condição 3</label>
+                                     <input 
+                                        type="text" 
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
+                                        value={proposta.cliente.condicaoColaboradores3 || ''}
+                                        onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, condicaoColaboradores3: e.target.value}})}
+                                     />
+                                  </div>
+                               </div>
+                            </div>
+
+                            {/* Cliente */}
+                            <div className="border-t border-slate-150 pt-5">
+                               <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider mb-3">
+                                  Condições para o Cliente
+                               </h4>
+                               <div className="space-y-3">
+                                  <div>
+                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condição 1</label>
+                                     <input 
+                                        type="text" 
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
+                                        value={proposta.cliente.condicaoCliente1 || ''}
+                                        onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, condicaoCliente1: e.target.value}})}
+                                     />
+                                  </div>
+                                  <div>
+                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condição 2</label>
+                                     <input 
+                                        type="text" 
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
+                                        value={proposta.cliente.condicaoCliente2 || ''}
+                                        onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, condicaoCliente2: e.target.value}})}
+                                     />
+                                  </div>
+                                  <div>
+                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condição 3</label>
+                                     <input 
+                                        type="text" 
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
+                                        value={proposta.cliente.condicaoCliente3 || ''}
+                                        onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, condicaoCliente3: e.target.value}})}
+                                     />
+                                  </div>
+                               </div>
                             </div>
                          </div>
                       </div>
@@ -4478,6 +4661,75 @@ function PropostaEditor() {
                            </div>
                         );
                       })()}
+
+                      {/* SLIDE 11 PRINT - CONDIÇÕES DA PROPOSTA */}
+                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-[#1e4480] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-white">
+                         <div className="relative z-10 flex flex-col h-full justify-between">
+                            {/* Bloco 1: Condições Colaboradores */}
+                            <div className="space-y-4">
+                               <div className="bg-white px-5 py-2 inline-block rounded-r-lg shadow-md border-l-4 border-emerald-500">
+                                  <h3 className="text-[#1e4480] text-xs font-black tracking-widest uppercase">
+                                     CONDIÇÕES PARA OS COLABORADORES
+                                  </h3>
+                               </div>
+                               <ul className="space-y-2 pl-4 text-white/95 text-xs font-semibold leading-relaxed">
+                                  {proposta.cliente.condicaoColaboradores1 && (
+                                     <li className="flex items-start gap-2">
+                                        <span className="text-emerald-400 mt-0.5">•</span>
+                                        <span>{proposta.cliente.condicaoColaboradores1}</span>
+                                     </li>
+                                  )}
+                                  {proposta.cliente.condicaoColaboradores2 && (
+                                     <li className="flex items-start gap-2">
+                                        <span className="text-emerald-400 mt-0.5">•</span>
+                                        <span>{proposta.cliente.condicaoColaboradores2}</span>
+                                     </li>
+                                  )}
+                                  {proposta.cliente.condicaoColaboradores3 && (
+                                     <li className="flex items-start gap-2">
+                                        <span className="text-emerald-400 mt-0.5">•</span>
+                                        <span>{proposta.cliente.condicaoColaboradores3}</span>
+                                     </li>
+                                  )}
+                               </ul>
+                            </div>
+
+                            {/* Bloco 2: Condições Cliente */}
+                            <div className="space-y-4">
+                               <div className="bg-white px-5 py-2 inline-block rounded-r-lg shadow-md border-l-4 border-emerald-500">
+                                  <h3 className="text-[#1e4480] text-xs font-black tracking-widest uppercase">
+                                     CONDIÇÕES PARA O CLIENTE
+                                  </h3>
+                               </div>
+                               <ul className="space-y-2 pl-4 text-white/95 text-xs font-semibold leading-relaxed">
+                                  {proposta.cliente.condicaoCliente1 && (
+                                     <li className="flex items-start gap-2">
+                                        <span className="text-emerald-400 mt-0.5">•</span>
+                                        <span>{proposta.cliente.condicaoCliente1}</span>
+                                     </li>
+                                  )}
+                                  {proposta.cliente.condicaoCliente2 && (
+                                     <li className="flex items-start gap-2">
+                                        <span className="text-emerald-400 mt-0.5">•</span>
+                                        <span>{proposta.cliente.condicaoCliente2}</span>
+                                     </li>
+                                  )}
+                                  {proposta.cliente.condicaoCliente3 && (
+                                     <li className="flex items-start gap-2">
+                                        <span className="text-emerald-400 mt-0.5">•</span>
+                                        <span className="font-extrabold text-emerald-300">{proposta.cliente.condicaoCliente3}</span>
+                                     </li>
+                                  )}
+                               </ul>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="flex justify-between items-center border-t border-white/20 pt-4 mt-auto text-white/60 text-[9px] font-bold">
+                               <span className="uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                               <span className="text-white/80 bg-white/10 px-2.5 py-0.5 rounded font-black">11</span>
+                            </div>
+                         </div>
+                      </div>
 
                   </div>
                </div>

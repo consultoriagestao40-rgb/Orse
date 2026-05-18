@@ -172,6 +172,12 @@ export async function saveProposta(data: any) {
           quadroEfetivoClausula1: cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
           quadroEfetivoClausula2: cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
           quadroEfetivoClausula3: cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
+          condicaoColaboradores1: cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
+          condicaoColaboradores2: cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
+          condicaoColaboradores3: cliente.condicaoColaboradores3 || '2 Vales transporte por dia.',
+          condicaoCliente1: cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
+          condicaoCliente2: cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
+          condicaoCliente3: cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.',
           itensInclusosExcluidos: data.itensInclusosExcluidos || defaultItensInclusosExcluidos,
           insumos: {
             ...data.insumos,
@@ -351,6 +357,12 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
         quadroEfetivoClausula1: meta.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
         quadroEfetivoClausula2: meta.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
         quadroEfetivoClausula3: meta.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
+        condicaoColaboradores1: meta.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
+        condicaoColaboradores2: meta.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
+        condicaoColaboradores3: meta.condicaoColaboradores3 || '2 Vales transporte por dia.',
+        condicaoCliente1: meta.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
+        condicaoCliente2: meta.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
+        condicaoCliente3: meta.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.',
       itensInclusosExcluidos: (() => {
         const rawItens = meta.itensInclusosExcluidos || [];
         const hasMaoDeObra = rawItens.some((item: any) => 
