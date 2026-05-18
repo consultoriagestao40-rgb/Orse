@@ -2650,7 +2650,7 @@ function PropostaEditor() {
                                            <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
                                               <MapPin size={26} className="text-white shrink-0" />
                                            </div>
-                                           <span className="text-[14px] font-bold text-white leading-none whitespace-nowrap">+ <strong className="text-xl font-black">100</strong></span>
+                                           <span className="text-[14px] font-bold text-white leading-none whitespace-nowrap"><strong className="text-xl font-black">+100</strong></span>
                                            <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
                                               postos ativos
                                            </span>
@@ -2670,7 +2670,7 @@ function PropostaEditor() {
                                            <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
                                               <ShieldCheck size={26} className="text-white shrink-0" />
                                            </div>
-                                           <span className="text-[12px] font-black text-white leading-none whitespace-nowrap">+100.000m²</span>
+                                           <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap block w-full text-center"><strong className="text-base font-black">+100</strong> mil m²</span>
                                            <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
                                               de limpeza em altura
                                            </span>
@@ -2680,7 +2680,7 @@ function PropostaEditor() {
                                            <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
                                               <Sparkles size={26} className="text-white shrink-0" />
                                            </div>
-                                           <span className="text-[12px] font-black text-white leading-none whitespace-nowrap">+500.000m²</span>
+                                           <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap block w-full text-center"><strong className="text-base font-black">+500</strong> mil m²</span>
                                            <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
                                               de Pisos tratados
                                            </span>
@@ -3496,52 +3496,96 @@ function PropostaEditor() {
                                      </div>
                                      <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
+                             {(() => {
+                                const condsColab = [
+                                   proposta.cliente?.condicaoColaboradores1 || "Vale alimentação de R$900,00;",
+                                   proposta.cliente?.condicaoColaboradores2 || "Cesta trimestral de assiduidade;",
+                                   proposta.cliente?.condicaoColaboradores3 || "2 Vales transporte por dia."
+                                ].filter(Boolean);
 
-                                  <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-2 gap-8">
-                                     <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-6 shadow-xs space-y-4">
-                                        <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
-                                           <Calendar size={18} className="text-[#1e4480]" />
-                                           <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Prazos e Validade</h4>
-                                        </div>
-                                        <div className="space-y-3">
-                                           <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-2">
-                                              <span className="text-slate-500 font-bold">Validade da Proposta:</span>
-                                              <span className="text-slate-800 font-black">{proposta.condicoes?.validadeProposta || "15 (quinze) dias"}</span>
-                                           </div>
-                                           <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-2">
-                                              <span className="text-slate-500 font-bold">Prazo de Início dos Serviços:</span>
-                                              <span className="text-slate-800 font-black">{proposta.condicoes?.prazoInicio || "20 (vinte) dias"}</span>
-                                           </div>
-                                           <div className="flex justify-between items-center text-[10px] pb-1">
-                                              <span className="text-slate-500 font-bold">Vigência Contratual Mínima:</span>
-                                              <span className="text-slate-800 font-black">{proposta.condicoes?.vigenciaContratual || "12 (doze) meses"}</span>
-                                           </div>
-                                        </div>
-                                     </div>
+                                const condsCli = [
+                                   proposta.cliente?.condicaoCliente1 || "Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;",
+                                   proposta.cliente?.condicaoCliente2 || "Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;",
+                                   proposta.cliente?.condicaoCliente3 || "Próximo reajuste Fevereiro/2026."
+                                ].filter(Boolean);
 
-                                     <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-6 shadow-xs space-y-4">
-                                        <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
-                                           <CreditCard size={18} className="text-[#1e4480]" />
-                                           <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Faturamento e Reajuste</h4>
-                                        </div>
-                                        <div className="space-y-3">
-                                           <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-2">
-                                              <span className="text-slate-500 font-bold">Prazo de Pagamento:</span>
-                                              <span className="text-slate-800 font-black">{proposta.condicoes?.prazoPagamento || "30 dias líquido"}</span>
-                                           </div>
-                                           <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-2">
-                                              <span className="text-slate-500 font-bold">Base de Reajuste Anual:</span>
-                                              <span className="text-slate-800 font-black">{proposta.condicoes?.baseReajuste || "Convenção Coletiva (CCT) / IPCA"}</span>
-                                           </div>
-                                           <div className="flex justify-between items-center text-[10px] pb-1">
-                                              <span className="text-slate-500 font-bold">Garantias e Seguros:</span>
-                                              <span className="text-[#1b4d3e] font-black uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded border border-emerald-150">Inclusos e Ativos</span>
-                                           </div>
-                                        </div>
-                                     </div>
-                                  </div>
+                                return (
+                                   <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-2 gap-x-8 gap-y-4">
+                                      <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-5 shadow-xs space-y-3">
+                                         <div className="flex items-center gap-2 border-b border-slate-200 pb-1.5">
+                                            <Calendar size={16} className="text-[#1e4480]" />
+                                            <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Prazos e Validade</h4>
+                                         </div>
+                                         <div className="space-y-2">
+                                            <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
+                                               <span className="text-slate-500 font-bold">Validade da Proposta:</span>
+                                               <span className="text-slate-800 font-black">{proposta.condicoes?.validadeProposta || "15 (quinze) dias"}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
+                                               <span className="text-slate-500 font-bold">Prazo de Início dos Serviços:</span>
+                                               <span className="text-slate-800 font-black">{proposta.condicoes?.prazoInicio || "20 (vinte) dias"}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-[10px] pb-0.5">
+                                               <span className="text-slate-500 font-bold">Vigência Contratual Mínima:</span>
+                                               <span className="text-slate-800 font-black">{proposta.condicoes?.vigenciaContratual || "12 (doze) meses"}</span>
+                                            </div>
+                                         </div>
+                                      </div>
 
-                                  <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
+                                      <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-5 shadow-xs space-y-3">
+                                         <div className="flex items-center gap-2 border-b border-slate-200 pb-1.5">
+                                            <CreditCard size={16} className="text-[#1e4480]" />
+                                            <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Faturamento e Reajuste</h4>
+                                         </div>
+                                         <div className="space-y-2">
+                                            <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
+                                               <span className="text-slate-500 font-bold">Prazo de Pagamento:</span>
+                                               <span className="text-slate-800 font-black">{proposta.condicoes?.prazoPagamento || "30 dias líquido"}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
+                                               <span className="text-slate-500 font-bold">Base de Reajuste Anual:</span>
+                                               <span className="text-slate-800 font-black">{proposta.condicoes?.baseReajuste || "Convenção Coletiva (CCT) / IPCA"}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-[10px] pb-0.5">
+                                               <span className="text-slate-500 font-bold">Garantias e Seguros:</span>
+                                               <span className="text-[#1b4d3e] font-black uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded border border-emerald-150 text-[9px]">Inclusos e Ativos</span>
+                                            </div>
+                                         </div>
+                                      </div>
+
+                                      <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-5 shadow-xs space-y-3">
+                                         <div className="flex items-center gap-2 border-b border-slate-200 pb-1.5">
+                                            <UserCheck size={16} className="text-[#1e4480]" />
+                                            <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condições dos Colaboradores</h4>
+                                         </div>
+                                         <div className="space-y-1.5 max-h-[90px] overflow-y-auto pr-1">
+                                            {condsColab.map((cond, idx) => (
+                                               <div key={idx} className="flex gap-2 items-start text-[9px] leading-tight">
+                                                  <CheckCircle2 size={10} className="text-[#1b4d3e] shrink-0 mt-0.5" />
+                                                  <span className="text-slate-700 font-bold">{cond}</span>
+                                               </div>
+                                            ))}
+                                         </div>
+                                      </div>
+
+                                      <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-5 shadow-xs space-y-3">
+                                         <div className="flex items-center gap-2 border-b border-slate-200 pb-1.5">
+                                            <Briefcase size={16} className="text-[#1e4480]" />
+                                            <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condições para o Cliente</h4>
+                                         </div>
+                                         <div className="space-y-1.5 max-h-[90px] overflow-y-auto pr-1">
+                                            {condsCli.map((cond, idx) => (
+                                               <div key={idx} className="flex gap-2 items-start text-[9px] leading-tight">
+                                                  <CheckCircle2 size={10} className="text-[#1b4d3e] shrink-0 mt-0.5" />
+                                                  <span className="text-slate-700 font-bold">{cond}</span>
+                                               </div>
+                                            ))}
+                                         </div>
+                                      </div>
+                                   </div>
+                                );
+                             })()}
+<div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
                                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
                                      <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded font-black">12</span>
                                   </div>
@@ -4918,7 +4962,7 @@ function PropostaEditor() {
                                      <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
                                         <MapPin size={26} className="text-white shrink-0" />
                                      </div>
-                                     <span className="text-[14px] font-bold text-white leading-none whitespace-nowrap">+ <strong className="text-xl font-black">100</strong></span>
+                                     <span className="text-[14px] font-bold text-white leading-none whitespace-nowrap"><strong className="text-xl font-black">+100</strong></span>
                                      <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
                                         postos ativos
                                      </span>
@@ -4938,7 +4982,7 @@ function PropostaEditor() {
                                      <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
                                         <ShieldCheck size={26} className="text-white shrink-0" />
                                      </div>
-                                     <span className="text-[12px] font-black text-white leading-none whitespace-nowrap">+100.000m²</span>
+                                     <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap block w-full text-center"><strong className="text-base font-black">+100</strong> mil m²</span>
                                      <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
                                         de limpeza em altura
                                      </span>
@@ -4948,7 +4992,7 @@ function PropostaEditor() {
                                      <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
                                         <Sparkles size={26} className="text-white shrink-0" />
                                      </div>
-                                     <span className="text-[12px] font-black text-white leading-none whitespace-nowrap">+500.000m²</span>
+                                     <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap block w-full text-center"><strong className="text-base font-black">+500</strong> mil m²</span>
                                      <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
                                         de Pisos tratados
                                      </span>
@@ -4957,10 +5001,10 @@ function PropostaEditor() {
                             </div>
 
                             <div className="col-span-5 h-full flex flex-col justify-center items-center relative pr-2">
-                               <div className="w-full max-w-[300px] aspect-square drop-shadow-lg">
+                               <div style={{ width: '280px', height: '280px' }} className="relative drop-shadow-lg flex items-center justify-center">
                                   <BrazilMap highlightedStates={['PR', 'SC', 'RS']} className="w-full h-full" />
                                </div>
-                               <div className="text-[13px] font-black text-white uppercase tracking-widest mt-4 bg-white/10 px-4 py-1.5 rounded-full shadow-sm">
+                               <div className="text-[11px] font-black text-white uppercase tracking-widest mt-4 bg-white/10 px-4 py-1 rounded-full shadow-sm">
                                   Atendimento em toda Região Sul
                                </div>
                             </div>
@@ -5744,50 +5788,96 @@ function PropostaEditor() {
                                <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
                             </div>
 
-                            <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-2 gap-8">
-                               <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-6 shadow-xs space-y-4">
-                                  <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
-                                     <Calendar size={18} className="text-[#1e4480]" />
-                                     <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Prazos e Validade</h4>
-                                  </div>
-                                  <div className="space-y-3">
-                                     <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-2">
-                                        <span className="text-slate-500 font-bold">Validade da Proposta:</span>
-                                        <span className="text-slate-800 font-black">{proposta.condicoes?.validadeProposta || "15 (quinze) dias"}</span>
-                                     </div>
-                                     <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-2">
-                                        <span className="text-slate-500 font-bold">Prazo de Início dos Serviços:</span>
-                                        <span className="text-slate-800 font-black">{proposta.condicoes?.prazoInicio || "20 (vinte) dias"}</span>
-                                     </div>
-                                     <div className="flex justify-between items-center text-[10px] pb-1">
-                                        <span className="text-slate-500 font-bold">Vigência Contratual Mínima:</span>
-                                        <span className="text-slate-800 font-black">{proposta.condicoes?.vigenciaContratual || "12 (doze) meses"}</span>
-                                     </div>
-                                  </div>
-                               </div>
+                            
+                                   {(() => {
+                                      const condsColab = [
+                                         proposta.cliente?.condicaoColaboradores1 || "Vale alimentação de R$900,00;",
+                                         proposta.cliente?.condicaoColaboradores2 || "Cesta trimestral de assiduidade;",
+                                         proposta.cliente?.condicaoColaboradores3 || "2 Vales transporte por dia."
+                                      ].filter(Boolean);
 
-                               <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-6 shadow-xs space-y-4">
-                                  <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
-                                     <CreditCard size={18} className="text-[#1e4480]" />
-                                     <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Faturamento e Reajuste</h4>
-                                  </div>
-                                  <div className="space-y-3">
-                                     <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-2">
-                                        <span className="text-slate-500 font-bold">Prazo de Pagamento:</span>
-                                        <span className="text-slate-800 font-black">{proposta.condicoes?.prazoPagamento || "30 dias líquido"}</span>
-                                     </div>
-                                     <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-2">
-                                        <span className="text-slate-500 font-bold">Base de Reajuste Anual:</span>
-                                        <span className="text-slate-800 font-black">{proposta.condicoes?.baseReajuste || "Convenção Coletiva (CCT) / IPCA"}</span>
-                                     </div>
-                                     <div className="flex justify-between items-center text-[10px] pb-1">
-                                        <span className="text-slate-500 font-bold">Garantias e Seguros:</span>
-                                        <span className="text-[#1b4d3e] font-black uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded border border-emerald-150">Inclusos e Ativos</span>
-                                     </div>
-                                  </div>
-                               </div>
-                            </div>
+                                      const condsCli = [
+                                         proposta.cliente?.condicaoCliente1 || "Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;",
+                                         proposta.cliente?.condicaoCliente2 || "Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;",
+                                         proposta.cliente?.condicaoCliente3 || "Próximo reajuste Fevereiro/2026."
+                                      ].filter(Boolean);
 
+                                      return (
+                                         <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-2 gap-x-8 gap-y-4">
+                                            <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-5 shadow-xs space-y-3">
+                                               <div className="flex items-center gap-2 border-b border-slate-200 pb-1.5">
+                                                  <Calendar size={16} className="text-[#1e4480]" />
+                                                  <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Prazos e Validade</h4>
+                                               </div>
+                                               <div className="space-y-2">
+                                                  <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
+                                                     <span className="text-slate-500 font-bold">Validade da Proposta:</span>
+                                                     <span className="text-slate-800 font-black">{proposta.condicoes?.validadeProposta || "15 (quinze) dias"}</span>
+                                                  </div>
+                                                  <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
+                                                     <span className="text-slate-500 font-bold">Prazo de Início dos Serviços:</span>
+                                                     <span className="text-slate-800 font-black">{proposta.condicoes?.prazoInicio || "20 (vinte) dias"}</span>
+                                                  </div>
+                                                  <div className="flex justify-between items-center text-[10px] pb-0.5">
+                                                     <span className="text-slate-500 font-bold">Vigência Contratual Mínima:</span>
+                                                     <span className="text-slate-800 font-black">{proposta.condicoes?.vigenciaContratual || "12 (doze) meses"}</span>
+                                                  </div>
+                                               </div>
+                                            </div>
+
+                                            <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-5 shadow-xs space-y-3">
+                                               <div className="flex items-center gap-2 border-b border-slate-200 pb-1.5">
+                                                  <CreditCard size={16} className="text-[#1e4480]" />
+                                                  <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Faturamento e Reajuste</h4>
+                                               </div>
+                                               <div className="space-y-2">
+                                                  <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
+                                                     <span className="text-slate-500 font-bold">Prazo de Pagamento:</span>
+                                                     <span className="text-slate-800 font-black">{proposta.condicoes?.prazoPagamento || "30 dias líquido"}</span>
+                                                  </div>
+                                                  <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
+                                                     <span className="text-slate-500 font-bold">Base de Reajuste Anual:</span>
+                                                     <span className="text-slate-800 font-black">{proposta.condicoes?.baseReajuste || "Convenção Coletiva (CCT) / IPCA"}</span>
+                                                  </div>
+                                                  <div className="flex justify-between items-center text-[10px] pb-0.5">
+                                                     <span className="text-slate-500 font-bold">Garantias e Seguros:</span>
+                                                     <span className="text-[#1b4d3e] font-black uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded border border-emerald-150 text-[9px]">Inclusos e Ativos</span>
+                                                  </div>
+                                               </div>
+                                            </div>
+
+                                            <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-5 shadow-xs space-y-3">
+                                               <div className="flex items-center gap-2 border-b border-slate-200 pb-1.5">
+                                                  <UserCheck size={16} className="text-[#1e4480]" />
+                                                  <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condições dos Colaboradores</h4>
+                                               </div>
+                                               <div className="space-y-1.5 max-h-[100px] overflow-y-auto pr-1">
+                                                  {condsColab.map((cond, idx) => (
+                                                     <div key={idx} className="flex gap-2 items-start text-[9.5px] leading-tight">
+                                                        <CheckCircle2 size={11} className="text-[#1b4d3e] shrink-0 mt-0.5" />
+                                                        <span className="text-slate-700 font-bold">{cond}</span>
+                                                     </div>
+                                                  ))}
+                                               </div>
+                                            </div>
+
+                                            <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-5 shadow-xs space-y-3">
+                                               <div className="flex items-center gap-2 border-b border-slate-200 pb-1.5">
+                                                  <Briefcase size={16} className="text-[#1e4480]" />
+                                                  <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condições para o Cliente</h4>
+                                               </div>
+                                               <div className="space-y-1.5 max-h-[100px] overflow-y-auto pr-1">
+                                                  {condsCli.map((cond, idx) => (
+                                                     <div key={idx} className="flex gap-2 items-start text-[9.5px] leading-tight">
+                                                        <CheckCircle2 size={11} className="text-[#1b4d3e] shrink-0 mt-0.5" />
+                                                        <span className="text-slate-700 font-bold">{cond}</span>
+                                                     </div>
+                                                  ))}
+                                               </div>
+                                            </div>
+                                         </div>
+                                      );
+                                   })()}
                             <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
                                <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded font-black">12</span>
