@@ -14,7 +14,7 @@ import { getProdutos } from '@/app/produtos/actions';
 import { saveProposta, getPropostaCompleta, getLoggedUser } from '@/app/propostas/actions';
 import { getTiposServico } from '@/app/admin/settings/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, ChevronLeft, Factory, Store, Bus, Building, Hospital, ShoppingBag, GraduationCap, Share2, Clock, Smartphone, Cpu } from 'lucide-react';
+import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, ChevronLeft, Factory, Store, Bus, Building, Hospital, ShoppingBag, GraduationCap, Share2, Clock, Smartphone, Cpu, CreditCard } from 'lucide-react';
 import BrazilMap from '@/components/BrazilMap';
 
 const TABS = [
@@ -2611,10 +2611,9 @@ function PropostaEditor() {
                            </div>
                         )}
 
-                        {/* SLIDE 03 (NOSSA PRESENÇA - QUEM SOMOS E COBERTURA SUL) */}
+                        
                          {currentSlide === 3 && (
-                            <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 text-white overflow-hidden bg-[#1e4480]">
-                               {/* Linhas diagonais decorativas da marca */}
+                            <div className="w-full h-full bg-[#1e4480] p-16 flex flex-col justify-between relative overflow-hidden text-white rounded-2xl border border-slate-200 select-none">
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
                                   <line x1="-50" y1="150" x2="350" y2="-250" stroke="#FFFFFF" strokeWidth="10" />
                                   <line x1="-50" y1="200" x2="400" y2="-250" stroke="#FFFFFF" strokeWidth="6" />
@@ -2626,101 +2625,89 @@ function PropostaEditor() {
                                </svg>
 
                                <div className="grid grid-cols-12 gap-8 items-center h-[calc(100%-40px)] relative z-10">
-                                  {/* Coluna de Texto e KPIs (Esquerda) */}
-                                  <div className="col-span-7 flex flex-col justify-center space-y-4 pl-2 h-full">
+                                  <div className="col-span-7 flex flex-col justify-center space-y-5 pl-2 h-full text-white">
                                      <div>
-                                        <h2 className="text-3xl font-black text-white tracking-tight leading-none uppercase">
+                                        <h2 className="text-4xl font-black text-white tracking-tight leading-none uppercase">
                                            QUEM SOMOS
                                         </h2>
-                                        <p className="text-white/90 text-[10px] font-semibold leading-relaxed mt-3 max-w-xl">
+                                        <p className="text-white/95 text-[14px] font-semibold leading-relaxed mt-4 max-w-xl">
                                            Há mais de 30 anos no mercado de Facilities, somos especialistas em prestações de serviços de limpeza profissional e similares.
                                         </p>
                                      </div>
 
-                                     {/* Grid de KPIs Ultra Premium */}
-                                     <div className="grid grid-cols-5 gap-1.5 pt-4 border-t border-white/10">
-                                        {/* Anos de atuação */}
+                                     <div className="grid grid-cols-5 gap-4 pt-6 border-t border-white/15">
                                         <div className="flex flex-col items-center text-center">
-                                           <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 hover:bg-white/20 transition-all duration-200">
-                                              <Award size={18} className="text-white shrink-0" />
+                                           <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
+                                              <Award size={26} className="text-white shrink-0" />
                                            </div>
-                                           <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap">+de <strong className="text-sm font-black">30</strong></span>
-                                           <span className="text-[7.5px] font-black text-white/80 uppercase mt-1 leading-normal tracking-tight block max-w-[65px]">
-                                              Anos de atuação em Facilities e Serviços
+                                           <span className="text-[14px] font-bold text-white leading-none whitespace-nowrap">+de <strong className="text-xl font-black">30</strong></span>
+                                           <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
+                                              Anos de atuação em Facilities
                                            </span>
                                         </div>
 
-                                        {/* Postos ativos */}
                                         <div className="flex flex-col items-center text-center">
-                                           <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 hover:bg-white/20 transition-all duration-200">
-                                              <MapPin size={18} className="text-white shrink-0" />
+                                           <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
+                                              <MapPin size={26} className="text-white shrink-0" />
                                            </div>
-                                           <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap">+ <strong className="text-sm font-black">100</strong></span>
-                                           <span className="text-[7.5px] font-black text-white/80 uppercase mt-1 leading-normal tracking-tight block max-w-[65px]">
+                                           <span className="text-[14px] font-bold text-white leading-none whitespace-nowrap">+ <strong className="text-xl font-black">100</strong></span>
+                                           <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
                                               postos ativos
                                            </span>
                                         </div>
 
-                                        {/* Clientes atendidos */}
                                         <div className="flex flex-col items-center text-center">
-                                           <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 hover:bg-white/20 transition-all duration-200">
-                                              <Users size={18} className="text-white shrink-0" />
+                                           <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
+                                              <Users size={26} className="text-white shrink-0" />
                                            </div>
-                                           <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap">+ <strong className="text-sm font-black">200</strong></span>
-                                           <span className="text-[7.5px] font-black text-white/80 uppercase mt-1 leading-normal tracking-tight block max-w-[65px]">
+                                           <span className="text-[14px] font-bold text-white leading-none whitespace-nowrap">+ <strong className="text-xl font-black">200</strong></span>
+                                           <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
                                               Clientes atendidos
                                            </span>
                                         </div>
 
-                                        {/* Limpeza em altura */}
                                         <div className="flex flex-col items-center text-center">
-                                           <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 hover:bg-white/20 transition-all duration-200">
-                                              <ShieldCheck size={18} className="text-white shrink-0" />
+                                           <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
+                                              <ShieldCheck size={26} className="text-white shrink-0" />
                                            </div>
-                                           <span className="text-[9px] font-black text-white leading-none mt-0.5 whitespace-nowrap">+100.000m²</span>
-                                           <span className="text-[7.5px] font-black text-white/80 uppercase mt-1 leading-normal tracking-tight block max-w-[65px]">
-                                              de limpeza em altura executados
+                                           <span className="text-[12px] font-black text-white leading-none whitespace-nowrap">+100.000m²</span>
+                                           <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
+                                              de limpeza em altura
                                            </span>
                                         </div>
 
-                                        {/* Pisos tratados */}
                                         <div className="flex flex-col items-center text-center">
-                                           <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-2 hover:bg-white/20 transition-all duration-200">
-                                              <Sparkles size={18} className="text-white shrink-0" />
+                                           <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
+                                              <Sparkles size={26} className="text-white shrink-0" />
                                            </div>
-                                           <span className="text-[9px] font-black text-white leading-none mt-0.5 whitespace-nowrap">+500.000m²</span>
-                                           <span className="text-[7.5px] font-black text-white/80 uppercase mt-1 leading-normal tracking-tight block max-w-[65px]">
-                                              de Pisos tratados.
+                                           <span className="text-[12px] font-black text-white leading-none whitespace-nowrap">+500.000m²</span>
+                                           <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
+                                              de Pisos tratados
                                            </span>
                                         </div>
                                      </div>
                                   </div>
 
-                                  {/* Coluna do Mapa (Direita) */}
                                   <div className="col-span-5 h-full flex flex-col justify-center items-center relative pr-2">
-                                     <div className="w-full max-w-[260px] aspect-square">
+                                     <div className="w-full max-w-[300px] aspect-square drop-shadow-lg">
                                         <BrazilMap highlightedStates={['PR', 'SC', 'RS']} className="w-full h-full" />
                                      </div>
-                                     <div className="text-[10px] font-extrabold text-white uppercase tracking-widest mt-2 animate-pulse">
+                                     <div className="text-[13px] font-black text-white uppercase tracking-widest mt-4 bg-white/10 px-4 py-1.5 rounded-full shadow-sm">
                                         Atendimento em toda Região Sul
                                      </div>
                                   </div>
                                </div>
 
-                               {/* Rodapé do Slide 3 */}
-                               <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-28 mt-auto">
+                               <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-4 mt-auto">
                                   <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.grupojvsserv.com.br</span>
                                   <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">03</span>
                                </div>
-
                             </div>
                          )}
 
-                                                  {/* SLIDE 04 (NOSSOS VALORES - COM AS TRÊS ESFERAS DE VALORES E A MÃO DE SUPORTE) */}
                          {currentSlide === 4 && (
-                            <div className="absolute inset-0 w-full h-full flex flex-col justify-between z-10 animate-fadeIn bg-white overflow-hidden p-16">
-                               {/* Linhas diagonais decorativas da marca */}
-                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
+                            <div className="w-full h-full bg-white p-16 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none">
+                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" xmlns="http://www.w3.org/2000/svg">
                                   <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
                                   <line x1="-50" y1="200" x2="400" y2="-250" stroke="#E2E8F0" strokeWidth="6" />
                                   <line x1="-50" y1="250" x2="450" y2="-250" stroke="#E2E8F0" strokeWidth="3" />
@@ -2729,382 +2716,288 @@ function PropostaEditor() {
                                   <line x1="650" y1="800" x2="1150" y2="300" stroke="#E2E8F0" strokeWidth="6" />
                                   <line x1="700" y1="800" x2="1200" y2="300" stroke="#E2E8F0" strokeWidth="3" />
                                </svg>
-
+                               
                                <div className="grid grid-cols-12 gap-8 items-center h-[calc(100%-40px)] relative z-10">
-                                  {/* Coluna de Texto (Esquerda) */}
                                   <div className="col-span-7 flex flex-col justify-center space-y-4 pl-2 h-full">
                                      <div>
-                                        <h2 className="text-3xl font-black text-[#1E3A8A] tracking-tight leading-none uppercase">
+                                        <h2 className="text-4xl font-black text-[#1E3A8A] tracking-tight leading-none uppercase">
                                            NOSSOS VALORES
                                         </h2>
-                                        <p className="text-slate-600 text-[10px] font-semibold leading-relaxed mt-4">
+                                        <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-5 text-justify">
                                            Nosso compromisso é guiado por princípios sólidos: agimos com <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">ética</strong>, mantendo a integridade acima de benefícios momentâneos. Buscamos <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">agilidade</strong>, <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">eficiência</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">excelência</strong> através do aprimoramento contínuo de processos e sistemas. <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">Valorizamos nossas pessoas</strong>, promovendo um ambiente humanizado e soluções que garantem a satisfação e a permanência dos colaboradores. Somos comprometidos com a <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">entrega</strong> dos nossos acordos, mesmo diante de desafios. Além disso, investimos em <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">inovação</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">tecnologia</strong> para otimizar a automação, produtividade e eficiência.
                                         </p>
                                      </div>
                                   </div>
 
-                                  {/* Coluna Gráfica (Direita - Esferas e Mão de Suporte) */}
                                   <div className="col-span-5 h-full w-full flex items-center justify-center relative">
-                                     {/* Imagem da mão recortada no canto inferior direito */}
                                      <div 
                                         className="absolute right-0 bottom-0 w-[320px] h-[180px] bg-contain bg-right-bottom bg-no-repeat pointer-events-none opacity-90 z-10"
                                         style={{ backgroundImage: "url('https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?q=80&w=800')" }}
                                      ></div>
 
-                                     {/* As 3 Esferas de Valores flutuando de forma harmoniosa */}
                                      <div className="relative w-full h-[220px] z-20">
-                                        {/* Esfera 1 (Trophy / Topo Centro) */}
-                                        <div className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center justify-center w-16 h-16 rounded-full bg-[#1e4480] text-white shadow-xl hover:scale-105 transition-all duration-300">
-                                           <Trophy size={28} className="text-white shrink-0" />
+                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl">
+                                           <Trophy size={36} className="text-white shrink-0" />
                                         </div>
 
-                                        {/* Esfera 2 (Lightbulb / Esquerda) */}
-                                        <div className="absolute bottom-16 left-4 flex items-center justify-center w-16 h-16 rounded-full bg-[#1e4480] text-white shadow-xl hover:scale-105 transition-all duration-300">
-                                           <Lightbulb size={28} className="text-white shrink-0" />
+                                        <div className="absolute bottom-12 left-4 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl">
+                                           <Lightbulb size={36} className="text-white shrink-0" />
                                         </div>
 
-                                        {/* Esfera 3 (Users / Direita) */}
-                                        <div className="absolute bottom-16 right-4 flex items-center justify-center w-16 h-16 rounded-full bg-[#1e4480] text-white shadow-xl hover:scale-105 transition-all duration-300">
-                                           <Users size={28} className="text-white shrink-0" />
+                                        <div className="absolute bottom-12 right-4 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl">
+                                           <Users size={36} className="text-white shrink-0" />
                                         </div>
                                      </div>
                                   </div>
-                                </div>
+                               </div>
 
-                                {/* Rodapé do Slide 4 */}
-                                <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto pr-24 relative z-20">
-                                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                                   <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">08</span>
-                                </div>
+                               <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
+                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                  <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">04</span>
+                               </div>
+                            </div>
+                         )}
 
-                                {/* Botão de Avanço voltando para o Slide 01 */}
-                             </div>
-                          )}
-
-                         {/* SLIDE 05 (PRINCIPAIS SERVIÇOS PRESTADOS - COM AS 5 CATEGORIAS DE SERVIÇOS) */}
                          {currentSlide === 5 && (
-                            <div className="absolute inset-0 w-full h-full flex flex-col justify-between z-10 animate-fadeIn bg-white overflow-hidden p-16">
-                               {/* Stripes de fundo */}
+                            <div className="w-full h-full bg-white p-16 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none">
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" xmlns="http://www.w3.org/2000/svg">
                                   <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
                                   <line x1="-100" y1="150" x2="450" y2="-400" stroke="#F1F5F9" strokeWidth="12" />
                                   <line x1="-100" y1="200" x2="500" y2="-400" stroke="#F1F5F9" strokeWidth="6" />
                                   <line x1="-100" y1="250" x2="550" y2="-400" stroke="#F1F5F9" strokeWidth="3" />
-                                  <line x1="-100" y1="300" x2="600" y2="-400" stroke="#F1F5F9" strokeWidth="12" />
-                                  <line x1="-100" y1="350" x2="650" y2="-400" stroke="#F1F5F9" strokeWidth="4" />
                                   
                                   <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
                                   <line x1="550" y1="900" x2="1250" y2="200" stroke="#F1F5F9" strokeWidth="12" />
-                                  <line x1="600" y1="900" x2="1300" y2="200" stroke="#F1F5F9" strokeWidth="6" />
-                                  <line x1="650" y1="900" x2="1350" y2="200" stroke="#F1F5F9" strokeWidth="3" />
-                                  <line x1="700" y1="900" x2="1400" y2="200" stroke="#F1F5F9" strokeWidth="12" />
-                                  <line x1="750" y1="900" x2="1450" y2="200" stroke="#F1F5F9" strokeWidth="4" />
                                </svg>
                                
-                               <div className="grid grid-cols-12 gap-6 items-center h-[calc(100%-150px)] relative z-10 text-slate-800">
-                                  {/* Coluna do Título (Esquerda) */}
-                                  <div className="col-span-4 flex flex-col justify-center h-full pr-2">
-                                     <h2 className="text-3xl font-black text-[#1e4480] uppercase tracking-tight leading-none">
-                                        PRINCIPAIS<br />
-                                        SERVIÇOS<br />
-                                        PRESTADOS
+                               <div className="relative z-10 flex flex-col h-[calc(100%-30px)] justify-between">
+                                  <div>
+                                     <h2 className="text-3xl font-black text-[#1e4480] uppercase tracking-tight leading-none mb-6">
+                                        PRINCIPAIS SERVIÇOS PRESTADOS
                                      </h2>
-                                  </div>
 
-                                  {/* Coluna 1 (Centro) - Terceirização */}
-                                  <div className="col-span-4 flex flex-col space-y-2 h-full justify-center">
-                                     <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
-                                        <span className="text-[#1e4480] text-[10px] font-black tracking-wide uppercase leading-tight max-w-[150px]">
-                                           TERCEIRIZAÇÃO DE SERVIÇOS DE FACILITIES
-                                        </span>
-                                        <div className="text-[#1e4480] shrink-0">
-                                           <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-14 h-14 shrink-0">
-                                              <path d="M12 52L24 40M52 52L40 40" stroke="#1e4480" strokeWidth="3" />
-                                              <path d="M22 38L14 30M42 38L50 30" stroke="#1e4480" strokeWidth="3" />
-                                              <line x1="24" y1="40" x2="36" y2="28" stroke="#1e4480" strokeWidth="2.5" />
-                                              <line x1="40" y1="40" x2="28" y2="28" stroke="#1e4480" strokeWidth="2.5" />
-                                              <path d="M18 42C18 42 22 46 28 46C34 46 38 42 38 36" stroke="#1e4480" strokeWidth="2.5" />
-                                              <path d="M46 42C46 42 42 46 36 46C30 46 26 42 26 36" stroke="#1e4480" strokeWidth="2.5" />
-                                              <path d="M32 8L34 14L40 16L34 18L32 24L30 18L24 16L30 14Z" fill="#1e4480" />
-                                              <path d="M18 16L19 19L22 20L19 21L18 24L17 21L14 20L17 19Z" fill="#1e4480" />
-                                              <path d="M46 16L47 19L50 20L47 21L46 24L45 21L42 20L45 19Z" fill="#1e4480" />
-                                           </svg>
+                                     <div className="grid grid-cols-2 gap-12 mt-2">
+                                        <div className="flex flex-col space-y-3">
+                                           <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-2">
+                                              <span className="text-[#1e4480] text-[15px] font-black tracking-wide uppercase leading-tight max-w-[300px]">
+                                                 TERCEIRIZAÇÃO DE SERVIÇOS DE FACILITIES
+                                              </span>
+                                              <div className="text-[#1e4480] shrink-0">
+                                                 <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-14 h-14 shrink-0">
+                                                    <path d="M12 52L24 40M52 52L40 40" stroke="#1e4480" strokeWidth="3" />
+                                                    <path d="M22 38L14 30M42 38L50 30" stroke="#1e4480" strokeWidth="3" />
+                                                    <line x1="24" y1="40" x2="36" y2="28" stroke="#1e4480" strokeWidth="2.5" />
+                                                    <line x1="40" y1="40" x2="28" y2="28" stroke="#1e4480" strokeWidth="2.5" />
+                                                    <path d="M18 42C18 42 22 46 28 46C34 46 38 42 38 36" stroke="#1e4480" strokeWidth="2.5" />
+                                                    <path d="M32 8L34 14L40 16L34 18L32 24L30 18L24 16L30 14Z" fill="#1e4480" />
+                                                 </svg>
+                                              </div>
+                                           </div>
+                                           <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
+                                              Gestão e execução de serviços essenciais, como limpeza, manutenção e segurança, que garantem o bom funcionamento e organização de um ambiente de trabalho. Nossa função é cuidar de tudo isso para que a empresa possa focar no que faz de melhor, enquanto oferecemos um space eficiente, seguro e bem cuidado.
+                                           </p>
+                                        </div>
+
+                                        <div className="flex flex-col space-y-3">
+                                           <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-2">
+                                              <span className="text-[#1e4480] text-[15px] font-black tracking-wide uppercase leading-tight">
+                                                 LIMPEZA EM ALTURA
+                                              </span>
+                                              <div className="text-[#1e4480] shrink-0">
+                                                 <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-14 h-14 shrink-0">
+                                                    <rect x="6" y="6" width="20" height="52" rx="2" stroke="#cbd5e1" strokeWidth="1.5" />
+                                                    <line x1="6" y1="20" x2="26" y2="20" stroke="#cbd5e1" strokeWidth="1.5" />
+                                                    <line x1="6" y1="36" x2="26" y2="36" stroke="#cbd5e1" strokeWidth="1.5" />
+                                                    <line x1="16" y1="6" x2="16" y2="58" stroke="#cbd5e1" strokeWidth="1.5" />
+                                                    <line x1="38" y1="2" x2="38" y2="62" stroke="#1e4480" strokeWidth="1.5" strokeDasharray="3 3" />
+                                                    <line x1="48" y1="2" x2="48" y2="62" stroke="#1e4480" strokeWidth="1.5" />
+                                                    <circle cx="48" cy="22" r="4" fill="#1e4480" />
+                                                    <path d="M44 20H48V24" stroke="#1e4480" strokeWidth="2" />
+                                                    <path d="M48 26L42 36" stroke="#1e4480" strokeWidth="4" />
+                                                 </svg>
+                                              </div>
+                                           </div>
+                                           <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
+                                              Serviço que é realizado em áreas de difícil acesso, como fachadas de prédios, janelas externas e estruturas elevadas. Usamos equipamentos específicos e técnicas seguras para garantir que essas superfícies sejam limpas de maneira eficiente, mantendo a estética e a segurança dos espaços altos, onde o cuidado e a precisão são essenciais.
+                                           </p>
                                         </div>
                                      </div>
-                                     <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
-                                        Gestão e execução de serviços essenciais, como limpeza, manutenção e segurança, que garantem o bom funcionamento e organização de um ambiente de trabalho. Nossa função é cuidar de tudo isso para que a empresa possa focar no que faz de melhor, enquanto oferecemos um espaço eficiente, seguro e bem cuidado.
-                                     </p>
                                   </div>
 
-                                  {/* Coluna 2 (Direita) - Limpeza em Altura */}
-                                  <div className="col-span-4 flex flex-col space-y-2 h-full justify-center pl-2">
-                                     <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
-                                        <span className="text-[#1e4480] text-[10px] font-black tracking-wide uppercase leading-tight">
-                                           LIMPEZA EM ALTURA
-                                        </span>
-                                        <div className="text-[#1e4480] shrink-0">
-                                           <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-14 h-14 shrink-0">
-                                              <rect x="6" y="6" width="20" height="52" rx="2" stroke="#cbd5e1" strokeWidth="1.5" />
-                                              <line x1="6" y1="20" x2="26" y2="20" stroke="#cbd5e1" strokeWidth="1.5" />
-                                              <line x1="6" y1="36" x2="26" y2="36" stroke="#cbd5e1" strokeWidth="1.5" />
-                                              <line x1="16" y1="6" x2="16" y2="58" stroke="#cbd5e1" strokeWidth="1.5" />
-                                              <line x1="38" y1="2" x2="38" y2="62" stroke="#1e4480" strokeWidth="1.5" strokeDasharray="3 3" />
-                                              <line x1="48" y1="2" x2="48" y2="62" stroke="#1e4480" strokeWidth="1.5" />
-                                              <circle cx="48" cy="22" r="4" fill="#1e4480" />
-                                              <path d="M44 20H48V24" stroke="#1e4480" strokeWidth="2" />
-                                              <path d="M48 26L42 36" stroke="#1e4480" strokeWidth="4" />
-                                              <path d="M42 36L46 44L52 46" stroke="#1e4480" strokeWidth="3" />
-                                              <path d="M42 36L36 42L38 48" stroke="#1e4480" strokeWidth="3" />
-                                              <path d="M46 28L34 26" stroke="#1e4480" strokeWidth="2.5" />
-                                              <line x1="34" y1="20" x2="34" y2="32" stroke="#1e4480" strokeWidth="3" />
-                                              <line x1="34" y1="26" x2="30" y2="26" stroke="#1e4480" strokeWidth="2" />
-                                              <circle cx="28" cy="24" r="1.5" fill="#38bdf8" />
-                                              <circle cx="26" cy="29" r="1" fill="#38bdf8" />
+                                  <div className="flex justify-around items-center w-full pt-4 mt-auto border-t border-slate-100 relative z-20">
+                                     <div className="flex flex-col items-center justify-center">
+                                        <div className="bg-[#1e4480] text-white w-20 h-20 flex items-center justify-center rounded-full shadow-xl">
+                                           <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 text-white">
+                                              <circle cx="32" cy="16" r="6" fill="currentColor" />
+                                              <path d="M26 14C26 12 30 10 34 10H38" stroke="currentColor" strokeWidth="2.5" />
+                                              <path d="M22 28C22 24 25 24 32 24C39 24 42 24 42 28V46H22V28Z" fill="currentColor" />
                                            </svg>
                                         </div>
+                                        <span className="text-[#1e4480] text-[12px] font-black tracking-wider uppercase mt-2.5">
+                                           LIMPEZA
+                                        </span>
                                      </div>
-                                     <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
-                                        Serviço que é realizado em áreas de difícil acesso, como fachadas de prédios, janelas externas e estruturas elevadas. Usamos equipamentos específicos e técnicas seguras para garantir que essas superfícies sejam limpas de maneira eficiente, mantendo a estética e a segurança dos espaços altos, onde o cuidado e a precisão são essenciais.
-                                     </p>
+
+                                     <div className="flex flex-col items-center justify-center">
+                                        <div className="bg-[#1e4480] text-white w-20 h-20 flex items-center justify-center rounded-full shadow-xl">
+                                           <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 text-white">
+                                              <circle cx="32" cy="25" r="6" fill="currentColor" />
+                                              <path d="M16 38C16 33 20 32 32 32C44 32 48 33 48 38V52H16V38Z" fill="currentColor" />
+                                           </svg>
+                                        </div>
+                                        <span className="text-[#1e4480] text-[12px] font-black tracking-wider uppercase mt-2.5">
+                                           PORTARIA
+                                        </span>
+                                     </div>
+
+                                     <div className="flex flex-col items-center justify-center">
+                                        <div className="bg-[#1e4480] text-white w-20 h-20 flex items-center justify-center rounded-full shadow-xl">
+                                           <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 text-white">
+                                              <path d="M4 42H60V54H4V42Z" fill="currentColor" />
+                                              <circle cx="22" cy="22" r="5" fill="currentColor" />
+                                           </svg>
+                                        </div>
+                                        <span className="text-[#1e4480] text-[12px] font-black tracking-wider uppercase mt-2.5">
+                                           RECEPÇÃO
+                                        </span>
+                                     </div>
+
+                                     <div className="flex flex-col items-center justify-center">
+                                        <div className="bg-[#1e4480] text-white w-20 h-20 flex items-center justify-center rounded-full shadow-xl">
+                                           <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 text-white">
+                                              <circle cx="28" cy="18" r="6" fill="currentColor" />
+                                           </svg>
+                                        </div>
+                                        <span className="text-[#1e4480] text-[12px] font-black tracking-wider uppercase mt-2.5">
+                                           MANUTENÇÃO
+                                        </span>
+                                     </div>
+
+                                     <div className="flex flex-col items-center justify-center">
+                                        <div className="bg-[#1e4480] text-white w-20 h-20 flex items-center justify-center rounded-full shadow-xl">
+                                           <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 text-white">
+                                              <circle cx="32" cy="26" r="5" fill="currentColor" />
+                                           </svg>
+                                        </div>
+                                        <span className="text-[#1e4480] text-[12px] font-black tracking-wider uppercase mt-2.5">
+                                           JARDINAGEM
+                                        </span>
+                                     </div>
                                   </div>
                                </div>
 
-                               {/* Painel inferior com as 5 categorias de serviços */}
-                               <div className="flex justify-around items-center w-full pt-4 mt-auto border-t border-slate-100 relative z-20">
-                                  {/* Categoria 1: Limpeza */}
-                                  <div className="flex flex-col items-center justify-center group cursor-pointer hover:scale-105 transition-all duration-300">
-                                     <div className="bg-[#1e4480] text-white w-24 h-24 flex items-center justify-center rounded-full shadow-xl group-hover:bg-[#1B4D3E] transition-colors duration-300">
-                                        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-white">
-                                           <circle cx="32" cy="16" r="6" fill="currentColor" />
-                                           <path d="M26 14C26 12 30 10 34 10H38" stroke="currentColor" strokeWidth="2.5" />
-                                           <path d="M22 28C22 24 25 24 32 24C39 24 42 24 42 28V46H22V28Z" fill="currentColor" />
-                                           <path d="M28 24V46M36 24V46" stroke="#1e4480" strokeWidth="1.5" />
-                                           <path d="M22 30L12 34L12 48" stroke="currentColor" strokeWidth="3.5" />
-                                           <line x1="10" y1="12" x2="10" y2="54" stroke="currentColor" strokeWidth="2.5" />
-                                           <path d="M4 54H16L18 58H2L4 54Z" fill="currentColor" />
-                                           <path d="M42 30L50 36L50 44" stroke="currentColor" strokeWidth="3.5" />
-                                           <path d="M46 44H54L56 56H44L46 44Z" fill="currentColor" />
-                                           <path d="M46 44C46 44 48 40 50 40C52 40 54 44 54 44" stroke="currentColor" strokeWidth="1.5" />
-                                        </svg>
-                                     </div>
-                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[10px] font-black tracking-wider uppercase mt-3 transition-colors duration-300">
-                                        LIMPEZA
-                                     </span>
-                                  </div>
-
-                                  {/* Categoria 2: Portaria */}
-                                  <div className="flex flex-col items-center justify-center group cursor-pointer hover:scale-105 transition-all duration-300">
-                                     <div className="bg-[#1e4480] text-white w-24 h-24 flex items-center justify-center rounded-full shadow-xl group-hover:bg-[#1B4D3E] transition-colors duration-300">
-                                        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-white">
-                                           <path d="M18 18C18 10 24 8 32 8C40 8 46 10 46 18H18Z" fill="currentColor" />
-                                           <path d="M14 18H50V20C50 20 40 22 32 22C24 22 14 20 14 20Z" fill="currentColor" />
-                                           <path d="M32 10L35 13L32 16L29 13Z" fill="#eab308" />
-                                           <circle cx="32" cy="25" r="6" fill="currentColor" />
-                                           <path d="M16 38C16 33 20 32 32 32C44 32 48 33 48 38V52H16V38Z" fill="currentColor" />
-                                           <path d="M28 32L32 40L36 32Z" fill="#ffffff" />
-                                           <path d="M31 35L33 35L33 48L31 48Z" fill="#1e4480" />
-                                           <path d="M22 36L25 38L24 41L20 41L19 38Z" fill="#eab308" />
-                                           <path d="M16 34H22" stroke="#eab308" strokeWidth="2.5" />
-                                           <path d="M42 34H48" stroke="#eab308" strokeWidth="2.5" />
-                                        </svg>
-                                     </div>
-                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[10px] font-black tracking-wider uppercase mt-3 transition-colors duration-300">
-                                        PORTARIA
-                                     </span>
-                                  </div>
-
-                                  {/* Categoria 3: Recepção */}
-                                  <div className="flex flex-col items-center justify-center group cursor-pointer hover:scale-105 transition-all duration-300">
-                                     <div className="bg-[#1e4480] text-white w-24 h-24 flex items-center justify-center rounded-full shadow-xl group-hover:bg-[#1B4D3E] transition-colors duration-300">
-                                        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-white">
-                                           <path d="M4 42H60V54H4V42Z" fill="currentColor" />
-                                           <line x1="8" y1="46" x2="56" y2="46" stroke="#1e4480" strokeWidth="2" />
-                                           <circle cx="22" cy="22" r="5" fill="currentColor" />
-                                           <path d="M17 18C15 21 16 25 22 25C28 25 29 21 27 18" stroke="currentColor" strokeWidth="2.5" />
-                                           <path d="M12 36C12 30 15 28 22 28C29 28 32 30 32 36V42H12V36Z" fill="currentColor" />
-                                           <circle cx="42" cy="22" r="5" fill="currentColor" />
-                                           <path d="M37 20C37 15 47 15 47 20" stroke="currentColor" strokeWidth="2" />
-                                           <path d="M32 36C32 30 35 28 42 28C49 28 52 30 52 36V42H32V36Z" fill="currentColor" />
-                                           <path d="M26 38L30 32H34L38 38H26Z" fill="#cbd5e1" stroke="currentColor" strokeWidth="1.5" />
-                                           <line x1="24" y1="40" x2="40" y2="40" stroke="currentColor" strokeWidth="2" />
-                                        </svg>
-                                     </div>
-                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[10px] font-black tracking-wider uppercase mt-3 transition-colors duration-300">
-                                        RECEPÇÃO
-                                     </span>
-                                  </div>
-
-                                  {/* Categoria 4: Manutenção */}
-                                  <div className="flex flex-col items-center justify-center group cursor-pointer hover:scale-105 transition-all duration-300">
-                                     <div className="bg-[#1e4480] text-white w-24 h-24 flex items-center justify-center rounded-full shadow-xl group-hover:bg-[#1B4D3E] transition-colors duration-300">
-                                        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-white">
-                                           <circle cx="48" cy="20" r="8" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" />
-                                           <path d="M48 10V12M48 28V30M38 20H40M56 20H58" stroke="currentColor" strokeWidth="2" />
-                                           <circle cx="28" cy="18" r="6" fill="currentColor" />
-                                           <path d="M22 15C22 13 26 11 31 11H36" stroke="currentColor" strokeWidth="2.5" />
-                                           <path d="M16 30C16 26 19 25 28 25C37 25 40 26 40 30V48H16V30Z" fill="currentColor" />
-                                           <path d="M38 32L48 28L48 40" stroke="currentColor" strokeWidth="3.5" />
-                                           <path d="M46 20L50 24" stroke="currentColor" strokeWidth="3.5" />
-                                           <circle cx="45" cy="19" r="3" stroke="currentColor" strokeWidth="2" fill="#1e4480" />
-                                           <circle cx="51" cy="25" r="3" stroke="currentColor" strokeWidth="2" fill="#1e4480" />
-                                           <rect x="20" y="29" width="4" height="6" rx="0.5" fill="#ffffff" />
-                                        </svg>
-                                     </div>
-                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[10px] font-black tracking-wider uppercase mt-3 transition-colors duration-300">
-                                        MANUTENÇÃO
-                                     </span>
-                                  </div>
-
-                                  {/* Categoria 5: Jardinagem */}
-                                  <div className="flex flex-col items-center justify-center group cursor-pointer hover:scale-105 transition-all duration-300">
-                                     <div className="bg-[#1e4480] text-white w-24 h-24 flex items-center justify-center rounded-full shadow-xl group-hover:bg-[#1B4D3E] transition-colors duration-300">
-                                        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-white">
-                                           <path d="M14 20C14 20 22 12 32 12C42 12 50 20 50 20H14Z" fill="currentColor" stroke="currentColor" strokeWidth="1" />
-                                           <ellipse cx="32" cy="20" rx="22" ry="3" fill="currentColor" />
-                                           <circle cx="32" cy="26" r="5" fill="currentColor" />
-                                           <path d="M18 36C18 32 21 31 32 31C43 31 46 32 46 36V50H18V36Z" fill="currentColor" />
-                                           <path d="M24 31V50M40 31V50" stroke="#1e4480" strokeWidth="2.5" />
-                                           <path d="M44 38C44 38 48 34 52 35C52 35 54 40 48 42" fill="currentColor" />
-                                           <path d="M48 30C48 30 52 27 55 30C55 30 54 35 49 33" fill="currentColor" />
-                                           <path d="M28 42H36L38 48H26L28 42Z" fill="currentColor" stroke="currentColor" strokeWidth="1.5" />
-                                           <circle cx="32" cy="38" r="2" fill="#eab308" />
-                                        </svg>
-                                     </div>
-                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[10px] font-black tracking-wider uppercase mt-3 transition-colors duration-300">
-                                        JARDINAGEM
-                                     </span>
-                                  </div>
+                               <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
+                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                  <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">05</span>
                                </div>
-
-                               {/* Rodapé do Slide 5 */}
-                               <div className="flex justify-between items-center border-t border-slate-100 pt-3 mt-4 pr-28 relative z-20 text-slate-500">
-                                  <span className="text-[9px] font-bold uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                                  <span className="text-[9px] font-black bg-slate-100 px-2.5 py-0.5 rounded">05</span>
-                                </div>
                             </div>
                          )}
 
-{/* SLIDE 06 (SETORES ATENDIDOS - COM OS ICONS E COLUNAS DE INDUSTRIA E VAREJO) */}
                          {currentSlide === 6 && (
-                            <div className="absolute inset-0 w-full h-full flex flex-col justify-between z-10 animate-fadeIn bg-[#1e4480] text-white overflow-hidden p-16">
-                               {/* Linhas diagonais decorativas da marca */}
+                            <div className="w-full h-full bg-[#1e4480] p-16 flex flex-col justify-between relative overflow-hidden text-white rounded-2xl border border-slate-200 select-none">
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
                                   <line x1="-50" y1="150" x2="350" y2="-250" stroke="#FFFFFF" strokeWidth="10" />
-                                  <line x1="-50" y1="200" x2="400" y2="-250" stroke="#FFFFFF" strokeWidth="6" />
-                                  <line x1="-50" y1="250" x2="450" y2="-250" stroke="#FFFFFF" strokeWidth="3" />
                                   <line x1="600" y1="800" x2="1100" y2="300" stroke="#FFFFFF" strokeWidth="10" />
-                                  <line x1="650" y1="800" x2="1150" y2="300" stroke="#FFFFFF" strokeWidth="6" />
-                                  <line x1="700" y1="800" x2="1200" y2="300" stroke="#FFFFFF" strokeWidth="3" />
                                </svg>
-
-                               <div className="grid grid-cols-12 gap-6 items-center h-[calc(100%-110px)] relative z-10">
-                                  {/* Coluna do Título (Esquerda) */}
-                                  <div className="col-span-4 flex flex-col justify-center h-full pr-2">
-                                     <h2 className="text-3xl font-black text-white uppercase tracking-tight leading-none">
-                                        SETORES<br />
-                                        ATENDIDOS
+                               
+                               <div className="relative z-10 flex flex-col h-[calc(100%-30px)] justify-between text-white">
+                                  <div>
+                                     <h2 className="text-3xl font-black text-white uppercase tracking-tight leading-none mb-6">
+                                        SETORES ATENDIDOS
                                      </h2>
-                                  </div>
 
-                                  {/* Coluna 1 (Centro) - Industria */}
-                                  <div className="col-span-4 flex flex-col space-y-2 h-full justify-center">
-                                     <div className="flex flex-col border-b border-white/20 pb-2">
-                                        <div className="w-8 h-1 bg-white mb-2"></div>
-                                        <div className="flex items-center justify-between gap-2">
-                                           <span className="text-white text-[10px] font-black tracking-wide uppercase leading-tight">
-                                              INDUSTRIA
-                                           </span>
-                                           <div className="bg-white/10 p-1.5 rounded-xl text-white shrink-0">
-                                              <Factory size={18} className="stroke-[2.5]" />
+                                     <div className="grid grid-cols-2 gap-12 mt-2">
+                                        <div className="flex flex-col space-y-3">
+                                           <div className="flex flex-col border-b border-white/20 pb-2">
+                                              <div style={{ width: '48px', height: '4px', backgroundColor: 'white', marginBottom: '8px' }}></div>
+                                              <div className="flex items-center justify-between gap-4">
+                                                 <span className="text-white text-[15px] font-black tracking-wide uppercase leading-tight">
+                                                    INDÚSTRIA
+                                                 </span>
+                                                 <div className="bg-white/10 p-2 rounded-xl text-white shrink-0 shadow-sm">
+                                                    <Factory size={22} className="stroke-[2.5]" />
+                                                 </div>
+                                              </div>
                                            </div>
+                                           <p className="text-white/90 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
+                                              Com processos minuciosos e detalhados, o setor industrial trouxe para o escopo da JVS Facilities a capacidade de atender clientes de alta exigência. Possuímos qualidade técnica validada no mercado para atender as mais variadas necessidades da indústria.
+                                           </p>
+                                        </div>
+
+                                        <div className="flex flex-col space-y-3 pl-2">
+                                           <div className="flex flex-col border-b border-white/20 pb-2">
+                                              <div style={{ width: '48px', height: '4px', backgroundColor: 'white', marginBottom: '8px' }}></div>
+                                              <div className="flex items-center justify-between gap-4">
+                                                 <span className="text-white text-[15px] font-black tracking-wide uppercase leading-tight">
+                                                    VAREJO
+                                                 </span>
+                                                 <div className="bg-white/10 p-2 rounded-xl text-white shrink-0 shadow-sm">
+                                                    <Store size={22} className="stroke-[2.5]" />
+                                                 </div>
+                                              </div>
+                                           </div>
+                                           <p className="text-white/90 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
+                                              Um dos setores com maior participação em nossa carteira de clientes, o varejo exigiu resiliência e trabalho árduo em busca de superar os desafios operacionais, que por fim, resultaram em constantes avaliações positivas de satisfação e controle dos indicadores de rotatividade e absenteísmo.
+                                           </p>
                                         </div>
                                      </div>
-                                     <p className="text-white/80 text-[8.5px] font-semibold leading-relaxed">
-                                        Com processos minuciosos e detalhados, o setor industrial trouxe para o escopo da JVS Facilities a capacidade de atender clientes de alta exigência. Possuímos qualidade técnica validada no mercado para atender as mais variadas necessidades da industria.
-                                     </p>
                                   </div>
 
-                                  {/* Coluna 2 (Direita) - Varejo */}
-                                  <div className="col-span-4 flex flex-col space-y-2 h-full justify-center pl-2">
-                                     <div className="flex flex-col border-b border-white/20 pb-2">
-                                        <div className="w-8 h-1 bg-white mb-2"></div>
-                                        <div className="flex items-center justify-between gap-2">
-                                           <span className="text-white text-[10px] font-black tracking-wide uppercase leading-tight">
-                                              VAREJO
-                                           </span>
-                                           <div className="bg-white/10 p-1.5 rounded-xl text-white shrink-0">
-                                              <Store size={18} className="stroke-[2.5]" />
-                                           </div>
+                                  <div className="flex justify-around items-center w-full pt-4 mt-auto border-t border-white/20 relative z-20">
+                                     <div className="flex flex-col items-center justify-center">
+                                        <div className="bg-white text-[#1e4480] shadow-xl w-14 h-14 flex items-center justify-center rounded-full">
+                                           <Bus size={22} className="stroke-[2]" />
                                         </div>
+                                        <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[100px] leading-tight">
+                                           TRANSPORTE<br />E LOGÍSTICA
+                                        </span>
                                      </div>
-                                     <p className="text-white/80 text-[8.5px] font-semibold leading-relaxed">
-                                        Um dos setores com maior participação em nossa carteira de clientes, o varejo exigiu resiliência e trabalho árduo em busca de superar os desafios operacionais, que por fim, resultaram em constantes avaliações positivas de satisfação e controle dos indicadores de rotatividade e absenteísmo.
-                                     </p>
+
+                                     <div className="flex flex-col items-center justify-center">
+                                        <div className="bg-white text-[#1e4480] shadow-xl w-14 h-14 flex items-center justify-center rounded-full">
+                                           <Building size={22} className="stroke-[2]" />
+                                        </div>
+                                        <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[110px] leading-tight">
+                                           CONDOMÍNIOS<br />E EDIFÍCIOS
+                                        </span>
+                                     </div>
+
+                                     <div className="flex flex-col items-center justify-center">
+                                        <div className="bg-white text-[#1e4480] shadow-xl w-14 h-14 flex items-center justify-center rounded-full">
+                                           <Hospital size={22} className="stroke-[2]" />
+                                        </div>
+                                        <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[100px] leading-tight">
+                                           CLÍNICAS E<br />HOSPITAIS
+                                        </span>
+                                     </div>
+
+                                     <div className="flex flex-col items-center justify-center">
+                                        <div className="bg-white text-[#1e4480] shadow-xl w-14 h-14 flex items-center justify-center rounded-full">
+                                           <ShoppingBag size={22} className="stroke-[2]" />
+                                        </div>
+                                        <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[100px] leading-tight">
+                                           SHOPPING<br />CENTERS
+                                        </span>
+                                     </div>
+
+                                     <div className="flex flex-col items-center justify-center">
+                                        <div className="bg-white text-[#1e4480] shadow-xl w-14 h-14 flex items-center justify-center rounded-full">
+                                           <GraduationCap size={22} className="stroke-[2]" />
+                                        </div>
+                                        <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[120px] leading-tight">
+                                           ESTABELECIMENTOS<br />EDUCACIONAIS
+                                        </span>
+                                     </div>
                                   </div>
                                </div>
 
-                               {/* Painel inferior com as 5 categorias de setores */}
-                               <div className="flex justify-around items-center w-full pt-4 mt-auto border-t border-white/20 relative z-20">
-                                  {/* Setor 1: Transporte */}
-                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
-                                     <div className="bg-white text-[#1e4480] group-hover:scale-110 transition-all duration-300 shadow-md w-12 h-12 flex items-center justify-center rounded-full">
-                                        <Bus size={20} className="stroke-[2]" />
-                                     </div>
-                                     <span className="text-white text-[8px] font-black tracking-wider uppercase mt-2 text-center max-w-[80px] leading-tight">
-                                        TRANSPORTE<br />E LOGÍSTICA
-                                     </span>
-                                  </div>
-
-                                  {/* Setor 2: Condominios */}
-                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
-                                     <div className="bg-white text-[#1e4480] group-hover:scale-110 transition-all duration-300 shadow-md w-12 h-12 flex items-center justify-center rounded-full">
-                                        <Building size={20} className="stroke-[2]" />
-                                     </div>
-                                     <span className="text-white text-[8px] font-black tracking-wider uppercase mt-2 text-center max-w-[90px] leading-tight">
-                                        CONDOMÍNIOS<br />E EDIFÍCIOS
-                                     </span>
-                                  </div>
-
-                                  {/* Setor 3: Clinicas */}
-                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
-                                     <div className="bg-white text-[#1e4480] group-hover:scale-110 transition-all duration-300 shadow-md w-12 h-12 flex items-center justify-center rounded-full">
-                                        <Hospital size={20} className="stroke-[2]" />
-                                     </div>
-                                     <span className="text-white text-[8px] font-black tracking-wider uppercase mt-2 text-center max-w-[80px] leading-tight">
-                                        CLÍNICAS E<br />HOSPITAIS
-                                     </span>
-                                  </div>
-
-                                  {/* Setor 4: Shoppings */}
-                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
-                                     <div className="bg-white text-[#1e4480] group-hover:scale-110 transition-all duration-300 shadow-md w-12 h-12 flex items-center justify-center rounded-full">
-                                        <ShoppingBag size={20} className="stroke-[2]" />
-                                     </div>
-                                     <span className="text-white text-[8px] font-black tracking-wider uppercase mt-2 text-center max-w-[80px] leading-tight">
-                                        SHOPPING<br />CENTERS
-                                     </span>
-                                  </div>
-
-                                  {/* Setor 5: Educacionais */}
-                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
-                                     <div className="bg-white text-[#1e4480] group-hover:scale-110 transition-all duration-300 shadow-md w-12 h-12 flex items-center justify-center rounded-full">
-                                        <GraduationCap size={20} className="stroke-[2]" />
-                                     </div>
-                                     <span className="text-white text-[8px] font-black tracking-wider uppercase mt-2 text-center max-w-[100px] leading-tight">
-                                        ESTABELECIMENTOS<br />EDUCACIONAIS
-                                     </span>
-                                  </div>
-                               </div>
-
-                               {/* Rodapé do Slide 6 */}
-                               <div className="flex justify-between items-center border-t border-white/20 pt-3 mt-4 pr-28 relative z-20 text-white/60">
-                                  <span className="text-[9px] font-bold uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                                  <span className="text-[9px] font-black bg-white/10 px-2.5 py-0.5 rounded">06</span>
+                               <div className="flex justify-between items-center border-t border-white/20 pt-4 mt-auto">
+                                  <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                  <span className="text-[9px] font-black text-white/80 bg-white/10 px-2.5 py-0.5 rounded">06</span>
                                </div>
                             </div>
                          )}
-
-                         {/* SLIDE 07 (PRINCIPAIS FERRAMENTAS - DIVIDIDO LADO A LADO) */}
+{/* SLIDE 07 (PRINCIPAIS FERRAMENTAS - DIVIDIDO LADO A LADO) */}
                          {currentSlide === 7 && (
                             <div className="absolute inset-0 w-full h-full grid grid-cols-2 z-10 animate-fadeIn bg-white overflow-hidden">
                                {/* Metade Esquerda (Branca) */}
@@ -3326,55 +3219,46 @@ function PropostaEditor() {
                             </div>
                           )}
 
-{/* SLIDE 04 (QUADRO EFETIVO - TABELA AUTOMÁTICA DA ABA 4) */}
+
                          {currentSlide === 9 && (
-                            <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 text-slate-800 overflow-hidden bg-white">
-                               {/* Linhas diagonais decorativas da marca */}
-                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
-                                  <line x1="-50" y1="150" x2="350" y2="-250" stroke="#1e4480" strokeWidth="10" />
-                                  <line x1="-50" y1="200" x2="400" y2="-250" stroke="#1e4480" strokeWidth="6" />
-                                  <line x1="-50" y1="250" x2="450" y2="-250" stroke="#1e4480" strokeWidth="3" />
-                                  
-                                  <line x1="600" y1="800" x2="1100" y2="300" stroke="#1e4480" strokeWidth="10" />
-                                  <line x1="650" y1="800" x2="1150" y2="300" stroke="#1e4480" strokeWidth="6" />
-                                  <line x1="700" y1="800" x2="1200" y2="300" stroke="#1e4480" strokeWidth="3" />
+                            <div className="w-full h-full bg-white p-12 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none">
+                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
+                                  <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
+                                  <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
                                </svg>
 
-                               <div className="flex flex-col justify-between h-full relative z-10">
-                                  <div className="flex justify-between items-start">
-                                     <h2 className="text-3xl font-black text-[#1e4480] tracking-tight leading-none uppercase">
-                                        PROPOSTA
-                                     </h2>
-                                     <img 
-                                        src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                        alt="JVS Facilities Logo" 
-                                        className="max-h-10 w-auto object-contain"
-                                     />
+                               <div className="flex flex-col justify-between h-full relative z-10 w-full">
+                                  <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
+                                     <div className="flex flex-col">
+                                        <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                        <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">QUADRO DE EQUIPE EFETIVO</h2>
+                                     </div>
+                                     <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
 
-                                  <div className="my-auto w-full max-w-5xl mx-auto space-y-4">
-                                     <div className="w-full bg-white rounded-xl border border-slate-200/80 shadow-lg overflow-hidden">
-                                        <div className="bg-[#1e4480] text-center py-2">
+                                  <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-stretch">
+                                     <div className="col-span-8 bg-white rounded-2xl border border-slate-150 shadow-lg overflow-hidden flex flex-col">
+                                        <div className="bg-[#1e4480] text-center py-3">
                                            <h3 className="text-white text-xs font-black tracking-widest uppercase">{proposta.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções'}</h3>
                                         </div>
-                                        <div className="overflow-y-auto max-h-[160px]">
+                                        <div className="flex-1">
                                            <table className="w-full text-left border-collapse">
                                               <thead>
-                                                 <tr className="bg-[#1e4480]/90 text-white text-[9px] font-black uppercase tracking-wider border-b border-slate-200">
-                                                    <th className="px-4 py-2">Função</th>
-                                                    <th className="px-4 py-2 text-center w-20">Quantidade</th>
-                                                    <th className="px-4 py-2 text-center w-28">Escala</th>
-                                                    <th className="px-4 py-2 text-center w-32">Horário</th>
+                                                 <tr className="bg-slate-50 text-[#1e4480] text-[10px] font-black uppercase tracking-wider border-b border-slate-200">
+                                                    <th className="px-5 py-3">Função</th>
+                                                    <th className="px-5 py-3 text-center w-24">Qtd.</th>
+                                                    <th className="px-5 py-3 text-center w-28">Escala</th>
+                                                    <th className="px-5 py-3 text-center w-36">Horário</th>
                                                  </tr>
                                               </thead>
                                               <tbody>
                                                  {proposta.equipe && proposta.equipe.length > 0 ? (
                                                     proposta.equipe.map((p: any, idx: number) => (
-                                                       <tr key={p.id || idx} className={`border-b border-slate-100 text-[10px] font-bold text-slate-700 hover:bg-slate-50/50 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
-                                                          <td className="px-4 py-2 font-black text-slate-800">{p.nomeCargo || "Selecione a Função"}</td>
-                                                          <td className="px-4 py-2 text-center">{(p.quantidade || 0).toFixed(2).replace('.', ',')}</td>
-                                                          <td className="px-4 py-2 text-center">{p.escala || "Á definir"}</td>
-                                                          <td className="px-4 py-2 text-center font-semibold text-slate-600">
+                                                       <tr key={p.id || idx} className={`border-b border-slate-100 text-[10px] font-bold text-slate-700 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}`}>
+                                                          <td className="px-5 py-3.5 font-black text-slate-800">{p.nomeCargo || "Selecione a Função"}</td>
+                                                          <td className="px-5 py-3.5 text-center font-black text-[#1e4480]">{(p.quantidade || 0).toFixed(2).replace('.', ',')}</td>
+                                                          <td className="px-5 py-3.5 text-center">{p.escala || "A definir"}</td>
+                                                          <td className="px-5 py-3.5 text-center font-semibold text-slate-500">
                                                              {p.parametrosPosto?.horarioInicio && p.parametrosPosto?.horarioFim 
                                                                 ? `${p.parametrosPosto.horarioInicio} às ${p.parametrosPosto.horarioFim}` 
                                                                 : '08:00 às 17:00'}
@@ -3383,7 +3267,7 @@ function PropostaEditor() {
                                                     ))
                                                  ) : (
                                                     <tr className="border-b border-slate-100 text-[10px] font-semibold text-slate-400 italic">
-                                                       <td colSpan={4} className="px-4 py-6 text-center">Nenhum posto inserido no Quadro de Equipe (Aba 4).</td>
+                                                       <td colSpan={4} className="px-5 py-8 text-center bg-slate-50/10">Nenhum posto de trabalho inserido.</td>
                                                     </tr>
                                                  )}
                                               </tbody>
@@ -3391,393 +3275,344 @@ function PropostaEditor() {
                                         </div>
                                      </div>
 
-                                     {/* Cláusulas Operacionais */}
-                                     <div className="pl-4 space-y-1 select-none">
-                                        {(() => {
-                                           const clausulas = proposta.cliente.quadroEfetivoClausulas || [
-                                              proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
-                                              proposta.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
-                                              proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
-                                           ];
-                                           return clausulas.map((c: string, cIdx: number) => (
-                                              <div key={cIdx} className="flex items-start gap-3 animate-fadeIn">
-                                                 <span className="text-[#1e4480] text-[8.5px] font-black mt-0.5 select-none">•</span>
-                                                 <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                                    {c}
-                                                 </p>
-                                              </div>
-                                           ));
-                                        })()}
+                                     <div className="col-span-4 flex flex-col justify-center">
+                                        <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-6 shadow-xs space-y-4">
+                                           <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+                                              <div className="w-2 h-4 bg-[#1e4480] rounded-full shrink-0"></div>
+                                              <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Diretrizes Operacionais</h4>
+                                           </div>
+                                           <div className="space-y-3">
+                                              {(() => {
+                                                 const clausulas = proposta.cliente.quadroEfetivoClausulas || [
+                                                    proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
+                                                    proposta.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
+                                                    proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
+                                                 ];
+                                                 return clausulas.map((c: string, cIdx: number) => (
+                                                    <div key={cIdx} className="flex items-start gap-2.5">
+                                                       <svg className="w-4 h-4 text-[#1e4480] shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                                       </svg>
+                                                       <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">{c}</p>
+                                                    </div>
+                                                 ));
+                                              })()}
+                                           </div>
+                                        </div>
                                      </div>
                                   </div>
 
-                                  <div className="flex justify-between items-end w-full text-slate-400 text-[10px] font-extrabold uppercase tracking-wider pr-28">
+                                  <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
                                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                                     <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">08</span>
+                                     <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">09</span>
                                   </div>
                                </div>
                             </div>
                          )}
 
-                          {currentSlide === 10 && (
-                             <div className="w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-full text-slate-800 select-none">
-                                {/* Top Header */}
-                                <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
-                                   <div className="flex flex-col">
-                                      <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
-                                      <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUÍDOS</h2>
-                                   </div>
-                                   <img 
-                                      src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                      alt="JVS Facilities Logo" 
-                                      className="max-h-10 w-auto object-contain"
-                                   />
-                                </div>
+                         {currentSlide === 10 && (
+                            <div className="w-full h-full bg-white p-12 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none">
+                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
+                                  <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
+                                  <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
+                               </svg>
 
-                                {/* Table Body */}
-                                <div className="my-auto w-full max-w-4xl mx-auto space-y-4">
-                                   <div className="w-full bg-white rounded-xl border border-slate-200/80 shadow-lg overflow-hidden">
-                                      <div className="overflow-y-auto max-h-[220px]">
-                                         <table className="w-full text-left border-collapse">
-                                            <thead>
-                                               <tr className="bg-[#1e4480] text-white text-[9px] font-black uppercase tracking-wider">
-                                                  <th className="px-4 py-2 w-48">Item</th>
-                                                  <th className="px-4 py-2">Descrição</th>
-                                                  <th className="px-4 py-2 text-center w-28">Incluso</th>
-                                               </tr>
-                                            </thead>
-                                            <tbody>
-                                               {(proposta.itensInclusosExcluidos || []).map((p: any, idx: number) => (
-                                                  <tr 
-                                                     key={p.id || idx} 
-                                                     className={`border-b border-slate-100 text-[9.5px] font-bold text-slate-700 hover:bg-slate-50/50 cursor-pointer transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}
-                                                     onClick={() => {
-                                                        const newList = proposta.itensInclusosExcluidos.map((item: any) =>
-                                                           item.id === p.id ? { ...item, incluso: !item.incluso } : item
-                                                        );
-                                                        setProposta({ ...proposta, itensInclusosExcluidos: newList });
-                                                     }}
-                                                  >
-                                                     <td className="px-4 py-2.5 font-black text-slate-800">{String(idx + 1).padStart(2, '0')}</td>
-                                                     <td className="px-4 py-2.5 font-semibold text-slate-600 leading-tight">{p.descricao}</td>
-                                                     <td className="px-4 py-2.5 text-center">
-                                                        {p.incluso ? (
-                                                           <svg className="w-5 h-5 text-emerald-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
-                                                           </svg>
-                                                        ) : (
-                                                           <div className="w-4 h-4 rounded border-2 border-slate-300 mx-auto bg-slate-50 hover:border-[#1e4480] transition-colors"></div>
-                                                        )}
-                                                     </td>
-                                                  </tr>
-                                               ))}
-                                            </tbody>
-                                         </table>
-                                      </div>
-                                   </div>
-                                </div>
+                               <div className="relative z-10 flex flex-col h-full justify-between">
+                                  <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
+                                     <div className="flex flex-col">
+                                        <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                        <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUSÍDOS</h2>
+                                     </div>
+                                     <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
+                                  </div>
 
-                                {/* Footer */}
-                                <div className="flex justify-between items-end w-full text-slate-400 text-[10px] font-extrabold uppercase tracking-wider pr-28">
-                                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                                   <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">09</span>
-                                </div>
-                             </div>
-                          )}
+                                  <div className="my-auto w-full max-w-4xl mx-auto">
+                                     <div className="w-full bg-white rounded-2xl border border-slate-150 shadow-lg overflow-hidden">
+                                        <table className="w-full text-left border-collapse">
+                                           <thead>
+                                              <tr className="bg-[#1e4480] text-white text-[10px] font-black uppercase tracking-wider border-b border-slate-200">
+                                                 <th className="px-6 py-3.5 w-32">Item</th>
+                                                 <th className="px-6 py-3.5">Descrição</th>
+                                                 <th className="px-6 py-3.5 text-center w-40">Status</th>
+                                              </tr>
+                                           </thead>
+                                           <tbody>
+                                              {(proposta.itensInclusosExcluidos || []).map((p: any, idx: number) => (
+                                                 <tr key={p.id || idx} className={`border-b border-slate-100 text-[10px] font-bold text-slate-700 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}`}>
+                                                    <td className="px-6 py-3.5 font-black text-slate-500">{String(idx + 1).padStart(2, '0')}</td>
+                                                    <td className="px-6 py-3.5 font-semibold text-slate-800 leading-normal">{p.descricao}</td>
+                                                    <td className="px-6 py-3.5 text-center">
+                                                       {p.incluso ? (
+                                                          <div className="w-7 h-7 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mx-auto shadow-xs">
+                                                             <svg className="w-4 h-4 stroke-[3.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path>
+                                                             </svg>
+                                                          </div>
+                                                       ) : (
+                                                          <div className="w-7 h-7 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-400 mx-auto opacity-90 shadow-xs">
+                                                             <svg className="w-3.5 h-3.5 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                                                             </svg>
+                                                          </div>
+                                                       )}
+                                                    </td>
+                                                 </tr>
+                                              ))}
+                                           </tbody>
+                                        </table>
+                                     </div>
+                                  </div>
 
-                          {currentSlide === 11 && (() => {
-                             const fc = formatCurrency;
-                             const divisorTributos = resultado?.divisor || 1;
-                             const txAdm = (proposta.premissas.taxaAdm || 0) / 100;
-                             const txLucro = (proposta.premissas.margemLucro || 0) / 100;
-                             
-                             const applyCascata = (custo: any) => {
-                               const cD = Number(custo) || 0;
-                               const comAdm = cD * (1 + txAdm);
-                               const comLucro = comAdm * (1 + txLucro);
-                               return divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
-                             };
+                                  <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
+                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                     <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">10</span>
+                                  </div>
+                               </div>
+                            </div>
+                         )}
 
-                             const maoDeObraSubtotal = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
-                             const insumosSubtotal = applyCascata(
-                               Number(proposta.insumos.materiais || 0) + 
-                               Number(proposta.insumos.maquinas || 0) + 
-                               Number(proposta.insumos.descartaveis || 0) + 
-                               Number(proposta.insumos.servicos || 0)
-                             );
+                         {currentSlide === 11 && (() => {
+                            const fc = formatCurrency;
+                            const divisorTributos = resultado?.divisor || 1;
+                            const txAdm = (proposta.premissas.taxaAdm || 0) / 100;
+                            const txLucro = (proposta.premissas.margemLucro || 0) / 100;
+                            
+                            const applyCascata = (custo: any) => {
+                              const cD = Number(custo) || 0;
+                              const comAdm = cD * (1 + txAdm);
+                              const comLucro = comAdm * (1 + txLucro);
+                              return divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
+                            };
 
-                             return (
-                                <div className="w-full aspect-[16/9] border border-slate-200 bg-white p-12 flex flex-col justify-between relative overflow-hidden h-full text-slate-800 select-none">
-                                   {/* Top Header */}
-                                   <div className="flex justify-between items-center w-full pb-3 border-b border-slate-100">
-                                      <div className="flex flex-col">
-                                         <span className="text-[#1e4480] text-[9px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
-                                         <h2 className="text-lg font-black text-[#1e4480] uppercase tracking-tight">RESUMO DA PROPOSTA COMERCIAL</h2>
-                                      </div>
-                                      <img 
-                                         src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                         alt="JVS Facilities Logo" 
-                                         className="max-h-8 w-auto object-contain"
-                                      />
-                                   </div>
+                            const maoDeObraSubtotal = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
+                            const insumosSubtotal = applyCascata(
+                              Number(proposta.insumos.materiais || 0) + 
+                              Number(proposta.insumos.maquinas || 0) + 
+                              Number(proposta.insumos.descartaveis || 0) + 
+                              Number(proposta.insumos.servicos || 0)
+                            );
 
-                                   {/* Main Split Grid */}
-                                   <div className="my-auto grid grid-cols-2 gap-6 w-full max-w-5xl mx-auto items-stretch">
-                                      {/* Left Column: Mão de Obra */}
-                                      <div className="bg-slate-50/50 rounded-xl border border-slate-150 p-4 flex flex-col justify-between shadow-sm">
-                                         <div>
-                                            <div className="flex items-center gap-2 mb-3">
-                                               <div className="w-2.5 h-2.5 rounded-full bg-[#1e4480]"></div>
-                                               <h3 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">1) Mão de Obra — Efetivo</h3>
-                                            </div>
-                                            <div className="overflow-y-auto max-h-[140px] pr-1">
-                                               <table className="w-full text-left text-[9px]">
-                                                  <thead>
-                                                     <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
-                                                        <th className="py-1">Função</th>
-                                                        <th className="py-1 text-center w-8">Qtd.</th>
-                                                        <th className="py-1 text-right w-16">Unit.</th>
-                                                        <th className="py-1 text-right w-20">Total</th>
-                                                     </tr>
-                                                  </thead>
-                                                  <tbody>
-                                                     {proposta.equipe.length === 0 ? (
-                                                        <tr>
-                                                           <td colSpan={4} className="py-4 text-center text-slate-400 italic">Nenhum colaborador no Quadro de Equipe.</td>
-                                                        </tr>
-                                                     ) : (
-                                                        proposta.equipe.map((p: any, idx: number) => {
-                                                           const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
-                                                           const precoVendaItem = itemRes?.precoVenda || 0;
-                                                           const precoUnitario = p.quantidade > 0 ? precoVendaItem / p.quantidade : 0;
-                                                           return (
-                                                              <tr key={p.id} className="border-b border-slate-100 text-slate-700">
-                                                                 <td className="py-1.5 font-bold">{p.nomeCargo}</td>
-                                                                 <td className="py-1.5 text-center font-black text-slate-600">{p.quantidade}</td>
-                                                                 <td className="py-1.5 text-right text-slate-500 font-semibold">{fc(precoUnitario)}</td>
-                                                                 <td className="py-1.5 text-right font-bold text-slate-800">{fc(precoVendaItem)}</td>
-                                                               </tr>
-                                                           );
-                                                        })
-                                                     )}
-                                                  </tbody>
-                                               </table>
-                                            </div>
-                                         </div>
-                                         <div className="border-t border-slate-200 pt-3 mt-3 flex justify-between items-center text-[10px]">
-                                            <span className="font-extrabold text-slate-500 uppercase tracking-wider">Subtotal Mão de Obra</span>
-                                            <span className="font-black text-[#1e4480] text-xs">{fc(maoDeObraSubtotal)}</span>
-                                         </div>
-                                      </div>
+                            const renderInsumoRow = (label: string, value: number) => {
+                               const isZero = value === 0;
+                               return (
+                                  <tr key={label} className={`border-b border-slate-100 ${isZero ? 'opacity-40 text-slate-400 bg-slate-50/10' : 'text-slate-700 font-bold'}`}>
+                                     <td className="py-3 px-4 font-semibold">{label}</td>
+                                     <td className={`py-3 px-4 text-right font-black ${isZero ? 'text-slate-300' : 'text-slate-800'}`}>
+                                        {isZero ? '-' : fc(value)}
+                                     </td>
+                                  </tr>
+                               );
+                            };
 
-                                      {/* Right Column: Insumos & Total Geral */}
-                                      <div className="flex flex-col justify-between gap-4">
-                                         {/* Insumos Table */}
-                                         <div className="bg-slate-50/50 rounded-xl border border-slate-150 p-4 shadow-sm">
-                                            <div className="flex items-center gap-2 mb-2">
-                                               <div className="w-2.5 h-2.5 rounded-full bg-slate-500"></div>
-                                               <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-wider">2) Materiais, Equipamentos e Serviços</h3>
-                                            </div>
-                                            <table className="w-full text-left text-[9px]">
-                                               <tbody>
-                                                  <tr className="border-b border-slate-100 text-slate-700">
-                                                     <td className="py-1.5 font-bold">Materiais e Produtos de Limpeza</td>
-                                                     <td className="py-1.5 text-right font-black">{fc(applyCascata(proposta.insumos.materiais))}</td>
-                                                  </tr>
-                                                  <tr className="border-b border-slate-100 text-slate-700">
-                                                     <td className="py-1.5 font-bold">Máquinas e Equipamentos</td>
-                                                     <td className="py-1.5 text-right font-black">{fc(applyCascata(proposta.insumos.maquinas))}</td>
-                                                  </tr>
-                                                  <tr className="border-b border-slate-100 text-slate-700">
-                                                     <td className="py-1.5 font-bold">Descartáveis</td>
-                                                     <td className="py-1.5 text-right font-black">{fc(applyCascata(proposta.insumos.descartaveis))}</td>
-                                                  </tr>
-                                                  <tr className="border-b border-slate-100 text-slate-700">
-                                                     <td className="py-1.5 font-bold">
-                                                        Serviços ${proposta.insumos.servicosDescricao ? `(${proposta.insumos.servicosDescricao})` : ''}
-                                                     </td>
-                                                     <td className="py-1.5 text-right font-black">{fc(applyCascata(proposta.insumos.servicos))}</td>
-                                                  </tr>
-                                               </tbody>
-                                            </table>
-                                            <div className="border-t border-slate-200 pt-2.5 mt-2 flex justify-between items-center text-[10px]">
-                                               <span className="font-extrabold text-slate-500 uppercase tracking-wider">Subtotal Insumos</span>
-                                               <span className="font-black text-slate-700 text-xs">{fc(insumosSubtotal)}</span>
-                                            </div>
-                                         </div>
+                            return (
+                               <div className="w-full h-full bg-white p-12 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none">
+                                  <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
+                                     <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
+                                     <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
+                                  </svg>
 
-                                         {/* Total Card */}
-                                         <div className="bg-gradient-to-r from-[#1B4D3E] to-[#12382d] rounded-xl p-4 text-white flex justify-between items-center shadow-md relative overflow-hidden">
-                                            <div className="absolute right-[-10px] top-[-10px] w-20 h-20 bg-white/5 rounded-full"></div>
-                                            <div>
-                                               <h4 className="text-[8px] font-black uppercase tracking-widest text-emerald-400 mb-0.5">VALOR FINAL DA VENDA</h4>
-                                               <p className="text-[11px] font-extrabold text-white tracking-tight uppercase">TOTAL GERAL DA PROPOSTA</p>
-                                            </div>
-                                            <div className="text-2xl font-black text-emerald-400 tracking-tight z-10">
-                                               {fc(resultado?.faturamentoBruto || 0)}
-                                            </div>
-                                         </div>
-                                      </div>
-                                   </div>
+                                  <div className="relative z-10 flex flex-col h-full justify-between">
+                                     <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
+                                        <div className="flex flex-col">
+                                           <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                           <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">RESUMO DA PROPOSTA COMERCIAL</h2>
+                                        </div>
+                                        <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
+                                     </div>
 
-                                   {/* Footer */}
-                                   <div className="flex justify-between items-end w-full text-slate-400 text-[10px] font-extrabold uppercase tracking-wider pr-28">
-                                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                                      <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">10</span>
-                                   </div>
-                                </div>
-                             );
-                          })()}
+                                     <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-stretch">
+                                        <div className="col-span-7 bg-white rounded-2xl border border-slate-150 shadow-lg overflow-hidden flex flex-col justify-between">
+                                           <table className="w-full text-left border-collapse text-[10px]">
+                                              <thead>
+                                                 <tr className="bg-[#1e4480] text-white text-[10px] font-black uppercase tracking-wider border-b border-slate-200">
+                                                    <th className="py-3.5 px-4">Grupo de Custo</th>
+                                                    <th className="py-3.5 px-4 text-right">Valor Mensal</th>
+                                                 </tr>
+                                              </thead>
+                                              <tbody>
+                                                 <tr className="border-b border-slate-100 text-slate-700 font-bold">
+                                                    <td className="py-3.5 px-4 font-black">Mão de Obra Efetiva (Postos)</td>
+                                                    <td className="py-3.5 px-4 text-right font-black text-[#1e4480]">{fc(maoDeObraSubtotal)}</td>
+                                                 </tr>
+                                                 {renderInsumoRow('Materiais e Equipamentos', applyCascata(Number(proposta.insumos.materiais || 0) + Number(proposta.insumos.maquinas || 0)))}
+                                                 {renderInsumoRow('Descartáveis e Higiene', applyCascata(Number(proposta.insumos.descartaveis || 0)))}
+                                                 {renderInsumoRow('Outros Serviços / Operações', applyCascata(Number(proposta.insumos.servicos || 0)))}
+                                              </tbody>
+                                           </table>
+                                           
+                                           <div className="bg-slate-50 border-t border-slate-150 p-4 flex justify-between items-center mt-auto">
+                                              <span className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Valor Total Mensal Proposto</span>
+                                              <span className="text-lg font-black text-[#1b4d3e] bg-emerald-50 border border-emerald-250 px-4 py-1.5 rounded-xl shadow-xs">
+                                                 {fc((resultado?.totalGeral || 0) + insumosSubtotal)}
+                                              </span>
+                                           </div>
+                                        </div>
 
-                          {currentSlide === 12 && (
-                             <div className="w-full aspect-[16/9] border border-slate-200 bg-[#1e4480] p-12 flex flex-col justify-between relative overflow-hidden h-full text-white select-none">
-                                {/* Fundo decorativo sutil */}
-                                <div className="absolute inset-0 opacity-10 pointer-events-none">
-                                   <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                                      <line x1="-50" y1="100" x2="400" y2="-200" stroke="white" strokeWidth="8" />
-                                      <line x1="-50" y1="150" x2="450" y2="-200" stroke="white" strokeWidth="4" />
-                                      <line x1="500" y1="600" x2="1000" y2="200" stroke="white" strokeWidth="8" />
-                                      <line x1="550" y1="600" x2="1050" y2="200" stroke="white" strokeWidth="4" />
-                                   </svg>
-                                </div>
+                                        <div className="col-span-5 flex flex-col justify-center">
+                                           <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-6 shadow-xs space-y-4">
+                                              <div className="flex items-center gap-2 border-b border-slate-255 pb-2">
+                                                 <div className="w-2 h-4 bg-[#1e4480] rounded-full shrink-0"></div>
+                                                 <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Premissas do Investimento</h4>
+                                              </div>
+                                              <div className="space-y-3.5">
+                                                 <div className="flex items-start gap-2.5">
+                                                    <svg className="w-4 h-4 text-[#1e4480] shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                       <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                    </svg>
+                                                    <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">Os valores propostos contemplam todos os encargos sociais, tributos (PIS, COFINS, ISS), taxas de administração e insumos descritos na proposta;</p>
+                                                 </div>
+                                                 <div className="flex items-start gap-2.5">
+                                                    <svg className="w-4 h-4 text-[#1e4480] shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                    </svg>
+                                                    <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">Faturamento mensal com vencimento a ser pactuado nas condições gerais da contratação, emitido após a prestação dos serviços.</p>
+                                                 </div>
+                                              </div>
+                                           </div>
+                                        </div>
+                                     </div>
 
-                                <div className="relative z-10 flex flex-col h-full justify-between gap-4">
-                                   {/* Bloco 1: Condições Colaboradores */}
-                                   <div className="space-y-3">
-                                      <div className="bg-white px-4 py-1.5 inline-block rounded-r-lg shadow-sm border-l-4 border-emerald-500">
-                                         <h3 className="text-[#1e4480] text-xs font-black tracking-widest uppercase">
-                                            CONDIÇÕES PARA OS COLABORADORES
-                                         </h3>
-                                      </div>
-                                      <ul className="space-y-1.5 pl-4 text-white/95 text-[10px] font-semibold leading-relaxed">
-                                        {((proposta.cliente.condicoesColaboradores && proposta.cliente.condicoesColaboradores.length > 0)
-                                           ? proposta.cliente.condicoesColaboradores
-                                           : [
-                                              proposta.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
-                                              proposta.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
-                                              proposta.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.'
-                                           ]
-                                        ).map((cond: string, idx: number) => (
-                                           <li key={idx} className="flex items-start gap-2">
-                                              <span className="text-emerald-400 mt-0.5">•</span>
-                                              <span>{cond}</span>
-                                           </li>
-                                        ))}
-                                      </ul>
-                                   </div>
+                                     <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                        <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">11</span>
+                                     </div>
+                                  </div>
+                               </div>
+                            );
+                         })()}
 
-                                   {/* Bloco 2: Condições Cliente */}
-                                   <div className="space-y-3">
-                                      <div className="bg-white px-4 py-1.5 inline-block rounded-r-lg shadow-sm border-l-4 border-emerald-500">
-                                         <h3 className="text-[#1e4480] text-xs font-black tracking-widest uppercase">
-                                            CONDIÇÕES PARA O CLIENTE
-                                         </h3>
-                                      </div>
-                                      <ul className="space-y-1.5 pl-4 text-white/95 text-[10px] font-semibold leading-relaxed">
-                                        {((proposta.cliente.condicoesCliente && proposta.cliente.condicoesCliente.length > 0)
-                                           ? proposta.cliente.condicoesCliente
-                                           : [
-                                              proposta.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
-                                              proposta.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
-                                              proposta.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.'
-                                           ]
-                                        ).map((cond: string, idx: number) => (
-                                           <li key={idx} className="flex items-start gap-2">
-                                              <span className="text-emerald-400 mt-0.5">•</span>
-                                              <span className={idx === (proposta.cliente.condicoesCliente || []).length - 1 ? "font-extrabold text-emerald-300" : ""}>{cond}</span>
-                                           </li>
-                                        ))}
-                                      </ul>
-                                   </div>
+                         {currentSlide === 12 && (
+                            <div className="w-full h-full bg-white p-12 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none">
+                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
+                                  <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
+                                  <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
+                               </svg>
 
-                                   {/* Footer */}
-                                   <div className="flex justify-between items-center w-full text-white/60 text-[9px] font-bold uppercase tracking-wider pt-2 border-t border-white/10">
-                                      <span>www.grupojvsserv.com.br</span>
-                                      <span className="text-white/80 bg-white/10 px-2.5 py-0.5 rounded font-black">12</span>
-                                   </div>
-                                </div>
-                             </div>
-                          )}
+                               <div className="relative z-10 flex flex-col h-full justify-between">
+                                  <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
+                                     <div className="flex flex-col">
+                                        <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                        <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">CONDIÇÕES GERAIS DA PROPOSTA</h2>
+                                     </div>
+                                     <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
+                                  </div>
 
-                          {currentSlide === 13 && (
-                             <div className="w-full aspect-[16/9] border border-slate-200 bg-[#1e4480] p-12 flex flex-col justify-between relative overflow-hidden h-full text-white select-none">
-                                {/* Fundo decorativo sutil */}
-                                <div className="absolute inset-0 opacity-10 pointer-events-none">
-                                   <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                                      <line x1="-50" y1="100" x2="400" y2="-200" stroke="white" strokeWidth="8" />
-                                      <line x1="-50" y1="150" x2="450" y2="-200" stroke="white" strokeWidth="4" />
-                                      <line x1="500" y1="600" x2="1000" y2="200" stroke="white" strokeWidth="8" />
-                                      <line x1="550" y1="600" x2="1050" y2="200" stroke="white" strokeWidth="4" />
-                                   </svg>
-                                </div>
+                                  <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-2 gap-8">
+                                     <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-6 shadow-xs space-y-4">
+                                        <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+                                           <Calendar size={18} className="text-[#1e4480]" />
+                                           <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Prazos e Validade</h4>
+                                        </div>
+                                        <div className="space-y-3">
+                                           <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-2">
+                                              <span className="text-slate-500 font-bold">Validade da Proposta:</span>
+                                              <span className="text-slate-800 font-black">{proposta.condicoes?.validadeProposta || "15 (quinze) dias"}</span>
+                                           </div>
+                                           <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-2">
+                                              <span className="text-slate-500 font-bold">Prazo de Início dos Serviços:</span>
+                                              <span className="text-slate-800 font-black">{proposta.condicoes?.prazoInicio || "20 (vinte) dias"}</span>
+                                           </div>
+                                           <div className="flex justify-between items-center text-[10px] pb-1">
+                                              <span className="text-slate-500 font-bold">Vigência Contratual Mínima:</span>
+                                              <span className="text-slate-800 font-black">{proposta.condicoes?.vigenciaContratual || "12 (doze) meses"}</span>
+                                           </div>
+                                        </div>
+                                     </div>
 
-                                <div className="relative z-10 flex flex-col h-full justify-between">
-                                   {/* Header */}
-                                   <div className="flex justify-between items-center w-full pb-2 border-b border-white/10">
-                                      <h2 className="text-2xl font-black text-white tracking-widest uppercase">ACEITE</h2>
-                                      <img 
-                                         src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                         alt="JVS Facilities Logo" 
-                                         className="max-h-8 w-auto object-contain"
-                                      />
-                                   </div>
+                                     <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-6 shadow-xs space-y-4">
+                                        <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+                                           <CreditCard size={18} className="text-[#1e4480]" />
+                                           <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Faturamento e Reajuste</h4>
+                                        </div>
+                                        <div className="space-y-3">
+                                           <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-2">
+                                              <span className="text-slate-500 font-bold">Prazo de Pagamento:</span>
+                                              <span className="text-slate-800 font-black">{proposta.condicoes?.prazoPagamento || "30 dias líquido"}</span>
+                                           </div>
+                                           <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-2">
+                                              <span className="text-slate-500 font-bold">Base de Reajuste Anual:</span>
+                                              <span className="text-slate-800 font-black">{proposta.condicoes?.baseReajuste || "Convenção Coletiva (CCT) / IPCA"}</span>
+                                           </div>
+                                           <div className="flex justify-between items-center text-[10px] pb-1">
+                                              <span className="text-slate-500 font-bold">Garantias e Seguros:</span>
+                                              <span className="text-[#1b4d3e] font-black uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded border border-emerald-150">Inclusos e Ativos</span>
+                                           </div>
+                                        </div>
+                                     </div>
+                                  </div>
 
-                                   {/* Content Table/Pills Grid */}
-                                   <div className="my-auto max-w-3xl w-full mx-auto grid grid-cols-2 gap-x-8 gap-y-3">
-                                      {/* Left Column: Dados da Empresa */}
-                                      <div className="space-y-1">
-                                         {[
-                                            { label: 'Razão Social', value: proposta.cliente.razaoSocial || proposta.cliente.cliente || '-' },
-                                            { label: 'Nome Fantasia', value: proposta.cliente.cliente || '-' },
-                                            { label: 'CNPJ', value: proposta.cliente.cnpj || '-' },
-                                            { label: 'Valor', value: formatCurrency(resultado?.faturamentoBruto || 0) },
-                                            { label: 'Início', value: proposta.cliente.dataInicio || '-' },
-                                            { label: 'Vencimento', value: proposta.cliente.dataVencimento || '-' }
-                                         ].map((item, idx) => (
-                                            <div key={idx} className="flex gap-2 text-[8px] font-black tracking-wider uppercase">
-                                               <div className="w-24 bg-white text-[#1e4480] py-1 rounded-full text-center shrink-0 shadow-sm flex items-center justify-center font-black">
-                                                  {item.label}
-                                               </div>
-                                               <div className="flex-1 bg-white/20 text-white py-1 px-4 rounded-full font-bold overflow-hidden text-ellipsis whitespace-nowrap flex items-center">
-                                                  {item.value}
-                                               </div>
-                                            </div>
-                                         ))}
-                                      </div>
+                                  <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
+                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                     <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded font-black">12</span>
+                                  </div>
+                               </div>
+                            </div>
+                         )}
 
-                                      {/* Right Column: Contato */}
-                                      <div className="space-y-1">
-                                         {[
-                                            { label: 'Contato', value: proposta.cliente.contato || '-' },
-                                            { label: 'Cargo', value: proposta.cliente.contatoCargo || '-' },
-                                            { label: 'Cel', value: proposta.cliente.celular || '-' },
-                                            { label: 'E-mail', value: proposta.cliente.email || '-' }
-                                         ].map((item, idx) => (
-                                            <div key={idx} className="flex gap-2 text-[8px] font-black tracking-wider uppercase">
-                                               <div className="w-24 bg-white text-[#1e4480] py-1 rounded-full text-center shrink-0 shadow-sm flex items-center justify-center font-black">
-                                                  {item.label}
-                                               </div>
-                                               <div className="flex-1 bg-white/20 text-white py-1 px-4 rounded-full font-bold overflow-hidden text-ellipsis whitespace-nowrap flex items-center">
-                                                  {item.value}
-                                               </div>
-                                            </div>
-                                         ))}
-                                      </div>
-                                   </div>
+                         {currentSlide === 13 && (
+                            <div className="w-full h-full bg-[#1e4480] p-12 flex flex-col justify-between relative overflow-hidden text-white rounded-2xl border border-slate-200 select-none">
+                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                                  <line x1="-50" y1="150" x2="350" y2="-250" stroke="#FFFFFF" strokeWidth="10" />
+                                  <line x1="600" y1="800" x2="1100" y2="300" stroke="#FFFFFF" strokeWidth="10" />
+                               </svg>
 
-                                   {/* Bottom Signature Area */}
-                                   <div className="flex flex-col items-center pt-2">
-                                      <div className="border-t border-white w-64 my-1"></div>
-                                      <span className="text-[9px] font-black text-white/90 uppercase tracking-widest">Cliente</span>
-                                   </div>
-                                </div>
-                             </div>
-                          )}
+                               <div className="relative z-10 flex flex-col h-full justify-between">
+                                  <div className="flex justify-between items-center w-full pb-4 border-b border-white/20">
+                                     <div className="flex flex-col">
+                                        <span className="text-white/70 text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                        <h2 className="text-xl font-black text-white uppercase tracking-tight">TERMO DE ACEITE E CONTRATAÇÃO</h2>
+                                     </div>
+                                     <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain brightness-0 invert" />
+                                  </div>
 
+                                  <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-center text-white">
+                                     <div className="col-span-6 space-y-4">
+                                        <h3 className="text-lg font-black tracking-tight leading-snug">Estamos prontos para iniciar a nossa parceria de sucesso!</h3>
+                                        <div className="text-white/80 text-[10px] leading-relaxed space-y-3 font-semibold text-justify">
+                                           <p>Ao assinar este termo de aceite, o <strong className="text-white font-extrabold">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
+                                           <p>Este documento servirá como base oficial para a elaboração do instrumento jurídico definitivo (Contrato de Prestação de Serviços) entre as partes.</p>
+                                        </div>
+                                     </div>
 
+                                     <div className="col-span-6 grid grid-cols-2 gap-4">
+                                        <div className="bg-white/10 rounded-2xl p-5 border border-white/15 shadow-md flex flex-col justify-between h-40">
+                                           <div className="flex flex-col">
+                                              <span className="text-[10px] font-black tracking-[0.2em] uppercase text-white/90">CONTRATANTE</span>
+                                              <span className="text-[8.5px] text-white/70 font-semibold mt-1 truncate">{proposta.cliente.cliente || "Erasto Gaertner"}</span>
+                                           </div>
+                                           <div className="border-t border-white/30 pt-3 mt-auto flex flex-col text-center">
+                                              <div className="h-6 w-full mb-1"></div>
+                                              <span className="text-[9px] font-black text-white">Assinatura / Carimbo</span>
+                                              <span className="text-[8px] text-white/50 font-bold uppercase mt-0.5">Representante Legal</span>
+                                           </div>
+                                        </div>
+
+                                        <div className="bg-white/10 rounded-2xl p-5 border border-white/15 shadow-md flex flex-col justify-between h-40">
+                                           <div className="flex flex-col">
+                                              <span className="text-[10px] font-black tracking-[0.2em] uppercase text-white/90">CONTRATADA</span>
+                                              <span className="text-[8.5px] text-white/70 font-semibold mt-1 truncate">JVS Serv. Terceirizados Ltda.</span>
+                                           </div>
+                                           <div className="border-t border-white/30 pt-3 mt-auto flex flex-col text-center">
+                                              <div className="h-6 w-full mb-1 flex items-center justify-center">
+                                                 <span className="text-[8px] text-emerald-300 font-extrabold tracking-wider bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/35 uppercase select-none">Assinado Digitalmente</span>
+                                              </div>
+                                              <span className="text-[9px] font-black text-white">{proposta.cliente.vendedorNome || "Ádamo Quadros"}</span>
+                                              <span className="text-[8px] text-white/50 font-bold uppercase mt-0.5">{proposta.cliente.vendedorCargo || "Novos Negócios"}</span>
+                                           </div>
+                                        </div>
+                                     </div>
+                                  </div>
+
+                                  <div className="flex justify-between items-center border-t border-white/20 pt-4 mt-auto">
+                                     <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                     <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded">13</span>
+                                  </div>
+                               </div>
+                            </div>
+                         )}
                      </div>
                   </div>
-                   {/* CONTROLES DE NAVEGAÇÃO DOS SLIDES (PADRONIZADOS FORA DO SLIDE E DO NÚMERO) */}
+{/* CONTROLES DE NAVEGAÇÃO DOS SLIDES (PADRONIZADOS FORA DO SLIDE E DO NÚMERO) */}
                    <div className="flex flex-col items-center space-y-4 mt-6">
                       <div className="flex justify-center items-center gap-6">
                          <button
@@ -5045,179 +4880,139 @@ function PropostaEditor() {
                         </div>
                      </div>
 
-                     {/* SLIDE 03 PRINT - NOSSA PRESENÇA / QUEM SOMOS */}
-                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-gradient-to-br from-[#1e4480] to-[#0f284e] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-white">
-                         {/* Stripes de fundo refinados */}
-                         <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-10" xmlns="http://www.w3.org/2000/svg">
-                            <line x1="-100" y1="100" x2="400" y2="-400" stroke="#FFFFFF" strokeWidth="18" />
-                            <line x1="-100" y1="150" x2="450" y2="-400" stroke="#FFFFFF" strokeWidth="12" />
-                            <line x1="500" y1="900" x2="1200" y2="200" stroke="#FFFFFF" strokeWidth="18" />
+                     
+                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-[#1e4480] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-white">
+                         <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                            <line x1="-50" y1="150" x2="350" y2="-250" stroke="#FFFFFF" strokeWidth="10" />
+                            <line x1="-50" y1="200" x2="400" y2="-250" stroke="#FFFFFF" strokeWidth="6" />
+                            <line x1="-50" y1="250" x2="450" y2="-250" stroke="#FFFFFF" strokeWidth="3" />
+                            
+                            <line x1="600" y1="800" x2="1100" y2="300" stroke="#FFFFFF" strokeWidth="10" />
+                            <line x1="650" y1="800" x2="1150" y2="300" stroke="#FFFFFF" strokeWidth="6" />
+                            <line x1="700" y1="800" x2="1200" y2="300" stroke="#FFFFFF" strokeWidth="3" />
                          </svg>
 
-                         <div className="grid grid-cols-12 gap-8 items-center h-[calc(100%-60px)] relative z-10">
-                            {/* Coluna de Texto e KPIs (Esquerda) */}
-                            <div className="col-span-7 flex flex-col justify-between h-full py-4 text-white">
+                         <div className="grid grid-cols-12 gap-8 items-center h-[calc(100%-40px)] relative z-10">
+                            <div className="col-span-7 flex flex-col justify-center space-y-5 pl-2 h-full text-white">
                                <div>
-                                  <span className="text-emerald-400 text-[10px] font-black tracking-[0.2em] uppercase">QUEM SOMOS</span>
-                                  <h2 className="text-3xl font-black text-white tracking-tight leading-none uppercase mt-1">
-                                     NOSSA PRESENÇA
+                                  <h2 className="text-4xl font-black text-white tracking-tight leading-none uppercase">
+                                     QUEM SOMOS
                                   </h2>
-                                  <p className="text-white/80 text-[11px] font-semibold leading-relaxed mt-4 max-w-xl">
-                                     Há mais de 30 anos no mercado de Facilities, somos especialistas em prestações de serviços de limpeza profissional e similares, entregando soluções integradas com máxima eficiência e qualidade técnica validada.
+                                  <p className="text-white/95 text-[14px] font-semibold leading-relaxed mt-4 max-w-xl">
+                                     Há mais de 30 anos no mercado de Facilities, somos especialistas em prestações de serviços de limpeza profissional e similares.
                                   </p>
                                </div>
 
-                               {/* Grid de KPIs de Glassmorphism Premium */}
-                               <div className="grid grid-cols-5 gap-3 pt-6 border-t border-white/10">
-                                  {/* Anos de atuação */}
-                                  <div className="bg-white/10 border border-white/15 backdrop-blur-md rounded-2xl p-3.5 flex flex-col items-center justify-between text-center shadow-md h-32">
-                                     <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center mb-1 shrink-0 shadow-sm">
-                                        <Award size={18} className="text-[#1e4480] shrink-0" />
+                               <div className="grid grid-cols-5 gap-4 pt-6 border-t border-white/15">
+                                  <div className="flex flex-col items-center text-center">
+                                     <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
+                                        <Award size={26} className="text-white shrink-0" />
                                      </div>
-                                     <div className="flex flex-col items-center">
-                                        <span className="text-[13px] font-black text-white leading-none whitespace-nowrap">+de 30</span>
-                                        <span className="text-[6.5px] font-black text-white/70 uppercase mt-1 leading-tight tracking-wider block max-w-[65px]">
-                                           Anos de atuação
-                                        </span>
-                                     </div>
+                                     <span className="text-[14px] font-bold text-white leading-none whitespace-nowrap">+de <strong className="text-xl font-black">30</strong></span>
+                                     <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
+                                        Anos de atuação em Facilities
+                                     </span>
                                   </div>
 
-                                  {/* Postos ativos */}
-                                  <div className="bg-white/10 border border-white/15 backdrop-blur-md rounded-2xl p-3.5 flex flex-col items-center justify-between text-center shadow-md h-32">
-                                     <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center mb-1 shrink-0 shadow-sm">
-                                        <MapPin size={18} className="text-[#1e4480] shrink-0" />
+                                  <div className="flex flex-col items-center text-center">
+                                     <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
+                                        <MapPin size={26} className="text-white shrink-0" />
                                      </div>
-                                     <div className="flex flex-col items-center">
-                                        <span className="text-[13px] font-black text-white leading-none whitespace-nowrap">+ 100</span>
-                                        <span className="text-[6.5px] font-black text-white/70 uppercase mt-1 leading-tight tracking-wider block max-w-[65px]">
-                                           Postos ativos
-                                        </span>
-                                     </div>
+                                     <span className="text-[14px] font-bold text-white leading-none whitespace-nowrap">+ <strong className="text-xl font-black">100</strong></span>
+                                     <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
+                                        postos ativos
+                                     </span>
                                   </div>
 
-                                  {/* Clientes atendidos */}
-                                  <div className="bg-white/10 border border-white/15 backdrop-blur-md rounded-2xl p-3.5 flex flex-col items-center justify-between text-center shadow-md h-32">
-                                     <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center mb-1 shrink-0 shadow-sm">
-                                        <Users size={18} className="text-[#1e4480] shrink-0" />
+                                  <div className="flex flex-col items-center text-center">
+                                     <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
+                                        <Users size={26} className="text-white shrink-0" />
                                      </div>
-                                     <div className="flex flex-col items-center">
-                                        <span className="text-[13px] font-black text-white leading-none whitespace-nowrap">+ 200</span>
-                                        <span className="text-[6.5px] font-black text-white/70 uppercase mt-1 leading-tight tracking-wider block max-w-[65px]">
-                                           Clientes
-                                        </span>
-                                     </div>
+                                     <span className="text-[14px] font-bold text-white leading-none whitespace-nowrap">+ <strong className="text-xl font-black">200</strong></span>
+                                     <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
+                                        Clientes atendidos
+                                     </span>
                                   </div>
 
-                                  {/* Limpeza em altura */}
-                                  <div className="bg-white/10 border border-white/15 backdrop-blur-md rounded-2xl p-3.5 flex flex-col items-center justify-between text-center shadow-md h-32">
-                                     <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center mb-1 shrink-0 shadow-sm">
-                                        <ShieldCheck size={18} className="text-[#1e4480] shrink-0" />
+                                  <div className="flex flex-col items-center text-center">
+                                     <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
+                                        <ShieldCheck size={26} className="text-white shrink-0" />
                                      </div>
-                                     <div className="flex flex-col items-center">
-                                        <span className="text-[10px] font-black text-emerald-400 leading-none whitespace-nowrap">+100 mil</span>
-                                        <span className="text-[6.5px] font-black text-white/70 uppercase mt-1 leading-tight tracking-wider block max-w-[65px]">
-                                           m² em altura
-                                        </span>
-                                     </div>
+                                     <span className="text-[12px] font-black text-white leading-none whitespace-nowrap">+100.000m²</span>
+                                     <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
+                                        de limpeza em altura
+                                     </span>
                                   </div>
 
-                                  {/* Pisos tratados */}
-                                  <div className="bg-white/10 border border-white/15 backdrop-blur-md rounded-2xl p-3.5 flex flex-col items-center justify-between text-center shadow-md h-32">
-                                     <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center mb-1 shrink-0 shadow-sm">
-                                        <Sparkles size={18} className="text-[#1e4480] shrink-0" />
+                                  <div className="flex flex-col items-center text-center">
+                                     <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
+                                        <Sparkles size={26} className="text-white shrink-0" />
                                      </div>
-                                     <div className="flex flex-col items-center">
-                                        <span className="text-[10px] font-black text-emerald-400 leading-none whitespace-nowrap">+500 mil</span>
-                                        <span className="text-[6.5px] font-black text-white/70 uppercase mt-1 leading-tight tracking-wider block max-w-[65px]">
-                                           m² de pisos
-                                        </span>
-                                     </div>
+                                     <span className="text-[12px] font-black text-white leading-none whitespace-nowrap">+500.000m²</span>
+                                     <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
+                                        de Pisos tratados
+                                     </span>
                                   </div>
                                </div>
                             </div>
 
-                            {/* Coluna do Mapa (Direita) */}
                             <div className="col-span-5 h-full flex flex-col justify-center items-center relative pr-2">
-                               <div className="bg-white/5 border border-white/10 backdrop-blur-lg rounded-3xl p-6 shadow-xl flex flex-col justify-center items-center h-[340px] w-[340px] relative overflow-hidden">
-                                  <div className="absolute right-[-10px] top-[-10px] w-20 h-20 bg-emerald-500/10 rounded-full blur-xl"></div>
-                                  <div className="w-full max-w-[240px] aspect-square drop-shadow-[0_8px_24px_rgba(0,0,0,0.3)]">
-                                     <BrazilMap highlightedStates={['PR', 'SC', 'RS']} className="w-full h-full text-emerald-400" />
-                                  </div>
-                                  <div className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mt-4 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full shadow-xs">
-                                     Atendimento em toda Região Sul
-                                  </div>
+                               <div className="w-full max-w-[300px] aspect-square drop-shadow-lg">
+                                  <BrazilMap highlightedStates={['PR', 'SC', 'RS']} className="w-full h-full" />
+                               </div>
+                               <div className="text-[13px] font-black text-white uppercase tracking-widest mt-4 bg-white/10 px-4 py-1.5 rounded-full shadow-sm">
+                                  Atendimento em toda Região Sul
                                </div>
                             </div>
                          </div>
 
-                         {/* Rodapé */}
                          <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-4 mt-auto">
-                            <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                            <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.grupojvsserv.com.br</span>
                             <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">03</span>
                          </div>
                       </div>
 
-{/* SLIDE 04 PRINT - NOSSOS VALORES */}
+                      {/* SLIDE 04 PRINT - NOSSOS VALORES */}
                       <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
-                         {/* Stripes de fundo */}
                          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" xmlns="http://www.w3.org/2000/svg">
-                            <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
-                            <line x1="-100" y1="150" x2="450" y2="-400" stroke="#F1F5F9" strokeWidth="12" />
-                            <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
+                            <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
+                            <line x1="-50" y1="200" x2="400" y2="-250" stroke="#E2E8F0" strokeWidth="6" />
+                            <line x1="-50" y1="250" x2="450" y2="-250" stroke="#E2E8F0" strokeWidth="3" />
+                            
+                            <line x1="600" y1="800" x2="1100" y2="300" stroke="#E2E8F0" strokeWidth="10" />
+                            <line x1="650" y1="800" x2="1150" y2="300" stroke="#E2E8F0" strokeWidth="6" />
+                            <line x1="700" y1="800" x2="1200" y2="300" stroke="#E2E8F0" strokeWidth="3" />
                          </svg>
                          
                          <div className="grid grid-cols-12 gap-8 items-center h-[calc(100%-40px)] relative z-10">
-                            {/* Coluna de Texto (Esquerda) */}
-                            <div className="col-span-6 flex flex-col justify-center space-y-4 pl-2 h-full">
+                            <div className="col-span-7 flex flex-col justify-center space-y-4 pl-2 h-full">
                                <div>
-                                  <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">DIRETRIZES CORPORATIVAS</span>
-                                  <h2 className="text-3xl font-black text-[#1e4480] tracking-tight leading-none uppercase mt-1">
+                                  <h2 className="text-4xl font-black text-[#1E3A8A] tracking-tight leading-none uppercase">
                                      NOSSOS VALORES
                                   </h2>
-                                  <p className="text-slate-600 text-[11px] font-semibold leading-relaxed mt-4">
-                                     Nosso compromisso é guiado por princípios sólidos: agimos com <strong className="underline decoration-[#1e4480] decoration-2 font-black text-[#1e4480]">ética</strong>, mantendo a integridade acima de benefícios momentâneos. Buscamos <strong className="underline decoration-emerald-500 decoration-2 font-black text-[#1e4480]">agilidade</strong>, <strong className="underline decoration-emerald-500 decoration-2 font-black text-[#1e4480]">eficiência</strong> e <strong className="underline decoration-emerald-500 decoration-2 font-black text-[#1e4480]">excelência</strong> através do aprimoramento contínuo de processos e sistemas. 
-                                  </p>
-                                  <p className="text-slate-600 text-[11px] font-semibold leading-relaxed mt-3">
-                                     <strong className="underline decoration-[#1e4480] decoration-2 font-black text-[#1e4480]">Valorizamos nossas pessoas</strong>, promovendo um ambiente humanizado e soluções que garantem a satisfação e a permanência dos colaboradores. Somos comprometidos com a <strong className="underline decoration-emerald-500 decoration-2 font-black text-[#1e4480]">entrega</strong> dos nossos acordos, além de investir continuamente em <strong className="underline decoration-emerald-500 decoration-2 font-black text-[#1e4480]">inovação</strong> e <strong className="underline decoration-emerald-500 decoration-2 font-black text-[#1e4480]">tecnologia</strong>.
+                                  <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-5 text-justify">
+                                     Nosso compromisso é guiado por princípios sólidos: agimos com <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">ética</strong>, mantendo a integridade acima de benefícios momentâneos. Buscamos <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">agilidade</strong>, <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">eficiência</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">excelência</strong> através do aprimoramento contínuo de processos e sistemas. <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">Valorizamos nossas pessoas</strong>, promovendo um ambiente humanizado e soluções que garantem a satisfação e a permanência dos colaboradores. Somos comprometidos com a <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">entrega</strong> dos nossos acordos, mesmo diante de desafios. Além disso, investimos em <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">inovação</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">tecnologia</strong> para otimizar a automação, produtividade e eficiência.
                                   </p>
                                </div>
                             </div>
 
-                            {/* Coluna Gráfica (Direita) */}
-                            <div className="col-span-6 h-full w-full flex items-center justify-center relative">
-                               {/* Grid em Escada de 3 Cards Premium */}
-                               <div className="grid grid-cols-1 gap-4 w-full max-w-sm">
-                                  {/* Card 1: Excelência */}
-                                  <div className="bg-white border border-slate-150 rounded-2xl p-4 shadow-md flex items-center gap-4 border-l-4 border-l-[#1e4480] hover:translate-x-1 transition-transform">
-                                     <div className="w-12 h-12 rounded-full bg-[#1e4480]/10 flex items-center justify-center shrink-0">
-                                        <Trophy size={22} className="text-[#1e4480]" />
-                                     </div>
-                                     <div>
-                                        <h4 className="text-[11px] font-black text-[#1e4480] uppercase tracking-wider">Excelência & Entrega</h4>
-                                        <p className="text-[9px] text-slate-500 font-semibold leading-normal mt-0.5">Agilidade e eficiência com foco no aprimoramento e cumprimento de todos os acordos firmados.</p>
-                                     </div>
+                            <div className="col-span-5 h-full w-full flex items-center justify-center relative">
+                               <div 
+                                  className="absolute right-0 bottom-0 w-[320px] h-[180px] bg-contain bg-right-bottom bg-no-repeat pointer-events-none opacity-90 z-10"
+                                  style={{ backgroundImage: "url('https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?q=80&w=800')" }}
+                                ></div>
+
+                               <div className="relative w-full h-[220px] z-20">
+                                  <div className="absolute top-0 left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl">
+                                     <Trophy size={36} className="text-white shrink-0" />
                                   </div>
 
-                                  {/* Card 2: Inovação */}
-                                  <div className="bg-white border border-slate-150 rounded-2xl p-4 shadow-md flex items-center gap-4 border-l-4 border-l-emerald-500 hover:translate-x-1 transition-transform">
-                                     <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
-                                        <Lightbulb size={22} className="text-emerald-600" />
-                                     </div>
-                                     <div>
-                                        <h4 className="text-[11px] font-black text-emerald-700 uppercase tracking-wider">Inovação & Tecnologia</h4>
-                                        <p className="text-[9px] text-slate-500 font-semibold leading-normal mt-0.5">Sistemas e automação de ponta para otimizar os processos, elevando a produtividade operacional.</p>
-                                     </div>
+                                  <div className="absolute bottom-12 left-4 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl">
+                                     <Lightbulb size={36} className="text-white shrink-0" />
                                   </div>
 
-                                  {/* Card 3: Pessoas */}
-                                  <div className="bg-white border border-slate-150 rounded-2xl p-4 shadow-md flex items-center gap-4 border-l-4 border-l-[#1e4480] hover:translate-x-1 transition-transform">
-                                     <div className="w-12 h-12 rounded-full bg-[#1e4480]/10 flex items-center justify-center shrink-0">
-                                        <Users size={22} className="text-[#1e4480]" />
-                                     </div>
-                                     <div>
-                                        <h4 className="text-[11px] font-black text-[#1e4480] uppercase tracking-wider">Valorização de Pessoas</h4>
-                                        <p className="text-[9px] text-slate-500 font-semibold leading-normal mt-0.5">Construção de ambiente humanizado que propicia a satisfação e retenção de nossos talentos.</p>
-                                     </div>
+                                  <div className="absolute bottom-12 right-4 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl">
+                                     <Users size={36} className="text-white shrink-0" />
                                   </div>
                                </div>
                             </div>
@@ -5229,187 +5024,130 @@ function PropostaEditor() {
                          </div>
                       </div>
 
-{/* SLIDE 05 PRINT - PRINCIPAIS SERVIÇOS PRESTADOS */}
+                      {/* SLIDE 05 PRINT - PRINCIPAIS SERVIÇOS PRESTADOS */}
                       <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
-                         {/* Stripes de fundo */}
                          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" xmlns="http://www.w3.org/2000/svg">
                             <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
                             <line x1="-100" y1="150" x2="450" y2="-400" stroke="#F1F5F9" strokeWidth="12" />
+                            <line x1="-100" y1="200" x2="500" y2="-400" stroke="#F1F5F9" strokeWidth="6" />
                             <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
+                            <line x1="550" y1="900" x2="1250" y2="200" stroke="#F1F5F9" strokeWidth="12" />
                          </svg>
                          
-                         <div className="grid grid-cols-12 gap-8 items-stretch h-[calc(100%-140px)] relative z-10 my-auto">
-                            {/* Coluna do Título (Esquerda) */}
-                            <div className="col-span-3 flex flex-col justify-center h-full">
-                               <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">NOSSO ESCOPO</span>
-                               <h2 className="text-2xl font-black text-[#1e4480] uppercase tracking-tight leading-none mt-1">
-                                  PRINCIPAIS<br />
-                                  SERVIÇOS<br />
-                                  PRESTADOS
+                         <div className="relative z-10 flex flex-col h-[calc(100%-30px)] justify-between">
+                            <div>
+                               <h2 className="text-3xl font-black text-[#1e4480] uppercase tracking-tight leading-none mb-6">
+                                  PRINCIPAIS SERVIÇOS PRESTADOS
                                </h2>
-                            </div>
 
-                            {/* Coluna 1 (Centro) - Terceirização */}
-                            <div className="col-span-4 bg-white border border-slate-150 rounded-2xl p-6 shadow-lg flex flex-col justify-between hover:scale-[1.01] transition-transform">
-                               <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                                  <span className="text-[#1e4480] text-[10px] font-black tracking-wide uppercase leading-tight max-w-[170px]">
-                                     TERCEIRIZAÇÃO DE FACILITIES
-                                  </span>
-                                  <div className="text-[#1e4480] shrink-0">
-                                     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 shrink-0">
-                                        <path d="M12 52L24 40M52 52L40 40" stroke="#1e4480" strokeWidth="3" />
-                                        <path d="M22 38L14 30M42 38L50 30" stroke="#1e4480" strokeWidth="3" />
-                                        <line x1="24" y1="40" x2="36" y2="28" stroke="#1e4480" strokeWidth="2.5" />
-                                        <line x1="40" y1="40" x2="28" y2="28" stroke="#1e4480" strokeWidth="2.5" />
-                                        <path d="M18 42C18 42 22 46 28 46C34 46 38 42 38 36" stroke="#1e4480" strokeWidth="2.5" />
-                                        <path d="M46 42C46 42 42 46 36 46C30 46 26 42 26 36" stroke="#1e4480" strokeWidth="2.5" />
-                                        <path d="M32 8L34 14L40 16L34 18L32 24L30 18L24 16L30 14Z" fill="#1e4480" />
-                                        <path d="M18 16L19 19L22 20L19 21L18 24L17 21L14 20L17 19Z" fill="#1e4480" />
-                                        <path d="M46 16L47 19L50 20L47 21L46 24L45 21L42 20L45 19Z" fill="#1e4480" />
-                                     </svg>
+                               <div className="grid grid-cols-2 gap-12 mt-2">
+                                  <div className="flex flex-col space-y-3">
+                                     <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-2">
+                                        <span className="text-[#1e4480] text-[15px] font-black tracking-wide uppercase leading-tight max-w-[300px]">
+                                           TERCEIRIZAÇÃO DE SERVIÇOS DE FACILITIES
+                                        </span>
+                                        <div className="text-[#1e4480] shrink-0">
+                                           <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-14 h-14 shrink-0">
+                                              <path d="M12 52L24 40M52 52L40 40" stroke="#1e4480" strokeWidth="3" />
+                                              <path d="M22 38L14 30M42 38L50 30" stroke="#1e4480" strokeWidth="3" />
+                                              <line x1="24" y1="40" x2="36" y2="28" stroke="#1e4480" strokeWidth="2.5" />
+                                              <line x1="40" y1="40" x2="28" y2="28" stroke="#1e4480" strokeWidth="2.5" />
+                                              <path d="M18 42C18 42 22 46 28 46C34 46 38 42 38 36" stroke="#1e4480" strokeWidth="2.5" />
+                                              <path d="M32 8L34 14L40 16L34 18L32 24L30 18L24 16L30 14Z" fill="#1e4480" />
+                                           </svg>
+                                        </div>
+                                     </div>
+                                     <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
+                                        Gestão e execução de serviços essenciais, como limpeza, manutenção e segurança, que garantem o bom funcionamento e organização de um ambiente de trabalho. Nossa função é cuidar de tudo isso para que a empresa possa focar no que faz de melhor, enquanto oferecemos um espaço eficiente, seguro e bem cuidado.
+                                     </p>
+                                  </div>
+
+                                  <div className="flex flex-col space-y-3">
+                                     <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-2">
+                                        <span className="text-[#1e4480] text-[15px] font-black tracking-wide uppercase leading-tight">
+                                           LIMPEZA EM ALTURA
+                                        </span>
+                                        <div className="text-[#1e4480] shrink-0">
+                                           <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-14 h-14 shrink-0">
+                                              <rect x="6" y="6" width="20" height="52" rx="2" stroke="#cbd5e1" strokeWidth="1.5" />
+                                              <line x1="6" y1="20" x2="26" y2="20" stroke="#cbd5e1" strokeWidth="1.5" />
+                                              <line x1="6" y1="36" x2="26" y2="36" stroke="#cbd5e1" strokeWidth="1.5" />
+                                              <line x1="16" y1="6" x2="16" y2="58" stroke="#cbd5e1" strokeWidth="1.5" />
+                                              <line x1="38" y1="2" x2="38" y2="62" stroke="#1e4480" strokeWidth="1.5" strokeDasharray="3 3" />
+                                              <line x1="48" y1="2" x2="48" y2="62" stroke="#1e4480" strokeWidth="1.5" />
+                                              <circle cx="48" cy="22" r="4" fill="#1e4480" />
+                                              <path d="M44 20H48V24" stroke="#1e4480" strokeWidth="2" />
+                                              <path d="M48 26L42 36" stroke="#1e4480" strokeWidth="4" />
+                                           </svg>
+                                        </div>
+                                     </div>
+                                     <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
+                                        Serviço que é realizado em áreas de difícil acesso, como fachadas de prédios, janelas externas e estruturas elevadas. Usamos equipamentos específicos e técnicas seguras para garantir que essas superfícies sejam limpas de maneira eficiente, mantendo a estética e a segurança dos espaços altos, onde o cuidado e a precisão são essenciais.
+                                     </p>
                                   </div>
                                </div>
-                               <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed mt-3">
-                                  Gestão e execução de serviços essenciais como limpeza, portaria, recepção e jardinagem, garantindo a organização total e a produtividade máxima dos postos de trabalho dos nossos parceiros corporativos.
-                               </p>
                             </div>
 
-                            {/* Coluna 2 (Direita) - Limpeza em Altura */}
-                            <div className="col-span-5 bg-white border border-slate-150 rounded-2xl p-6 shadow-lg flex flex-col justify-between hover:scale-[1.01] transition-transform">
-                               <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                                  <span className="text-[#1e4480] text-[10px] font-black tracking-wide uppercase leading-tight">
-                                     LIMPEZA TÉCNICA E EM ALTURA
-                                  </span>
-                                  <div className="text-[#1e4480] shrink-0">
-                                     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 shrink-0">
-                                        <rect x="6" y="6" width="20" height="52" rx="2" stroke="#cbd5e1" strokeWidth="1.5" />
-                                        <line x1="6" y1="20" x2="26" y2="20" stroke="#cbd5e1" strokeWidth="1.5" />
-                                        <line x1="6" y1="36" x2="26" y2="36" stroke="#cbd5e1" strokeWidth="1.5" />
-                                        <line x1="16" y1="6" x2="16" y2="58" stroke="#cbd5e1" strokeWidth="1.5" />
-                                        <line x1="38" y1="2" x2="38" y2="62" stroke="#1e4480" strokeWidth="1.5" strokeDasharray="3 3" />
-                                        <line x1="48" y1="2" x2="48" y2="62" stroke="#1e4480" strokeWidth="1.5" />
-                                        <circle cx="48" cy="22" r="4" fill="#1e4480" />
-                                        <path d="M44 20H48V24" stroke="#1e4480" strokeWidth="2" />
-                                        <path d="M48 26L42 36" stroke="#1e4480" strokeWidth="4" />
-                                        <path d="M42 36L46 44L52 46" stroke="#1e4480" strokeWidth="3" />
-                                        <path d="M42 36L36 42L38 48" stroke="#1e4480" strokeWidth="3" />
-                                        <path d="M46 28L34 26" stroke="#1e4480" strokeWidth="2.5" />
-                                        <line x1="34" y1="20" x2="34" y2="32" stroke="#1e4480" strokeWidth="3" />
-                                        <line x1="34" y1="26" x2="30" y2="26" stroke="#1e4480" strokeWidth="2" />
-                                        <circle cx="28" cy="24" r="1.5" fill="#38bdf8" />
-                                        <circle cx="26" cy="29" r="1" fill="#38bdf8" />
-                                     </svg>
-                                  </div>
-                               </div>
-                               <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed mt-3">
-                                  Serviço técnico especializado para áreas de difícil acesso, como fachadas de vidro e estruturas industriais elevadas. Utilizamos as mais rígidas metodologias de segurança (NR-35) e equipamentos profissionais certificados.
-                               </p>
-                            </div>
-                         </div>
-
-                         {/* Painel inferior com as 5 categorias de serviços */}
-                         <div className="flex justify-between items-center w-full pt-4 mt-auto border-t border-slate-100 relative z-20 gap-3">
-                            {[
-                               {
-                                  title: 'LIMPEZA',
-                                  desc: 'Higienização técnica',
-                                  svg: (
-                                     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 text-white">
+                            <div className="flex justify-around items-center w-full pt-4 mt-auto border-t border-slate-100 relative z-20">
+                               <div className="flex flex-col items-center justify-center">
+                                  <div className="bg-[#1e4480] text-white w-20 h-20 flex items-center justify-center rounded-full shadow-xl">
+                                     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 text-white">
                                         <circle cx="32" cy="16" r="6" fill="currentColor" />
                                         <path d="M26 14C26 12 30 10 34 10H38" stroke="currentColor" strokeWidth="2.5" />
                                         <path d="M22 28C22 24 25 24 32 24C39 24 42 24 42 28V46H22V28Z" fill="currentColor" />
-                                        <path d="M28 24V46M36 24V46" stroke="#1e4480" strokeWidth="1.5" />
-                                        <path d="M22 30L12 34L12 48" stroke="currentColor" strokeWidth="3.5" />
-                                        <line x1="10" y1="12" x2="10" y2="54" stroke="currentColor" strokeWidth="2.5" />
-                                        <path d="M4 54H16L18 58H2L4 54Z" fill="currentColor" />
-                                        <path d="M42 30L50 36L50 44" stroke="currentColor" strokeWidth="3.5" />
-                                        <path d="M46 44H54L56 56H44L46 44Z" fill="currentColor" />
-                                        <path d="M46 44C46 44 48 40 50 40C52 40 54 44 54 44" stroke="currentColor" strokeWidth="1.5" />
                                      </svg>
-                                  )
-                               },
-                               {
-                                  title: 'PORTARIA',
-                                  desc: 'Controle especializado',
-                                  svg: (
-                                     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 text-white">
-                                        <path d="M18 18C18 10 24 8 32 8C40 8 46 10 46 18H18Z" fill="currentColor" />
-                                        <path d="M14 18H50V20C50 20 40 22 32 22C24 22 14 20 14 20Z" fill="currentColor" />
-                                        <path d="M32 10L35 13L32 16L29 13Z" fill="#eab308" />
+                                  </div>
+                                  <span className="text-[#1e4480] text-[12px] font-black tracking-wider uppercase mt-2.5">
+                                     LIMPEZA
+                                  </span>
+                               </div>
+
+                               <div className="flex flex-col items-center justify-center">
+                                  <div className="bg-[#1e4480] text-white w-20 h-20 flex items-center justify-center rounded-full shadow-xl">
+                                     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 text-white">
                                         <circle cx="32" cy="25" r="6" fill="currentColor" />
                                         <path d="M16 38C16 33 20 32 32 32C44 32 48 33 48 38V52H16V38Z" fill="currentColor" />
-                                        <path d="M28 32L32 40L36 32Z" fill="#ffffff" />
-                                        <path d="M31 35L33 35L33 48L31 48Z" fill="#1e4480" />
-                                        <path d="M22 36L25 38L24 41L20 41L19 38Z" fill="#eab308" />
-                                        <path d="M16 34H22" stroke="#eab308" strokeWidth="2.5" />
-                                        <path d="M42 34H48" stroke="#eab308" strokeWidth="2.5" />
                                      </svg>
-                                  )
-                               },
-                               {
-                                  title: 'RECEPÇÃO',
-                                  desc: 'Atendimento corporativo',
-                                  svg: (
-                                     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 text-white">
+                                  </div>
+                                  <span className="text-[#1e4480] text-[12px] font-black tracking-wider uppercase mt-2.5">
+                                     PORTARIA
+                                  </span>
+                                </div>
+
+                               <div className="flex flex-col items-center justify-center">
+                                  <div className="bg-[#1e4480] text-white w-20 h-20 flex items-center justify-center rounded-full shadow-xl">
+                                     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 text-white">
                                         <path d="M4 42H60V54H4V42Z" fill="currentColor" />
-                                        <line x1="8" y1="46" x2="56" y2="46" stroke="#1e4480" strokeWidth="2" />
                                         <circle cx="22" cy="22" r="5" fill="currentColor" />
-                                        <path d="M17 18C15 21 16 25 22 25C28 25 29 21 27 18" stroke="currentColor" strokeWidth="2.5" />
-                                        <path d="M12 36C12 30 15 28 22 28C29 28 32 30 32 36V42H12V36Z" fill="currentColor" />
-                                        <circle cx="42" cy="22" r="5" fill="currentColor" />
-                                        <path d="M37 20C37 15 47 15 47 20" stroke="currentColor" strokeWidth="2" />
-                                        <path d="M32 36C32 30 35 28 42 28C49 28 52 30 52 36V42H32V36Z" fill="currentColor" />
-                                        <path d="M26 38L30 32H34L38 38H26Z" fill="#cbd5e1" stroke="currentColor" strokeWidth="1.5" />
-                                        <line x1="24" y1="40" x2="40" y2="40" stroke="currentColor" strokeWidth="2" />
                                      </svg>
-                                  )
-                               },
-                               {
-                                  title: 'MANUTENÇÃO',
-                                  desc: 'Conservação preventiva',
-                                  svg: (
-                                     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 text-white">
-                                        <circle cx="48" cy="20" r="8" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" />
-                                        <path d="M48 10V12M48 28V30M38 20H40M56 20H58" stroke="currentColor" strokeWidth="2" />
-                                        <circle cx="28" cy="18" r="6" fill="currentColor" />
-                                        <path d="M22 15C22 13 26 11 31 11H36" stroke="currentColor" strokeWidth="2.5" />
-                                        <path d="M16 30C16 26 19 25 28 25C37 25 40 26 40 30V48H16V30Z" fill="currentColor" />
-                                        <path d="M38 32L48 28L48 40" stroke="currentColor" strokeWidth="3.5" />
-                                        <path d="M46 20L50 24" stroke="currentColor" strokeWidth="3.5" />
-                                        <circle cx="45" cy="19" r="3" stroke="currentColor" strokeWidth="2" fill="#1e4480" />
-                                        <circle cx="51" cy="25" r="3" stroke="currentColor" strokeWidth="2" fill="#1e4480" />
-                                        <rect x="20" y="29" width="4" height="6" rx="0.5" fill="#ffffff" />
-                                     </svg>
-                                  )
-                               },
-                               {
-                                  title: 'JARDINAGEM',
-                                  desc: 'Escopo paisagístico',
-                                  svg: (
-                                     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 text-white">
-                                        <path d="M14 20C14 20 22 12 32 12C42 12 50 20 50 20H14Z" fill="currentColor" stroke="currentColor" strokeWidth="1" />
-                                        <ellipse cx="32" cy="20" rx="22" ry="3" fill="currentColor" />
-                                        <circle cx="32" cy="26" r="5" fill="currentColor" />
-                                        <path d="M18 36C18 32 21 31 32 31C43 31 46 32 46 36V50H18V36Z" fill="currentColor" />
-                                        <path d="M24 31V50M40 31V50" stroke="#1e4480" strokeWidth="2.5" />
-                                        <path d="M44 38C44 38 48 34 52 35C52 35 54 40 48 42" fill="currentColor" />
-                                        <path d="M48 30C48 30 52 27 55 30C55 30 54 35 49 33" fill="currentColor" />
-                                        <path d="M28 42H36L38 48H26L28 42Z" fill="currentColor" stroke="currentColor" strokeWidth="1.5" />
-                                        <circle cx="32" cy="38" r="2" fill="#eab308" />
-                                     </svg>
-                                  )
-                               }
-                            ].map((cat, idx) => (
-                               <div key={idx} className="flex-1 bg-white border border-slate-150 rounded-2xl p-4 shadow-md flex flex-col items-center justify-between text-center h-32 hover:scale-[1.03] transition-transform duration-300">
-                                  <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#1e4480] to-[#2c65bd] flex items-center justify-center shrink-0 shadow-sm">
-                                     {cat.svg}
                                   </div>
-                                  <div className="flex flex-col items-center">
-                                     <span className="text-[#1e4480] text-[9px] font-black tracking-wider uppercase">{cat.title}</span>
-                                     <span className="text-[7.5px] text-slate-400 font-bold mt-0.5 leading-tight">{cat.desc}</span>
-                                  </div>
+                                  <span className="text-[#1e4480] text-[12px] font-black tracking-wider uppercase mt-2.5">
+                                     RECEPÇÃO
+                                  </span>
                                </div>
-                            ))}
+
+                               <div className="flex flex-col items-center justify-center">
+                                  <div className="bg-[#1e4480] text-white w-20 h-20 flex items-center justify-center rounded-full shadow-xl">
+                                     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 text-white">
+                                        <circle cx="28" cy="18" r="6" fill="currentColor" />
+                                     </svg>
+                                  </div>
+                                  <span className="text-[#1e4480] text-[12px] font-black tracking-wider uppercase mt-2.5">
+                                     MANUTENÇÃO
+                                  </span>
+                               </div>
+
+                               <div className="flex flex-col items-center justify-center">
+                                  <div className="bg-[#1e4480] text-white w-20 h-20 flex items-center justify-center rounded-full shadow-xl">
+                                     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 text-white">
+                                        <circle cx="32" cy="26" r="5" fill="currentColor" />
+                                     </svg>
+                                  </div>
+                                  <span className="text-[#1e4480] text-[12px] font-black tracking-wider uppercase mt-2.5">
+                                     JARDINAGEM
+                                  </span>
+                               </div>
+                            </div>
                          </div>
 
                          <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
@@ -5418,104 +5156,111 @@ function PropostaEditor() {
                          </div>
                       </div>
 
-{/* SLIDE 06 PRINT - SETORES ATENDIDOS */}
-                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-gradient-to-br from-[#1e4480] to-[#0f284e] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-white">
-                         {/* Stripes de fundo */}
-                         <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-10" xmlns="http://www.w3.org/2000/svg">
-                            <line x1="-100" y1="100" x2="400" y2="-400" stroke="#FFFFFF" strokeWidth="18" />
-                            <line x1="-100" y1="150" x2="450" y2="-400" stroke="#FFFFFF" strokeWidth="12" />
-                            <line x1="500" y1="900" x2="1200" y2="200" stroke="#FFFFFF" strokeWidth="18" />
+                      {/* SLIDE 06 PRINT - SETORES ATENDIDOS */}
+                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-[#1e4480] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-white">
+                         <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                            <line x1="-50" y1="150" x2="350" y2="-250" stroke="#FFFFFF" strokeWidth="10" />
+                            <line x1="600" y1="800" x2="1100" y2="300" stroke="#FFFFFF" strokeWidth="10" />
                          </svg>
                          
-                         <div className="grid grid-cols-12 gap-8 items-stretch h-[calc(100%-140px)] relative z-10 my-auto">
-                            {/* Coluna do Título (Esquerda) */}
-                            <div className="col-span-3 flex flex-col justify-center h-full">
-                               <span className="text-emerald-400 text-[10px] font-black tracking-[0.2em] uppercase">CARTEIRA SÓLIDA</span>
-                               <h2 className="text-2xl font-black text-white uppercase tracking-tight leading-none mt-1">
-                                  SETORES<br />
-                                  ATENDIDOS
+                         <div className="relative z-10 flex flex-col h-[calc(100%-30px)] justify-between text-white">
+                            <div>
+                               <h2 className="text-3xl font-black text-white uppercase tracking-tight leading-none mb-6">
+                                  SETORES ATENDIDOS
                                </h2>
+
+                               <div className="grid grid-cols-2 gap-12 mt-2">
+                                  <div className="flex flex-col space-y-3">
+                                     <div className="flex flex-col border-b border-white/20 pb-2">
+                                        <div style={{ width: '48px', height: '4px', backgroundColor: 'white', marginBottom: '8px' }}></div>
+                                        <div className="flex items-center justify-between gap-4">
+                                           <span className="text-white text-[15px] font-black tracking-wide uppercase leading-tight">
+                                              INDÚSTRIA
+                                           </span>
+                                           <div className="bg-white/10 p-2 rounded-xl text-white shrink-0 shadow-sm">
+                                              <Factory size={22} className="stroke-[2.5]" />
+                                           </div>
+                                        </div>
+                                     </div>
+                                     <p className="text-white/90 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
+                                        Com processos minuciosos e detalhados, o setor industrial trouxe para o escopo da JVS Facilities a capacidade de atender clientes de alta exigência. Possuímos qualidade técnica validada no mercado para atender as mais variadas necessidades da indústria.
+                                     </p>
+                                  </div>
+
+                                  <div className="flex flex-col space-y-3 pl-2">
+                                     <div className="flex flex-col border-b border-white/20 pb-2">
+                                        <div style={{ width: '48px', height: '4px', backgroundColor: 'white', marginBottom: '8px' }}></div>
+                                        <div className="flex items-center justify-between gap-4">
+                                           <span className="text-white text-[15px] font-black tracking-wide uppercase leading-tight">
+                                              VAREJO
+                                           </span>
+                                           <div className="bg-white/10 p-2 rounded-xl text-white shrink-0 shadow-sm">
+                                              <Store size={22} className="stroke-[2.5]" />
+                                           </div>
+                                        </div>
+                                     </div>
+                                     <p className="text-white/90 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
+                                        Um dos setores com maior participação em nossa carteira de clientes, o varejo exigiu resiliência e trabalho árduo em busca de superar os desafios operacionais, que por fim, resultaram in constantes avaliações positivas de satisfação e controle dos indicadores de rotatividade e absenteísmo.
+                                     </p>
+                                  </div>
+                               </div>
                             </div>
 
-                            {/* Coluna 1 (Centro) - Indústria */}
-                            <div className="col-span-4 bg-white/10 border border-white/15 backdrop-blur-md rounded-2xl p-6 shadow-lg flex flex-col justify-between hover:scale-[1.01] transition-transform">
-                               <div className="flex items-center justify-between gap-2 border-b border-white/15 pb-3">
-                                  <span className="text-white text-[10px] font-black tracking-wide uppercase leading-tight">
-                                     INDÚSTRIA E LOGÍSTICA
+                            <div className="flex justify-around items-center w-full pt-4 mt-auto border-t border-white/20 relative z-20">
+                               <div className="flex flex-col items-center justify-center">
+                                  <div className="bg-white text-[#1e4480] shadow-xl w-14 h-14 flex items-center justify-center rounded-full">
+                                     <Bus size={22} className="stroke-[2]" />
+                                  </div>
+                                  <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[100px] leading-tight">
+                                     TRANSPORTE<br />E LOGÍSTICA
                                   </span>
-                                  <div className="bg-white/15 p-2 rounded-xl text-white shrink-0 shadow-sm">
-                                     <Factory size={20} className="stroke-[2.5]" />
-                                  </div>
                                </div>
-                               <p className="text-white/85 text-[8.5px] font-semibold leading-relaxed mt-3">
-                                  Com processos minuciosos e rigorosos de auditorias, o setor industrial chancela a capacidade técnica da JVS Facilities de operar em ambientes de altíssima exigência, conformidade técnica e regulamentação (NRs).
-                               </p>
-                            </div>
 
-                            {/* Coluna 2 (Direita) - Varejo */}
-                            <div className="col-span-5 bg-white/10 border border-white/15 backdrop-blur-md rounded-2xl p-6 shadow-lg flex flex-col justify-between hover:scale-[1.01] transition-transform">
-                               <div className="flex items-center justify-between gap-2 border-b border-white/15 pb-3">
-                                  <span className="text-white text-[10px] font-black tracking-wide uppercase leading-tight">
-                                     VAREJO, CORPORATIVO E PÚBLICO
+                               <div className="flex flex-col items-center justify-center">
+                                  <div className="bg-white text-[#1e4480] shadow-xl w-14 h-14 flex items-center justify-center rounded-full">
+                                     <Building size={22} className="stroke-[2]" />
+                                  </div>
+                                  <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[110px] leading-tight">
+                                     CONDOMÍNIOS<br />E EDIFÍCIOS
                                   </span>
-                                  <div className="bg-white/15 p-2 rounded-xl text-white shrink-0 shadow-sm">
-                                     <Store size={20} className="stroke-[2.5]" />
-                                  </div>
                                </div>
-                               <p className="text-white/85 text-[8.5px] font-semibold leading-relaxed mt-3">
-                                  Um dos nossos maiores pilares. Atendemos redes de varejo exigindo máxima resiliência e dinamismo operacional em grande escala, resultando em índices impecáveis de absenteísmo, satisfação e rotatividade controlada.
-                               </p>
-                            </div>
-                         </div>
 
-                         {/* Painel inferior com as 5 categorias de setores */}
-                         <div className="flex justify-between items-center w-full pt-4 mt-auto border-t border-white/15 relative z-20 gap-3">
-                            {[
-                               {
-                                  title: 'TRANSPORTE',
-                                  desc: 'Hubs logísticos',
-                                  svg: <Bus size={18} className="text-[#1e4480] stroke-[2.5]" />
-                               },
-                               {
-                                  title: 'CONDOMÍNIOS',
-                                  desc: 'Edifícios e residenciais',
-                                  svg: <Building size={18} className="text-[#1e4480] stroke-[2.5]" />
-                               },
-                               {
-                                  title: 'HOSPITAIS',
-                                  desc: 'Clínicas e saúde',
-                                  svg: <Hospital size={18} className="text-[#1e4480] stroke-[2.5]" />
-                               },
-                               {
-                                  title: 'SHOPPING CENTERS',
-                                  desc: 'Grandes empreendimentos',
-                                  svg: <ShoppingBag size={18} className="text-[#1e4480] stroke-[2.5]" />
-                               },
-                               {
-                                  title: 'EDUCACIONAL',
-                                  desc: 'Escolas e universidades',
-                                  svg: <GraduationCap size={18} className="text-[#1e4480] stroke-[2.5]" />
-                               }
-                            ].map((setor, idx) => (
-                               <div key={idx} className="flex-1 bg-white border border-slate-150 rounded-2xl p-4 shadow-lg flex flex-col items-center justify-between text-center h-28 hover:scale-[1.03] transition-transform duration-300">
-                                  <div className="w-10 h-10 rounded-full bg-[#1e4480]/10 flex items-center justify-center shrink-0">
-                                     {setor.svg}
+                               <div className="flex flex-col items-center justify-center">
+                                  <div className="bg-white text-[#1e4480] shadow-xl w-14 h-14 flex items-center justify-center rounded-full">
+                                     <Hospital size={22} className="stroke-[2]" />
                                   </div>
-                                  <div className="flex flex-col items-center">
-                                     <span className="text-[#1e4480] text-[8.5px] font-black tracking-wider uppercase leading-tight">{setor.title}</span>
-                                     <span className="text-[7px] text-slate-400 font-bold mt-0.5 leading-none">{setor.desc}</span>
-                                  </div>
+                                  <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[100px] leading-tight">
+                                     CLÍNICAS E<br />HOSPITAIS
+                                  </span>
                                </div>
-                            ))}
+
+                               <div className="flex flex-col items-center justify-center">
+                                  <div className="bg-white text-[#1e4480] shadow-xl w-14 h-14 flex items-center justify-center rounded-full">
+                                     <ShoppingBag size={22} className="stroke-[2]" />
+                                  </div>
+                                  <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[100px] leading-tight">
+                                     SHOPPING<br />CENTERS
+                                  </span>
+                               </div>
+
+                               <div className="flex flex-col items-center justify-center">
+                                  <div className="bg-white text-[#1e4480] shadow-xl w-14 h-14 flex items-center justify-center rounded-full">
+                                     <GraduationCap size={22} className="stroke-[2]" />
+                                  </div>
+                                  <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[120px] leading-tight">
+                                     ESTABELECIMENTOS<br />EDUCACIONAIS
+                                  </span>
+                               </div>
+                            </div>
                          </div>
 
                          <div className="flex justify-between items-center border-t border-white/20 pt-4 mt-auto">
-                            <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                            <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest">www.grupojvsserv.com.br</span>
                             <span className="text-[9px] font-black text-white/80 bg-white/10 px-2.5 py-0.5 rounded">06</span>
                          </div>
                       </div>
 
-{/* SLIDE 07 PRINT - PRINCIPAIS FERRAMENTAS */}
+                      {/* {/* SLIDE 07 PRINT - PRINCIPAIS FERRAMENTAS */}
                       <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white grid grid-cols-2 relative overflow-hidden h-[100vh] text-slate-800">
                          {/* Metade Esquerda (Branca) */}
                          <div className="col-span-1 bg-white p-16 flex flex-col justify-between relative h-full border-r border-slate-100">
@@ -5723,34 +5468,23 @@ function PropostaEditor() {
                           </div>
                        </div>
 
-                       {/* SLIDE 09 PRINT - QUADRO EFETIVO */}
+                       
                       <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800">
-                         {/* Stripes de fundo corporativos modernos */}
                          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
                             <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
-                            <line x1="-100" y1="150" x2="450" y2="-400" stroke="#F1F5F9" strokeWidth="12" />
-                            <line x1="-100" y1="200" x2="500" y2="-400" stroke="#F1F5F9" strokeWidth="6" />
                             <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
-                            <line x1="550" y1="900" x2="1250" y2="200" stroke="#F1F5F9" strokeWidth="12" />
                          </svg>
 
                          <div className="flex flex-col justify-between h-full relative z-10 w-full">
-                            {/* Header */}
                             <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                <div className="flex flex-col">
                                   <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
                                   <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">QUADRO DE EQUIPE EFETIVO</h2>
                                </div>
-                               <img 
-                                  src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                  alt="JVS Facilities Logo" 
-                                  className="max-h-10 w-auto object-contain"
-                               />
+                               <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
                             </div>
 
-                            {/* Conteúdo Principal */}
                             <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-stretch">
-                               {/* Tabela de Quadro Efetivo */}
                                <div className="col-span-8 bg-white rounded-2xl border border-slate-150 shadow-lg overflow-hidden flex flex-col">
                                   <div className="bg-[#1e4480] text-center py-3">
                                      <h3 className="text-white text-xs font-black tracking-widest uppercase">{proposta.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções'}</h3>
@@ -5781,12 +5515,7 @@ function PropostaEditor() {
                                               ))
                                            ) : (
                                               <tr className="border-b border-slate-100 text-[10px] font-semibold text-slate-400 italic">
-                                                 <td colSpan={4} className="px-5 py-8 text-center bg-slate-50/10">
-                                                    <div className="flex flex-col items-center justify-center space-y-1 py-4">
-                                                       <p className="text-slate-400">Nenhum posto de trabalho inserido.</p>
-                                                       <p className="text-[9px] text-slate-300">Por favor, adicione postos na aba 4 (Quadro Equipe).</p>
-                                                    </div>
-                                                 </td>
+                                                 <td colSpan={4} className="px-5 py-8 text-center bg-slate-50/10">Nenhum posto de trabalho inserido.</td>
                                               </tr>
                                            )}
                                         </tbody>
@@ -5794,7 +5523,6 @@ function PropostaEditor() {
                                   </div>
                                </div>
 
-                               {/* Cláusulas Operacionais */}
                                <div className="col-span-4 flex flex-col justify-center">
                                   <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-6 shadow-xs space-y-4">
                                      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
@@ -5813,9 +5541,7 @@ function PropostaEditor() {
                                                  <svg className="w-4 h-4 text-[#1e4480] shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                                                  </svg>
-                                                 <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">
-                                                    {c}
-                                                 </p>
+                                                 <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">{c}</p>
                                               </div>
                                            ));
                                         })()}
@@ -5824,7 +5550,6 @@ function PropostaEditor() {
                                </div>
                             </div>
 
-                            {/* Rodapé */}
                             <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
                                <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">09</span>
@@ -5832,30 +5557,22 @@ function PropostaEditor() {
                          </div>
                       </div>
 
-{/* SLIDE 10 PRINT - ITENS INCLUSOS E EXCLUSÍDOS */}
+                      {/* SLIDE 10 PRINT - ITENS INCLUSOS E EXCLUSÍDOS */}
                       <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800">
-                         {/* Stripes de fundo */}
                          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
                             <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
-                            <line x1="-100" y1="150" x2="450" y2="-400" stroke="#F1F5F9" strokeWidth="12" />
                             <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
                          </svg>
 
                          <div className="relative z-10 flex flex-col h-full justify-between">
-                            {/* Header */}
                             <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                <div className="flex flex-col">
                                   <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
-                                  <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUÍDOS</h2>
+                                  <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUSÍDOS</h2>
                                </div>
-                               <img 
-                                  src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                  alt="JVS Facilities Logo" 
-                                  className="max-h-10 w-auto object-contain"
-                               />
+                               <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
                             </div>
 
-                            {/* Tabela de Itens */}
                             <div className="my-auto w-full max-w-4xl mx-auto">
                                <div className="w-full bg-white rounded-2xl border border-slate-150 shadow-lg overflow-hidden">
                                   <table className="w-full text-left border-collapse">
@@ -5893,7 +5610,6 @@ function PropostaEditor() {
                                </div>
                             </div>
 
-                            {/* Rodapé */}
                             <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
                                <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">10</span>
@@ -5901,7 +5617,7 @@ function PropostaEditor() {
                          </div>
                       </div>
 
-{/* SLIDE 11 PRINT - RESUMO DA PROPOSTA */}
+                      {/* SLIDE 11 PRINT - RESUMO DA PROPOSTA */}
                       {(() => {
                          const fc = formatCurrency;
                          const divisorTributos = resultado?.divisor || 1;
@@ -5923,11 +5639,10 @@ function PropostaEditor() {
                            Number(proposta.insumos.servicos || 0)
                          );
 
-                         // Função auxiliar para renderizar linhas de insumos com tratamento premium de valores zerados
                          const renderInsumoRow = (label: string, value: number) => {
                             const isZero = value === 0;
                             return (
-                               <tr className={`border-b border-slate-100 ${isZero ? 'opacity-40 text-slate-400 bg-slate-50/10' : 'text-slate-700 font-bold'}`}>
+                               <tr key={label} className={`border-b border-slate-100 ${isZero ? 'opacity-40 text-slate-400 bg-slate-50/10' : 'text-slate-700 font-bold'}`}>
                                   <td className="py-3 px-4 font-semibold">{label}</td>
                                   <td className={`py-3 px-4 text-right font-black ${isZero ? 'text-slate-300' : 'text-slate-800'}`}>
                                      {isZero ? '-' : fc(value)}
@@ -5938,115 +5653,72 @@ function PropostaEditor() {
 
                          return (
                             <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800">
-                               {/* Stripes de fundo */}
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
                                   <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
                                   <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
                                </svg>
 
                                <div className="relative z-10 flex flex-col h-full justify-between">
-                                  {/* Top Header */}
                                   <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                      <div className="flex flex-col">
                                         <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
                                         <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">RESUMO DA PROPOSTA COMERCIAL</h2>
                                      </div>
-                                     <img 
-                                        src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                        alt="JVS Facilities Logo" 
-                                        className="max-h-10 w-auto object-contain"
-                                     />
+                                     <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
 
-                                  {/* Grid Central Simétrico */}
-                                  <div className="my-auto grid grid-cols-2 gap-10 w-full max-w-5xl mx-auto items-stretch">
-                                     {/* Coluna Esquerda: Mão de Obra */}
-                                     <div className="bg-white rounded-2xl border border-slate-150 p-6 flex flex-col justify-between shadow-lg">
-                                        <div>
-                                           <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
-                                              <div className="w-2.5 h-2.5 rounded-full bg-[#1e4480]"></div>
-                                              <h3 className="text-xs font-black text-[#1e4480] uppercase tracking-wider">1) Mão de Obra — Efetivo</h3>
-                                           </div>
-                                           <div className="pr-1">
-                                              <table className="w-full text-left text-[10px] border-collapse">
-                                                 <thead>
-                                                    <tr className="border-b border-slate-200 text-[#1e4480] font-black uppercase tracking-wider text-[9px] bg-slate-50/50">
-                                                       <th className="py-2 px-3">Função</th>
-                                                       <th className="py-2 px-3 text-center w-14">Qtd.</th>
-                                                       <th className="py-2 px-3 text-right w-24">Unitário</th>
-                                                       <th className="py-2 px-3 text-right w-28">Total</th>
-                                                    </tr>
-                                                 </thead>
-                                                 <tbody>
-                                                    {proposta.equipe.length === 0 ? (
-                                                       <tr>
-                                                          <td colSpan={4} className="py-6 text-center text-slate-400 italic">Nenhum colaborador no Quadro de Equipe.</td>
-                                                       </tr>
-                                                    ) : (
-                                                       proposta.equipe.map((p: any, idx: number) => {
-                                                          const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
-                                                          const precoVendaItem = itemRes?.precoVenda || 0;
-                                                          const precoUnitario = p.quantidade > 0 ? precoVendaItem / p.quantidade : 0;
-                                                          return (
-                                                             <tr key={p.id} className="border-b border-slate-100 text-slate-700">
-                                                                <td className="py-3 px-3 font-bold">{p.nomeCargo}</td>
-                                                                <td className="py-3 px-3 text-center font-black text-[#1e4480]">{p.quantidade}</td>
-                                                                <td className="py-3 px-3 text-right text-slate-500 font-semibold">{fc(precoUnitario)}</td>
-                                                                <td className="py-3 px-3 text-right font-black text-slate-800">{fc(precoVendaItem)}</td>
-                                                             </tr>
-                                                          );
-                                                       })
-                                                    )}
-                                                 </tbody>
-                                              </table>
-                                           </div>
-                                        </div>
-                                        <div className="border-t border-slate-200 pt-3.5 mt-4 flex justify-between items-center text-xs">
-                                           <span className="font-extrabold text-slate-500 uppercase tracking-wider">Subtotal Mão de Obra</span>
-                                           <span className="font-black text-[#1e4480] text-base">{fc(maoDeObraSubtotal)}</span>
+                                  <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-stretch">
+                                     <div className="col-span-7 bg-white rounded-2xl border border-slate-150 shadow-lg overflow-hidden flex flex-col justify-between">
+                                        <table className="w-full text-left border-collapse text-[10px]">
+                                           <thead>
+                                              <tr className="bg-[#1e4480] text-white text-[10px] font-black uppercase tracking-wider border-b border-slate-200">
+                                                 <th className="py-3.5 px-4">Grupo de Custo</th>
+                                                 <th className="py-3.5 px-4 text-right">Valor Mensal</th>
+                                              </tr>
+                                           </thead>
+                                           <tbody>
+                                              <tr className="border-b border-slate-100 text-slate-700 font-bold">
+                                                 <td className="py-3.5 px-4 font-black">Mão de Obra Efetiva (Postos)</td>
+                                                 <td className="py-3.5 px-4 text-right font-black text-[#1e4480]">{fc(maoDeObraSubtotal)}</td>
+                                              </tr>
+                                              {renderInsumoRow('Materiais e Equipamentos', applyCascata(Number(proposta.insumos.materiais || 0) + Number(proposta.insumos.maquinas || 0)))}
+                                              {renderInsumoRow('Descartáveis e Higiene', applyCascata(Number(proposta.insumos.descartaveis || 0)))}
+                                              {renderInsumoRow('Outros Serviços / Operações', applyCascata(Number(proposta.insumos.servicos || 0)))}
+                                           </tbody>
+                                        </table>
+                                        
+                                        <div className="bg-slate-50 border-t border-slate-150 p-4 flex justify-between items-center mt-auto">
+                                           <span className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Valor Total Mensal Proposto</span>
+                                           <span className="text-lg font-black text-[#1b4d3e] bg-emerald-50 border border-emerald-250 px-4 py-1.5 rounded-xl shadow-xs">
+                                              {fc((resultado?.totalGeral || 0) + insumosSubtotal)}
+                                           </span>
                                         </div>
                                      </div>
 
-                                     {/* Coluna Direita: Insumos & Total Geral */}
-                                     <div className="flex flex-col justify-between gap-8">
-                                        {/* Tabela de Insumos */}
-                                        <div className="bg-white rounded-2xl border border-slate-150 p-6 shadow-lg">
-                                           <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
-                                              <div className="w-2.5 h-2.5 rounded-full bg-slate-500"></div>
-                                              <h3 className="text-xs font-black text-slate-600 uppercase tracking-wider">2) Materiais, Equipamentos e Serviços</h3>
+                                     <div className="col-span-5 flex flex-col justify-center">
+                                        <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-6 shadow-xs space-y-4">
+                                           <div className="flex items-center gap-2 border-b border-slate-255 pb-2">
+                                              <div className="w-2 h-4 bg-[#1e4480] rounded-full shrink-0"></div>
+                                              <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Premissas do Investimento</h4>
                                            </div>
-                                           <table className="w-full text-left text-[10px] border-collapse">
-                                              <tbody>
-                                                 {renderInsumoRow('Materiais e Produtos de Limpeza', applyCascata(proposta.insumos.materiais))}
-                                                 {renderInsumoRow('Máquinas e Equipamentos', applyCascata(proposta.insumos.maquinas))}
-                                                 {renderInsumoRow('Descartáveis', applyCascata(proposta.insumos.descartaveis))}
-                                                 {renderInsumoRow(
-                                                    `Serviços ${proposta.insumos.servicosDescricao ? `(${proposta.insumos.servicosDescricao})` : ''}`, 
-                                                    applyCascata(proposta.insumos.servicos)
-                                                 )}
-                                              </tbody>
-                                           </table>
-                                           <div className="border-t border-slate-200 pt-3.5 mt-4 flex justify-between items-center text-xs">
-                                              <span className="font-extrabold text-slate-500 uppercase tracking-wider">Subtotal Insumos</span>
-                                              <span className="font-black text-slate-700 text-base">{fc(insumosSubtotal)}</span>
-                                           </div>
-                                        </div>
-
-                                        {/* Card Valor Final */}
-                                        <div className="bg-gradient-to-r from-[#1e4480] to-[#12382d] rounded-2xl p-6 text-white flex justify-between items-center shadow-xl relative overflow-hidden">
-                                           <div className="absolute right-[-10px] top-[-10px] w-24 h-24 bg-white/5 rounded-full"></div>
-                                           <div>
-                                              <h4 className="text-[9px] font-black uppercase tracking-widest text-emerald-400 mb-0.5">VALOR FINAL DA VENDA</h4>
-                                              <p className="text-xs font-extrabold text-white tracking-tight uppercase">TOTAL GERAL DA PROPOSTA</p>
-                                           </div>
-                                           <div className="text-3xl font-black text-emerald-400 tracking-tight z-10">
-                                              {fc(resultado?.faturamentoBruto || 0)}
+                                           <div className="space-y-3.5">
+                                              <div className="flex items-start gap-2.5">
+                                                 <svg className="w-4 h-4 text-[#1e4480] shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                 </svg>
+                                                 <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">Os valores propostos contemplam todos os encargos sociais, tributos (PIS, COFINS, ISS), taxas de administração e insumos descritos na proposta;</p>
+                                              </div>
+                                              <div className="flex items-start gap-2.5">
+                                                 <svg className="w-4 h-4 text-[#1e4480] shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                 </svg>
+                                                 <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">Faturamento mensal com vencimento a ser pactuado nas condições gerais da contratação, emitido após a prestação dos serviços.</p>
+                                              </div>
                                            </div>
                                         </div>
                                      </div>
                                   </div>
 
-                                  {/* Footer */}
                                   <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
                                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
                                      <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">11</span>
@@ -6056,160 +5728,130 @@ function PropostaEditor() {
                          );
                       })()}
 
-{/* SLIDE 12 PRINT - CONDIÇÕES DA PROPOSTA */}
-                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-slate-50 p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800">
-                         {/* Stripes de fundo */}
-                         <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
-                            <line x1="-100" y1="100" x2="400" y2="-400" stroke="#1e4480" strokeWidth="18" />
-                            <line x1="500" y1="900" x2="1200" y2="200" stroke="#1e4480" strokeWidth="18" />
+                      {/* SLIDE 12 PRINT - CONDIÇÕES DA PROPOSTA */}
+                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800">
+                         <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
+                            <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
+                            <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
                          </svg>
 
                          <div className="relative z-10 flex flex-col h-full justify-between">
-                            {/* Header */}
-                            <div className="flex justify-between items-center w-full pb-4 border-b border-slate-200/60">
+                            <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                <div className="flex flex-col">
                                   <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
                                   <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">CONDIÇÕES GERAIS DA PROPOSTA</h2>
                                </div>
-                               <img 
-                                  src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                  alt="JVS Facilities Logo" 
-                                  className="max-h-10 w-auto object-contain"
-                               />
+                               <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
                             </div>
 
-                            {/* Grid Central de Duas Colunas de Cards */}
-                            <div className="my-auto grid grid-cols-2 gap-8 w-full max-w-5xl mx-auto items-stretch">
-                               {/* Card Esquerdo: Colaboradores */}
-                               <div className="bg-white rounded-2xl border border-slate-150 p-8 shadow-lg border-t-4 border-t-[#1e4480] flex flex-col space-y-4">
-                                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                                     <svg className="w-5 h-5 text-[#1e4480]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                     </svg>
-                                     <h3 className="text-[#1e4480] text-xs font-black tracking-wider uppercase">
-                                        CONDIÇÕES PARA OS COLABORADORES
-                                     </h3>
+                            <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-2 gap-8">
+                               <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-6 shadow-xs space-y-4">
+                                  <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+                                     <Calendar size={18} className="text-[#1e4480]" />
+                                     <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Prazos e Validade</h4>
                                   </div>
-                                  <ul className="space-y-3 text-slate-600 text-[10px] font-semibold leading-relaxed">
-                                     {((proposta.cliente.condicoesColaboradores && proposta.cliente.condicoesColaboradores.length > 0)
-                                        ? proposta.cliente.condicoesColaboradores
-                                        : [
-                                           proposta.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
-                                           proposta.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
-                                           proposta.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.'
-                                        ]
-                                     ).map((cond: string, idx: number) => (
-                                        <li key={idx} className="flex items-start gap-2">
-                                           <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-1"></div>
-                                           <span>{cond}</span>
-                                        </li>
-                                     ))}
-                                  </ul>
+                                  <div className="space-y-3">
+                                     <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-2">
+                                        <span className="text-slate-500 font-bold">Validade da Proposta:</span>
+                                        <span className="text-slate-800 font-black">{proposta.condicoes?.validadeProposta || "15 (quinze) dias"}</span>
+                                     </div>
+                                     <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-2">
+                                        <span className="text-slate-500 font-bold">Prazo de Início dos Serviços:</span>
+                                        <span className="text-slate-800 font-black">{proposta.condicoes?.prazoInicio || "20 (vinte) dias"}</span>
+                                     </div>
+                                     <div className="flex justify-between items-center text-[10px] pb-1">
+                                        <span className="text-slate-500 font-bold">Vigência Contratual Mínima:</span>
+                                        <span className="text-slate-800 font-black">{proposta.condicoes?.vigenciaContratual || "12 (doze) meses"}</span>
+                                     </div>
+                                  </div>
                                </div>
 
-                               {/* Card Direito: Cliente */}
-                               <div className="bg-white rounded-2xl border border-slate-150 p-8 shadow-lg border-t-4 border-t-emerald-500 flex flex-col space-y-4">
-                                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                                     <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0V9a2 2 0 012-2h2a2 2 0 012 2v12m-6 0h6"></path>
-                                     </svg>
-                                     <h3 className="text-emerald-600 text-xs font-black tracking-wider uppercase">
-                                        CONDIÇÕES PARA O CLIENTE
-                                     </h3>
+                               <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-6 shadow-xs space-y-4">
+                                  <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+                                     <CreditCard size={18} className="text-[#1e4480]" />
+                                     <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Faturamento e Reajuste</h4>
                                   </div>
-                                  <ul className="space-y-3 text-slate-600 text-[10px] font-semibold leading-relaxed">
-                                     {((proposta.cliente.condicoesCliente && proposta.cliente.condicoesCliente.length > 0)
-                                        ? proposta.cliente.condicoesCliente
-                                        : [
-                                           proposta.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
-                                           proposta.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
-                                           proposta.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.'
-                                        ]
-                                     ).map((cond: string, idx: number) => (
-                                        <li key={idx} className="flex items-start gap-2">
-                                           <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-1"></div>
-                                           <span className={idx === (proposta.cliente.condicoesCliente || []).length - 1 ? "font-extrabold text-[#1B4D3E]" : ""}>{cond}</span>
-                                        </li>
-                                     ))}
-                                  </ul>
+                                  <div className="space-y-3">
+                                     <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-2">
+                                        <span className="text-slate-500 font-bold">Prazo de Pagamento:</span>
+                                        <span className="text-slate-800 font-black">{proposta.condicoes?.prazoPagamento || "30 dias líquido"}</span>
+                                     </div>
+                                     <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-2">
+                                        <span className="text-slate-500 font-bold">Base de Reajuste Anual:</span>
+                                        <span className="text-slate-800 font-black">{proposta.condicoes?.baseReajuste || "Convenção Coletiva (CCT) / IPCA"}</span>
+                                     </div>
+                                     <div className="flex justify-between items-center text-[10px] pb-1">
+                                        <span className="text-slate-500 font-bold">Garantias e Seguros:</span>
+                                        <span className="text-[#1b4d3e] font-black uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded border border-emerald-150">Inclusos e Ativos</span>
+                                     </div>
+                                  </div>
                                </div>
                             </div>
 
-                            {/* Footer */}
-                            <div className="flex justify-between items-center border-t border-slate-200 pt-4 mt-auto">
+                            <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
                                <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded font-black">12</span>
                             </div>
                          </div>
                       </div>
 
-{/* SLIDE 13 PRINT - ACEITE */}
+                      {/* SLIDE 13 PRINT - ACEITE */}
                       <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-[#1e4480] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-white">
+                         <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                            <line x1="-50" y1="150" x2="350" y2="-250" stroke="#FFFFFF" strokeWidth="10" />
+                            <line x1="600" y1="800" x2="1100" y2="300" stroke="#FFFFFF" strokeWidth="10" />
+                         </svg>
+
                          <div className="relative z-10 flex flex-col h-full justify-between">
-                            {/* Header */}
-                            <div className="flex justify-between items-center w-full pb-3 border-b border-white/15">
-                               <h2 className="text-3xl font-black text-white tracking-widest uppercase">ACEITE</h2>
-                               <img 
-                                  src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                  alt="JVS Facilities Logo" 
-                                  className="max-h-10 w-auto object-contain"
-                               />
+                            <div className="flex justify-between items-center w-full pb-4 border-b border-white/20">
+                               <div className="flex flex-col">
+                                  <span className="text-white/70 text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                  <h2 className="text-xl font-black text-white uppercase tracking-tight">TERMO DE ACEITE E CONTRATAÇÃO</h2>
+                               </div>
+                               <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain brightness-0 invert" />
                             </div>
 
-                            {/* Cards de Dados de Glassmorphism Premium */}
-                            <div className="my-auto max-w-4xl w-full mx-auto grid grid-cols-2 gap-x-12 gap-y-4">
-                               {/* Coluna Esquerda: Dados da Empresa */}
-                               <div className="space-y-3">
-                                  {[
-                                     { label: 'Razão Social', value: proposta.cliente.razaoSocial || proposta.cliente.cliente || '-' },
-                                     { label: 'Nome Fantasia', value: proposta.cliente.cliente || '-' },
-                                     { label: 'CNPJ', value: proposta.cliente.cnpj || '-' },
-                                     { label: 'Valor Mensal', value: formatCurrency(resultado?.faturamentoBruto || 0) },
-                                     { label: 'Início', value: proposta.cliente.dataInicio || '-' },
-                                     { label: 'Vencimento', value: proposta.cliente.dataVencimento || '-' }
-                                  ].map((item, idx) => (
-                                     <div key={idx} className="bg-white/10 border border-white/15 backdrop-blur-md rounded-2xl py-2 px-5 flex justify-between items-center text-[10px] font-black tracking-wider uppercase shadow-xs">
-                                        <span className="text-white/60 shrink-0">{item.label}</span>
-                                        <span className="text-white font-extrabold text-ellipsis overflow-hidden whitespace-nowrap ml-4 max-w-[220px]">{item.value}</span>
-                                     </div>
-                                  ))}
-                                </div>
+                            <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-center text-white">
+                               <div className="col-span-6 space-y-4">
+                                  <h3 className="text-lg font-black tracking-tight leading-snug">Estamos prontos para iniciar a nossa parceria de sucesso!</h3>
+                                  <div className="text-white/80 text-[10px] leading-relaxed space-y-3 font-semibold text-justify">
+                                     <p>Ao assinar este termo de aceite, o <strong className="text-white font-extrabold">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
+                                     <p>Este documento servirá como base oficial para a elaboração do instrumento jurídico definitivo (Contrato de Prestação de Serviços) entre as partes.</p>
+                                  </div>
+                               </div>
 
-                               {/* Coluna Direita: Contato do Cliente */}
-                               <div className="space-y-3">
-                                  {[
-                                     { label: 'Contato', value: proposta.cliente.contato || '-' },
-                                     { label: 'Cargo', value: proposta.cliente.contatoCargo || '-' },
-                                     { label: 'Celular / Tel', value: proposta.cliente.celular || '-' },
-                                     { label: 'E-mail', value: proposta.cliente.email || '-' }
-                                  ].map((item, idx) => (
-                                     <div key={idx} className="bg-white/10 border border-white/15 backdrop-blur-md rounded-2xl py-2 px-5 flex justify-between items-center text-[10px] font-black tracking-wider uppercase shadow-xs">
-                                        <span className="text-white/60 shrink-0">{item.label}</span>
-                                        <span className="text-white font-extrabold text-ellipsis overflow-hidden whitespace-nowrap ml-4 max-w-[220px]">{item.value}</span>
+                               <div className="col-span-6 grid grid-cols-2 gap-4">
+                                  <div className="bg-white/10 rounded-2xl p-5 border border-white/15 shadow-md flex flex-col justify-between h-40">
+                                     <div className="flex flex-col">
+                                        <span className="text-[10px] font-black tracking-[0.2em] uppercase text-white/90">CONTRATANTE</span>
+                                        <span className="text-[8.5px] text-white/70 font-semibold mt-1 truncate">{proposta.cliente.cliente || "Erasto Gaertner"}</span>
                                      </div>
-                                  ))}
+                                     <div className="border-t border-white/30 pt-3 mt-auto flex flex-col text-center">
+                                        <div className="h-6 w-full mb-1"></div>
+                                        <span className="text-[9px] font-black text-white">Assinatura / Carimbo</span>
+                                        <span className="text-[8px] text-white/50 font-bold uppercase mt-0.5">Representante Legal</span>
+                                     </div>
+                                  </div>
+
+                                  <div className="bg-white/10 rounded-2xl p-5 border border-white/15 shadow-md flex flex-col justify-between h-40">
+                                     <div className="flex flex-col">
+                                        <span className="text-[10px] font-black tracking-[0.2em] uppercase text-white/90">CONTRATADA</span>
+                                        <span className="text-[8.5px] text-white/70 font-semibold mt-1 truncate">JVS Serv. Terceirizados Ltda.</span>
+                                     </div>
+                                     <div className="border-t border-white/30 pt-3 mt-auto flex flex-col text-center">
+                                        <div className="h-6 w-full mb-1 flex items-center justify-center">
+                                           <span className="text-[8px] text-emerald-300 font-extrabold tracking-wider bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/35 uppercase select-none">Assinado Digitalmente</span>
+                                        </div>
+                                        <span className="text-[9px] font-black text-white">{proposta.cliente.vendedorNome || "Ádamo Quadros"}</span>
+                                        <span className="text-[8px] text-white/50 font-bold uppercase mt-0.5">{proposta.cliente.vendedorCargo || "Novos Negócios"}</span>
+                                     </div>
+                                  </div>
                                </div>
                             </div>
 
-                            {/* Seção Dupla de Assinaturas Imponentes e Simétricas */}
-                            <div className="grid grid-cols-2 gap-24 w-full max-w-4xl mx-auto pt-6 border-t border-white/15 mt-auto">
-                               {/* Representante SmartBid / Vendedor */}
-                               <div className="flex flex-col items-center">
-                                  <div className="border-t border-white/40 w-full my-1"></div>
-                                  <span className="text-[10px] font-black text-white uppercase tracking-widest mt-1">SmartBid / JVS Facilities</span>
-                                  <span className="text-[9px] text-white/70 font-semibold leading-relaxed mt-0.5">
-                                     {proposta.cliente.vendedorNome || 'Representante'} — {proposta.cliente.vendedorCargo || 'Comercial'}
-                                  </span>
-                               </div>
-
-                               {/* Representante do Cliente */}
-                               <div className="flex flex-col items-center">
-                                  <div className="border-t border-white/40 w-full my-1"></div>
-                                  <span className="text-[10px] font-black text-white uppercase tracking-widest mt-1">De Acordo / Assinatura do Cliente</span>
-                                  <span className="text-[9px] text-white/70 font-semibold leading-relaxed mt-0.5">
-                                     {proposta.cliente.cliente || 'Representante Legal'}
-                                  </span>
-                               </div>
+                            <div className="flex justify-between items-center border-t border-white/20 pt-4 mt-auto">
+                               <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                               <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded">13</span>
                             </div>
                          </div>
                       </div>
