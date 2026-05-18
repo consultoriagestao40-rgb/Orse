@@ -160,6 +160,10 @@ export async function saveProposta(data: any) {
           vendedorCargo: cliente.vendedorCargo || 'Novos Negócios',
           vendedorTelefone: cliente.vendedorTelefone || '(41) 9 9737-0880',
           vendedorEmail: cliente.vendedorEmail || 'adamo@grupojvsserv.com.br',
+          quadroEfetivoSubtitulo: cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
+          quadroEfetivoClausula1: cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
+          quadroEfetivoClausula2: cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
+          quadroEfetivoClausula3: cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
           insumos: {
             ...data.insumos,
             detalheMateriais: data.insumos.detalheMateriais || [],
@@ -333,7 +337,11 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
         vendedorNome: meta.vendedorNome || 'Ádamo Quadros',
         vendedorCargo: meta.vendedorCargo || 'Novos Negócios',
         vendedorTelefone: meta.vendedorTelefone || '(41) 9 9737-0880',
-        vendedorEmail: meta.vendedorEmail || 'adamo@grupojvsserv.com.br'
+        vendedorEmail: meta.vendedorEmail || 'adamo@grupojvsserv.com.br',
+        quadroEfetivoSubtitulo: meta.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
+        quadroEfetivoClausula1: meta.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
+        quadroEfetivoClausula2: meta.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
+        quadroEfetivoClausula3: meta.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
       },
       insumos: {
         materiais: meta.insumos?.materiais || 0,

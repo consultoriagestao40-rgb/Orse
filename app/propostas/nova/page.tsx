@@ -84,7 +84,11 @@ function PropostaEditor() {
             vendedorNome: fullData.cliente.vendedorNome || 'Ádamo Quadros',
             vendedorCargo: fullData.cliente.vendedorCargo || 'Novos Negócios',
             vendedorTelefone: fullData.cliente.vendedorTelefone || '(41) 9 9737-0880',
-            vendedorEmail: fullData.cliente.vendedorEmail || 'adamo@grupojvsserv.com.br'
+            vendedorEmail: fullData.cliente.vendedorEmail || 'adamo@grupojvsserv.com.br',
+            quadroEfetivoSubtitulo: fullData.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
+            quadroEfetivoClausula1: fullData.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
+            quadroEfetivoClausula2: fullData.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
+            quadroEfetivoClausula3: fullData.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
           },
           dreTaxPercent: (fullData as any).dreTaxPercent,
           dreEncargos: (fullData as any).dreEncargos,
@@ -123,7 +127,11 @@ function PropostaEditor() {
       vendedorNome: 'Ádamo Quadros',
       vendedorCargo: 'Novos Negócios',
       vendedorTelefone: '(41) 9 9737-0880',
-      vendedorEmail: 'adamo@grupojvsserv.com.br'
+      vendedorEmail: 'adamo@grupojvsserv.com.br',
+      quadroEfetivoSubtitulo: 'Quadro efetivo - Opções',
+      quadroEfetivoClausula1: 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
+      quadroEfetivoClausula2: 'Para reduções no efetivo prazo de 30 (trinta) dias;',
+      quadroEfetivoClausula3: 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
     },
     premissas: { 
       taxaAdm: 5, 
@@ -312,7 +320,11 @@ function PropostaEditor() {
                  vendedorNome: fullData.cliente.vendedorNome || loggedUser?.nome || 'Ádamo Quadros',
                  vendedorCargo: fullData.cliente.vendedorCargo || (loggedUser?.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser?.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios'),
                  vendedorTelefone: fullData.cliente.vendedorTelefone || '(41) 9 9737-0880',
-                 vendedorEmail: fullData.cliente.vendedorEmail || loggedUser?.email || 'adamo@grupojvsserv.com.br'
+                 vendedorEmail: fullData.cliente.vendedorEmail || loggedUser?.email || 'adamo@grupojvsserv.com.br',
+                  quadroEfetivoSubtitulo: fullData.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
+                  quadroEfetivoClausula1: fullData.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
+                  quadroEfetivoClausula2: fullData.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
+                  quadroEfetivoClausula3: fullData.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
                },
                premissas: {
                  ...fullData.premissas,
@@ -2539,7 +2551,7 @@ function PropostaEditor() {
                                 {/* Rodapé do Slide 4 */}
                                 <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto pr-24 relative z-20">
                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                                   <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">04</span>
+                                   <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">08</span>
                                 </div>
 
                                 {/* Botão de Avanço voltando para o Slide 01 */}
@@ -2963,7 +2975,7 @@ function PropostaEditor() {
                                   <div className="my-auto w-full max-w-2xl mx-auto space-y-4">
                                      <div className="w-full bg-white rounded-xl border border-slate-200/80 shadow-lg overflow-hidden">
                                         <div className="bg-[#1e4480] text-center py-2">
-                                           <h3 className="text-white text-xs font-black tracking-widest uppercase">Quadro efetivo - Opções</h3>
+                                           <h3 className="text-white text-xs font-black tracking-widest uppercase">{proposta.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções'}</h3>
                                         </div>
                                         <div className="overflow-y-auto max-h-[160px]">
                                            <table className="w-full text-left border-collapse">
@@ -3151,6 +3163,53 @@ function PropostaEditor() {
                            </div>
                         </div>
                      </div>
+                      {/* SEÇÃO 3: DADOS DO QUADRO EFETIVO */}
+                      <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
+                         <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#16325e] rounded-t-2xl mb-6">
+                            <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
+                               📋 Personalizar Observações do Quadro Efetivo (Slide 08)
+                            </h3>
+                         </div>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-1 md:col-span-2">
+                               <label className="text-xs font-semibold text-slate-700">Subtítulo / Título da Tabela</label>
+                               <input 
+                                  type="text" 
+                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
+                                  value={proposta.cliente.quadroEfetivoSubtitulo || ''} 
+                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, quadroEfetivoSubtitulo: e.target.value}})} 
+                               />
+                            </div>
+                            <div className="space-y-1 md:col-span-2">
+                               <label className="text-xs font-semibold text-slate-700">Cláusula / Observação 1</label>
+                               <textarea 
+                                  rows={2}
+                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium resize-none" 
+                                  value={proposta.cliente.quadroEfetivoClausula1 || ''} 
+                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, quadroEfetivoClausula1: e.target.value}})} 
+                               />
+                            </div>
+                            <div className="space-y-1 md:col-span-2">
+                               <label className="text-xs font-semibold text-slate-700">Cláusula / Observação 2</label>
+                               <textarea 
+                                  rows={2}
+                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium resize-none" 
+                                  value={proposta.cliente.quadroEfetivoClausula2 || ''} 
+                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, quadroEfetivoClausula2: e.target.value}})} 
+                               />
+                            </div>
+                            <div className="space-y-1 md:col-span-2">
+                               <label className="text-xs font-semibold text-slate-700">Cláusula / Observação 3</label>
+                               <textarea 
+                                  rows={2}
+                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium resize-none" 
+                                  value={proposta.cliente.quadroEfetivoClausula3 || ''} 
+                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, quadroEfetivoClausula3: e.target.value}})} 
+                               />
+                            </div>
+                         </div>
+                      </div>
+
                   </div>
 
                   <div className="hidden print-slide-deck">
@@ -3807,7 +3866,7 @@ function PropostaEditor() {
                            <div className="my-auto w-full max-w-2xl mx-auto space-y-4">
                               <div className="w-full bg-white rounded-xl border border-slate-200/80 shadow-lg overflow-hidden">
                                  <div className="bg-[#1e4480] text-center py-2">
-                                    <h3 className="text-white text-xs font-black tracking-widest uppercase">Quadro efetivo - Opções</h3>
+                                    <h3 className="text-white text-xs font-black tracking-widest uppercase">{proposta.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções'}</h3>
                                  </div>
                                  <div className="overflow-y-auto max-h-[160px]">
                                     <table className="w-full text-left border-collapse">
