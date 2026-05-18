@@ -3579,7 +3579,7 @@ function PropostaEditor() {
                   {/* FORMULÁRIO DE ATUALIZAÇÃO DOS DADOS DOS SLIDES E DO VENDEDOR */}
                   
                   <div className="space-y-6">
-                     {currentSlide === 1 && (
+                     {currentSlide === 2 && (
                         <>
                            {/* SEÇÃO 1: DADOS DO CLIENTE E CONTEÚDO */}
                      <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm">
@@ -3715,9 +3715,119 @@ function PropostaEditor() {
                       <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                          <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#16325e] rounded-t-2xl mb-6">
                             <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
-                               📋 Personalizar Observações do Quadro Efetivo (Slide 08)
+                               📋 Personalizar Quadro Efetivo & Observações (Slide 09)
                             </h3>
                          </div>
+                         {/* SEÇÃO 1: INTEGRANTES DO QUADRO EFETIVO */}
+                         <div className="space-y-4 border-b border-slate-100 pb-6 mb-6">
+                            <div className="flex justify-between items-center">
+                               <div>
+                                  <h4 className="text-xs font-black text-[#1e4480] uppercase tracking-wider">
+                                     👥 Integrantes do Quadro Efetivo
+                                  </h4>
+                                  <p className="text-slate-500 text-[10px] font-semibold mt-1">
+                                     Edite diretamente as funções, quantidades e escalas exibidas na tabela do Slide 09.
+                                  </p>
+                               </div>
+                               <button
+                                  type="button"
+                                  className="px-3 py-1.5 bg-[#1e4480] hover:bg-[#16325e] text-white font-bold text-[10px] uppercase tracking-wider rounded-lg transition-all active:scale-95 shadow-sm cursor-pointer shrink-0"
+                                  onClick={() => {
+                                     const newId = String(Date.now());
+                                     const newItem = { 
+                                        id: newId, 
+                                        nomeCargo: 'Nova Função', 
+                                        quantidade: 1, 
+                                        escala: '44h' 
+                                     };
+                                     const newList = [...(proposta.equipe || []), newItem];
+                                     setProposta({ ...proposta, equipe: newList });
+                                  }}
+                               >
+                                  ➕ Novo Item / Função
+                               </button>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                               <table className="w-full text-left border-collapse">
+                                  <thead>
+                                     <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
+                                        <th className="px-4 py-3">Função / Cargo</th>
+                                        <th className="px-4 py-3 text-center w-28">Quantidade</th>
+                                        <th className="px-4 py-3 text-center w-36">Escala</th>
+                                        <th className="px-4 py-3 text-center w-20">Ações</th>
+                                     </tr>
+                                  </thead>
+                                  <tbody>
+                                     {(proposta.equipe || []).map((p: any, idx: number) => (
+                                        <tr key={p.id || idx} className="border-b border-slate-100 hover:bg-slate-50/50">
+                                           <td className="px-4 py-3">
+                                              <input 
+                                                 type="text" 
+                                                 className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-700 outline-none focus:border-[#1e4480] font-medium"
+                                                 value={p.nomeCargo || ''}
+                                                 onChange={(e) => {
+                                                    const newList = proposta.equipe.map((item: any) => 
+                                                       item.id === p.id ? { ...item, nomeCargo: e.target.value } : item
+                                                    );
+                                                    setProposta({ ...proposta, equipe: newList });
+                                                 }}
+                                              />
+                                           </td>
+                                           <td className="px-4 py-3 text-center">
+                                              <input 
+                                                 type="number" 
+                                                 step="0.01"
+                                                 className="w-20 px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-700 outline-none focus:border-[#1e4480] font-semibold text-center"
+                                                 value={p.quantidade || 0}
+                                                 onChange={(e) => {
+                                                    const newList = proposta.equipe.map((item: any) => 
+                                                       item.id === p.id ? { ...item, quantidade: parseFloat(e.target.value) || 0 } : item
+                                                    );
+                                                    setProposta({ ...proposta, equipe: newList });
+                                                 }}
+                                              />
+                                           </td>
+                                           <td className="px-4 py-3 text-center">
+                                              <input 
+                                                 type="text" 
+                                                 className="w-32 px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-700 outline-none focus:border-[#1e4480] font-semibold text-center"
+                                                 value={p.escala || ''}
+                                                 onChange={(e) => {
+                                                    const newList = proposta.equipe.map((item: any) => 
+                                                       item.id === p.id ? { ...item, escala: e.target.value } : item
+                                                    );
+                                                    setProposta({ ...proposta, equipe: newList });
+                                                 }}
+                                              />
+                                           </td>
+                                           <td className="px-4 py-3 text-center">
+                                              <button
+                                                 type="button"
+                                                 className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
+                                                 onClick={() => {
+                                                    const newList = proposta.equipe.filter((item: any) => item.id !== p.id);
+                                                    setProposta({ ...proposta, equipe: newList });
+                                                 }}
+                                              >
+                                                 <Trash size={16} />
+                                              </button>
+                                           </td>
+                                        </tr>
+                                     ))}
+                                     {(!proposta.equipe || proposta.equipe.length === 0) && (
+                                        <tr>
+                                           <td colSpan={4} className="px-4 py-8 text-center text-slate-400 italic text-xs font-semibold">
+                                              Nenhum cargo no Quadro Efetivo. Clique no botão acima para adicionar!
+                                           </td>
+                                        </tr>
+                                     )}
+                                  </tbody>
+                               </table>
+                            </div>
+                         </div>
+
+                         {/* SEÇÃO 2: OBSERVAÇÕES E TÍTULOS */}
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-1 md:col-span-2">
                                <label className="text-xs font-semibold text-slate-700">Subtítulo / Título da Tabela</label>
