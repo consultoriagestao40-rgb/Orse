@@ -3076,7 +3076,7 @@ function PropostaEditor() {
                                                         setProposta({ ...proposta, itensInclusosExcluidos: newList });
                                                      }}
                                                   >
-                                                     <td className="px-4 py-2.5 font-black text-slate-800">{p.item}</td>
+                                                     <td className="px-4 py-2.5 font-black text-slate-800">{String(idx + 1).padStart(2, '0')}</td>
                                                      <td className="px-4 py-2.5 font-semibold text-slate-600 leading-tight">{p.descricao}</td>
                                                      <td className="px-4 py-2.5 text-center">
                                                         {p.incluso ? (
@@ -3294,7 +3294,7 @@ function PropostaEditor() {
                                   className="px-3 py-1.5 bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold text-[10px] uppercase tracking-wider rounded-lg transition-all active:scale-95 shadow-sm cursor-pointer shrink-0"
                                   onClick={() => {
                                      const newId = String(Date.now());
-                                     const newItem = { id: newId, item: 'Novo Item', descricao: 'Fornecimento de...', incluso: true };
+                                     const newItem = { id: newId, descricao: 'Fornecimento de...', incluso: true };
                                      const newList = [...(proposta.itensInclusosExcluidos || []), newItem];
                                      setProposta({ ...proposta, itensInclusosExcluidos: newList });
                                   }}
@@ -3306,7 +3306,7 @@ function PropostaEditor() {
                                <table className="w-full text-left border-collapse">
                                   <thead>
                                      <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
-                                        <th className="px-4 py-3 w-48">Item</th>
+                                        <th className="px-4 py-3 w-28 text-center">Item</th>
                                         <th className="px-4 py-3">Descrição</th>
                                         <th className="px-4 py-3 text-center w-28">Incluso?</th>
                                         <th className="px-4 py-3 text-center w-20">Ações</th>
@@ -3315,18 +3315,10 @@ function PropostaEditor() {
                                   <tbody>
                                      {(proposta.itensInclusosExcluidos || []).map((p: any, idx: number) => (
                                         <tr key={p.id || idx} className="border-b border-slate-100 hover:bg-slate-50/50">
-                                           <td className="px-4 py-3">
-                                              <input 
-                                                 type="text" 
-                                                 className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-800 outline-none focus:border-[#1B4D3E] font-bold"
-                                                 value={p.item || ''}
-                                                 onChange={(e) => {
-                                                    const newList = proposta.itensInclusosExcluidos.map((item: any) => 
-                                                       item.id === p.id ? { ...item, item: e.target.value } : item
-                                                    );
-                                                    setProposta({ ...proposta, itensInclusosExcluidos: newList });
-                                                 }}
-                                              />
+                                           <td className="px-4 py-3 flex justify-center">
+                                              <div className="w-16 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs text-slate-800 font-black text-center select-none">
+                                                 {String(idx + 1).padStart(2, '0')}
+                                              </div>
                                            </td>
                                            <td className="px-4 py-3">
                                               <input 
@@ -4164,7 +4156,7 @@ function PropostaEditor() {
                                      <tbody>
                                         {(proposta.itensInclusosExcluidos || []).map((p: any, idx: number) => (
                                            <tr key={p.id || idx} className={`border-b border-slate-100 text-[9.5px] font-bold text-slate-700 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
-                                              <td className="px-4 py-2 font-black text-slate-800">{p.item}</td>
+                                              <td className="px-4 py-2 font-black text-slate-800">{String(idx + 1).padStart(2, '0')}</td>
                                               <td className="px-4 py-2 font-semibold text-slate-600 leading-tight">{p.descricao}</td>
                                               <td className="px-4 py-2 text-center">
                                                  {p.incluso ? (
