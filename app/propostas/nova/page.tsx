@@ -2380,8 +2380,8 @@ function PropostaEditor() {
                         .print-slide-deck .w-12 { width: 5rem !important; height: 5rem !important; }
                         .print-slide-deck .h-12 { height: 5rem !important; }
                         
-                        /* GARANTIR QUE OS SVGS CRESÇAM PROPORCIONALMENTE NO PRINT */
-                        .print-slide-deck svg:not(.brazil-map-svg) { 
+                        /* GARANTIR QUE OS SVGS DO LUCIDE CRESÇAM PROPORCIONALMENTE NO PRINT */
+                        .print-slide-deck svg[viewBox="0 0 24 24"] { 
                            width: 2.2rem !important; 
                            height: 2.2rem !important; 
                            stroke-width: 2.5 !important;
@@ -2730,12 +2730,13 @@ function PropostaEditor() {
                                   </div>
 
                                   <div className="col-span-5 h-full w-full flex items-center justify-center relative">
-                                     <div 
-                                        className="absolute right-0 bottom-0 w-[320px] h-[180px] bg-contain bg-right-bottom bg-no-repeat pointer-events-none opacity-90 z-10"
-                                        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?q=80&w=800')" }}
-                                     ></div>
 
                                      <div className="relative w-full h-[220px] z-20">
+                                        <img 
+                                           src="/hand-support.png" 
+                                           alt="Mão de suporte"
+                                           className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[240px] h-auto pointer-events-none opacity-60 z-0" 
+                                        />
                                         <div className="absolute top-0 left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl">
                                            <Trophy size={36} className="text-white shrink-0" />
                                         </div>
@@ -5041,12 +5042,13 @@ function PropostaEditor() {
                             </div>
 
                             <div className="col-span-5 h-full w-full flex items-center justify-center relative">
-                               <div 
-                                  className="absolute right-0 bottom-0 w-[320px] h-[180px] bg-contain bg-right-bottom bg-no-repeat pointer-events-none opacity-90 z-10"
-                                  style={{ backgroundImage: "url('https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?q=80&w=800')" }}
-                                ></div>
 
                                <div className="relative w-full h-[220px] z-20">
+                                  <img 
+                                     src="/hand-support.png" 
+                                     alt="Mão de suporte"
+                                     className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[240px] h-auto pointer-events-none opacity-60 z-0" 
+                                  />
                                   <div className="absolute top-0 left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl">
                                      <Trophy size={36} className="text-white shrink-0" />
                                   </div>

@@ -31,7 +31,7 @@ export default function BrazilMap({ className = '', highlightedStates = ['PR', '
         height="100%" 
         viewBox="0 0 353.845 367.766" 
         xmlSpace="preserve"
-        className="drop-shadow-[0_10px_20px_rgba(0,0,0,0.15)] filter"
+        className="drop-shadow-[0_10px_20px_rgba(0,0,0,0.15)] filter brazil-map-svg"
       >
         <g>
           {/* Fundo do mapa */}
