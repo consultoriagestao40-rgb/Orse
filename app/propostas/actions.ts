@@ -354,7 +354,13 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
         quadroEfetivoClausula1: meta.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
         quadroEfetivoClausula2: meta.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
         quadroEfetivoClausula3: meta.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
-      itensInclusosExcluidos: (meta.itensInclusosExcluidos && meta.itensInclusosExcluidos.length > 0) ? meta.itensInclusosExcluidos : defaultItensInclusosExcluidos
+      itensInclusosExcluidos: (() => {
+        const rawItens = meta.itensInclusosExcluidos || [];
+        const hasMaoDeObra = rawItens.some((item: any) => 
+          item.descricao && item.descricao.toLowerCase().includes('mão de obra') && item.descricao.toLowerCase().includes("epi's")
+        );
+        return hasMaoDeObra ? rawItens : defaultItensInclusosExcluidos;
+      })()
       },
       insumos: {
         materiais: meta.insumos?.materiais || 0,
