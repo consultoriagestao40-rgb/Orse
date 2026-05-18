@@ -3127,8 +3127,9 @@ function PropostaEditor() {
                                               <thead>
                                                  <tr className="bg-[#1e4480]/90 text-white text-[9px] font-black uppercase tracking-wider border-b border-slate-200">
                                                     <th className="px-4 py-2">Função</th>
-                                                    <th className="px-4 py-2 text-center w-28">Quantidade</th>
-                                                    <th className="px-4 py-2 text-center w-36">Escala</th>
+                                                    <th className="px-4 py-2 text-center w-20">Quantidade</th>
+                                                    <th className="px-4 py-2 text-center w-28">Escala</th>
+                                                    <th className="px-4 py-2 text-center w-32">Horário</th>
                                                  </tr>
                                               </thead>
                                               <tbody>
@@ -3138,11 +3139,16 @@ function PropostaEditor() {
                                                           <td className="px-4 py-2 font-black text-slate-800">{p.nomeCargo || "Selecione a Função"}</td>
                                                           <td className="px-4 py-2 text-center">{(p.quantidade || 0).toFixed(2).replace('.', ',')}</td>
                                                           <td className="px-4 py-2 text-center">{p.escala || "Á definir"}</td>
+                                                          <td className="px-4 py-2 text-center font-semibold text-slate-600">
+                                                             {p.parametrosPosto?.horarioInicio && p.parametrosPosto?.horarioFim 
+                                                                ? `${p.parametrosPosto.horarioInicio} às ${p.parametrosPosto.horarioFim}` 
+                                                                : '08:00 às 17:00'}
+                                                          </td>
                                                        </tr>
                                                     ))
                                                  ) : (
                                                     <tr className="border-b border-slate-100 text-[10px] font-semibold text-slate-400 italic">
-                                                       <td colSpan={3} className="px-4 py-6 text-center">Nenhum posto inserido no Quadro de Equipe (Aba 4).</td>
+                                                       <td colSpan={4} className="px-4 py-6 text-center">Nenhum posto inserido no Quadro de Equipe (Aba 4).</td>
                                                     </tr>
                                                  )}
                                               </tbody>
@@ -3152,24 +3158,21 @@ function PropostaEditor() {
 
                                      {/* Cláusulas Operacionais */}
                                      <div className="pl-4 space-y-1 select-none">
-                                        <div className="flex items-start gap-2">
-                                           <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
-                                           <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                              {proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;'}
-                                           </p>
-                                        </div>
-                                        <div className="flex items-start gap-2">
-                                           <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
-                                           <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                              {proposta.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;'}
-                                           </p>
-                                        </div>
-                                        <div className="flex items-start gap-2">
-                                           <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
-                                           <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                              {proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'}
-                                           </p>
-                                        </div>
+                                        {(() => {
+                                           const clausulas = proposta.cliente.quadroEfetivoClausulas || [
+                                              proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
+                                              proposta.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
+                                              proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
+                                           ];
+                                           return clausulas.map((c: string, cIdx: number) => (
+                                              <div key={cIdx} className="flex items-start gap-2 animate-fadeIn">
+                                                 <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
+                                                 <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
+                                                    {c}
+                                                 </p>
+                                              </div>
+                                           ));
+                                        })()}
                                      </div>
                                   </div>
 
@@ -3718,107 +3721,45 @@ function PropostaEditor() {
                                📋 Personalizar Quadro Efetivo & Observações (Slide 09)
                             </h3>
                          </div>
-                         {/* SEÇÃO 1: INTEGRANTES DO QUADRO EFETIVO */}
+                         
+                         {/* SEÇÃO 1: INTEGRANTES DO QUADRO EFETIVO (LEITURA) */}
                          <div className="space-y-4 border-b border-slate-100 pb-6 mb-6">
-                            <div className="flex justify-between items-center">
-                               <div>
-                                  <h4 className="text-xs font-black text-[#1e4480] uppercase tracking-wider">
-                                     👥 Integrantes do Quadro Efetivo
-                                  </h4>
-                                  <p className="text-slate-500 text-[10px] font-semibold mt-1">
-                                     Edite diretamente as funções, quantidades e escalas exibidas na tabela do Slide 09.
-                                  </p>
-                               </div>
-                               <button
-                                  type="button"
-                                  className="px-3 py-1.5 bg-[#1e4480] hover:bg-[#16325e] text-white font-bold text-[10px] uppercase tracking-wider rounded-lg transition-all active:scale-95 shadow-sm cursor-pointer shrink-0"
-                                  onClick={() => {
-                                     const newId = String(Date.now());
-                                     const newItem = { 
-                                        id: newId, 
-                                        nomeCargo: 'Nova Função', 
-                                        quantidade: 1, 
-                                        escala: '44h' 
-                                     };
-                                     const newList = [...(proposta.equipe || []), newItem];
-                                     setProposta({ ...proposta, equipe: newList });
-                                  }}
-                               >
-                                  ➕ Novo Item / Função
-                               </button>
+                            <div>
+                               <h4 className="text-xs font-black text-[#1e4480] uppercase tracking-wider flex items-center gap-1.5">
+                                  👥 Integrantes do Quadro Efetivo (Visualização)
+                               </h4>
+                               <p className="text-slate-500 text-[10px] font-semibold mt-1">
+                                  ℹ️ Estes itens são importados automaticamente da <strong>Aba 4 (Quadro de Equipe)</strong> e não podem ser alterados diretamente neste slide.
+                               </p>
                             </div>
 
                             <div className="overflow-x-auto">
-                               <table className="w-full text-left border-collapse">
+                               <table className="w-full text-left border-collapse border border-slate-200 rounded-xl overflow-hidden">
                                   <thead>
                                      <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
-                                        <th className="px-4 py-3">Função / Cargo</th>
-                                        <th className="px-4 py-3 text-center w-28">Quantidade</th>
-                                        <th className="px-4 py-3 text-center w-36">Escala</th>
-                                        <th className="px-4 py-3 text-center w-20">Ações</th>
+                                        <th className="px-4 py-2.5">Função</th>
+                                        <th className="px-4 py-2.5 text-center w-24">Qtd</th>
+                                        <th className="px-4 py-2.5 text-center w-32">Escala</th>
+                                        <th className="px-4 py-2.5 text-center w-36">Horário</th>
                                      </tr>
                                   </thead>
                                   <tbody>
                                      {(proposta.equipe || []).map((p: any, idx: number) => (
-                                        <tr key={p.id || idx} className="border-b border-slate-100 hover:bg-slate-50/50">
-                                           <td className="px-4 py-3">
-                                              <input 
-                                                 type="text" 
-                                                 className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-700 outline-none focus:border-[#1e4480] font-medium"
-                                                 value={p.nomeCargo || ''}
-                                                 onChange={(e) => {
-                                                    const newList = proposta.equipe.map((item: any) => 
-                                                       item.id === p.id ? { ...item, nomeCargo: e.target.value } : item
-                                                    );
-                                                    setProposta({ ...proposta, equipe: newList });
-                                                 }}
-                                              />
-                                           </td>
-                                           <td className="px-4 py-3 text-center">
-                                              <input 
-                                                 type="number" 
-                                                 step="0.01"
-                                                 className="w-20 px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-700 outline-none focus:border-[#1e4480] font-semibold text-center"
-                                                 value={p.quantidade || 0}
-                                                 onChange={(e) => {
-                                                    const newList = proposta.equipe.map((item: any) => 
-                                                       item.id === p.id ? { ...item, quantidade: parseFloat(e.target.value) || 0 } : item
-                                                    );
-                                                    setProposta({ ...proposta, equipe: newList });
-                                                 }}
-                                              />
-                                           </td>
-                                           <td className="px-4 py-3 text-center">
-                                              <input 
-                                                 type="text" 
-                                                 className="w-32 px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-700 outline-none focus:border-[#1e4480] font-semibold text-center"
-                                                 value={p.escala || ''}
-                                                 onChange={(e) => {
-                                                    const newList = proposta.equipe.map((item: any) => 
-                                                       item.id === p.id ? { ...item, escala: e.target.value } : item
-                                                    );
-                                                    setProposta({ ...proposta, equipe: newList });
-                                                 }}
-                                              />
-                                           </td>
-                                           <td className="px-4 py-3 text-center">
-                                              <button
-                                                 type="button"
-                                                 className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
-                                                 onClick={() => {
-                                                    const newList = proposta.equipe.filter((item: any) => item.id !== p.id);
-                                                    setProposta({ ...proposta, equipe: newList });
-                                                 }}
-                                              >
-                                                 <Trash size={16} />
-                                              </button>
+                                        <tr key={p.id || idx} className="border-b border-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-50/30">
+                                           <td className="px-4 py-2.5 font-black text-slate-800">{p.nomeCargo || "Nova Função"}</td>
+                                           <td className="px-4 py-2.5 text-center">{p.quantidade || 0}</td>
+                                           <td className="px-4 py-2.5 text-center">{p.escala || "Á definir"}</td>
+                                           <td className="px-4 py-2.5 text-center">
+                                              {p.parametrosPosto?.horarioInicio && p.parametrosPosto?.horarioFim 
+                                                 ? `${p.parametrosPosto.horarioInicio} às ${p.parametrosPosto.horarioFim}` 
+                                                 : '08:00 às 17:00'}
                                            </td>
                                         </tr>
                                      ))}
                                      {(!proposta.equipe || proposta.equipe.length === 0) && (
                                         <tr>
                                            <td colSpan={4} className="px-4 py-8 text-center text-slate-400 italic text-xs font-semibold">
-                                              Nenhum cargo no Quadro Efetivo. Clique no botão acima para adicionar!
+                                              Nenhum cargo no Quadro de Equipe.
                                            </td>
                                         </tr>
                                      )}
@@ -3827,48 +3768,103 @@ function PropostaEditor() {
                             </div>
                          </div>
 
-                         {/* SEÇÃO 2: OBSERVAÇÕES E TÍTULOS */}
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-1 md:col-span-2">
-                               <label className="text-xs font-semibold text-slate-700">Subtítulo / Título da Tabela</label>
-                               <input 
-                                  type="text" 
-                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
-                                  value={proposta.cliente.quadroEfetivoSubtitulo || ''} 
-                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, quadroEfetivoSubtitulo: e.target.value}})} 
-                               />
+                         {/* SEÇÃO 2: CLÁUSULAS OPERACIONAIS DINÂMICAS */}
+                         <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                               <div>
+                                  <h4 className="text-xs font-black text-[#1e4480] uppercase tracking-wider">
+                                     📝 Cláusulas & Observações Operacionais
+                                  </h4>
+                                  <p className="text-slate-500 text-[10px] font-semibold mt-1">
+                                     Adicione, remova ou edite as observações e regras operacionais exibidas na base do Slide 09.
+                                  </p>
+                               </div>
+                               <button
+                                  type="button"
+                                  className="px-3 py-1.5 bg-[#1e4480] hover:bg-[#16325e] text-white font-bold text-[10px] uppercase tracking-wider rounded-lg transition-all active:scale-95 shadow-sm cursor-pointer shrink-0"
+                                  onClick={() => {
+                                     const currentClausulas = proposta.cliente.quadroEfetivoClausulas || [
+                                        proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
+                                        proposta.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
+                                        proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
+                                     ];
+                                     const newList = [...currentClausulas, 'Nova cláusula ou observação...'];
+                                     setProposta({
+                                        ...proposta,
+                                        cliente: {
+                                           ...proposta.cliente,
+                                           quadroEfetivoClausulas: newList
+                                        }
+                                     });
+                                  }}
+                               >
+                                  ➕ Nova Cláusula
+                               </button>
                             </div>
-                            <div className="space-y-1 md:col-span-2">
-                               <label className="text-xs font-semibold text-slate-700">Cláusula / Observação 1</label>
-                               <textarea 
-                                  rows={2}
-                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium resize-none" 
-                                  value={proposta.cliente.quadroEfetivoClausula1 || ''} 
-                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, quadroEfetivoClausula1: e.target.value}})} 
-                               />
+
+                            <div className="space-y-3">
+                               {(() => {
+                                  const currentClausulas = proposta.cliente.quadroEfetivoClausulas || [
+                                     proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
+                                     proposta.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
+                                     proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
+                                  ];
+                                  return currentClausulas.map((c: string, idx: number) => (
+                                     <div key={idx} className="flex gap-3 items-start bg-slate-50 p-4 border border-slate-200 rounded-xl">
+                                        <div className="w-6 h-6 rounded-full bg-[#1e4480] text-white font-black text-xs flex items-center justify-center shrink-0">
+                                           {String(idx + 1).padStart(2, '0')}
+                                        </div>
+                                        <textarea
+                                           rows={2}
+                                           className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 outline-none focus:border-[#1e4480] font-medium resize-none"
+                                           value={c}
+                                           onChange={(e) => {
+                                              const newList = [...currentClausulas];
+                                              newList[idx] = e.target.value;
+                                              setProposta({
+                                                 ...proposta,
+                                                 cliente: {
+                                                    ...proposta.cliente,
+                                                    quadroEfetivoClausulas: newList
+                                                 }
+                                              });
+                                           }}
+                                        />
+                                        <button
+                                           type="button"
+                                           className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-all cursor-pointer shrink-0 mt-1"
+                                           onClick={() => {
+                                              const newList = currentClausulas.filter((_: string, i: number) => i !== idx);
+                                              setProposta({
+                                                 ...proposta,
+                                                 cliente: {
+                                                    ...proposta.cliente,
+                                                    quadroEfetivoClausulas: newList
+                                                 }
+                                              });
+                                           }}
+                                        >
+                                           <Trash size={16} />
+                                        </button>
+                                     </div>
+                                  ));
+                               })()}
                             </div>
-                            <div className="space-y-1 md:col-span-2">
-                               <label className="text-xs font-semibold text-slate-700">Cláusula / Observação 2</label>
-                               <textarea 
-                                  rows={2}
-                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium resize-none" 
-                                  value={proposta.cliente.quadroEfetivoClausula2 || ''} 
-                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, quadroEfetivoClausula2: e.target.value}})} 
-                               />
-                            </div>
-                            <div className="space-y-1 md:col-span-2">
-                               <label className="text-xs font-semibold text-slate-700">Cláusula / Observação 3</label>
-                               <textarea 
-                                  rows={2}
-                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium resize-none" 
-                                  value={proposta.cliente.quadroEfetivoClausula3 || ''} 
-                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, quadroEfetivoClausula3: e.target.value}})} 
-                               />
+
+                            <div className="grid grid-cols-1 gap-4 pt-4 border-t border-slate-100">
+                               <div className="space-y-1">
+                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Subtítulo / Título da Tabela</label>
+                                  <input 
+                                     type="text" 
+                                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-[#1e4480] font-semibold" 
+                                     value={proposta.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo'} 
+                                     onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, quadroEfetivoSubtitulo: e.target.value}})} 
+                                  />
+                               </div>
                             </div>
                          </div>
                       </div>
                      )}
-
                      {currentSlide === 10 && (
                       <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                          <div className="bg-[#1B4D3E] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
@@ -4983,8 +4979,9 @@ function PropostaEditor() {
                                        <thead>
                                           <tr className="bg-[#1e4480]/90 text-white text-[9px] font-black uppercase tracking-wider border-b border-slate-200">
                                              <th className="px-4 py-2">Função</th>
-                                             <th className="px-4 py-2 text-center w-28">Quantidade</th>
-                                             <th className="px-4 py-2 text-center w-36">Escala</th>
+                                             <th className="px-4 py-2 text-center w-20">Quantidade</th>
+                                             <th className="px-4 py-2 text-center w-28">Escala</th>
+                                             <th className="px-4 py-2 text-center w-32">Horário</th>
                                           </tr>
                                        </thead>
                                        <tbody>
@@ -4994,11 +4991,16 @@ function PropostaEditor() {
                                                    <td className="px-4 py-2 font-black text-slate-800">{p.nomeCargo || "Selecione a Função"}</td>
                                                    <td className="px-4 py-2 text-center">{(p.quantidade || 0).toFixed(2).replace('.', ',')}</td>
                                                    <td className="px-4 py-2 text-center">{p.escala || "Á definir"}</td>
+                                                   <td className="px-4 py-2 text-center font-semibold text-slate-600">
+                                                      {p.parametrosPosto?.horarioInicio && p.parametrosPosto?.horarioFim 
+                                                         ? `${p.parametrosPosto.horarioInicio} às ${p.parametrosPosto.horarioFim}` 
+                                                         : '08:00 às 17:00'}
+                                                   </td>
                                                 </tr>
                                              ))
                                           ) : (
                                              <tr className="border-b border-slate-100 text-[10px] font-semibold text-slate-400 italic">
-                                                <td colSpan={3} className="px-4 py-6 text-center">Nenhum posto inserido no Quadro de Equipe (Aba 4).</td>
+                                                <td colSpan={4} className="px-4 py-6 text-center">Nenhum posto inserido no Quadro de Equipe (Aba 4).</td>
                                              </tr>
                                           )}
                                        </tbody>
@@ -5008,24 +5010,21 @@ function PropostaEditor() {
 
                               {/* Cláusulas Operacionais */}
                               <div className="pl-4 space-y-1 select-none">
-                                 <div className="flex items-start gap-2">
-                                    <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
-                                    <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                       {proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;'}
-                                    </p>
-                                 </div>
-                                 <div className="flex items-start gap-2">
-                                    <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
-                                    <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                       {proposta.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;'}
-                                    </p>
-                                 </div>
-                                 <div className="flex items-start gap-2">
-                                    <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
-                                    <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                       {proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'}
-                                    </p>
-                                 </div>
+                                 {(() => {
+                                    const clausulas = proposta.cliente.quadroEfetivoClausulas || [
+                                       proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
+                                       proposta.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
+                                       proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
+                                    ];
+                                    return clausulas.map((c: string, cIdx: number) => (
+                                       <div key={cIdx} className="flex items-start gap-2">
+                                          <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
+                                          <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
+                                             {c}
+                                          </p>
+                                       </div>
+                                    ));
+                                 })()}
                               </div>
                            </div>
 
