@@ -2345,19 +2345,53 @@ function PropostaEditor() {
                            border: none !important;
                         }
 
+                        /* ESCALA DE TEXTOS E ELEMENTOS AUMENTADOS PARA ALTA QUALIDADE NO IMPRESSO A4 */
+                        .print-slide-deck .text-[10px] { font-size: 14px !important; }
+                        .print-slide-deck .text-[11px] { font-size: 15px !important; }
+                        .print-slide-deck .text-[13px] { font-size: 18px !important; }
+                        .print-slide-deck .text-[15px] { font-size: 20px !important; }
+                        .print-slide-deck .text-xs { font-size: 15px !important; line-height: 20px !important; }
+                        .print-slide-deck .text-sm { font-size: 17px !important; line-height: 24px !important; }
+                        .print-slide-deck .text-base { font-size: 20px !important; line-height: 28px !important; }
+                        .print-slide-deck .text-lg { font-size: 24px !important; line-height: 32px !important; }
+                        .print-slide-deck .text-xl { font-size: 28px !important; line-height: 36px !important; }
+                        .print-slide-deck .text-2xl { font-size: 34px !important; line-height: 42px !important; }
+                        .print-slide-deck .text-3xl { font-size: 40px !important; line-height: 50px !important; }
+                        .print-slide-deck .text-4xl { font-size: 52px !important; line-height: 60px !important; }
+                        .print-slide-deck .text-5xl { font-size: 64px !important; line-height: 74px !important; }
+
+                        .print-slide-deck .p-16 { padding: 4.5rem !important; }
+                        .print-slide-deck .p-8 { padding: 2.5rem !important; }
+                        .print-slide-deck .p-6 { padding: 2rem !important; }
+                        .print-slide-deck .gap-8 { gap: 2.5rem !important; }
+                        .print-slide-deck .gap-6 { gap: 2rem !important; }
+
                         .print-slide {
                            display: flex !important;
                            page-break-after: always !important;
                            break-after: page !important;
+                           page-break-inside: avoid !important;
+                           break-inside: avoid !important;
                            width: 297mm !important;
                            height: 210mm !important;
+                           max-height: 210mm !important;
                            box-sizing: border-box !important;
                            margin: 0 !important;
                            padding: 4rem !important;
                            position: relative !important;
-                           background: transparent !important;
                            overflow: hidden !important;
                            border: none !important;
+                        }
+
+                        /* FORÇAR RENDERIZAÇÃO DE CORES DE FUNDO EXPLICITAMENTE */
+                        .print-slide.bg-[#1e4480], .print-slide[class*="bg-[#1e4480]"] {
+                           background-color: #1e4480 !important;
+                        }
+                        .print-slide.bg-slate-950, .print-slide[class*="bg-slate-950"] {
+                           background-color: #020617 !important;
+                        }
+                        .print-slide.bg-white, .print-slide[class*="bg-white"] {
+                           background-color: #ffffff !important;
                         }
                      }
                   `}</style>
@@ -2492,11 +2526,12 @@ function PropostaEditor() {
                         {/* SLIDE 02 (CAPA DA PROPOSTA - COM FOTO E FILTRO AZUL) */}
                         {currentSlide === 1 && (
                            <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 text-white overflow-hidden bg-slate-950">
-                              {/* Imagem de Fundo (Workers cleaning office windows) */}
-                              <div 
-                                 className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-40 scale-105 filter blur-[0.5px]"
-                                 style={{ backgroundImage: `url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200')` }}
-                              ></div>
+                              {/* Imagem de Fundo Nativa HTML para Garantir Renderização */}
+                              <img 
+                                 src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200" 
+                                 alt="Capa Fundo" 
+                                 className="absolute inset-0 w-full h-full object-cover opacity-40 scale-105 filter blur-[0.5px]"
+                              />
                               
                               {/* Overlay Azul Escuro do Print */}
                               <div className="absolute inset-0 bg-[#1e4480]/85 backdrop-blur-[1px]"></div>
@@ -4794,12 +4829,13 @@ function PropostaEditor() {
 
 <div className="print-slide-deck">
                      {/* SLIDE 01 PRINT - CAPA COMERCIAL */}
-                     <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-slate-950 p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
-                        {/* Imagem de Fundo */}
-                        <div 
-                           className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-40 scale-105 filter blur-[0.5px]"
-                           style={{ backgroundImage: `url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200')` }}
-                        ></div>
+                     <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-[#020617] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
+                        {/* Imagem de Fundo Nativa HTML para Garantir Renderização */}
+                        <img 
+                           src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200" 
+                           alt="Capa Fundo" 
+                           className="absolute inset-0 w-full h-full object-cover opacity-40 scale-105 filter blur-[0.5px]"
+                        />
                         {/* Overlay Azul */}
                         <div className="absolute inset-0 bg-[#1e4480]/85 backdrop-blur-[1px]"></div>
                         
@@ -4808,7 +4844,7 @@ function PropostaEditor() {
                               <img 
                                  src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
                                  alt="JVS Facilities Logo" 
-                                 className="max-h-32 w-auto object-contain brightness-0 invert drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
+                                 className="max-h-32 w-auto object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
                               />
                               <div className="text-[11px] font-black tracking-[0.3em] text-white/90 uppercase pl-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">FACILITIES</div>
                            </div>
