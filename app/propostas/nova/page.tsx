@@ -2231,11 +2231,11 @@ function PropostaEditor() {
                                 { id: 1, label: 'Slide 01 (Capa)' },
                                 { id: 2, label: 'Slide 02 (Mensagem)' },
                                 { id: 3, label: 'Slide 03 (Presença)' },
-                                { id: 4, label: 'Slide 04 (Quadro Efetivo)' },
-                                { id: 5, label: 'Slide 05 (Valores)' },
-                                { id: 6, label: 'Slide 06 (Serviços)' },
-                                { id: 7, label: 'Slide 07 (Setores)' },
-                                { id: 8, label: 'Slide 08 (Ferramentas)' }
+                                { id: 4, label: 'Slide 04 (Valores)' },
+                                { id: 5, label: 'Slide 05 (Serviços)' },
+                                { id: 6, label: 'Slide 06 (Setores)' },
+                                { id: 7, label: 'Slide 07 (Ferramentas)' },
+                                { id: 8, label: 'Slide 08 (Quadro Efetivo)' }
                              ].map((slide) => (
                                <button 
                                   key={slide.id}
@@ -2481,100 +2481,8 @@ function PropostaEditor() {
                             </div>
                          )}
 
-                                                  {/* SLIDE 04 (QUADRO EFETIVO - TABELA AUTOMÁTICA DA ABA 4) */}
+                                                  {/* SLIDE 04 (NOSSOS VALORES - COM AS TRÊS ESFERAS DE VALORES E A MÃO DE SUPORTE) */}
                          {currentSlide === 4 && (
-                            <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 text-slate-800 overflow-hidden bg-white">
-                               {/* Linhas diagonais decorativas da marca */}
-                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
-                                  <line x1="-50" y1="150" x2="350" y2="-250" stroke="#1e4480" strokeWidth="10" />
-                                  <line x1="-50" y1="200" x2="400" y2="-250" stroke="#1e4480" strokeWidth="6" />
-                                  <line x1="-50" y1="250" x2="450" y2="-250" stroke="#1e4480" strokeWidth="3" />
-                                  
-                                  <line x1="600" y1="800" x2="1100" y2="300" stroke="#1e4480" strokeWidth="10" />
-                                  <line x1="650" y1="800" x2="1150" y2="300" stroke="#1e4480" strokeWidth="6" />
-                                  <line x1="700" y1="800" x2="1200" y2="300" stroke="#1e4480" strokeWidth="3" />
-                               </svg>
-
-                               <div className="flex flex-col justify-between h-full relative z-10">
-                                  <div className="flex justify-between items-start">
-                                     <h2 className="text-3xl font-black text-[#1e4480] tracking-tight leading-none uppercase">
-                                        PROPOSTA
-                                     </h2>
-                                     <img 
-                                        src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                        alt="JVS Facilities Logo" 
-                                        className="max-h-10 w-auto object-contain"
-                                     />
-                                  </div>
-
-                                  <div className="my-auto w-full max-w-2xl mx-auto space-y-4">
-                                     <div className="w-full bg-white rounded-xl border border-slate-200/80 shadow-lg overflow-hidden">
-                                        <div className="bg-[#1e4480] text-center py-2">
-                                           <h3 className="text-white text-xs font-black tracking-widest uppercase">Quadro efetivo - Opções</h3>
-                                        </div>
-                                        <div className="overflow-y-auto max-h-[160px]">
-                                           <table className="w-full text-left border-collapse">
-                                              <thead>
-                                                 <tr className="bg-[#1e4480]/90 text-white text-[9px] font-black uppercase tracking-wider border-b border-slate-200">
-                                                    <th className="px-4 py-2">Função</th>
-                                                    <th className="px-4 py-2 text-center w-28">Quantidade</th>
-                                                    <th className="px-4 py-2 text-center w-36">Escala</th>
-                                                 </tr>
-                                              </thead>
-                                              <tbody>
-                                                 {proposta.equipe && proposta.equipe.length > 0 ? (
-                                                    proposta.equipe.map((p: any, idx: number) => (
-                                                       <tr key={p.id || idx} className={`border-b border-slate-100 text-[10px] font-bold text-slate-700 hover:bg-slate-50/50 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
-                                                          <td className="px-4 py-2 font-black text-slate-800">{p.nomeCargo || "Selecione a Função"}</td>
-                                                          <td className="px-4 py-2 text-center">{(p.quantidade || 0).toFixed(2).replace('.', ',')}</td>
-                                                          <td className="px-4 py-2 text-center">{p.escala || "Á definir"}</td>
-                                                       </tr>
-                                                    ))
-                                                 ) : (
-                                                    <tr className="border-b border-slate-100 text-[10px] font-semibold text-slate-400 italic">
-                                                       <td colSpan={3} className="px-4 py-6 text-center">Nenhum posto inserido no Quadro de Equipe (Aba 4).</td>
-                                                    </tr>
-                                                 )}
-                                              </tbody>
-                                           </table>
-                                        </div>
-                                     </div>
-
-                                     {/* Cláusulas Operacionais */}
-                                     <div className="pl-4 space-y-1 select-none">
-                                        <div className="flex items-start gap-2">
-                                           <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
-                                           <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                              Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;
-                                           </p>
-                                        </div>
-                                        <div className="flex items-start gap-2">
-                                           <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
-                                           <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                              Para reduções no efetivo prazo de 30 (trinta) dias;
-                                           </p>
-                                        </div>
-                                        <div className="flex items-start gap-2">
-                                           <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
-                                           <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                              Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).
-                                           </p>
-                                        </div>
-                                     </div>
-                                  </div>
-
-                                  <div className="flex justify-between items-end w-full text-slate-400 text-[10px] font-extrabold uppercase tracking-wider pr-28">
-                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                                     <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">05</span>
-                                  </div>
-                               </div>
-                            </div>
-                         )}
-
-
-
-{/* SLIDE 04 (NOSSOS VALORES - COM AS TRÊS ESFERAS DE VALORES E A MÃO DE SUPORTE) */}
-                         {currentSlide === 5 && (
                             <div className="h-full w-full flex flex-col justify-between relative z-10 animate-fadeIn bg-white rounded-2xl overflow-hidden p-12">
                                {/* Linhas diagonais decorativas da marca */}
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
@@ -2639,7 +2547,7 @@ function PropostaEditor() {
                           )}
 
                          {/* SLIDE 05 (PRINCIPAIS SERVIÇOS PRESTADOS - COM AS 5 CATEGORIAS DE SERVIÇOS) */}
-                         {currentSlide === 6 && (
+                         {currentSlide === 5 && (
                             <div className="h-full w-full flex flex-col justify-between relative z-10 animate-fadeIn bg-white rounded-2xl overflow-hidden p-12">
                                {/* Linhas diagonais decorativas da marca */}
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
@@ -2748,13 +2656,13 @@ function PropostaEditor() {
                                {/* Rodapé do Slide 5 */}
                                <div className="flex justify-between items-center border-t border-slate-100 pt-3 mt-4 pr-28 relative z-20 text-slate-500">
                                   <span className="text-[9px] font-bold uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                                  <span className="text-[9px] font-black bg-slate-100 px-2.5 py-0.5 rounded">06</span>
+                                  <span className="text-[9px] font-black bg-slate-100 px-2.5 py-0.5 rounded">05</span>
                                </div>
                             </div>
                          )}
 
                          {/* SLIDE 06 (SETORES ATENDIDOS - COM OS ICONS E COLUNAS DE INDUSTRIA E VAREJO) */}
-                         {currentSlide === 7 && (
+                         {currentSlide === 6 && (
                             <div className="h-full w-full flex flex-col justify-between relative z-10 animate-fadeIn bg-[#1e4480] text-white rounded-2xl overflow-hidden p-12">
                                {/* Linhas diagonais decorativas da marca */}
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
@@ -2868,13 +2776,13 @@ function PropostaEditor() {
                                {/* Rodapé do Slide 6 */}
                                <div className="flex justify-between items-center border-t border-white/20 pt-3 mt-4 pr-28 relative z-20 text-white/60">
                                   <span className="text-[9px] font-bold uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                                  <span className="text-[9px] font-black bg-white/10 px-2.5 py-0.5 rounded">07</span>
+                                  <span className="text-[9px] font-black bg-white/10 px-2.5 py-0.5 rounded">06</span>
                                </div>
                             </div>
                          )}
 
                          {/* SLIDE 07 (PRINCIPAIS FERRAMENTAS - DIVIDIDO LADO A LADO) */}
-                         {currentSlide === 8 && (
+                         {currentSlide === 7 && (
                             <div className="h-full w-full grid grid-cols-2 relative z-10 animate-fadeIn bg-white rounded-2xl overflow-hidden">
                                {/* Metade Esquerda (Branca) */}
                                <div className="col-span-1 bg-white p-12 flex flex-col justify-between relative h-full text-slate-800 border-r border-slate-100">
@@ -3019,12 +2927,103 @@ function PropostaEditor() {
                                      {/* Rodapé Direito */}
                                      <div className="pt-4 border-t border-white/20 flex justify-between items-center text-white/60 text-[9px] font-bold">
                                         <span className="uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                                        <span className="text-white/80 bg-white/10 px-2.5 py-0.5 rounded font-black">08</span>
+                                        <span className="text-white/80 bg-white/10 px-2.5 py-0.5 rounded font-black">07</span>
                                      </div>
                                   </div>
                                </div>
                             </div>
                          )}
+
+{/* SLIDE 04 (QUADRO EFETIVO - TABELA AUTOMÁTICA DA ABA 4) */}
+                         {currentSlide === 8 && (
+                            <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 text-slate-800 overflow-hidden bg-white">
+                               {/* Linhas diagonais decorativas da marca */}
+                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                                  <line x1="-50" y1="150" x2="350" y2="-250" stroke="#1e4480" strokeWidth="10" />
+                                  <line x1="-50" y1="200" x2="400" y2="-250" stroke="#1e4480" strokeWidth="6" />
+                                  <line x1="-50" y1="250" x2="450" y2="-250" stroke="#1e4480" strokeWidth="3" />
+                                  
+                                  <line x1="600" y1="800" x2="1100" y2="300" stroke="#1e4480" strokeWidth="10" />
+                                  <line x1="650" y1="800" x2="1150" y2="300" stroke="#1e4480" strokeWidth="6" />
+                                  <line x1="700" y1="800" x2="1200" y2="300" stroke="#1e4480" strokeWidth="3" />
+                               </svg>
+
+                               <div className="flex flex-col justify-between h-full relative z-10">
+                                  <div className="flex justify-between items-start">
+                                     <h2 className="text-3xl font-black text-[#1e4480] tracking-tight leading-none uppercase">
+                                        PROPOSTA
+                                     </h2>
+                                     <img 
+                                        src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
+                                        alt="JVS Facilities Logo" 
+                                        className="max-h-10 w-auto object-contain"
+                                     />
+                                  </div>
+
+                                  <div className="my-auto w-full max-w-2xl mx-auto space-y-4">
+                                     <div className="w-full bg-white rounded-xl border border-slate-200/80 shadow-lg overflow-hidden">
+                                        <div className="bg-[#1e4480] text-center py-2">
+                                           <h3 className="text-white text-xs font-black tracking-widest uppercase">Quadro efetivo - Opções</h3>
+                                        </div>
+                                        <div className="overflow-y-auto max-h-[160px]">
+                                           <table className="w-full text-left border-collapse">
+                                              <thead>
+                                                 <tr className="bg-[#1e4480]/90 text-white text-[9px] font-black uppercase tracking-wider border-b border-slate-200">
+                                                    <th className="px-4 py-2">Função</th>
+                                                    <th className="px-4 py-2 text-center w-28">Quantidade</th>
+                                                    <th className="px-4 py-2 text-center w-36">Escala</th>
+                                                 </tr>
+                                              </thead>
+                                              <tbody>
+                                                 {proposta.equipe && proposta.equipe.length > 0 ? (
+                                                    proposta.equipe.map((p: any, idx: number) => (
+                                                       <tr key={p.id || idx} className={`border-b border-slate-100 text-[10px] font-bold text-slate-700 hover:bg-slate-50/50 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
+                                                          <td className="px-4 py-2 font-black text-slate-800">{p.nomeCargo || "Selecione a Função"}</td>
+                                                          <td className="px-4 py-2 text-center">{(p.quantidade || 0).toFixed(2).replace('.', ',')}</td>
+                                                          <td className="px-4 py-2 text-center">{p.escala || "Á definir"}</td>
+                                                       </tr>
+                                                    ))
+                                                 ) : (
+                                                    <tr className="border-b border-slate-100 text-[10px] font-semibold text-slate-400 italic">
+                                                       <td colSpan={3} className="px-4 py-6 text-center">Nenhum posto inserido no Quadro de Equipe (Aba 4).</td>
+                                                    </tr>
+                                                 )}
+                                              </tbody>
+                                           </table>
+                                        </div>
+                                     </div>
+
+                                     {/* Cláusulas Operacionais */}
+                                     <div className="pl-4 space-y-1 select-none">
+                                        <div className="flex items-start gap-2">
+                                           <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
+                                           <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
+                                              Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;
+                                           </p>
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                           <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
+                                           <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
+                                              Para reduções no efetivo prazo de 30 (trinta) dias;
+                                           </p>
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                           <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
+                                           <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
+                                              Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).
+                                           </p>
+                                        </div>
+                                     </div>
+                                  </div>
+
+                                  <div className="flex justify-between items-end w-full text-slate-400 text-[10px] font-extrabold uppercase tracking-wider pr-28">
+                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                     <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">04</span>
+                                  </div>
+                               </div>
+                            </div>
+                         )}
+
 
                      </div>
                   </div>
@@ -3351,96 +3350,7 @@ function PropostaEditor() {
                         </div>
                      </div>
 
-                                          {/* SLIDE 04 PRINT - QUADRO EFETIVO */}
-                     <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800">
-                        {/* Stripes de fundo */}
-                        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
-                           <line x1="-50" y1="150" x2="350" y2="-250" stroke="#1e4480" strokeWidth="10" />
-                           <line x1="-50" y1="200" x2="400" y2="-250" stroke="#1e4480" strokeWidth="6" />
-                           <line x1="-50" y1="250" x2="450" y2="-250" stroke="#1e4480" strokeWidth="3" />
-                           
-                           <line x1="600" y1="800" x2="1100" y2="300" stroke="#1e4480" strokeWidth="10" />
-                           <line x1="650" y1="800" x2="1150" y2="300" stroke="#1e4480" strokeWidth="6" />
-                           <line x1="700" y1="800" x2="1200" y2="300" stroke="#1e4480" strokeWidth="3" />
-                        </svg>
-
-                        <div className="flex flex-col justify-between h-full relative z-10 w-full">
-                           <div className="flex justify-between items-start w-full">
-                              <h2 className="text-3xl font-black text-[#1e4480] tracking-tight leading-none uppercase">
-                                 PROPOSTA
-                              </h2>
-                              <img 
-                                 src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                 alt="JVS Facilities Logo" 
-                                 className="max-h-10 w-auto object-contain"
-                              />
-                           </div>
-
-                           <div className="my-auto w-full max-w-2xl mx-auto space-y-4">
-                              <div className="w-full bg-white rounded-xl border border-slate-200/80 shadow-lg overflow-hidden">
-                                 <div className="bg-[#1e4480] text-center py-2">
-                                    <h3 className="text-white text-xs font-black tracking-widest uppercase">Quadro efetivo - Opções</h3>
-                                 </div>
-                                 <div className="overflow-y-auto max-h-[160px]">
-                                    <table className="w-full text-left border-collapse">
-                                       <thead>
-                                          <tr className="bg-[#1e4480]/90 text-white text-[9px] font-black uppercase tracking-wider border-b border-slate-200">
-                                             <th className="px-4 py-2">Função</th>
-                                             <th className="px-4 py-2 text-center w-28">Quantidade</th>
-                                             <th className="px-4 py-2 text-center w-36">Escala</th>
-                                          </tr>
-                                       </thead>
-                                       <tbody>
-                                          {proposta.equipe && proposta.equipe.length > 0 ? (
-                                             proposta.equipe.map((p: any, idx: number) => (
-                                                <tr key={p.id || idx} className={`border-b border-slate-100 text-[10px] font-bold text-slate-700 hover:bg-slate-50/50 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
-                                                   <td className="px-4 py-2 font-black text-slate-800">{p.nomeCargo || "Selecione a Função"}</td>
-                                                   <td className="px-4 py-2 text-center">{(p.quantidade || 0).toFixed(2).replace('.', ',')}</td>
-                                                   <td className="px-4 py-2 text-center">{p.escala || "Á definir"}</td>
-                                                </tr>
-                                             ))
-                                          ) : (
-                                             <tr className="border-b border-slate-100 text-[10px] font-semibold text-slate-400 italic">
-                                                <td colSpan={3} className="px-4 py-6 text-center">Nenhum posto inserido no Quadro de Equipe (Aba 4).</td>
-                                             </tr>
-                                          )}
-                                       </tbody>
-                                    </table>
-                                 </div>
-                              </div>
-
-                              {/* Cláusulas Operacionais */}
-                              <div className="pl-4 space-y-1 select-none">
-                                 <div className="flex items-start gap-2">
-                                    <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
-                                    <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                       Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;
-                                    </p>
-                                 </div>
-                                 <div className="flex items-start gap-2">
-                                    <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
-                                    <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                       Para reduções no efetivo prazo de 30 (trinta) dias;
-                                    </p>
-                                 </div>
-                                 <div className="flex items-start gap-2">
-                                    <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
-                                    <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                       Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).
-                                    </p>
-                                 </div>
-                              </div>
-                           </div>
-
-                           <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
-                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                              <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">04</span>
-                           </div>
-                        </div>
-                     </div>
-
-
-{/* SLIDE 04 PRINT - NOSSOS VALORES */}
+                                          {/* SLIDE 04 PRINT - NOSSOS VALORES */}
                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
                         {/* Stripes de fundo */}
                         <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" xmlns="http://www.w3.org/2000/svg">
@@ -3867,7 +3777,96 @@ function PropostaEditor() {
                                </div>
                             </div>
                          </div>
-                      </div>
+                      </div>
+
+{/* SLIDE 04 PRINT - QUADRO EFETIVO */}
+                     <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800">
+                        {/* Stripes de fundo */}
+                        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                           <line x1="-50" y1="150" x2="350" y2="-250" stroke="#1e4480" strokeWidth="10" />
+                           <line x1="-50" y1="200" x2="400" y2="-250" stroke="#1e4480" strokeWidth="6" />
+                           <line x1="-50" y1="250" x2="450" y2="-250" stroke="#1e4480" strokeWidth="3" />
+                           
+                           <line x1="600" y1="800" x2="1100" y2="300" stroke="#1e4480" strokeWidth="10" />
+                           <line x1="650" y1="800" x2="1150" y2="300" stroke="#1e4480" strokeWidth="6" />
+                           <line x1="700" y1="800" x2="1200" y2="300" stroke="#1e4480" strokeWidth="3" />
+                        </svg>
+
+                        <div className="flex flex-col justify-between h-full relative z-10 w-full">
+                           <div className="flex justify-between items-start w-full">
+                              <h2 className="text-3xl font-black text-[#1e4480] tracking-tight leading-none uppercase">
+                                 PROPOSTA
+                              </h2>
+                              <img 
+                                 src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
+                                 alt="JVS Facilities Logo" 
+                                 className="max-h-10 w-auto object-contain"
+                              />
+                           </div>
+
+                           <div className="my-auto w-full max-w-2xl mx-auto space-y-4">
+                              <div className="w-full bg-white rounded-xl border border-slate-200/80 shadow-lg overflow-hidden">
+                                 <div className="bg-[#1e4480] text-center py-2">
+                                    <h3 className="text-white text-xs font-black tracking-widest uppercase">Quadro efetivo - Opções</h3>
+                                 </div>
+                                 <div className="overflow-y-auto max-h-[160px]">
+                                    <table className="w-full text-left border-collapse">
+                                       <thead>
+                                          <tr className="bg-[#1e4480]/90 text-white text-[9px] font-black uppercase tracking-wider border-b border-slate-200">
+                                             <th className="px-4 py-2">Função</th>
+                                             <th className="px-4 py-2 text-center w-28">Quantidade</th>
+                                             <th className="px-4 py-2 text-center w-36">Escala</th>
+                                          </tr>
+                                       </thead>
+                                       <tbody>
+                                          {proposta.equipe && proposta.equipe.length > 0 ? (
+                                             proposta.equipe.map((p: any, idx: number) => (
+                                                <tr key={p.id || idx} className={`border-b border-slate-100 text-[10px] font-bold text-slate-700 hover:bg-slate-50/50 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
+                                                   <td className="px-4 py-2 font-black text-slate-800">{p.nomeCargo || "Selecione a Função"}</td>
+                                                   <td className="px-4 py-2 text-center">{(p.quantidade || 0).toFixed(2).replace('.', ',')}</td>
+                                                   <td className="px-4 py-2 text-center">{p.escala || "Á definir"}</td>
+                                                </tr>
+                                             ))
+                                          ) : (
+                                             <tr className="border-b border-slate-100 text-[10px] font-semibold text-slate-400 italic">
+                                                <td colSpan={3} className="px-4 py-6 text-center">Nenhum posto inserido no Quadro de Equipe (Aba 4).</td>
+                                             </tr>
+                                          )}
+                                       </tbody>
+                                    </table>
+                                 </div>
+                              </div>
+
+                              {/* Cláusulas Operacionais */}
+                              <div className="pl-4 space-y-1 select-none">
+                                 <div className="flex items-start gap-2">
+                                    <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
+                                    <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
+                                       Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;
+                                    </p>
+                                 </div>
+                                 <div className="flex items-start gap-2">
+                                    <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
+                                    <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
+                                       Para reduções no efetivo prazo de 30 (trinta) dias;
+                                    </p>
+                                 </div>
+                                 <div className="flex items-start gap-2">
+                                    <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
+                                    <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
+                                       Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).
+                                    </p>
+                                 </div>
+                              </div>
+                           </div>
+
+                           <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
+                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                              <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">08</span>
+                           </div>
+                        </div>
+                     </div>
+
                   </div>
                </div>
             )}
