@@ -92,6 +92,13 @@ function PropostaEditor() {
           },
           dreTaxPercent: (fullData as any).dreTaxPercent,
           dreEncargos: (fullData as any).dreEncargos,
+          itensInclusosExcluidos: (fullData as any).itensInclusosExcluidos || [
+            { id: '1', descricao: 'Fornecimento de mão de obra', incluso: true },
+            { id: '2', descricao: 'Fornecimento de insumos necessario para a prestação dos serviços', incluso: true },
+            { id: '3', descricao: 'Maquinas e equipamentos', incluso: false },
+            { id: '4', descricao: 'Produtos químicos', incluso: false },
+            { id: '5', descricao: 'Descartaveis', incluso: false }
+          ],
         });
       }
     } catch (err) {
@@ -165,7 +172,14 @@ function PropostaEditor() {
       detalheMateriais: [],
       detalheMaquinas: [],
       detalheDescartaveis: []
-    }
+    },
+    itensInclusosExcluidos: [
+      { id: '1', descricao: 'Fornecimento de mão de obra', incluso: true },
+      { id: '2', descricao: 'Fornecimento de insumos necessario para a prestação dos serviços', incluso: true },
+      { id: '3', descricao: 'Maquinas e equipamentos', incluso: false },
+      { id: '4', descricao: 'Produtos químicos', incluso: false },
+      { id: '5', descricao: 'Descartaveis', incluso: false }
+    ]
   });
 
   const [resultado, setResultado] = useState<any>(null);
@@ -337,6 +351,13 @@ function PropostaEditor() {
                })),
                versao: fullData.versao,
                insumos: (fullData as any).insumos || { materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0, servicosDescricao: '' },
+               itensInclusosExcluidos: (fullData as any).itensInclusosExcluidos || [
+                  { id: '1', descricao: 'Fornecimento de mão de obra', incluso: true },
+                  { id: '2', descricao: 'Fornecimento de insumos necessario para a prestação dos serviços', incluso: true },
+                  { id: '3', descricao: 'Maquinas e equipamentos', incluso: false },
+                  { id: '4', descricao: 'Produtos químicos', incluso: false },
+                  { id: '5', descricao: 'Descartaveis', incluso: false }
+               ],
                dreTaxPercent: (fullData as any).dreTaxPercent,
                dreEncargos: (fullData as any).dreEncargos
             });
@@ -3999,7 +4020,7 @@ function PropostaEditor() {
                                </div>
                             </div>
                          </div>
-                      </div>
+                      </div>
 
 {/* SLIDE 04 PRINT - QUADRO EFETIVO */}
                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800">

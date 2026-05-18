@@ -3,14 +3,11 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 const defaultItensInclusosExcluidos = [
-  { id: '1', descricao: "Fornecimento de Mão de obra, Uniforme e EPI's;", incluso: true },
-  { id: '2', descricao: 'Fornecimento de Equipamentos, Utensílios e Químicos;', incluso: false },
-  { id: '3', descricao: 'Fornecimento de Controle de Pragas;', incluso: false },
-  { id: '4', descricao: 'Fornecimento de Materiais de Higiene Pessoal e Descartáveis;', incluso: false },
-  { id: '5', descricao: 'Fornecimento de Tratamento de Piso;', incluso: false },
-  { id: '6', descricao: 'Limpeza de Fachadas, Vidros Externos e Coberturas;', incluso: false },
-  { id: '7', descricao: 'Serviços e Insumos de Jardins;', incluso: false },
-  { id: '8', descricao: 'Reserva técnica para atendimento a datas especiais e/ou eventos. Caso necessário este item será cobrado como extra.', incluso: false }
+  { id: '1', descricao: 'Fornecimento de mão de obra', incluso: true },
+  { id: '2', descricao: 'Fornecimento de insumos necessario para a prestação dos serviços', incluso: true },
+  { id: '3', descricao: 'Maquinas e equipamentos', incluso: false },
+  { id: '4', descricao: 'Produtos químicos', incluso: false },
+  { id: '5', descricao: 'Descartaveis', incluso: false }
 ];
 
 
@@ -357,7 +354,7 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
       itensInclusosExcluidos: (() => {
         const rawItens = meta.itensInclusosExcluidos || [];
         const hasMaoDeObra = rawItens.some((item: any) => 
-          item.descricao && item.descricao.toLowerCase().includes('mão de obra') && item.descricao.toLowerCase().includes("epi's")
+          item.descricao && item.descricao.toLowerCase().includes('mão de obra')
         );
         return hasMaoDeObra ? rawItens : defaultItensInclusosExcluidos;
       })()
