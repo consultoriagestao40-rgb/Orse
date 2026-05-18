@@ -2784,17 +2784,24 @@ function PropostaEditor() {
                          {/* SLIDE 05 (PRINCIPAIS SERVIÇOS PRESTADOS - COM AS 5 CATEGORIAS DE SERVIÇOS) */}
                          {currentSlide === 5 && (
                             <div className="absolute inset-0 w-full h-full flex flex-col justify-between z-10 animate-fadeIn bg-white overflow-hidden p-16">
-                               {/* Linhas diagonais decorativas da marca */}
-                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
-                                  <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
-                                  <line x1="-50" y1="200" x2="400" y2="-250" stroke="#E2E8F0" strokeWidth="6" />
-                                  <line x1="-50" y1="250" x2="450" y2="-250" stroke="#E2E8F0" strokeWidth="3" />
-                                  <line x1="600" y1="800" x2="1100" y2="300" stroke="#E2E8F0" strokeWidth="10" />
-                                  <line x1="650" y1="800" x2="1150" y2="300" stroke="#E2E8F0" strokeWidth="6" />
-                                  <line x1="700" y1="800" x2="1200" y2="300" stroke="#E2E8F0" strokeWidth="3" />
+                               {/* Stripes de fundo */}
+                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" xmlns="http://www.w3.org/2000/svg">
+                                  <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
+                                  <line x1="-100" y1="150" x2="450" y2="-400" stroke="#F1F5F9" strokeWidth="12" />
+                                  <line x1="-100" y1="200" x2="500" y2="-400" stroke="#F1F5F9" strokeWidth="6" />
+                                  <line x1="-100" y1="250" x2="550" y2="-400" stroke="#F1F5F9" strokeWidth="3" />
+                                  <line x1="-100" y1="300" x2="600" y2="-400" stroke="#F1F5F9" strokeWidth="12" />
+                                  <line x1="-100" y1="350" x2="650" y2="-400" stroke="#F1F5F9" strokeWidth="4" />
+                                  
+                                  <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
+                                  <line x1="550" y1="900" x2="1250" y2="200" stroke="#F1F5F9" strokeWidth="12" />
+                                  <line x1="600" y1="900" x2="1300" y2="200" stroke="#F1F5F9" strokeWidth="6" />
+                                  <line x1="650" y1="900" x2="1350" y2="200" stroke="#F1F5F9" strokeWidth="3" />
+                                  <line x1="700" y1="900" x2="1400" y2="200" stroke="#F1F5F9" strokeWidth="12" />
+                                  <line x1="750" y1="900" x2="1450" y2="200" stroke="#F1F5F9" strokeWidth="4" />
                                </svg>
-
-                               <div className="grid grid-cols-12 gap-6 items-center h-[calc(100%-110px)] relative z-10 text-slate-800">
+                               
+                               <div className="grid grid-cols-12 gap-6 items-center h-[calc(100%-150px)] relative z-10 text-slate-800">
                                   {/* Coluna do Título (Esquerda) */}
                                   <div className="col-span-4 flex flex-col justify-center h-full pr-2">
                                      <h2 className="text-3xl font-black text-[#1e4480] uppercase tracking-tight leading-none">
@@ -2810,8 +2817,18 @@ function PropostaEditor() {
                                         <span className="text-[#1e4480] text-[10px] font-black tracking-wide uppercase leading-tight max-w-[150px]">
                                            TERCEIRIZAÇÃO DE SERVIÇOS DE FACILITIES
                                         </span>
-                                        <div className="bg-[#1e4480]/10 p-1.5 rounded-xl text-[#1e4480] shrink-0">
-                                           <Building2 size={18} className="stroke-[2.5]" />
+                                        <div className="text-[#1e4480] shrink-0">
+                                           <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-14 h-14 shrink-0">
+                                              <path d="M12 52L24 40M52 52L40 40" stroke="#1e4480" strokeWidth="3" />
+                                              <path d="M22 38L14 30M42 38L50 30" stroke="#1e4480" strokeWidth="3" />
+                                              <line x1="24" y1="40" x2="36" y2="28" stroke="#1e4480" strokeWidth="2.5" />
+                                              <line x1="40" y1="40" x2="28" y2="28" stroke="#1e4480" strokeWidth="2.5" />
+                                              <path d="M18 42C18 42 22 46 28 46C34 46 38 42 38 36" stroke="#1e4480" strokeWidth="2.5" />
+                                              <path d="M46 42C46 42 42 46 36 46C30 46 26 42 26 36" stroke="#1e4480" strokeWidth="2.5" />
+                                              <path d="M32 8L34 14L40 16L34 18L32 24L30 18L24 16L30 14Z" fill="#1e4480" />
+                                              <path d="M18 16L19 19L22 20L19 21L18 24L17 21L14 20L17 19Z" fill="#1e4480" />
+                                              <path d="M46 16L47 19L50 20L47 21L46 24L45 21L42 20L45 19Z" fill="#1e4480" />
+                                           </svg>
                                         </div>
                                      </div>
                                      <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
@@ -2825,8 +2842,25 @@ function PropostaEditor() {
                                         <span className="text-[#1e4480] text-[10px] font-black tracking-wide uppercase leading-tight">
                                            LIMPEZA EM ALTURA
                                         </span>
-                                        <div className="bg-[#1e4480]/10 p-1.5 rounded-xl text-[#1e4480] shrink-0">
-                                           <HardHat size={18} className="stroke-[2.5]" />
+                                        <div className="text-[#1e4480] shrink-0">
+                                           <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-14 h-14 shrink-0">
+                                              <rect x="6" y="6" width="20" height="52" rx="2" stroke="#cbd5e1" strokeWidth="1.5" />
+                                              <line x1="6" y1="20" x2="26" y2="20" stroke="#cbd5e1" strokeWidth="1.5" />
+                                              <line x1="6" y1="36" x2="26" y2="36" stroke="#cbd5e1" strokeWidth="1.5" />
+                                              <line x1="16" y1="6" x2="16" y2="58" stroke="#cbd5e1" strokeWidth="1.5" />
+                                              <line x1="38" y1="2" x2="38" y2="62" stroke="#1e4480" strokeWidth="1.5" strokeDasharray="3 3" />
+                                              <line x1="48" y1="2" x2="48" y2="62" stroke="#1e4480" strokeWidth="1.5" />
+                                              <circle cx="48" cy="22" r="4" fill="#1e4480" />
+                                              <path d="M44 20H48V24" stroke="#1e4480" strokeWidth="2" />
+                                              <path d="M48 26L42 36" stroke="#1e4480" strokeWidth="4" />
+                                              <path d="M42 36L46 44L52 46" stroke="#1e4480" strokeWidth="3" />
+                                              <path d="M42 36L36 42L38 48" stroke="#1e4480" strokeWidth="3" />
+                                              <path d="M46 28L34 26" stroke="#1e4480" strokeWidth="2.5" />
+                                              <line x1="34" y1="20" x2="34" y2="32" stroke="#1e4480" strokeWidth="3" />
+                                              <line x1="34" y1="26" x2="30" y2="26" stroke="#1e4480" strokeWidth="2" />
+                                              <circle cx="28" cy="24" r="1.5" fill="#38bdf8" />
+                                              <circle cx="26" cy="29" r="1" fill="#38bdf8" />
+                                           </svg>
                                         </div>
                                      </div>
                                      <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
@@ -2838,51 +2872,105 @@ function PropostaEditor() {
                                {/* Painel inferior com as 5 categorias de serviços */}
                                <div className="flex justify-around items-center w-full pt-4 mt-auto border-t border-slate-100 relative z-20">
                                   {/* Categoria 1: Limpeza */}
-                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
-                                     <div className="bg-[#1e4480] group-hover:bg-[#1B4D3E] group-hover:scale-110 transition-all duration-300 shadow-md text-white w-12 h-12 flex items-center justify-center rounded-full">
-                                        <Sparkles size={20} className="stroke-[2]" />
+                                  <div className="flex flex-col items-center justify-center group cursor-pointer hover:scale-105 transition-all duration-300">
+                                     <div className="bg-[#1e4480] text-white w-24 h-24 flex items-center justify-center rounded-full shadow-xl group-hover:bg-[#1B4D3E] transition-colors duration-300">
+                                        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-white">
+                                           <circle cx="32" cy="16" r="6" fill="currentColor" />
+                                           <path d="M26 14C26 12 30 10 34 10H38" stroke="currentColor" strokeWidth="2.5" />
+                                           <path d="M22 28C22 24 25 24 32 24C39 24 42 24 42 28V46H22V28Z" fill="currentColor" />
+                                           <path d="M28 24V46M36 24V46" stroke="#1e4480" strokeWidth="1.5" />
+                                           <path d="M22 30L12 34L12 48" stroke="currentColor" strokeWidth="3.5" />
+                                           <line x1="10" y1="12" x2="10" y2="54" stroke="currentColor" strokeWidth="2.5" />
+                                           <path d="M4 54H16L18 58H2L4 54Z" fill="currentColor" />
+                                           <path d="M42 30L50 36L50 44" stroke="currentColor" strokeWidth="3.5" />
+                                           <path d="M46 44H54L56 56H44L46 44Z" fill="currentColor" />
+                                           <path d="M46 44C46 44 48 40 50 40C52 40 54 44 54 44" stroke="currentColor" strokeWidth="1.5" />
+                                        </svg>
                                      </div>
-                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[9px] font-black tracking-wider uppercase mt-2 transition-colors">
+                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[10px] font-black tracking-wider uppercase mt-3 transition-colors duration-300">
                                         LIMPEZA
                                      </span>
                                   </div>
 
                                   {/* Categoria 2: Portaria */}
-                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
-                                     <div className="bg-[#1e4480] group-hover:bg-[#1B4D3E] group-hover:scale-110 transition-all duration-300 shadow-md text-white w-12 h-12 flex items-center justify-center rounded-full">
-                                        <ShieldCheck size={20} className="stroke-[2]" />
+                                  <div className="flex flex-col items-center justify-center group cursor-pointer hover:scale-105 transition-all duration-300">
+                                     <div className="bg-[#1e4480] text-white w-24 h-24 flex items-center justify-center rounded-full shadow-xl group-hover:bg-[#1B4D3E] transition-colors duration-300">
+                                        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-white">
+                                           <path d="M18 18C18 10 24 8 32 8C40 8 46 10 46 18H18Z" fill="currentColor" />
+                                           <path d="M14 18H50V20C50 20 40 22 32 22C24 22 14 20 14 20Z" fill="currentColor" />
+                                           <path d="M32 10L35 13L32 16L29 13Z" fill="#eab308" />
+                                           <circle cx="32" cy="25" r="6" fill="currentColor" />
+                                           <path d="M16 38C16 33 20 32 32 32C44 32 48 33 48 38V52H16V38Z" fill="currentColor" />
+                                           <path d="M28 32L32 40L36 32Z" fill="#ffffff" />
+                                           <path d="M31 35L33 35L33 48L31 48Z" fill="#1e4480" />
+                                           <path d="M22 36L25 38L24 41L20 41L19 38Z" fill="#eab308" />
+                                           <path d="M16 34H22" stroke="#eab308" strokeWidth="2.5" />
+                                           <path d="M42 34H48" stroke="#eab308" strokeWidth="2.5" />
+                                        </svg>
                                      </div>
-                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[9px] font-black tracking-wider uppercase mt-2 transition-colors">
+                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[10px] font-black tracking-wider uppercase mt-3 transition-colors duration-300">
                                         PORTARIA
                                      </span>
                                   </div>
 
                                   {/* Categoria 3: Recepção */}
-                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
-                                     <div className="bg-[#1e4480] group-hover:bg-[#1B4D3E] group-hover:scale-110 transition-all duration-300 shadow-md text-white w-12 h-12 flex items-center justify-center rounded-full">
-                                        <ConciergeBell size={20} className="stroke-[2]" />
+                                  <div className="flex flex-col items-center justify-center group cursor-pointer hover:scale-105 transition-all duration-300">
+                                     <div className="bg-[#1e4480] text-white w-24 h-24 flex items-center justify-center rounded-full shadow-xl group-hover:bg-[#1B4D3E] transition-colors duration-300">
+                                        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-white">
+                                           <path d="M4 42H60V54H4V42Z" fill="currentColor" />
+                                           <line x1="8" y1="46" x2="56" y2="46" stroke="#1e4480" strokeWidth="2" />
+                                           <circle cx="22" cy="22" r="5" fill="currentColor" />
+                                           <path d="M17 18C15 21 16 25 22 25C28 25 29 21 27 18" stroke="currentColor" strokeWidth="2.5" />
+                                           <path d="M12 36C12 30 15 28 22 28C29 28 32 30 32 36V42H12V36Z" fill="currentColor" />
+                                           <circle cx="42" cy="22" r="5" fill="currentColor" />
+                                           <path d="M37 20C37 15 47 15 47 20" stroke="currentColor" strokeWidth="2" />
+                                           <path d="M32 36C32 30 35 28 42 28C49 28 52 30 52 36V42H32V36Z" fill="currentColor" />
+                                           <path d="M26 38L30 32H34L38 38H26Z" fill="#cbd5e1" stroke="currentColor" strokeWidth="1.5" />
+                                           <line x1="24" y1="40" x2="40" y2="40" stroke="currentColor" strokeWidth="2" />
+                                        </svg>
                                      </div>
-                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[9px] font-black tracking-wider uppercase mt-2 transition-colors">
+                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[10px] font-black tracking-wider uppercase mt-3 transition-colors duration-300">
                                         RECEPÇÃO
                                      </span>
                                   </div>
 
                                   {/* Categoria 4: Manutenção */}
-                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
-                                     <div className="bg-[#1e4480] group-hover:bg-[#1B4D3E] group-hover:scale-110 transition-all duration-300 shadow-md text-white w-12 h-12 flex items-center justify-center rounded-full">
-                                        <Wrench size={20} className="stroke-[2]" />
+                                  <div className="flex flex-col items-center justify-center group cursor-pointer hover:scale-105 transition-all duration-300">
+                                     <div className="bg-[#1e4480] text-white w-24 h-24 flex items-center justify-center rounded-full shadow-xl group-hover:bg-[#1B4D3E] transition-colors duration-300">
+                                        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-white">
+                                           <circle cx="48" cy="20" r="8" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" />
+                                           <path d="M48 10V12M48 28V30M38 20H40M56 20H58" stroke="currentColor" strokeWidth="2" />
+                                           <circle cx="28" cy="18" r="6" fill="currentColor" />
+                                           <path d="M22 15C22 13 26 11 31 11H36" stroke="currentColor" strokeWidth="2.5" />
+                                           <path d="M16 30C16 26 19 25 28 25C37 25 40 26 40 30V48H16V30Z" fill="currentColor" />
+                                           <path d="M38 32L48 28L48 40" stroke="currentColor" strokeWidth="3.5" />
+                                           <path d="M46 20L50 24" stroke="currentColor" strokeWidth="3.5" />
+                                           <circle cx="45" cy="19" r="3" stroke="currentColor" strokeWidth="2" fill="#1e4480" />
+                                           <circle cx="51" cy="25" r="3" stroke="currentColor" strokeWidth="2" fill="#1e4480" />
+                                           <rect x="20" y="29" width="4" height="6" rx="0.5" fill="#ffffff" />
+                                        </svg>
                                      </div>
-                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[9px] font-black tracking-wider uppercase mt-2 transition-colors">
+                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[10px] font-black tracking-wider uppercase mt-3 transition-colors duration-300">
                                         MANUTENÇÃO
                                      </span>
                                   </div>
 
                                   {/* Categoria 5: Jardinagem */}
-                                  <div className="flex flex-col items-center justify-center group cursor-pointer">
-                                     <div className="bg-[#1e4480] group-hover:bg-[#1B4D3E] group-hover:scale-110 transition-all duration-300 shadow-md text-white w-12 h-12 flex items-center justify-center rounded-full">
-                                        <Trees size={20} className="stroke-[2]" />
+                                  <div className="flex flex-col items-center justify-center group cursor-pointer hover:scale-105 transition-all duration-300">
+                                     <div className="bg-[#1e4480] text-white w-24 h-24 flex items-center justify-center rounded-full shadow-xl group-hover:bg-[#1B4D3E] transition-colors duration-300">
+                                        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-white">
+                                           <path d="M14 20C14 20 22 12 32 12C42 12 50 20 50 20H14Z" fill="currentColor" stroke="currentColor" strokeWidth="1" />
+                                           <ellipse cx="32" cy="20" rx="22" ry="3" fill="currentColor" />
+                                           <circle cx="32" cy="26" r="5" fill="currentColor" />
+                                           <path d="M18 36C18 32 21 31 32 31C43 31 46 32 46 36V50H18V36Z" fill="currentColor" />
+                                           <path d="M24 31V50M40 31V50" stroke="#1e4480" strokeWidth="2.5" />
+                                           <path d="M44 38C44 38 48 34 52 35C52 35 54 40 48 42" fill="currentColor" />
+                                           <path d="M48 30C48 30 52 27 55 30C55 30 54 35 49 33" fill="currentColor" />
+                                           <path d="M28 42H36L38 48H26L28 42Z" fill="currentColor" stroke="currentColor" strokeWidth="1.5" />
+                                           <circle cx="32" cy="38" r="2" fill="#eab308" />
+                                        </svg>
                                      </div>
-                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[9px] font-black tracking-wider uppercase mt-2 transition-colors">
+                                     <span className="text-[#1e4480] group-hover:text-[#1B4D3E] text-[10px] font-black tracking-wider uppercase mt-3 transition-colors duration-300">
                                         JARDINAGEM
                                      </span>
                                   </div>
@@ -2892,11 +2980,11 @@ function PropostaEditor() {
                                <div className="flex justify-between items-center border-t border-slate-100 pt-3 mt-4 pr-28 relative z-20 text-slate-500">
                                   <span className="text-[9px] font-bold uppercase tracking-widest">www.grupojvsserv.com.br</span>
                                   <span className="text-[9px] font-black bg-slate-100 px-2.5 py-0.5 rounded">05</span>
-                               </div>
+                                </div>
                             </div>
                          )}
 
-                         {/* SLIDE 06 (SETORES ATENDIDOS - COM OS ICONS E COLUNAS DE INDUSTRIA E VAREJO) */}
+{/* SLIDE 06 (SETORES ATENDIDOS - COM OS ICONS E COLUNAS DE INDUSTRIA E VAREJO) */}
                          {currentSlide === 6 && (
                             <div className="absolute inset-0 w-full h-full flex flex-col justify-between z-10 animate-fadeIn bg-[#1e4480] text-white overflow-hidden p-16">
                                {/* Linhas diagonais decorativas da marca */}
@@ -4861,7 +4949,7 @@ function PropostaEditor() {
         </div>
       )}
 
-<div className="print-slide-deck">
+<div className="print-slide-deck hidden print:block">
                      {/* SLIDE 01 PRINT - CAPA COMERCIAL */}
                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-[#020617] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
                         {/* Imagem de Fundo Nativa HTML para Garantir Renderização */}
@@ -5120,118 +5208,206 @@ function PropostaEditor() {
                      </div>
 
                      {/* SLIDE 05 PRINT - PRINCIPAIS SERVIÇOS PRESTADOS */}
-                     <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
-                        {/* Stripes de fundo */}
-                        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" xmlns="http://www.w3.org/2000/svg">
-                           <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
-                           <line x1="-50" y1="200" x2="400" y2="-250" stroke="#E2E8F0" strokeWidth="6" />
-                           <line x1="-50" y1="250" x2="450" y2="-250" stroke="#E2E8F0" strokeWidth="3" />
-                           <line x1="600" y1="800" x2="1100" y2="300" stroke="#E2E8F0" strokeWidth="10" />
-                           <line x1="650" y1="800" x2="1150" y2="300" stroke="#E2E8F0" strokeWidth="6" />
-                           <line x1="700" y1="800" x2="1200" y2="300" stroke="#E2E8F0" strokeWidth="3" />
-                        </svg>
-                        
-                        <div className="grid grid-cols-12 gap-6 items-center h-[calc(100%-110px)] relative z-10">
-                           {/* Coluna do Título (Esquerda) */}
-                           <div className="col-span-4 flex flex-col justify-center h-full pr-2">
-                              <h2 className="text-3xl font-black text-[#1e4480] uppercase tracking-tight leading-none">
-                                 PRINCIPAIS<br />
-                                 SERVIÇOS<br />
-                                 PRESTADOS
-                              </h2>
-                           </div>
+                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
+                         {/* Stripes de fundo */}
+                         <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" xmlns="http://www.w3.org/2000/svg">
+                            <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
+                            <line x1="-100" y1="150" x2="450" y2="-400" stroke="#F1F5F9" strokeWidth="12" />
+                            <line x1="-100" y1="200" x2="500" y2="-400" stroke="#F1F5F9" strokeWidth="6" />
+                            <line x1="-100" y1="250" x2="550" y2="-400" stroke="#F1F5F9" strokeWidth="3" />
+                            <line x1="-100" y1="300" x2="600" y2="-400" stroke="#F1F5F9" strokeWidth="12" />
+                            <line x1="-100" y1="350" x2="650" y2="-400" stroke="#F1F5F9" strokeWidth="4" />
+                            
+                            <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
+                            <line x1="550" y1="900" x2="1250" y2="200" stroke="#F1F5F9" strokeWidth="12" />
+                            <line x1="600" y1="900" x2="1300" y2="200" stroke="#F1F5F9" strokeWidth="6" />
+                            <line x1="650" y1="900" x2="1350" y2="200" stroke="#F1F5F9" strokeWidth="3" />
+                            <line x1="700" y1="900" x2="1400" y2="200" stroke="#F1F5F9" strokeWidth="12" />
+                            <line x1="750" y1="900" x2="1450" y2="200" stroke="#F1F5F9" strokeWidth="4" />
+                         </svg>
+                         
+                         <div className="grid grid-cols-12 gap-6 items-center h-[calc(100%-150px)] relative z-10">
+                            {/* Coluna do Título (Esquerda) */}
+                            <div className="col-span-4 flex flex-col justify-center h-full pr-2">
+                               <h2 className="text-3xl font-black text-[#1e4480] uppercase tracking-tight leading-none">
+                                  PRINCIPAIS<br />
+                                  SERVIÇOS<br />
+                                  PRESTADOS
+                               </h2>
+                            </div>
 
-                           {/* Coluna 1 (Centro) - Terceirização */}
-                           <div className="col-span-4 flex flex-col space-y-2 h-full justify-center">
-                              <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
-                                 <span className="text-[#1e4480] text-[10px] font-black tracking-wide uppercase leading-tight max-w-[150px]">
-                                    TERCEIRIZAÇÃO DE SERVIÇOS DE FACILITIES
-                                 </span>
-                                 <div className="bg-[#1e4480]/10 p-1.5 rounded-xl text-[#1e4480] shrink-0">
-                                    <Building2 size={18} className="stroke-[2.5]" />
-                                 </div>
-                              </div>
-                              <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
-                                 Gestão e execução de serviços essenciais, como limpeza, manutenção e segurança, que garantem o bom funcionamento e organização de um ambiente de trabalho. Nossa função é cuidar de tudo isso para que a empresa possa focar no que faz de melhor, enquanto oferecemos um espaço eficiente, seguro e bem cuidado.
-                              </p>
-                           </div>
+                            {/* Coluna 1 (Centro) - Terceirização */}
+                            <div className="col-span-4 flex flex-col space-y-2 h-full justify-center">
+                               <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                                  <span className="text-[#1e4480] text-[10px] font-black tracking-wide uppercase leading-tight max-w-[150px]">
+                                     TERCEIRIZAÇÃO DE SERVIÇOS DE FACILITIES
+                                  </span>
+                                  <div className="text-[#1e4480] shrink-0">
+                                     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-14 h-14 shrink-0">
+                                        <path d="M12 52L24 40M52 52L40 40" stroke="#1e4480" strokeWidth="3" />
+                                        <path d="M22 38L14 30M42 38L50 30" stroke="#1e4480" strokeWidth="3" />
+                                        <line x1="24" y1="40" x2="36" y2="28" stroke="#1e4480" strokeWidth="2.5" />
+                                        <line x1="40" y1="40" x2="28" y2="28" stroke="#1e4480" strokeWidth="2.5" />
+                                        <path d="M18 42C18 42 22 46 28 46C34 46 38 42 38 36" stroke="#1e4480" strokeWidth="2.5" />
+                                        <path d="M46 42C46 42 42 46 36 46C30 46 26 42 26 36" stroke="#1e4480" strokeWidth="2.5" />
+                                        <path d="M32 8L34 14L40 16L34 18L32 24L30 18L24 16L30 14Z" fill="#1e4480" />
+                                        <path d="M18 16L19 19L22 20L19 21L18 24L17 21L14 20L17 19Z" fill="#1e4480" />
+                                        <path d="M46 16L47 19L50 20L47 21L46 24L45 21L42 20L45 19Z" fill="#1e4480" />
+                                     </svg>
+                                  </div>
+                                </div>
+                               <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
+                                  Gestão e execução de serviços essenciais, como limpeza, manutenção e segurança, que garantem o bom funcionamento e organização de um ambiente de trabalho. Nossa função é cuidar de tudo isso para que a empresa possa focar no que faz de melhor, enquanto oferecemos um espaço eficiente, seguro e bem cuidado.
+                               </p>
+                            </div>
 
-                           {/* Coluna 2 (Direita) - Limpeza em Altura */}
-                           <div className="col-span-4 flex flex-col space-y-2 h-full justify-center pl-2">
-                              <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
-                                 <span className="text-[#1e4480] text-[10px] font-black tracking-wide uppercase leading-tight">
-                                    LIMPEZA EM ALTURA
-                                 </span>
-                                 <div className="bg-[#1e4480]/10 p-1.5 rounded-xl text-[#1e4480] shrink-0">
-                                    <HardHat size={18} className="stroke-[2.5]" />
-                                 </div>
-                              </div>
-                              <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
-                                 Serviço que é realizado em áreas de difícil acesso, como fachadas de prédios, janelas externas e estruturas elevadas. Usamos equipamentos específicos e técnicas seguras para garantir que essas superfícies sejam limpas de maneira eficiente, mantendo a estética e a segurança dos espaços altos, onde o cuidado e a precisão são essenciais.
-                              </p>
-                           </div>
-                        </div>
+                            {/* Coluna 2 (Direita) - Limpeza em Altura */}
+                            <div className="col-span-4 flex flex-col space-y-2 h-full justify-center pl-2">
+                               <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                                  <span className="text-[#1e4480] text-[10px] font-black tracking-wide uppercase leading-tight">
+                                     LIMPEZA EM ALTURA
+                                  </span>
+                                  <div className="text-[#1e4480] shrink-0">
+                                     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-14 h-14 shrink-0">
+                                        <rect x="6" y="6" width="20" height="52" rx="2" stroke="#cbd5e1" strokeWidth="1.5" />
+                                        <line x1="6" y1="20" x2="26" y2="20" stroke="#cbd5e1" strokeWidth="1.5" />
+                                        <line x1="6" y1="36" x2="26" y2="36" stroke="#cbd5e1" strokeWidth="1.5" />
+                                        <line x1="16" y1="6" x2="16" y2="58" stroke="#cbd5e1" strokeWidth="1.5" />
+                                        <line x1="38" y1="2" x2="38" y2="62" stroke="#1e4480" strokeWidth="1.5" strokeDasharray="3 3" />
+                                        <line x1="48" y1="2" x2="48" y2="62" stroke="#1e4480" strokeWidth="1.5" />
+                                        <circle cx="48" cy="22" r="4" fill="#1e4480" />
+                                        <path d="M44 20H48V24" stroke="#1e4480" strokeWidth="2" />
+                                        <path d="M48 26L42 36" stroke="#1e4480" strokeWidth="4" />
+                                        <path d="M42 36L46 44L52 46" stroke="#1e4480" strokeWidth="3" />
+                                        <path d="M42 36L36 42L38 48" stroke="#1e4480" strokeWidth="3" />
+                                        <path d="M46 28L34 26" stroke="#1e4480" strokeWidth="2.5" />
+                                        <line x1="34" y1="20" x2="34" y2="32" stroke="#1e4480" strokeWidth="3" />
+                                        <line x1="34" y1="26" x2="30" y2="26" stroke="#1e4480" strokeWidth="2" />
+                                        <circle cx="28" cy="24" r="1.5" fill="#38bdf8" />
+                                        <circle cx="26" cy="29" r="1" fill="#38bdf8" />
+                                     </svg>
+                                  </div>
+                               </div>
+                               <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
+                                  Serviço que é realizado em áreas de difícil acesso, como fachadas de prédios, janelas externas e estruturas elevadas. Usamos equipamentos específicos e técnicas seguras para garantir que essas superfícies sejam limpas de maneira eficiente, mantendo a estética e a segurança dos espaços altos, onde o cuidado e a precisão são essenciais.
+                               </p>
+                            </div>
+                         </div>
 
-                        {/* Painel inferior com as 5 categorias de serviços */}
-                        <div className="flex justify-around items-center w-full pt-4 mt-auto border-t border-slate-100 relative z-20">
-                           {/* Categoria 1: Limpeza */}
-                           <div className="flex flex-col items-center justify-center">
-                              <div className="bg-[#1e4480] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-md">
-                                 <Sparkles size={20} className="stroke-[2]" />
-                              </div>
-                              <span className="text-[#1e4480] text-[9px] font-black tracking-wider uppercase mt-2">
-                                 LIMPEZA
-                              </span>
-                           </div>
+                         {/* Painel inferior com as 5 categorias de serviços */}
+                         <div className="flex justify-around items-center w-full pt-4 mt-auto border-t border-slate-100 relative z-20">
+                            {/* Categoria 1: Limpeza */}
+                            <div className="flex flex-col items-center justify-center">
+                               <div className="bg-[#1e4480] text-white w-24 h-24 flex items-center justify-center rounded-full shadow-xl">
+                                  <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-white">
+                                     <circle cx="32" cy="16" r="6" fill="currentColor" />
+                                     <path d="M26 14C26 12 30 10 34 10H38" stroke="currentColor" strokeWidth="2.5" />
+                                     <path d="M22 28C22 24 25 24 32 24C39 24 42 24 42 28V46H22V28Z" fill="currentColor" />
+                                     <path d="M28 24V46M36 24V46" stroke="#1e4480" strokeWidth="1.5" />
+                                     <path d="M22 30L12 34L12 48" stroke="currentColor" strokeWidth="3.5" />
+                                     <line x1="10" y1="12" x2="10" y2="54" stroke="currentColor" strokeWidth="2.5" />
+                                     <path d="M4 54H16L18 58H2L4 54Z" fill="currentColor" />
+                                     <path d="M42 30L50 36L50 44" stroke="currentColor" strokeWidth="3.5" />
+                                     <path d="M46 44H54L56 56H44L46 44Z" fill="currentColor" />
+                                     <path d="M46 44C46 44 48 40 50 40C52 40 54 44 54 44" stroke="currentColor" strokeWidth="1.5" />
+                                  </svg>
+                               </div>
+                               <span className="text-[#1e4480] text-[10px] font-black tracking-wider uppercase mt-3">
+                                  LIMPEZA
+                                </span>
+                            </div>
 
-                           {/* Categoria 2: Portaria */}
-                           <div className="flex flex-col items-center justify-center">
-                              <div className="bg-[#1e4480] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-md">
-                                 <ShieldCheck size={20} className="stroke-[2]" />
-                              </div>
-                              <span className="text-[#1e4480] text-[9px] font-black tracking-wider uppercase mt-2">
-                                 PORTARIA
-                              </span>
-                           </div>
+                            {/* Categoria 2: Portaria */}
+                            <div className="flex flex-col items-center justify-center">
+                               <div className="bg-[#1e4480] text-white w-24 h-24 flex items-center justify-center rounded-full shadow-xl">
+                                  <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-white">
+                                     <path d="M18 18C18 10 24 8 32 8C40 8 46 10 46 18H18Z" fill="currentColor" />
+                                     <path d="M14 18H50V20C50 20 40 22 32 22C24 22 14 20 14 20Z" fill="currentColor" />
+                                     <path d="M32 10L35 13L32 16L29 13Z" fill="#eab308" />
+                                     <circle cx="32" cy="25" r="6" fill="currentColor" />
+                                     <path d="M16 38C16 33 20 32 32 32C44 32 48 33 48 38V52H16V38Z" fill="currentColor" />
+                                     <path d="M28 32L32 40L36 32Z" fill="#ffffff" />
+                                     <path d="M31 35L33 35L33 48L31 48Z" fill="#1e4480" />
+                                     <path d="M22 36L25 38L24 41L20 41L19 38Z" fill="#eab308" />
+                                     <path d="M16 34H22" stroke="#eab308" strokeWidth="2.5" />
+                                     <path d="M42 34H48" stroke="#eab308" strokeWidth="2.5" />
+                                  </svg>
+                               </div>
+                               <span className="text-[#1e4480] text-[10px] font-black tracking-wider uppercase mt-3">
+                                  PORTARIA
+                               </span>
+                            </div>
 
-                           {/* Categoria 3: Recepção */}
-                           <div className="flex flex-col items-center justify-center">
-                              <div className="bg-[#1e4480] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-md">
-                                 <ConciergeBell size={20} className="stroke-[2]" />
-                              </div>
-                              <span className="text-[#1e4480] text-[9px] font-black tracking-wider uppercase mt-2">
-                                 RECEPÇÃO
-                              </span>
-                           </div>
+                            {/* Categoria 3: Recepção */}
+                            <div className="flex flex-col items-center justify-center">
+                               <div className="bg-[#1e4480] text-white w-24 h-24 flex items-center justify-center rounded-full shadow-xl">
+                                  <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-white">
+                                     <path d="M4 42H60V54H4V42Z" fill="currentColor" />
+                                     <line x1="8" y1="46" x2="56" y2="46" stroke="#1e4480" strokeWidth="2" />
+                                     <circle cx="22" cy="22" r="5" fill="currentColor" />
+                                     <path d="M17 18C15 21 16 25 22 25C28 25 29 21 27 18" stroke="currentColor" strokeWidth="2.5" />
+                                     <path d="M12 36C12 30 15 28 22 28C29 28 32 30 32 36V42H12V36Z" fill="currentColor" />
+                                     <circle cx="42" cy="22" r="5" fill="currentColor" />
+                                     <path d="M37 20C37 15 47 15 47 20" stroke="currentColor" strokeWidth="2" />
+                                     <path d="M32 36C32 30 35 28 42 28C49 28 52 30 52 36V42H32V36Z" fill="currentColor" />
+                                     <path d="M26 38L30 32H34L38 38H26Z" fill="#cbd5e1" stroke="currentColor" strokeWidth="1.5" />
+                                     <line x1="24" y1="40" x2="40" y2="40" stroke="currentColor" strokeWidth="2" />
+                                  </svg>
+                               </div>
+                               <span className="text-[#1e4480] text-[10px] font-black tracking-wider uppercase mt-3">
+                                  RECEPÇÃO
+                               </span>
+                            </div>
 
-                           {/* Categoria 4: Manutenção */}
-                           <div className="flex flex-col items-center justify-center">
-                              <div className="bg-[#1e4480] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-md">
-                                 <Wrench size={20} className="stroke-[2]" />
-                              </div>
-                              <span className="text-[#1e4480] text-[9px] font-black tracking-wider uppercase mt-2">
-                                 MANUTENÇÃO
-                              </span>
-                           </div>
+                            {/* Categoria 4: Manutenção */}
+                            <div className="flex flex-col items-center justify-center">
+                               <div className="bg-[#1e4480] text-white w-24 h-24 flex items-center justify-center rounded-full shadow-xl">
+                                  <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-white">
+                                     <circle cx="48" cy="20" r="8" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" />
+                                     <path d="M48 10V12M48 28V30M38 20H40M56 20H58" stroke="currentColor" strokeWidth="2" />
+                                     <circle cx="28" cy="18" r="6" fill="currentColor" />
+                                     <path d="M22 15C22 13 26 11 31 11H36" stroke="currentColor" strokeWidth="2.5" />
+                                     <path d="M16 30C16 26 19 25 28 25C37 25 40 26 40 30V48H16V30Z" fill="currentColor" />
+                                     <path d="M38 32L48 28L48 40" stroke="currentColor" strokeWidth="3.5" />
+                                     <path d="M46 20L50 24" stroke="currentColor" strokeWidth="3.5" />
+                                     <circle cx="45" cy="19" r="3" stroke="currentColor" strokeWidth="2" fill="#1e4480" />
+                                     <circle cx="51" cy="25" r="3" stroke="currentColor" strokeWidth="2" fill="#1e4480" />
+                                     <rect x="20" y="29" width="4" height="6" rx="0.5" fill="#ffffff" />
+                                  </svg>
+                               </div>
+                               <span className="text-[#1e4480] text-[10px] font-black tracking-wider uppercase mt-3">
+                                  MANUTENÇÃO
+                               </span>
+                            </div>
 
-                           {/* Categoria 5: Jardinagem */}
-                           <div className="flex flex-col items-center justify-center">
-                              <div className="bg-[#1e4480] text-white w-12 h-12 flex items-center justify-center rounded-full shadow-md">
-                                 <Trees size={20} className="stroke-[2]" />
-                              </div>
-                              <span className="text-[#1e4480] text-[9px] font-black tracking-wider uppercase mt-2">
-                                 JARDINAGEM
-                              </span>
-                           </div>
-                        </div>
+                            {/* Categoria 5: Jardinagem */}
+                            <div className="flex flex-col items-center justify-center">
+                               <div className="bg-[#1e4480] text-white w-24 h-24 flex items-center justify-center rounded-full shadow-xl">
+                                  <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-white">
+                                     <path d="M14 20C14 20 22 12 32 12C42 12 50 20 50 20H14Z" fill="currentColor" stroke="currentColor" strokeWidth="1" />
+                                     <ellipse cx="32" cy="20" rx="22" ry="3" fill="currentColor" />
+                                     <circle cx="32" cy="26" r="5" fill="currentColor" />
+                                     <path d="M18 36C18 32 21 31 32 31C43 31 46 32 46 36V50H18V36Z" fill="currentColor" />
+                                     <path d="M24 31V50M40 31V50" stroke="#1e4480" strokeWidth="2.5" />
+                                     <path d="M44 38C44 38 48 34 52 35C52 35 54 40 48 42" fill="currentColor" />
+                                     <path d="M48 30C48 30 52 27 55 30C55 30 54 35 49 33" fill="currentColor" />
+                                     <path d="M28 42H36L38 48H26L28 42Z" fill="currentColor" stroke="currentColor" strokeWidth="1.5" />
+                                     <circle cx="32" cy="38" r="2" fill="#eab308" />
+                                  </svg>
+                               </div>
+                               <span className="text-[#1e4480] text-[10px] font-black tracking-wider uppercase mt-3">
+                                  JARDINAGEM
+                               </span>
+                            </div>
+                         </div>
 
-                        <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
-                           <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                           <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">05</span>
-                        </div>
-                     </div>
+                         <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                            <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">05</span>
+                         </div>
+                      </div>
 
-                      {/* SLIDE 06 PRINT - SETORES ATENDIDOS */}
+{/* SLIDE 06 PRINT - SETORES ATENDIDOS */}
                       <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-[#1e4480] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-white">
                          {/* Stripes de fundo */}
                          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
