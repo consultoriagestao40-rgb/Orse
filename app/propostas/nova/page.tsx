@@ -2368,11 +2368,31 @@ function PropostaEditor() {
                         .print-slide-deck .text-4xl { font-size: 64px !important; line-height: 76px !important; }
                         .print-slide-deck .text-5xl { font-size: 78px !important; line-height: 90px !important; }
 
-                        .print-slide-deck .p-16 { padding: 4.5rem !important; }
-                        .print-slide-deck .p-8 { padding: 2.5rem !important; }
-                        .print-slide-deck .p-6 { padding: 2rem !important; }
-                        .print-slide-deck .gap-8 { gap: 2.5rem !important; }
-                        .print-slide-deck .gap-6 { gap: 2rem !important; }
+                        .print-slide-deck .p-16 { padding: 2.5rem 3.5rem !important; }
+                        .print-slide-deck .p-8 { padding: 1.5rem 2rem !important; }
+                        .print-slide-deck .p-6 { padding: 1rem 1.5rem !important; }
+                        .print-slide-deck .gap-8 { gap: 2rem !important; }
+                        .print-slide-deck .gap-6 { gap: 1.5rem !important; }
+
+                        /* REDIMENSIONAR E AMPLIAR CÍRCULOS DE ÍCONES NO PRINT */
+                        .print-slide-deck .w-10 { width: 4rem !important; height: 4rem !important; }
+                        .print-slide-deck .h-10 { height: 4rem !important; }
+                        .print-slide-deck .w-12 { width: 5rem !important; height: 5rem !important; }
+                        .print-slide-deck .h-12 { height: 5rem !important; }
+                        
+                        /* GARANTIR QUE OS SVGS CRESÇAM PROPORCIONALMENTE NO PRINT */
+                        .print-slide-deck svg:not(.brazil-map-svg) { 
+                           width: 2.2rem !important; 
+                           height: 2.2rem !important; 
+                           stroke-width: 2.5 !important;
+                        }
+
+                        /* AUMENTAR A GAP DO GRID DE KPIS E LARGURA DE DESCRIÇÕES NO PRINT */
+                        .print-slide-deck .gap-1.5 { gap: 2rem !important; }
+                        .print-slide-deck .max-w-\[65px\] { max-w: 130px !important; }
+                        .print-slide-deck .max-w-\[80px\] { max-w: 160px !important; }
+                        .print-slide-deck .max-w-\[90px\] { max-w: 170px !important; }
+                        .print-slide-deck .max-w-\[100px\] { max-w: 190px !important; }
 
                         /* GENEROSO ESPAÇAMENTO E BORDAS NAS TABELAS NO PRINT */
                         .print-slide-deck table th, 
@@ -2391,7 +2411,7 @@ function PropostaEditor() {
                            max-height: 210mm !important;
                            box-sizing: border-box !important;
                            margin: 0 !important;
-                           padding: 4rem !important;
+                           padding: 2.5rem 3.5rem !important;
                            position: relative !important;
                            overflow: hidden !important;
                            border: none !important;
