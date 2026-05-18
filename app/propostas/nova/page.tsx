@@ -3175,23 +3175,26 @@ function PropostaEditor() {
                                                   <thead>
                                                      <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
                                                         <th className="py-1">Função</th>
-                                                        <th className="py-1 text-center w-12">Qtd.</th>
-                                                        <th className="py-1 text-right w-24">Venda Total</th>
+                                                        <th className="py-1 text-center w-8">Qtd.</th>
+                                                        <th className="py-1 text-right w-16">Unit.</th>
+                                                        <th className="py-1 text-right w-20">Total</th>
                                                      </tr>
                                                   </thead>
                                                   <tbody>
                                                      {proposta.equipe.length === 0 ? (
                                                         <tr>
-                                                           <td colSpan={3} className="py-4 text-center text-slate-400 italic">Nenhum colaborador no Quadro de Equipe.</td>
+                                                           <td colSpan={4} className="py-4 text-center text-slate-400 italic">Nenhum colaborador no Quadro de Equipe.</td>
                                                         </tr>
                                                      ) : (
                                                         proposta.equipe.map((p: any, idx: number) => {
                                                            const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
                                                            const precoVendaItem = itemRes?.precoVenda || 0;
+                                                           const precoUnitario = p.quantidade > 0 ? precoVendaItem / p.quantidade : 0;
                                                            return (
                                                               <tr key={p.id} className="border-b border-slate-100 text-slate-700">
                                                                  <td className="py-1.5 font-bold">{p.nomeCargo}</td>
                                                                  <td className="py-1.5 text-center font-black text-slate-600">{p.quantidade}</td>
+                                                                 <td className="py-1.5 text-right text-slate-500 font-semibold">{fc(precoUnitario)}</td>
                                                                  <td className="py-1.5 text-right font-bold text-slate-800">{fc(precoVendaItem)}</td>
                                                                </tr>
                                                            );
@@ -3230,7 +3233,9 @@ function PropostaEditor() {
                                                      <td className="py-1.5 text-right font-black">{fc(applyCascata(proposta.insumos.descartaveis))}</td>
                                                   </tr>
                                                   <tr className="border-b border-slate-100 text-slate-700">
-                                                     <td className="py-1.5 font-bold">Serviços e Outros</td>
+                                                     <td className="py-1.5 font-bold">
+                                                        Serviços ${proposta.insumos.servicosDescricao ? `(${proposta.insumos.servicosDescricao})` : ''}
+                                                     </td>
                                                      <td className="py-1.5 text-right font-black">{fc(applyCascata(proposta.insumos.servicos))}</td>
                                                   </tr>
                                                </tbody>
@@ -4379,23 +4384,26 @@ function PropostaEditor() {
                                                 <thead>
                                                    <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
                                                       <th className="py-1">Função</th>
-                                                      <th className="py-1 text-center w-12">Qtd.</th>
-                                                      <th className="py-1 text-right w-24">Venda Total</th>
+                                                      <th className="py-1 text-center w-10">Qtd.</th>
+                                                      <th className="py-1 text-right w-20">Unit.</th>
+                                                      <th className="py-1 text-right w-24">Total</th>
                                                    </tr>
                                                 </thead>
                                                 <tbody>
                                                    {proposta.equipe.length === 0 ? (
                                                       <tr>
-                                                         <td colSpan={3} className="py-4 text-center text-slate-400 italic">Nenhum colaborador no Quadro de Equipe.</td>
+                                                         <td colSpan={4} className="py-4 text-center text-slate-400 italic">Nenhum colaborador no Quadro de Equipe.</td>
                                                       </tr>
                                                    ) : (
                                                       proposta.equipe.map((p: any, idx: number) => {
                                                          const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
                                                          const precoVendaItem = itemRes?.precoVenda || 0;
+                                                         const precoUnitario = p.quantidade > 0 ? precoVendaItem / p.quantidade : 0;
                                                          return (
                                                             <tr key={p.id} className="border-b border-slate-100 text-slate-700">
                                                                <td className="py-2 font-bold">{p.nomeCargo}</td>
                                                                <td className="py-2 text-center font-black text-slate-600">{p.quantidade}</td>
+                                                               <td className="py-2 text-right text-slate-500 font-semibold">{fc(precoUnitario)}</td>
                                                                <td className="py-2 text-right font-bold text-slate-800">{fc(precoVendaItem)}</td>
                                                             </tr>
                                                          );
@@ -4426,6 +4434,7 @@ function PropostaEditor() {
                                                    <td className="py-2 text-right font-black">{fc(applyCascata(proposta.insumos.materiais))}</td>
                                                 </tr>
                                                 <tr className="border-b border-slate-100 text-slate-700">
+                                                   <td className="py-2 font-bold">Máquinas e Equipamentos</td>
                                                    <td className="py-2 text-right font-black">{fc(applyCascata(proposta.insumos.maquinas))}</td>
                                                 </tr>
                                                 <tr className="border-b border-slate-100 text-slate-700">
@@ -4433,7 +4442,9 @@ function PropostaEditor() {
                                                    <td className="py-2 text-right font-black">{fc(applyCascata(proposta.insumos.descartaveis))}</td>
                                                 </tr>
                                                 <tr className="border-b border-slate-100 text-slate-700">
-                                                   <td className="py-2 font-bold">Serviços e Outros</td>
+                                                   <td className="py-2 font-bold">
+                                                      Serviços ${proposta.insumos.servicosDescricao ? `(${proposta.insumos.servicosDescricao})` : ''}
+                                                   </td>
                                                    <td className="py-2 text-right font-black">{fc(applyCascata(proposta.insumos.servicos))}</td>
                                                 </tr>
                                              </tbody>
