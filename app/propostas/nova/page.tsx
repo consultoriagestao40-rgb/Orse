@@ -2247,7 +2247,8 @@ function PropostaEditor() {
                                 { id: 5, label: 'Slide 05 (Serviços)' },
                                 { id: 6, label: 'Slide 06 (Setores)' },
                                 { id: 7, label: 'Slide 07 (Ferramentas)' },
-                                { id: 8, label: 'Slide 08 (Quadro Efetivo)' }
+                                { id: 8, label: 'Slide 08 (Quadro Efetivo)' },
+                                { id: 9, label: 'Slide 09 (Inclusos/Excluídos)' }
                              ].map((slide) => (
                                <button 
                                   key={slide.id}
@@ -3010,19 +3011,19 @@ function PropostaEditor() {
                                         <div className="flex items-start gap-2">
                                            <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
                                            <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                              Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;
+                                              {proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;'}
                                            </p>
                                         </div>
                                         <div className="flex items-start gap-2">
                                            <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
                                            <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                              Para reduções no efetivo prazo de 30 (trinta) dias;
+                                              {proposta.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;'}
                                            </p>
                                         </div>
                                         <div className="flex items-start gap-2">
                                            <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
                                            <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                              Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).
+                                              {proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'}
                                            </p>
                                         </div>
                                      </div>
@@ -3030,11 +3031,77 @@ function PropostaEditor() {
 
                                   <div className="flex justify-between items-end w-full text-slate-400 text-[10px] font-extrabold uppercase tracking-wider pr-28">
                                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
-                                     <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">04</span>
+                                     <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">08</span>
                                   </div>
                                </div>
                             </div>
                          )}
+
+                          {currentSlide === 9 && (
+                             <div className="w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-full text-slate-800 select-none">
+                                {/* Top Header */}
+                                <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
+                                   <div className="flex flex-col">
+                                      <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                      <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUÍDOS</h2>
+                                   </div>
+                                   <img 
+                                      src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
+                                      alt="JVS Facilities Logo" 
+                                      className="max-h-10 w-auto object-contain"
+                                   />
+                                </div>
+
+                                {/* Table Body */}
+                                <div className="my-auto w-full max-w-4xl mx-auto space-y-4">
+                                   <div className="w-full bg-white rounded-xl border border-slate-200/80 shadow-lg overflow-hidden">
+                                      <div className="overflow-y-auto max-h-[220px]">
+                                         <table className="w-full text-left border-collapse">
+                                            <thead>
+                                               <tr className="bg-[#1e4480] text-white text-[9px] font-black uppercase tracking-wider">
+                                                  <th className="px-4 py-2 w-48">Item</th>
+                                                  <th className="px-4 py-2">Descrição</th>
+                                                  <th className="px-4 py-2 text-center w-28">Incluso</th>
+                                               </tr>
+                                            </thead>
+                                            <tbody>
+                                               {(proposta.itensInclusosExcluidos || []).map((p: any, idx: number) => (
+                                                  <tr 
+                                                     key={p.id || idx} 
+                                                     className={`border-b border-slate-100 text-[9.5px] font-bold text-slate-700 hover:bg-slate-50/50 cursor-pointer transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}
+                                                     onClick={() => {
+                                                        const newList = proposta.itensInclusosExcluidos.map((item: any) =>
+                                                           item.id === p.id ? { ...item, incluso: !item.incluso } : item
+                                                        );
+                                                        setProposta({ ...proposta, itensInclusosExcluidos: newList });
+                                                     }}
+                                                  >
+                                                     <td className="px-4 py-2.5 font-black text-slate-800">{p.item}</td>
+                                                     <td className="px-4 py-2.5 font-semibold text-slate-600 leading-tight">{p.descricao}</td>
+                                                     <td className="px-4 py-2.5 text-center">
+                                                        {p.incluso ? (
+                                                           <svg className="w-5 h-5 text-emerald-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
+                                                           </svg>
+                                                        ) : (
+                                                           <div className="w-4 h-4 rounded border-2 border-slate-300 mx-auto bg-slate-50 hover:border-[#1e4480] transition-colors"></div>
+                                                        )}
+                                                     </td>
+                                                  </tr>
+                                               ))}
+                                            </tbody>
+                                         </table>
+                                      </div>
+                                   </div>
+                                </div>
+
+                                {/* Footer */}
+                                <div className="flex justify-between items-end w-full text-slate-400 text-[10px] font-extrabold uppercase tracking-wider pr-28">
+                                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                   <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">09</span>
+                                </div>
+                             </div>
+                          )}
 
 
                      </div>
@@ -3044,14 +3111,14 @@ function PropostaEditor() {
                       <div className="flex justify-center items-center gap-6">
                          <button
                             type="button"
-                            onClick={() => setCurrentSlide(currentSlide === 1 ? 8 : currentSlide - 1)}
+                            onClick={() => setCurrentSlide(currentSlide === 1 ? 9 : currentSlide - 1)}
                             className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold text-xs uppercase tracking-wider hover:bg-slate-50 hover:border-slate-300 active:scale-95 transition-all shadow-sm cursor-pointer z-30"
                          >
                             <ChevronLeft size={16} className="stroke-[3]" /> Voltar
                          </button>
                          
                          <div className="flex gap-2 bg-slate-100 p-1.5 rounded-full border border-slate-200">
-                            {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                                <button
                                   key={num}
                                   type="button"
@@ -3065,14 +3132,14 @@ function PropostaEditor() {
 
                          <button
                             type="button"
-                            onClick={() => setCurrentSlide(currentSlide === 8 ? 1 : currentSlide + 1)}
+                            onClick={() => setCurrentSlide(currentSlide === 9 ? 1 : currentSlide + 1)}
                             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1e4480] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#1e4480]/90 active:scale-95 transition-all shadow-md cursor-pointer z-30"
                          >
                             Avançar <ChevronRight size={16} className="stroke-[3]" />
                          </button>
                       </div>
                       <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                         Visualizando Slide {currentSlide} de 8
+                         Visualizando Slide {currentSlide} de 9
                       </div>
                    </div>
 
@@ -3163,6 +3230,149 @@ function PropostaEditor() {
                            </div>
                         </div>
                      </div>
+                      {/* SEÇÃO 3: DADOS DO QUADRO EFETIVO */}
+                      <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
+                         <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#16325e] rounded-t-2xl mb-6">
+                            <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
+                               📋 Personalizar Observações do Quadro Efetivo (Slide 08)
+                            </h3>
+                         </div>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-1 md:col-span-2">
+                               <label className="text-xs font-semibold text-slate-700">Subtítulo / Título da Tabela</label>
+                               <input 
+                                  type="text" 
+                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
+                                  value={proposta.cliente.quadroEfetivoSubtitulo || ''} 
+                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, quadroEfetivoSubtitulo: e.target.value}})} 
+                               />
+                            </div>
+                            <div className="space-y-1 md:col-span-2">
+                               <label className="text-xs font-semibold text-slate-700">Cláusula / Observação 1</label>
+                               <textarea 
+                                  rows={2}
+                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium resize-none" 
+                                  value={proposta.cliente.quadroEfetivoClausula1 || ''} 
+                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, quadroEfetivoClausula1: e.target.value}})} 
+                               />
+                            </div>
+                            <div className="space-y-1 md:col-span-2">
+                               <label className="text-xs font-semibold text-slate-700">Cláusula / Observação 2</label>
+                               <textarea 
+                                  rows={2}
+                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium resize-none" 
+                                  value={proposta.cliente.quadroEfetivoClausula2 || ''} 
+                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, quadroEfetivoClausula2: e.target.value}})} 
+                               />
+                            </div>
+                            <div className="space-y-1 md:col-span-2">
+                               <label className="text-xs font-semibold text-slate-700">Cláusula / Observação 3</label>
+                               <textarea 
+                                  rows={2}
+                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium resize-none" 
+                                  value={proposta.cliente.quadroEfetivoClausula3 || ''} 
+                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, quadroEfetivoClausula3: e.target.value}})} 
+                               />
+                            </div>
+                         </div>
+                      </div>
+
+                      {/* SEÇÃO 4: ITENS INCLUSOS E EXCLUSÍDOS */}
+                      <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
+                         <div className="bg-[#1B4D3E] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
+                            <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
+                               📋 Personalizar Tabela de Itens Inclusos e Excluídos (Slide 09)
+                            </h3>
+                         </div>
+                         <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                               <p className="text-slate-500 text-xs font-semibold">
+                                  Abaixo você pode editar os nomes, descrições e o status de inclusão de cada item exibido no Slide 09. Marque a caixa para definir o item como "Incluso" (Sim) ou desmarque para deixá-lo "Excluído" (Não).
+                               </p>
+                               <button
+                                  type="button"
+                                  className="px-3 py-1.5 bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold text-[10px] uppercase tracking-wider rounded-lg transition-all active:scale-95 shadow-sm cursor-pointer shrink-0"
+                                  onClick={() => {
+                                     const newId = String(Date.now());
+                                     const newItem = { id: newId, item: 'Novo Item', descricao: 'Fornecimento de...', incluso: true };
+                                     const newList = [...(proposta.itensInclusosExcluidos || []), newItem];
+                                     setProposta({ ...proposta, itensInclusosExcluidos: newList });
+                                  }}
+                               >
+                                  ➕ Novo Item
+                               </button>
+                            </div>
+                            <div className="overflow-x-auto">
+                               <table className="w-full text-left border-collapse">
+                                  <thead>
+                                     <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
+                                        <th className="px-4 py-3 w-48">Item</th>
+                                        <th className="px-4 py-3">Descrição</th>
+                                        <th className="px-4 py-3 text-center w-28">Incluso?</th>
+                                        <th className="px-4 py-3 text-center w-20">Ações</th>
+                                     </tr>
+                                  </thead>
+                                  <tbody>
+                                     {(proposta.itensInclusosExcluidos || []).map((p: any, idx: number) => (
+                                        <tr key={p.id || idx} className="border-b border-slate-100 hover:bg-slate-50/50">
+                                           <td className="px-4 py-3">
+                                              <input 
+                                                 type="text" 
+                                                 className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-800 outline-none focus:border-[#1B4D3E] font-bold"
+                                                 value={p.item || ''}
+                                                 onChange={(e) => {
+                                                    const newList = proposta.itensInclusosExcluidos.map((item: any) => 
+                                                       item.id === p.id ? { ...item, item: e.target.value } : item
+                                                    );
+                                                    setProposta({ ...proposta, itensInclusosExcluidos: newList });
+                                                 }}
+                                              />
+                                           </td>
+                                           <td className="px-4 py-3">
+                                              <input 
+                                                 type="text" 
+                                                 className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-700 outline-none focus:border-[#1B4D3E] font-medium"
+                                                 value={p.descricao || ''}
+                                                 onChange={(e) => {
+                                                    const newList = proposta.itensInclusosExcluidos.map((item: any) => 
+                                                       item.id === p.id ? { ...item, descricao: e.target.value } : item
+                                                    );
+                                                    setProposta({ ...proposta, itensInclusosExcluidos: newList });
+                                                 }}
+                                              />
+                                           </td>
+                                           <td className="px-4 py-3 text-center">
+                                              <input 
+                                                 type="checkbox" 
+                                                 className="w-4 h-4 text-[#1B4D3E] focus:ring-[#1B4D3E] border-slate-300 rounded cursor-pointer"
+                                                 checked={!!p.incluso}
+                                                 onChange={(e) => {
+                                                    const newList = proposta.itensInclusosExcluidos.map((item: any) => 
+                                                       item.id === p.id ? { ...item, incluso: e.target.checked } : item
+                                                    );
+                                                    setProposta({ ...proposta, itensInclusosExcluidos: newList });
+                                                 }}
+                                              />
+                                           </td>
+                                           <td className="px-4 py-3 text-center">
+                                              <button
+                                                 type="button"
+                                                 className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
+                                                 onClick={() => {
+                                                    const newList = proposta.itensInclusosExcluidos.filter((item: any) => item.id !== p.id);
+                                                    setProposta({ ...proposta, itensInclusosExcluidos: newList });
+                                                 }}
+                                              >
+                                                 <Trash size={16} />
+                                              </button>
+                                           </td>
+                                        </tr>
+                                     ))}
+                                  </tbody>
+                               </table>
+                            </div>
+                         </div>
+                      </div>
                       {/* SEÇÃO 3: DADOS DO QUADRO EFETIVO */}
                       <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                          <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#16325e] rounded-t-2xl mb-6">
@@ -3901,19 +4111,19 @@ function PropostaEditor() {
                                  <div className="flex items-start gap-2">
                                     <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
                                     <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                       Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;
+                                       {proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;'}
                                     </p>
                                  </div>
                                  <div className="flex items-start gap-2">
                                     <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
                                     <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                       Para reduções no efetivo prazo de 30 (trinta) dias;
+                                       {proposta.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;'}
                                     </p>
                                  </div>
                                  <div className="flex items-start gap-2">
                                     <span className="text-[#1e4480] text-xs font-black mt-0.5">•</span>
                                     <p className="text-slate-600 text-[8.5px] font-semibold leading-normal">
-                                       Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).
+                                       {proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'}
                                     </p>
                                  </div>
                               </div>
@@ -3925,6 +4135,59 @@ function PropostaEditor() {
                            </div>
                         </div>
                      </div>
+
+                      {/* SLIDE 09 PRINT - ITENS INCLUSOS E EXCLUSÍDOS */}
+                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800">
+                         <div className="relative z-10 flex flex-col h-full justify-between">
+                            <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
+                               <div className="flex flex-col">
+                                  <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                  <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUÍDOS</h2>
+                               </div>
+                               <img 
+                                  src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
+                                  alt="JVS Facilities Logo" 
+                                  className="max-h-10 w-auto object-contain"
+                               />
+                            </div>
+
+                            <div className="my-auto w-full max-w-4xl mx-auto space-y-4">
+                               <div className="w-full bg-white rounded-xl border border-slate-200/80 shadow-md overflow-hidden">
+                                  <table className="w-full text-left border-collapse">
+                                     <thead>
+                                        <tr className="bg-[#1e4480] text-white text-[9px] font-black uppercase tracking-wider">
+                                           <th className="px-4 py-2 w-48">Item</th>
+                                           <th className="px-4 py-2">Descrição</th>
+                                           <th className="px-4 py-2 text-center w-28">Incluso</th>
+                                        </tr>
+                                     </thead>
+                                     <tbody>
+                                        {(proposta.itensInclusosExcluidos || []).map((p: any, idx: number) => (
+                                           <tr key={p.id || idx} className={`border-b border-slate-100 text-[9.5px] font-bold text-slate-700 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
+                                              <td className="px-4 py-2 font-black text-slate-800">{p.item}</td>
+                                              <td className="px-4 py-2 font-semibold text-slate-600 leading-tight">{p.descricao}</td>
+                                              <td className="px-4 py-2 text-center">
+                                                 {p.incluso ? (
+                                                    <svg className="w-5 h-5 text-emerald-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
+                                                    </svg>
+                                                 ) : (
+                                                    <div className="w-4 h-4 rounded border-2 border-slate-300 mx-auto bg-slate-50"></div>
+                                                 )}
+                                              </td>
+                                           </tr>
+                                        ))}
+                                     </tbody>
+                                  </table>
+                               </div>
+                            </div>
+
+                            <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
+                               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                               <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">09</span>
+                            </div>
+                         </div>
+                      </div>
 
                   </div>
                </div>

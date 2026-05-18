@@ -2,6 +2,17 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+const defaultItensInclusosExcluidos = [
+  { id: '1', item: 'Mão de Obra e EPIs', descricao: "Fornecimento de Mão de obra, Uniforme e EPI's;", incluso: true },
+  { id: '2', item: 'Equipamentos e Químicos', descricao: 'Fornecimento de Equipamentos, Utensílios e Químicos;', incluso: false },
+  { id: '3', item: 'Controle de Pragas', descricao: 'Fornecimento de Controle de Pragas;', incluso: false },
+  { id: '4', item: 'Higiene e Descartáveis', descricao: 'Fornecimento de Materiais de Higiene Pessoal e Descartáveis;', incluso: false },
+  { id: '5', item: 'Tratamento de Piso', descricao: 'Fornecimento de Tratamento de Piso;', incluso: false },
+  { id: '6', item: 'Vidros e Fachadas', descricao: 'Limpeza de Fachadas, Vidros Externos e Coberturas;', incluso: false },
+  { id: '7', item: 'Serviços de Jardinagem', descricao: 'Serviços e Insumos de Jardins;', incluso: false },
+  { id: '8', item: 'Reserva Técnica', descricao: 'Reserva técnica para atendimento a datas especiais e/ou eventos. Caso necessário este item será cobrado como extra.', incluso: false }
+];
+
 
 export async function getCurrentUserRole() {
   try {
@@ -164,6 +175,7 @@ export async function saveProposta(data: any) {
           quadroEfetivoClausula1: cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
           quadroEfetivoClausula2: cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
           quadroEfetivoClausula3: cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
+          itensInclusosExcluidos: data.itensInclusosExcluidos || defaultItensInclusosExcluidos,
           insumos: {
             ...data.insumos,
             detalheMateriais: data.insumos.detalheMateriais || [],
@@ -341,7 +353,8 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
         quadroEfetivoSubtitulo: meta.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
         quadroEfetivoClausula1: meta.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
         quadroEfetivoClausula2: meta.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
-        quadroEfetivoClausula3: meta.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
+        quadroEfetivoClausula3: meta.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
+      itensInclusosExcluidos: meta.itensInclusosExcluidos || defaultItensInclusosExcluidos
       },
       insumos: {
         materiais: meta.insumos?.materiais || 0,
