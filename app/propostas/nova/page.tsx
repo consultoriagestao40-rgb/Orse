@@ -2308,9 +2308,9 @@ function PropostaEditor() {
                      }
                      @media print {
                         @page {
-                           size: A4 landscape !important;
-                           margin: 0 !important;
-                        }
+                            size: 297mm 167mm !important;
+                            margin: 0 !important;
+                         }
                         
                         * {
                            -webkit-print-color-adjust: exact !important;
@@ -2401,21 +2401,21 @@ function PropostaEditor() {
                         }
 
                         .print-slide {
-                           display: flex !important;
-                           page-break-after: always !important;
-                           break-after: page !important;
-                           page-break-inside: avoid !important;
-                           break-inside: avoid !important;
-                           width: 297mm !important;
-                           height: 210mm !important;
-                           max-height: 210mm !important;
-                           box-sizing: border-box !important;
-                           margin: 0 !important;
-                           padding: 2.5rem 3.5rem !important;
-                           position: relative !important;
-                           overflow: hidden !important;
-                           border: none !important;
-                        }
+                            display: flex !important;
+                            page-break-after: always !important;
+                            break-after: page !important;
+                            page-break-inside: avoid !important;
+                            break-inside: avoid !important;
+                            width: 297mm !important;
+                            height: 167mm !important;
+                            max-height: 167mm !important;
+                            box-sizing: border-box !important;
+                            margin: 0 !important;
+                            padding: 2.5rem 3.5rem !important;
+                            position: relative !important;
+                            overflow: hidden !important;
+                            border: none !important;
+                         }
 
                         /* FORÇAR RENDERIZAÇÃO DE CORES DE FUNDO EXPLICITAMENTE */
                         .print-slide.bg-[#1e4480], .print-slide[class*="bg-[#1e4480]"] {
@@ -2735,7 +2735,7 @@ function PropostaEditor() {
                                         <img 
                                            src="/hand-support.png" 
                                            alt="Mão de suporte"
-                                           className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[240px] h-auto pointer-events-none opacity-60 z-0" 
+                                           className="absolute right-0 bottom-0 w-[440px] h-auto pointer-events-none opacity-95 z-0 mix-blend-multiply"
                                         />
                                         <div className="absolute top-0 left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl">
                                            <Trophy size={36} className="text-white shrink-0" />
@@ -5047,7 +5047,7 @@ function PropostaEditor() {
                                   <img 
                                      src="/hand-support.png" 
                                      alt="Mão de suporte"
-                                     className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[240px] h-auto pointer-events-none opacity-60 z-0" 
+                                     className="absolute right-0 bottom-0 w-[440px] h-auto pointer-events-none opacity-95 z-0 mix-blend-multiply"
                                   />
                                   <div className="absolute top-0 left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl">
                                      <Trophy size={36} className="text-white shrink-0" />
