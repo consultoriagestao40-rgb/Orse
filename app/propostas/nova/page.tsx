@@ -2281,6 +2281,26 @@ function PropostaEditor() {
                <div className="space-y-8 animate-fadeIn">
                   {/* ESTILOS DE IMPRESSÃO EXCLUSIVOS PARA O SLIDE DECK */}
                   <style>{`
+                     /* Estilos exclusivos para o Modo Apresentação - Aumento de Fontes */
+                     .presentation-mode-active .text-[10px] { font-size: 14px !important; }
+                     .presentation-mode-active .text-[11px] { font-size: 15px !important; }
+                     .presentation-mode-active .text-[13px] { font-size: 18px !important; }
+                     .presentation-mode-active .text-[15px] { font-size: 20px !important; }
+                     .presentation-mode-active .text-xs { font-size: 16px !important; line-height: 22px !important; }
+                     .presentation-mode-active .text-sm { font-size: 18px !important; line-height: 26px !important; }
+                     .presentation-mode-active .text-base { font-size: 22px !important; line-height: 30px !important; }
+                     .presentation-mode-active .text-lg { font-size: 26px !important; line-height: 34px !important; }
+                     .presentation-mode-active .text-xl { font-size: 30px !important; line-height: 38px !important; }
+                     .presentation-mode-active .text-2xl { font-size: 36px !important; line-height: 44px !important; }
+                     .presentation-mode-active .text-3xl { font-size: 42px !important; line-height: 52px !important; }
+                     .presentation-mode-active .text-4xl { font-size: 54px !important; line-height: 64px !important; }
+                     .presentation-mode-active .text-5xl { font-size: 68px !important; line-height: 78px !important; }
+                     
+                     .presentation-mode-active .p-16 { padding: 4.5rem !important; }
+                     .presentation-mode-active .p-8 { padding: 2.5rem !important; }
+                     .presentation-mode-active .p-6 { padding: 2rem !important; }
+                     .presentation-mode-active .gap-8 { gap: 2.5rem !important; }
+
                      @media screen {
                         .print-slide-deck {
                            display: none !important;
@@ -2292,12 +2312,16 @@ function PropostaEditor() {
                            margin: 0 !important;
                         }
                         
+                        * {
+                           -webkit-print-color-adjust: exact !important;
+                           print-color-adjust: exact !important;
+                           color-adjust: exact !important;
+                        }
+
                         body {
                            margin: 0 !important;
                            padding: 0 !important;
                            background: white !important;
-                           -webkit-print-color-adjust: exact !important;
-                           print-color-adjust: exact !important;
                         }
 
                         body * {
@@ -2315,7 +2339,7 @@ function PropostaEditor() {
                            top: 0 !important;
                            width: 297mm !important;
                            height: auto !important;
-                           background: white !important;
+                           background: transparent !important;
                            margin: 0 !important;
                            padding: 0 !important;
                            border: none !important;
@@ -2331,7 +2355,7 @@ function PropostaEditor() {
                            margin: 0 !important;
                            padding: 4rem !important;
                            position: relative !important;
-                           background: white !important;
+                           background: transparent !important;
                            overflow: hidden !important;
                            border: none !important;
                         }
@@ -2394,7 +2418,7 @@ function PropostaEditor() {
 
                   {/* CONTAINER DOS SLIDES PARA VISUALIZAÇÃO EM TELA */}
                   <div className={presentationMode 
-                     ? "fixed inset-0 bg-slate-950/98 z-[99999] flex flex-col justify-center items-center select-none p-6" 
+                     ? "fixed inset-0 bg-slate-950/98 z-[99999] flex flex-col justify-center items-center select-none p-6 presentation-mode-active" 
                      : "w-full bg-slate-900/5 rounded-3xl p-8 border border-slate-200/40 flex justify-center items-center overflow-x-auto"
                   }>
                      <div className={presentationMode
@@ -4335,7 +4359,440 @@ function PropostaEditor() {
                      )}
                   </div>
 
-                  <div className="print-slide-deck">
+                  
+               </div>
+            )}
+
+
+        </div>
+      
+         
+         {/* ========================================================================= */}
+         {/* ESTILOS DE ANIMAÇÃO PARA OS MODAIS ULTRA PREMIUM                          */}
+         {/* ========================================================================= */}
+         <style>{`
+            @keyframes modalFadeIn {
+               from { opacity: 0; transform: scale(0.97) translateY(8px); }
+               to { opacity: 1; transform: scale(1) translateY(0); }
+            }
+            .animate-modal-in {
+               animation: modalFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+         `}</style>
+
+         {/* ========================================================================= */}
+         {/* MODAL 1: PARAMETROS & JORNADA DO POSTO                                    */}
+         {/* ========================================================================= */}
+         {(() => {
+            if (!activeAdicionaisPostoId) return null;
+            const p = proposta.equipe.find((x: any) => x.id === activeAdicionaisPostoId);
+            if (!p) return null;
+            return (
+               <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 transition-all duration-300">
+                  <div className="bg-white/95 rounded-2xl border border-slate-100 shadow-[0_25px_60px_-15px_rgba(27,77,62,0.18)] max-w-2xl w-full flex flex-col max-h-[90vh] overflow-hidden animate-modal-in">
+                     {/* Cabeçalho */}
+                     <div className="bg-gradient-to-r from-[#1B4D3E] via-[#215E4C] to-[#12362b] text-white p-5 flex items-center justify-between border-b-2 border-emerald-500/20">
+                        <div className="flex items-center gap-3">
+                           <div className="bg-white/10 p-2 rounded-xl border border-white/10">
+                              <span className="text-lg">⚙️</span>
+                           </div>
+                           <div>
+                              <h3 className="font-extrabold text-xs uppercase tracking-widest text-emerald-100/90">Parâmetros & Jornada</h3>
+                              <div className="mt-1 flex items-center gap-2">
+                                 <span className="bg-[#D4AF37]/15 text-[#e5c158] border border-[#D4AF37]/35 text-[9px] px-2 py-0.5 rounded-full font-black tracking-wider uppercase">
+                                    Posto: {p.nomeCargo}
+                                 </span>
+                              </div>
+                           </div>
+                        </div>
+                        <button 
+                           onClick={() => setActiveAdicionaisPostoId(null)}
+                           className="text-white/80 hover:text-white transition-all p-2 rounded-xl hover:bg-white/10 active:scale-95"
+                        >
+                           <X size={18} />
+                        </button>
+                     </div>
+
+                     {/* Conteúdo */}
+                     <div className="p-6 overflow-y-auto space-y-6">
+                        {/* Grid 1: Adicionais */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                           <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Periculosidade</label>
+                              <select 
+                                 className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
+                                 value={p.parametrosPosto?.periculosidade ? 'SIM' : 'NAO'} 
+                                 onChange={(e) => {
+                                    const param = {...p.parametrosPosto, periculosidade: e.target.value === 'SIM'};
+                                    updatePosto(p.id, 'parametrosPosto', param);
+                                 }}
+                              >
+                                 <option value="NAO">Não</option>
+                                 <option value="SIM">Sim (30%)</option>
+                              </select>
+                           </div>
+
+                           <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Insalubridade (%)</label>
+                              <select 
+                                 className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
+                                 value={p.parametrosPosto?.insalubridadePercent || 0} 
+                                 onChange={(e) => {
+                                    const param = {...p.parametrosPosto, insalubridadePercent: Number(e.target.value)};
+                                    updatePosto(p.id, 'parametrosPosto', param);
+                                 }}
+                              >
+                                 <option value={0}>0%</option>
+                                 <option value={10}>10% (Mínimo)</option>
+                                 <option value={20}>20% (Médio)</option>
+                                 <option value={40}>40% (Máximo)</option>
+                              </select>
+                           </div>
+
+                           <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Horas Noturnas (Mês)</label>
+                              <input 
+                                 type="number" 
+                                 className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
+                                 value={p.parametrosPosto?.adicionalNoturnoHoras || 0} 
+                                 onChange={(e) => {
+                                    const param = {...p.parametrosPosto, adicionalNoturnoHoras: Number(e.target.value)};
+                                    updatePosto(p.id, 'parametrosPosto', param);
+                                 }} 
+                              />
+                           </div>
+
+                           <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Intrajornada (Horas/Mês)</label>
+                              <input 
+                                 type="number" 
+                                 className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
+                                 value={p.parametrosPosto?.intrajornadaHoras || 0} 
+                                 onChange={(e) => {
+                                    const param = {...p.parametrosPosto, intrajornadaHoras: Number(e.target.value)};
+                                    updatePosto(p.id, 'parametrosPosto', param);
+                                 }} 
+                              />
+                           </div>
+
+                           <div className="space-y-1.5 md:col-span-2">
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">DSR s/ Adicionais (%)</label>
+                              <input 
+                                 type="number" 
+                                 step="0.01"
+                                 className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
+                                 value={p.parametrosPosto?.dsrPercent || 0} 
+                                 onChange={(e) => {
+                                    const param = {...p.parametrosPosto, dsrPercent: Number(e.target.value)};
+                                    updatePosto(p.id, 'parametrosPosto', param);
+                                 }} 
+                              />
+                           </div>
+                        </div>
+
+                        {/* Seção de Jornada */}
+                        <div className="bg-[#F8FAFC]/80 border border-slate-100 rounded-2xl p-5 shadow-xs space-y-4 relative overflow-hidden">
+                           <h4 className="text-xs font-extrabold text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2 border-b border-slate-200/60 pb-2.5">
+                              <span>📅</span> Horários & Dias Trabalhados
+                           </h4>
+                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="space-y-1.5">
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Horário de Início</label>
+                                 <input 
+                                    type="time" 
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] transition-all" 
+                                    value={p.parametrosPosto?.horarioInicio || '08:00'} 
+                                    onChange={(e) => {
+                                       const hInicio = e.target.value;
+                                       const hFim = p.parametrosPosto?.horarioFim || '17:00';
+                                       const dias = p.parametrosPosto?.diasTrabalhadosMes || 22;
+                                       const noturnoAuto = calculateAutoNoturno(hInicio, hFim, dias);
+                                       const param = {...p.parametrosPosto, horarioInicio: hInicio, adicionalNoturnoHoras: noturnoAuto};
+                                       updatePosto(p.id, 'parametrosPosto', param);
+                                    }} 
+                                 />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Horário de Saída</label>
+                                 <input 
+                                    type="time" 
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] transition-all" 
+                                    value={p.parametrosPosto?.horarioFim || '17:00'} 
+                                    onChange={(e) => {
+                                       const hFim = e.target.value;
+                                       const hInicio = p.parametrosPosto?.horarioInicio || '08:00';
+                                       const dias = p.parametrosPosto?.diasTrabalhadosMes || 22;
+                                       const noturnoAuto = calculateAutoNoturno(hInicio, hFim, dias);
+                                       const param = {...p.parametrosPosto, horarioFim: hFim, adicionalNoturnoHoras: noturnoAuto};
+                                       updatePosto(p.id, 'parametrosPosto', param);
+                                    }} 
+                                 />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Dias Trab. / Mês</label>
+                                 <input 
+                                    type="number" 
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] transition-all" 
+                                    value={p.parametrosPosto?.diasTrabalhadosMes || 22} 
+                                    onChange={(e) => {
+                                       const dias = Number(e.target.value);
+                                       const hInicio = p.parametrosPosto?.horarioInicio || '08:00';
+                                       const hFim = p.parametrosPosto?.horarioFim || '17:00';
+                                       const noturnoAuto = calculateAutoNoturno(hInicio, hFim, dias);
+                                       const param = {...p.parametrosPosto, diasTrabalhadosMes: dias, adicionalNoturnoHoras: noturnoAuto};
+                                       updatePosto(p.id, 'parametrosPosto', param);
+                                    }} 
+                                 />
+                              </div>
+                           </div>
+
+                           <div className="bg-emerald-50/50 text-[#1B4D3E] p-4 rounded-xl text-xs font-bold border border-emerald-100/50 flex items-center justify-between shadow-xs">
+                              <span className="flex items-center gap-1.5 text-emerald-950 font-bold">⏰ Cálculo automático de adicionais:</span>
+                              <span className="bg-[#1B4D3E] text-white px-3 py-1 rounded-lg font-black text-xs shadow-sm">
+                                 {p.parametrosPosto?.adicionalNoturnoHoras || 0}h / mês
+                              </span>
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* Rodapé */}
+                     <div className="bg-[#F8FAFC] px-6 py-4.5 flex justify-end border-t border-slate-100/60 rounded-b-2xl">
+                        <button 
+                           onClick={() => setActiveAdicionaisPostoId(null)}
+                           className="bg-gradient-to-r from-[#1B4D3E] to-[#12362b] hover:from-[#153a2f] hover:to-[#0f2a22] text-white font-extrabold px-6 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-[0_4px_14px_rgba(27,77,62,0.25)] hover:shadow-[0_6px_20px_rgba(27,77,62,0.35)] active:scale-[0.98] cursor-pointer"
+                        >
+                           <Save size={14} /> Fechar & Salvar
+                        </button>
+                     </div>
+                  </div>
+               </div>
+            );
+         })()}
+
+         {/* ========================================================================= */}
+         {/* MODAL 2: EPIS & UNIFORMES ADICIONAIS DO POSTO                              */}
+         {/* ========================================================================= */}
+         {(() => {
+            if (!activeEpisPostoId) return null;
+            const p = proposta.equipe.find((x: any) => x.id === activeEpisPostoId);
+            if (!p) return null;
+            return (
+               <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 transition-all duration-300">
+                  <div className="bg-white/95 rounded-2xl border border-slate-100 shadow-[0_25px_60px_-15px_rgba(27,77,62,0.18)] max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden animate-modal-in">
+                     {/* Cabeçalho */}
+                     <div className="bg-gradient-to-r from-[#1B4D3E] via-[#215E4C] to-[#12362b] text-white p-5 flex items-center justify-between border-b-2 border-emerald-500/20">
+                        <div className="flex items-center gap-3">
+                           <div className="bg-white/10 p-2 rounded-xl border border-white/10">
+                              <span className="text-lg">🛡️</span>
+                           </div>
+                           <div>
+                              <h3 className="font-extrabold text-xs uppercase tracking-widest text-emerald-100/90">EPIs & Uniformes Especiais</h3>
+                              <div className="mt-1 flex items-center gap-2">
+                                 <span className="bg-[#D4AF37]/15 text-[#e5c158] border border-[#D4AF37]/35 text-[9px] px-2 py-0.5 rounded-full font-black tracking-wider uppercase">
+                                    Posto: {p.nomeCargo}
+                                 </span>
+                              </div>
+                           </div>
+                        </div>
+                        <button 
+                           onClick={() => setActiveEpisPostoId(null)}
+                           className="text-white/80 hover:text-white transition-all p-2 rounded-xl hover:bg-white/10 active:scale-95"
+                        >
+                           <X size={18} />
+                        </button>
+                     </div>
+
+                     {/* Conteúdo */}
+                     <div className="p-6 overflow-y-auto space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                           <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+                              Cadastre itens adicionais específicos para este posto
+                           </p>
+                           <button 
+                              onClick={() => {
+                                 const epis = p.parametrosPosto?.episAdicionais || [];
+                                 const param = {...p.parametrosPosto, episAdicionais: [...epis, { id: Math.random().toString(), descricao: '', quantidade: 1, precoUnitario: 0, vidaUtil: 6 }]};
+                                 updatePosto(p.id, 'parametrosPosto', param);
+                              }}
+                              className="bg-emerald-50 hover:bg-emerald-100/80 text-[#1B4D3E] px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all border border-emerald-100/50 shadow-xs hover:shadow-sm"
+                           >
+                              <Plus size={14} /> Inserir Item
+                           </button>
+                        </div>
+
+                        {(p.parametrosPosto?.episAdicionais || []).length > 0 ? (
+                           <div className="overflow-hidden border border-slate-100 rounded-2xl shadow-xs bg-white">
+                              <table className="w-full text-xs">
+                                 <thead className="bg-[#F8FAFC] text-slate-400 uppercase text-[9px] tracking-wider font-extrabold border-b border-slate-100">
+                                    <tr>
+                                       <th className="px-5 py-3 text-left">Descrição do Item</th>
+                                       <th className="px-5 py-3 text-center w-24">Qtd</th>
+                                       <th className="px-5 py-3 text-center w-36">Preço Unitário</th>
+                                       <th className="px-5 py-3 text-center w-32">Vida Útil (meses)</th>
+                                       <th className="px-5 py-3 text-right w-36">Custo / Mês</th>
+                                       <th className="px-5 py-3 text-center w-16"></th>
+                                    </tr>
+                                 </thead>
+                                 <tbody className="divide-y divide-slate-100">
+                                    {p.parametrosPosto.episAdicionais.map((epi: any, epiIdx: number) => (
+                                       <tr key={epi.id || epiIdx} className="hover:bg-[#F8FAFC]/40 transition-colors">
+                                          <td className="px-5 py-3">
+                                             <input 
+                                                type="text" 
+                                                className="w-full bg-slate-50/40 border border-slate-200/60 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:bg-white focus:border-[#1B4D3E] focus:ring-2 focus:ring-emerald-500/5 outline-none transition-all" 
+                                                placeholder="Ex: Roupa Térmica p/ Câmara Fria"
+                                                value={epi.descricao}
+                                                onChange={(e) => {
+                                                   const newEpis = [...p.parametrosPosto.episAdicionais];
+                                                   newEpis[epiIdx].descricao = e.target.value;
+                                                   updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
+                                                }}
+                                             />
+                                          </td>
+                                          <td className="px-5 py-3">
+                                             <input 
+                                                type="number" 
+                                                className="w-full bg-slate-50/40 border border-slate-200/60 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 text-center focus:bg-white focus:border-[#1B4D3E] outline-none transition-all" 
+                                                value={epi.quantidade}
+                                                onChange={(e) => {
+                                                   const newEpis = [...p.parametrosPosto.episAdicionais];
+                                                   newEpis[epiIdx].quantidade = Number(e.target.value);
+                                                   updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
+                                                }}
+                                             />
+                                          </td>
+                                          <td className="px-5 py-3">
+                                             <div className="relative">
+                                                <span className="absolute left-2.5 top-2 text-slate-400 text-xs">R$</span>
+                                                <input 
+                                                   type="number" 
+                                                   step="0.01"
+                                                   className="w-full bg-slate-50/40 border border-slate-200/60 rounded-lg pl-8 pr-2.5 py-1.5 text-xs font-bold text-slate-800 text-center focus:bg-white focus:border-[#1B4D3E] outline-none transition-all" 
+                                                   value={epi.precoUnitario}
+                                                   onChange={(e) => {
+                                                      const newEpis = [...p.parametrosPosto.episAdicionais];
+                                                      newEpis[epiIdx].precoUnitario = Number(e.target.value);
+                                                      updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
+                                                   }}
+                                                />
+                                             </div>
+                                          </td>
+                                          <td className="px-5 py-3">
+                                             <input 
+                                                type="number" 
+                                                className="w-full bg-slate-50/40 border border-slate-200/60 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 text-center focus:bg-white focus:border-[#1B4D3E] outline-none transition-all" 
+                                                value={epi.vidaUtil}
+                                                onChange={(e) => {
+                                                   const newEpis = [...p.parametrosPosto.episAdicionais];
+                                                   newEpis[epiIdx].vidaUtil = Number(e.target.value);
+                                                   updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
+                                                }}
+                                             />
+                                          </td>
+                                          <td className="px-5 py-3 text-right font-black text-[#1B4D3E] text-xs">
+                                             R$ {((epi.precoUnitario * epi.quantidade) / (epi.vidaUtil || 1)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                          </td>
+                                          <td className="px-5 py-3 text-center">
+                                             <button 
+                                                onClick={() => {
+                                                   const newEpis = p.parametrosPosto.episAdicionais.filter((_: any, i: number) => i !== epiIdx);
+                                                   updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
+                                                }}
+                                                className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                                                title="Excluir EPI"
+                                             >
+                                                <Trash2 size={15} />
+                                             </button>
+                                          </td>
+                                       </tr>
+                                    ))}
+                                 </tbody>
+                              </table>
+                           </div>
+                        ) : (
+                           <div className="bg-[#F8FAFC] border border-dashed border-slate-200 rounded-2xl py-12 text-center">
+                              <p className="text-sm text-slate-400 font-medium italic">Nenhum EPI ou uniforme especial adicionado a este posto.</p>
+                              <p className="text-xs text-slate-300 mt-1.5">Clique em "Inserir Item" no canto superior direito para começar.</p>
+                           </div>
+                        )}
+                     </div>
+
+                     {/* Rodapé */}
+                     <div className="bg-[#F8FAFC] px-6 py-4.5 flex justify-between items-center border-t border-slate-100/60 rounded-b-2xl">
+                        <div>
+                           <span className="text-[10px] font-bold text-slate-400 uppercase block tracking-wider">Custo Total Especial</span>
+                           <span className="text-base font-black text-[#1B4D3E]">
+                              R$ {((p.parametrosPosto?.episAdicionais || []).reduce((acc: number, item: any) => acc + ((item.precoUnitario * item.quantidade) / (item.vidaUtil || 1)), 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">/ mês</span>
+                           </span>
+                        </div>
+                        <button 
+                           onClick={() => setActiveEpisPostoId(null)}
+                           className="bg-gradient-to-r from-[#1B4D3E] to-[#12362b] hover:from-[#153a2f] hover:to-[#0f2a22] text-white font-extrabold px-6 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-[0_4px_14px_rgba(27,77,62,0.25)] hover:shadow-[0_6px_20px_rgba(27,77,62,0.35)] active:scale-[0.98] cursor-pointer"
+                        >
+                           <Save size={14} /> Fechar & Salvar
+                        </button>
+                     </div>
+                  </div>
+               </div>
+            );
+         })()}
+
+      {/* MODAL OBRIGATÓRIO DE CHANGELOG PARA REVISÕES */}
+      {showChangelogModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 transform scale-100 transition-all duration-300">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-amber-50 border border-amber-200 rounded-full flex items-center justify-center text-amber-600 mb-4 shadow-sm">
+                <History size={24} />
+              </div>
+              <h2 className="text-xl font-black text-slate-800 tracking-tight">Descrever Alterações da Versão</h2>
+              <p className="text-xs text-slate-400 mt-2 font-medium">
+                Como você está salvando a <strong className="text-amber-600 font-extrabold">Revisão R${String(proposta.versao + 1).padStart(2, '0')}</strong>, descreva de forma clara e obrigatória o que foi alterado nesta versão para fins de histórico.
+              </p>
+            </div>
+            
+            <div className="mt-6">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Resumo das Mudanças</label>
+              <textarea 
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#1B4D3E] focus:border-[#1B4D3E] focus:bg-white transition-all resize-none h-32"
+                placeholder="Ex: Ajuste na taxa tributária da DRE, aumento do percentual de férias dos colaboradores, correção de insumos de limpeza..."
+                value={changelogText}
+                onChange={(e) => setChangelogText(e.target.value)}
+              />
+              <div className="flex justify-between items-center mt-2 px-1">
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">Mínimo 5 caracteres</span>
+                <span className={`text-[10px] font-extrabold uppercase ${changelogText.trim().length >= 5 ? 'text-emerald-500' : 'text-amber-500'}`}>
+                  {changelogText.trim().length} caracteres
+                </span>
+              </div>
+            </div>
+            
+            <div className="mt-8 flex gap-3">
+              <button 
+                onClick={() => {
+                  setShowChangelogModal(false);
+                  setChangelogText('');
+                }}
+                disabled={saving}
+                className="flex-1 py-3.5 bg-slate-50 hover:bg-slate-100 text-slate-500 font-extrabold rounded-2xl text-xs uppercase tracking-wider transition-colors border border-slate-200/60 active:scale-[0.98] cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => executeSave(changelogText.trim())}
+                disabled={saving || changelogText.trim().length < 5}
+                className="flex-1 py-3.5 bg-[#1B4D3E] hover:bg-[#13382d] disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-extrabold rounded-2xl text-xs uppercase tracking-wider transition-colors active:scale-[0.98] cursor-pointer shadow-[0_4px_14px_rgba(27,77,62,0.2)]"
+              >
+                {saving ? 'Salvando...' : 'Salvar Versão'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+<div className="print-slide-deck">
                      {/* SLIDE 01 PRINT - CAPA COMERCIAL */}
                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-slate-950 p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
                         {/* Imagem de Fundo */}
@@ -5444,438 +5901,6 @@ function PropostaEditor() {
                       </div>
 
                   </div>
-               </div>
-            )}
-
-
-        </div>
-      
-         
-         {/* ========================================================================= */}
-         {/* ESTILOS DE ANIMAÇÃO PARA OS MODAIS ULTRA PREMIUM                          */}
-         {/* ========================================================================= */}
-         <style>{`
-            @keyframes modalFadeIn {
-               from { opacity: 0; transform: scale(0.97) translateY(8px); }
-               to { opacity: 1; transform: scale(1) translateY(0); }
-            }
-            .animate-modal-in {
-               animation: modalFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            }
-         `}</style>
-
-         {/* ========================================================================= */}
-         {/* MODAL 1: PARAMETROS & JORNADA DO POSTO                                    */}
-         {/* ========================================================================= */}
-         {(() => {
-            if (!activeAdicionaisPostoId) return null;
-            const p = proposta.equipe.find((x: any) => x.id === activeAdicionaisPostoId);
-            if (!p) return null;
-            return (
-               <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 transition-all duration-300">
-                  <div className="bg-white/95 rounded-2xl border border-slate-100 shadow-[0_25px_60px_-15px_rgba(27,77,62,0.18)] max-w-2xl w-full flex flex-col max-h-[90vh] overflow-hidden animate-modal-in">
-                     {/* Cabeçalho */}
-                     <div className="bg-gradient-to-r from-[#1B4D3E] via-[#215E4C] to-[#12362b] text-white p-5 flex items-center justify-between border-b-2 border-emerald-500/20">
-                        <div className="flex items-center gap-3">
-                           <div className="bg-white/10 p-2 rounded-xl border border-white/10">
-                              <span className="text-lg">⚙️</span>
-                           </div>
-                           <div>
-                              <h3 className="font-extrabold text-xs uppercase tracking-widest text-emerald-100/90">Parâmetros & Jornada</h3>
-                              <div className="mt-1 flex items-center gap-2">
-                                 <span className="bg-[#D4AF37]/15 text-[#e5c158] border border-[#D4AF37]/35 text-[9px] px-2 py-0.5 rounded-full font-black tracking-wider uppercase">
-                                    Posto: {p.nomeCargo}
-                                 </span>
-                              </div>
-                           </div>
-                        </div>
-                        <button 
-                           onClick={() => setActiveAdicionaisPostoId(null)}
-                           className="text-white/80 hover:text-white transition-all p-2 rounded-xl hover:bg-white/10 active:scale-95"
-                        >
-                           <X size={18} />
-                        </button>
-                     </div>
-
-                     {/* Conteúdo */}
-                     <div className="p-6 overflow-y-auto space-y-6">
-                        {/* Grid 1: Adicionais */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                           <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Periculosidade</label>
-                              <select 
-                                 className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
-                                 value={p.parametrosPosto?.periculosidade ? 'SIM' : 'NAO'} 
-                                 onChange={(e) => {
-                                    const param = {...p.parametrosPosto, periculosidade: e.target.value === 'SIM'};
-                                    updatePosto(p.id, 'parametrosPosto', param);
-                                 }}
-                              >
-                                 <option value="NAO">Não</option>
-                                 <option value="SIM">Sim (30%)</option>
-                              </select>
-                           </div>
-
-                           <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Insalubridade (%)</label>
-                              <select 
-                                 className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
-                                 value={p.parametrosPosto?.insalubridadePercent || 0} 
-                                 onChange={(e) => {
-                                    const param = {...p.parametrosPosto, insalubridadePercent: Number(e.target.value)};
-                                    updatePosto(p.id, 'parametrosPosto', param);
-                                 }}
-                              >
-                                 <option value={0}>0%</option>
-                                 <option value={10}>10% (Mínimo)</option>
-                                 <option value={20}>20% (Médio)</option>
-                                 <option value={40}>40% (Máximo)</option>
-                              </select>
-                           </div>
-
-                           <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Horas Noturnas (Mês)</label>
-                              <input 
-                                 type="number" 
-                                 className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
-                                 value={p.parametrosPosto?.adicionalNoturnoHoras || 0} 
-                                 onChange={(e) => {
-                                    const param = {...p.parametrosPosto, adicionalNoturnoHoras: Number(e.target.value)};
-                                    updatePosto(p.id, 'parametrosPosto', param);
-                                 }} 
-                              />
-                           </div>
-
-                           <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Intrajornada (Horas/Mês)</label>
-                              <input 
-                                 type="number" 
-                                 className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
-                                 value={p.parametrosPosto?.intrajornadaHoras || 0} 
-                                 onChange={(e) => {
-                                    const param = {...p.parametrosPosto, intrajornadaHoras: Number(e.target.value)};
-                                    updatePosto(p.id, 'parametrosPosto', param);
-                                 }} 
-                              />
-                           </div>
-
-                           <div className="space-y-1.5 md:col-span-2">
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">DSR s/ Adicionais (%)</label>
-                              <input 
-                                 type="number" 
-                                 step="0.01"
-                                 className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
-                                 value={p.parametrosPosto?.dsrPercent || 0} 
-                                 onChange={(e) => {
-                                    const param = {...p.parametrosPosto, dsrPercent: Number(e.target.value)};
-                                    updatePosto(p.id, 'parametrosPosto', param);
-                                 }} 
-                              />
-                           </div>
-                        </div>
-
-                        {/* Seção de Jornada */}
-                        <div className="bg-[#F8FAFC]/80 border border-slate-100 rounded-2xl p-5 shadow-xs space-y-4 relative overflow-hidden">
-                           <h4 className="text-xs font-extrabold text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2 border-b border-slate-200/60 pb-2.5">
-                              <span>📅</span> Horários & Dias Trabalhados
-                           </h4>
-                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="space-y-1.5">
-                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Horário de Início</label>
-                                 <input 
-                                    type="time" 
-                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] transition-all" 
-                                    value={p.parametrosPosto?.horarioInicio || '08:00'} 
-                                    onChange={(e) => {
-                                       const hInicio = e.target.value;
-                                       const hFim = p.parametrosPosto?.horarioFim || '17:00';
-                                       const dias = p.parametrosPosto?.diasTrabalhadosMes || 22;
-                                       const noturnoAuto = calculateAutoNoturno(hInicio, hFim, dias);
-                                       const param = {...p.parametrosPosto, horarioInicio: hInicio, adicionalNoturnoHoras: noturnoAuto};
-                                       updatePosto(p.id, 'parametrosPosto', param);
-                                    }} 
-                                 />
-                              </div>
-
-                              <div className="space-y-1.5">
-                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Horário de Saída</label>
-                                 <input 
-                                    type="time" 
-                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] transition-all" 
-                                    value={p.parametrosPosto?.horarioFim || '17:00'} 
-                                    onChange={(e) => {
-                                       const hFim = e.target.value;
-                                       const hInicio = p.parametrosPosto?.horarioInicio || '08:00';
-                                       const dias = p.parametrosPosto?.diasTrabalhadosMes || 22;
-                                       const noturnoAuto = calculateAutoNoturno(hInicio, hFim, dias);
-                                       const param = {...p.parametrosPosto, horarioFim: hFim, adicionalNoturnoHoras: noturnoAuto};
-                                       updatePosto(p.id, 'parametrosPosto', param);
-                                    }} 
-                                 />
-                              </div>
-
-                              <div className="space-y-1.5">
-                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Dias Trab. / Mês</label>
-                                 <input 
-                                    type="number" 
-                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] transition-all" 
-                                    value={p.parametrosPosto?.diasTrabalhadosMes || 22} 
-                                    onChange={(e) => {
-                                       const dias = Number(e.target.value);
-                                       const hInicio = p.parametrosPosto?.horarioInicio || '08:00';
-                                       const hFim = p.parametrosPosto?.horarioFim || '17:00';
-                                       const noturnoAuto = calculateAutoNoturno(hInicio, hFim, dias);
-                                       const param = {...p.parametrosPosto, diasTrabalhadosMes: dias, adicionalNoturnoHoras: noturnoAuto};
-                                       updatePosto(p.id, 'parametrosPosto', param);
-                                    }} 
-                                 />
-                              </div>
-                           </div>
-
-                           <div className="bg-emerald-50/50 text-[#1B4D3E] p-4 rounded-xl text-xs font-bold border border-emerald-100/50 flex items-center justify-between shadow-xs">
-                              <span className="flex items-center gap-1.5 text-emerald-950 font-bold">⏰ Cálculo automático de adicionais:</span>
-                              <span className="bg-[#1B4D3E] text-white px-3 py-1 rounded-lg font-black text-xs shadow-sm">
-                                 {p.parametrosPosto?.adicionalNoturnoHoras || 0}h / mês
-                              </span>
-                           </div>
-                        </div>
-                     </div>
-
-                     {/* Rodapé */}
-                     <div className="bg-[#F8FAFC] px-6 py-4.5 flex justify-end border-t border-slate-100/60 rounded-b-2xl">
-                        <button 
-                           onClick={() => setActiveAdicionaisPostoId(null)}
-                           className="bg-gradient-to-r from-[#1B4D3E] to-[#12362b] hover:from-[#153a2f] hover:to-[#0f2a22] text-white font-extrabold px-6 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-[0_4px_14px_rgba(27,77,62,0.25)] hover:shadow-[0_6px_20px_rgba(27,77,62,0.35)] active:scale-[0.98] cursor-pointer"
-                        >
-                           <Save size={14} /> Fechar & Salvar
-                        </button>
-                     </div>
-                  </div>
-               </div>
-            );
-         })()}
-
-         {/* ========================================================================= */}
-         {/* MODAL 2: EPIS & UNIFORMES ADICIONAIS DO POSTO                              */}
-         {/* ========================================================================= */}
-         {(() => {
-            if (!activeEpisPostoId) return null;
-            const p = proposta.equipe.find((x: any) => x.id === activeEpisPostoId);
-            if (!p) return null;
-            return (
-               <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 transition-all duration-300">
-                  <div className="bg-white/95 rounded-2xl border border-slate-100 shadow-[0_25px_60px_-15px_rgba(27,77,62,0.18)] max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden animate-modal-in">
-                     {/* Cabeçalho */}
-                     <div className="bg-gradient-to-r from-[#1B4D3E] via-[#215E4C] to-[#12362b] text-white p-5 flex items-center justify-between border-b-2 border-emerald-500/20">
-                        <div className="flex items-center gap-3">
-                           <div className="bg-white/10 p-2 rounded-xl border border-white/10">
-                              <span className="text-lg">🛡️</span>
-                           </div>
-                           <div>
-                              <h3 className="font-extrabold text-xs uppercase tracking-widest text-emerald-100/90">EPIs & Uniformes Especiais</h3>
-                              <div className="mt-1 flex items-center gap-2">
-                                 <span className="bg-[#D4AF37]/15 text-[#e5c158] border border-[#D4AF37]/35 text-[9px] px-2 py-0.5 rounded-full font-black tracking-wider uppercase">
-                                    Posto: {p.nomeCargo}
-                                 </span>
-                              </div>
-                           </div>
-                        </div>
-                        <button 
-                           onClick={() => setActiveEpisPostoId(null)}
-                           className="text-white/80 hover:text-white transition-all p-2 rounded-xl hover:bg-white/10 active:scale-95"
-                        >
-                           <X size={18} />
-                        </button>
-                     </div>
-
-                     {/* Conteúdo */}
-                     <div className="p-6 overflow-y-auto space-y-4">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                           <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">
-                              Cadastre itens adicionais específicos para este posto
-                           </p>
-                           <button 
-                              onClick={() => {
-                                 const epis = p.parametrosPosto?.episAdicionais || [];
-                                 const param = {...p.parametrosPosto, episAdicionais: [...epis, { id: Math.random().toString(), descricao: '', quantidade: 1, precoUnitario: 0, vidaUtil: 6 }]};
-                                 updatePosto(p.id, 'parametrosPosto', param);
-                              }}
-                              className="bg-emerald-50 hover:bg-emerald-100/80 text-[#1B4D3E] px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all border border-emerald-100/50 shadow-xs hover:shadow-sm"
-                           >
-                              <Plus size={14} /> Inserir Item
-                           </button>
-                        </div>
-
-                        {(p.parametrosPosto?.episAdicionais || []).length > 0 ? (
-                           <div className="overflow-hidden border border-slate-100 rounded-2xl shadow-xs bg-white">
-                              <table className="w-full text-xs">
-                                 <thead className="bg-[#F8FAFC] text-slate-400 uppercase text-[9px] tracking-wider font-extrabold border-b border-slate-100">
-                                    <tr>
-                                       <th className="px-5 py-3 text-left">Descrição do Item</th>
-                                       <th className="px-5 py-3 text-center w-24">Qtd</th>
-                                       <th className="px-5 py-3 text-center w-36">Preço Unitário</th>
-                                       <th className="px-5 py-3 text-center w-32">Vida Útil (meses)</th>
-                                       <th className="px-5 py-3 text-right w-36">Custo / Mês</th>
-                                       <th className="px-5 py-3 text-center w-16"></th>
-                                    </tr>
-                                 </thead>
-                                 <tbody className="divide-y divide-slate-100">
-                                    {p.parametrosPosto.episAdicionais.map((epi: any, epiIdx: number) => (
-                                       <tr key={epi.id || epiIdx} className="hover:bg-[#F8FAFC]/40 transition-colors">
-                                          <td className="px-5 py-3">
-                                             <input 
-                                                type="text" 
-                                                className="w-full bg-slate-50/40 border border-slate-200/60 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:bg-white focus:border-[#1B4D3E] focus:ring-2 focus:ring-emerald-500/5 outline-none transition-all" 
-                                                placeholder="Ex: Roupa Térmica p/ Câmara Fria"
-                                                value={epi.descricao}
-                                                onChange={(e) => {
-                                                   const newEpis = [...p.parametrosPosto.episAdicionais];
-                                                   newEpis[epiIdx].descricao = e.target.value;
-                                                   updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
-                                                }}
-                                             />
-                                          </td>
-                                          <td className="px-5 py-3">
-                                             <input 
-                                                type="number" 
-                                                className="w-full bg-slate-50/40 border border-slate-200/60 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 text-center focus:bg-white focus:border-[#1B4D3E] outline-none transition-all" 
-                                                value={epi.quantidade}
-                                                onChange={(e) => {
-                                                   const newEpis = [...p.parametrosPosto.episAdicionais];
-                                                   newEpis[epiIdx].quantidade = Number(e.target.value);
-                                                   updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
-                                                }}
-                                             />
-                                          </td>
-                                          <td className="px-5 py-3">
-                                             <div className="relative">
-                                                <span className="absolute left-2.5 top-2 text-slate-400 text-xs">R$</span>
-                                                <input 
-                                                   type="number" 
-                                                   step="0.01"
-                                                   className="w-full bg-slate-50/40 border border-slate-200/60 rounded-lg pl-8 pr-2.5 py-1.5 text-xs font-bold text-slate-800 text-center focus:bg-white focus:border-[#1B4D3E] outline-none transition-all" 
-                                                   value={epi.precoUnitario}
-                                                   onChange={(e) => {
-                                                      const newEpis = [...p.parametrosPosto.episAdicionais];
-                                                      newEpis[epiIdx].precoUnitario = Number(e.target.value);
-                                                      updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
-                                                   }}
-                                                />
-                                             </div>
-                                          </td>
-                                          <td className="px-5 py-3">
-                                             <input 
-                                                type="number" 
-                                                className="w-full bg-slate-50/40 border border-slate-200/60 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 text-center focus:bg-white focus:border-[#1B4D3E] outline-none transition-all" 
-                                                value={epi.vidaUtil}
-                                                onChange={(e) => {
-                                                   const newEpis = [...p.parametrosPosto.episAdicionais];
-                                                   newEpis[epiIdx].vidaUtil = Number(e.target.value);
-                                                   updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
-                                                }}
-                                             />
-                                          </td>
-                                          <td className="px-5 py-3 text-right font-black text-[#1B4D3E] text-xs">
-                                             R$ {((epi.precoUnitario * epi.quantidade) / (epi.vidaUtil || 1)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                          </td>
-                                          <td className="px-5 py-3 text-center">
-                                             <button 
-                                                onClick={() => {
-                                                   const newEpis = p.parametrosPosto.episAdicionais.filter((_: any, i: number) => i !== epiIdx);
-                                                   updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
-                                                }}
-                                                className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"
-                                                title="Excluir EPI"
-                                             >
-                                                <Trash2 size={15} />
-                                             </button>
-                                          </td>
-                                       </tr>
-                                    ))}
-                                 </tbody>
-                              </table>
-                           </div>
-                        ) : (
-                           <div className="bg-[#F8FAFC] border border-dashed border-slate-200 rounded-2xl py-12 text-center">
-                              <p className="text-sm text-slate-400 font-medium italic">Nenhum EPI ou uniforme especial adicionado a este posto.</p>
-                              <p className="text-xs text-slate-300 mt-1.5">Clique em "Inserir Item" no canto superior direito para começar.</p>
-                           </div>
-                        )}
-                     </div>
-
-                     {/* Rodapé */}
-                     <div className="bg-[#F8FAFC] px-6 py-4.5 flex justify-between items-center border-t border-slate-100/60 rounded-b-2xl">
-                        <div>
-                           <span className="text-[10px] font-bold text-slate-400 uppercase block tracking-wider">Custo Total Especial</span>
-                           <span className="text-base font-black text-[#1B4D3E]">
-                              R$ {((p.parametrosPosto?.episAdicionais || []).reduce((acc: number, item: any) => acc + ((item.precoUnitario * item.quantidade) / (item.vidaUtil || 1)), 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">/ mês</span>
-                           </span>
-                        </div>
-                        <button 
-                           onClick={() => setActiveEpisPostoId(null)}
-                           className="bg-gradient-to-r from-[#1B4D3E] to-[#12362b] hover:from-[#153a2f] hover:to-[#0f2a22] text-white font-extrabold px-6 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-[0_4px_14px_rgba(27,77,62,0.25)] hover:shadow-[0_6px_20px_rgba(27,77,62,0.35)] active:scale-[0.98] cursor-pointer"
-                        >
-                           <Save size={14} /> Fechar & Salvar
-                        </button>
-                     </div>
-                  </div>
-               </div>
-            );
-         })()}
-
-      {/* MODAL OBRIGATÓRIO DE CHANGELOG PARA REVISÕES */}
-      {showChangelogModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 transform scale-100 transition-all duration-300">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 bg-amber-50 border border-amber-200 rounded-full flex items-center justify-center text-amber-600 mb-4 shadow-sm">
-                <History size={24} />
-              </div>
-              <h2 className="text-xl font-black text-slate-800 tracking-tight">Descrever Alterações da Versão</h2>
-              <p className="text-xs text-slate-400 mt-2 font-medium">
-                Como você está salvando a <strong className="text-amber-600 font-extrabold">Revisão R${String(proposta.versao + 1).padStart(2, '0')}</strong>, descreva de forma clara e obrigatória o que foi alterado nesta versão para fins de histórico.
-              </p>
-            </div>
-            
-            <div className="mt-6">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Resumo das Mudanças</label>
-              <textarea 
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#1B4D3E] focus:border-[#1B4D3E] focus:bg-white transition-all resize-none h-32"
-                placeholder="Ex: Ajuste na taxa tributária da DRE, aumento do percentual de férias dos colaboradores, correção de insumos de limpeza..."
-                value={changelogText}
-                onChange={(e) => setChangelogText(e.target.value)}
-              />
-              <div className="flex justify-between items-center mt-2 px-1">
-                <span className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">Mínimo 5 caracteres</span>
-                <span className={`text-[10px] font-extrabold uppercase ${changelogText.trim().length >= 5 ? 'text-emerald-500' : 'text-amber-500'}`}>
-                  {changelogText.trim().length} caracteres
-                </span>
-              </div>
-            </div>
-            
-            <div className="mt-8 flex gap-3">
-              <button 
-                onClick={() => {
-                  setShowChangelogModal(false);
-                  setChangelogText('');
-                }}
-                disabled={saving}
-                className="flex-1 py-3.5 bg-slate-50 hover:bg-slate-100 text-slate-500 font-extrabold rounded-2xl text-xs uppercase tracking-wider transition-colors border border-slate-200/60 active:scale-[0.98] cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button 
-                onClick={() => executeSave(changelogText.trim())}
-                disabled={saving || changelogText.trim().length < 5}
-                className="flex-1 py-3.5 bg-[#1B4D3E] hover:bg-[#13382d] disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-extrabold rounded-2xl text-xs uppercase tracking-wider transition-colors active:scale-[0.98] cursor-pointer shadow-[0_4px_14px_rgba(27,77,62,0.2)]"
-              >
-                {saving ? 'Salvando...' : 'Salvar Versão'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
 </main>
     </div>
   );
