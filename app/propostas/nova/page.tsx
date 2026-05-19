@@ -3602,7 +3602,7 @@ function PropostaEditor() {
                                          <div className="space-y-1">
                                             {condsColab.map((cond, idx) => (
                                                <div key={idx} className="flex gap-2.5 items-start text-[9.5px] leading-normal">
-                                                  <CheckCircle2 size={13} className="text-[#1b4d3e] shrink-0 mt-0.5" /> 
+                                                  <CheckCircle2 size={8} className="text-[#1b4d3e] shrink-0 mt-0.5" /> 
                                                   <span className="text-slate-700 font-semibold text-[9.5px] leading-normal">{cond}</span>
                                                </div>
                                             ))}
@@ -3617,7 +3617,7 @@ function PropostaEditor() {
                                          <div className="space-y-1">
                                             {condsCli.map((cond, idx) => (
                                                <div key={idx} className="flex gap-2.5 items-start text-[9.5px] leading-normal">
-                                                  <CheckCircle2 size={13} className="text-[#1b4d3e] shrink-0 mt-0.5" /> 
+                                                  <CheckCircle2 size={8} className="text-[#1b4d3e] shrink-0 mt-0.5" /> 
                                                   <span className="text-slate-700 font-semibold text-[9.5px] leading-normal">{cond}</span>
                                                </div>
                                             ))}
@@ -3653,9 +3653,33 @@ function PropostaEditor() {
                                   <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-center text-white">
                                      <div className="col-span-6 space-y-4">
                                         <h3 className="text-lg font-black tracking-tight leading-snug">Estamos prontos para iniciar a nossa parceria de sucesso!</h3>
-                                        <div className="text-white/80 text-[10px] leading-relaxed space-y-3 font-semibold text-justify">
+                                        <div className="text-white/80 text-[10px] leading-relaxed space-y-2 font-semibold text-justify">
                                            <p>Ao assinar este termo de aceite, o <strong className="text-white font-extrabold">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
                                            <p>Este documento servirá como base oficial para a elaboração do instrumento jurídico definitivo (Contrato de Prestação de Serviços) entre as partes.</p>
+                                        </div>
+                                        <div className="bg-white/5 border border-white/10 rounded-xl p-3 mt-3.5 space-y-2 text-[9px] font-semibold text-white/90">
+                                           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                                              <div className="flex flex-col">
+                                                 <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Razão Social</span>
+                                                 <span className="truncate text-white font-bold">{proposta.cliente.razaoSocial || proposta.cliente.cliente || "Não informada"}</span>
+                                              </div>
+                                              <div className="flex flex-col">
+                                                 <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">CNPJ</span>
+                                                 <span className="text-white font-bold">{proposta.cliente.cnpj || "Não informado"}</span>
+                                              </div>
+                                              <div className="flex flex-col">
+                                                 <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Data de Início</span>
+                                                 <span className="text-white font-bold">{proposta.cliente.dataInicio || "A definir"}</span>
+                                              </div>
+                                              <div className="flex flex-col">
+                                                 <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Data de Vencimento</span>
+                                                 <span className="text-white font-bold">{proposta.cliente.dataVencimento || "A definir"}</span>
+                                              </div>
+                                              <div className="flex flex-col col-span-2">
+                                                 <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Cargo do Contato / Representante</span>
+                                                 <span className="truncate text-white font-bold">{proposta.cliente.contatoCargo || "Representante Legal"}</span>
+                                              </div>
+                                           </div>
                                         </div>
                                      </div>
 
@@ -5936,7 +5960,7 @@ function PropostaEditor() {
                                                <div className="space-y-1">
                                                   {condsColab.map((cond, idx) => (
                                                      <div key={idx} className="flex gap-2.5 items-start text-[9.5px] leading-normal">
-                                                        <CheckCircle2 size={13} className="text-[#1b4d3e] shrink-0 mt-0.5" /> 
+                                                        <CheckCircle2 size={8} className="text-[#1b4d3e] shrink-0 mt-0.5" /> 
                                                         <span className="text-slate-700 font-semibold text-[9.5px] leading-normal">{cond}</span>
                                                      </div>
                                                   ))}
@@ -5951,7 +5975,7 @@ function PropostaEditor() {
                                                <div className="space-y-1">
                                                   {condsCli.map((cond, idx) => (
                                                      <div key={idx} className="flex gap-2.5 items-start text-[9.5px] leading-normal">
-                                                        <CheckCircle2 size={13} className="text-[#1b4d3e] shrink-0 mt-0.5" /> 
+                                                        <CheckCircle2 size={8} className="text-[#1b4d3e] shrink-0 mt-0.5" /> 
                                                         <span className="text-slate-700 font-semibold text-[9.5px] leading-normal">{cond}</span>
                                                      </div>
                                                   ))}
@@ -5986,9 +6010,33 @@ function PropostaEditor() {
                             <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-center text-white">
                                <div className="col-span-6 space-y-4">
                                   <h3 className="text-lg font-black tracking-tight leading-snug">Estamos prontos para iniciar a nossa parceria de sucesso!</h3>
-                                  <div className="text-white/80 text-[10px] leading-relaxed space-y-3 font-semibold text-justify">
+                                  <div className="text-white/80 text-[10px] leading-relaxed space-y-2 font-semibold text-justify">
                                      <p>Ao assinar este termo de aceite, o <strong className="text-white font-extrabold">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
                                      <p>Este documento servirá como base oficial para a elaboração do instrumento jurídico definitivo (Contrato de Prestação de Serviços) entre as partes.</p>
+                                  </div>
+                                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 mt-3.5 space-y-2 text-[9px] font-semibold text-white/90">
+                                     <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                                        <div className="flex flex-col">
+                                           <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Razão Social</span>
+                                           <span className="truncate text-white font-bold">{proposta.cliente.razaoSocial || proposta.cliente.cliente || "Não informada"}</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                           <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">CNPJ</span>
+                                           <span className="text-white font-bold">{proposta.cliente.cnpj || "Não informado"}</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                           <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Data de Início</span>
+                                           <span className="text-white font-bold">{proposta.cliente.dataInicio || "A definir"}</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                           <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Data de Vencimento</span>
+                                           <span className="text-white font-bold">{proposta.cliente.dataVencimento || "A definir"}</span>
+                                        </div>
+                                        <div className="flex flex-col col-span-2">
+                                           <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Cargo do Contato / Representante</span>
+                                           <span className="truncate text-white font-bold">{proposta.cliente.contatoCargo || "Representante Legal"}</span>
+                                        </div>
+                                     </div>
                                   </div>
                                </div>
 
