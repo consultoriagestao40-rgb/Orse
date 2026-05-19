@@ -82,6 +82,9 @@ export async function createCCT(data: any) {
       }
     });
     
+    revalidatePath('/admin/ccts');
+    revalidatePath('/propostas/nova');
+    revalidatePath('/');
     return { success: true };
   } catch (error: any) {
     console.error('Erro ao criar CCT:', error);
@@ -156,6 +159,9 @@ export async function updateCCT(id: string, data: any) {
         }
       }
     });
+    revalidatePath('/admin/ccts');
+    revalidatePath('/propostas/nova');
+    revalidatePath('/');
     return { success: true };
   } catch (error: any) {
     console.error('Erro ao atualizar CCT:', error);
@@ -168,6 +174,9 @@ export async function deleteCCT(id: string) {
     await prisma.cCT.delete({
       where: { id }
     });
+    revalidatePath('/admin/ccts');
+    revalidatePath('/propostas/nova');
+    revalidatePath('/');
     return { success: true };
   } catch (error) {
     console.error('Erro ao deletar CCT:', error);
