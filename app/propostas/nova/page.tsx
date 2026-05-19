@@ -2735,7 +2735,7 @@ function PropostaEditor() {
                                         <img 
                                            src="/hand-support.png" 
                                            alt="Mão de suporte"
-                                           className="absolute right-[-20px] bottom-[-55px] w-[300px] h-auto pointer-events-none opacity-90 z-0 mix-blend-multiply"
+                                           className="absolute right-[-10px] bottom-[-65px] w-[320px] h-auto pointer-events-none opacity-90 z-0 mix-blend-multiply"
                                         />
                                         <div className="absolute top-[-12px] left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
                                            <Trophy size={36} className="text-white shrink-0" />
@@ -5087,7 +5087,7 @@ function PropostaEditor() {
                                   <img 
                                      src="/hand-support.png" 
                                      alt="Mão de suporte"
-                                     className="absolute right-[-20px] bottom-[-55px] w-[300px] h-auto pointer-events-none opacity-90 z-0 mix-blend-multiply"
+                                     className="absolute right-[-10px] bottom-[-65px] w-[320px] h-auto pointer-events-none opacity-90 z-0 mix-blend-multiply"
                                   />
                                   <div className="absolute top-[-12px] left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
                                      <Trophy size={36} className="text-white shrink-0" />
