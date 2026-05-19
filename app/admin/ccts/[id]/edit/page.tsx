@@ -472,10 +472,10 @@ export default function CCTEditorPage() {
               </button>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="w-full text-left border-collapse text-xs min-w-[1000px]">
                 <thead>
                   <tr className="bg-slate-100 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
-                    <th className="px-6 py-3">Função / Cargo</th>
+                    <th className="px-6 py-3 min-w-[280px]">Função / Cargo</th>
                     <th className="px-6 py-3 text-center">Piso (R$)</th>
                     <th className="px-6 py-3 text-center">Gratif. (R$)</th>
                     <th className="px-6 py-3 text-center">Assid. (R$)</th>
@@ -488,14 +488,14 @@ export default function CCTEditorPage() {
                 <tbody>
                   {cargos.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-slate-400 italic text-xs">
+                      <td colSpan={8} className="px-6 py-8 text-center text-slate-400 italic text-xs">
                         Ex: Servente
                       </td>
                     </tr>
                   )}
                   {cargos.map((cargo, idx) => (
                     <tr key={cargo.id || idx} className="border-b border-slate-200 hover:bg-slate-50">
-                      <td className="px-6 py-3">
+                      <td className="px-6 py-3 min-w-[280px]">
                         <input
                           type="text"
                           placeholder="Ex: Servente"
