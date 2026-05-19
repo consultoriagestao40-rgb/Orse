@@ -96,6 +96,56 @@ export default function CCTEditorPage() {
     setCargos([...cargos, { id: Math.random().toString(), nome: '', pisoSalarial: 0, gratificacoes: 0, assiduidade: 0, adicionalCopa: 0 }]);
   };
 
+  const importBaseCompleta = () => {
+    if (confirm("Deseja substituir a lista atual pela base completa de 42 cargos da Convenção?")) {
+      const baseCompleta = [
+        { id: Math.random().toString(), nome: "Servente 44 horas", pisoSalarial: 1900.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Servente 40 horas", pisoSalarial: 1727.27, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Servente 36 horas", pisoSalarial: 1554.55, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Copeira, Cantineiras, Merendeiras, Aux. de Coz., Lactarista e Camareiros 44 horas", pisoSalarial: 1961.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Servente com Cumulação de Função 44 horas", pisoSalarial: 1900.00, gratificacoes: 131.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Copeira com Cumulação de Função 44 horas", pisoSalarial: 1961.00, gratificacoes: 70.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Servente Hospitalar 44 horas", pisoSalarial: 1900.00, gratificacoes: 62.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Encarregada 03 a 10 funcionários 44 horas", pisoSalarial: 2191.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Encarregada 11 a 20 funcionários 44 horas", pisoSalarial: 2279.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Encarregada acima de 20 funcionários 44 horas", pisoSalarial: 2404.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Supervisor 44 horas", pisoSalarial: 3023.00, gratificacoes: 302.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Encarregado Adm., Almoxarife e Zelador 44 horas", pisoSalarial: 3023.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Cozinheiro 44 horas", pisoSalarial: 2038.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Cozinheiro Chefe 44 horas", pisoSalarial: 2038.00, gratificacoes: 130.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Jardineiro 44 horas", pisoSalarial: 2029.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Op. Máq. Costal / Roçadeira / Empilhadeira / Tratorista / Barqueiro coletor aquático / Podador 44 horas", pisoSalarial: 2404.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Varredores 44 horas - (Municípios com até 200.000 habitantes)", pisoSalarial: 1969.00, gratificacoes: 648.40, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Roçadores Manuais / Capinadores 44 horas - (Municípios com até 200.000 habitantes)", pisoSalarial: 1969.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Coletores - Inclusive de resíduos vegetais 44 horas - (Municípios com até 200.000 habitantes)", pisoSalarial: 2025.00, gratificacoes: 648.40, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Recicladores em aterros Sanitários 44 horas - (Municípios com até 200.000 habitantes)", pisoSalarial: 1969.00, gratificacoes: 648.40, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Ascensorista / Telefonista 36 horas", pisoSalarial: 1998.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Maqueiro 44 horas", pisoSalarial: 1998.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Tratadores de animais 44 horas", pisoSalarial: 2276.00, gratificacoes: 324.20, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Porteiro 44 horas / 12x36", pisoSalarial: 2415.00, gratificacoes: 86.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Porteiro SDF", pisoSalarial: 1869.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Garagista 44 horas / 12x36", pisoSalarial: 2141.00, gratificacoes: 43.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Recepcionista 44 horas / 12x36", pisoSalarial: 2141.00, gratificacoes: 43.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Assistente / Agente e Auxiliar Administrativo 44 horas", pisoSalarial: 2141.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Monitor ou op. de equipamento / Operador de Caixa / Guardião 44 horas / 12x36", pisoSalarial: 2141.00, gratificacoes: 43.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Auxiliar Veterinário 44 horas", pisoSalarial: 2276.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Controlador de Acesso, Pátio e Tráfego 44 horas", pisoSalarial: 2177.00, gratificacoes: 43.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Bombeiro Hidráulico 44 horas", pisoSalarial: 2141.00, gratificacoes: 43.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Desinsetizador 44 horas", pisoSalarial: 2276.00, gratificacoes: 648.40, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Controlador de vetores 44 horas", pisoSalarial: 2276.00, gratificacoes: 648.40, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Contínuo e Menores Aprendizes 44 horas", pisoSalarial: 1694.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Carreg. e Carreg. Agrícolas 44 horas", pisoSalarial: 1900.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Auxiliar de Serviços Gerais e Segregadores 44 horas", pisoSalarial: 1900.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Auxiliar Multifuncional em plantas industriais e condomínios 44 horas", pisoSalarial: 2141.00, gratificacoes: 43.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Repositor 44 horas", pisoSalarial: 1969.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Lavadores 44 horas", pisoSalarial: 1900.00, gratificacoes: 324.20, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Inspetor de Aluno 44 horas", pisoSalarial: 2372.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] },
+        { id: Math.random().toString(), nome: "Profissional de Apoio Escolar 44 horas", pisoSalarial: 2215.00, gratificacoes: 0.00, assiduidade: 0, adicionalCopa: 0, insalubridadePercent: 0, episConfig: [] }
+      ];
+      setCargos(baseCompleta);
+    }
+  };
+
   const updateCargo = (idx: number, field: string, val: any) => {
     const newCargos = [...cargos];
     newCargos[idx][field] = val;
@@ -464,12 +514,22 @@ export default function CCTEditorPage() {
                 <Briefcase size={16} className="text-emerald-300" />
                 <h2 className="text-xs font-black text-white uppercase tracking-widest">Cargos e Remunerações</h2>
               </div>
-              <button
-                onClick={addCargo}
-                className="bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold px-4 py-1.5 rounded flex items-center gap-1 transition-colors"
-              >
-                <Plus size={14} /> Adicionar
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={importBaseCompleta}
+                  className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-1.5 rounded flex items-center gap-1 transition-colors shadow-sm"
+                >
+                  <Plus size={14} /> Carregar Base Completa (42 Cargos)
+                </button>
+                <button
+                  type="button"
+                  onClick={addCargo}
+                  className="bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold px-4 py-1.5 rounded flex items-center gap-1 transition-colors shadow-sm"
+                >
+                  <Plus size={14} /> Adicionar
+                </button>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs min-w-[1000px]">
