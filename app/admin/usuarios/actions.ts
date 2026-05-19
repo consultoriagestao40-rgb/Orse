@@ -26,6 +26,8 @@ export async function createUsuario(data: any) {
         nome: data.nome,
         password: data.password || '123456',
         role: data.role,
+        cargo: data.cargo || null,
+        celular: data.celular || null,
         managerId: data.managerId || null,
       },
     });
@@ -41,6 +43,28 @@ export async function deleteUsuario(id: string) {
     await prisma.user.delete({ where: { id } });
     revalidatePath('/admin/usuarios');
     return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+
+export async function updateUsuario(id: string, data: any) {
+  try {
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        email: data.email,
+        nome: data.nome,
+        password: data.password ? data.password : undefined,
+        role: data.role,
+        cargo: data.cargo || null,
+        celular: data.celular || null,
+        managerId: data.managerId || null,
+      },
+    });
+    revalidatePath('/admin/usuarios');
+    return { success: true, data: user };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

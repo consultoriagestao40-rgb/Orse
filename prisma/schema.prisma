@@ -16,6 +16,8 @@ model User {
   nome         String
   password     String     @default("123456")
   role         UserRole   @default(USER)
+  cargo        String?
+  celular      String?
   managerId    String?
   createdAt    DateTime   @default(now())
   propostas    Proposta[]
