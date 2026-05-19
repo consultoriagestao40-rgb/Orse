@@ -2735,17 +2735,17 @@ function PropostaEditor() {
                                         <img 
                                            src="/hand-support.png" 
                                            alt="Mão de suporte"
-                                           className="absolute right-[-40px] bottom-[-20px] w-[340px] h-auto pointer-events-none opacity-90 z-0 mix-blend-multiply"
+                                           className="absolute right-[-20px] bottom-[-55px] w-[300px] h-auto pointer-events-none opacity-90 z-0 mix-blend-multiply"
                                         />
-                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
+                                        <div className="absolute top-[-12px] left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
                                            <Trophy size={36} className="text-white shrink-0" />
                                         </div>
 
-                                        <div className="absolute bottom-12 left-4 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
+                                        <div className="absolute bottom-[100px] left-4 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
                                            <Lightbulb size={36} className="text-white shrink-0" />
                                         </div>
 
-                                        <div className="absolute bottom-12 right-4 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
+                                        <div className="absolute bottom-[100px] right-4 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
                                            <Users size={36} className="text-white shrink-0" />
                                         </div>
                                      </div>
@@ -3599,11 +3599,11 @@ function PropostaEditor() {
                                             <UserCheck size={16} className="text-[#1e4480]" />
                                             <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condições dos Colaboradores</h4>
                                          </div>
-                                         <div className="space-y-1.5 max-h-[90px] overflow-y-auto pr-1">
+                                         <div className="space-y-1">
                                             {condsColab.map((cond, idx) => (
-                                               <div key={idx} className="flex gap-2 items-start text-[9px] leading-tight">
-                                                  <CheckCircle2 size={10} className="text-[#1b4d3e] shrink-0 mt-0.5" />
-                                                  <span className="text-slate-700 font-bold">{cond}</span>
+                                               <div key={idx} className="flex gap-1.5 items-start text-[8px] leading-tight">
+                                                  <CheckCircle2 size={9} className="text-[#1b4d3e] shrink-0 mt-0.5" />
+                                                  <span className="text-slate-700 font-semibold text-[8px] leading-tight">{cond}</span>
                                                </div>
                                             ))}
                                          </div>
@@ -3614,11 +3614,11 @@ function PropostaEditor() {
                                             <Briefcase size={16} className="text-[#1e4480]" />
                                             <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condições para o Cliente</h4>
                                          </div>
-                                         <div className="space-y-1.5 max-h-[90px] overflow-y-auto pr-1">
+                                         <div className="space-y-1">
                                             {condsCli.map((cond, idx) => (
-                                               <div key={idx} className="flex gap-2 items-start text-[9px] leading-tight">
-                                                  <CheckCircle2 size={10} className="text-[#1b4d3e] shrink-0 mt-0.5" />
-                                                  <span className="text-slate-700 font-bold">{cond}</span>
+                                               <div key={idx} className="flex gap-1.5 items-start text-[8px] leading-tight">
+                                                  <CheckCircle2 size={9} className="text-[#1b4d3e] shrink-0 mt-0.5" />
+                                                  <span className="text-slate-700 font-semibold text-[8px] leading-tight">{cond}</span>
                                                </div>
                                             ))}
                                          </div>
@@ -5087,17 +5087,17 @@ function PropostaEditor() {
                                   <img 
                                      src="/hand-support.png" 
                                      alt="Mão de suporte"
-                                     className="absolute right-[-40px] bottom-[-20px] w-[340px] h-auto pointer-events-none opacity-90 z-0 mix-blend-multiply"
+                                     className="absolute right-[-20px] bottom-[-55px] w-[300px] h-auto pointer-events-none opacity-90 z-0 mix-blend-multiply"
                                   />
-                                  <div className="absolute top-0 left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl">
+                                  <div className="absolute top-[-12px] left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
                                      <Trophy size={36} className="text-white shrink-0" />
                                   </div>
 
-                                  <div className="absolute bottom-12 left-4 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl">
+                                  <div className="absolute bottom-[100px] left-4 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
                                      <Lightbulb size={36} className="text-white shrink-0" />
                                   </div>
 
-                                  <div className="absolute bottom-12 right-4 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl">
+                                  <div className="absolute bottom-[100px] right-4 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
                                      <Users size={36} className="text-white shrink-0" />
                                   </div>
                                </div>
@@ -5933,11 +5933,11 @@ function PropostaEditor() {
                                                   <UserCheck size={16} className="text-[#1e4480]" />
                                                   <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condições dos Colaboradores</h4>
                                                </div>
-                                               <div className="space-y-1.5 max-h-[100px] overflow-y-auto pr-1">
+                                               <div className="space-y-1">
                                                   {condsColab.map((cond, idx) => (
-                                                     <div key={idx} className="flex gap-2 items-start text-[9.5px] leading-tight">
-                                                        <CheckCircle2 size={11} className="text-[#1b4d3e] shrink-0 mt-0.5" />
-                                                        <span className="text-slate-700 font-bold">{cond}</span>
+                                                     <div key={idx} className="flex gap-1.5 items-start text-[8px] leading-tight">
+                                                        <CheckCircle2 size={9} className="text-[#1b4d3e] shrink-0 mt-0.5" />
+                                                        <span className="text-slate-700 font-semibold text-[8px] leading-tight">{cond}</span>
                                                      </div>
                                                   ))}
                                                </div>
@@ -5948,11 +5948,11 @@ function PropostaEditor() {
                                                   <Briefcase size={16} className="text-[#1e4480]" />
                                                   <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condições para o Cliente</h4>
                                                </div>
-                                               <div className="space-y-1.5 max-h-[100px] overflow-y-auto pr-1">
+                                               <div className="space-y-1">
                                                   {condsCli.map((cond, idx) => (
-                                                     <div key={idx} className="flex gap-2 items-start text-[9.5px] leading-tight">
-                                                        <CheckCircle2 size={11} className="text-[#1b4d3e] shrink-0 mt-0.5" />
-                                                        <span className="text-slate-700 font-bold">{cond}</span>
+                                                     <div key={idx} className="flex gap-1.5 items-start text-[8px] leading-tight">
+                                                        <CheckCircle2 size={9} className="text-[#1b4d3e] shrink-0 mt-0.5" />
+                                                        <span className="text-slate-700 font-semibold text-[8px] leading-tight">{cond}</span>
                                                      </div>
                                                   ))}
                                                </div>
