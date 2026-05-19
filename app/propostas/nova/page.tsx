@@ -3601,9 +3601,8 @@ function PropostaEditor() {
                                          </div>
                                          <div className="space-y-1">
                                             {condsColab.map((cond, idx) => (
-                                               <div key={idx} className="flex gap-2.5 items-start text-[9.5px] leading-normal">
-                                                  <CheckCircle2 size={8} className="text-[#1b4d3e] shrink-0 mt-0.5" /> 
-                                                  <span className="text-slate-700 font-semibold text-[9.5px] leading-normal">{cond}</span>
+                                               <div key={idx} className="text-slate-700 font-semibold text-[9.5px] leading-normal pl-1.5 relative before:content-['•'] before:absolute before:left-0 before:text-[#1b4d3e]">
+                                                  {cond}
                                                </div>
                                             ))}
                                          </div>
@@ -3616,9 +3615,8 @@ function PropostaEditor() {
                                          </div>
                                          <div className="space-y-1">
                                             {condsCli.map((cond, idx) => (
-                                               <div key={idx} className="flex gap-2.5 items-start text-[9.5px] leading-normal">
-                                                  <CheckCircle2 size={8} className="text-[#1b4d3e] shrink-0 mt-0.5" /> 
-                                                  <span className="text-slate-700 font-semibold text-[9.5px] leading-normal">{cond}</span>
+                                               <div key={idx} className="text-slate-700 font-semibold text-[9.5px] leading-normal pl-1.5 relative before:content-['•'] before:absolute before:left-0 before:text-[#1b4d3e]">
+                                                  {cond}
                                                </div>
                                             ))}
                                          </div>
@@ -5959,9 +5957,8 @@ function PropostaEditor() {
                                                </div>
                                                <div className="space-y-1">
                                                   {condsColab.map((cond, idx) => (
-                                                     <div key={idx} className="flex gap-2.5 items-start text-[9.5px] leading-normal">
-                                                        <CheckCircle2 size={8} className="text-[#1b4d3e] shrink-0 mt-0.5" /> 
-                                                        <span className="text-slate-700 font-semibold text-[9.5px] leading-normal">{cond}</span>
+                                                     <div key={idx} className="text-slate-700 font-semibold text-[9.5px] leading-normal pl-1.5 relative before:content-['•'] before:absolute before:left-0 before:text-[#1b4d3e]">
+                                                        {cond}
                                                      </div>
                                                   ))}
                                                </div>
@@ -5974,9 +5971,8 @@ function PropostaEditor() {
                                                </div>
                                                <div className="space-y-1">
                                                   {condsCli.map((cond, idx) => (
-                                                     <div key={idx} className="flex gap-2.5 items-start text-[9.5px] leading-normal">
-                                                        <CheckCircle2 size={8} className="text-[#1b4d3e] shrink-0 mt-0.5" /> 
-                                                        <span className="text-slate-700 font-semibold text-[9.5px] leading-normal">{cond}</span>
+                                                     <div key={idx} className="text-slate-700 font-semibold text-[9.5px] leading-normal pl-1.5 relative before:content-['•'] before:absolute before:left-0 before:text-[#1b4d3e]">
+                                                        {cond}
                                                      </div>
                                                   ))}
                                                </div>
