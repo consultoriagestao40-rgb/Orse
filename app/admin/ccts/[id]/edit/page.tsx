@@ -61,6 +61,9 @@ export default function CCTEditorPage() {
   const [showEpiModal, setShowEpiModal] = useState(false);
   const [activeCargoIdx, setActiveCargoIdx] = useState<number | null>(null);
   const [epiSearch, setEpiSearch] = useState('');
+  
+  // Pesquisa de Cargos
+  const [searchTermCargos, setSearchTermCargos] = useState('');
 
   useEffect(() => {
     async function loadEpis() {
@@ -531,9 +534,24 @@ export default function CCTEditorPage() {
                 </button>
               </div>
             </div>
-            <div className="overflow-x-auto">
+            
+            {/* Barra de Pesquisa de Cargos */}
+            <div className="p-4 border-b border-slate-200 bg-slate-50">
+              <div className="relative max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input 
+                  type="text" 
+                  placeholder="Pesquisar por função / cargo..." 
+                  className="w-full bg-white border border-slate-300 rounded pl-10 pr-4 py-2 text-xs focus:border-[#1B4D3E] outline-none font-bold uppercase transition-all shadow-sm"
+                  value={searchTermCargos}
+                  onChange={(e) => setSearchTermCargos(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="max-h-[60vh] overflow-auto custom-scrollbar">
               <table className="w-full text-left border-collapse text-xs min-w-[1000px]">
-                <thead>
+                <thead className="sticky top-0 z-10 shadow-sm">
                   <tr className="bg-slate-100 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
                     <th className="px-6 py-3 min-w-[280px]">Função / Cargo</th>
                     <th className="px-6 py-3 text-center">Piso (R$)</th>
@@ -553,7 +571,11 @@ export default function CCTEditorPage() {
                       </td>
                     </tr>
                   )}
-                  {cargos.map((cargo, idx) => (
+                  {cargos.map((cargo, idx) => {
+                    if (searchTermCargos && !cargo.nome.toLowerCase().includes(searchTermCargos.toLowerCase())) {
+                      return null;
+                    }
+                    return (
                     <tr key={cargo.id || idx} className="border-b border-slate-200 hover:bg-slate-50">
                       <td className="px-6 py-3 min-w-[280px]">
                         <input
@@ -601,7 +623,8 @@ export default function CCTEditorPage() {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -727,7 +750,7 @@ export default function CCTEditorPage() {
                       onClick={() => setShowEpiModal(false)}
                       className="mt-6 w-full bg-[#1B4D3E] text-white py-3 rounded font-black text-xs uppercase tracking-widest shadow-xl hover:bg-[#13382D] transition-all active:scale-[0.98]"
                     >
-                      Concluir Composição
+                      Fechar Composição (Lembre-se de Salvar a Regra na tela principal)
                     </button>
                   </div>
                 </div>

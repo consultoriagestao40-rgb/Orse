@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
-  Settings, Layers, CalendarDays, Ruler, Plus, Trash2, 
+  Settings as SettingsIcon, Layers, CalendarDays, Ruler, Plus, Trash2, 
   Save, X, Tag, Edit2, Target
 } from 'lucide-react';
 import { 
@@ -21,14 +21,42 @@ import {
 
 type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'metas';
 
-
 export default function SettingsPage() {
+  // ── Estado principal ─────────────────────────────────────────────────────────
   const [userRole, setUserRole] = useState<string>('USER');
   const [hasAccess, setHasAccess] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<Tab>('status');
   const [loading, setLoading] = useState(true);
 
-  // Verificação de Perfil (Qualquer usuário logado pode acessar as configurações, mas com limites)
+  // Status
+  const [statuses, setStatuses] = useState<any[]>([]);
+  const [newStatusName, setNewStatusName] = useState('');
+
+  // Tipos de Serviço
+  const [tipos, setTipos] = useState<any[]>([]);
+  const [newTipoNome, setNewTipoNome] = useState('');
+
+  // Escalas
+  const [escalas, setEscalas] = useState<any[]>([]);
+  const [showEscalaModal, setShowEscalaModal] = useState(false);
+  const [escalaForm, setEscalaForm] = useState({ id: '', nome: '', diasTrabalhadosMes: 22, horasMensais: 220 });
+
+  // Unidades de Medida
+  const [unidades, setUnidades] = useState<any[]>([]);
+  const [newUnidade, setNewUnidade] = useState({ nome: '' });
+
+  // Categorias
+  const [categorias, setCategorias] = useState<any[]>([]);
+  const [newCategoriaNome, setNewCategoriaNome] = useState('');
+
+  // Metas
+  const [sellers, setSellers] = useState<string[]>([]);
+  const [metas, setMetas] = useState<Record<string, number>>({});
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    return new Date().toISOString().substring(0, 7);
+  });
+
+  // ── Verificação de acesso (deve ficar ANTES de qualquer return) ───────────────
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
@@ -37,7 +65,7 @@ export default function SettingsPage() {
           const parsed = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
           setUserRole(parsed.role || 'USER');
           setHasAccess(true);
-        } catch (e) {
+        } catch {
           window.location.href = '/';
         }
       } else {
@@ -46,46 +74,7 @@ export default function SettingsPage() {
     }
   }, []);
 
-  if (!hasAccess) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#F8FAFC]">
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-8 h-8 border-4 border-[#1B4D3E] border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-xs font-bold text-[#1B4D3E] uppercase tracking-widest">Verificando permissões...</span>
-        </div>
-      </div>
-    );
-  }
-
-
-  // Status State
-  const [statuses, setStatuses] = useState<any[]>([]);
-  const [newStatusName, setNewStatusName] = useState('');
-
-  // Tipos State
-  const [tipos, setTipos] = useState<any[]>([]);
-  const [newTipoNome, setNewTipoNome] = useState('');
-
-  // Escalas State
-  const [escalas, setEscalas] = useState<any[]>([]);
-  const [showEscalaModal, setShowEscalaModal] = useState(false);
-  const [escalaForm, setEscalaForm] = useState({ id: '', nome: '', diasTrabalhadosMes: 22, horasMensais: 220 });
-
-  // Unidades State
-  const [unidades, setUnidades] = useState<any[]>([]);
-  const [newUnidade, setNewUnidade] = useState({ nome: '' });
-
-  // Categorias State
-  const [categorias, setCategorias] = useState<any[]>([]);
-  const [newCategoriaNome, setNewCategoriaNome] = useState('');
-
-  // Metas State
-  const [sellers, setSellers] = useState<string[]>([]);
-  const [metas, setMetas] = useState<Record<string, number>>({});
-  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
-    return new Date().toISOString().substring(0, 7); // Padrão: YYYY-MM atual
-  });
-
+  // ── Metas ────────────────────────────────────────────────────────────────────
   const loadMetas = () => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sb_kpi_goals');
@@ -112,9 +101,12 @@ export default function SettingsPage() {
     }
   };
 
+  // ── Carregamento de dados por aba ─────────────────────────────────────────────
   useEffect(() => {
-    loadData();
-  }, [activeTab]);
+    if (hasAccess) {
+      loadData();
+    }
+  }, [activeTab, hasAccess]);
 
   const loadData = async () => {
     setLoading(true);
@@ -150,8 +142,9 @@ export default function SettingsPage() {
     }
   };
 
+  // ── Handlers ──────────────────────────────────────────────────────────────────
 
-  // HANDLERS TIPOS
+  // Tipos
   const handleAddTipo = async () => {
     if (!newTipoNome.trim()) {
       alert('Preencha o nome do tipo de serviço.');
@@ -173,7 +166,7 @@ export default function SettingsPage() {
     else alert('Erro ao excluir: ' + res.error);
   };
 
-  // HANDLERS STATUS
+  // Status
   const handleAddStatus = async () => {
     if (!newStatusName.trim()) return;
     const res = await createPropostaStatus(newStatusName);
@@ -192,7 +185,7 @@ export default function SettingsPage() {
     else alert('Erro ao excluir: ' + res.error);
   };
 
-  // HANDLERS ESCALAS
+  // Escalas
   const handleSaveEscala = async () => {
     if (!escalaForm.nome.trim()) return alert('O nome da escala é obrigatório.');
     setLoading(true);
@@ -201,7 +194,6 @@ export default function SettingsPage() {
       diasTrabalhadosMes: escalaForm.diasTrabalhadosMes,
       horasMensais: escalaForm.horasMensais
     };
-
     if (escalaForm.id) {
       await updateEscala(escalaForm.id, payload);
     } else {
@@ -225,7 +217,7 @@ export default function SettingsPage() {
     setShowEscalaModal(true);
   };
 
-  // HANDLERS UNIDADES
+  // Unidades
   const handleAddUnidade = async () => {
     if (!newUnidade.nome.trim()) {
       alert('Preencha o nome da unidade.');
@@ -247,7 +239,7 @@ export default function SettingsPage() {
     else alert('Erro ao excluir: ' + res.error);
   };
 
-  // HANDLERS CATEGORIAS
+  // Categorias
   const handleAddCategoria = async () => {
     if (!newCategoriaNome.trim()) {
       alert('Preencha o nome da categoria.');
@@ -269,6 +261,19 @@ export default function SettingsPage() {
     else alert('Erro ao excluir: ' + res.error);
   };
 
+  // ── Guarda de acesso (APÓS todos os hooks) ────────────────────────────────────
+  if (!hasAccess) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-[#F8FAFC]">
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-8 h-8 border-4 border-[#1B4D3E] border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-xs font-bold text-[#1B4D3E] uppercase tracking-widest">Verificando permissões...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
@@ -276,24 +281,24 @@ export default function SettingsPage() {
       <main className="flex-1 p-8 overflow-y-auto">
         <div className="max-w-6xl mx-auto space-y-6">
           
-          {/* HEADER PADRÃO */}
+          {/* HEADER */}
           <header className="flex justify-between items-end border-b border-slate-300 pb-4">
             <div>
               <h1 className="text-2xl font-bold text-[#1B4D3E] tracking-wider uppercase flex items-center gap-2">
-                <Settings size={22} /> Configurações do Sistema
+                <SettingsIcon size={22} /> Configurações do Sistema
               </h1>
               <p className="text-slate-500 text-sm mt-1 uppercase font-bold tracking-tighter">Parâmetros operacionais e tabelas auxiliares</p>
             </div>
           </header>
 
-          {/* TABS NAVEGAÇÃO PADRÃO */}
+          {/* TABS */}
           <div className="flex gap-4 border-b border-slate-200">
             {[
               { id: 'status', label: 'Status de Proposta', icon: Layers, roles: ['ADMIN', 'MANAGER', 'USER'] },
               { id: 'escalas', label: 'Escalas de Trabalho', icon: CalendarDays, roles: ['ADMIN', 'MANAGER', 'USER'] },
               { id: 'unidades', label: 'Unidades de Medida', icon: Ruler, roles: ['ADMIN', 'MANAGER', 'USER'] },
               { id: 'categorias', label: 'Categorias', icon: Tag, roles: ['ADMIN', 'MANAGER', 'USER'] },
-              { id: 'tipos', label: 'Tipos de Serviço', icon: Settings, roles: ['ADMIN', 'MANAGER', 'USER'] },
+              { id: 'tipos', label: 'Tipos de Serviço', icon: SettingsIcon, roles: ['ADMIN', 'MANAGER', 'USER'] },
               { id: 'metas', label: 'Metas dos Vendedores', icon: Target, roles: ['ADMIN', 'MANAGER'] },
             ].filter(tab => tab.roles.includes(userRole)).map((tab) => (
               <button
@@ -311,7 +316,7 @@ export default function SettingsPage() {
             ))}
           </div>
 
-          {/* CONTEÚDO EM CARD PADRÃO */}
+          {/* CONTEÚDO */}
           <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden min-h-[500px] relative">
             
             {/* 1. ABA STATUS */}
@@ -500,7 +505,7 @@ export default function SettingsPage() {
               <div>
                 <div className="bg-[#1B4D3E] px-6 py-3 border-b border-[#13382D]">
                   <h2 className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                    <Settings size={14} /> Gestão de Tipos de Serviço
+                    <SettingsIcon size={14} /> Gestão de Tipos de Serviço
                   </h2>
                 </div>
 
@@ -540,7 +545,7 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* 6. ABA METAS DOS VENDEDORES */}
+            {/* 6. ABA METAS DOS VENDEDORES — somente ADMIN e MANAGER */}
             {activeTab === 'metas' && userRole !== 'USER' && (
               <div>
                 <div className="bg-[#1B4D3E] px-6 py-4 border-b border-[#13382D] flex flex-col md:flex-row justify-between items-center gap-4">
@@ -607,7 +612,7 @@ export default function SettingsPage() {
               </div>
             )}
 
-
+            {/* Loading overlay */}
             {loading && (
               <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-2">
@@ -619,7 +624,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* MODAL ESCALA PADRÃO */}
+        {/* MODAL ESCALA */}
         {showEscalaModal && (
           <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
             <div className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden">

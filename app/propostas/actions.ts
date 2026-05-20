@@ -131,7 +131,7 @@ async function getDefaultUser() {
 export async function saveProposta(data: any) {
   const loggedUser = await getLoggedUser();
   const user = loggedUser || await getDefaultUser();
-  const { id, cliente, premissas, encargos, equipe, resultado, dreTaxPercent, dreEncargos, changelog } = data;
+  const { id, cliente, premissas, encargos, equipe, resultado, dreTaxPercent, dreEncargos, changelog, novaVersao } = data;
 
   try {
     let propostaId = id;
@@ -178,90 +178,135 @@ export async function saveProposta(data: any) {
       where: { propostaId },
       orderBy: { versao: 'desc' }
     });
-    const nextVersion = lastVersion ? lastVersion.versao + 1 : 1;
 
-    const newVersao = await prisma.propostaVersao.create({
+    // novaVersao === false: sobrescreve a versão atual (mesma revisão)
+    // novaVersao === true ou undefined: cria nova revisão
+    const criarNova = novaVersao !== false;
+    const nextVersion = criarNova
+      ? (lastVersion ? lastVersion.versao + 1 : 1)
+      : (lastVersion ? lastVersion.versao : 1);
+
+    const metadados = {
+      clienteNome: cliente.cliente,
+      contato: cliente.contato,
+      celular: cliente.celular,
+      email: cliente.email,
+      objetoProposta: cliente.objetoProposta,
+      hasEscopoTecnico: cliente.hasEscopoTecnico || false,
+      escopoTecnico: cliente.escopoTecnico || '',
+      cidade: cliente.cidade,
+      dataElaboracao: cliente.dataElaboracao,
+      numeroProposta: cliente.numeroProposta,
+      revisao: cliente.revisao,
+      tipoServicos: cliente.tipoServicos,
+      vendedorNome: cliente.vendedorNome || 'Ádamo Quadros',
+      vendedorCargo: cliente.vendedorCargo || 'Novos Negócios',
+      vendedorTelefone: cliente.vendedorTelefone || '(41) 9 9737-0880',
+      vendedorEmail: cliente.vendedorEmail || 'adamo@grupojvsserv.com.br',
+      quadroEfetivoSubtitulo: cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
+      quadroEfetivoClausula1: cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
+      quadroEfetivoClausula2: cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
+      quadroEfetivoClausula3: cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
+      condicaoColaboradores1: cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
+      condicaoColaboradores2: cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
+      condicaoColaboradores3: cliente.condicaoColaboradores3 || '2 Vales transporte por dia.',
+      condicaoCliente1: cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
+      condicaoCliente2: cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao disssídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
+      condicaoCliente3: cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.',
+      razaoSocial: cliente.razaoSocial || '',
+      cnpj: cliente.cnpj || '',
+      dataInicio: cliente.dataInicio || '',
+      dataVencimento: cliente.dataVencimento || '',
+      contatoCargo: cliente.contatoCargo || '',
+      condicoesColaboradores: cliente.condicoesColaboradores || [],
+      condicoesCliente: cliente.condicoesCliente || [],
+      itensInclusosExcluidos: data.itensInclusosExcluidos || defaultItensInclusosExcluidos,
+      insumos: {
+        ...data.insumos,
+        detalheMateriais: data.insumos.detalheMateriais || [],
+        detalheMaquinas: data.insumos.detalheMaquinas || [],
+        detalheDescartaveis: data.insumos.detalheDescartaveis || []
+      },
+      dreTaxPercent: dreTaxPercent !== undefined ? dreTaxPercent : null,
+      dreEncargos: dreEncargos || null,
+      encargos: encargos || null,
+      changelog: changelog || 'Criação inicial da proposta'
+    };
+
+    const itemsData = equipe.map((item: any) => {
+      const itemRes = resultado.items.find((r: any) => r.id === item.id);
+      return {
+        nomeCargo: item.nomeCargo,
+        quantidade: item.quantidade,
+        escala: item.escala,
+        entrada: item.parametrosPosto?.horarioInicio || '08:00',
+        saida: item.parametrosPosto?.horarioFim || '17:00',
+        configFinanceira: item.cargo as any,
+        ativosConfig: {
+          ...(item.ativosConfig || {}),
+          parametrosPosto: item.parametrosPosto
+        } as any,
+        custoDireto: itemRes?.detalhes?.remuneracao || 0,
+        custoTotalItem: itemRes?.custoTotal || 0
+      };
+    });
+
+    let newVersao: any;
+
+    if (!criarNova && lastVersion) {
+      // Atualiza a versão existente
+      await prisma.propostaItem.deleteMany({ where: { versaoId: lastVersion.id } });
+      newVersao = await prisma.propostaVersao.update({
+        where: { id: lastVersion.id },
+        data: {
+          impostos: { list: premissas.tributos, sindicatoId: cliente.sindicatoId } as any,
+          margens: {
+            adm: premissas.taxaAdm,
+            lucro: premissas.margemLucro,
+            reservaTecnicaPct: premissas.reservaTecnicaPct,
+            manutencaoPct: premissas.manutencaoPct
+          } as any,
+          metadados: metadados as any,
+          custoTotal: resultado.custoDiretoTotal || 0,
+          precoVenda: resultado.faturamentoBruto || 0,
+          items: {
+            create: itemsData
+          }
+        }
+      });
+    } else {
+      // Cria nova versão
+      newVersao = await prisma.propostaVersao.create({
+        data: {
+          propostaId,
+          versao: nextVersion,
+          impostos: { list: premissas.tributos, sindicatoId: cliente.sindicatoId } as any,
+          margens: {
+            adm: premissas.taxaAdm,
+            lucro: premissas.margemLucro,
+            reservaTecnicaPct: premissas.reservaTecnicaPct,
+            manutencaoPct: premissas.manutencaoPct
+          } as any,
+          metadados: metadados as any,
+          custoTotal: resultado.custoDiretoTotal || 0,
+          precoVenda: resultado.faturamentoBruto || 0,
+          items: {
+            create: itemsData
+          }
+        }
+      });
+    }
+
+    await prisma.auditLog.create({
       data: {
         propostaId,
-        versao: nextVersion,
-        impostos: { list: premissas.tributos, sindicatoId: cliente.sindicatoId } as any,
-        margens: { 
-          adm: premissas.taxaAdm, 
-          lucro: premissas.margemLucro,
-          reservaTecnicaPct: premissas.reservaTecnicaPct,
-          manutencaoPct: premissas.manutencaoPct
-        } as any,
-        metadados: {
-          clienteNome: cliente.cliente,
-          contato: cliente.contato,
-          celular: cliente.celular,
-          email: cliente.email,
-          objetoProposta: cliente.objetoProposta,
-          hasEscopoTecnico: cliente.hasEscopoTecnico || false,
-          escopoTecnico: cliente.escopoTecnico || '',
-          cidade: cliente.cidade,
-          dataElaboracao: cliente.dataElaboracao,
-          numeroProposta: cliente.numeroProposta,
-          revisao: cliente.revisao,
-          tipoServicos: cliente.tipoServicos,
-          vendedorNome: cliente.vendedorNome || 'Ádamo Quadros',
-          vendedorCargo: cliente.vendedorCargo || 'Novos Negócios',
-          vendedorTelefone: cliente.vendedorTelefone || '(41) 9 9737-0880',
-          vendedorEmail: cliente.vendedorEmail || 'adamo@grupojvsserv.com.br',
-          quadroEfetivoSubtitulo: cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
-          quadroEfetivoClausula1: cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
-          quadroEfetivoClausula2: cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
-          quadroEfetivoClausula3: cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
-          condicaoColaboradores1: cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
-          condicaoColaboradores2: cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
-          condicaoColaboradores3: cliente.condicaoColaboradores3 || '2 Vales transporte por dia.',
-          condicaoCliente1: cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
-          condicaoCliente2: cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
-          condicaoCliente3: cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.',
-          razaoSocial: cliente.razaoSocial || '',
-          cnpj: cliente.cnpj || '',
-          dataInicio: cliente.dataInicio || '',
-          dataVencimento: cliente.dataVencimento || '',
-          contatoCargo: cliente.contatoCargo || '',
-          condicoesColaboradores: cliente.condicoesColaboradores || [],
-          condicoesCliente: cliente.condicoesCliente || [],
-          itensInclusosExcluidos: data.itensInclusosExcluidos || defaultItensInclusosExcluidos,
-          insumos: {
-            ...data.insumos,
-            detalheMateriais: data.insumos.detalheMateriais || [],
-            detalheMaquinas: data.insumos.detalheMaquinas || [],
-            detalheDescartaveis: data.insumos.detalheDescartaveis || []
-          },
-          dreTaxPercent: dreTaxPercent !== undefined ? dreTaxPercent : null,
-          dreEncargos: dreEncargos || null,
-          changelog: changelog || 'Criação inicial da proposta'
-        } as any,
-        custoTotal: resultado.custoDiretoTotal || 0,
-        precoVenda: resultado.faturamentoBruto || 0,
-        items: {
-          create: equipe.map((item: any) => {
-            const itemRes = resultado.items.find((r: any) => r.id === item.id);
-            return {
-              nomeCargo: item.nomeCargo,
-              quantidade: item.quantidade,
-              escala: item.escala,
-              entrada: item.parametrosPosto?.horarioInicio || '08:00',
-              saida: item.parametrosPosto?.horarioFim || '17:00',
-              configFinanceira: item.cargo as any,
-              ativosConfig: { 
-                ...(item.ativosConfig || {}), 
-                parametrosPosto: item.parametrosPosto 
-              } as any,
-              custoDireto: itemRes?.detalhes?.remuneracao || 0,
-              custoTotalItem: itemRes?.custoTotal || 0
-            };
-          })
-        }
+        userId: user.id,
+        action: !id ? 'CREATE' : (!criarNova && lastVersion ? 'VERSION_UPDATE' : 'VERSION_SAVE'),
+        details: { versao: nextVersion, changelog: changelog || 'Criação inicial da proposta' }
       }
     });
 
     revalidatePath('/');
-    // Busca o numero sequencial para retornar ao frontend
     const propostaCompleta = await prisma.proposta.findUnique({ where: { id: propostaId }, select: { numero: true } });
     const numeroProposta = propostaCompleta ? `FPV-${propostaCompleta.numero.toString().padStart(3, '0')}` : '';
     return { success: true, propostaId, versaoId: newVersao.id, versao: nextVersion, numeroProposta };
@@ -280,11 +325,17 @@ export async function getPropostas() {
     if (loggedUser.role === 'MANAGER') {
       const subordinateIds = await getSubordinateIds(loggedUser.id);
       whereClause = {
-        userId: { in: [loggedUser.id, ...subordinateIds] }
+        OR: [
+          { userId: { in: [loggedUser.id, ...subordinateIds] } },
+          { shares: { some: { userId: loggedUser.id } } }
+        ]
       };
     } else if (loggedUser.role === 'USER') {
       whereClause = {
-        userId: loggedUser.id
+        OR: [
+          { userId: loggedUser.id },
+          { shares: { some: { userId: loggedUser.id } } }
+        ]
       };
     }
 
@@ -327,7 +378,19 @@ export async function getPropostas() {
 
 export async function updatePropostaStatus(id: string, status: string) {
   try {
+    const loggedUser = await getLoggedUser();
     await prisma.proposta.update({ where: { id }, data: { status } });
+
+    if (loggedUser) {
+      await prisma.auditLog.create({
+        data: {
+          propostaId: id,
+          userId: loggedUser.id,
+          action: 'STATUS_CHANGE',
+          details: { newStatus: status }
+        }
+      });
+    }
 
     // Registra a data de transição para "ACEITA" ou similar em metadados da última versão
     const lastVersion = await prisma.propostaVersao.findFirst({
@@ -511,7 +574,8 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
       }),
       versao: v.versao,
       dreTaxPercent: meta.dreTaxPercent !== undefined ? meta.dreTaxPercent : null,
-      dreEncargos: meta.dreEncargos || null
+      dreEncargos: meta.dreEncargos || null,
+      encargos: meta.encargos || null
     };
   } catch (error) {
     console.error('Error fetching full proposta:', error);
@@ -589,6 +653,118 @@ export async function getKPIs() {
   } catch (error) {
     console.error('Error fetching raw KPIs data:', error);
     return null;
+  }
+}
+
+export async function getUsersList() {
+  try {
+    const loggedUser = await getLoggedUser();
+    if (!loggedUser) return [];
+
+    const users = await prisma.user.findMany({
+      orderBy: { nome: 'asc' },
+      select: { id: true, nome: true, role: true }
+    });
+    return users;
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return [];
+  }
+}
+
+export async function transferirProposta(propostaId: string, newUserId: string) {
+  try {
+    const loggedUser = await getLoggedUser();
+    if (!loggedUser || (loggedUser.role !== 'ADMIN' && loggedUser.role !== 'MANAGER')) {
+      return { success: false, error: 'Apenas gestores e administradores podem transferir propostas.' };
+    }
+
+    const proposta = await prisma.proposta.findUnique({ where: { id: propostaId }, include: { user: true } });
+    const newUser = await prisma.user.findUnique({ where: { id: newUserId } });
+
+    if (!proposta || !newUser) return { success: false, error: 'Proposta ou usuário não encontrado.' };
+
+    await prisma.proposta.update({
+      where: { id: propostaId },
+      data: { userId: newUserId }
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        propostaId,
+        userId: loggedUser.id,
+        action: 'TRANSFER',
+        details: { fromUserId: proposta.userId, fromUserName: proposta.user.nome, toUserId: newUserId, toUserName: newUser.nome }
+      }
+    });
+
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function compartilharProposta(propostaId: string, shareUserId: string) {
+  try {
+    const loggedUser = await getLoggedUser();
+    if (!loggedUser) return { success: false, error: 'Não autorizado.' };
+
+    const proposta = await prisma.proposta.findUnique({ where: { id: propostaId } });
+    const shareUser = await prisma.user.findUnique({ where: { id: shareUserId } });
+
+    if (!proposta || !shareUser) return { success: false, error: 'Proposta ou usuário não encontrado.' };
+
+    // Verificar permissão (dono, admin ou manager)
+    if (proposta.userId !== loggedUser.id && loggedUser.role === 'USER') {
+      return { success: false, error: 'Você não tem permissão para compartilhar esta proposta.' };
+    }
+
+    // Criar o compartilhamento se não existir
+    await prisma.propostaShare.upsert({
+      where: { propostaId_userId: { propostaId, userId: shareUserId } },
+      create: { propostaId, userId: shareUserId },
+      update: {}
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        propostaId,
+        userId: loggedUser.id,
+        action: 'SHARE',
+        details: { sharedWithUserId: shareUserId, sharedWithUserName: shareUser.nome }
+      }
+    });
+
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getPropostaShares(propostaId: string) {
+  try {
+    const shares = await prisma.propostaShare.findMany({
+      where: { propostaId },
+      include: { user: true }
+    });
+    return shares;
+  } catch (error) {
+    return [];
+  }
+}
+
+export async function getAuditLogs(propostaId: string) {
+  try {
+    const logs = await prisma.auditLog.findMany({
+      where: { propostaId },
+      include: { user: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    return logs;
+  } catch (error) {
+    return [];
   }
 }
 

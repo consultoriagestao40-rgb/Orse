@@ -16,11 +16,17 @@ export default function ProdutosPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    id: string;
+    descricao: string;
+    unidade: string;
+    precoUnitario: number | string;
+    categoria: string;
+  }>({
     id: '',
     descricao: '',
     unidade: 'UN',
-    precoUnitario: 0,
+    precoUnitario: '',
     categoria: ''
   });
 
@@ -64,7 +70,7 @@ export default function ProdutosPage() {
         id: '',
         descricao: '',
         unidade: 'UN',
-        precoUnitario: 0,
+        precoUnitario: '',
         categoria: categorias.length > 0 ? categorias[0].nome : 'Geral'
       });
     }
@@ -75,10 +81,16 @@ export default function ProdutosPage() {
     if (!formData.descricao) return alert('A descrição é obrigatória.');
     
     setLoading(true);
+
+    const dataToSave = {
+      ...formData,
+      precoUnitario: Number(formData.precoUnitario) || 0
+    };
+
     if (formData.id) {
-      await updateProduto(formData.id, formData);
+      await updateProduto(formData.id, dataToSave);
     } else {
-      await createProduto(formData);
+      await createProduto(dataToSave);
     }
     await loadData();
     setIsModalOpen(false);
@@ -246,7 +258,7 @@ export default function ProdutosPage() {
                       step="0.01"
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-sm font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
                       value={formData.precoUnitario}
-                      onChange={(e) => setFormData({...formData, precoUnitario: Number(e.target.value)})}
+                      onChange={(e) => setFormData({...formData, precoUnitario: e.target.value === '' ? '' : Number(e.target.value)})}
                     />
                   </div>
                 </div>

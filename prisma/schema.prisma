@@ -11,18 +11,20 @@ datasource db {
 }
 
 model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
-  nome         String
-  password     String     @default("123456")
-  role         UserRole   @default(USER)
-  cargo        String?
-  celular      String?
-  managerId    String?
-  createdAt    DateTime   @default(now())
-  propostas    Proposta[]
-  manager      User?      @relation("UserToManager", fields: [managerId], references: [id])
-  subordinates User[]     @relation("UserToManager")
+  id             String          @id @default(cuid())
+  email          String          @unique
+  nome           String
+  password       String          @default("123456")
+  role           UserRole        @default(USER)
+  cargo          String?
+  celular        String?
+  managerId      String?
+  createdAt      DateTime        @default(now())
+  propostas      Proposta[]
+  manager        User?           @relation("UserToManager", fields: [managerId], references: [id])
+  subordinates   User[]          @relation("UserToManager")
+  propostaShares PropostaShare[]
+  auditLogs      AuditLog[]
 }
 
 model Client {
@@ -99,6 +101,8 @@ model Proposta {
   client    Client?          @relation(fields: [clientId], references: [id])
   user      User             @relation(fields: [userId], references: [id])
   versoes   PropostaVersao[]
+  shares    PropostaShare[]
+  auditLogs AuditLog[]
 }
 
 model PropostaVersao {
@@ -175,4 +179,28 @@ enum UserRole {
 model TipoServico {
   id   String @id @default(cuid())
   nome String @unique
+}
+
+model PropostaShare {
+  id         String   @id @default(cuid())
+  propostaId String
+  userId     String
+  createdAt  DateTime @default(now())
+
+  proposta Proposta @relation(fields: [propostaId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([propostaId, userId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  propostaId String
+  userId     String // Quem realizou a ação
+  action     String // Ex: 'CREATE', 'TRANSFER', 'SHARE', 'STATUS_CHANGE', 'VERSION_SAVE'
+  details    Json? // Detalhes extras (ex: de quem para quem foi transferido)
+  createdAt  DateTime @default(now())
+
+  proposta Proposta @relation(fields: [propostaId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
 }

@@ -17,11 +17,17 @@ export default function EpisPage() {
   
   const CATEGORIA_EPI = 'EPIs e Uniformes';
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    id: string;
+    descricao: string;
+    unidade: string;
+    precoUnitario: number | string;
+    categoria: string;
+  }>({
     id: '',
     descricao: '',
     unidade: 'UN',
-    precoUnitario: 0,
+    precoUnitario: '',
     categoria: CATEGORIA_EPI
   });
 
@@ -56,7 +62,7 @@ export default function EpisPage() {
         id: '',
         descricao: '',
         unidade: 'UN',
-        precoUnitario: 0,
+        precoUnitario: '',
         categoria: CATEGORIA_EPI
       });
     }
@@ -68,11 +74,16 @@ export default function EpisPage() {
     
     try {
       setLoading(true);
+      const dataToSave = {
+        ...formData,
+        precoUnitario: Number(formData.precoUnitario) || 0
+      };
+
       let res;
       if (formData.id) {
-        res = await updateProduto(formData.id, formData);
+        res = await updateProduto(formData.id, dataToSave);
       } else {
-        res = await createProduto(formData);
+        res = await createProduto(dataToSave);
       }
       
       if (res && !res.success) {
@@ -241,7 +252,7 @@ export default function EpisPage() {
                       step="0.01"
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-sm font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
                       value={formData.precoUnitario}
-                      onChange={(e) => setFormData({...formData, precoUnitario: Number(e.target.value)})}
+                      onChange={(e) => setFormData({...formData, precoUnitario: e.target.value === '' ? '' : Number(e.target.value)})}
                     />
                   </div>
                 </div>
