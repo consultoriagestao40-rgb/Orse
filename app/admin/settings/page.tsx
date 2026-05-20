@@ -23,21 +23,20 @@ type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'metas';
 
 
 export default function SettingsPage() {
-  const [isAdmin, setIsAdmin] = useState<boolean>(true);
+  const [userRole, setUserRole] = useState<string>('USER');
+  const [hasAccess, setHasAccess] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<Tab>('status');
   const [loading, setLoading] = useState(true);
 
-  // Verificação de Perfil Administrador (bloqueia acesso direto via URL)
+  // Verificação de Perfil (Qualquer usuário logado pode acessar as configurações, mas com limites)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
       if (cookie) {
         try {
           const parsed = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
-          if (parsed.role !== 'ADMIN') {
-            setIsAdmin(false);
-            window.location.href = '/'; // Redireciona para o CRM
-          }
+          setUserRole(parsed.role || 'USER');
+          setHasAccess(true);
         } catch (e) {
           window.location.href = '/';
         }
@@ -47,7 +46,7 @@ export default function SettingsPage() {
     }
   }, []);
 
-  if (!isAdmin) {
+  if (!hasAccess) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-[#F8FAFC]">
         <div className="flex flex-col items-center gap-2">
@@ -136,6 +135,10 @@ export default function SettingsPage() {
         const data = await getTiposServico();
         setTipos(data || []);
       } else if (activeTab === 'metas') {
+        if (userRole === 'USER') {
+          setActiveTab('status');
+          return;
+        }
         const sellersList = await getSellers();
         setSellers(sellersList || []);
         loadMetas();
@@ -286,14 +289,13 @@ export default function SettingsPage() {
           {/* TABS NAVEGAÇÃO PADRÃO */}
           <div className="flex gap-4 border-b border-slate-200">
             {[
-              { id: 'status', label: 'Status de Proposta', icon: Layers },
-              { id: 'escalas', label: 'Escalas de Trabalho', icon: CalendarDays },
-              { id: 'unidades', label: 'Unidades de Medida', icon: Ruler },
-              { id: 'categorias', label: 'Categorias', icon: Tag },
-              { id: 'tipos', label: 'Tipos de Serviço', icon: Settings },
-              { id: 'metas', label: 'Metas dos Vendedores', icon: Target },
-            ].map((tab) => (
-
+              { id: 'status', label: 'Status de Proposta', icon: Layers, roles: ['ADMIN', 'MANAGER', 'USER'] },
+              { id: 'escalas', label: 'Escalas de Trabalho', icon: CalendarDays, roles: ['ADMIN', 'MANAGER', 'USER'] },
+              { id: 'unidades', label: 'Unidades de Medida', icon: Ruler, roles: ['ADMIN', 'MANAGER', 'USER'] },
+              { id: 'categorias', label: 'Categorias', icon: Tag, roles: ['ADMIN', 'MANAGER', 'USER'] },
+              { id: 'tipos', label: 'Tipos de Serviço', icon: Settings, roles: ['ADMIN', 'MANAGER', 'USER'] },
+              { id: 'metas', label: 'Metas dos Vendedores', icon: Target, roles: ['ADMIN', 'MANAGER'] },
+            ].filter(tab => tab.roles.includes(userRole)).map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as Tab)}
@@ -539,7 +541,7 @@ export default function SettingsPage() {
             )}
 
             {/* 6. ABA METAS DOS VENDEDORES */}
-            {activeTab === 'metas' && (
+            {activeTab === 'metas' && userRole !== 'USER' && (
               <div>
                 <div className="bg-[#1B4D3E] px-6 py-4 border-b border-[#13382D] flex flex-col md:flex-row justify-between items-center gap-4">
                   <h2 className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">

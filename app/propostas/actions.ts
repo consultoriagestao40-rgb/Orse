@@ -11,9 +11,25 @@ const defaultItensInclusosExcluidos = [
 ];
 
 
+async function getSubordinateIds(managerId: string): Promise<string[]> {
+  try {
+    const subs = await prisma.user.findMany({
+      where: { managerId },
+      select: { id: true }
+    });
+    const ids = subs.map(s => s.id);
+    const subIdsPromises = ids.map(id => getSubordinateIds(id));
+    const nestedIds = await Promise.all(subIdsPromises);
+    return [...ids, ...nestedIds.flat()];
+  } catch (error) {
+    console.error('Erro ao buscar subordinados recursivamente:', error);
+    return [];
+  }
+}
+
 export async function getCurrentUserRole() {
   try {
-    const user = await prisma.user.findFirst();
+    const user = await getLoggedUser();
     return user?.role || 'USER';
   } catch {
     return 'USER';
@@ -41,8 +57,8 @@ export async function getLoggedUser() {
 export async function deleteProposta(id: string) {
   try {
     // Verifica se o usuário é admin antes de deletar
-    const user = await prisma.user.findFirst();
-    if (user?.role !== 'ADMIN') {
+    const user = await getLoggedUser();
+    if (!user || user.role !== 'ADMIN') {
       return { success: false, error: 'Sem permissão para excluir propostas.' };
     }
     await prisma.proposta.delete({ where: { id } });
@@ -113,13 +129,37 @@ async function getDefaultUser() {
 }
 
 export async function saveProposta(data: any) {
-  const user = await getDefaultUser();
+  const loggedUser = await getLoggedUser();
+  const user = loggedUser || await getDefaultUser();
   const { id, cliente, premissas, encargos, equipe, resultado, dreTaxPercent, dreEncargos, changelog } = data;
 
   try {
     let propostaId = id;
 
-    if (!propostaId) {
+    if (propostaId) {
+      // Editar proposta existente - verifica se tem acesso
+      const existingProposta = await prisma.proposta.findUnique({
+        where: { id: propostaId }
+      });
+      if (!existingProposta) {
+        return { success: false, error: 'Proposta não encontrada.' };
+      }
+      if (user.role !== 'ADMIN') {
+        if (user.role === 'MANAGER') {
+          const subordinateIds = await getSubordinateIds(user.id);
+          const allowedIds = [user.id, ...subordinateIds];
+          if (!allowedIds.includes(existingProposta.userId)) {
+            return { success: false, error: 'Sem permissão para editar esta proposta.' };
+          }
+        } else {
+          // USER
+          if (existingProposta.userId !== user.id) {
+            return { success: false, error: 'Sem permissão para editar esta proposta.' };
+          }
+        }
+      }
+    } else {
+      // Criar nova proposta
       const dbClient = await prisma.client.findFirst({
         where: { nomeFantasia: cliente.cliente }
       });
@@ -233,7 +273,23 @@ export async function saveProposta(data: any) {
 
 export async function getPropostas() {
   try {
+    const loggedUser = await getLoggedUser();
+    if (!loggedUser) return [];
+
+    let whereClause: any = {};
+    if (loggedUser.role === 'MANAGER') {
+      const subordinateIds = await getSubordinateIds(loggedUser.id);
+      whereClause = {
+        userId: { in: [loggedUser.id, ...subordinateIds] }
+      };
+    } else if (loggedUser.role === 'USER') {
+      whereClause = {
+        userId: loggedUser.id
+      };
+    }
+
     const propostas = await prisma.proposta.findMany({
+      where: whereClause,
       include: {
         client: true,
         user: true,
@@ -305,6 +361,9 @@ export async function updatePropostaStatus(id: string, status: string) {
 
 export async function getPropostaCompleta(id: string, versionId?: string) {
   try {
+    const loggedUser = await getLoggedUser();
+    if (!loggedUser) return null;
+
     const proposta = await prisma.proposta.findUnique({
       where: { id },
       include: {
@@ -316,6 +375,22 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
     });
 
     if (!proposta || !proposta.versoes.length) return null;
+
+    // Validação de segurança por perfil
+    if (loggedUser.role !== 'ADMIN') {
+      if (loggedUser.role === 'MANAGER') {
+        const subordinateIds = await getSubordinateIds(loggedUser.id);
+        const allowedIds = [loggedUser.id, ...subordinateIds];
+        if (!allowedIds.includes(proposta.userId)) {
+          return null;
+        }
+      } else {
+        // USER
+        if (proposta.userId !== loggedUser.id) {
+          return null;
+        }
+      }
+    }
 
     const availableVersions = proposta.versoes.map(v => {
       const meta = (v.metadados as any) || {};
@@ -446,12 +521,37 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
 
 export async function getKPIs() {
   try {
+    const loggedUser = await getLoggedUser();
+    if (!loggedUser) return null;
+
+    let whereClause: any = {};
+    let usersWhereClause: any = {};
+
+    if (loggedUser.role === 'MANAGER') {
+      const subordinateIds = await getSubordinateIds(loggedUser.id);
+      whereClause = {
+        userId: { in: [loggedUser.id, ...subordinateIds] }
+      };
+      usersWhereClause = {
+        id: { in: [loggedUser.id, ...subordinateIds] }
+      };
+    } else if (loggedUser.role === 'USER') {
+      whereClause = {
+        userId: loggedUser.id
+      };
+      usersWhereClause = {
+        id: loggedUser.id
+      };
+    }
+
     const propostas = await prisma.proposta.findMany({
+      where: whereClause,
       include: {
         client: true,
         user: true,
         versoes: {
           orderBy: { versao: 'desc' },
+          take: 1,
           include: { items: true }
         }
       }
@@ -476,8 +576,9 @@ export async function getKPIs() {
       };
     });
 
-    // Busca todos os usuários do sistema
+    // Busca todos os usuários permitidos do sistema
     const users = await prisma.user.findMany({
+      where: usersWhereClause,
       orderBy: { nome: 'asc' }
     });
 
