@@ -113,7 +113,7 @@ export default function ProposalsDashboard() {
     const [open, setOpen] = useState(false);
     return (
       <div className="relative" onClick={e => e.stopPropagation()}>
-        <button onClick={() => setOpen(!open)} className="text-slate-400 hover:text-[#1B4D3E] p-1 rounded transition-colors">
+        <button onClick={() => setOpen(!open)} className="text-amber-500 hover:text-amber-600 p-1 rounded transition-colors">
           <MoreVertical size={16} />
         </button>
         {open && (
@@ -250,7 +250,7 @@ export default function ProposalsDashboard() {
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
                     viewMode === 'lista'
                       ? 'bg-[#1B4D3E] text-white shadow-sm'
-                      : 'text-slate-400 hover:text-slate-600'
+                      : 'text-amber-500 hover:text-amber-600'
                   }`}
                 >
                   <LayoutList size={14} /> Lista
@@ -261,7 +261,7 @@ export default function ProposalsDashboard() {
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
                     viewMode === 'kanban-status'
                       ? 'bg-[#1B4D3E] text-white shadow-sm'
-                      : 'text-slate-400 hover:text-slate-600'
+                      : 'text-amber-500 hover:text-amber-600'
                   }`}
                 >
                   <LayoutGrid size={14} /> Por Status
@@ -272,7 +272,7 @@ export default function ProposalsDashboard() {
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
                     viewMode === 'kanban-vendedor'
                       ? 'bg-[#1B4D3E] text-white shadow-sm'
-                      : 'text-slate-400 hover:text-slate-600'
+                      : 'text-amber-500 hover:text-amber-600'
                   }`}
                 >
                   <UserSquare2 size={14} /> Por Vendedor
@@ -401,7 +401,7 @@ export default function ProposalsDashboard() {
                           <div className="flex items-center justify-center gap-2 relative">
                             <button
                               onClick={() => router.push(`/propostas/nova?id=${prop.id}`)}
-                              className="text-slate-400 hover:text-[#1B4D3E] transition-colors p-1"
+                              className="text-amber-500 hover:text-amber-600 transition-colors p-1"
                               title="Editar Proposta"
                             >
                               <Edit2 size={16} />
@@ -519,7 +519,7 @@ export default function ProposalsDashboard() {
               <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
                 <ArrowRightLeft size={20} className="text-[#1B4D3E]" /> Transferir Proposta
               </h2>
-              <button onClick={() => setTransferModal({ isOpen: false, propId: null })} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setTransferModal({ isOpen: false, propId: null })} className="text-amber-500 hover:text-amber-600">
                 <X size={20} />
               </button>
             </div>
@@ -571,7 +571,7 @@ export default function ProposalsDashboard() {
               <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
                 <Share2 size={20} className="text-[#1B4D3E]" /> Compartilhar Proposta
               </h2>
-              <button onClick={() => setShareModal({ isOpen: false, propId: null })} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setShareModal({ isOpen: false, propId: null })} className="text-amber-500 hover:text-amber-600">
                 <X size={20} />
               </button>
             </div>
@@ -623,7 +623,7 @@ export default function ProposalsDashboard() {
               <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
                 <History size={20} className="text-[#1B4D3E]" /> Linha do Tempo / Auditoria
               </h2>
-              <button onClick={() => setAuditModal({ isOpen: false, propId: null, logs: [] })} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setAuditModal({ isOpen: false, propId: null, logs: [] })} className="text-amber-500 hover:text-amber-600">
                 <X size={20} />
               </button>
             </div>

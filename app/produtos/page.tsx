@@ -187,7 +187,7 @@ export default function ProdutosPage() {
                         <div className="flex items-center justify-center gap-2">
                           <button 
                             onClick={() => openModal(p)}
-                            className="p-1.5 text-slate-400 hover:text-[#1B4D3E] transition-colors"
+                            className="p-1.5 text-amber-500 hover:text-amber-600 transition-colors"
                             title="Editar"
                           >
                             <Edit2 size={14} />

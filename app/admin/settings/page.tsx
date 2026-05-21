@@ -307,7 +307,7 @@ export default function SettingsPage() {
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-bold transition-all border-b-2 -mb-[2px] ${
                   activeTab === tab.id 
                     ? 'border-[#1B4D3E] text-[#1B4D3E]' 
-                    : 'border-transparent text-slate-400 hover:text-slate-600'
+                    : 'border-transparent text-amber-500 hover:text-amber-600'
                 }`}
               >
                 <tab.icon size={16} />
@@ -399,7 +399,7 @@ export default function SettingsPage() {
                           <td className="px-4 py-3 text-center font-bold">{e.horasMensais}h</td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex justify-end gap-2">
-                              <button onClick={() => openEscalaModal(e)} className="text-slate-400 hover:text-[#1B4D3E]"><Edit2 size={14} /></button>
+                              <button onClick={() => openEscalaModal(e)} className="text-amber-500 hover:text-amber-600"><Edit2 size={14} /></button>
                               <button onClick={() => { if(confirm('Excluir escala?')) deleteEscala(e.id).then(loadData) }} className="text-slate-400 hover:text-red-600"><Trash2 size={14} /></button>
                             </div>
                           </td>

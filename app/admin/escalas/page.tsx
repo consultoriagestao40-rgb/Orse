@@ -261,7 +261,7 @@ export default function EscalasPage() {
             <div className="px-8 py-6 bg-slate-50/50 border-t border-slate-100 flex justify-end gap-4">
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="px-6 py-3 text-sm font-black text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest"
+                className="px-6 py-3 text-sm font-black text-amber-500 hover:text-amber-600 transition-colors uppercase tracking-widest"
               >
                 Cancelar
               </button>

@@ -244,7 +244,7 @@ export default function UsuariosPage() {
                     <div className="flex justify-end gap-1">
                       <button 
                         onClick={() => handleEditClick(u)}
-                        className="p-3 text-slate-400 hover:text-[#1B4D3E] hover:bg-[#1B4D3E]/5 rounded-xl transition-all"
+                        className="p-3 text-amber-500 hover:text-amber-600 hover:bg-[#1B4D3E]/5 rounded-xl transition-all"
                         title="Editar Usuário"
                       >
                         <Pencil size={18} />

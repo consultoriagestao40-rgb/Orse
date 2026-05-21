@@ -499,6 +499,72 @@ function PropostaEditor() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [presentationMode]);
 
+  const handleCalcularProposta = async () => {
+    try {
+      setLoading(true);
+      const [dataProdutos, dataCcts] = await Promise.all([
+        getProdutos(),
+        getCCTs()
+      ]);
+      setProdutosDb(dataProdutos || []);
+      setCcts(dataCcts || []);
+
+      const updateList = (list: any[], db: any[]) => {
+        if (!Array.isArray(list)) return [];
+        return list.map(item => {
+          const prodDb = db.find(p => p.id === item.id || p.codigo === item.codigo);
+          if (prodDb) {
+            const novoPreco = Number(prodDb.precoUnitario || prodDb.valor || 0);
+            const qtd = Number(item.quantidade || item.qtde || 0);
+            const vida = Number(item.vidaUtil || 1);
+            return {
+              ...item,
+              precoUnitario: novoPreco,
+              custoMensal: vida > 0 ? (novoPreco * qtd) / vida : (novoPreco * qtd)
+            };
+          }
+          return item;
+        });
+      };
+
+      const newEquipe = proposta.equipe.map((posto: any) => ({
+        ...posto,
+        configFinanceira: {
+          ...posto.configFinanceira,
+          epi: updateList(posto.configFinanceira?.epi, dataProdutos || []),
+          uniformes: updateList(posto.configFinanceira?.uniformes, dataProdutos || []),
+          equipamentos: updateList(posto.configFinanceira?.equipamentos, dataProdutos || []),
+          insumos: updateList(posto.configFinanceira?.insumos, dataProdutos || []),
+        }
+      }));
+
+      const newInsumos = {
+        ...proposta.insumos,
+        detalheMateriais: updateList(proposta.insumos?.detalheMateriais, dataProdutos || []),
+        detalheDescartaveis: updateList(proposta.insumos?.detalheDescartaveis, dataProdutos || []),
+        detalheMaquinas: updateList(proposta.insumos?.detalheMaquinas, dataProdutos || []),
+      };
+      
+      const calcTotal = (arr: any[]) => arr.reduce((acc, curr) => acc + (curr.custoMensal || 0), 0);
+      newInsumos.materiais = calcTotal(newInsumos.detalheMateriais);
+      newInsumos.descartaveis = calcTotal(newInsumos.detalheDescartaveis);
+      newInsumos.maquinas = calcTotal(newInsumos.detalheMaquinas);
+
+      setProposta((prev: any) => ({
+        ...prev,
+        equipe: newEquipe,
+        insumos: newInsumos
+      }));
+
+      alert("Custos recalculados com sucesso com os valores atualizados do banco de dados!");
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao recalcular proposta.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const addTributo = () => {
     setProposta({ ...proposta, premissas: { ...proposta.premissas, tributos: [...proposta.premissas.tributos, { id: Math.random().toString(), nome: '', percent: 0 }] } });
   };
@@ -870,6 +936,13 @@ function PropostaEditor() {
                {!id && (
                  <span className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full font-medium">Nova Proposta</span>
                )}
+               <button 
+                 onClick={handleCalcularProposta}
+                 disabled={loading}
+                 className="bg-[#2A4365] hover:bg-[#1E3A8A] text-white text-sm font-semibold py-2 px-4 rounded shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50"
+               >
+                  <Calculator size={16} /> Calcular Proposta
+               </button>
                <button 
                  onClick={handleSave}
                  disabled={saving}
