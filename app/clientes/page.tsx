@@ -139,7 +139,7 @@ export default function ClientesPage() {
                         <div className="flex items-center justify-end gap-1">
                           <button 
                             onClick={() => router.push(`/clientes/${cliente.id}/edit`)}
-                            className="p-2 text-slate-300 hover:text-emerald-500 transition-colors"
+                            className="p-2 text-amber-500 hover:text-amber-600 transition-colors"
                           >
                             <Edit2 size={16} />
                           </button>
