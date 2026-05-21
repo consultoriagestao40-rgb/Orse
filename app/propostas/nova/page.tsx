@@ -228,6 +228,7 @@ function PropostaEditor() {
   // =========================================================================
   const [dreTaxPercent, setDreTaxPercent] = useState<number>(12.5);
   const [showChangelogModal, setShowChangelogModal] = useState(false);
+  const [showSaveChoiceModal, setShowSaveChoiceModal] = useState(false);
   const [changelogText, setChangelogText] = useState('');
   const [dreEncargos, setDreEncargos] = useState({
      fgts: 8.00,
@@ -557,23 +558,34 @@ function PropostaEditor() {
     if (!proposta.cliente.cliente) return alert('Por favor, selecione ou informe o cliente.');
     if (proposta.equipe.length === 0) return alert('Adicione ao menos um posto no quadro de equipe.');
 
-    // Se for uma revisão (versão >= 2), abre o modal obrigatório de changelog
-    if (proposta.id) {
-      setChangelogText('');
-      setShowChangelogModal(true);
+    // Se for nova proposta, salva direto sem escolha de versão
+    if (!proposta.id) {
+      await executeSave('Criação inicial da proposta', false);
       return;
     }
 
-    // Se for a primeira versão (v1), salva diretamente
-    await executeSave('Criação inicial da proposta');
+    // Se for edição, abre modal de escolha: mesma versão ou nova versão
+    setShowSaveChoiceModal(true);
   };
 
-  const executeSave = async (changelog: string) => {
+  // novaVersao=false → salva sobrepondo a versão atual (mesma versão)
+  // novaVersao=true  → cria nova revisão com changelog
+  const executeSave = async (changelog: string, novaVersao: boolean = false) => {
     try {
       setSaving(true);
-      const res = await saveProposta({ ...proposta, resultado, dreTaxPercent, dreEncargos, changelog });
+      const res = await saveProposta({ 
+        ...proposta, 
+        resultado, 
+        dreTaxPercent, 
+        dreEncargos, 
+        changelog,
+        novaVersao 
+      });
       if (res.success) {
-        alert(`Sucesso! Proposta ${proposta.id ? 'atualizada' : 'salva'} como Revisão ${res.versao}.`);
+        const msg = novaVersao
+          ? `Nova Revisão R${String(res.versao).padStart(2, '0')} salva com sucesso!`
+          : `Proposta salva na mesma versão R${String(res.versao).padStart(2, '0')}.`;
+        alert(msg);
         const novoNumero = res.numeroProposta || proposta.cliente.numeroProposta;
         const novaRevisao = `R${String(res.versao).padStart(2, '0')}`;
         setProposta({ 
@@ -591,6 +603,7 @@ function PropostaEditor() {
         const updatedData = await getPropostaCompleta(res.propostaId);
         if (updatedData) setVersions(updatedData.availableVersions || []);
         setShowChangelogModal(false);
+        setShowSaveChoiceModal(false);
         setChangelogText('');
         if (!proposta.id) {
            router.push(`/propostas/nova?id=${res.propostaId}`);
@@ -735,7 +748,7 @@ function PropostaEditor() {
                       type="number" 
                       className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold outline-none focus:border-[#1B4D3E]"
                       value={item.quantidade}
-                      onChange={(e) => updateInsumoItem(tipo, item.id, 'quantidade', Number(e.target.value))}
+                      onChange={(e) => updateInsumoItem(tipo, item.id, 'quantidade', (e.target.value === '' ? '' : Number(e.target.value)))}
                     />
                   </td>
                   <td className="px-4 py-2">
@@ -743,7 +756,7 @@ function PropostaEditor() {
                       type="number" 
                       className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold outline-none focus:border-[#1B4D3E]"
                       value={item.vidaUtil}
-                      onChange={(e) => updateInsumoItem(tipo, item.id, 'vidaUtil', Number(e.target.value))}
+                      onChange={(e) => updateInsumoItem(tipo, item.id, 'vidaUtil', (e.target.value === '' ? '' : Number(e.target.value)))}
                     />
                   </td>
                   <td className="px-4 py-2 text-right font-bold text-[#1B4D3E] bg-emerald-50">
@@ -777,10 +790,12 @@ function PropostaEditor() {
               <tbody>
                  {Object.entries(dados).map(([key, val]) => (
                     <tr key={key} className="border-b border-slate-200 last:border-0 hover:bg-slate-50">
-                       <td className="py-2 px-4 text-slate-700 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</td>
+                       <td className="py-2 px-4 text-slate-700 font-bold uppercase text-[10px]">
+                          {key === 'previdenciaSocial' ? 'INSS - PREVIDENCIA SOCIAL' : key.replace(/([A-Z])/g, ' $1').trim()}
+                       </td>
                        <td className="py-2 px-4 text-right w-24">
                           <div className="flex items-center justify-end gap-1">
-                             <input type="number" step="0.01" className="w-16 bg-white border border-slate-300 text-right font-medium text-slate-800 focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] outline-none rounded px-1 py-0.5" value={val} onChange={(e) => setDados({...dados, [key]: Number(e.target.value)})} />
+                             <input type="number" step="0.01" className="w-16 bg-white border border-slate-300 text-right font-medium text-slate-800 focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] outline-none rounded px-1 py-0.5" value={val} onChange={(e) => setDados({...dados, [key]: (e.target.value === '' ? '' : Number(e.target.value))})} />
                              <span className="text-slate-500">%</span>
                           </div>
                        </td>
@@ -1064,11 +1079,11 @@ function PropostaEditor() {
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-white p-6 rounded-md border border-slate-300 shadow-sm flex flex-col gap-2">
                        <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Taxa Administrativa (%)</label>
-                       <input type="number" className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded text-lg font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={proposta.premissas.taxaAdm} onChange={(e) => setProposta({...proposta, premissas: {...proposta.premissas, taxaAdm: Number(e.target.value)}})} />
+                       <input type="number" className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded text-lg font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={proposta.premissas.taxaAdm} onChange={(e) => setProposta({...proposta, premissas: {...proposta.premissas, taxaAdm: (e.target.value === '' ? '' : Number(e.target.value))}})} />
                     </div>
                     <div className="bg-white p-6 rounded-md border border-slate-300 shadow-sm flex flex-col gap-2">
                        <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Margem de Lucro (%)</label>
-                       <input type="number" className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded text-lg font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={proposta.premissas.margemLucro} onChange={(e) => setProposta({...proposta, premissas: {...proposta.premissas, margemLucro: Number(e.target.value)}})} />
+                       <input type="number" className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded text-lg font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={proposta.premissas.margemLucro} onChange={(e) => setProposta({...proposta, premissas: {...proposta.premissas, margemLucro: (e.target.value === '' ? '' : Number(e.target.value))}})} />
                     </div>
                  </div>
 
@@ -1086,7 +1101,7 @@ function PropostaEditor() {
                              }} />
                              <div className="relative w-32">
                                 <input type="number" step="0.01" className="w-full bg-white border border-slate-300 rounded px-3 py-2 text-sm font-bold text-slate-800 focus:border-[#1B4D3E] outline-none text-right pr-8" value={t.percent} onChange={(e) => {
-                                   const newT = proposta.premissas.tributos.map((x: any) => x.id === t.id ? {...x, percent: Number(e.target.value)} : x);
+                                   const newT = proposta.premissas.tributos.map((x: any) => x.id === t.id ? {...x, percent: (e.target.value === '' ? '' : Number(e.target.value))} : x);
                                    setProposta({...proposta, premissas: {...proposta.premissas, tributos: newT}});
                                 }} />
                                 <span className="absolute right-3 top-2 text-slate-400 text-sm">%</span>
@@ -1179,7 +1194,7 @@ function PropostaEditor() {
                              <React.Fragment key={p.id}>
                                 <tr className="border-b border-slate-200 hover:bg-slate-50">
                                    <td className="px-6 py-4">
-                                      <input type="number" className="w-16 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.quantidade} onChange={(e) => updatePosto(p.id, 'quantidade', Number(e.target.value))} />
+                                      <input type="number" className="w-16 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.quantidade} onChange={(e) => updatePosto(p.id, 'quantidade', (e.target.value === '' ? '' : Number(e.target.value)))} />
                                    </td>
                                    <td className="px-6 py-4">
                                       <select className="w-full bg-white border border-slate-300 rounded px-3 py-1.5 text-sm font-medium text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.cargo?.id ? `${p.cctBase?.id}|${p.cargo?.id}` : ''} onChange={(e) => {
@@ -1441,7 +1456,7 @@ function PropostaEditor() {
                                                     className="w-14 bg-white border border-slate-300 text-right px-1 py-0.5 rounded outline-none focus:border-[#1B4D3E]"
                                                     value={(proposta.premissas as any)[row.field]}
                                                     onChange={(e) => {
-                                                       const val = Number(e.target.value);
+                                                       const val = (e.target.value === '' ? '' : Number(e.target.value));
                                                        setProposta({...proposta, premissas: {...proposta.premissas, [row.field]: val}});
                                                     }}
                                                  />
@@ -1936,7 +1951,7 @@ function PropostaEditor() {
                                              type="number" 
                                              step="0.01" 
                                              value={dreTaxPercent} 
-                                             onChange={(e) => setDreTaxPercent(Number(e.target.value))} 
+                                             onChange={(e) => setDreTaxPercent((e.target.value === '' ? '' : Number(e.target.value)))} 
                                              className="w-12 py-0.5 border border-slate-200 rounded text-center text-[10px] font-black text-[#1B4D3E] bg-[#F8FAFC] focus:bg-white focus:ring-2 focus:ring-emerald-500/10 outline-none" 
                                           /> %
                                        </div>
@@ -2093,7 +2108,7 @@ function PropostaEditor() {
                                              type="number" 
                                              step="0.01" 
                                              value={(dreEncargos as any)[item.key]} 
-                                             onChange={(e) => setDreEncargos({ ...dreEncargos, [item.key]: Number(e.target.value) })} 
+                                             onChange={(e) => setDreEncargos({ ...dreEncargos, [item.key]: (e.target.value === '' ? '' : Number(e.target.value)) })} 
                                              className="w-12 py-0.5 border border-slate-200 rounded text-center text-[10px] font-black text-[#1B4D3E] bg-[#F8FAFC] focus:bg-white focus:ring-2 focus:ring-emerald-500/10 outline-none" 
                                           /> %
                                        </div>
@@ -4539,7 +4554,7 @@ function PropostaEditor() {
                                  className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
                                  value={p.parametrosPosto?.insalubridadePercent || 0} 
                                  onChange={(e) => {
-                                    const param = {...p.parametrosPosto, insalubridadePercent: Number(e.target.value)};
+                                    const param = {...p.parametrosPosto, insalubridadePercent: (e.target.value === '' ? '' : Number(e.target.value))};
                                     updatePosto(p.id, 'parametrosPosto', param);
                                  }}
                               >
@@ -4557,7 +4572,7 @@ function PropostaEditor() {
                                  className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
                                  value={p.parametrosPosto?.adicionalNoturnoHoras || 0} 
                                  onChange={(e) => {
-                                    const param = {...p.parametrosPosto, adicionalNoturnoHoras: Number(e.target.value)};
+                                    const param = {...p.parametrosPosto, adicionalNoturnoHoras: (e.target.value === '' ? '' : Number(e.target.value))};
                                     updatePosto(p.id, 'parametrosPosto', param);
                                  }} 
                               />
@@ -4570,7 +4585,7 @@ function PropostaEditor() {
                                  className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
                                  value={p.parametrosPosto?.intrajornadaHoras || 0} 
                                  onChange={(e) => {
-                                    const param = {...p.parametrosPosto, intrajornadaHoras: Number(e.target.value)};
+                                    const param = {...p.parametrosPosto, intrajornadaHoras: (e.target.value === '' ? '' : Number(e.target.value))};
                                     updatePosto(p.id, 'parametrosPosto', param);
                                  }} 
                               />
@@ -4584,7 +4599,7 @@ function PropostaEditor() {
                                  className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
                                  value={p.parametrosPosto?.dsrPercent || 0} 
                                  onChange={(e) => {
-                                    const param = {...p.parametrosPosto, dsrPercent: Number(e.target.value)};
+                                    const param = {...p.parametrosPosto, dsrPercent: (e.target.value === '' ? '' : Number(e.target.value))};
                                     updatePosto(p.id, 'parametrosPosto', param);
                                  }} 
                               />
@@ -4638,7 +4653,7 @@ function PropostaEditor() {
                                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] transition-all" 
                                     value={p.parametrosPosto?.diasTrabalhadosMes || 22} 
                                     onChange={(e) => {
-                                       const dias = Number(e.target.value);
+                                       const dias = (e.target.value === '' ? '' : Number(e.target.value));
                                        const hInicio = p.parametrosPosto?.horarioInicio || '08:00';
                                        const hFim = p.parametrosPosto?.horarioFim || '17:00';
                                        const noturnoAuto = calculateAutoNoturno(hInicio, hFim, dias);
@@ -4759,7 +4774,7 @@ function PropostaEditor() {
                                                 value={epi.quantidade}
                                                 onChange={(e) => {
                                                    const newEpis = [...p.parametrosPosto.episAdicionais];
-                                                   newEpis[epiIdx].quantidade = Number(e.target.value);
+                                                   newEpis[epiIdx].quantidade = (e.target.value === '' ? '' : Number(e.target.value));
                                                    updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
                                                 }}
                                              />
@@ -4774,7 +4789,7 @@ function PropostaEditor() {
                                                    value={epi.precoUnitario}
                                                    onChange={(e) => {
                                                       const newEpis = [...p.parametrosPosto.episAdicionais];
-                                                      newEpis[epiIdx].precoUnitario = Number(e.target.value);
+                                                      newEpis[epiIdx].precoUnitario = (e.target.value === '' ? '' : Number(e.target.value));
                                                       updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
                                                    }}
                                                 />
@@ -4787,7 +4802,7 @@ function PropostaEditor() {
                                                 value={epi.vidaUtil}
                                                 onChange={(e) => {
                                                    const newEpis = [...p.parametrosPosto.episAdicionais];
-                                                   newEpis[epiIdx].vidaUtil = Number(e.target.value);
+                                                   newEpis[epiIdx].vidaUtil = (e.target.value === '' ? '' : Number(e.target.value));
                                                    updatePosto(p.id, 'parametrosPosto', {...p.parametrosPosto, episAdicionais: newEpis});
                                                 }}
                                              />
@@ -4840,6 +4855,61 @@ function PropostaEditor() {
             );
          })()}
 
+      {/* MODAL DE ESCOLHA DE SALVAMENTO (EDIÇÃO) */}
+      {showSaveChoiceModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 transform scale-100 transition-all duration-300">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-[#1B4D3E]/5 border border-[#1B4D3E]/10 rounded-2xl flex items-center justify-center text-[#1B4D3E] mb-6 shadow-sm">
+                <Save size={32} />
+              </div>
+              <h3 className="text-xl font-black text-slate-800 mb-2">Como deseja salvar?</h3>
+              <p className="text-sm text-slate-500 mb-8 px-2 font-medium">
+                Escolha se esta alteração deve gerar uma nova revisão da proposta ou sobrescrever a versão atual.
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <button
+                onClick={() => executeSave('Atualização na mesma revisão', false)}
+                className="w-full text-left p-4 rounded-2xl border border-slate-200 hover:border-[#1B4D3E]/30 hover:bg-[#1B4D3E]/5 hover:shadow-md transition-all group flex items-start gap-4"
+              >
+                <div className="w-10 h-10 bg-slate-100 group-hover:bg-white rounded-xl flex items-center justify-center text-slate-500 group-hover:text-[#1B4D3E] shadow-sm">
+                  <Save size={20} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 group-hover:text-[#1B4D3E] mb-0.5">Salvar mesma Versão</h4>
+                  <p className="text-xs text-slate-500">Sobrescreve a revisão atual sem criar histórico</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                   setShowSaveChoiceModal(false);
+                   setShowChangelogModal(true);
+                }}
+                className="w-full text-left p-4 rounded-2xl border border-[#1B4D3E]/10 bg-[#1B4D3E]/5 hover:border-[#1B4D3E]/30 hover:bg-[#1B4D3E]/10 hover:shadow-md transition-all group flex items-start gap-4"
+              >
+                <div className="w-10 h-10 bg-white/50 group-hover:bg-white rounded-xl flex items-center justify-center text-[#1B4D3E] shadow-sm">
+                  <History size={20} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-[#1B4D3E] mb-0.5">Salvar Nova Versão</h4>
+                  <p className="text-xs text-[#1B4D3E]/70">Cria a Revisão R{String((proposta.versao || 1) + 1).padStart(2, '0')} com histórico de mudanças</p>
+                </div>
+              </button>
+            </div>
+
+            <button 
+              onClick={() => setShowSaveChoiceModal(false)}
+              className="mt-8 w-full py-3 px-4 font-bold text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all tracking-wider"
+            >
+              CANCELAR
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* MODAL OBRIGATÓRIO DE CHANGELOG PARA REVISÕES */}
       {showChangelogModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
@@ -4882,7 +4952,7 @@ function PropostaEditor() {
                 Cancelar
               </button>
               <button 
-                onClick={() => executeSave(changelogText.trim())}
+                onClick={() => executeSave(changelogText.trim(), true)}
                 disabled={saving || changelogText.trim().length < 5}
                 className="flex-1 py-3.5 bg-[#1B4D3E] hover:bg-[#13382d] disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-extrabold rounded-2xl text-xs uppercase tracking-wider transition-colors active:scale-[0.98] cursor-pointer shadow-[0_4px_14px_rgba(27,77,62,0.2)]"
               >
