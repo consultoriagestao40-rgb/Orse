@@ -516,8 +516,9 @@ function PropostaEditor() {
     setProposta({ ...proposta, equipe: newEquipe });
   };
 
-  const calculateAutoNoturno = (hInicio: string, hFim: string, diasMes: number) => {
-    if (!hInicio || !hFim) return 0;
+  const calculateAutoNoturno = (hInicio: string, hFim: string, diasMesRaw: number | string) => {
+    const diasMes = Number(diasMesRaw) || 0;
+    if (!hInicio || !hFim || diasMes <= 0) return 0;
     
     try {
       const getMinutes = (time: string) => {
