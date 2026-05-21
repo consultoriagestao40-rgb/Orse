@@ -128,7 +128,7 @@ export default async function AdminCCTPage() {
                         <div className="flex items-center justify-end gap-1">
                           <Link 
                             href={`/admin/ccts/${cct.id}/edit`}
-                            className="p-2 text-slate-300 hover:text-emerald-500 transition-colors"
+                            className="p-2 text-amber-500 hover:text-amber-600 transition-colors"
                           >
                             <Edit2 size={16} />
                           </Link>

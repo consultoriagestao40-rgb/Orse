@@ -18,6 +18,41 @@ const ESTADOS_BRASIL = [
 const labelClass = "text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block";
 const inputClass = "w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]";
 
+
+function CurrencyInput({ value, onChange, className, placeholder }: any) {
+  const [displayValue, setDisplayValue] = React.useState('');
+
+  React.useEffect(() => {
+    if (value === 0 || value === '0' || !value) {
+       setDisplayValue('');
+    } else {
+       setDisplayValue(new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value)));
+    }
+  }, [value]);
+
+  const handleChange = (e: any) => {
+    let raw = e.target.value.replace(/\D/g, '');
+    if (!raw) {
+       setDisplayValue('');
+       onChange(0);
+       return;
+    }
+    const num = Number(raw) / 100;
+    setDisplayValue(new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num));
+    onChange(num);
+  };
+
+  return (
+    <input
+      type="text"
+      className={className}
+      value={displayValue}
+      onChange={handleChange}
+      placeholder={placeholder || "0,00"}
+    />
+  );
+}
+
 export default function CCTEditorPage() {
   const router = useRouter();
   const { id } = useParams();
@@ -387,13 +422,7 @@ export default function CCTEditorPage() {
                     <option value="DIARIO">R$ / Dia</option>
                     <option value="FIXO">R$ / Mês (Fixo)</option>
                   </select>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
-                    value={formData.vaValor}
-                    onChange={e => setFormData({ ...formData, vaValor: e.target.value })}
-                  />
+                  <CurrencyInput className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E]" value={formData.vaValor} onChange={(val: number) => setFormData({ ...formData, vaValor: val })} />
                 </div>
                 <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
                   <input
@@ -409,47 +438,23 @@ export default function CCTEditorPage() {
               {/* Vale Transporte */}
               <div className="border border-slate-200 rounded-md p-4 space-y-3">
                 <label className={labelClass}>Vale Transporte (Diário)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className={inputClass}
-                  value={formData.vtValor}
-                  onChange={e => setFormData({ ...formData, vtValor: e.target.value })}
-                />
+                <CurrencyInput className={inputClass} value={formData.vtValor} onChange={(val: number) => setFormData({ ...formData, vtValor: val })} />
                 <div className="space-y-1">
                   <label className={labelClass}>Desconto Legal (% do Piso)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className={inputClass}
-                    value={formData.vtDescPercent}
-                    onChange={e => setFormData({ ...formData, vtDescPercent: e.target.value })}
-                  />
+                  <input type="number" step="0.01" className={inputClass} value={formData.vtDescPercent || ''} onChange={e => setFormData({ ...formData, vtDescPercent: e.target.value ? Number(e.target.value) : 0 })} placeholder="0" />
                 </div>
               </div>
 
               {/* Desconto VA */}
               <div className="space-y-1">
                 <label className={labelClass}>Desconto VA CLT (%)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className={inputClass}
-                  value={formData.vaDescPercent}
-                  onChange={e => setFormData({ ...formData, vaDescPercent: e.target.value })}
-                />
+                <input type="number" step="0.01" className={inputClass} value={formData.vaDescPercent || ''} onChange={e => setFormData({ ...formData, vaDescPercent: e.target.value ? Number(e.target.value) : 0 })} placeholder="0" />
               </div>
 
               {/* Cesta Básica */}
               <div className="space-y-1">
                 <label className={labelClass}>Cesta Básica (Fixo/Mês)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className={inputClass}
-                  value={formData.cestaBasica}
-                  onChange={e => setFormData({ ...formData, cestaBasica: e.target.value })}
-                />
+                <CurrencyInput className={inputClass} value={formData.cestaBasica} onChange={(val: number) => setFormData({ ...formData, cestaBasica: val })} />
               </div>
 
 
@@ -457,25 +462,13 @@ export default function CCTEditorPage() {
               {/* Exames Médicos */}
               <div className="space-y-1">
                 <label className={labelClass}>Exames Médicos (Mês)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className={inputClass}
-                  value={formData.examesMedicos}
-                  onChange={e => setFormData({ ...formData, examesMedicos: e.target.value })}
-                />
+                <CurrencyInput className={inputClass} value={formData.examesMedicos} onChange={(val: number) => setFormData({ ...formData, examesMedicos: val })} />
               </div>
 
                             {/* Custos com Sindicatos */}
               <div className="space-y-1">
                 <label className={labelClass}>Custos com Sindicatos (Mês)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className={inputClass}
-                  value={formData.custosSindicato}
-                  onChange={e => setFormData({ ...formData, custosSindicato: e.target.value })}
-                />
+                <CurrencyInput className={inputClass} value={formData.custosSindicato} onChange={(val: number) => setFormData({ ...formData, custosSindicato: val })} />
                 <p className="text-[10px] text-slate-400 italic">Soma de Assistência Médica, Social e Fundo de Formação conforme CCT</p>
               </div>
 
@@ -484,13 +477,7 @@ export default function CCTEditorPage() {
               {/* Outros Benefícios */}
               <div className="space-y-1">
                 <label className={labelClass}>Outros Benefícios (Mês)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className={inputClass}
-                  value={formData.outrosBeneficios}
-                  onChange={e => setFormData({ ...formData, outrosBeneficios: e.target.value })}
-                />
+                <CurrencyInput className={inputClass} value={formData.outrosBeneficios} onChange={(val: number) => setFormData({ ...formData, outrosBeneficios: val })} />
               </div>
 
               {/* Regra de Insalubridade */}
@@ -526,13 +513,7 @@ export default function CCTEditorPage() {
                     <label className={labelClass}>Valor Salário Mínimo Vigente</label>
                     <div className="flex items-center gap-2">
                       <span className="text-slate-400 font-bold text-xs">R$</span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        className={inputClass}
-                        value={formData.salarioMinimo}
-                        onChange={e => setFormData({ ...formData, salarioMinimo: e.target.value })}
-                      />
+                      <CurrencyInput className={inputClass} value={formData.salarioMinimo} onChange={(val: number) => setFormData({ ...formData, salarioMinimo: val })} />
                     </div>
                     <p className="text-[10px] text-slate-400 italic">O percentual escolhido no cargo incidirá sobre este valor.</p>
                   </div>
@@ -598,7 +579,8 @@ export default function CCTEditorPage() {
               <table className="w-full text-left border-collapse text-xs min-w-[1000px]">
                 <thead className="sticky top-0 z-10 shadow-sm">
                   <tr className="bg-slate-100 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
-                    <th className="px-6 py-3 min-w-[280px]">Função / Cargo</th>
+                    <th className="px-4 py-3 text-center w-12">#</th>
+                    <th className="px-6 py-3 whitespace-nowrap">Função / Cargo</th>
                     <th className="px-6 py-3 text-center">Piso (R$)</th>
                     <th className="px-6 py-3 text-center">Gratif. (R$)</th>
                     <th className="px-6 py-3 text-center">Assid. (R$)</th>
@@ -611,7 +593,7 @@ export default function CCTEditorPage() {
                 <tbody>
                   {cargos.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="px-6 py-8 text-center text-slate-400 italic text-xs">
+                      <td colSpan={9} className="px-6 py-8 text-center text-slate-400 italic text-xs">
                         Ex: Servente
                       </td>
                     </tr>
@@ -622,7 +604,8 @@ export default function CCTEditorPage() {
                     }
                     return (
                     <tr key={cargo.id || idx} className="border-b border-slate-200 hover:bg-slate-50">
-                      <td className="px-6 py-3 min-w-[280px]">
+                      <td className="px-4 py-3 text-center font-bold text-slate-400 text-xs">{idx + 1}</td>
+                      <td className="px-6 py-3 whitespace-nowrap min-w-[350px]">
                         <input
                           type="text"
                           placeholder="Ex: Servente"
@@ -632,16 +615,27 @@ export default function CCTEditorPage() {
                         />
                       </td>
                       {(['pisoSalarial', 'gratificacoes', 'assiduidade', 'adicionalCopa', 'insalubridadePercent'] as const).map(field => (
-                        <td key={field} className="px-6 py-3 text-center">
+                        <td key={field} className="px-4 py-3 text-center">
                           <div className="flex items-center justify-center gap-1">
-                            <input
-                              type="number"
-                              step="0.01"
-                              className="w-20 bg-white border border-slate-200 rounded px-2 py-1 text-center text-slate-700 focus:border-[#1B4D3E] outline-none font-medium text-xs"
-                              value={(cargo as any)[field]}
-                              onChange={e => updateCargo(idx, field, e.target.value)}
-                            />
-                            {field === 'insalubridadePercent' && <span className="text-slate-400 font-bold">%</span>}
+                            {field === 'insalubridadePercent' ? (
+                              <>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  className="w-16 bg-white border border-slate-200 rounded px-2 py-1 text-center text-slate-700 focus:border-[#1B4D3E] outline-none font-medium text-xs"
+                                  value={(cargo as any)[field] || ''}
+                                  onChange={e => updateCargo(idx, field, e.target.value ? Number(e.target.value) : 0)}
+                                  placeholder="0"
+                                />
+                                <span className="text-slate-400 font-bold">%</span>
+                              </>
+                            ) : (
+                              <CurrencyInput
+                                className="w-24 bg-white border border-slate-200 rounded px-2 py-1 text-right text-slate-700 focus:border-[#1B4D3E] outline-none font-medium text-xs"
+                                value={(cargo as any)[field]}
+                                onChange={(val: number) => updateCargo(idx, field, val)}
+                              />
+                            )}
                           </div>
                         </td>
                       ))}
