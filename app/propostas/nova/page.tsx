@@ -226,7 +226,7 @@ function PropostaEditor() {
   // =========================================================================
   // ESTADOS DA DRE PARAMETRIZADA E EDITÁVEL
   // =========================================================================
-  const [dreTaxPercent, setDreTaxPercent] = useState<number>(12.5);
+  const [dreTaxPercent, setDreTaxPercent] = useState<number | ''>(12.5);
   const [showChangelogModal, setShowChangelogModal] = useState(false);
   const [showSaveChoiceModal, setShowSaveChoiceModal] = useState(false);
   const [changelogText, setChangelogText] = useState('');
@@ -1769,7 +1769,7 @@ function PropostaEditor() {
 
                // 6. Valores Totais Mensais e Anuais
                const receitaMensal = resultado?.faturamentoBruto || 0;
-               const tributosMensal = receitaMensal * (dreTaxPercent / 100);
+               const tributosMensal = receitaMensal * ((Number(dreTaxPercent) || 0) / 100);
                const receitaLiquidaMensal = receitaMensal - tributosMensal;
 
                const custoOperacionalMensal = totalRemuneracaoBase + totalEncargosSociais + totalBeneficiosSubtotal + totalSSMASubtotal + totalMateriais + totalMaquinas;
