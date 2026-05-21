@@ -410,8 +410,7 @@ function PropostaEditor() {
                   { id: '4', descricao: 'Produtos químicos', incluso: false },
                   { id: '5', descricao: 'Descartaveis', incluso: false }
                ],
-               dreTaxPercent: (fullData as any).dreTaxPercent,
-               dreEncargos: (fullData as any).dreEncargos
+               dreTaxPercent: (fullData as any).dreTaxPercent
             });
             setVersions(fullData.availableVersions || []);
             console.log('Estado da proposta atualizado.');
