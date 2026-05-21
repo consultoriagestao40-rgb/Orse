@@ -65,6 +65,37 @@ export default function CCTEditorPage() {
   // Pesquisa de Cargos
   const [searchTermCargos, setSearchTermCargos] = useState('');
 
+  // Refs e estado para barra de rolagem sincronizada no topo da tabela de cargos
+  const topScrollRef = React.useRef<HTMLDivElement>(null);
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const [tableScrollWidth, setTableScrollWidth] = useState(1000);
+
+  const syncTopScroll = () => {
+    if (topScrollRef.current && tableContainerRef.current) {
+      tableContainerRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+    }
+  };
+
+  const syncTableScroll = () => {
+    if (topScrollRef.current && tableContainerRef.current) {
+      topScrollRef.current.scrollLeft = tableContainerRef.current.scrollLeft;
+    }
+  };
+
+  useEffect(() => {
+    const updateWidth = () => {
+      if (tableContainerRef.current) {
+        setTableScrollWidth(tableContainerRef.current.scrollWidth);
+      }
+    };
+    const timer = setTimeout(updateWidth, 100);
+    window.addEventListener('resize', updateWidth);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateWidth);
+    };
+  }, [cargos, searchTermCargos]);
+
   useEffect(() => {
     async function loadEpis() {
       const data = await getProdutos();
@@ -549,7 +580,21 @@ export default function CCTEditorPage() {
               </div>
             </div>
 
-            <div className="max-h-[60vh] overflow-auto custom-scrollbar">
+            {/* Barra de rolagem superior sincronizada */}
+            <div 
+              ref={topScrollRef} 
+              onScroll={syncTopScroll} 
+              className="overflow-x-auto overflow-y-hidden bg-slate-50 border-b border-slate-200 custom-scrollbar"
+              style={{ height: '12px' }}
+            >
+              <div style={{ width: `${tableScrollWidth}px`, height: '1px' }}></div>
+            </div>
+
+            <div 
+              ref={tableContainerRef}
+              onScroll={syncTableScroll}
+              className="max-h-[60vh] overflow-auto custom-scrollbar"
+            >
               <table className="w-full text-left border-collapse text-xs min-w-[1000px]">
                 <thead className="sticky top-0 z-10 shadow-sm">
                   <tr className="bg-slate-100 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
