@@ -161,9 +161,9 @@ export async function getSegmentos() {
 
 export async function createSegmento(nome: string) {
   try {
-    await prisma.segmento.create({ data: { nome: nome.toUpperCase() } });
+    const res = await prisma.segmento.create({ data: { nome: nome.toUpperCase() } });
     revalidatePath('/admin/settings');
-    return { success: true };
+    return { success: true, data: res };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
