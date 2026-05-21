@@ -12,7 +12,7 @@ import { getCCTs } from '@/app/ccts/actions';
 import { getEscalas } from '@/app/escalas/actions';
 import { getProdutos } from '@/app/produtos/actions';
 import { saveProposta, getPropostaCompleta, getLoggedUser } from '@/app/propostas/actions';
-import { getTiposServico } from '@/app/admin/settings/actions';
+import { getTiposServico, getSegmentos } from '@/app/admin/settings/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, ChevronLeft, Factory, Store, Bus, Building, Hospital, ShoppingBag, GraduationCap, Share2, Clock, Smartphone, Cpu, CreditCard } from 'lucide-react';
 import BrazilMap from '@/components/BrazilMap';
@@ -124,6 +124,7 @@ function PropostaEditor() {
   const [ccts, setCcts] = useState<any[]>([]);
   const [escalasDb, setEscalasDb] = useState<any[]>([]);
   const [produtosDb, setProdutosDb] = useState<any[]>([]);
+  const [segmentos, setSegmentos] = useState<any[]>([]);
   const [clientesList, setClientesList] = useState<any[]>([]);
   const [tiposServico, setTiposServico] = useState<any[]>([]);
   const [showClientDropdown, setShowClientDropdown] = useState(false);
@@ -146,6 +147,7 @@ function PropostaEditor() {
       hasEscopoTecnico: false, 
       escopoTecnico: '', 
       sindicatoId: '',
+      segmento: '',
       vendedorNome: '',
       vendedorCargo: '',
       vendedorTelefone: '',
@@ -319,18 +321,21 @@ function PropostaEditor() {
       try {
         console.log('Iniciando carregamento do Editor FPV...');
         setLoading(true);
-        const [dataCcts, dataEscalas, dataProdutos, dataTipos, loggedUser] = await Promise.all([
+        const [dataCcts, dataEscalas, dataProdutos, dataTipos, dataSegmentos, loggedUser] = await Promise.all([
           getCCTs(), 
           getEscalas(), 
           getProdutos(), 
           getTiposServico(),
+          getSegmentos(),
           getLoggedUser()
         ]);
         setCcts(dataCcts || []);
         setEscalasDb(dataEscalas || []);
         setProdutosDb(dataProdutos || []);
         setTiposServico(dataTipos || []);
-        console.log('CCTs, Escalas e Tipos de Serviço carregados.');
+        setSegmentos(dataSegmentos || []);
+        setCurrentUser(loggedUser || null);
+        console.log('CCTs, Escalas, Produtos, Tipos de Serviço e Segmentos carregados.');
         
         const { getClientes } = await import('@/app/clientes/actions');
         const clientesData = await getClientes();
@@ -1107,6 +1112,20 @@ function PropostaEditor() {
                     <div className="space-y-1">
                        <label className="text-xs font-semibold text-slate-700">Celular / WhatsApp</label>
                        <input type="text" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]" value={proposta.cliente.celular} onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, celular: e.target.value}})} />
+                    </div>
+
+                    <div className="space-y-1">
+                       <label className="text-xs font-semibold text-slate-700">Segmento do Cliente</label>
+                       <select 
+                          className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]"
+                          value={proposta.cliente.segmento || ''}
+                          onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, segmento: e.target.value}})}
+                       >
+                          <option value="">Selecione...</option>
+                          {segmentos.map((s: any) => (
+                             <option key={s.id} value={s.nome}>{s.nome}</option>
+                          ))}
+                       </select>
                     </div>
 
                     <div className="md:col-span-2 space-y-1">

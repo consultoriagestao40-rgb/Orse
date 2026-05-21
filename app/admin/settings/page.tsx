@@ -16,10 +16,11 @@ import {
   getUnidadesMedida, createUnidadeMedida, deleteUnidadeMedida,
   getCategorias, createCategoria, deleteCategoria,
   getTiposServico, createTipoServico, deleteTipoServico,
+  getSegmentos, createSegmento, deleteSegmento,
   getSellers
 } from './actions';
 
-type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'metas';
+type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas';
 
 export default function SettingsPage() {
   // ── Estado principal ─────────────────────────────────────────────────────────
@@ -48,6 +49,10 @@ export default function SettingsPage() {
   // Categorias
   const [categorias, setCategorias] = useState<any[]>([]);
   const [newCategoriaNome, setNewCategoriaNome] = useState('');
+
+  // Segmentos
+  const [segmentos, setSegmentos] = useState<any[]>([]);
+  const [newSegmentoNome, setNewSegmentoNome] = useState('');
 
   // Metas
   const [sellers, setSellers] = useState<string[]>([]);
@@ -126,6 +131,9 @@ export default function SettingsPage() {
       } else if (activeTab === 'tipos') {
         const data = await getTiposServico();
         setTipos(data || []);
+      } else if (activeTab === 'segmentos') {
+        const data = await getSegmentos();
+        setSegmentos(data || []);
       } else if (activeTab === 'metas') {
         if (userRole === 'USER') {
           setActiveTab('status');
@@ -162,6 +170,28 @@ export default function SettingsPage() {
   const handleDeleteTipo = async (id: string) => {
     if (!confirm('Remover este tipo de serviço?')) return;
     const res = await deleteTipoServico(id);
+    if (res.success) loadData();
+    else alert('Erro ao excluir: ' + res.error);
+  };
+
+  // Segmentos
+  const handleAddSegmento = async () => {
+    if (!newSegmentoNome.trim()) {
+      alert('Preencha o nome do segmento.');
+      return;
+    }
+    const res = await createSegmento(newSegmentoNome);
+    if (res.success) {
+      setNewSegmentoNome('');
+      loadData();
+    } else {
+      alert('Erro ao adicionar segmento: ' + res.error);
+    }
+  };
+
+  const handleDeleteSegmento = async (id: string) => {
+    if (!confirm('Remover este segmento?')) return;
+    const res = await deleteSegmento(id);
     if (res.success) loadData();
     else alert('Erro ao excluir: ' + res.error);
   };
@@ -299,6 +329,7 @@ export default function SettingsPage() {
               { id: 'unidades', label: 'Unidades de Medida', icon: Ruler, roles: ['ADMIN', 'MANAGER', 'USER'] },
               { id: 'categorias', label: 'Categorias', icon: Tag, roles: ['ADMIN', 'MANAGER', 'USER'] },
               { id: 'tipos', label: 'Tipos de Serviço', icon: SettingsIcon, roles: ['ADMIN', 'MANAGER', 'USER'] },
+              { id: 'segmentos', label: 'Segmentos de Cliente', icon: Target, roles: ['ADMIN', 'MANAGER', 'USER'] },
               { id: 'metas', label: 'Metas dos Vendedores', icon: Target, roles: ['ADMIN', 'MANAGER'] },
             ].filter(tab => tab.roles.includes(userRole)).map((tab) => (
               <button
@@ -533,6 +564,51 @@ export default function SettingsPage() {
                         <span className="text-xs font-bold text-slate-700">{t.nome}</span>
                         <button 
                           onClick={() => handleDeleteTipo(t.id)}
+                          className="text-slate-400 hover:text-red-600 transition-colors"
+                          title="Remover"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ABA SEGMENTOS */}
+            {activeTab === 'segmentos' && (
+              <div>
+                <div className="bg-[#1B4D3E] px-6 py-3 border-b border-[#13382D]">
+                  <h2 className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                    <Target size={14} /> Gestão de Segmentos de Cliente
+                  </h2>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Nome do Segmento (Ex: Indústria, Varejo, Viação)"
+                      value={newSegmentoNome}
+                      onChange={e => setNewSegmentoNome(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleAddSegmento()}
+                      className="flex-1 px-3 py-2 border border-slate-300 rounded text-sm outline-none focus:border-[#1B4D3E] font-bold uppercase"
+                    />
+                    <button 
+                      onClick={handleAddSegmento}
+                      className="bg-[#1B4D3E] hover:bg-emerald-900 text-white px-6 py-2 rounded text-sm font-bold flex items-center gap-2 shadow-sm transition-all"
+                    >
+                      <Plus size={16} /> Adicionar
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {segmentos.map(s => (
+                      <div key={s.id} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded hover:bg-white hover:shadow-sm transition-all group">
+                        <span className="text-xs font-bold text-slate-700 uppercase">{s.nome}</span>
+                        <button 
+                          onClick={() => handleDeleteSegmento(s.id)}
                           className="text-slate-400 hover:text-red-600 transition-colors"
                           title="Remover"
                         >

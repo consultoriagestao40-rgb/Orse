@@ -181,6 +181,11 @@ model TipoServico {
   nome String @unique
 }
 
+model Segmento {
+  id   String @id @default(cuid())
+  nome String @unique
+}
+
 model PropostaShare {
   id         String   @id @default(cuid())
   propostaId String
