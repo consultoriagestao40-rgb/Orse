@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from 'next/cache';
 'use server';
 
 import { prisma } from '@/lib/prisma';
@@ -317,6 +318,7 @@ export async function saveProposta(data: any) {
 }
 
 export async function getPropostas() {
+  noStore();
   try {
     const loggedUser = await getLoggedUser();
     if (!loggedUser) return [];

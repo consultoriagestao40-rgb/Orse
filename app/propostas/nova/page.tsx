@@ -544,16 +544,32 @@ function PropostaEditor() {
         });
       };
 
-      const newEquipe = proposta.equipe.map((posto: any) => ({
-        ...posto,
-        configFinanceira: {
-          ...posto.configFinanceira,
-          epi: updateList(posto.configFinanceira?.epi, dataProdutos || []),
-          uniformes: updateList(posto.configFinanceira?.uniformes, dataProdutos || []),
-          equipamentos: updateList(posto.configFinanceira?.equipamentos, dataProdutos || []),
-          insumos: updateList(posto.configFinanceira?.insumos, dataProdutos || []),
+      const newEquipe = proposta.equipe.map((posto: any) => {
+        let newCctBase = posto.cctBase;
+        let newCargo = posto.cargo;
+        if (posto.cctBase?.id) {
+          const dbCct = dataCcts?.find((c: any) => c.id === posto.cctBase.id);
+          if (dbCct) {
+            newCctBase = dbCct;
+            if (posto.cargo?.nome) {
+              const dbCargo = dbCct.cargos?.find((c: any) => c.nome === posto.cargo.nome);
+              if (dbCargo) newCargo = dbCargo;
+            }
+          }
         }
-      }));
+        return {
+          ...posto,
+          cctBase: newCctBase,
+          cargo: newCargo,
+          configFinanceira: {
+            ...posto.configFinanceira,
+            epi: updateList(posto.configFinanceira?.epi, dataProdutos || []),
+            uniformes: updateList(posto.configFinanceira?.uniformes, dataProdutos || []),
+            equipamentos: updateList(posto.configFinanceira?.equipamentos, dataProdutos || []),
+            insumos: updateList(posto.configFinanceira?.insumos, dataProdutos || []),
+          }
+        };
+      });
 
       const newInsumos = {
         ...proposta.insumos,
