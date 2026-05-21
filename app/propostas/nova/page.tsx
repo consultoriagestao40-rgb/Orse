@@ -11,6 +11,8 @@ import { calculateEnterprisePrice } from '@/lib/pricingEngine';
 import { getCCTs } from '@/app/ccts/actions';
 import { getEscalas } from '@/app/escalas/actions';
 import { getProdutos } from '@/app/produtos/actions';
+import { createCliente, getClientes } from '@/app/clientes/actions';
+import { createProduto } from '@/app/produtos/actions';
 import { saveProposta, getPropostaCompleta, getLoggedUser } from '@/app/propostas/actions';
 import { getTiposServico, getSegmentos } from '@/app/admin/settings/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -128,6 +130,16 @@ function PropostaEditor() {
   const [clientesList, setClientesList] = useState<any[]>([]);
   const [tiposServico, setTiposServico] = useState<any[]>([]);
   const [showClientDropdown, setShowClientDropdown] = useState(false);
+
+  const [showNewClientModal, setShowNewClientModal] = useState(false);
+  const [newClientForm, setNewClientForm] = useState({ nomeFantasia: '', razaoSocial: '', cnpj: '', email: '', whatsapp: '', endereco: '', contato: '', segmento: '' });
+  const [savingClient, setSavingClient] = useState(false);
+
+  const [showNewProductModal, setShowNewProductModal] = useState(false);
+  const [newProductForm, setNewProductForm] = useState({ descricao: '', precoUnitario: 0, unidade: 'UN', categoria: 'Geral' });
+  const [savingProduct, setSavingProduct] = useState(false);
+  const [activeProdutoTipo, setActiveProdutoTipo] = useState<'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis' | ''>(''); // To know which section opened the product modal
+
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [presentationMode, setPresentationMode] = useState(false);
 
@@ -626,6 +638,63 @@ function PropostaEditor() {
     }
   };
 
+  
+  const handleSaveNewClient = async () => {
+    if (!newClientForm.nomeFantasia.trim()) return alert('Nome Fantasia é obrigatório');
+    setSavingClient(true);
+    try {
+      const res = await createCliente(newClientForm);
+      if (res.success || !res.error) {
+        // success
+        const updatedClientes = await getClientes();
+        setClientesList(updatedClientes || []);
+        setProposta({
+          ...proposta,
+          cliente: {
+             ...proposta.cliente,
+             cliente: newClientForm.nomeFantasia,
+             cnpj: newClientForm.cnpj,
+             email: newClientForm.email,
+             celular: newClientForm.whatsapp,
+             contato: newClientForm.contato,
+             segmento: newClientForm.segmento
+          }
+        });
+        setShowNewClientModal(false);
+        setNewClientForm({ nomeFantasia: '', razaoSocial: '', cnpj: '', email: '', whatsapp: '', endereco: '', contato: '', segmento: '' });
+      } else {
+        alert(res.error);
+      }
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setSavingClient(false);
+    }
+  };
+
+  const handleSaveNewProduct = async () => {
+    if (!newProductForm.descricao.trim()) return alert('Descrição é obrigatória');
+    setSavingProduct(true);
+    try {
+      const res = await createProduto(newProductForm);
+      if (res.success && res.produto) {
+        const updatedProdutos = await getProdutos();
+        setProdutosDb(updatedProdutos || []);
+        if (activeProdutoTipo) {
+           addInsumoItem(activeProdutoTipo, res.produto);
+        }
+        setShowNewProductModal(false);
+        setNewProductForm({ descricao: '', precoUnitario: 0, unidade: 'UN', categoria: 'Geral' });
+      } else {
+        alert(res.error);
+      }
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setSavingProduct(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!proposta.cliente.cliente) return alert('Por favor, selecione ou informe o cliente.');
     if (proposta.equipe.length === 0) return alert('Adicione ao menos um posto no quadro de equipe.');
@@ -781,7 +850,20 @@ function PropostaEditor() {
 
         <div className="p-6">
           <div className="mb-6">
-            <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Adicionar Item da Tabela de Produtos</label>
+            
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-xs font-bold text-slate-500 uppercase block">Adicionar Item da Tabela de Produtos</label>
+              <button 
+                 onClick={() => {
+                    setActiveProdutoTipo(tipo);
+                    setShowNewProductModal(true);
+                 }}
+                 className="text-[10px] text-[#1B4D3E] font-bold uppercase tracking-wider hover:text-[#12362b] transition-colors bg-emerald-50 px-2 py-1 rounded border border-emerald-200"
+              >
+                 + Novo Produto
+              </button>
+            </div>
+
             <select 
               className="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2 text-sm outline-none focus:border-[#1B4D3E]"
               value=""
@@ -992,7 +1074,17 @@ function PropostaEditor() {
                  </div>
                  <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                     <div className="space-y-1 relative">
-                       <label className="text-xs font-semibold text-slate-700">Cliente (Buscar Cadastrado)</label>
+                       
+                       <div className="flex justify-between items-center">
+                          <label className="text-xs font-semibold text-slate-700">Cliente (Buscar Cadastrado)</label>
+                          <button 
+                             onClick={() => setShowNewClientModal(true)}
+                             className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider hover:text-emerald-800 transition-colors bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"
+                          >
+                             + Novo Cliente
+                          </button>
+                       </div>
+
                        <input 
                           type="text" 
                           placeholder="Digite para buscar..."
