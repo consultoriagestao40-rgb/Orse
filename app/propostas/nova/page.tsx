@@ -2785,6 +2785,7 @@ function PropostaEditor() {
                      <div className="w-full bg-slate-200 border border-slate-300 rounded-xl overflow-hidden min-h-[600px] mb-8">
                         <DocumentoA4 
                            proposta={proposta} 
+                           resultado={resultado}
                            empresaEmissora={empresasEmissoras.find(e => e.id === selectedEmpresaId) || empresasEmissoras[0]} 
                         />
                      </div>
