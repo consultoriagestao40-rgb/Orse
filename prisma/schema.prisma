@@ -10,6 +10,18 @@ datasource db {
   provider = "postgresql"
 }
 
+model EmpresaEmissora {
+  id           String   @id @default(uuid())
+  nomeFantasia String
+  razaoSocial  String
+  cnpj         String
+  endereco     String?
+  telefone     String?
+  email        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
 model User {
   id             String          @id @default(cuid())
   email          String          @unique

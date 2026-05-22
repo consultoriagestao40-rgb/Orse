@@ -18,6 +18,8 @@ import { getTiposServico, getSegmentos, createTipoServico, createSegmento } from
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, ChevronLeft, Factory, Store, Bus, Building, Hospital, ShoppingBag, GraduationCap, Share2, Clock, Smartphone, Cpu, CreditCard } from 'lucide-react';
 import BrazilMap from '@/components/BrazilMap';
+import DocumentoA4 from '@/components/DocumentoA4';
+import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
 
 const TABS = [
   { id: 'dados', label: '1. Cliente', icon: Building2 },
@@ -41,6 +43,9 @@ function PropostaEditor() {
   const id = searchParams.get('id');
 
   const [activeTab, setActiveTab] = useState('dados');
+  const [viewMode, setViewMode] = useState<'slide' | 'document'>('slide');
+  const [empresasEmissoras, setEmpresasEmissoras] = useState<any[]>([]);
+  const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [versions, setVersions] = useState<any[]>([]);
@@ -339,19 +344,22 @@ function PropostaEditor() {
       try {
         console.log('Iniciando carregamento do Editor FPV...');
         setLoading(true);
-        const [dataCcts, dataEscalas, dataProdutos, dataTipos, dataSegmentos, loggedUser] = await Promise.all([
+        const [dataCcts, dataEscalas, dataProdutos, dataTipos, dataSegmentos, loggedUser, dataEmpresas] = await Promise.all([
           getCCTs(), 
           getEscalas(), 
           getProdutos(), 
           getTiposServico(),
           getSegmentos(),
-          getLoggedUser()
+          getLoggedUser(),
+          getEmpresasEmissoras()
         ]);
         setCcts(dataCcts || []);
         setEscalasDb(dataEscalas || []);
         setProdutosDb(dataProdutos || []);
         setTiposServico(dataTipos || []);
         setSegmentos(dataSegmentos || []);
+        setEmpresasEmissoras(dataEmpresas || []);
+        if (dataEmpresas && dataEmpresas.length > 0) setSelectedEmpresaId(dataEmpresas[0].id);
         setCurrentUser(loggedUser || null);
         console.log('CCTs, Escalas, Produtos, Tipos de Serviço e Segmentos carregados.');
         
@@ -2705,9 +2713,26 @@ function PropostaEditor() {
                   <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row justify-between items-center gap-4">
                      <div>
                         <h2 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2">
-                           <Presentation className="text-[#10B981]" size={18} /> Proposta Comercial (Slide Deck)
+                           <Presentation className="text-[#10B981]" size={18} /> Apresentação da Proposta
                         </h2>
-                        <p className="text-xs text-slate-400 mt-1 font-medium">Visualize, edite e exporte a proposta comercial em formato de slides de apresentação.</p>
+                        <div className="flex gap-2 mt-3 mb-2">
+                           <button onClick={() => setViewMode('slide')} className={`px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all ${viewMode === 'slide' ? 'bg-[#1B4D3E] text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>Slide Deck (Apresentação)</button>
+                           <button onClick={() => setViewMode('document')} className={`px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all ${viewMode === 'document' ? 'bg-[#1B4D3E] text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>Documento Simples (A4)</button>
+                        </div>
+                        {viewMode === 'document' && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Empresa Emissora:</span>
+                            <select 
+                              value={selectedEmpresaId} 
+                              onChange={(e) => setSelectedEmpresaId(e.target.value)}
+                              className="px-3 py-1.5 border border-slate-300 rounded-md text-xs font-bold text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
+                            >
+                              {empresasEmissoras.map(emp => (
+                                <option key={emp.id} value={emp.id}>{emp.nomeFantasia}</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
                      </div>
                      <div className="flex items-center gap-3">
                          <div className="bg-slate-100 p-1 rounded-xl flex gap-1 flex-wrap">
@@ -2755,11 +2780,21 @@ function PropostaEditor() {
                      </div>
                   </div>
 
+                  {/* CONTAINER DO DOCUMENTO SIMPLES A4 */}
+                  {viewMode === 'document' && (
+                     <div className="w-full bg-slate-200 border border-slate-300 rounded-xl overflow-hidden min-h-[600px] mb-8">
+                        <DocumentoA4 
+                           proposta={proposta} 
+                           empresaEmissora={empresasEmissoras.find(e => e.id === selectedEmpresaId) || empresasEmissoras[0]} 
+                        />
+                     </div>
+                  )}
+
                   {/* CONTAINER DOS SLIDES PARA VISUALIZAÇÃO EM TELA */}
-                  <div className={presentationMode 
+                  <div className={viewMode === 'document' ? 'hidden' : (presentationMode 
                      ? "fixed inset-0 bg-slate-950/98 z-[99999] flex flex-col justify-center items-center select-none p-6 presentation-mode-active" 
                      : "w-full bg-slate-900/5 rounded-3xl p-8 border border-slate-200/40 flex justify-center items-center overflow-x-auto"
-                  }>
+                  )}>
                      <div className={presentationMode
                         ? "w-[90vw] h-[50.625vw] max-h-[85vh] max-w-[151.1vh] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative flex flex-col justify-between"
                         : "w-full max-w-[960px] aspect-[16/9] min-w-[760px] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative select-none flex flex-col justify-between"
@@ -3991,7 +4026,7 @@ function PropostaEditor() {
                      </div>
                   </div>
 {/* CONTROLES DE NAVEGAÇÃO DOS SLIDES (PADRONIZADOS FORA DO SLIDE E DO NÚMERO) */}
-                   <div className="flex flex-col items-center space-y-4 mt-6">
+                   <div className={`flex flex-col items-center space-y-4 mt-6 ${viewMode === 'document' ? 'hidden' : ''}`}>
                       <div className="flex justify-center items-center gap-6">
                          <button
                             type="button"
@@ -5358,7 +5393,7 @@ function PropostaEditor() {
         </div>
       )}
 
-<div className="print-slide-deck hidden print:block">
+<div className={`print-slide-deck hidden ${viewMode === 'slide' ? 'print:block' : ''}`}>
                      {/* SLIDE 01 PRINT - CAPA COMERCIAL */}
                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-[#020617] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
                         {/* Imagem de Fundo Nativa HTML para Garantir Renderização */}
