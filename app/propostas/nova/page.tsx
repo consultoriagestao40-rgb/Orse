@@ -4027,7 +4027,7 @@ function PropostaEditor() {
                      </div>
                   </div>
 {/* CONTROLES DE NAVEGAÇÃO DOS SLIDES (PADRONIZADOS FORA DO SLIDE E DO NÚMERO) */}
-                   <div className={`flex flex-col items-center space-y-4 mt-6 ${viewMode === 'document' ? 'hidden' : ''}`}>
+                   <div className={`flex flex-col items-center space-y-4 mt-6`}>
                       <div className="flex justify-center items-center gap-6">
                          <button
                             type="button"
@@ -4059,7 +4059,7 @@ function PropostaEditor() {
                          </button>
                       </div>
                       <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                         Visualizando Slide {currentSlide} de 13
+                         {viewMode === 'document' ? `Painel de Configuração ${currentSlide} de 13` : `Visualizando Slide ${currentSlide} de 13`}
                       </div>
                    </div>
 
