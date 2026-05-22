@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function DocumentoA4({ proposta, empresaEmissora }: { proposta: any, empresaEmissora: any }) {
+export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { proposta: any, resultado: any, empresaEmissora: any }) {
   if (!proposta || !proposta.cliente) return <div className="p-10 text-center">Carregando dados da proposta...</div>;
   if (!empresaEmissora) return <div className="p-10 text-center">Selecione uma Empresa Emissora para visualizar o documento.</div>;
 
@@ -8,8 +8,28 @@ export default function DocumentoA4({ proposta, empresaEmissora }: { proposta: a
   const fmt = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
   
   const equipe = proposta.equipe || [];
-  const totalEquipe = equipe.reduce((acc: number, item: any) => acc + (item.custoTotalItem || 0), 0);
-  const totalInsumos = (proposta.insumos?.materiais || 0) + (proposta.insumos?.maquinas || 0) + (proposta.insumos?.descartaveis || 0) + (proposta.insumos?.servicos || 0);
+  
+  // Cascata
+  const divisorTributos = resultado?.divisor || 1;
+  const txAdm = (proposta.premissas?.taxaAdm || 0) / 100;
+  const txLucro = (proposta.premissas?.margemLucro || 0) / 100;
+  
+  const applyCascata = (custo: any) => {
+    const cD = Number(custo) || 0;
+    const comAdm = cD * (1 + txAdm);
+    const comLucro = comAdm * (1 + txLucro);
+    return divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
+  };
+
+  const totalEquipe = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
+  
+  const vMateriais = applyCascata(proposta.insumos?.materiais || 0);
+  const vMaquinas = applyCascata(proposta.insumos?.maquinas || 0);
+  const vDescartaveis = applyCascata(proposta.insumos?.descartaveis || 0);
+  const vServicos = applyCascata(proposta.insumos?.servicos || 0);
+  
+  const totalInsumos = vMateriais + vMaquinas + vDescartaveis + vServicos;
+  
   const totalGeral = totalEquipe + totalInsumos;
 
   return (
@@ -83,15 +103,20 @@ export default function DocumentoA4({ proposta, empresaEmissora }: { proposta: a
             </tr>
           </thead>
           <tbody>
-            {equipe.map((item: any, idx: number) => (
-              <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}>
-                <td className="p-2 border border-slate-300 font-bold">{item.nomeCargo}</td>
-                <td className="p-2 border border-slate-300 text-center">{item.escala}</td>
-                <td className="p-2 border border-slate-300 text-center">{item.quantidade}</td>
-                <td className="p-2 border border-slate-300 text-right">{fmt(item.custoTotalItem / item.quantidade)}</td>
-                <td className="p-2 border border-slate-300 text-right font-bold">{fmt(item.custoTotalItem)}</td>
-              </tr>
-            ))}
+            {equipe.map((item: any, idx: number) => {
+              const precoVendaTotal = resultado?.items?.[idx]?.precoVenda || 0;
+              const precoUnitario = item.quantidade > 0 ? precoVendaTotal / item.quantidade : 0;
+              
+              return (
+                <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}>
+                  <td className="p-2 border border-slate-300 font-bold">{item.nomeCargo}</td>
+                  <td className="p-2 border border-slate-300 text-center">{item.escala}</td>
+                  <td className="p-2 border border-slate-300 text-center">{item.quantidade}</td>
+                  <td className="p-2 border border-slate-300 text-right">{fmt(precoUnitario)}</td>
+                  <td className="p-2 border border-slate-300 text-right font-bold">{fmt(precoVendaTotal)}</td>
+                </tr>
+              );
+            })}
             {equipe.length === 0 && (
               <tr><td colSpan={5} className="p-4 text-center text-slate-500">Nenhum posto de serviço adicionado.</td></tr>
             )}
@@ -116,20 +141,20 @@ export default function DocumentoA4({ proposta, empresaEmissora }: { proposta: a
           <tbody>
             <tr className="bg-white">
               <td className="p-2 border border-slate-300 font-bold">Materiais de Limpeza e Consumo</td>
-              <td className="p-2 border border-slate-300 text-right">{fmt(proposta.insumos?.materiais || 0)}</td>
+              <td className="p-2 border border-slate-300 text-right">{fmt(vMateriais)}</td>
             </tr>
             <tr className="bg-slate-50">
               <td className="p-2 border border-slate-300 font-bold">Máquinas e Equipamentos</td>
-              <td className="p-2 border border-slate-300 text-right">{fmt(proposta.insumos?.maquinas || 0)}</td>
+              <td className="p-2 border border-slate-300 text-right">{fmt(vMaquinas)}</td>
             </tr>
             <tr className="bg-white">
               <td className="p-2 border border-slate-300 font-bold">Materiais Descartáveis</td>
-              <td className="p-2 border border-slate-300 text-right">{fmt(proposta.insumos?.descartaveis || 0)}</td>
+              <td className="p-2 border border-slate-300 text-right">{fmt(vDescartaveis)}</td>
             </tr>
-            {proposta.insumos?.servicos > 0 && (
+            {vServicos > 0 && (
               <tr className="bg-slate-50">
                 <td className="p-2 border border-slate-300 font-bold">{proposta.insumos?.servicosDescricao || "Serviços Terceirizados"}</td>
-                <td className="p-2 border border-slate-300 text-right">{fmt(proposta.insumos?.servicos || 0)}</td>
+                <td className="p-2 border border-slate-300 text-right">{fmt(vServicos)}</td>
               </tr>
             )}
           </tbody>
