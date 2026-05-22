@@ -80,7 +80,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
         <div className="bg-slate-100 border-l-4 border-slate-900 p-4 mb-8">
           <h3 className="font-black uppercase mb-3 text-sm">DADOS DO CLIENTE</h3>
           <div className="grid grid-cols-2 gap-2">
-            <p><strong>Cliente:</strong> {proposta.cliente?.razaoSocial || proposta.cliente?.cliente}</p>
+            <p><strong>Cliente:</strong> {proposta.cliente?.cliente || proposta.cliente?.razaoSocial}</p>
             <p><strong>CNPJ/CPF:</strong> {proposta.cliente?.cnpj}</p>
             <p className="col-span-2"><strong>Endereço:</strong> {proposta.cliente?.cidade}</p>
             <p><strong>Contato:</strong> {proposta.cliente?.contato}</p>
@@ -174,27 +174,40 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
         {/* CLÁUSULAS */}
         <h3 className="font-black uppercase mb-4 text-sm text-center border-b-2 border-slate-900 pb-2">CLÁUSULAS E CONDIÇÕES</h3>
         <div className="space-y-4 text-justify">
-          <div>
-            <h4 className="font-bold uppercase">CLÁUSULA 01 - DO OBJETO E ESCOPO:</h4>
-            <div className="pl-4 mt-2">
-              <p>1.1. O presente contrato tem como objeto a prestação de serviços de <strong className="font-bold">{proposta.cliente?.tipoServicos || "serviços gerais"}</strong>.</p>
-              {proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico && (
-                <div className="mt-2 whitespace-pre-wrap">{proposta.cliente.escopoTecnico}</div>
-              )}
-            </div>
-          </div>
-          
-          <div>
-            <h4 className="font-bold uppercase mt-6">CLÁUSULA 02 - DAS CONDIÇÕES COMERCIAIS:</h4>
-            <div className="pl-4 mt-2">
-               {proposta.cliente?.condicoesCliente?.map((c: string, i: number) => (
-                  <p key={i} className="mb-1">2.{i+1}. {c}</p>
-               ))}
-               {!proposta.cliente?.condicoesCliente?.length && (
-                 <p>As condições comerciais seguirão o padrão estipulado em contrato, com vencimento conforme acordado e validade da proposta de 30 dias.</p>
-               )}
-            </div>
-          </div>
+          {proposta.cliente?.clausulasA4 && proposta.cliente.clausulasA4.length > 0 ? (
+             proposta.cliente.clausulasA4.map((clausula: any, idx: number) => (
+               <div key={idx} className={idx > 0 ? "mt-6" : ""}>
+                 <h4 className="font-bold uppercase">{clausula.titulo}</h4>
+                 <div className="pl-4 mt-2 whitespace-pre-wrap">
+                   {clausula.texto}
+                 </div>
+               </div>
+             ))
+          ) : (
+            <>
+              <div>
+                <h4 className="font-bold uppercase">CLÁUSULA 01 - DO OBJETO E ESCOPO:</h4>
+                <div className="pl-4 mt-2">
+                  <p>1.1. O presente contrato tem como objeto a prestação de serviços de <strong className="font-bold">{proposta.cliente?.tipoServicos || "serviços gerais"}</strong>.</p>
+                  {proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico && (
+                    <div className="mt-2 whitespace-pre-wrap">{proposta.cliente.escopoTecnico}</div>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="font-bold uppercase mt-6">CLÁUSULA 02 - DAS CONDIÇÕES COMERCIAIS:</h4>
+                <div className="pl-4 mt-2">
+                   {proposta.cliente?.condicoesCliente?.map((c: string, i: number) => (
+                      <p key={i} className="mb-1">2.{i+1}. {c}</p>
+                   ))}
+                   {!proposta.cliente?.condicoesCliente?.length && (
+                     <p>As condições comerciais seguirão o padrão estipulado em contrato, com vencimento conforme acordado e validade da proposta de 30 dias.</p>
+                   )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* ASSINATURAS / ACEITE */}

@@ -19,6 +19,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, ChevronLeft, Factory, Store, Bus, Building, Hospital, ShoppingBag, GraduationCap, Share2, Clock, Smartphone, Cpu, CreditCard } from 'lucide-react';
 import BrazilMap from '@/components/BrazilMap';
 import DocumentoA4 from '@/components/DocumentoA4';
+import TemplateEditorModal from '@/components/TemplateEditorModal';
 import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
 
 const TABS = [
@@ -44,6 +45,15 @@ function PropostaEditor() {
 
   const [activeTab, setActiveTab] = useState('dados');
   const [viewMode, setViewMode] = useState<'slide' | 'document'>('slide');
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [templates, setTemplates] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/templates').then(r => r.json()).then(data => {
+      if (Array.isArray(data)) setTemplates(data);
+    }).catch(console.error);
+  }, [showTemplateModal]);
+
   const [empresasEmissoras, setEmpresasEmissoras] = useState<any[]>([]);
   const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -4027,7 +4037,7 @@ function PropostaEditor() {
                      </div>
                   </div>
 {/* CONTROLES DE NAVEGAÇÃO DOS SLIDES (PADRONIZADOS FORA DO SLIDE E DO NÚMERO) */}
-                   <div className={`flex flex-col items-center space-y-4 mt-6`}>
+                   <div className={`flex flex-col items-center space-y-4 mt-6 ${viewMode === 'document' ? 'hidden' : ''}`}>
                       <div className="flex justify-center items-center gap-6">
                          <button
                             type="button"
@@ -4058,13 +4068,122 @@ function PropostaEditor() {
                             Avançar <ChevronRight size={16} className="stroke-[3]" />
                          </button>
                       </div>
-                      <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                         {viewMode === 'document' ? `Painel de Configuração ${currentSlide} de 13` : `Visualizando Slide ${currentSlide} de 13`}
                       </div>
                    </div>
 
                   {/* FORMULÁRIO DE ATUALIZAÇÃO DOS DADOS DOS SLIDES E DO VENDEDOR */}
                   
+                  {viewMode === 'document' ? (
+                     <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6 space-y-8 relative">
+                        <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#16325e] rounded-t-2xl mb-6 flex justify-between items-center">
+                           <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
+                              📝 Construtor de Cláusulas (A4)
+                           </h3>
+                           <button 
+                             onClick={() => setShowTemplateModal(true)}
+                             className="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+                           >
+                             Editar Templates
+                           </button>
+                        </div>
+                        
+                        {showTemplateModal && (
+                           <TemplateEditorModal 
+                              onClose={() => setShowTemplateModal(false)}
+                              onSave={async (name, clausulas) => {
+                                 await fetch('/api/templates', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ nome: name, clausulas })
+                                 });
+                                 setShowTemplateModal(false);
+                                 alert('Template salvo com sucesso!');
+                              }}
+                           />
+                        )}
+
+                        <div className="space-y-4">
+                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Selecione um Template de Cláusulas</label>
+                           <select 
+                             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
+                             onChange={(e) => {
+                               const t = templates.find(x => x.id === e.target.value);
+                               if (t) {
+                                 setProposta({
+                                   ...proposta,
+                                   cliente: {
+                                     ...proposta.cliente,
+                                     clausulasA4: t.clausulas.map((c:any) => ({ titulo: c.titulo, texto: c.texto }))
+                                   }
+                                 });
+                               }
+                             }}
+                           >
+                             <option value="">-- Escolha um template para carregar --</option>
+                             {templates.map(t => (
+                               <option key={t.id} value={t.id}>{t.nome}</option>
+                             ))}
+                           </select>
+                        </div>
+
+                        <div className="space-y-6">
+                           <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider border-b border-slate-100 pb-2 flex justify-between items-center">
+                              Cláusulas Atuais do Documento
+                              <button 
+                                onClick={() => {
+                                  const list = proposta.cliente.clausulasA4 || [];
+                                  setProposta({...proposta, cliente: {...proposta.cliente, clausulasA4: [...list, { titulo: 'NOVA CLÁUSULA', texto: '' }]}});
+                                }}
+                                className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded text-[9px]"
+                              >
+                                + Adicionar
+                              </button>
+                           </h4>
+                           
+                           {/* Render active clauses */}
+                           {(proposta.cliente.clausulasA4 || []).map((clausula: any, idx: number) => (
+                             <div key={idx} className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3 relative">
+                                <button 
+                                  onClick={() => {
+                                    const list = [...proposta.cliente.clausulasA4];
+                                    list.splice(idx, 1);
+                                    setProposta({...proposta, cliente: {...proposta.cliente, clausulasA4: list}});
+                                  }}
+                                  className="absolute top-4 right-4 text-red-500 hover:text-red-700"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                                <div>
+                                  <input 
+                                    className="w-full bg-white border border-slate-200 rounded text-xs px-3 py-2 font-bold"
+                                    value={clausula.titulo}
+                                    onChange={(e) => {
+                                      const list = [...proposta.cliente.clausulasA4];
+                                      list[idx].titulo = e.target.value;
+                                      setProposta({...proposta, cliente: {...proposta.cliente, clausulasA4: list}});
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <textarea 
+                                    className="w-full bg-white border border-slate-200 rounded text-xs px-3 py-2 h-24 resize-none"
+                                    value={clausula.texto}
+                                    onChange={(e) => {
+                                      const list = [...proposta.cliente.clausulasA4];
+                                      list[idx].texto = e.target.value;
+                                      setProposta({...proposta, cliente: {...proposta.cliente, clausulasA4: list}});
+                                    }}
+                                  />
+                                </div>
+                             </div>
+                           ))}
+                           
+                           {(proposta.cliente.clausulasA4?.length || 0) === 0 && (
+                             <div className="text-slate-400 text-xs italic">Nenhuma cláusula definida. Carregue um template acima ou adicione manualmente.</div>
+                           )}
+                        </div>
+                     </div>
+                  ) : (
                   <div className="space-y-6">
                      {currentSlide === 2 && (
                         <>
@@ -4732,6 +4851,7 @@ function PropostaEditor() {
                          </div>
                       </div>
                      )}
+                  )}
                      
                      {/* Floating Controls Dock no Modo Apresentação */}
                      {presentationMode && (

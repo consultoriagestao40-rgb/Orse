@@ -221,3 +221,19 @@ model AuditLog {
   proposta Proposta @relation(fields: [propostaId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id])
 }
+
+model TemplateContrato {
+  id        String             @id @default(uuid())
+  nome      String             @unique
+  clausulas ClausulaTemplate[]
+  createdAt DateTime           @default(now())
+}
+
+model ClausulaTemplate {
+  id         String           @id @default(uuid())
+  templateId String
+  ordem      Int              @default(0)
+  titulo     String
+  texto      String
+  template   TemplateContrato @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
