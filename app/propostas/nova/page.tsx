@@ -4068,7 +4068,6 @@ function PropostaEditor() {
                             Avançar <ChevronRight size={16} className="stroke-[3]" />
                          </button>
                       </div>
-                      </div>
                    </div>
 
                   {/* FORMULÁRIO DE ATUALIZAÇÃO DOS DADOS DOS SLIDES E DO VENDEDOR */}
@@ -4851,6 +4850,7 @@ function PropostaEditor() {
                          </div>
                       </div>
                      )}
+                  </div>
                   )}
                      
                      {/* Floating Controls Dock no Modo Apresentação */}
