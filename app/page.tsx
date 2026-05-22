@@ -155,11 +155,14 @@ export default function ProposalsDashboard() {
     );
   };
 
-  // ── Card de proposta reutilizável ───────────────────────────────────────────
   const ProposalCard = ({ prop }: { prop: any }) => (
     <div
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/plain', prop.id);
+      }}
       onClick={() => router.push(`/propostas/nova?id=${prop.id}`)}
-      className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group"
+      className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing"
     >
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
@@ -197,22 +200,57 @@ export default function ProposalsDashboard() {
   );
 
   // ── Coluna de Kanban reutilizável ───────────────────────────────────────────
-  const KanbanColumn = ({ label, color, cards, total }: {
-    label: string; color?: string; cards: any[]; total: number;
+  const KanbanColumn = ({ label, color, cards, total, type = 'status', onDropProp }: {
+    label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor'; onDropProp?: (propId: string) => void;
   }) => (
-    <div className="flex-shrink-0 w-72 flex flex-col">
+    <div 
+      className="flex-shrink-0 w-72 flex flex-col"
+      onDragOver={(e) => {
+        e.preventDefault(); // Necessário para permitir o drop
+        e.currentTarget.classList.add('bg-slate-200/50', 'rounded-xl');
+      }}
+      onDragLeave={(e) => {
+        e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl');
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl');
+        const propId = e.dataTransfer.getData('text/plain');
+        if (propId && onDropProp) onDropProp(propId);
+      }}
+    >
       {/* Cabeçalho da coluna */}
       <div className="bg-white border border-slate-200 rounded-xl mb-3 p-4 shadow-sm">
-        <div className="flex items-center justify-between mb-2">
-          <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${color || 'bg-slate-100 text-slate-600'}`}>
-            {label}
-          </span>
-          <span className="text-xs font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
-            {cards.length}
-          </span>
-        </div>
-        <p className="text-sm font-black text-[#1B4D3E]">{fmt(total)}</p>
-        <p className="text-[10px] text-slate-400 font-medium mt-0.5">Volume total da coluna</p>
+        {type === 'status' ? (
+          <>
+            <div className="flex items-center justify-between mb-2">
+              <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${color || 'bg-slate-100 text-slate-600'}`}>
+                {label}
+              </span>
+              <span className="text-xs font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
+                {cards.length}
+              </span>
+            </div>
+            <p className="text-sm font-black text-[#1B4D3E]">{fmt(total)}</p>
+            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Volume total da coluna</p>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-9 h-9 rounded-xl bg-[#1B4D3E]/10 flex items-center justify-center text-[#1B4D3E] font-black text-sm uppercase">
+                {label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-black text-slate-800 truncate">{label}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[10px] text-slate-400 font-medium">{cards.length} proposta{cards.length !== 1 ? 's' : ''}</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-base font-black text-[#1B4D3E]">{fmt(total)}</p>
+            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Volume total</p>
+          </>
+        )}
       </div>
 
       {/* Cards */}
@@ -439,6 +477,14 @@ export default function ProposalsDashboard() {
                         color={col.color}
                         cards={col.cards}
                         total={col.total}
+                        onDropProp={async (propId) => {
+                          const prop = proposals.find(p => p.id === propId);
+                          if (prop && prop.status !== col.label) {
+                            setProposals(prev => prev.map(p => p.id === propId ? { ...p, status: col.label } : p));
+                            const res = await updatePropostaStatus(propId, col.label);
+                            if (!res.success) alert(res.error);
+                          }
+                        }}
                       />
                     ))}
                     {kanbanStatusCols.length === 0 && (
@@ -472,35 +518,28 @@ export default function ProposalsDashboard() {
                 <div className="overflow-x-auto pb-6">
                   <div className="flex gap-5 min-w-max">
                     {kanbanVendedorCols.map(col => (
-                      <div key={col.id} className="flex-shrink-0 w-72 flex flex-col">
-                        {/* Cabeçalho do vendedor */}
-                        <div className="bg-white border border-slate-200 rounded-xl mb-3 p-4 shadow-sm">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="w-9 h-9 rounded-xl bg-[#1B4D3E]/10 flex items-center justify-center text-[#1B4D3E] font-black text-sm uppercase">
-                              {col.label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-black text-slate-800 truncate">{col.label}</p>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-[10px] text-slate-400 font-medium">{col.cards.length} proposta{col.cards.length !== 1 ? 's' : ''}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <p className="text-base font-black text-[#1B4D3E]">{fmt(col.total)}</p>
-                          <p className="text-[10px] text-slate-400 font-medium mt-0.5">Volume total</p>
-                        </div>
-
-                        {/* Cards */}
-                        <div className="flex flex-col gap-3 flex-1">
-                          {col.cards.length === 0 ? (
-                            <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
-                              <p className="text-xs text-slate-300 font-medium">Sem propostas</p>
-                            </div>
-                          ) : (
-                            col.cards.map((prop: any) => <ProposalCard key={prop.id} prop={prop} />)
-                          )}
-                        </div>
-                      </div>
+                      <KanbanColumn
+                        key={col.id}
+                        label={col.label}
+                        type="vendedor"
+                        cards={col.cards}
+                        total={col.total}
+                        onDropProp={async (propId) => {
+                          const prop = proposals.find(p => p.id === propId);
+                          if (prop && prop.usuario !== col.label) {
+                            if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
+                              alert('Apenas gestores e administradores podem transferir propostas.');
+                              return;
+                            }
+                            const newUser = usersList.find(u => u.nome === col.label);
+                            if (newUser) {
+                              setProposals(prev => prev.map(p => p.id === propId ? { ...p, usuario: newUser.nome } : p));
+                              const res = await transferirProposta(propId, newUser.id);
+                              if (!res.success) alert(res.error);
+                            }
+                          }
+                        }}
+                      />
                     ))}
                   </div>
                 </div>
