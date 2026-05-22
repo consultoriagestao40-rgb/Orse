@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
   Settings as SettingsIcon, Layers, CalendarDays, Ruler, Plus, Trash2, 
-  Save, X, Tag, Edit2, Target
+  Save, X, Tag, Edit2, Target, Briefcase
 } from 'lucide-react';
 import { 
   getPropostaStatuses, createPropostaStatus, deletePropostaStatus 
