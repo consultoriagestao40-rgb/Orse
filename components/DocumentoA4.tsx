@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function DocumentoA4({ proposta, resultado, empresaEmissora, templates, onUpdateClausulas }: { proposta: any, resultado: any, empresaEmissora: any, templates?: any[], onUpdateClausulas?: (c: any[]) => void }) {
+export default function DocumentoA4({ proposta, resultado, empresaEmissora, templates, onUpdateClausulas, onUpdateCliente }: { proposta: any, resultado: any, empresaEmissora: any, templates?: any[], onUpdateClausulas?: (c: any[]) => void, onUpdateCliente?: (c: any) => void }) {
   const [showEditorModal, setShowEditorModal] = useState(false);
 
   if (!proposta || !proposta.cliente) return <div className="p-10 text-center">Carregando dados da proposta...</div>;
@@ -573,6 +573,51 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                           }}
                         />
                       </div>
+                      {clausula.texto.includes('[TERMO_ACEITE]') && onUpdateCliente && (
+                         <div className="mt-4 bg-indigo-50/50 border border-indigo-100 p-4 rounded-xl shadow-sm">
+                            <h5 className="text-[10px] font-black text-indigo-800 uppercase mb-3 flex items-center gap-1.5">
+                              <span className="text-sm">📝</span> Dados Exclusivos do Termo de Aceite
+                            </h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                               <div>
+                                 <label className="text-[9px] font-bold text-slate-500 uppercase ml-1">Razão Social</label>
+                                 <input className="w-full text-xs px-3 py-2 bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-indigo-300 font-semibold" value={proposta.cliente.razaoSocial || ''} onChange={e => onUpdateCliente({...proposta.cliente, razaoSocial: e.target.value})} />
+                               </div>
+                               <div>
+                                 <label className="text-[9px] font-bold text-slate-500 uppercase ml-1">Nome Fantasia</label>
+                                 <input className="w-full text-xs px-3 py-2 bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-indigo-300 font-semibold" value={proposta.cliente.cliente || ''} onChange={e => onUpdateCliente({...proposta.cliente, cliente: e.target.value})} />
+                               </div>
+                               <div>
+                                 <label className="text-[9px] font-bold text-slate-500 uppercase ml-1">CNPJ</label>
+                                 <input className="w-full text-xs px-3 py-2 bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-indigo-300 font-semibold" value={proposta.cliente.cnpj || ''} onChange={e => onUpdateCliente({...proposta.cliente, cnpj: e.target.value})} />
+                               </div>
+                               <div>
+                                 <label className="text-[9px] font-bold text-slate-500 uppercase ml-1">E-mail</label>
+                                 <input className="w-full text-xs px-3 py-2 bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-indigo-300 font-semibold" value={proposta.cliente.email || ''} onChange={e => onUpdateCliente({...proposta.cliente, email: e.target.value})} />
+                               </div>
+                               <div>
+                                 <label className="text-[9px] font-bold text-slate-500 uppercase ml-1">Data de Início</label>
+                                 <input className="w-full text-xs px-3 py-2 bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-indigo-300 font-semibold" value={proposta.cliente.dataInicio || ''} onChange={e => onUpdateCliente({...proposta.cliente, dataInicio: e.target.value})} placeholder="DD/MM/AAAA" />
+                               </div>
+                               <div>
+                                 <label className="text-[9px] font-bold text-slate-500 uppercase ml-1">Data de Vencimento</label>
+                                 <input className="w-full text-xs px-3 py-2 bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-indigo-300 font-semibold" value={proposta.cliente.dataVencimento || ''} onChange={e => onUpdateCliente({...proposta.cliente, dataVencimento: e.target.value})} placeholder="DD/MM/AAAA" />
+                               </div>
+                               <div>
+                                 <label className="text-[9px] font-bold text-slate-500 uppercase ml-1">Nome do Contato</label>
+                                 <input className="w-full text-xs px-3 py-2 bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-indigo-300 font-semibold" value={proposta.cliente.contato || ''} onChange={e => onUpdateCliente({...proposta.cliente, contato: e.target.value})} />
+                               </div>
+                               <div>
+                                 <label className="text-[9px] font-bold text-slate-500 uppercase ml-1">Cargo do Contato</label>
+                                 <input className="w-full text-xs px-3 py-2 bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-indigo-300 font-semibold" value={proposta.cliente.contatoCargo || ''} onChange={e => onUpdateCliente({...proposta.cliente, contatoCargo: e.target.value})} />
+                               </div>
+                               <div>
+                                 <label className="text-[9px] font-bold text-slate-500 uppercase ml-1">Celular</label>
+                                 <input className="w-full text-xs px-3 py-2 bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-indigo-300 font-semibold" value={proposta.cliente.celular || ''} onChange={e => onUpdateCliente({...proposta.cliente, celular: e.target.value})} />
+                               </div>
+                            </div>
+                         </div>
+                      )}
                    </div>
                  ))}
                  

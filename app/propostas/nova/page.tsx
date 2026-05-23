@@ -2810,6 +2810,7 @@ function PropostaEditor() {
                            empresaEmissora={empresasEmissoras.find(e => e.id === selectedEmpresaId) || empresasEmissoras[0]} 
                            templates={templates}
                            onUpdateClausulas={(clausulas: any[]) => setProposta({...proposta, cliente: {...proposta.cliente, clausulasA4: clausulas}})}
+                           onUpdateCliente={(cliente: any) => setProposta({...proposta, cliente})}
                         />
                      </div>
                   )}
