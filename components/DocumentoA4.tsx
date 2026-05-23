@@ -179,7 +179,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
         {/* CABEÇALHO HORIZONTAL */}
         <div className="flex items-center justify-between border-b-2 border-slate-900 pb-6 mb-6">
           {/* Espaçador invisível na esquerda para manter o texto 100% centralizado */}
-          <div className="w-40 invisible">Espaçador</div>
+          <div className="w-40"></div>
           
           {/* DADOS DA EMPRESA CENTRALIZADOS */}
           <div className="flex flex-col items-center text-center flex-1">
