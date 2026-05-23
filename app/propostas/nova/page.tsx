@@ -4890,9 +4890,6 @@ function PropostaEditor() {
                            </button>
                         </div>
                      )}
-                  </div>
-
-                  
                </div>
             )}
 
