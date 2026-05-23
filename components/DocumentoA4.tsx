@@ -362,21 +362,29 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
              <>
                {proposta.cliente.clausulasA4.map((clausula: any, idx: number) => {
                   const clauseNum = idx + 1;
-                  const rawTitulo = clausula.titulo.replace(/^CLÁUSULA\s+\d+\s*[-–]?\s*/i, '').trim();
+                  const rawTitulo = clausula.titulo.replace(/^(?:CL[ÁA]US[U]?L[A]?|CL[ÁA]US[U]?|CL[ÁA]US)?\s*\d*\s*[-–]?\s*/i, '').trim();
                   const tituloFinal = `CLÁUSULA ${String(clauseNum).padStart(2,'0')} - ${rawTitulo}`;
                   
-                  // Se for uma das tags especiais, não tenta quebrar parágrafos textuais
-                  const isSpecial = clausula.texto === '[TABELA]' || clausula.texto === '[ITENS]' || clausula.texto === '[TERMO_ACEITE]';
+                  const txt = clausula.texto || '';
+                  const hasTabela = txt.includes('[TABELA]');
+                  const hasItens = txt.includes('[ITENS]');
+                  const hasAceite = txt.includes('[TERMO_ACEITE]');
                   
-                  const paragrafos = !isSpecial
-                    ? clausula.texto.split(/\n/).filter((p: string) => p.trim() !== '')
+                  const textoLimpo = txt
+                    .replace(/\[TABELA\]/g, '')
+                    .replace(/\[ITENS\]/g, '')
+                    .replace(/\[TERMO_ACEITE\]/g, '')
+                    .trim();
+                    
+                  const paragrafos = textoLimpo
+                    ? textoLimpo.split(/\n/).filter((p: string) => p.trim() !== '')
                     : [];
                     
                   return (
                     <div key={idx} className={idx > 0 ? "mt-6 page-break-inside-avoid" : ""}>
                       <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">{tituloFinal}</h4>
-                      {!isSpecial && (
-                        <div className="pl-4 mt-2">
+                      {paragrafos.length > 0 && (
+                        <div className="pl-4 mt-2 mb-4">
                           {paragrafos.map((p: string, pIdx: number) => (
                             <p key={pIdx} className="mb-2 text-justify">
                               <span className="font-bold mr-1">{clauseNum}.{pIdx + 1}.</span>{p.replace(/^\d+\.\d+\.?\s*/, '')}
@@ -385,9 +393,9 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                         </div>
                       )}
                       
-                      {clausula.texto === '[TABELA]' && renderTabelaComercial()}
-                      {clausula.texto === '[ITENS]' && renderTabelaItensInclusosExcluidos()}
-                      {clausula.texto === '[TERMO_ACEITE]' && renderTermoDeAceite()}
+                      {hasTabela && renderTabelaComercial()}
+                      {hasItens && renderTabelaItensInclusosExcluidos()}
+                      {hasAceite && renderTermoDeAceite()}
                     </div>
                   );
                 })}
