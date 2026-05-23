@@ -187,23 +187,27 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
         </div>
 
         {/* TÍTULO */}
-        <div className="text-center mb-8">
-          <h2 className="text-lg font-black uppercase tracking-tight">PROPOSTA COMERCIAL DE PRESTAÇÃO DE SERVIÇOS</h2>
-          <p className="font-bold mt-2">Proposta nº {(proposta.numero || "0000").toString().padStart(4, '0')} - Rev. {String(proposta.versao || 1).padStart(2, '0')}</p>
-          <p>Data: {proposta.cliente?.dataElaboracao || new Date().toLocaleDateString('pt-BR')}</p>
+        <div className="text-center mb-10">
+          <h2 className="text-xl font-black uppercase tracking-tight text-[#0B1A2D]">PROPOSTA COMERCIAL DE PRESTAÇÃO DE SERVIÇOS</h2>
+          <div className="flex justify-center items-center gap-4 mt-2 text-sm font-bold text-slate-700">
+             <span>Proposta nº {(proposta.numero || "0000").toString().padStart(4, '0')}</span>
+             <span>|</span>
+             <span>Revisão {String(proposta.versao || 1).padStart(2, '0')}</span>
+             <span>|</span>
+             <span>Data: {proposta.cliente?.dataElaboracao || new Date().toLocaleDateString('pt-BR')}</span>
+          </div>
         </div>
 
-        {/* DADOS DO CLIENTE */}
-        <div className="bg-slate-100 border-l-4 border-slate-900 p-4 mb-8">
-          <h3 className="font-black uppercase mb-3 text-sm">DADOS DO CLIENTE</h3>
-          <div className="grid grid-cols-2 gap-2">
-            <p><strong>Cliente:</strong> {proposta.cliente?.cliente || proposta.cliente?.razaoSocial}</p>
-            <p><strong>CNPJ/CPF:</strong> {proposta.cliente?.cnpj}</p>
-            <p className="col-span-2"><strong>Endereço:</strong> {proposta.cliente?.cidade}</p>
-            <p><strong>Contato:</strong> {proposta.cliente?.contato}</p>
-            <p><strong>Cargo:</strong> {proposta.cliente?.contatoCargo}</p>
-            <p><strong>Telefone:</strong> {proposta.cliente?.celular}</p>
-            <p><strong>Email:</strong> {proposta.cliente?.email}</p>
+        {/* DADOS DO CLIENTE - QUADRO ORIGINAL DESIGNER */}
+        <div className="border border-slate-400 p-6 mb-10 text-[13px] bg-white">
+          <h3 className="font-bold uppercase mb-4 text-base border-b border-slate-300 pb-3 text-[#0B1A2D]">DADOS DO CONTRATANTE</h3>
+          <div className="grid grid-cols-2 gap-y-4 gap-x-8 text-slate-600">
+            <p className="col-span-2"><strong className="text-[#0B1A2D]">Razão Social / Cliente:</strong> {proposta.cliente?.cliente || proposta.cliente?.razaoSocial}</p>
+            <p><strong className="text-[#0B1A2D]">CNPJ / CPF:</strong> {proposta.cliente?.cnpj}</p>
+            <p><strong className="text-[#0B1A2D]">Telefone:</strong> {proposta.cliente?.celular || proposta.cliente?.telefone}</p>
+            <p className="col-span-2"><strong className="text-[#0B1A2D]">Endereço de Implantação:</strong> {proposta.cliente?.cidade}</p>
+            <p><strong className="text-[#0B1A2D]">A/C:</strong> {proposta.cliente?.contato} {proposta.cliente?.contatoCargo ? `(${proposta.cliente.contatoCargo})` : ''}</p>
+            <p><strong className="text-[#0B1A2D]">E-mail:</strong> {proposta.cliente?.email}</p>
           </div>
         </div>
 
