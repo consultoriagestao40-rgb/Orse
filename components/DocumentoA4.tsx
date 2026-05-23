@@ -133,21 +133,41 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
           @page { margin: 0; size: A4; }
-          body, html, #root, [class*="layout"], [class*="sidebar"], [class*="main"], header, nav, button, .no-print {
+          
+          * {
+             -webkit-print-color-adjust: exact !important;
+             print-color-adjust: exact !important;
+             color-adjust: exact !important;
+          }
+
+          body {
             background-color: white !important;
-            color: black !important;
             margin: 0 !important;
             padding: 0 !important;
-            box-shadow: none !important;
           }
-          .sidebar, header, nav, button, .no-print { display: none !important; }
+          
+          /* Esconde tudo na tela mantendo a árvore do DOM */
+          body * {
+            visibility: hidden !important;
+          }
+
+          /* Traz de volta o A4 e seus filhos */
+          .print-a4-page, .print-a4-page * {
+            visibility: visible !important;
+          }
+
+          /* Arranca o A4 do fluxo do layout e joga pro topo da página de impressão */
           .print-a4-page {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
             width: 100% !important;
             height: auto !important;
             min-height: 100vh !important;
             margin: 0 !important;
             padding: 0 !important;
             box-shadow: none !important;
+            border: none !important;
             page-break-after: always;
           }
         }
