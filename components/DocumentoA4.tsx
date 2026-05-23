@@ -605,11 +605,11 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                                </div>
                                <div>
                                  <label className="text-[9px] font-bold text-slate-500 uppercase ml-1">Data de Início</label>
-                                 <input className="w-full text-xs px-3 py-2 bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-indigo-300 font-semibold" value={proposta.cliente.dataInicio || ''} onChange={e => onUpdateCliente({...proposta.cliente, dataInicio: e.target.value})} placeholder="DD/MM/AAAA" />
+                                 <input type="date" className="w-full text-xs px-3 py-2 bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-indigo-300 font-semibold" value={proposta.cliente.dataInicio || ''} onChange={e => onUpdateCliente({...proposta.cliente, dataInicio: e.target.value})} placeholder="DD/MM/AAAA" />
                                </div>
                                <div>
                                  <label className="text-[9px] font-bold text-slate-500 uppercase ml-1">Data de Vencimento</label>
-                                 <input className="w-full text-xs px-3 py-2 bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-indigo-300 font-semibold" value={proposta.cliente.dataVencimento || ''} onChange={e => onUpdateCliente({...proposta.cliente, dataVencimento: e.target.value})} placeholder="DD/MM/AAAA" />
+                                 <input type="date" className="w-full text-xs px-3 py-2 bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-indigo-300 font-semibold" value={proposta.cliente.dataVencimento || ''} onChange={e => onUpdateCliente({...proposta.cliente, dataVencimento: e.target.value})} placeholder="DD/MM/AAAA" />
                                </div>
                                <div>
                                  <label className="text-[9px] font-bold text-slate-500 uppercase ml-1">Nome do Contato</label>
