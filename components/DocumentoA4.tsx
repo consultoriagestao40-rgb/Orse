@@ -334,17 +334,72 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
         </div>
 
         {/* ASSINATURAS / ACEITE */}
-        <div className="mt-32 pt-10 border-t-2 border-slate-200 grid grid-cols-2 gap-16 text-center page-break-inside-avoid">
-           <div>
-              <div className="border-t border-black pt-2 font-black">CONTRATANTE</div>
-              <div className="mt-1 font-bold text-[10px]">{proposta.cliente?.razaoSocial || proposta.cliente?.cliente || "Cliente"}</div>
-              <div className="text-[10px] text-slate-500 uppercase">{proposta.cliente?.contato || "Representante Legal"}</div>
-           </div>
-           <div>
-              <div className="border-t border-black pt-2 font-black">CONTRATADA</div>
-              <div className="mt-1 font-bold text-[10px]">{empresaEmissora.razaoSocial}</div>
-              <div className="text-[10px] text-slate-500 uppercase">{proposta.cliente?.vendedorNome || "Representante Legal"}</div>
-           </div>
+        <div className="mt-16 page-break-inside-avoid">
+          <h2 className="text-2xl font-black text-[#1e4480] tracking-tight mb-6">Estamos prontos para iniciar a nossa parceria de sucesso!</h2>
+          <div className="text-[13px] text-justify space-y-4 mb-8 text-[#1e4480] font-medium leading-relaxed">
+             <p>Ao assinar este termo de aceite, o <strong>{proposta.cliente?.cliente?.toUpperCase() || proposta.cliente?.razaoSocial?.toUpperCase() || "CLIENTE"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
+             <p>Este documento servirá como base oficial para a elaboração do instrumento jurídico definitivo (Contrato de Prestação de Serviços) entre as partes.</p>
+          </div>
+          
+          <h2 className="text-3xl font-black text-white bg-[#285084] p-4 rounded-t-xl tracking-tight mb-0 -mx-4 px-10">ACEITE</h2>
+          <div className="bg-[#285084] p-6 -mx-4 px-10 rounded-b-xl space-y-3 text-white font-bold text-xs pb-12 shadow-md relative overflow-hidden">
+            
+            {/* Decorações de fundo */}
+            <div className="absolute top-0 right-0 opacity-10 pointer-events-none transform translate-x-1/4 -translate-y-1/4">
+               <div className="w-64 h-20 bg-white rotate-45 mb-4"></div>
+               <div className="w-64 h-20 bg-white rotate-45"></div>
+            </div>
+
+            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
+              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">Razão Social</div>
+              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.razaoSocial || ""}</div>
+            </div>
+            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
+              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">Nome Fantasia</div>
+              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.cliente || ""}</div>
+            </div>
+            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
+              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">CNPJ</div>
+              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.cnpj || ""}</div>
+            </div>
+            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
+              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">Valor</div>
+              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{fmt(totalGeral)}</div>
+            </div>
+            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
+              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">Início</div>
+              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.dataInicio || "-"}</div>
+            </div>
+            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
+              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">Vencimento</div>
+              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.dataVencimento || "-"}</div>
+            </div>
+
+            <div className="h-6"></div>
+
+            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
+              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">Contato</div>
+              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.contato || ""}</div>
+            </div>
+            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
+              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">Cargo</div>
+              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.contatoCargo || ""}</div>
+            </div>
+            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
+              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">Cel</div>
+              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.celular || ""}</div>
+            </div>
+            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
+              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">E-mail</div>
+              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.email || ""}</div>
+            </div>
+
+            <div className="relative z-10 mt-16 flex justify-center pb-4">
+              <div className="w-2/3 border-t-2 border-white text-center pt-2 text-sm font-black tracking-wide uppercase">
+                Cliente
+              </div>
+            </div>
+          </div>
         </div>
               </td>
             </tr>
