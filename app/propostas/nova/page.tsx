@@ -2799,7 +2799,15 @@ function PropostaEditor() {
                               </button>
                               <button
                                  type="button"
-                                 onClick={() => window.print()}
+                                 onClick={() => {
+                                    const oldTitle = document.title;
+                                    const num = proposta.cliente.numeroProposta || "S-N";
+                                    const rev = proposta.cliente.revisao || "R01";
+                                    const clientName = proposta.cliente.cliente || proposta.cliente.razaoSocial || "Cliente";
+                                    document.title = `Proposta comercial ${num}-${rev} ${clientName}`;
+                                    window.print();
+                                    setTimeout(() => { document.title = oldTitle; }, 100);
+                                 }}
                                  className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
                               >
                                  <span>🖨️</span> Salvar PDF / Imprimir
