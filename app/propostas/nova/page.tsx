@@ -2728,12 +2728,36 @@ function PropostaEditor() {
                   {/* CONTROLES E AÇÕES */}
                   <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row justify-between items-center gap-4">
                      <div>
-                        <h2 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2">
+                        <h2 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2 mb-4">
                            <Presentation className="text-[#10B981]" size={18} /> Apresentação da Proposta
                         </h2>
-                        <div className="flex gap-6 mt-4 border-b border-slate-200">
-                           <button onClick={() => setViewMode('document')} className={`pb-3 text-[11px] font-black uppercase tracking-wider transition-all border-b-2 relative top-[1px] ${viewMode === 'document' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-400 hover:text-slate-800'}`}>Documento Simples (A4)</button>
-                           <button onClick={() => setViewMode('slide')} className={`pb-3 text-[11px] font-black uppercase tracking-wider transition-all border-b-2 relative top-[1px] ${viewMode === 'slide' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-400 hover:text-slate-800'}`}>Slide Deck (Apresentação)</button>
+                        <div className="w-full border-b border-slate-200 pb-2">
+                           <nav className="flex flex-wrap gap-x-6 gap-y-2">
+                              <button 
+                                 onClick={() => setViewMode('document')} 
+                                 className={`
+                                    whitespace-nowrap py-3 px-1 border-b-2 font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all duration-200
+                                    ${viewMode === 'document' 
+                                       ? 'border-[#1B4D3E] text-[#1B4D3E] scale-105 opacity-100' 
+                                       : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 opacity-80'}
+                                 `}
+                              >
+                                 <FileText size={14} className={viewMode === 'document' ? 'text-[#10B981]' : 'text-slate-400'} />
+                                 Documento Simples (A4)
+                              </button>
+                              <button 
+                                 onClick={() => setViewMode('slide')} 
+                                 className={`
+                                    whitespace-nowrap py-3 px-1 border-b-2 font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all duration-200
+                                    ${viewMode === 'slide' 
+                                       ? 'border-[#1B4D3E] text-[#1B4D3E] scale-105 opacity-100' 
+                                       : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 opacity-80'}
+                                 `}
+                              >
+                                 <Presentation size={14} className={viewMode === 'slide' ? 'text-[#10B981]' : 'text-slate-400'} />
+                                 Slide Deck (Apresentação)
+                              </button>
+                           </nav>
                         </div>
                         {viewMode === 'document' && (
                           <div className="mt-2 flex items-center gap-2">
