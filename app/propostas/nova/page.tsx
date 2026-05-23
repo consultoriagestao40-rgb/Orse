@@ -2750,33 +2750,7 @@ function PropostaEditor() {
                           </div>
                         )}
                      </div>
-                     <div className="flex items-center gap-3">
-                         <div className="bg-slate-100 p-1 rounded-xl flex gap-1 flex-wrap">
-                            {[
-                                { id: 1, label: 'Slide 01 (Capa)' },
-                                { id: 2, label: 'Slide 02 (Mensagem)' },
-                                { id: 3, label: 'Slide 03 (Presença)' },
-                                { id: 4, label: 'Slide 04 (Valores)' },
-                                { id: 5, label: 'Slide 05 (Serviços)' },
-                                { id: 6, label: 'Slide 06 (Setores)' },
-                                { id: 7, label: 'Slide 07 (Ferramentas)' },
-                                { id: 8, label: 'Slide 08 (Objeto & Escopo)' },
-                                { id: 9, label: 'Slide 09 (Quadro Efetivo)' },
-                                { id: 10, label: 'Slide 10 (Inclusos/Excluídos)' },
-                                { id: 11, label: 'Slide 11 (Resumo Geral)' },
-                                { id: 12, label: 'Slide 12 (Condições)' },
-                                { id: 13, label: 'Slide 13 (Aceite)' }
-                             ].map((slide) => (
-                               <button 
-                                  key={slide.id}
-                                  type="button"
-                                  onClick={() => setCurrentSlide(slide.id)}
-                                  className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${currentSlide === slide.id ? 'bg-white text-[#1B4D3E] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-                               >
-                                  {slide.label}
-                               </button>
-                            ))}
-                         </div>
+                     <div className="flex items-center justify-end gap-3 w-full">
                         <div className="flex gap-3">
                            <button
                               type="button"
