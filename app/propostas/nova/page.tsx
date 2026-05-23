@@ -2735,17 +2735,17 @@ function PropostaEditor() {
                   {/* CONTROLES E AÇÕES */}
                   <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row justify-between items-center gap-4">
                      <div>
-                        <div className="flex items-center flex-wrap gap-x-6 gap-y-2 mb-4">
-                           <h2 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2">
+                        <div className="flex items-center gap-6 mb-4 min-w-max">
+                           <h2 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2 whitespace-nowrap">
                               <Presentation className="text-[#10B981]" size={18} /> Apresentação da Proposta
                            </h2>
                            {viewMode === 'document' && (
-                             <div className="flex items-center gap-2">
-                               <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Empresa Emissora:</span>
+                             <div className="flex items-center gap-2 whitespace-nowrap">
+                               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Empresa Emissora:</span>
                                <select 
                                  value={selectedEmpresaId} 
                                  onChange={(e) => setSelectedEmpresaId(e.target.value)}
-                                 className="px-3 py-1.5 border border-slate-300 rounded-md text-xs font-bold text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
+                                 className="px-3 py-1.5 border border-slate-300 rounded-md text-[11px] font-bold text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
                                >
                                  {empresasEmissoras.map(emp => (
                                    <option key={emp.id} value={emp.id}>{emp.nomeFantasia}</option>
