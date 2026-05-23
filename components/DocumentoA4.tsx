@@ -132,8 +132,8 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
 
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
-          /* RESTAURA MARGEM NATIVA PARA NÃO QUEBRAR PÁGINAS SUBSEQUENTES */
-          @page { margin: 20mm !important; size: A4; }
+          /* Zera a margem nativa para sumir com cabeçalhos/rodapés do Chrome automaticamente */
+          @page { margin: 0 !important; size: auto; }
           
           * {
              -webkit-print-color-adjust: exact !important;
@@ -157,25 +157,37 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
             visibility: visible !important;
           }
 
-          /* Arranca o A4 do fluxo do layout e joga pro topo da página de impressão */
           .print-a4-page {
             position: absolute !important;
             left: 0 !important;
             top: 0 !important;
             width: 100% !important;
-            height: auto !important;
             margin: 0 !important;
-            padding: 0 !important; /* Deixa o navegador colocar o margin */
+            padding: 0 !important;
             box-sizing: border-box !important;
             box-shadow: none !important;
             border: none !important;
-            /* Sem page-break-after para evitar página em branco no final */
+          }
+
+          /* Ocultar o thead e tfoot na tela, só mostrar na impressão */
+          .print-margin-header, .print-margin-footer {
+             height: 20mm;
+          }
+          .print-content-cell {
+             padding: 0 20mm !important;
           }
         }
       `}} />
 
-      <div className="print-a4-page bg-white w-[210mm] min-h-[297mm] shadow-2xl print:shadow-none mx-auto relative px-16 py-12 text-slate-900 text-xs">
-        
+      <div className="print-a4-page bg-white w-[210mm] min-h-[297mm] print:min-h-0 shadow-2xl print:shadow-none mx-auto relative text-slate-900 text-xs">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr><td className="print-margin-header border-none p-0"></td></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="print-content-cell px-16 py-12 print:py-0 border-none align-top">
+                
         {/* CABEÇALHO HORIZONTAL */}
         <div className="flex items-center justify-between border-b-2 border-slate-900 pb-6 mb-6">
           {/* Espaçador invisível na esquerda para manter o texto 100% centralizado */}
@@ -294,7 +306,13 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
               <div className="text-[10px] text-slate-500 uppercase">{proposta.cliente?.vendedorNome || "Representante Legal"}</div>
            </div>
         </div>
-
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr><td className="print-margin-footer border-none p-0"></td></tr>
+          </tfoot>
+        </table>
       </div>
     </div>
   );
