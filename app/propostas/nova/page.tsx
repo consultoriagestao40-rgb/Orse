@@ -4114,11 +4114,21 @@ function PropostaEditor() {
                              onChange={(e) => {
                                const t = templates.find(x => x.id === e.target.value);
                                if (t) {
+                                 const base = t.clausulas.map((c:any) => ({ titulo: c.titulo, texto: c.texto }));
+                                 if (base.length > 0) {
+                                   base[0] = { titulo: 'CLÁUSULA 01 - DO OBJETO E ESCOPO', texto: proposta.cliente.objetoProposta || '' };
+                                   if (base.length > 1) {
+                                     base[1] = { titulo: 'CLÁUSULA 02 - DO ESCOPO TÉCNICO', texto: proposta.cliente.escopoTecnico || '' };
+                                   }
+                                   if (base.length > 2 && !base.some((c:any) => c.texto.includes('[TABELA]'))) {
+                                     base[2] = { titulo: 'CLÁUSULA 03 - DAS CONDIÇÕES COMERCIAIS', texto: '[TABELA]' };
+                                   }
+                                 }
                                  setProposta({
                                    ...proposta,
                                    cliente: {
                                      ...proposta.cliente,
-                                     clausulasA4: t.clausulas.map((c:any) => ({ titulo: c.titulo, texto: c.texto }))
+                                     clausulasA4: base
                                    }
                                  });
                                }
@@ -4136,8 +4146,15 @@ function PropostaEditor() {
                               Cláusulas Atuais do Documento
                               <button 
                                 onClick={() => {
-                                  const list = proposta.cliente.clausulasA4 || [];
-                                  setProposta({...proposta, cliente: {...proposta.cliente, clausulasA4: [...list, { titulo: 'NOVA CLÁUSULA', texto: '' }]}});
+                                  const list = [...(proposta.cliente.clausulasA4 || [])];
+                                  if (list.length === 0) {
+                                    list.push({ titulo: 'CLÁUSULA 01 - DO OBJETO E ESCOPO', texto: proposta.cliente.objetoProposta || '' });
+                                    list.push({ titulo: 'CLÁUSULA 02 - DO ESCOPO TÉCNICO', texto: proposta.cliente.escopoTecnico || '' });
+                                    list.push({ titulo: 'CLÁUSULA 03 - DAS CONDIÇÕES COMERCIAIS', texto: '[TABELA]' });
+                                  } else {
+                                    list.push({ titulo: 'NOVA CLÁUSULA', texto: '' });
+                                  }
+                                  setProposta({...proposta, cliente: {...proposta.cliente, clausulasA4: list}});
                                 }}
                                 className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded text-[9px]"
                               >
@@ -4164,7 +4181,7 @@ function PropostaEditor() {
                                     value={clausula.titulo}
                                     onChange={(e) => {
                                       const list = [...proposta.cliente.clausulasA4];
-                                      list[idx].titulo = e.target.value;
+                                      list[idx] = { ...list[idx], titulo: e.target.value };
                                       setProposta({...proposta, cliente: {...proposta.cliente, clausulasA4: list}});
                                     }}
                                   />

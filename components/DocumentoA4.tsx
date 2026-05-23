@@ -32,11 +32,107 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
   
   const totalGeral = totalEquipe + totalInsumos;
 
+  const renderTabelaComercial = () => (
+    <div className="mt-6 pr-4">
+        {/* QUADRO EFETIVO */}
+        <h5 className="font-black uppercase mb-2 text-[10px]">QUADRO EFETIVO / SERVIÇOS</h5>
+        <table className="w-full text-left border-collapse border border-slate-300 mb-6">
+          <thead>
+            <tr className="bg-slate-900 text-white font-bold text-[10px] uppercase">
+              <th className="p-2 border border-slate-300">Cargo / Função</th>
+              <th className="p-2 border border-slate-300 text-center">Escala</th>
+              <th className="p-2 border border-slate-300 text-center">Qtd</th>
+              <th className="p-2 border border-slate-300 text-right">Valor Unit.</th>
+              <th className="p-2 border border-slate-300 text-right">Valor Mensal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {equipe.map((item: any, idx: number) => {
+              const precoVendaTotal = resultado?.items?.[idx]?.precoVenda || 0;
+              const precoUnitario = item.quantidade > 0 ? precoVendaTotal / item.quantidade : 0;
+              
+              return (
+                <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}>
+                  <td className="p-2 border border-slate-300 font-bold">{item.nomeCargo}</td>
+                  <td className="p-2 border border-slate-300 text-center">{item.escala}</td>
+                  <td className="p-2 border border-slate-300 text-center">{item.quantidade}</td>
+                  <td className="p-2 border border-slate-300 text-right">{fmt(precoUnitario)}</td>
+                  <td className="p-2 border border-slate-300 text-right font-bold">{fmt(precoVendaTotal)}</td>
+                </tr>
+              );
+            })}
+            {equipe.length === 0 && (
+              <tr><td colSpan={5} className="p-4 text-center text-slate-500">Nenhum posto de serviço adicionado.</td></tr>
+            )}
+          </tbody>
+          <tfoot>
+            <tr className="bg-slate-200 font-black">
+              <td colSpan={4} className="p-2 border border-slate-300 text-right">Total dos Serviços:</td>
+              <td className="p-2 border border-slate-300 text-right">{fmt(totalEquipe)}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        {/* INSUMOS E MATERIAIS */}
+        <h5 className="font-black uppercase mb-2 text-[10px]">EQUIPAMENTOS E INSUMOS</h5>
+        <table className="w-full text-left border-collapse border border-slate-300 mb-6">
+          <thead>
+            <tr className="bg-slate-900 text-white font-bold text-[10px] uppercase">
+              <th className="p-2 border border-slate-300">Descrição</th>
+              <th className="p-2 border border-slate-300 text-right">Valor Mensal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="bg-white">
+              <td className="p-2 border border-slate-300 font-bold">Materiais de Limpeza e Consumo</td>
+              <td className="p-2 border border-slate-300 text-right">{fmt(vMateriais)}</td>
+            </tr>
+            <tr className="bg-slate-50">
+              <td className="p-2 border border-slate-300 font-bold">Máquinas e Equipamentos</td>
+              <td className="p-2 border border-slate-300 text-right">{fmt(vMaquinas)}</td>
+            </tr>
+            <tr className="bg-white">
+              <td className="p-2 border border-slate-300 font-bold">Materiais Descartáveis</td>
+              <td className="p-2 border border-slate-300 text-right">{fmt(vDescartaveis)}</td>
+            </tr>
+            {vServicos > 0 && (
+              <tr className="bg-slate-50">
+                <td className="p-2 border border-slate-300 font-bold">{proposta.insumos?.servicosDescricao || "Serviços Terceirizados"}</td>
+                <td className="p-2 border border-slate-300 text-right">{fmt(vServicos)}</td>
+              </tr>
+            )}
+          </tbody>
+          <tfoot>
+            <tr className="bg-slate-200 font-black">
+              <td className="p-2 border border-slate-300 text-right">Total de Equipamentos e Insumos:</td>
+              <td className="p-2 border border-slate-300 text-right">{fmt(totalInsumos)}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        {/* VALOR TOTAL */}
+        <div className="w-full p-4 bg-green-50 border-2 border-green-600 text-center text-green-900 font-black text-lg mb-12">
+          VALOR TOTAL DA PROPOSTA: {fmt(totalGeral)}
+        </div>
+    </div>
+  );
+
   return (
-    <div className="w-full bg-slate-100 flex flex-col items-center py-10 print:py-0 print:bg-white overflow-y-auto">
+    <div className="bg-slate-200 min-h-screen py-8 flex flex-col items-center overflow-auto print:bg-white print:py-0">
+      
+      {/* Botão de Voltar para não bugar o fluxo - Só aparece na tela, não na impressão */}
+      <div className="w-[210mm] mb-4 flex justify-between no-print">
+        <button onClick={() => window.history.back()} className="px-4 py-2 bg-white rounded-lg shadow text-sm font-bold text-slate-600 hover:bg-slate-50">
+          ← Voltar
+        </button>
+        <button onClick={() => window.print()} className="px-6 py-2 bg-[#1B4D3E] rounded-lg shadow text-sm font-black text-white hover:bg-[#143d31]">
+          🖨️ Imprimir PDF
+        </button>
+      </div>
+
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
-          @page { size: A4 portrait; margin: 15mm; }
+          @page { margin: 0; size: A4; }
           body, html, #root, [class*="layout"], [class*="sidebar"], [class*="main"], header, nav, button, .no-print {
             background-color: white !important;
             color: black !important;
@@ -90,107 +186,42 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
           </div>
         </div>
 
-        {/* QUADRO EFETIVO */}
-        <h3 className="font-black uppercase mb-2 text-sm mt-8">QUADRO EFETIVO / SERVIÇOS</h3>
-        <table className="w-full text-left border-collapse border border-slate-300 mb-8">
-          <thead>
-            <tr className="bg-slate-900 text-white font-bold text-[10px] uppercase">
-              <th className="p-2 border border-slate-300">Cargo / Função</th>
-              <th className="p-2 border border-slate-300 text-center">Escala</th>
-              <th className="p-2 border border-slate-300 text-center">Qtd</th>
-              <th className="p-2 border border-slate-300 text-right">Valor Unit.</th>
-              <th className="p-2 border border-slate-300 text-right">Valor Mensal</th>
-            </tr>
-          </thead>
-          <tbody>
-            {equipe.map((item: any, idx: number) => {
-              const precoVendaTotal = resultado?.items?.[idx]?.precoVenda || 0;
-              const precoUnitario = item.quantidade > 0 ? precoVendaTotal / item.quantidade : 0;
-              
-              return (
-                <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}>
-                  <td className="p-2 border border-slate-300 font-bold">{item.nomeCargo}</td>
-                  <td className="p-2 border border-slate-300 text-center">{item.escala}</td>
-                  <td className="p-2 border border-slate-300 text-center">{item.quantidade}</td>
-                  <td className="p-2 border border-slate-300 text-right">{fmt(precoUnitario)}</td>
-                  <td className="p-2 border border-slate-300 text-right font-bold">{fmt(precoVendaTotal)}</td>
-                </tr>
-              );
-            })}
-            {equipe.length === 0 && (
-              <tr><td colSpan={5} className="p-4 text-center text-slate-500">Nenhum posto de serviço adicionado.</td></tr>
-            )}
-          </tbody>
-          <tfoot>
-            <tr className="bg-slate-200 font-black">
-              <td colSpan={4} className="p-2 border border-slate-300 text-right">Total dos Serviços:</td>
-              <td className="p-2 border border-slate-300 text-right">{fmt(totalEquipe)}</td>
-            </tr>
-          </tfoot>
-        </table>
-
-        {/* INSUMOS E MATERIAIS */}
-        <h3 className="font-black uppercase mb-2 text-sm mt-8">EQUIPAMENTOS E INSUMOS</h3>
-        <table className="w-full text-left border-collapse border border-slate-300 mb-8">
-          <thead>
-            <tr className="bg-slate-900 text-white font-bold text-[10px] uppercase">
-              <th className="p-2 border border-slate-300">Descrição</th>
-              <th className="p-2 border border-slate-300 text-right">Valor Mensal</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="bg-white">
-              <td className="p-2 border border-slate-300 font-bold">Materiais de Limpeza e Consumo</td>
-              <td className="p-2 border border-slate-300 text-right">{fmt(vMateriais)}</td>
-            </tr>
-            <tr className="bg-slate-50">
-              <td className="p-2 border border-slate-300 font-bold">Máquinas e Equipamentos</td>
-              <td className="p-2 border border-slate-300 text-right">{fmt(vMaquinas)}</td>
-            </tr>
-            <tr className="bg-white">
-              <td className="p-2 border border-slate-300 font-bold">Materiais Descartáveis</td>
-              <td className="p-2 border border-slate-300 text-right">{fmt(vDescartaveis)}</td>
-            </tr>
-            {vServicos > 0 && (
-              <tr className="bg-slate-50">
-                <td className="p-2 border border-slate-300 font-bold">{proposta.insumos?.servicosDescricao || "Serviços Terceirizados"}</td>
-                <td className="p-2 border border-slate-300 text-right">{fmt(vServicos)}</td>
-              </tr>
-            )}
-          </tbody>
-          <tfoot>
-            <tr className="bg-slate-200 font-black">
-              <td className="p-2 border border-slate-300 text-right">Total de Equipamentos e Insumos:</td>
-              <td className="p-2 border border-slate-300 text-right">{fmt(totalInsumos)}</td>
-            </tr>
-          </tfoot>
-        </table>
-
-        {/* VALOR TOTAL */}
-        <div className="w-full p-4 bg-green-50 border-2 border-green-600 text-center text-green-900 font-black text-lg mb-12">
-          VALOR TOTAL DO CONTRATO: {fmt(totalGeral)}
-        </div>
-
         {/* CLÁUSULAS */}
-        <h3 className="font-black uppercase mb-4 text-sm text-center border-b-2 border-slate-900 pb-2">CLÁUSULAS E CONDIÇÕES</h3>
+        <h3 className="font-black uppercase mb-4 text-sm text-center border-b-2 border-slate-900 pb-2 mt-8">CLÁUSULAS E CONDIÇÕES</h3>
         <div className="space-y-4 text-justify">
           {proposta.cliente?.clausulasA4 && proposta.cliente.clausulasA4.length > 0 ? (
-             proposta.cliente.clausulasA4.map((clausula: any, idx: number) => (
-               <div key={idx} className={idx > 0 ? "mt-6" : ""}>
-                 <h4 className="font-bold uppercase">{clausula.titulo}</h4>
-                 <div className="pl-4 mt-2 whitespace-pre-wrap">
-                   {clausula.texto}
+             <>
+               {proposta.cliente.clausulasA4.map((clausula: any, idx: number) => (
+                 <div key={idx} className={idx > 0 ? "mt-6" : ""}>
+                   <h4 className="font-bold uppercase">{clausula.titulo}</h4>
+                   <div className="pl-4 mt-2 whitespace-pre-wrap">
+                     {clausula.texto !== '[TABELA]' && clausula.texto}
+                   </div>
+                   {(clausula.texto.includes('[TABELA]') || clausula.titulo.includes('COMERCIAIS')) && renderTabelaComercial()}
                  </div>
-               </div>
-             ))
+               ))}
+               
+               {/* Se não encontrou a tabela nas cláusulas e tem menos de 3 (ex. o cara fez só a 1 e a 2), força no final! */}
+               {proposta.cliente.clausulasA4.length > 0 && !proposta.cliente.clausulasA4.some((c:any) => c.texto.includes('[TABELA]') || c.titulo.includes('COMERCIAIS')) && (
+                 <div className="mt-6">
+                   <h4 className="font-bold uppercase">CLÁUSULA 03 - RESUMO COMERCIAL DA PROPOSTA</h4>
+                   <div className="pl-4 mt-2 whitespace-pre-wrap">
+                     Valores referentes aos serviços prestados, equipe alocada e insumos, conforme detalhamento a seguir:
+                   </div>
+                   {renderTabelaComercial()}
+                 </div>
+               )}
+             </>
           ) : (
             <>
               <div>
                 <h4 className="font-bold uppercase">CLÁUSULA 01 - DO OBJETO E ESCOPO:</h4>
-                <div className="pl-4 mt-2">
-                  <p>1.1. O presente contrato tem como objeto a prestação de serviços de <strong className="font-bold">{proposta.cliente?.tipoServicos || "serviços gerais"}</strong>.</p>
+                <div className="pl-4 mt-2 whitespace-pre-wrap">
+                  {proposta.cliente?.objetoProposta && (
+                    <div className="mb-2">{proposta.cliente.objetoProposta}</div>
+                  )}
                   {proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico && (
-                    <div className="mt-2 whitespace-pre-wrap">{proposta.cliente.escopoTecnico}</div>
+                    <div>{proposta.cliente.escopoTecnico}</div>
                   )}
                 </div>
               </div>
@@ -205,6 +236,14 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
                      <p>As condições comerciais seguirão o padrão estipulado em contrato, com vencimento conforme acordado e validade da proposta de 30 dias.</p>
                    )}
                 </div>
+              </div>
+
+              <div className="mt-6">
+                <h4 className="font-bold uppercase">CLÁUSULA 03 - RESUMO COMERCIAL DA PROPOSTA</h4>
+                <div className="pl-4 mt-2 whitespace-pre-wrap">
+                  Valores referentes aos serviços prestados, equipe alocada e insumos, conforme detalhamento a seguir:
+                </div>
+                {renderTabelaComercial()}
               </div>
             </>
           )}
