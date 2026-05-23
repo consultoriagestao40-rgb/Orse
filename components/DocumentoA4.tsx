@@ -150,11 +150,11 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
     );
   };
 
-  const renderTermoDeAceite = () => (
-    <div className="page-break-inside-avoid">
+  const renderTermoDeAceite = (clauseNum: number, startIdx: number) => (
+    <div className="page-break-inside-avoid mt-4">
       <div className="text-[13px] text-justify space-y-4 mb-6 text-slate-800 leading-relaxed pl-4">
-         <p>Ao assinar este termo de aceite, o <strong>{proposta.cliente?.cliente?.toUpperCase() || proposta.cliente?.razaoSocial?.toUpperCase() || "CLIENTE"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
-         <p>Este documento servirá como base oficial para a elaboração do instrumento jurídico definitivo (Contrato de Prestação de Serviços) entre as partes.</p>
+         <p><span className="font-bold mr-1">{clauseNum}.{startIdx + 1}.</span>Ao assinar este termo de aceite, o <strong>{proposta.cliente?.cliente?.toUpperCase() || proposta.cliente?.razaoSocial?.toUpperCase() || "CLIENTE"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
+         <p><span className="font-bold mr-1">{clauseNum}.{startIdx + 2}.</span>Este documento servirá como base oficial para a elaboração do instrumento jurídico definitivo (Contrato de Prestação de Serviços) entre as partes.</p>
       </div>
       
       <div className="w-full mt-4">
@@ -395,7 +395,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                       
                       {hasTabela && renderTabelaComercial()}
                       {hasItens && renderTabelaItensInclusosExcluidos()}
-                      {hasAceite && renderTermoDeAceite()}
+                      {hasAceite && renderTermoDeAceite(clauseNum, paragrafos.length)}
                     </div>
                   );
                 })}
