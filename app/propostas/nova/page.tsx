@@ -2783,24 +2783,26 @@ function PropostaEditor() {
                            )}
                         </div>
                      </div>
-                     <div className="flex items-center justify-end gap-3 shrink-0">
-                        <div className="flex gap-3">
-                           <button
-                              type="button"
-                              onClick={() => setPresentationMode(true)}
-                              className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
-                           >
-                              <span>🖥️</span> Apresentar
-                           </button>
-                           <button
-                              type="button"
-                              onClick={() => window.print()}
-                              className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
-                           >
-                              <span>🖨️</span> Salvar PDF / Imprimir
-                           </button>
+                     {viewMode === 'slide' && (
+                        <div className="flex items-center justify-end gap-3 shrink-0">
+                           <div className="flex gap-3">
+                              <button
+                                 type="button"
+                                 onClick={() => setPresentationMode(true)}
+                                 className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
+                              >
+                                 <span>🖥️</span> Apresentar
+                              </button>
+                              <button
+                                 type="button"
+                                 onClick={() => window.print()}
+                                 className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
+                              >
+                                 <span>🖨️</span> Salvar PDF / Imprimir
+                              </button>
+                           </div>
                         </div>
-                     </div>
+                     )}
                   </div>
 
                   {/* CONTAINER DO DOCUMENTO SIMPLES A4 */}
