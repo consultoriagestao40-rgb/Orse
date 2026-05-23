@@ -199,8 +199,8 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
         {/* TÍTULO */}
         <div className="text-center mb-8">
           <h2 className="text-lg font-black uppercase tracking-tight">PROPOSTA COMERCIAL DE PRESTAÇÃO DE SERVIÇOS</h2>
-          <p className="font-bold mt-2">Proposta nº {(proposta.numero || "0000").toString().padStart(4, '0')} - Rev. {String(proposta.versao || 1).padStart(2, '0')}</p>
-          <p>Data: {proposta.cliente?.dataElaboracao || new Date().toLocaleDateString('pt-BR')}</p>
+          <p className="font-bold mt-2">Proposta nº {(proposta.cliente?.numeroProposta || "0000").toString().padStart(4, '0')} - Rev. {String(proposta.cliente?.revisao || "01").padStart(2, '0')}</p>
+          <p>Data: {proposta.cliente?.dataElaboracao ? proposta.cliente.dataElaboracao.split('-').reverse().join('/') : new Date().toLocaleDateString('pt-BR')}</p>
         </div>
 
         {/* DADOS DO CLIENTE - EXATO MODELO ORIGINAL */}
