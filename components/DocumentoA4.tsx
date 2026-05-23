@@ -208,7 +208,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
           <h3 className="font-bold uppercase mb-3 text-sm text-slate-900">DADOS DO CLIENTE</h3>
           <div className="flex flex-col gap-1 text-[13px] text-slate-900">
             <p><strong>Cliente:</strong> {proposta.cliente?.cliente || proposta.cliente?.razaoSocial}</p>
-            <p><strong>Código:</strong> {proposta.cliente?.codigo || ''}</p>
+            <p><strong>Código:</strong> {proposta.cliente?.codigo ? `CLI-${String(proposta.cliente.codigo).padStart(4, '0')}` : 'Não cadastrado'}</p>
             <p><strong>CNPJ/CPF:</strong> {proposta.cliente?.cnpj}</p>
             <p><strong>Endereço:</strong> {proposta.cliente?.endereco || proposta.cliente?.logradouro ? `${proposta.cliente?.logradouro || proposta.cliente?.endereco}${proposta.cliente?.numero ? `, ${proposta.cliente?.numero}` : ''}${proposta.cliente?.bairro ? `, ${proposta.cliente?.bairro}` : ''}${proposta.cliente?.cidade ? `, ${proposta.cliente?.cidade} - ${proposta.cliente?.uf}` : ''}` : proposta.cliente?.cidade}</p>
             <p><strong>Cidade:</strong> {proposta.cliente?.cidade || ''}</p>
