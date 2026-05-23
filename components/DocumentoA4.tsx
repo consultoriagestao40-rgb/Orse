@@ -33,17 +33,17 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
   const totalGeral = totalEquipe + totalInsumos;
 
   const renderTabelaComercial = () => (
-    <div className="mt-8 pr-2">
+    <div className="mt-8 pr-2 font-sans">
         {/* QUADRO EFETIVO */}
-        <h5 className="font-bold uppercase mb-3 text-xs tracking-widest text-slate-800">1. Quadro de Efetivo e Serviços</h5>
-        <table className="w-full text-left border-collapse mb-8 text-[11px]">
+        <h5 className="font-black uppercase mb-2 text-[10px]">QUADRO EFETIVO / SERVIÇOS</h5>
+        <table className="w-full text-left border-collapse border border-slate-300 mb-6 text-xs">
           <thead>
-            <tr className="border-b-2 border-slate-800 text-slate-800 font-bold uppercase">
-              <th className="py-2 pr-2">Cargo / Função</th>
-              <th className="py-2 px-2 text-center">Escala</th>
-              <th className="py-2 px-2 text-center">Qtd</th>
-              <th className="py-2 px-2 text-right">Valor Unit.</th>
-              <th className="py-2 pl-2 text-right">Valor Mensal</th>
+            <tr className="bg-slate-900 text-white font-bold uppercase text-[10px]">
+              <th className="p-2 border border-slate-300">Cargo / Função</th>
+              <th className="p-2 border border-slate-300 text-center">Escala</th>
+              <th className="p-2 border border-slate-300 text-center">Qtd</th>
+              <th className="p-2 border border-slate-300 text-right">Valor Unit.</th>
+              <th className="p-2 border border-slate-300 text-right">Valor Mensal</th>
             </tr>
           </thead>
           <tbody>
@@ -52,68 +52,67 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
               const precoUnitario = item.quantidade > 0 ? precoVendaTotal / item.quantidade : 0;
               
               return (
-                <tr key={idx} className="border-b border-slate-200">
-                  <td className="py-2 pr-2 font-semibold text-slate-700">{item.nomeCargo}</td>
-                  <td className="py-2 px-2 text-center text-slate-600">{item.escala}</td>
-                  <td className="py-2 px-2 text-center text-slate-600">{item.quantidade}</td>
-                  <td className="py-2 px-2 text-right text-slate-600">{fmt(precoUnitario)}</td>
-                  <td className="py-2 pl-2 text-right font-bold text-slate-800">{fmt(precoVendaTotal)}</td>
+                <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}>
+                  <td className="p-2 border border-slate-300 font-bold text-slate-800">{item.nomeCargo}</td>
+                  <td className="p-2 border border-slate-300 text-center text-slate-600">{item.escala}</td>
+                  <td className="p-2 border border-slate-300 text-center text-slate-600">{item.quantidade}</td>
+                  <td className="p-2 border border-slate-300 text-right text-slate-600">{fmt(precoUnitario)}</td>
+                  <td className="p-2 border border-slate-300 text-right font-bold text-slate-800">{fmt(precoVendaTotal)}</td>
                 </tr>
               );
             })}
             {equipe.length === 0 && (
-              <tr><td colSpan={5} className="py-4 text-center text-slate-400 italic">Nenhum posto de serviço adicionado.</td></tr>
+              <tr><td colSpan={5} className="p-4 text-center text-slate-500 italic">Nenhum posto de serviço adicionado.</td></tr>
             )}
           </tbody>
           <tfoot>
-            <tr className="font-bold text-slate-800 bg-slate-50">
-              <td colSpan={4} className="py-3 pr-2 text-right uppercase text-[10px] tracking-wider">Subtotal Serviços:</td>
-              <td className="py-3 pl-2 text-right">{fmt(totalEquipe)}</td>
+            <tr className="bg-slate-200 font-black text-slate-900">
+              <td colSpan={4} className="p-2 border border-slate-300 text-right uppercase">Total dos Serviços:</td>
+              <td className="p-2 border border-slate-300 text-right">{fmt(totalEquipe)}</td>
             </tr>
           </tfoot>
         </table>
 
         {/* INSUMOS E MATERIAIS */}
-        <h5 className="font-bold uppercase mb-3 text-xs tracking-widest text-slate-800">2. Equipamentos e Insumos</h5>
-        <table className="w-full text-left border-collapse mb-8 text-[11px]">
+        <h5 className="font-black uppercase mb-2 text-[10px]">EQUIPAMENTOS E INSUMOS</h5>
+        <table className="w-full text-left border-collapse border border-slate-300 mb-6 text-xs">
           <thead>
-            <tr className="border-b-2 border-slate-800 text-slate-800 font-bold uppercase">
-              <th className="py-2 pr-2">Descrição</th>
-              <th className="py-2 pl-2 text-right">Valor Mensal</th>
+            <tr className="bg-slate-900 text-white font-bold uppercase text-[10px]">
+              <th className="p-2 border border-slate-300">Descrição</th>
+              <th className="p-2 border border-slate-300 text-right">Valor Mensal</th>
             </tr>
           </thead>
           <tbody>
-            <tr className="border-b border-slate-200">
-              <td className="py-2 pr-2 font-semibold text-slate-700">Materiais de Limpeza e Consumo</td>
-              <td className="py-2 pl-2 text-right text-slate-600">{fmt(vMateriais)}</td>
+            <tr className="bg-white border-b border-slate-300">
+              <td className="p-2 border-r border-slate-300 font-bold text-slate-800">Materiais de Limpeza e Consumo</td>
+              <td className="p-2 text-right text-slate-700">{fmt(vMateriais)}</td>
             </tr>
-            <tr className="border-b border-slate-200">
-              <td className="py-2 pr-2 font-semibold text-slate-700">Máquinas e Equipamentos</td>
-              <td className="py-2 pl-2 text-right text-slate-600">{fmt(vMaquinas)}</td>
+            <tr className="bg-slate-50 border-b border-slate-300">
+              <td className="p-2 border-r border-slate-300 font-bold text-slate-800">Máquinas e Equipamentos</td>
+              <td className="p-2 text-right text-slate-700">{fmt(vMaquinas)}</td>
             </tr>
-            <tr className="border-b border-slate-200">
-              <td className="py-2 pr-2 font-semibold text-slate-700">Materiais Descartáveis</td>
-              <td className="py-2 pl-2 text-right text-slate-600">{fmt(vDescartaveis)}</td>
+            <tr className="bg-white border-b border-slate-300">
+              <td className="p-2 border-r border-slate-300 font-bold text-slate-800">Materiais Descartáveis</td>
+              <td className="p-2 text-right text-slate-700">{fmt(vDescartaveis)}</td>
             </tr>
             {vServicos > 0 && (
-              <tr className="border-b border-slate-200">
-                <td className="py-2 pr-2 font-semibold text-slate-700">{proposta.insumos?.servicosDescricao || "Serviços Terceirizados"}</td>
-                <td className="py-2 pl-2 text-right text-slate-600">{fmt(vServicos)}</td>
+              <tr className="bg-slate-50 border-b border-slate-300">
+                <td className="p-2 border-r border-slate-300 font-bold text-slate-800">{proposta.insumos?.servicosDescricao || "Serviços Terceirizados"}</td>
+                <td className="p-2 text-right text-slate-700">{fmt(vServicos)}</td>
               </tr>
             )}
           </tbody>
           <tfoot>
-            <tr className="font-bold text-slate-800 bg-slate-50">
-              <td className="py-3 pr-2 text-right uppercase text-[10px] tracking-wider">Subtotal Insumos:</td>
-              <td className="py-3 pl-2 text-right">{fmt(totalInsumos)}</td>
+            <tr className="bg-slate-200 font-black text-slate-900">
+              <td className="p-2 border border-slate-300 text-right uppercase">Total de Equipamentos e Insumos:</td>
+              <td className="p-2 border border-slate-300 text-right">{fmt(totalInsumos)}</td>
             </tr>
           </tfoot>
         </table>
 
         {/* VALOR TOTAL */}
-        <div className="w-full mt-6 p-5 border border-slate-800 flex justify-between items-center bg-slate-50">
-          <span className="font-bold uppercase tracking-widest text-slate-800 text-xs">Valor Mensal da Proposta</span>
-          <span className="font-black text-xl text-slate-900">{fmt(totalGeral)}</span>
+        <div className="w-full mt-8 p-4 bg-green-50 border-2 border-green-600 flex justify-center items-center text-center text-green-900 font-black text-lg mb-12 uppercase tracking-wide">
+          Valor Total da Proposta: {fmt(totalGeral)}
         </div>
     </div>
   );
@@ -164,9 +163,9 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
             top: 0 !important;
             width: 100% !important;
             height: auto !important;
-            min-height: 100vh !important;
             margin: 0 !important;
-            padding: 0 !important;
+            padding: 20mm !important; /* RECUOS FORÇADOS AQUI */
+            box-sizing: border-box !important;
             box-shadow: none !important;
             border: none !important;
             page-break-after: always;
@@ -174,7 +173,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
         }
       `}} />
 
-      <div className="print-a4-page bg-white w-[210mm] min-h-[297mm] shadow-2xl print:shadow-none mx-auto relative px-16 py-12 text-slate-900 text-[13px] print:p-0 print:text-[12px] font-serif leading-relaxed">
+      <div className="print-a4-page bg-white w-[210mm] min-h-[297mm] shadow-2xl print:shadow-none mx-auto relative px-16 py-12 text-slate-900 text-[13px] font-serif leading-relaxed">
         
         {/* CABEÇALHO OFICIAL */}
         <div className="flex flex-col items-center text-center border-b-[3px] border-slate-900 pb-8 mb-10 mt-4">
