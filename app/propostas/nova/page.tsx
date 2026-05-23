@@ -541,6 +541,15 @@ function PropostaEditor() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [presentationMode]);
 
+  // Atualiza o title do documento constantemente para que impressoes via Ctrl+P ou menu do navegador
+  // sugiram o nome correto de arquivo do PDF
+  useEffect(() => {
+    const num = proposta.cliente?.numeroProposta || "S-N";
+    const rev = proposta.cliente?.revisao || "R01";
+    const clientName = proposta.cliente?.cliente || proposta.cliente?.razaoSocial || "Cliente";
+    document.title = `Proposta comercial ${num}-${rev} ${clientName}`;
+  }, [proposta.cliente?.numeroProposta, proposta.cliente?.revisao, proposta.cliente?.cliente, proposta.cliente?.razaoSocial]);
+
   const handleCalcularProposta = async () => {
     try {
       setLoading(true);
