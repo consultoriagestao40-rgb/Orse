@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { proposta: any, resultado: any, empresaEmissora: any }) {
+export default function DocumentoA4({ proposta, resultado, empresaEmissora, templates, onUpdateClausulas }: { proposta: any, resultado: any, empresaEmissora: any, templates?: any[], onUpdateClausulas?: (c: any[]) => void }) {
+  const [showEditorModal, setShowEditorModal] = useState(false);
+
   if (!proposta || !proposta.cliente) return <div className="p-10 text-center">Carregando dados da proposta...</div>;
   if (!empresaEmissora) return <div className="p-10 text-center">Selecione uma Empresa Emissora para visualizar o documento.</div>;
 
@@ -156,9 +158,16 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
         <button onClick={() => window.history.back()} className="px-4 py-2 bg-white rounded-lg shadow text-sm font-bold text-slate-600 hover:bg-slate-50">
           ← Voltar
         </button>
-        <button onClick={() => window.print()} className="px-6 py-2 bg-[#1B4D3E] rounded-lg shadow text-sm font-black text-white hover:bg-[#143d31]">
-          🖨️ Imprimir PDF
-        </button>
+        <div className="flex gap-2">
+          {onUpdateClausulas && (
+            <button onClick={() => setShowEditorModal(true)} className="px-6 py-2 bg-amber-500 rounded-lg shadow text-sm font-black text-white hover:bg-amber-600 transition-colors">
+              ✏️ Editar
+            </button>
+          )}
+          <button onClick={() => window.print()} className="px-6 py-2 bg-[#1B4D3E] rounded-lg shadow text-sm font-black text-white hover:bg-[#143d31]">
+            🖨️ Imprimir PDF
+          </button>
+        </div>
       </div>
 
       <style dangerouslySetInnerHTML={{__html: `
@@ -433,6 +442,149 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
           </tfoot>
         </table>
       </div>
+
+      {/* MODAL DE EDIÇÃO DE CLÁUSULAS */}
+      {showEditorModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-6 no-print">
+          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-[#1e4480] px-6 py-4 border-b border-[#16325e] flex justify-between items-center shrink-0">
+               <h3 className="text-white text-sm font-extrabold uppercase tracking-wider flex items-center gap-2">
+                  ✏️ Editar Cláusulas do Contrato
+               </h3>
+               <button 
+                 onClick={() => setShowEditorModal(false)}
+                 className="text-white hover:text-red-300 font-bold text-xl leading-none"
+               >
+                 ×
+               </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto bg-slate-100 flex-1 space-y-6">
+              
+              {/* Template Selector */}
+              {templates && templates.length > 0 && (
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                  <label className="text-[10px] font-black text-[#1e4480] uppercase tracking-widest block mb-2">Carregar Template Rápido</label>
+                  <select 
+                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-2 text-xs text-slate-800 font-bold focus:outline-none focus:border-[#1e4480]"
+                    onChange={(e) => {
+                      const t = templates.find(x => x.id === e.target.value);
+                      if (t && onUpdateClausulas) {
+                        if(confirm('Isso vai substituir suas cláusulas atuais. Continuar?')) {
+                          const base = t.clausulas.map((c:any) => ({ titulo: c.titulo, texto: c.texto }));
+                          if (base.length > 0) {
+                            base[0] = { titulo: 'CLÁUSULA 01 - DO OBJETO E ESCOPO', texto: proposta.cliente.objetoProposta || '' };
+                            if (base.length > 1) {
+                              base[1] = { titulo: 'CLÁUSULA 02 - DO ESCOPO TÉCNICO', texto: proposta.cliente.escopoTecnico || '' };
+                            }
+                            if (base.length > 2 && !base.some((c:any) => c.texto.includes('[TABELA]'))) {
+                              base[2] = { titulo: 'CLÁUSULA 03 - DAS CONDIÇÕES COMERCIAIS', texto: '[TABELA]' };
+                            }
+                          }
+                          onUpdateClausulas(base);
+                        }
+                      }
+                      e.target.value = "";
+                    }}
+                  >
+                    <option value="">-- Selecione para substituir --</option>
+                    {templates.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {/* Lista de Cláusulas */}
+              <div className="space-y-4">
+                 <div className="flex justify-between items-center border-b border-slate-300 pb-2">
+                    <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">
+                       Cláusulas Atuais
+                    </h4>
+                    <button 
+                      onClick={() => {
+                        if (onUpdateClausulas) {
+                          const list = [...(proposta.cliente.clausulasA4 || [])];
+                          if (list.length === 0) {
+                            list.push({ titulo: 'CLÁUSULA 01 - DO OBJETO E ESCOPO', texto: proposta.cliente.objetoProposta || '' });
+                            list.push({ titulo: 'CLÁUSULA 02 - DO ESCOPO TÉCNICO', texto: proposta.cliente.escopoTecnico || '' });
+                            list.push({ titulo: 'CLÁUSULA 03 - DAS CONDIÇÕES COMERCIAIS', texto: '[TABELA]' });
+                          } else {
+                            list.push({ titulo: 'NOVA CLÁUSULA', texto: '' });
+                          }
+                          onUpdateClausulas(list);
+                        }
+                      }}
+                      className="text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors"
+                    >
+                      + Adicionar Cláusula
+                    </button>
+                 </div>
+                 
+                 {(proposta.cliente.clausulasA4 || []).map((clausula: any, idx: number) => (
+                   <div key={idx} className="bg-white border border-slate-300 p-4 rounded-xl space-y-3 relative shadow-sm">
+                      <button 
+                        onClick={() => {
+                          if (onUpdateClausulas) {
+                            const list = [...proposta.cliente.clausulasA4];
+                            list.splice(idx, 1);
+                            onUpdateClausulas(list);
+                          }
+                        }}
+                        className="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition-colors"
+                        title="Remover Cláusula"
+                      >
+                        ✕
+                      </button>
+                      <div>
+                        <input 
+                          className="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm px-4 py-2.5 font-bold focus:outline-none focus:border-[#1e4480]"
+                          value={clausula.titulo}
+                          placeholder="Ex: CLÁUSULA 01 - DO OBJETO"
+                          onChange={(e) => {
+                            if (onUpdateClausulas) {
+                              const list = [...proposta.cliente.clausulasA4];
+                              list[idx] = { ...list[idx], titulo: e.target.value };
+                              onUpdateClausulas(list);
+                            }
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <textarea 
+                          className="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm px-4 py-3 min-h-[120px] resize-y focus:outline-none focus:border-[#1e4480]"
+                          value={clausula.texto}
+                          placeholder="Digite o texto da cláusula... (Para a tabela comercial, escreva exatamente [TABELA])"
+                          onChange={(e) => {
+                            if (onUpdateClausulas) {
+                              const list = [...proposta.cliente.clausulasA4];
+                              list[idx].texto = e.target.value;
+                              onUpdateClausulas(list);
+                            }
+                          }}
+                        />
+                      </div>
+                   </div>
+                 ))}
+                 
+                 {(proposta.cliente.clausulasA4?.length || 0) === 0 && (
+                   <div className="text-center p-8 bg-white border border-slate-200 rounded-xl">
+                     <p className="text-slate-500 text-sm font-medium">Nenhuma cláusula definida.</p>
+                     <p className="text-slate-400 text-xs mt-1">Carregue um template acima ou adicione manualmente.</p>
+                   </div>
+                 )}
+              </div>
+            </div>
+            
+            <div className="bg-white p-4 border-t border-slate-200 flex justify-end shrink-0">
+               <button 
+                 onClick={() => setShowEditorModal(false)}
+                 className="px-6 py-2.5 bg-[#1e4480] text-white font-bold rounded-lg hover:bg-[#16325e] transition-colors"
+               >
+                 Concluído
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2808,6 +2808,8 @@ function PropostaEditor() {
                            proposta={proposta} 
                            resultado={resultado}
                            empresaEmissora={empresasEmissoras.find(e => e.id === selectedEmpresaId) || empresasEmissoras[0]} 
+                           templates={templates}
+                           onUpdateClausulas={(clausulas: any[]) => setProposta({...proposta, cliente: {...proposta.cliente, clausulasA4: clausulas}})}
                         />
                      </div>
                   )}
@@ -4083,14 +4085,6 @@ function PropostaEditor() {
 
                   {/* FORMULÁRIO DE ATUALIZAÇÃO DOS DADOS DOS SLIDES E DO VENDEDOR */}
                   
-                  {viewMode === 'document' && (
-                     <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6 space-y-8 relative">
-                        <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#16325e] rounded-t-2xl mb-6 flex justify-between items-center">
-                           <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
-                              📝 Construtor de Cláusulas (A4)
-                           </h3>
-                           <button 
-                             onClick={() => setShowTemplateModal(true)}
                              className="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
                            >
                              Editar Templates
