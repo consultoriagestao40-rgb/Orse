@@ -734,6 +734,7 @@ function PropostaEditor() {
           cliente: {
              ...proposta.cliente,
              cliente: newClientForm.nomeFantasia,
+             codigo: res.data?.codigo || '',
              cnpj: newClientForm.cnpj,
              email: newClientForm.email,
              celular: newClientForm.whatsapp,
@@ -1196,6 +1197,7 @@ function PropostaEditor() {
                                           cliente: {
                                              ...proposta.cliente, 
                                              cliente: c.nomeFantasia,
+                                             codigo: c.codigo || '',
                                              razaoSocial: c.razaoSocial || '',
                                              cnpj: c.cnpj || '',
                                              cidade: c.cidade || '',
