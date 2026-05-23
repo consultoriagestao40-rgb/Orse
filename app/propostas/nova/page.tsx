@@ -2601,7 +2601,10 @@ function PropostaEditor() {
                            display: none !important;
                         }
                      }
-                     @media print {
+                     `}</style>
+                     {viewMode === 'slide' && (
+                        <style dangerouslySetInnerHTML={{__html: `
+                           @media print {
                         @page {
                             size: 297mm 167mm !important;
                             margin: 0 !important;
@@ -2723,7 +2726,8 @@ function PropostaEditor() {
                            background-color: #ffffff !important;
                         }
                      }
-                  `}</style>
+                  `}} />
+                  )}
 
                   {/* CONTROLES E AÇÕES */}
                   <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row justify-between items-center gap-4">
