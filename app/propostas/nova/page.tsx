@@ -44,7 +44,7 @@ function PropostaEditor() {
   const id = searchParams.get('id');
 
   const [activeTab, setActiveTab] = useState('dados');
-  const [viewMode, setViewMode] = useState<'slide' | 'document'>('slide');
+  const [viewMode, setViewMode] = useState<'slide' | 'document'>('document');
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [templates, setTemplates] = useState<any[]>([]);
 
@@ -2731,9 +2731,9 @@ function PropostaEditor() {
                         <h2 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2">
                            <Presentation className="text-[#10B981]" size={18} /> Apresentação da Proposta
                         </h2>
-                        <div className="flex gap-2 mt-3 mb-2">
-                           <button onClick={() => setViewMode('slide')} className={`px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all ${viewMode === 'slide' ? 'bg-[#1B4D3E] text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>Slide Deck (Apresentação)</button>
-                           <button onClick={() => setViewMode('document')} className={`px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all ${viewMode === 'document' ? 'bg-[#1B4D3E] text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>Documento Simples (A4)</button>
+                        <div className="flex gap-6 mt-4 border-b border-slate-200">
+                           <button onClick={() => setViewMode('document')} className={`pb-3 text-[11px] font-black uppercase tracking-wider transition-all border-b-2 relative top-[1px] ${viewMode === 'document' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-400 hover:text-slate-800'}`}>Documento Simples (A4)</button>
+                           <button onClick={() => setViewMode('slide')} className={`pb-3 text-[11px] font-black uppercase tracking-wider transition-all border-b-2 relative top-[1px] ${viewMode === 'slide' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-400 hover:text-slate-800'}`}>Slide Deck (Apresentação)</button>
                         </div>
                         {viewMode === 'document' && (
                           <div className="mt-2 flex items-center gap-2">
