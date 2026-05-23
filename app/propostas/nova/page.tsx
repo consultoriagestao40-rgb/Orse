@@ -1030,8 +1030,14 @@ function PropostaEditor() {
                        </td>
                        <td className="py-2 px-4 text-right w-24">
                           <div className="flex items-center justify-end gap-1">
-                             <input type="number" step="0.01" className="w-16 bg-white border border-slate-300 text-right font-medium text-slate-800 focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] outline-none rounded px-1 py-0.5" value={val} onChange={(e) => setDados({...dados, [key]: (e.target.value === '' ? '' : Number(e.target.value))})} />
-                             <span className="text-slate-500">%</span>
+                             {viewMode === 'document' ? (
+                                <span className="font-bold text-slate-800">{val}%</span>
+                             ) : (
+                                <>
+                                  <input type="number" step="0.01" className="w-16 bg-white border border-slate-300 text-right font-medium text-slate-800 focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] outline-none rounded px-1 py-0.5" value={val} onChange={(e) => setDados({...dados, [key]: (e.target.value === '' ? '' : Number(e.target.value))})} />
+                                  <span className="text-slate-500">%</span>
+                                </>
+                             )}
                           </div>
                        </td>
                     </tr>
@@ -4072,7 +4078,7 @@ function PropostaEditor() {
 
                   {/* FORMULÁRIO DE ATUALIZAÇÃO DOS DADOS DOS SLIDES E DO VENDEDOR */}
                   
-                  {viewMode === 'document' ? (
+                  {viewMode === 'document' && (
                      <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6 space-y-8 relative">
                         <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#16325e] rounded-t-2xl mb-6 flex justify-between items-center">
                            <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
@@ -4182,7 +4188,8 @@ function PropostaEditor() {
                            )}
                         </div>
                      </div>
-                  ) : (
+                  )}
+                  {viewMode !== 'document' && (
                   <div className="space-y-6">
                      {currentSlide === 2 && (
                         <>
