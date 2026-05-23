@@ -117,9 +117,14 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
         </table>
 
         {/* VALOR TOTAL */}
-        <div className="w-full mt-8 p-4 bg-green-50 border-2 border-green-600 flex justify-center items-center text-center text-green-900 font-black text-lg mb-12 uppercase tracking-wide">
-          Valor Total da Proposta: {fmt(totalGeral)} {totalGeral > 0 ? `(${require('numero-por-extenso').porExtenso(totalGeral, require('numero-por-extenso').estilo.monetario)})` : ''}
+        <div className="w-full mt-8 p-4 bg-green-50 border-2 border-green-600 flex justify-center items-center text-center text-green-900 font-black text-lg mb-2 uppercase tracking-wide">
+          Valor Total da Proposta: {fmt(totalGeral)}
         </div>
+        {totalGeral > 0 && (
+          <div className="text-center text-green-800 font-bold text-[10px] uppercase mb-12 tracking-wider">
+            ({require('numero-por-extenso').porExtenso(totalGeral, require('numero-por-extenso').estilo.monetario)})
+          </div>
+        )}
     </div>
   );
 
