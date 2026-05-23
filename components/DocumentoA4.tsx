@@ -118,7 +118,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
 
         {/* VALOR TOTAL */}
         <div className="w-full mt-8 p-4 bg-green-50 border-2 border-green-600 flex justify-center items-center text-center text-green-900 font-black text-lg mb-12 uppercase tracking-wide">
-          Valor Total da Proposta: {fmt(totalGeral)}
+          Valor Total da Proposta: {fmt(totalGeral)} {totalGeral > 0 ? `(${require('numero-por-extenso').porExtenso(totalGeral, require('numero-por-extenso').estilo.monetario)})` : ''}
         </div>
     </div>
   );
