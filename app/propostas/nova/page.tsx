@@ -2808,8 +2808,6 @@ function PropostaEditor() {
                            proposta={proposta} 
                            resultado={resultado}
                            empresaEmissora={empresasEmissoras.find(e => e.id === selectedEmpresaId) || empresasEmissoras[0]} 
-                           onUpdateProposta={(updates: any) => setProposta({ ...proposta, cliente: { ...proposta.cliente, ...updates } })}
-                           templates={templates}
                         />
                      </div>
                   )}
@@ -4800,6 +4798,23 @@ function PropostaEditor() {
                                                 type="button"
                                                 className="bg-red-50 text-red-600 hover:bg-red-100 p-1.5 rounded-lg border border-red-200 transition-colors shrink-0"
                                                 onClick={() => {
+                                                   const newList = condsCli.filter((_: string, i: number) => i !== idx);
+                                                   setProposta({...proposta, cliente: {...proposta.cliente, condicoesCliente: newList}});
+                                                }}
+                                             >
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                </svg>
+                                             </button>
+                                          </div>
+                                       ))}
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        );
+                     })()}
+
                      {currentSlide === 13 && (
                       <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                          <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
