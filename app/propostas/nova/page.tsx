@@ -2736,10 +2736,6 @@ function PropostaEditor() {
                   <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row justify-between items-center gap-4">
                      <div className="flex-1 w-full overflow-x-auto pb-1 scrollbar-hide">
                         <div className="flex items-center gap-8 min-w-max">
-                           <h2 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2 whitespace-nowrap">
-                              <Presentation className="text-[#10B981]" size={18} /> Apresentação da Proposta
-                           </h2>
-
                            <nav className="flex items-center gap-6">
                               <button 
                                  onClick={() => setViewMode('document')} 
