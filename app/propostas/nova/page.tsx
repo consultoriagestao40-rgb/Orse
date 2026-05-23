@@ -4025,11 +4025,11 @@ function PropostaEditor() {
                                               </div>
                                               <div className="flex flex-col">
                                                  <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Data de Início</span>
-                                                 <span className="text-white font-bold">{proposta.cliente.dataInicio || "A definir"}</span>
+                                                 <span className="text-white font-bold">{proposta.cliente.dataInicio ? proposta.cliente.dataInicio.split('-').reverse().join('/') : "A definir"}</span>
                                               </div>
                                               <div className="flex flex-col">
                                                  <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Data de Vencimento</span>
-                                                 <span className="text-white font-bold">{proposta.cliente.dataVencimento || "A definir"}</span>
+                                                 <span className="text-white font-bold">{proposta.cliente.dataVencimento ? proposta.cliente.dataVencimento.split('-').reverse().join('/') : "A definir"}</span>
                                               </div>
                                               <div className="flex flex-col col-span-2">
                                                  <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Cargo do Contato / Representante</span>

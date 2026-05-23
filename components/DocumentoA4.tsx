@@ -8,6 +8,10 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
 
   // Calculos e formatadores
   const fmt = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+  const formatBRDate = (d: string) => {
+    if (!d || !d.includes('-')) return d || "-";
+    return d.split('-').reverse().join('/');
+  };
   
   const equipe = proposta.equipe || [];
   
@@ -178,11 +182,11 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
             </tr>
             <tr className="border-b border-slate-300 text-[10px] text-slate-800">
               <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Início</td>
-              <td className="px-4 py-2 font-semibold">{proposta.cliente?.dataInicio || "-"}</td>
+              <td className="px-4 py-2 font-semibold">{formatBRDate(proposta.cliente?.dataInicio)}</td>
             </tr>
             <tr className="border-b border-slate-300 text-[10px] text-slate-800">
               <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Vencimento</td>
-              <td className="px-4 py-2 font-semibold">{proposta.cliente?.dataVencimento || "-"}</td>
+              <td className="px-4 py-2 font-semibold">{formatBRDate(proposta.cliente?.dataVencimento)}</td>
             </tr>
             <tr className="border-b border-slate-300 text-[10px] text-slate-800">
               <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Contato</td>
