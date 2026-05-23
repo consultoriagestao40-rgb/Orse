@@ -3,11 +3,19 @@ import { PrismaClient } from "@prisma/client";
 
 export const dynamic = 'force-dynamic';
 
-const prisma = new PrismaClient();
+let prisma: PrismaClient;
+
+function getPrisma() {
+  if (!prisma) {
+    prisma = new PrismaClient();
+  }
+  return prisma;
+}
 
 export async function GET() {
   try {
-    const templates = await prisma.templateContrato.findMany({
+    const db = getPrisma();
+    const templates = await db.templateContrato.findMany({
       include: { clausulas: { orderBy: { ordem: 'asc' } } }
     });
     return NextResponse.json(templates);
@@ -18,13 +26,14 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const db = getPrisma();
     const body = await req.json();
     const { nome, clausulas } = body;
 
     // Remove template if exists to replace (simple approach)
-    await prisma.templateContrato.deleteMany({ where: { nome } });
+    await db.templateContrato.deleteMany({ where: { nome } });
 
-    const newTemplate = await prisma.templateContrato.create({
+    const newTemplate = await db.templateContrato.create({
       data: {
         nome,
         clausulas: {
