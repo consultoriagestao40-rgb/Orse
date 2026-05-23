@@ -1131,23 +1131,34 @@ function PropostaEditor() {
 
         {/* NAVEGAÇÃO POR ABAS - ESTILO MULTI-LINHA PARA EVITAR SCROLL */}
         <div className="w-full max-w-7xl mb-8 border-b border-slate-200 pb-2">
-           <nav className="flex flex-wrap gap-x-6 gap-y-2">
-              {TABS.map((tab) => (
+           {activeTab === 'comercial' ? (
+              <div className="flex items-center">
                  <button 
-                    key={tab.id} 
-                    onClick={() => setActiveTab(tab.id)} 
-                    className={`
-                       whitespace-nowrap py-3 px-1 border-b-2 font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all duration-200
-                       ${activeTab === tab.id 
-                          ? 'border-[#1B4D3E] text-[#1B4D3E] scale-105 opacity-100' 
-                          : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 opacity-80'}
-                    `}
+                    onClick={() => setActiveTab('dre')}
+                    className="flex items-center gap-2 text-slate-500 hover:text-[#1B4D3E] transition-colors font-bold text-xs uppercase tracking-widest py-3 px-1"
                  >
-                    <tab.icon size={14} className={activeTab === tab.id ? 'text-[#10B981]' : 'text-slate-400'} /> 
-                    {tab.label}
+                    <ChevronLeft size={16} /> Voltar para os Cálculos
                  </button>
-              ))}
-           </nav>
+              </div>
+           ) : (
+              <nav className="flex flex-wrap gap-x-6 gap-y-2">
+                 {TABS.map((tab) => (
+                    <button 
+                       key={tab.id} 
+                       onClick={() => setActiveTab(tab.id)} 
+                       className={`
+                          whitespace-nowrap py-3 px-1 border-b-2 font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all duration-200
+                          ${activeTab === tab.id 
+                             ? 'border-[#1B4D3E] text-[#1B4D3E] scale-105 opacity-100' 
+                             : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 opacity-80'}
+                       `}
+                    >
+                       <tab.icon size={14} className={activeTab === tab.id ? 'text-[#10B981]' : 'text-slate-400'} /> 
+                       {tab.label}
+                    </button>
+                 ))}
+              </nav>
+           )}
         </div>
 
         {/* ÁREA DE CONTEÚDO */}
