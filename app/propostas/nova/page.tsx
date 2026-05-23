@@ -734,7 +734,7 @@ function PropostaEditor() {
           cliente: {
              ...proposta.cliente,
              cliente: newClientForm.nomeFantasia,
-             codigo: res.data?.codigo || '',
+             codigo: (res as any).data?.codigo || '',
              cnpj: newClientForm.cnpj,
              email: newClientForm.email,
              celular: newClientForm.whatsapp,
