@@ -4717,8 +4717,7 @@ function PropostaEditor() {
                                <div>
                                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Data Início</label>
                                   <input 
-                                     type="text" 
-                                     placeholder="Ex: 01/06/2026"
+                                     type="date" 
                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
                                      value={proposta.cliente.dataInicio || ''}
                                      onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, dataInicio: e.target.value}})}
@@ -4727,8 +4726,7 @@ function PropostaEditor() {
                                <div>
                                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Data Vencimento</label>
                                   <input 
-                                     type="text" 
-                                     placeholder="Ex: 31/05/2027"
+                                     type="date" 
                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
                                      value={proposta.cliente.dataVencimento || ''}
                                      onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, dataVencimento: e.target.value}})}
