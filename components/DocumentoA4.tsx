@@ -130,7 +130,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
 
   const renderTabelaItensInclusosExcluidos = () => {
     return (
-      <div className="w-full mt-4 page-break-inside-avoid">
+      <div className="w-full mt-4 break-inside-avoid print:break-inside-avoid">
         <table className="w-full text-left border-collapse border border-slate-300">
           <thead>
             <tr className="bg-slate-100 text-[10px] font-bold uppercase tracking-wider border-b border-slate-300">
@@ -160,7 +160,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
   };
 
   const renderTermoDeAceite = (clauseNum: number, startIdx: number) => (
-    <div className="page-break-inside-avoid mt-4">
+    <div className="break-inside-avoid print:break-inside-avoid mt-4">
       <div className="text-[13px] text-justify space-y-4 mb-6 text-slate-800 leading-relaxed pl-4">
          <p><span className="font-bold mr-1">{clauseNum}.{startIdx + 1}.</span>Ao assinar este termo de aceite, o <strong>{proposta.cliente?.cliente?.toUpperCase() || proposta.cliente?.razaoSocial?.toUpperCase() || "CLIENTE"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
          <p><span className="font-bold mr-1">{clauseNum}.{startIdx + 2}.</span>Este documento servirá como base oficial para a elaboração do instrumento jurídico definitivo (Contrato de Prestação de Serviços) entre as partes.</p>
@@ -213,7 +213,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
         </table>
       </div>
 
-      <div className="mt-20 pt-10 grid grid-cols-1 gap-16 text-center page-break-inside-avoid max-w-md mx-auto">
+      <div className="mt-20 pt-10 grid grid-cols-1 gap-16 text-center break-inside-avoid print:break-inside-avoid max-w-md mx-auto">
          <div>
             <div className="border-t border-black pt-2 font-black">CLIENTE</div>
             <div className="mt-1 font-bold text-[10px]">{proposta.cliente?.razaoSocial || proposta.cliente?.cliente || "Cliente"}</div>
@@ -390,7 +390,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                     : [];
                     
                   return (
-                    <div key={idx} className={idx > 0 ? "mt-6 page-break-inside-avoid" : ""}>
+                    <div key={idx} className={idx > 0 ? "mt-6 break-inside-avoid print:break-inside-avoid" : ""}>
                       <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">{tituloFinal}</h4>
                       {paragrafos.length > 0 && (
                         <div className="pl-4 mt-2 mb-4">
@@ -454,7 +454,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                 {renderTabelaItensInclusosExcluidos()}
               </div>
 
-              <div className="mt-16 page-break-inside-avoid">
+              <div className="mt-16 break-inside-avoid break-before-page print:break-before-page print:break-inside-avoid">
                 <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">CLÁUSULA 05 - TERMO DE ACEITE</h4>
                 {renderTermoDeAceite(5, 0)}
               </div>
