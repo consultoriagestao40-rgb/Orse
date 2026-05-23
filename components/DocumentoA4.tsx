@@ -266,61 +266,90 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
         <div className="space-y-4 text-justify">
           {proposta.cliente?.clausulasA4 && proposta.cliente.clausulasA4.length > 0 ? (
              <>
-               {proposta.cliente.clausulasA4.map((clausula: any, idx: number) => (
-                 <div key={idx} className={idx > 0 ? "mt-6" : ""}>
-                   <h4 className="font-bold uppercase">{clausula.titulo}</h4>
-                   <div className="pl-4 mt-2 whitespace-pre-wrap">
-                     {clausula.texto !== '[TABELA]' && clausula.texto}
-                   </div>
-                   {(clausula.texto.includes('[TABELA]') || clausula.titulo.includes('COMERCIAIS')) && renderTabelaComercial()}
-                 </div>
-               ))}
-               
-               {/* Se não encontrou a tabela nas cláusulas e tem menos de 3 (ex. o cara fez só a 1 e a 2), força no final! */}
-               {proposta.cliente.clausulasA4.length > 0 && !proposta.cliente.clausulasA4.some((c:any) => c.texto.includes('[TABELA]') || c.titulo.includes('COMERCIAIS')) && (
-                 <div className="mt-6">
-                   <h4 className="font-bold uppercase">CLÁUSULA 03 - RESUMO COMERCIAL DA PROPOSTA</h4>
-                   <div className="pl-4 mt-2 whitespace-pre-wrap">
-                     Valores referentes aos serviços prestados, equipe alocada e insumos, conforme detalhamento a seguir:
-                   </div>
-                   {renderTabelaComercial()}
-                 </div>
-               )}
-               <div className="mt-6">
-                 <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">ITENS INCLUSOS E EXCLUSOS</h4>
-                 {renderTabelaItensInclusosExcluidos()}
-               </div>
+               {proposta.cliente.clausulasA4.map((clausula: any, idx: number) => {
+                  const clauseNum = idx + 1;
+                  const rawTitulo = clausula.titulo.replace(/^CLÁUSULA\s+\d+\s*[-–]?\s*/i, '').trim();
+                  const tituloFinal = `CLÁUSULA ${String(clauseNum).padStart(2,'0')} - ${rawTitulo}`;
+                  const paragrafos = clausula.texto !== '[TABELA]'
+                    ? clausula.texto.split(/\n/).filter((p: string) => p.trim() !== '')
+                    : [];
+                  return (
+                    <div key={idx} className={idx > 0 ? "mt-6" : ""}>
+                      <h4 className="font-bold uppercase">{tituloFinal}</h4>
+                      <div className="pl-4 mt-2">
+                        {clausula.texto !== '[TABELA]' ? paragrafos.map((p: string, pIdx: number) => (
+                          <p key={pIdx} className="mb-2 text-justify">
+                            <span className="font-bold mr-1">{clauseNum}.{pIdx + 1}.</span>{p.replace(/^\d+\.\d+\.?\s*/, '')}
+                          </p>
+                        )) : null}
+                      </div>
+                      {(clausula.texto.includes('[TABELA]') || clausula.titulo.includes('COMERCIAIS')) && renderTabelaComercial()}
+                    </div>
+                  );
+                })}
+                
+                {proposta.cliente.clausulasA4.length > 0 && !proposta.cliente.clausulasA4.some((c:any) => c.texto.includes('[TABELA]') || c.titulo.includes('COMERCIAIS')) && (() => {
+                  const n = proposta.cliente.clausulasA4.length + 1;
+                  return (
+                    <div className="mt-6">
+                      <h4 className="font-bold uppercase">CLÁUSULA {String(n).padStart(2,'0')} - RESUMO COMERCIAL DA PROPOSTA</h4>
+                      <div className="pl-4 mt-2">
+                        <p><span className="font-bold mr-1">{n}.1.</span>Valores referentes aos serviços prestados, equipe alocada e insumos, conforme detalhamento a seguir:</p>
+                      </div>
+                      {renderTabelaComercial()}
+                    </div>
+                  );
+                })()}
+
+                {(() => {
+                  const hasTabela = proposta.cliente.clausulasA4.some((c:any) => c.texto.includes('[TABELA]') || c.titulo.includes('COMERCIAIS'));
+                  const n = hasTabela
+                    ? proposta.cliente.clausulasA4.length + 1
+                    : proposta.cliente.clausulasA4.length + 2;
+                  return (
+                    <div className="mt-6">
+                      <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">CLÁUSULA {String(n).padStart(2,'0')} - ITENS INCLUSOS E EXCLUSOS</h4>
+                      {renderTabelaItensInclusosExcluidos()}
+                    </div>
+                  );
+                })()}
              </>
           ) : (
             <>
               <div>
-                <h4 className="font-bold uppercase">CLÁUSULA 01 - DO OBJETO E ESCOPO:</h4>
-                <div className="pl-4 mt-2 whitespace-pre-wrap">
+                <h4 className="font-bold uppercase">CLÁUSULA 01 - DO OBJETO E ESCOPO</h4>
+                <div className="pl-4 mt-2">
                   {proposta.cliente?.objetoProposta && (
-                    <div className="mb-2">{proposta.cliente.objetoProposta}</div>
+                    <p className="mb-2 text-justify">
+                      <span className="font-bold mr-1">1.1.</span>{proposta.cliente.objetoProposta}
+                    </p>
                   )}
                   {proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico && (
-                    <div>{proposta.cliente.escopoTecnico}</div>
+                    <p className="text-justify">
+                      <span className="font-bold mr-1">1.2.</span>{proposta.cliente.escopoTecnico}
+                    </p>
                   )}
                 </div>
               </div>
               
               <div>
-                <h4 className="font-bold uppercase mt-6">CLÁUSULA 02 - DAS CONDIÇÕES COMERCIAIS:</h4>
+                <h4 className="font-bold uppercase mt-6">CLÁUSULA 02 - DAS CONDIÇÕES COMERCIAIS</h4>
                 <div className="pl-4 mt-2">
                    {proposta.cliente?.condicoesCliente?.map((c: string, i: number) => (
-                      <p key={i} className="mb-1">2.{i+1}. {c}</p>
+                      <p key={i} className="mb-2 text-justify">
+                        <span className="font-bold mr-1">2.{i+1}.</span>{c}
+                      </p>
                    ))}
                    {!proposta.cliente?.condicoesCliente?.length && (
-                     <p>As condições comerciais seguirão o padrão estipulado em contrato, com vencimento conforme acordado e validade da proposta de 30 dias.</p>
+                     <p className="text-justify"><span className="font-bold mr-1">2.1.</span>As condições comerciais seguirão o padrão estipulado em contrato, com vencimento conforme acordado e validade da proposta de 30 dias.</p>
                    )}
                 </div>
               </div>
 
               <div className="mt-6">
                 <h4 className="font-bold uppercase">CLÁUSULA 03 - RESUMO COMERCIAL DA PROPOSTA</h4>
-                <div className="pl-4 mt-2 whitespace-pre-wrap">
-                  Valores referentes aos serviços prestados, equipe alocada e insumos, conforme detalhamento a seguir:
+                <div className="pl-4 mt-2">
+                  <p className="text-justify"><span className="font-bold mr-1">3.1.</span>Valores referentes aos serviços prestados, equipe alocada e insumos, conforme detalhamento a seguir:</p>
                 </div>
                 {renderTabelaComercial()}
               </div>
