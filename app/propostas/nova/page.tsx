@@ -2734,13 +2734,41 @@ function PropostaEditor() {
 
                   {/* CONTROLES E AÇÕES */}
                   <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row justify-between items-center gap-4">
-                     <div>
-                        <div className="flex items-center gap-6 mb-4 min-w-max">
+                     <div className="flex-1 overflow-x-auto pb-1 scrollbar-hide">
+                        <div className="flex items-center gap-8 min-w-max">
                            <h2 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2 whitespace-nowrap">
                               <Presentation className="text-[#10B981]" size={18} /> Apresentação da Proposta
                            </h2>
+
+                           <nav className="flex items-center gap-6">
+                              <button 
+                                 onClick={() => setViewMode('document')} 
+                                 className={`
+                                    whitespace-nowrap py-2 px-3 border-b-2 font-bold text-[11px] uppercase tracking-widest flex items-center gap-2 transition-all duration-200
+                                    ${viewMode === 'document' 
+                                       ? 'border-[#1B4D3E] text-[#1B4D3E] opacity-100' 
+                                       : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 opacity-80'}
+                                 `}
+                              >
+                                 <FileText size={16} className={viewMode === 'document' ? 'text-[#10B981]' : 'text-slate-400'} />
+                                 Documento Simples (A4)
+                              </button>
+                              <button 
+                                 onClick={() => setViewMode('slide')} 
+                                 className={`
+                                    whitespace-nowrap py-2 px-3 border-b-2 font-bold text-[11px] uppercase tracking-widest flex items-center gap-2 transition-all duration-200
+                                    ${viewMode === 'slide' 
+                                       ? 'border-[#1B4D3E] text-[#1B4D3E] opacity-100' 
+                                       : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 opacity-80'}
+                                 `}
+                              >
+                                 <Presentation size={16} className={viewMode === 'slide' ? 'text-[#10B981]' : 'text-slate-400'} />
+                                 Slide Deck (Apresentação)
+                              </button>
+                           </nav>
+
                            {viewMode === 'document' && (
-                             <div className="flex items-center gap-2 whitespace-nowrap">
+                             <div className="flex items-center gap-2 whitespace-nowrap ml-2">
                                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Empresa Emissora:</span>
                                <select 
                                  value={selectedEmpresaId} 
@@ -2753,34 +2781,6 @@ function PropostaEditor() {
                                </select>
                              </div>
                            )}
-                        </div>
-                        <div className="flex w-full mb-2">
-                           <nav className="flex gap-8 border-b border-slate-200 w-full">
-                              <button 
-                                 onClick={() => setViewMode('document')} 
-                                 className={`
-                                    whitespace-nowrap py-3 px-2 border-b-2 font-bold text-[11px] uppercase tracking-widest flex items-center gap-2 transition-all duration-200 relative -mb-[1px]
-                                    ${viewMode === 'document' 
-                                       ? 'border-[#1B4D3E] text-[#1B4D3E] opacity-100' 
-                                       : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 opacity-80'}
-                                 `}
-                              >
-                                 <FileText size={16} className={viewMode === 'document' ? 'text-[#10B981]' : 'text-slate-400'} />
-                                 Documento Simples (A4)
-                              </button>
-                              <button 
-                                 onClick={() => setViewMode('slide')} 
-                                 className={`
-                                    whitespace-nowrap py-3 px-2 border-b-2 font-bold text-[11px] uppercase tracking-widest flex items-center gap-2 transition-all duration-200 relative -mb-[1px]
-                                    ${viewMode === 'slide' 
-                                       ? 'border-[#1B4D3E] text-[#1B4D3E] opacity-100' 
-                                       : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 opacity-80'}
-                                 `}
-                              >
-                                 <Presentation size={16} className={viewMode === 'slide' ? 'text-[#10B981]' : 'text-slate-400'} />
-                                 Slide Deck (Apresentação)
-                              </button>
-                           </nav>
                         </div>
                      </div>
                      <div className="flex items-center justify-end gap-3 w-full">
