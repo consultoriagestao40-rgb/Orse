@@ -150,6 +150,70 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
     );
   };
 
+  const renderTermoDeAceite = () => (
+    <div className="page-break-inside-avoid">
+      <div className="text-[13px] text-justify space-y-4 mb-6 text-slate-800 leading-relaxed pl-4">
+         <p>Ao assinar este termo de aceite, o <strong>{proposta.cliente?.cliente?.toUpperCase() || proposta.cliente?.razaoSocial?.toUpperCase() || "CLIENTE"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
+         <p>Este documento servirá como base oficial para a elaboração do instrumento jurídico definitivo (Contrato de Prestação de Serviços) entre as partes.</p>
+      </div>
+      
+      <div className="w-full mt-4">
+        <table className="w-full text-left border-collapse border border-slate-300">
+          <tbody>
+            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 w-1/4 uppercase">Razão Social</td>
+              <td className="px-4 py-2 font-semibold">{proposta.cliente?.razaoSocial || ""}</td>
+            </tr>
+            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Nome Fantasia</td>
+              <td className="px-4 py-2 font-semibold">{proposta.cliente?.cliente || ""}</td>
+            </tr>
+            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">CNPJ</td>
+              <td className="px-4 py-2 font-semibold">{proposta.cliente?.cnpj || ""}</td>
+            </tr>
+            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Valor</td>
+              <td className="px-4 py-2 font-black text-slate-900">{fmt(totalGeral)}</td>
+            </tr>
+            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Início</td>
+              <td className="px-4 py-2 font-semibold">{proposta.cliente?.dataInicio || "-"}</td>
+            </tr>
+            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Vencimento</td>
+              <td className="px-4 py-2 font-semibold">{proposta.cliente?.dataVencimento || "-"}</td>
+            </tr>
+            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Contato</td>
+              <td className="px-4 py-2 font-semibold">{proposta.cliente?.contato || ""}</td>
+            </tr>
+            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Cargo</td>
+              <td className="px-4 py-2 font-semibold">{proposta.cliente?.contatoCargo || ""}</td>
+            </tr>
+            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Celular</td>
+              <td className="px-4 py-2 font-semibold">{proposta.cliente?.celular || ""}</td>
+            </tr>
+            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">E-mail</td>
+              <td className="px-4 py-2 font-semibold">{proposta.cliente?.email || ""}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-20 pt-10 grid grid-cols-1 gap-16 text-center page-break-inside-avoid max-w-md mx-auto">
+         <div>
+            <div className="border-t border-black pt-2 font-black">CLIENTE</div>
+            <div className="mt-1 font-bold text-[10px]">{proposta.cliente?.razaoSocial || proposta.cliente?.cliente || "Cliente"}</div>
+            <div className="text-[10px] text-slate-500 uppercase">{proposta.cliente?.contato || "Representante Legal"}</div>
+         </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="bg-slate-200 min-h-screen py-8 flex flex-col items-center overflow-auto print:bg-white print:py-0">
       
@@ -160,8 +224,29 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
         </button>
         <div className="flex gap-2">
           {onUpdateClausulas && (
-            <button onClick={() => setShowEditorModal(true)} className="px-6 py-2 bg-amber-500 rounded-lg shadow text-sm font-black text-white hover:bg-amber-600 transition-colors">
-              ✏️ Editar
+            <button 
+              onClick={() => {
+                if (!proposta.cliente.clausulasA4 || proposta.cliente.clausulasA4.length === 0) {
+                   const defaultCondicoes = proposta.cliente?.condicoesCliente?.length > 0 
+                     ? proposta.cliente.condicoesCliente.join('\n') 
+                     : 'As condições comerciais seguirão o padrão estipulado em contrato, com vencimento conforme acordado e validade da proposta de 30 dias.';
+                   
+                   const txtObjeto = proposta.cliente?.objetoProposta || '';
+                   const txtEscopo = (proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico) ? `\n\n${proposta.cliente.escopoTecnico}` : '';
+                   
+                   onUpdateClausulas([
+                     { titulo: 'CLÁUSULA 01 - DO OBJETO E ESCOPO', texto: `${txtObjeto}${txtEscopo}`.trim() },
+                     { titulo: 'CLÁUSULA 02 - DAS CONDIÇÕES COMERCIAIS', texto: defaultCondicoes },
+                     { titulo: 'CLÁUSULA 03 - RESUMO COMERCIAL DA PROPOSTA', texto: '[TABELA]' },
+                     { titulo: 'CLÁUSULA 04 - ITENS INCLUSOS E EXCLUSOS', texto: '[ITENS]' },
+                     { titulo: 'CLÁUSULA 05 - TERMO DE ACEITE', texto: '[TERMO_ACEITE]' }
+                   ]);
+                }
+                setShowEditorModal(true);
+              }} 
+              className="px-6 py-2 bg-amber-500 rounded-lg shadow text-sm font-black text-white hover:bg-amber-600 transition-colors"
+            >
+              ✏️ Editar Cláusulas
             </button>
           )}
           <button onClick={() => window.print()} className="px-6 py-2 bg-[#1B4D3E] rounded-lg shadow text-sm font-black text-white hover:bg-[#143d31]">
@@ -279,49 +364,33 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                   const clauseNum = idx + 1;
                   const rawTitulo = clausula.titulo.replace(/^CLÁUSULA\s+\d+\s*[-–]?\s*/i, '').trim();
                   const tituloFinal = `CLÁUSULA ${String(clauseNum).padStart(2,'0')} - ${rawTitulo}`;
-                  const paragrafos = clausula.texto !== '[TABELA]'
+                  
+                  // Se for uma das tags especiais, não tenta quebrar parágrafos textuais
+                  const isSpecial = clausula.texto === '[TABELA]' || clausula.texto === '[ITENS]' || clausula.texto === '[TERMO_ACEITE]';
+                  
+                  const paragrafos = !isSpecial
                     ? clausula.texto.split(/\n/).filter((p: string) => p.trim() !== '')
                     : [];
+                    
                   return (
-                    <div key={idx} className={idx > 0 ? "mt-6" : ""}>
-                      <h4 className="font-bold uppercase">{tituloFinal}</h4>
-                      <div className="pl-4 mt-2">
-                        {clausula.texto !== '[TABELA]' ? paragrafos.map((p: string, pIdx: number) => (
-                          <p key={pIdx} className="mb-2 text-justify">
-                            <span className="font-bold mr-1">{clauseNum}.{pIdx + 1}.</span>{p.replace(/^\d+\.\d+\.?\s*/, '')}
-                          </p>
-                        )) : null}
-                      </div>
-                      {(clausula.texto.includes('[TABELA]') || clausula.titulo.includes('COMERCIAIS')) && renderTabelaComercial()}
+                    <div key={idx} className={idx > 0 ? "mt-6 page-break-inside-avoid" : ""}>
+                      <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">{tituloFinal}</h4>
+                      {!isSpecial && (
+                        <div className="pl-4 mt-2">
+                          {paragrafos.map((p: string, pIdx: number) => (
+                            <p key={pIdx} className="mb-2 text-justify">
+                              <span className="font-bold mr-1">{clauseNum}.{pIdx + 1}.</span>{p.replace(/^\d+\.\d+\.?\s*/, '')}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {clausula.texto === '[TABELA]' && renderTabelaComercial()}
+                      {clausula.texto === '[ITENS]' && renderTabelaItensInclusosExcluidos()}
+                      {clausula.texto === '[TERMO_ACEITE]' && renderTermoDeAceite()}
                     </div>
                   );
                 })}
-                
-                {proposta.cliente.clausulasA4.length > 0 && !proposta.cliente.clausulasA4.some((c:any) => c.texto.includes('[TABELA]') || c.titulo.includes('COMERCIAIS')) && (() => {
-                  const n = proposta.cliente.clausulasA4.length + 1;
-                  return (
-                    <div className="mt-6">
-                      <h4 className="font-bold uppercase">CLÁUSULA {String(n).padStart(2,'0')} - RESUMO COMERCIAL DA PROPOSTA</h4>
-                      <div className="pl-4 mt-2">
-                        <p><span className="font-bold mr-1">{n}.1.</span>Valores referentes aos serviços prestados, equipe alocada e insumos, conforme detalhamento a seguir:</p>
-                      </div>
-                      {renderTabelaComercial()}
-                    </div>
-                  );
-                })()}
-
-                {(() => {
-                  const hasTabela = proposta.cliente.clausulasA4.some((c:any) => c.texto.includes('[TABELA]') || c.titulo.includes('COMERCIAIS'));
-                  const n = hasTabela
-                    ? proposta.cliente.clausulasA4.length + 1
-                    : proposta.cliente.clausulasA4.length + 2;
-                  return (
-                    <div className="mt-6">
-                      <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">CLÁUSULA {String(n).padStart(2,'0')} - ITENS INCLUSOS E EXCLUSOS</h4>
-                      {renderTabelaItensInclusosExcluidos()}
-                    </div>
-                  );
-                })()}
              </>
           ) : (
             <>
@@ -364,75 +433,16 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
               </div>
 
               <div className="mt-6">
-                <h4 className="font-bold uppercase">CLÁUSULA 04 - ITENS INCLUSOS E EXCLUSOS</h4>
+                <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">CLÁUSULA 04 - ITENS INCLUSOS E EXCLUSOS</h4>
                 {renderTabelaItensInclusosExcluidos()}
+              </div>
+
+              <div className="mt-16 page-break-inside-avoid">
+                <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">CLÁUSULA 05 - TERMO DE ACEITE</h4>
+                {renderTermoDeAceite()}
               </div>
             </>
           )}
-        </div>
-
-        <div className="mt-16 page-break-inside-avoid">
-          <h4 className="font-bold uppercase">CLÁUSULA 05 - TERMO DE ACEITE</h4>
-          
-          <div className="text-[13px] text-justify space-y-4 my-6 text-slate-800 leading-relaxed pl-4">
-             <p>Ao assinar este termo de aceite, o <strong>{proposta.cliente?.cliente?.toUpperCase() || proposta.cliente?.razaoSocial?.toUpperCase() || "CLIENTE"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
-             <p>Este documento servirá como base oficial para a elaboração do instrumento jurídico definitivo (Contrato de Prestação de Serviços) entre as partes.</p>
-          </div>
-          
-          <div className="w-full mt-4">
-            <table className="w-full text-left border-collapse border border-slate-300">
-              <tbody>
-                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 w-1/4 uppercase">Razão Social</td>
-                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.razaoSocial || ""}</td>
-                </tr>
-                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Nome Fantasia</td>
-                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.cliente || ""}</td>
-                </tr>
-                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">CNPJ</td>
-                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.cnpj || ""}</td>
-                </tr>
-                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Valor</td>
-                  <td className="px-4 py-2 font-black text-slate-900">{fmt(totalGeral)}</td>
-                </tr>
-                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Início</td>
-                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.dataInicio || "-"}</td>
-                </tr>
-                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Vencimento</td>
-                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.dataVencimento || "-"}</td>
-                </tr>
-                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Contato</td>
-                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.contato || ""}</td>
-                </tr>
-                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Cargo</td>
-                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.contatoCargo || ""}</td>
-                </tr>
-                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Celular</td>
-                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.celular || ""}</td>
-                </tr>
-                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">E-mail</td>
-                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.email || ""}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div className="mt-20 pt-10 grid grid-cols-1 gap-16 text-center page-break-inside-avoid max-w-md mx-auto">
-             <div>
-                <div className="border-t border-black pt-2 font-black">CLIENTE</div>
-                <div className="mt-1 font-bold text-[10px]">{proposta.cliente?.razaoSocial || proposta.cliente?.cliente || "Cliente"}</div>
-                <div className="text-[10px] text-slate-500 uppercase">{proposta.cliente?.contato || "Representante Legal"}</div>
-             </div>
-          </div>
         </div>
               </td>
             </tr>
@@ -480,6 +490,13 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                             if (base.length > 2 && !base.some((c:any) => c.texto.includes('[TABELA]'))) {
                               base[2] = { titulo: 'CLÁUSULA 03 - DAS CONDIÇÕES COMERCIAIS', texto: '[TABELA]' };
                             }
+                            // Preserva ou adiciona as tags especiais
+                            if (!base.some((c:any) => c.texto.includes('[ITENS]'))) {
+                              base.push({ titulo: 'CLÁUSULA 04 - ITENS INCLUSOS E EXCLUSOS', texto: '[ITENS]' });
+                            }
+                            if (!base.some((c:any) => c.texto.includes('[TERMO_ACEITE]'))) {
+                              base.push({ titulo: 'CLÁUSULA 05 - TERMO DE ACEITE', texto: '[TERMO_ACEITE]' });
+                            }
                           }
                           onUpdateClausulas(base);
                         }
@@ -503,13 +520,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                       onClick={() => {
                         if (onUpdateClausulas) {
                           const list = [...(proposta.cliente.clausulasA4 || [])];
-                          if (list.length === 0) {
-                            list.push({ titulo: 'CLÁUSULA 01 - DO OBJETO E ESCOPO', texto: proposta.cliente.objetoProposta || '' });
-                            list.push({ titulo: 'CLÁUSULA 02 - DO ESCOPO TÉCNICO', texto: proposta.cliente.escopoTecnico || '' });
-                            list.push({ titulo: 'CLÁUSULA 03 - DAS CONDIÇÕES COMERCIAIS', texto: '[TABELA]' });
-                          } else {
-                            list.push({ titulo: 'NOVA CLÁUSULA', texto: '' });
-                          }
+                          list.push({ titulo: `NOVA CLÁUSULA`, texto: '' });
                           onUpdateClausulas(list);
                         }
                       }}
@@ -538,7 +549,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                         <input 
                           className="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm px-4 py-2.5 font-bold focus:outline-none focus:border-[#1e4480]"
                           value={clausula.titulo}
-                          placeholder="Ex: CLÁUSULA 01 - DO OBJETO"
+                          placeholder="Ex: DO OBJETO"
                           onChange={(e) => {
                             if (onUpdateClausulas) {
                               const list = [...proposta.cliente.clausulasA4];
@@ -552,7 +563,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                         <textarea 
                           className="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm px-4 py-3 min-h-[120px] resize-y focus:outline-none focus:border-[#1e4480]"
                           value={clausula.texto}
-                          placeholder="Digite o texto da cláusula... (Para a tabela comercial, escreva exatamente [TABELA])"
+                          placeholder="Digite o texto da cláusula... Ou use as tags: [TABELA], [ITENS], [TERMO_ACEITE]"
                           onChange={(e) => {
                             if (onUpdateClausulas) {
                               const list = [...proposta.cliente.clausulasA4];
