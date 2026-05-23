@@ -176,14 +176,24 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
 
       <div className="print-a4-page bg-white w-[210mm] min-h-[297mm] shadow-2xl print:shadow-none mx-auto relative px-16 py-12 text-slate-900 text-xs">
         
-        {/* CABEÇALHO */}
-        <div className="flex flex-col items-center text-center border-b-2 border-slate-900 pb-6 mb-6">
-          <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="Logo" className="h-14 object-contain mb-4" />
-          <h1 className="text-xl font-black uppercase tracking-widest">{empresaEmissora.nomeFantasia}</h1>
-          <p className="font-bold mt-1">CNPJ: {empresaEmissora.cnpj}</p>
-          {empresaEmissora.endereco && <p>{empresaEmissora.endereco}</p>}
-          {empresaEmissora.telefone && <p>Telefone: {empresaEmissora.telefone}</p>}
-          {empresaEmissora.email && <p>Email: {empresaEmissora.email}</p>}
+        {/* CABEÇALHO HORIZONTAL */}
+        <div className="flex items-center justify-between border-b-2 border-slate-900 pb-6 mb-6">
+          {/* Espaçador invisível na esquerda para manter o texto 100% centralizado */}
+          <div className="w-40 invisible">Espaçador</div>
+          
+          {/* DADOS DA EMPRESA CENTRALIZADOS */}
+          <div className="flex flex-col items-center text-center flex-1">
+            <h1 className="text-xl font-black uppercase tracking-widest">{empresaEmissora.nomeFantasia}</h1>
+            <p className="font-bold mt-1">CNPJ: {empresaEmissora.cnpj}</p>
+            {empresaEmissora.endereco && <p>{empresaEmissora.endereco}</p>}
+            {empresaEmissora.telefone && <p>Telefone: {empresaEmissora.telefone}</p>}
+            {empresaEmissora.email && <p>Email: {empresaEmissora.email}</p>}
+          </div>
+
+          {/* LOGOTIPO NA DIREITA */}
+          <div className="w-40 flex justify-end">
+            <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="Logo" className="h-16 object-contain" />
+          </div>
         </div>
 
         {/* TÍTULO */}
