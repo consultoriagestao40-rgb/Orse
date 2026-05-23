@@ -178,7 +178,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
             </tr>
             <tr className="border-b border-slate-300 text-[10px] text-slate-800">
               <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Valor</td>
-              <td className="px-4 py-2 font-black text-slate-900">{fmt(totalGeral)}</td>
+              <td className="px-4 py-2 font-black text-slate-900">{fmt(totalGeral)} {totalGeral > 0 ? `(${require('numero-por-extenso').porExtenso(totalGeral, require('numero-por-extenso').estilo.monetario)})` : ''}</td>
             </tr>
             <tr className="border-b border-slate-300 text-[10px] text-slate-800">
               <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Início</td>
