@@ -118,7 +118,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
 
         {/* VALOR TOTAL */}
         <div className="w-full mt-8 p-4 bg-green-50 border-2 border-green-600 flex justify-center items-center text-center text-green-900 font-black text-lg mb-2 uppercase tracking-wide">
-          Valor Total da Proposta: {fmt(totalGeral)}
+          Valor Total da Proposta: {fmt(totalGeral)} Mensal
         </div>
         {totalGeral > 0 && (
           <div className="text-center text-green-800 font-bold text-[10px] uppercase mb-12 tracking-wider">
