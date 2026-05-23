@@ -398,6 +398,9 @@ function PropostaEditor() {
                cliente: { 
                  ...proposta.cliente, 
                  cliente: clientObj?.nomeFantasia || fullData.cliente.clienteNome || '', 
+                 codigo: clientObj?.codigo || fullData.cliente.codigo || '',
+                 cnpj: clientObj?.cnpj || fullData.cliente.cnpj || '',
+                 razaoSocial: clientObj?.razaoSocial || fullData.cliente.razaoSocial || '',
                  sindicatoId: savedSindicatoId,
                  contato: fullData.cliente.contato || '',
                  celular: fullData.cliente.celular || '',

@@ -18,7 +18,7 @@ export async function getClientes() {
 
 export async function createCliente(data: any) {
   try {
-    await prisma.client.create({
+    const novoCliente = await prisma.client.create({
       data: {
         nomeFantasia: data.nomeFantasia || 'Novo Cliente',
         razaoSocial: data.razaoSocial || '',
@@ -31,7 +31,7 @@ export async function createCliente(data: any) {
     });
     
     revalidatePath('/clientes');
-    return { success: true };
+    return { success: true, data: JSON.parse(JSON.stringify(novoCliente)) };
   } catch (error: any) {
     console.error('Erro ao criar cliente:', error);
     return { error: error?.message || String(error) || 'Erro interno no banco de dados' };
