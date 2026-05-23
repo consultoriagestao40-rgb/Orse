@@ -333,72 +333,67 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
           )}
         </div>
 
-        {/* ASSINATURAS / ACEITE */}
         <div className="mt-16 page-break-inside-avoid">
-          <h2 className="text-2xl font-black text-[#1e4480] tracking-tight mb-6">Estamos prontos para iniciar a nossa parceria de sucesso!</h2>
-          <div className="text-[13px] text-justify space-y-4 mb-8 text-[#1e4480] font-medium leading-relaxed">
+          <h4 className="font-bold uppercase">CLÁUSULA 05 - TERMO DE ACEITE</h4>
+          
+          <div className="text-[13px] text-justify space-y-4 my-6 text-slate-800 leading-relaxed pl-4">
              <p>Ao assinar este termo de aceite, o <strong>{proposta.cliente?.cliente?.toUpperCase() || proposta.cliente?.razaoSocial?.toUpperCase() || "CLIENTE"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
              <p>Este documento servirá como base oficial para a elaboração do instrumento jurídico definitivo (Contrato de Prestação de Serviços) entre as partes.</p>
           </div>
           
-          <h2 className="text-3xl font-black text-white bg-[#285084] p-4 rounded-t-xl tracking-tight mb-0 -mx-4 px-10">ACEITE</h2>
-          <div className="bg-[#285084] p-6 -mx-4 px-10 rounded-b-xl space-y-3 text-white font-bold text-xs pb-12 shadow-md relative overflow-hidden">
-            
-            {/* Decorações de fundo */}
-            <div className="absolute top-0 right-0 opacity-10 pointer-events-none transform translate-x-1/4 -translate-y-1/4">
-               <div className="w-64 h-20 bg-white rotate-45 mb-4"></div>
-               <div className="w-64 h-20 bg-white rotate-45"></div>
-            </div>
+          <div className="w-full mt-4">
+            <table className="w-full text-left border-collapse border border-slate-300">
+              <tbody>
+                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 w-1/4 uppercase">Razão Social</td>
+                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.razaoSocial || ""}</td>
+                </tr>
+                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Nome Fantasia</td>
+                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.cliente || ""}</td>
+                </tr>
+                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">CNPJ</td>
+                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.cnpj || ""}</td>
+                </tr>
+                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Valor</td>
+                  <td className="px-4 py-2 font-black text-slate-900">{fmt(totalGeral)}</td>
+                </tr>
+                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Início</td>
+                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.dataInicio || "-"}</td>
+                </tr>
+                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Vencimento</td>
+                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.dataVencimento || "-"}</td>
+                </tr>
+                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Contato</td>
+                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.contato || ""}</td>
+                </tr>
+                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Cargo</td>
+                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.contatoCargo || ""}</td>
+                </tr>
+                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Celular</td>
+                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.celular || ""}</td>
+                </tr>
+                <tr className="border-b border-slate-300 text-[10px] text-slate-800">
+                  <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">E-mail</td>
+                  <td className="px-4 py-2 font-semibold">{proposta.cliente?.email || ""}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
-              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">Razão Social</div>
-              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.razaoSocial || ""}</div>
-            </div>
-            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
-              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">Nome Fantasia</div>
-              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.cliente || ""}</div>
-            </div>
-            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
-              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">CNPJ</div>
-              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.cnpj || ""}</div>
-            </div>
-            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
-              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">Valor</div>
-              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{fmt(totalGeral)}</div>
-            </div>
-            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
-              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">Início</div>
-              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.dataInicio || "-"}</div>
-            </div>
-            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
-              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">Vencimento</div>
-              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.dataVencimento || "-"}</div>
-            </div>
-
-            <div className="h-6"></div>
-
-            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
-              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">Contato</div>
-              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.contato || ""}</div>
-            </div>
-            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
-              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">Cargo</div>
-              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.contatoCargo || ""}</div>
-            </div>
-            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
-              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">Cel</div>
-              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.celular || ""}</div>
-            </div>
-            <div className="relative z-10 grid grid-cols-12 gap-3 items-center">
-              <div className="col-span-4 bg-white text-[#285084] py-2 px-4 rounded-full text-center">E-mail</div>
-              <div className="col-span-8 bg-[#86b4e0] text-white py-2 px-4 rounded-full text-center">{proposta.cliente?.email || ""}</div>
-            </div>
-
-            <div className="relative z-10 mt-16 flex justify-center pb-4">
-              <div className="w-2/3 border-t-2 border-white text-center pt-2 text-sm font-black tracking-wide uppercase">
-                Cliente
-              </div>
-            </div>
+          <div className="mt-20 pt-10 grid grid-cols-1 gap-16 text-center page-break-inside-avoid max-w-md mx-auto">
+             <div>
+                <div className="border-t border-black pt-2 font-black">CLIENTE</div>
+                <div className="mt-1 font-bold text-[10px]">{proposta.cliente?.razaoSocial || proposta.cliente?.cliente || "Cliente"}</div>
+                <div className="text-[10px] text-slate-500 uppercase">{proposta.cliente?.contato || "Representante Legal"}</div>
+             </div>
           </div>
         </div>
               </td>
