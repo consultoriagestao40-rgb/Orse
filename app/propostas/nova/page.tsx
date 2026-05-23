@@ -1130,17 +1130,8 @@ function PropostaEditor() {
         </header>
 
         {/* NAVEGAÇÃO POR ABAS - ESTILO MULTI-LINHA PARA EVITAR SCROLL */}
-        <div className="w-full max-w-7xl mb-8 border-b border-slate-200 pb-2">
-           {activeTab === 'comercial' ? (
-              <div className="flex items-center">
-                 <button 
-                    onClick={() => setActiveTab('dre')}
-                    className="flex items-center gap-2 text-slate-500 hover:text-[#1B4D3E] transition-colors font-bold text-xs uppercase tracking-widest py-3 px-1"
-                 >
-                    <ChevronLeft size={16} /> Voltar para os Cálculos
-                 </button>
-              </div>
-           ) : (
+        {activeTab !== 'comercial' && (
+           <div className="w-full max-w-7xl mb-8 border-b border-slate-200 pb-2">
               <nav className="flex flex-wrap gap-x-6 gap-y-2">
                  {TABS.map((tab) => (
                     <button 
@@ -1158,8 +1149,8 @@ function PropostaEditor() {
                     </button>
                  ))}
               </nav>
-           )}
-        </div>
+           </div>
+        )}
 
         {/* ÁREA DE CONTEÚDO */}
         <div className="w-full max-w-7xl min-h-[600px]">
@@ -2748,6 +2739,12 @@ function PropostaEditor() {
                      <div className="flex-1 w-full overflow-x-auto pb-1 scrollbar-hide">
                         <div className="flex items-center gap-8 min-w-max">
                            <nav className="flex items-center gap-6">
+                              <button 
+                                 onClick={() => setActiveTab('dre')}
+                                 className="flex items-center gap-2 text-slate-500 hover:text-[#1B4D3E] transition-colors font-bold text-[11px] uppercase tracking-widest py-2 pr-4 border-r border-slate-200"
+                              >
+                                 <ChevronLeft size={16} /> Voltar
+                              </button>
                               <button 
                                  onClick={() => setViewMode('document')} 
                                  className={`
