@@ -2827,8 +2827,26 @@ function PropostaEditor() {
                   {/* CONTAINER DOS SLIDES PARA VISUALIZAÇÃO EM TELA */}
                   <div className={viewMode === 'document' ? 'hidden' : (presentationMode 
                      ? "fixed inset-0 bg-slate-950/98 z-[99999] flex flex-col justify-center items-center select-none p-6 presentation-mode-active" 
-                     : "w-full bg-slate-900/5 rounded-3xl p-8 border border-slate-200/40 flex justify-center items-center overflow-x-auto"
+                     : "w-full bg-slate-900/5 rounded-3xl p-8 border border-slate-200/40 flex justify-center items-center overflow-hidden relative"
                   )}>
+                     {/* BOTÃO VOLTAR (ESQUERDA) */}
+                     <button
+                        type="button"
+                        onClick={() => setCurrentSlide(currentSlide === 1 ? 13 : currentSlide - 1)}
+                        className={`absolute left-4 top-1/2 -translate-y-1/2 z-[100] w-14 h-14 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-[#1e4480] hover:text-white hover:border-[#1e4480] shadow-xl active:scale-95 transition-all cursor-pointer ${presentationMode ? 'bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30 backdrop-blur-sm' : ''}`}
+                     >
+                        <ChevronLeft size={28} className="stroke-[3] -ml-1" />
+                     </button>
+                     
+                     {/* BOTÃO AVANÇAR (DIREITA) */}
+                     <button
+                        type="button"
+                        onClick={() => setCurrentSlide(currentSlide === 13 ? 1 : currentSlide + 1)}
+                        className={`absolute right-4 top-1/2 -translate-y-1/2 z-[100] w-14 h-14 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-[#1e4480] hover:text-white hover:border-[#1e4480] shadow-xl active:scale-95 transition-all cursor-pointer ${presentationMode ? 'bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30 backdrop-blur-sm' : ''}`}
+                     >
+                        <ChevronRight size={28} className="stroke-[3] -mr-1" />
+                     </button>
+
                      <div className={presentationMode
                         ? "w-[90vw] h-[50.625vw] max-h-[85vh] max-w-[151.1vh] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative flex flex-col justify-between"
                         : "w-full max-w-[960px] aspect-[16/9] min-w-[760px] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative select-none flex flex-col justify-between"
@@ -4059,39 +4077,7 @@ function PropostaEditor() {
                          )}
                      </div>
                   </div>
-{/* CONTROLES DE NAVEGAÇÃO DOS SLIDES (PADRONIZADOS FORA DO SLIDE E DO NÚMERO) */}
-                   <div className={`flex flex-col items-center space-y-4 mt-6 ${viewMode === 'document' ? 'hidden' : ''}`}>
-                      <div className="flex justify-center items-center gap-6">
-                         <button
-                            type="button"
-                            onClick={() => setCurrentSlide(currentSlide === 1 ? 13 : currentSlide - 1)}
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold text-xs uppercase tracking-wider hover:bg-slate-50 hover:border-slate-300 active:scale-95 transition-all shadow-sm cursor-pointer z-30"
-                         >
-                            <ChevronLeft size={16} className="stroke-[3]" /> Voltar
-                         </button>
-                         
-                         <div className="flex gap-2 bg-slate-100 p-1.5 rounded-full border border-slate-200">
-                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((num) => (
-                               <button
-                                  key={num}
-                                  type="button"
-                                  onClick={() => setCurrentSlide(num)}
-                                  className={`w-8 h-8 rounded-full text-xs font-black transition-all cursor-pointer flex items-center justify-center ${currentSlide === num ? 'bg-[#1e4480] text-white shadow-md' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-800'}`}
-                               >
-                                  {num}
-                               </button>
-                            ))}
-                         </div>
-
-                         <button
-                            type="button"
-                            onClick={() => setCurrentSlide(currentSlide === 13 ? 1 : currentSlide + 1)}
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1e4480] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#1e4480]/90 active:scale-95 transition-all shadow-md cursor-pointer z-30"
-                         >
-                            Avançar <ChevronRight size={16} className="stroke-[3]" />
-                         </button>
-                      </div>
-                   </div>
+{/* OS CONTROLES DE NAVEGAÇÃO FORAM MOVIDOS PARA AS LATERAIS DO CONTAINER DOS SLIDES */}
 
                   {/* FORMULÁRIO DE ATUALIZAÇÃO DOS DADOS DOS SLIDES E DO VENDEDOR */}
                   {viewMode !== 'document' && (
