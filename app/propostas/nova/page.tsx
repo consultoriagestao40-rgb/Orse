@@ -2731,30 +2731,30 @@ function PropostaEditor() {
                         <h2 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2 mb-4">
                            <Presentation className="text-[#10B981]" size={18} /> Apresentação da Proposta
                         </h2>
-                        <div className="w-full border-b border-slate-200 pb-2">
-                           <nav className="flex flex-wrap gap-x-6 gap-y-2">
+                        <div className="flex w-full mb-2">
+                           <nav className="flex gap-8 border-b border-slate-200 w-full">
                               <button 
                                  onClick={() => setViewMode('document')} 
                                  className={`
-                                    whitespace-nowrap py-3 px-1 border-b-2 font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all duration-200
+                                    whitespace-nowrap py-3 px-2 border-b-2 font-bold text-[11px] uppercase tracking-widest flex items-center gap-2 transition-all duration-200 relative -mb-[1px]
                                     ${viewMode === 'document' 
-                                       ? 'border-[#1B4D3E] text-[#1B4D3E] scale-105 opacity-100' 
+                                       ? 'border-[#1B4D3E] text-[#1B4D3E] opacity-100' 
                                        : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 opacity-80'}
                                  `}
                               >
-                                 <FileText size={14} className={viewMode === 'document' ? 'text-[#10B981]' : 'text-slate-400'} />
+                                 <FileText size={16} className={viewMode === 'document' ? 'text-[#10B981]' : 'text-slate-400'} />
                                  Documento Simples (A4)
                               </button>
                               <button 
                                  onClick={() => setViewMode('slide')} 
                                  className={`
-                                    whitespace-nowrap py-3 px-1 border-b-2 font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all duration-200
+                                    whitespace-nowrap py-3 px-2 border-b-2 font-bold text-[11px] uppercase tracking-widest flex items-center gap-2 transition-all duration-200 relative -mb-[1px]
                                     ${viewMode === 'slide' 
-                                       ? 'border-[#1B4D3E] text-[#1B4D3E] scale-105 opacity-100' 
+                                       ? 'border-[#1B4D3E] text-[#1B4D3E] opacity-100' 
                                        : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 opacity-80'}
                                  `}
                               >
-                                 <Presentation size={14} className={viewMode === 'slide' ? 'text-[#10B981]' : 'text-slate-400'} />
+                                 <Presentation size={16} className={viewMode === 'slide' ? 'text-[#10B981]' : 'text-slate-400'} />
                                  Slide Deck (Apresentação)
                               </button>
                            </nav>
