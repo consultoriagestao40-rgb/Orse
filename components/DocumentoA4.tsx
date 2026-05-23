@@ -132,8 +132,8 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
 
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
-          /* Garante 2cm de margem física em TODAS as páginas (Página 1, 2, 3...) */
-          @page { margin: 20mm !important; size: A4; }
+          /* Garante margem 0 no @page para o navegador ocultar URL e Data padrão (cabeçalhos e rodapés) */
+          @page { margin: 0 !important; size: auto; }
           
           * {
              -webkit-print-color-adjust: exact !important;
@@ -165,11 +165,11 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
             width: 100% !important;
             height: auto !important;
             margin: 0 !important;
-            padding: 0 !important;
+            padding: 20mm !important; /* Adiciona a margem física como padding */
             box-sizing: border-box !important;
             box-shadow: none !important;
             border: none !important;
-            page-break-after: always;
+            /* Remove page-break-after para evitar página final em branco */
           }
         }
       `}} />
