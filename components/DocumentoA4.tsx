@@ -447,7 +447,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
 
               <div className="mt-16 page-break-inside-avoid">
                 <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">CLÁUSULA 05 - TERMO DE ACEITE</h4>
-                {renderTermoDeAceite()}
+                {renderTermoDeAceite(5, 0)}
               </div>
             </>
           )}
