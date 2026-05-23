@@ -446,7 +446,7 @@ function PropostaEditor() {
                insumos: (fullData as any).insumos || { materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0, servicosDescricao: '' },
                dreEncargos: (fullData as any).dreEncargos,
                encargos: (fullData as any).encargos || proposta.encargos,
-               itensInclusosExcluidos: (fullData as any).itensInclusosExcluidos || [
+               itensInclusosExcluidos: (fullData.cliente as any).itensInclusosExcluidos || [
                   { id: '1', descricao: 'Fornecimento de mão de obra', incluso: true },
                   { id: '2', descricao: 'Fornecimento de insumos necessario para a prestação dos serviços', incluso: true },
                   { id: '3', descricao: 'Maquinas e equipamentos', incluso: false },
