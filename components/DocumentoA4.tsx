@@ -117,6 +117,37 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
     </div>
   );
 
+  const renderTabelaItensInclusosExcluidos = () => {
+    return (
+      <div className="w-full mt-4 page-break-inside-avoid">
+        <table className="w-full text-left border-collapse border border-slate-300">
+          <thead>
+            <tr className="bg-slate-100 text-[10px] font-bold uppercase tracking-wider border-b border-slate-300">
+              <th className="px-4 py-2 border-r border-slate-300 w-16">Item</th>
+              <th className="px-4 py-2 border-r border-slate-300">Descrição</th>
+              <th className="px-4 py-2 text-center w-32">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(proposta.itensInclusosExcluidos || []).map((p: any, idx: number) => (
+              <tr key={p.id || idx} className="border-b border-slate-300 text-[10px] text-slate-800">
+                <td className="px-4 py-2 border-r border-slate-300 text-slate-600">{String(idx + 1).padStart(2, '0')}</td>
+                <td className="px-4 py-2 border-r border-slate-300 font-semibold">{p.descricao}</td>
+                <td className="px-4 py-2 text-center font-bold">
+                  {p.incluso ? (
+                    <span className="text-emerald-600">INCLUSO</span>
+                  ) : (
+                    <span className="text-rose-600">NÃO INCLUSO</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   return (
     <div className="bg-slate-200 min-h-screen py-8 flex flex-col items-center overflow-auto print:bg-white print:py-0">
       
@@ -255,6 +286,10 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
                    {renderTabelaComercial()}
                  </div>
                )}
+               <div className="mt-6">
+                 <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">ITENS INCLUSOS E EXCLUSOS</h4>
+                 {renderTabelaItensInclusosExcluidos()}
+               </div>
              </>
           ) : (
             <>
@@ -288,6 +323,11 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora }: { 
                   Valores referentes aos serviços prestados, equipe alocada e insumos, conforme detalhamento a seguir:
                 </div>
                 {renderTabelaComercial()}
+              </div>
+
+              <div className="mt-6">
+                <h4 className="font-bold uppercase">CLÁUSULA 04 - ITENS INCLUSOS E EXCLUSOS</h4>
+                {renderTabelaItensInclusosExcluidos()}
               </div>
             </>
           )}

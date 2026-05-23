@@ -519,10 +519,7 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
         condicoesCliente: meta.condicoesCliente || [],
       itensInclusosExcluidos: (() => {
         const rawItens = meta.itensInclusosExcluidos || [];
-        const hasMaoDeObra = rawItens.some((item: any) => 
-          item.descricao && item.descricao.toLowerCase().includes('mão de obra')
-        );
-        return hasMaoDeObra ? rawItens : defaultItensInclusosExcluidos;
+        return rawItens.length > 0 ? rawItens : defaultItensInclusosExcluidos;
       })()
       },
       insumos: {
