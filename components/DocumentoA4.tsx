@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function DocumentoA4({ proposta, resultado, empresaEmissora, templates, onUpdateClausulas, onUpdateCliente }: { proposta: any, resultado: any, empresaEmissora: any, templates?: any[], onUpdateClausulas?: (c: any[]) => void, onUpdateCliente?: (c: any) => void }) {
+export default function DocumentoA4({ proposta, resultado, empresaEmissora, templates, onUpdateClausulas, onUpdateCliente, onUpdateItens }: { proposta: any, resultado: any, empresaEmissora: any, templates?: any[], onUpdateClausulas?: (c: any[]) => void, onUpdateCliente?: (c: any) => void, onUpdateItens?: (i: any[]) => void }) {
   const [showEditorModal, setShowEditorModal] = useState(false);
 
   if (!proposta || !proposta.cliente) return <div className="p-10 text-center">Carregando dados da proposta...</div>;
@@ -623,6 +623,64 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                                  <label className="text-[9px] font-bold text-slate-500 uppercase ml-1">Celular</label>
                                  <input className="w-full text-xs px-3 py-2 bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-indigo-300 font-semibold" value={proposta.cliente.celular || ''} onChange={e => onUpdateCliente({...proposta.cliente, celular: e.target.value})} />
                                </div>
+                            </div>
+                         </div>
+                      )}
+                      
+                      {clausula.texto.includes('[ITENS]') && onUpdateItens && (
+                         <div className="mt-4 bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl shadow-sm">
+                            <div className="flex justify-between items-center mb-3">
+                               <h5 className="text-[10px] font-black text-emerald-800 uppercase flex items-center gap-1.5">
+                                 <span className="text-sm">📦</span> Itens Inclusos e Exclusos
+                               </h5>
+                               <button 
+                                  onClick={() => {
+                                    const newId = String(Date.now());
+                                    const newList = [...(proposta.itensInclusosExcluidos || []), { id: newId, descricao: 'Novo Item...', incluso: true }];
+                                    onUpdateItens(newList);
+                                  }}
+                                  className="text-[9px] font-bold bg-emerald-600 text-white px-3 py-1.5 rounded-md hover:bg-emerald-700 transition-colors shadow-sm"
+                               >
+                                 + NOVO ITEM
+                               </button>
+                            </div>
+                            <div className="space-y-2">
+                               {(proposta.itensInclusosExcluidos || []).map((item: any, iIdx: number) => (
+                                  <div key={item.id || iIdx} className="flex items-center gap-3 bg-white p-2.5 rounded-lg border border-emerald-100 shadow-sm">
+                                     <span className="text-[10px] font-black text-emerald-800 w-5 text-center">{String(iIdx + 1).padStart(2,'0')}</span>
+                                     <input 
+                                        className="flex-1 text-xs px-3 py-1.5 bg-slate-50 border border-slate-200 rounded focus:outline-none focus:border-emerald-500 font-medium text-slate-700" 
+                                        value={item.descricao || ''}
+                                        onChange={e => {
+                                           const newList = [...proposta.itensInclusosExcluidos];
+                                           newList[iIdx] = { ...newList[iIdx], descricao: e.target.value };
+                                           onUpdateItens(newList);
+                                        }}
+                                     />
+                                     <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                                        <input 
+                                           type="checkbox" 
+                                           className="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-600 border-slate-300 rounded cursor-pointer" 
+                                           checked={!!item.incluso}
+                                           onChange={e => {
+                                              const newList = [...proposta.itensInclusosExcluidos];
+                                              newList[iIdx] = { ...newList[iIdx], incluso: e.target.checked };
+                                              onUpdateItens(newList);
+                                           }}
+                                        />
+                                        <span className="text-[9px] font-bold text-slate-600 tracking-wide uppercase">Incluso</span>
+                                     </label>
+                                     <button 
+                                        onClick={() => {
+                                           const newList = [...proposta.itensInclusosExcluidos];
+                                           newList.splice(iIdx, 1);
+                                           onUpdateItens(newList);
+                                        }}
+                                        className="text-rose-400 hover:text-rose-600 font-bold text-sm px-2 transition-colors"
+                                        title="Remover Item"
+                                     >✕</button>
+                                  </div>
+                               ))}
                             </div>
                          </div>
                       )}

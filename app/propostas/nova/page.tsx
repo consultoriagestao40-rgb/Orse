@@ -2811,6 +2811,7 @@ function PropostaEditor() {
                            templates={templates}
                            onUpdateClausulas={(clausulas: any[]) => setProposta({...proposta, cliente: {...proposta.cliente, clausulasA4: clausulas}})}
                            onUpdateCliente={(cliente: any) => setProposta({...proposta, cliente})}
+                           onUpdateItens={(itens: any[]) => setProposta({...proposta, itensInclusosExcluidos: itens})}
                         />
                      </div>
                   )}
