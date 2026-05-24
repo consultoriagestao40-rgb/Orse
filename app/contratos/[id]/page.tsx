@@ -71,6 +71,16 @@ export default function ContratoDetail() {
     setClausulas(list);
   };
 
+  const gerarNumeroContrato = (c: any) => {
+    if (!c || !c.proposta) return 'S/N';
+    const numProp = c.proposta.numero?.toString().padStart(3, '0') || '000';
+    const numRev = (c.proposta.versoes?.[0]?.versao || 1).toString().padStart(2, '0');
+    const d = c.dataInicio ? new Date(c.dataInicio) : new Date(c.createdAt || Date.now());
+    const m = (d.getMonth() + 1).toString().padStart(2, '0');
+    const y = d.getFullYear().toString();
+    return `${numProp}.${numRev}.${m}.${y}`;
+  };
+
   const calcularDataFim = () => {
     if (!dataInicio || !vigenciaMeses) return '-';
     const d = new Date(dataInicio);
@@ -107,10 +117,12 @@ export default function ContratoDetail() {
 
           <header className="flex justify-between items-end border-b border-slate-300 pb-4">
             <div>
-              <button onClick={() => router.push('/contratos')} className="text-slate-400 hover:text-[#1B4D3E] flex items-center gap-1 text-xs font-bold uppercase mb-2">
-                <ArrowLeft size={14} /> Voltar para Contratos
+              <button onClick={() => router.push('/contratos')} className="flex items-center text-slate-500 hover:text-[#1B4D3E] font-bold text-xs mb-2 transition-colors uppercase tracking-wider">
+                <ArrowLeft size={14} className="mr-1" /> Voltar para Contratos
               </button>
-              <h1 className="text-2xl font-bold text-[#1B4D3E] tracking-wider uppercase">Contrato FPV-{contrato.proposta?.numero}</h1>
+              <h1 className="text-2xl font-bold text-[#1B4D3E] tracking-wider uppercase flex items-center gap-2">
+                Contrato {gerarNumeroContrato(contrato)}
+              </h1>
               <p className="text-slate-500 text-sm mt-1">{contrato.client?.razaoSocial || contrato.client?.nomeFantasia}</p>
             </div>
             <div className="flex gap-3">

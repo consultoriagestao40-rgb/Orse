@@ -15,6 +15,16 @@ type ViewMode = 'lista' | 'kanban-status';
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 
+const gerarNumeroContrato = (c: any) => {
+  if (!c || !c.proposta) return 'S/N';
+  const numProp = c.proposta.numero?.toString().padStart(3, '0') || '000';
+  const numRev = (c.proposta.versoes?.[0]?.versao || 1).toString().padStart(2, '0');
+  const d = c.dataInicio ? new Date(c.dataInicio) : new Date(c.createdAt || Date.now());
+  const m = (d.getMonth() + 1).toString().padStart(2, '0');
+  const y = d.getFullYear().toString();
+  return `${numProp}.${numRev}.${m}.${y}`;
+};
+
 export default function ContratosDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -118,7 +128,7 @@ export default function ContratosDashboard() {
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div className="flex items-center gap-2">
                     <FileText size={13} className="text-[#1B4D3E]" />
-                    <span className="text-xs font-black text-slate-700 tracking-wide">FPV-{c.proposta?.numero}</span>
+                    <span className="text-xs font-black text-slate-700 tracking-wide">{gerarNumeroContrato(c)}</span>
                   </div>
                   <span className="text-[10px] text-slate-400 font-bold bg-slate-100 px-2 py-0.5 rounded">{c.empresaEmissora?.nomeFantasia}</span>
                 </div>
@@ -270,7 +280,7 @@ export default function ContratosDashboard() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
-                      <th className="px-6 py-3">Proposta</th>
+                      <th className="px-6 py-3">Contrato</th>
                       <th className="px-6 py-3">Cliente</th>
                       <th className="px-6 py-3">Empresa Grupo</th>
                       <th className="px-6 py-3 text-center">Início</th>
@@ -288,7 +298,7 @@ export default function ContratosDashboard() {
                       <tr><td colSpan={9} className="px-6 py-12 text-center text-slate-400">Nenhum contrato encontrado.</td></tr>
                     ) : filteredContratos.map((c) => (
                       <tr key={c.id} className="border-b border-slate-200 hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-3 font-bold text-slate-700">FPV-{c.proposta?.numero}</td>
+                        <td className="px-6 py-3 font-bold text-slate-700">{gerarNumeroContrato(c)}</td>
                         <td className="px-6 py-3 font-semibold text-slate-800">{c.client?.razaoSocial || c.client?.nomeFantasia}</td>
                         <td className="px-6 py-3 text-slate-600">{c.empresaEmissora?.nomeFantasia}</td>
                         <td className="px-6 py-3 text-center text-slate-600 font-medium">

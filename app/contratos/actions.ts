@@ -101,7 +101,14 @@ export async function getContratos() {
       include: {
         client: true,
         empresaEmissora: true,
-        proposta: true,
+        proposta: {
+          include: {
+            versoes: {
+              orderBy: { versao: 'desc' },
+              take: 1
+            }
+          }
+        },
       },
       orderBy: { createdAt: 'desc' }
     });

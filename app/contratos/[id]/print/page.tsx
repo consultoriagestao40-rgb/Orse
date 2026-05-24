@@ -9,6 +9,16 @@ export default function ContratoPrint() {
   const [loading, setLoading] = useState(true);
   const [contrato, setContrato] = useState<any>(null);
 
+  const gerarNumeroContrato = (c: any) => {
+    if (!c || !c.proposta) return 'S/N';
+    const numProp = c.proposta.numero?.toString().padStart(3, '0') || '000';
+    const numRev = (c.proposta.versoes?.[0]?.versao || 1).toString().padStart(2, '0');
+    const d = c.dataInicio ? new Date(c.dataInicio) : new Date(c.createdAt || Date.now());
+    const m = (d.getMonth() + 1).toString().padStart(2, '0');
+    const y = d.getFullYear().toString();
+    return `${numProp}.${numRev}.${m}.${y}`;
+  };
+
   const loadData = async () => {
     setLoading(true);
     const res = await getContratoById(id);
@@ -22,6 +32,11 @@ export default function ContratoPrint() {
 
   useEffect(() => {
     if (!loading && contrato) {
+      const numContrato = gerarNumeroContrato(contrato);
+      const emissora = contrato.empresaEmissora?.nomeFantasia || contrato.empresaEmissora?.razaoSocial || '';
+      const cliente = contrato.client?.nomeFantasia || contrato.client?.razaoSocial || '';
+      document.title = `CONTRATO - ${numContrato} - ${emissora} X ${cliente}`.toUpperCase();
+
       setTimeout(() => {
         window.print();
       }, 1000);
