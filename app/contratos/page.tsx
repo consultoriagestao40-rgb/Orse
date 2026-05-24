@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import { 
   FileText, Plus, Search, 
   Users, TrendingUp, Clock,
-  LayoutList, LayoutGrid, AlertCircle, Edit2, CheckCircle, Calendar, DollarSign, Trash2
+  LayoutList, LayoutGrid, AlertCircle, Edit2, CheckCircle, Calendar, DollarSign, Trash2, Printer
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getContratos, updateContratoStatus, deleteContrato } from './actions';
@@ -23,6 +23,13 @@ const gerarNumeroContrato = (c: any) => {
   const m = (d.getMonth() + 1).toString().padStart(2, '0');
   const y = d.getFullYear().toString();
   return `${numProp}.${numRev}.${m}.${y}`;
+};
+
+const calcularVencimento = (dataInicio: any, vigenciaMeses: any) => {
+  if (!dataInicio || !vigenciaMeses) return '-';
+  const d = new Date(dataInicio);
+  d.setMonth(d.getMonth() + vigenciaMeses);
+  return d.toLocaleDateString('pt-BR');
 };
 
 export default function ContratosDashboard() {
@@ -286,6 +293,7 @@ export default function ContratosDashboard() {
                       <th className="px-6 py-3">Empresa Grupo</th>
                       <th className="px-6 py-3 text-center">Início</th>
                       <th className="px-6 py-3 text-center">Vigência</th>
+                      <th className="px-6 py-3 text-center">Vencimento</th>
                       <th className="px-6 py-3 text-center">Data Reajuste</th>
                       <th className="px-6 py-3 text-right">Mensal</th>
                       <th className="px-6 py-3 text-center">Status</th>
@@ -306,6 +314,9 @@ export default function ContratosDashboard() {
                           {c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : '-'}
                         </td>
                         <td className="px-6 py-3 text-center text-slate-600 font-medium">{c.vigenciaMeses}m</td>
+                        <td className="px-6 py-3 text-center text-slate-600 font-bold">
+                          {calcularVencimento(c.dataInicio, c.vigenciaMeses)}
+                        </td>
                         <td className="px-6 py-3 text-center text-orange-600 font-bold">
                           {c.dataReajuste ? new Date(c.dataReajuste).toLocaleDateString('pt-BR') : '-'}
                         </td>
@@ -317,6 +328,13 @@ export default function ContratosDashboard() {
                         </td>
                         <td className="px-6 py-3 text-center">
                           <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => window.open(`/contratos/${c.id}/print`, '_blank')}
+                              className="text-slate-500 hover:text-slate-700 transition-colors p-1 bg-slate-100 rounded"
+                              title="Gerar/Imprimir PDF"
+                            >
+                              <Printer size={16} />
+                            </button>
                             <button
                               onClick={() => router.push(`/contratos/${c.id}`)}
                               className="text-amber-500 hover:text-amber-600 transition-colors p-1 bg-amber-50 rounded"
