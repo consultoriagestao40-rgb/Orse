@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 export default function DocumentoA4({ proposta, resultado, empresaEmissora, templates, onUpdateClausulas, onUpdateCliente, onUpdateItens }: { proposta: any, resultado: any, empresaEmissora: any, templates?: any[], onUpdateClausulas?: (c: any[]) => void, onUpdateCliente?: (c: any) => void, onUpdateItens?: (i: any[]) => void }) {
   const [showEditorModal, setShowEditorModal] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   if (!proposta || !proposta.cliente) return <div className="p-10 text-center">Carregando dados da proposta...</div>;
   if (!empresaEmissora) return <div className="p-10 text-center">Selecione uma Empresa Emissora para visualizar o documento.</div>;
@@ -263,7 +264,12 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
         <button onClick={() => window.history.back()} className="px-4 py-2 bg-white rounded-lg shadow text-sm font-bold text-slate-600 hover:bg-slate-50">
           ← Voltar
         </button>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <div className="flex items-center gap-1 bg-white rounded-lg shadow px-2 py-1 mr-4 no-print border border-slate-200">
+            <button onClick={() => setZoomLevel(prev => Math.max(0.5, prev - 0.1))} className="w-8 h-8 flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-800 rounded-md font-bold transition-colors" title="Reduzir Zoom">-</button>
+            <span className="text-xs font-bold text-slate-600 w-12 text-center">{Math.round(zoomLevel * 100)}%</span>
+            <button onClick={() => setZoomLevel(prev => Math.min(2, prev + 0.1))} className="w-8 h-8 flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-800 rounded-md font-bold transition-colors" title="Aumentar Zoom">+</button>
+          </div>
           {onUpdateClausulas && (
             <button 
               onClick={() => {
@@ -345,8 +351,12 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
         }
       `}} />
 
-      <div className="print-a4-page bg-white w-[210mm] min-h-[297mm] print:min-h-0 shadow-2xl print:shadow-none mx-auto relative text-slate-900 text-xs">
-        <table className="w-full border-collapse break-inside-avoid print:break-inside-avoid">
+      <div 
+        className="transition-transform duration-200 origin-top w-full flex justify-center print:block print:transform-none"
+        style={{ transform: `scale(${zoomLevel})`, marginBottom: zoomLevel > 1 ? `${(zoomLevel - 1) * 297}mm` : '0' }}
+      >
+        <div className="print-a4-page bg-white w-[210mm] min-h-[297mm] print:min-h-0 shadow-2xl print:shadow-none relative text-slate-900 text-xs">
+          <table className="w-full border-collapse break-inside-avoid print:break-inside-avoid">
           <thead>
             <tr><td className="print-margin-header border-none p-0"></td></tr>
           </thead>
@@ -500,6 +510,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
             <tr><td className="print-margin-footer border-none p-0"></td></tr>
           </tfoot>
         </table>
+        </div>
       </div>
 
       {/* MODAL DE EDIÇÃO DE CLÁUSULAS */}
