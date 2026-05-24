@@ -121,7 +121,7 @@ export async function addLeadHistory(leadId: string, tipo: string, descricao: st
   }
 }
 
-export async function convertLeadToClient(leadId: string) {
+export async function convertLeadToClient(leadId: string, clientData: any) {
   const user = await getLoggedUser();
   if (!user) return { success: false, error: 'Unauthorized' };
 
@@ -131,13 +131,13 @@ export async function convertLeadToClient(leadId: string) {
 
     const client = await prisma.client.create({
       data: {
-        nomeFantasia: lead.nomeFantasia,
-        razaoSocial: lead.razaoSocial || lead.nomeFantasia,
-        cnpj: lead.cnpj,
-        email: lead.email,
-        whatsapp: lead.telefone,
-        endereco: lead.endereco,
-        contato: lead.contatoNome,
+        nomeFantasia: clientData.nomeFantasia || lead.nomeFantasia,
+        razaoSocial: clientData.razaoSocial,
+        cnpj: clientData.cnpj,
+        email: clientData.email,
+        whatsapp: clientData.whatsapp || lead.telefone,
+        endereco: clientData.endereco || lead.endereco,
+        contato: clientData.contato || lead.contatoNome,
       }
     });
 

@@ -16,6 +16,17 @@ export default function LeadsKanban() {
   const [showModal, setShowModal] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
   
+  const [showConvertModal, setShowConvertModal] = useState(false);
+  const [convertForm, setConvertForm] = useState({
+    nomeFantasia: '',
+    razaoSocial: '',
+    cnpj: '',
+    email: '',
+    whatsapp: '',
+    endereco: '',
+    contato: ''
+  });
+  
   const [showNewLead, setShowNewLead] = useState(false);
   const [newLeadForm, setNewLeadForm] = useState({
     nomeFantasia: '',
@@ -75,14 +86,31 @@ export default function LeadsKanban() {
     fetchData();
   };
 
-  const handleConvert = async (leadId: string) => {
-    if (!confirm('Deseja converter este Lead em Cliente para gerar uma FPV?')) return;
+  const openConvertModal = (lead: any) => {
+    setConvertForm({
+      nomeFantasia: lead.nomeFantasia || '',
+      razaoSocial: lead.razaoSocial || '',
+      cnpj: lead.cnpj || '',
+      email: lead.email || '',
+      whatsapp: lead.telefone || '',
+      endereco: lead.endereco || '',
+      contato: lead.contatoNome || ''
+    });
+    setShowConvertModal(true);
+  };
+
+  const handleConvertSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!convertForm.nomeFantasia || !convertForm.razaoSocial || !convertForm.cnpj) {
+      alert('Por favor, preencha os campos obrigatórios (Nome Fantasia, Razão Social e CNPJ).');
+      return;
+    }
     
-    const res = await convertLeadToClient(leadId);
+    const res = await convertLeadToClient(selectedLead.id, convertForm);
     if (res.success) {
       alert('Lead convertido com sucesso!');
-      setShowModal(false);
-      // Redireciona para nova FPV passando o client Id
+      setShowConvertModal(false);
+      setSelectedLead(null);
       router.push(`/propostas/nova?clientId=${res.clientId}`);
     } else {
       alert('Erro: ' + res.error);
@@ -264,10 +292,74 @@ export default function LeadsKanban() {
             
             <div className="p-6 border-t border-slate-100 bg-slate-50 shrink-0">
               <button 
-                onClick={() => handleConvert(selectedLead.id)}
+                onClick={() => openConvertModal(selectedLead)}
                 className="w-full bg-emerald-500 hover:bg-emerald-600 text-white p-4 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-200"
               >
                 <CheckCircle2 size={18} /> Converter em Cliente e Gerar Proposta (FPV)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Conversão (Dados Obrigatórios) */}
+      {showConvertModal && selectedLead && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
+              <div>
+                <h3 className="text-xl font-black text-slate-800">Converter em Cliente</h3>
+                <p className="text-xs text-slate-500 mt-1">Preencha os dados oficiais do cliente para gerar a proposta.</p>
+              </div>
+              <button onClick={() => setShowConvertModal(false)} className="text-slate-400 hover:text-slate-600 bg-white p-2 rounded-full shadow-sm"><X size={16}/></button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1">
+              <form id="convert-form" onSubmit={handleConvertSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Nome Fantasia *</label>
+                    <input required value={convertForm.nomeFantasia} onChange={e => setConvertForm({...convertForm, nomeFantasia: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white transition-colors" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Razão Social *</label>
+                    <input required value={convertForm.razaoSocial} onChange={e => setConvertForm({...convertForm, razaoSocial: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white transition-colors" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">CNPJ *</label>
+                    <input required value={convertForm.cnpj} onChange={e => setConvertForm({...convertForm, cnpj: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white transition-colors" placeholder="00.000.000/0000-00" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">E-mail</label>
+                    <input type="email" value={convertForm.email} onChange={e => setConvertForm({...convertForm, email: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white transition-colors" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Telefone / WhatsApp</label>
+                    <input value={convertForm.whatsapp} onChange={e => setConvertForm({...convertForm, whatsapp: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white transition-colors" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Contato (Nome)</label>
+                    <input value={convertForm.contato} onChange={e => setConvertForm({...convertForm, contato: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white transition-colors" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Endereço Completo</label>
+                  <input value={convertForm.endereco} onChange={e => setConvertForm({...convertForm, endereco: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white transition-colors" placeholder="Rua, Número, Bairro, Cidade - UF" />
+                </div>
+              </form>
+            </div>
+            
+            <div className="p-6 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex justify-end gap-3">
+              <button onClick={() => setShowConvertModal(false)} className="px-6 py-3 font-bold text-slate-500 hover:text-slate-700 transition-colors">Cancelar</button>
+              <button form="convert-form" type="submit" className="bg-[#1B4D3E] hover:bg-[#13382d] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-emerald-200 transition-all flex items-center gap-2">
+                <CheckCircle2 size={18} /> Confirmar Conversão
               </button>
             </div>
           </div>
