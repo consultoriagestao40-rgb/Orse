@@ -4,11 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory } from './actions';
 import { Plus, User, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { getSegmentos } from '@/app/admin/settings/actions';
 
 export default function LeadsKanban() {
   const router = useRouter();
   const [stages, setStages] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
+  const [segmentos, setSegmentos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [showModal, setShowModal] = useState(false);
@@ -29,12 +31,14 @@ export default function LeadsKanban() {
 
   const fetchData = async () => {
     setLoading(true);
-    const [stagesRes, leadsRes] = await Promise.all([
+    const [stagesRes, leadsRes, segmentosRes] = await Promise.all([
       getLeadStages(),
-      getLeads()
+      getLeads(),
+      getSegmentos()
     ]);
     if (stagesRes.success) setStages(stagesRes.stages);
     if (leadsRes.success) setLeads(leadsRes.leads);
+    if (segmentosRes.success) setSegmentos(segmentosRes.segmentos);
     setLoading(false);
   };
 
@@ -186,7 +190,16 @@ export default function LeadsKanban() {
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">Segmento</label>
-                <input value={newLeadForm.segmento} onChange={e => setNewLeadForm({...newLeadForm, segmento: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl" placeholder="Ex: Saúde" />
+                <select 
+                  value={newLeadForm.segmento} 
+                  onChange={e => setNewLeadForm({...newLeadForm, segmento: e.target.value})} 
+                  className="w-full p-2.5 border border-slate-200 rounded-xl bg-white"
+                >
+                  <option value="">Selecione um segmento...</option>
+                  {segmentos.map(seg => (
+                    <option key={seg.id} value={seg.nome}>{seg.nome}</option>
+                  ))}
+                </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
