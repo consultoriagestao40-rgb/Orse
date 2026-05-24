@@ -257,9 +257,11 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                     <p className="text-sm font-bold text-slate-800">{s.user?.nome || 'Desconhecido'}</p>
                     <p className="text-xs text-slate-500">{s.user?.cargo || 'Colaborador'}</p>
                   </div>
-                  <button onClick={async () => { await removeLeadShare(lead.id, s.user.id); loadShares(); }} className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors">
-                    <Trash2 size={16} />
-                  </button>
+                  {s.user && (
+                    <button onClick={async () => { await removeLeadShare(lead.id, s.user.id); loadShares(); }} className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors">
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -271,7 +273,7 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                 className="flex-1 border border-slate-200 rounded-xl p-2 text-sm bg-white"
               >
                 <option value="">Selecione um usuário...</option>
-                {allUsers.filter(u => !shares.find(s => s.user.id === u.id)).map(u => (
+                {allUsers.filter(u => !shares.find(s => s.user?.id === u.id)).map(u => (
                   <option key={u.id} value={u.id}>{u.nome} ({u.cargo || 'Usuário'})</option>
                 ))}
               </select>
