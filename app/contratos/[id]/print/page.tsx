@@ -10,7 +10,7 @@ const gerarNumeroContrato = (c: any) => {
   const d = c.dataInicio ? new Date(c.dataInicio) : new Date(c.createdAt || Date.now());
   const m = (d.getMonth() + 1).toString().padStart(2, '0');
   const y = d.getFullYear().toString();
-  return \`\${numProp}.\${numRev}.\${m}.\${y}\`;
+  return `${numProp}.${numRev}.${m}.${y}`;
 };
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   const cliente = contrato.client?.nomeFantasia || contrato.client?.razaoSocial || '';
   
   return {
-    title: \`CONTRATO - \${numContrato} - \${emissora} X \${cliente}\`.toUpperCase()
+    title: `CONTRATO - ${numContrato} - ${emissora} X ${cliente}`.toUpperCase()
   };
 }
 
