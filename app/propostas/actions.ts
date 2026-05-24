@@ -589,9 +589,9 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
 
     // Calculate result dynamic to supply to DocumentoA4
     const totalTributos = (() => {
-      if (Array.isArray(impostos)) return impostos.reduce((a, b) => a + (b.percent || 0), 0);
-      if (impostos?.list) return impostos.list.reduce((a: any, b: any) => a + (b.percent || 0), 0);
-      return Object.values(impostos || {}).filter(v => !isNaN(Number(v))).reduce((a, b) => Number(a) + Number(b), 0);
+      if (Array.isArray(impostos)) return impostos.reduce((a: number, b: any) => a + (b.percent || 0), 0);
+      if (impostos?.list) return impostos.list.reduce((a: number, b: any) => a + (b.percent || 0), 0);
+      return Object.values(impostos || {}).filter((v: any) => !isNaN(Number(v))).reduce((a: number, b: any) => Number(a) + Number(b), 0);
     })();
     const cctDb = impostos?.sindicatoId ? await prisma.cCT.findUnique({ where: { id: impostos.sindicatoId }, include: { cargos: true } }) : null;
     const { calculateEnterprisePrice } = await import('@/lib/pricingEngine');
