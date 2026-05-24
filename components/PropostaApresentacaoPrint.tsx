@@ -1,4 +1,5 @@
 import React from 'react';
+import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, ChevronLeft, Factory, Store, Bus, Building, Hospital, ShoppingBag, GraduationCap, Share2, Clock, Smartphone, Cpu, CreditCard, User, Calendar, UserCheck, Briefcase } from 'lucide-react';
 
 export default function PropostaApresentacaoPrint({ proposta }: { proposta: any }) {
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
@@ -13,6 +14,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
   const mdoExtraMensal = 0;
   const provisaoRescisao = 0;
   const outrosCustosSubtotal = 0;
+  const resultado = { divisor: 1, items: [] };
   
   return (
     <>
@@ -1305,6 +1307,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                          </div>
                       </div>
 
+                   </div>
     </>
   );
 }
