@@ -5,10 +5,10 @@ import Sidebar from '@/components/Sidebar';
 import { 
   FileText, Plus, Search, 
   Users, TrendingUp, Clock,
-  LayoutList, LayoutGrid, AlertCircle, Edit2, CheckCircle, Calendar, DollarSign
+  LayoutList, LayoutGrid, AlertCircle, Edit2, CheckCircle, Calendar, DollarSign, Trash2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { getContratos, updateContratoStatus } from './actions';
+import { getContratos, updateContratoStatus, deleteContrato } from './actions';
 
 type ViewMode = 'lista' | 'kanban-status';
 
@@ -41,6 +41,18 @@ export default function ContratosDashboard() {
     return 'bg-blue-100 text-blue-700 border-blue-200';
   };
 
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm('Tem certeza que deseja excluir este contrato? Essa ação não pode ser desfeita.')) {
+      const res = await deleteContrato(id);
+      if (res.success) {
+        setContratos(prev => prev.filter(c => c.id !== id));
+      } else {
+        alert('Erro ao excluir: ' + res.error);
+      }
+    }
+  };
+
   const filteredContratos = contratos.filter(c => 
     c.client?.razaoSocial?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.client?.nomeFantasia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -49,6 +61,7 @@ export default function ContratosDashboard() {
   );
 
   const ativos = contratos.filter(c => c.status === 'Vigente');
+  const pendentesAssinatura = contratos.filter(c => c.status === 'Pendente de Assinatura');
   const pendentesReajuste = contratos.filter(c => c.status === 'Reajuste Pendente');
   const encerrados = contratos.filter(c => c.status === 'Encerrado');
   
@@ -191,7 +204,14 @@ export default function ContratosDashboard() {
           </header>
 
           {/* KPIs */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
+              <div className="p-3 bg-amber-50 rounded border border-amber-200 text-amber-600"><AlertCircle size={20} /></div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Em Assinatura</p>
+                <p className="text-lg font-black text-slate-800 leading-none mt-1">{pendentesAssinatura.length}</p>
+              </div>
+            </div>
             <div className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
               <div className="p-3 bg-emerald-50 rounded border border-emerald-200 text-emerald-600"><CheckCircle size={20} /></div>
               <div>
@@ -285,13 +305,22 @@ export default function ContratosDashboard() {
                           </span>
                         </td>
                         <td className="px-6 py-3 text-center">
-                          <button
-                            onClick={() => router.push(`/contratos/${c.id}`)}
-                            className="text-amber-500 hover:text-amber-600 transition-colors p-1 bg-amber-50 rounded"
-                            title="Editar Contrato"
-                          >
-                            <Edit2 size={16} />
-                          </button>
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => router.push(`/contratos/${c.id}`)}
+                              className="text-amber-500 hover:text-amber-600 transition-colors p-1 bg-amber-50 rounded"
+                              title="Editar Contrato"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={(e) => handleDelete(c.id, e)}
+                              className="text-red-500 hover:text-red-600 transition-colors p-1 bg-red-50 rounded"
+                              title="Excluir Contrato"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

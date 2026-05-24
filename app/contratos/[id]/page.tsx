@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
-import { FileText, ArrowLeft, Save, Printer, Calendar, ShieldCheck } from 'lucide-react';
+import { FileText, ArrowLeft, Save, Printer, Calendar, ShieldCheck, Trash2 } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
-import { getContratoById, updateContratoDetails, updateContratoClausulas } from '../actions';
+import { getContratoById, updateContratoDetails, updateContratoClausulas, deleteContrato } from '../actions';
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
@@ -82,6 +82,19 @@ export default function ContratoDetail() {
     return dataObj.toLocaleDateString('pt-BR');
   };
 
+  const handleDelete = async () => {
+    if (window.confirm('Tem certeza que deseja excluir este contrato? Essa ação não pode ser desfeita.')) {
+      setSaving(true);
+      const res = await deleteContrato(id);
+      if (res.success) {
+        router.push('/contratos');
+      } else {
+        alert('Erro ao excluir: ' + res.error);
+        setSaving(false);
+      }
+    }
+  };
+
   if (loading) return <div className="p-10 text-center text-slate-500">Carregando...</div>;
   if (!contrato) return <div className="p-10 text-center text-red-500">Contrato não encontrado.</div>;
 
@@ -101,6 +114,14 @@ export default function ContratoDetail() {
               <p className="text-slate-500 text-sm mt-1">{contrato.client?.razaoSocial || contrato.client?.nomeFantasia}</p>
             </div>
             <div className="flex gap-3">
+              <button
+                onClick={handleDelete}
+                disabled={saving}
+                className="bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2.5 px-4 rounded text-sm flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50"
+                title="Excluir Contrato"
+              >
+                <Trash2 size={18} />
+              </button>
               <button
                 onClick={() => window.open(`/contratos/${id}/print`, '_blank')}
                 className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold py-2.5 px-6 rounded text-sm flex items-center gap-2 shadow-sm transition-colors"
