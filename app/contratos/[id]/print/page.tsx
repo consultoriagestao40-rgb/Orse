@@ -92,5 +92,6 @@ export default function ContratoPrint() {
         </div>
       </div>
     </div>
+    </>
   );
 }
