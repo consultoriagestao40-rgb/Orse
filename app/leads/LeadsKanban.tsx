@@ -56,7 +56,8 @@ export default function LeadsKanban() {
     ]);
     if (stagesRes.success) setStages(stagesRes.stages);
     if (leadsRes.success) setLeads(leadsRes.leads);
-    if (segmentosRes.success) setSegmentos(segmentosRes.segmentos);
+    if (Array.isArray(segmentosRes)) setSegmentos(segmentosRes);
+    else if (segmentosRes && segmentosRes.success) setSegmentos(segmentosRes.segmentos);
     setLoading(false);
   };
 
