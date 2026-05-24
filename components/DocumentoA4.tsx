@@ -519,11 +519,15 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
             if (!proposta.cliente?.clausulasA4 || proposta.cliente.clausulasA4.length === 0) return null;
             
             const textStr = JSON.stringify(proposta.cliente?.clausulasA4 || []);
-            const missObjeto = !textStr.includes('[OBJETO_PROPOSTA]') && !textStr.includes('[ESCOPO_TECNICO]');
-            const missCondicoes = !textStr.includes('[CONDICOES_COMERCIAIS]');
+            const temObjeto = proposta.cliente.clausulasA4.some((c: any) => c.titulo.toUpperCase().includes('OBJETO') || c.titulo.toUpperCase().includes('ESCOPO'));
+            const temCondicoes = proposta.cliente.clausulasA4.some((c: any) => c.titulo.toUpperCase().includes('CONDI'));
+            const temAceite = proposta.cliente.clausulasA4.some((c: any) => c.titulo.toUpperCase().includes('ACEITE'));
+            
+            const missObjeto = !textStr.includes('[OBJETO_PROPOSTA]') && !textStr.includes('[ESCOPO_TECNICO]') && !temObjeto;
+            const missCondicoes = !textStr.includes('[CONDICOES_COMERCIAIS]') && !temCondicoes;
             const missTabela = !textStr.includes('[TABELA]');
             const missItens = !textStr.includes('[ITENS]');
-            const missAceite = !textStr.includes('[TERMO_ACEITE]');
+            const missAceite = !textStr.includes('[TERMO_ACEITE]') && !temAceite;
             
             const clauseOffset = proposta.cliente.clausulasA4.length + 1;
             let currentFallbackClause = clauseOffset;
