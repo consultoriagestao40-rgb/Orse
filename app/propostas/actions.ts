@@ -574,8 +574,52 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
       versao: v.versao,
       dreTaxPercent: meta.dreTaxPercent !== undefined ? meta.dreTaxPercent : null,
       dreEncargos: meta.dreEncargos || null,
-      encargos: meta.encargos || null
+      encargos: meta.encargos || null,
+      itensInclusosExcluidos: (() => {
+        const rawItens = meta.itensInclusosExcluidos || [];
+        return rawItens.length > 0 ? rawItens : [
+          { id: '1', descricao: 'Fornecimento de mão de obra', incluso: true },
+          { id: '2', descricao: 'Fornecimento de insumos necessario para a prestação dos serviços', incluso: true },
+          { id: '3', descricao: 'Maquinas e equipamentos', incluso: false },
+          { id: '4', descricao: 'Produtos químicos', incluso: false },
+          { id: '5', descricao: 'Descartaveis', incluso: false }
+        ];
+      })()
     };
+
+    // Calculate result dynamic to supply to DocumentoA4
+    const totalTributos = (() => {
+      if (Array.isArray(impostos)) return impostos.reduce((a, b) => a + (b.percent || 0), 0);
+      if (impostos?.list) return impostos.list.reduce((a: any, b: any) => a + (b.percent || 0), 0);
+      return Object.values(impostos || {}).filter(v => !isNaN(Number(v))).reduce((a, b) => Number(a) + Number(b), 0);
+    })();
+    const cctDb = impostos?.sindicatoId ? await prisma.cCT.findUnique({ where: { id: impostos.sindicatoId }, include: { cargos: true } }) : null;
+    const { calculateEnterprisePrice } = await import('@/lib/pricingEngine');
+    
+    const calcInput = {
+      items: returnObj.equipe,
+      impostos: { total: Number(totalTributos) },
+      margens: { adm: margens?.adm || 5, lucro: margens?.lucro || 10 },
+      reservaTecnicaPct: margens?.reservaTecnicaPct || 0,
+      manutencaoPct: margens?.manutencaoPct || 0,
+      encargos: meta.encargos,
+      cctGlobal: cctDb,
+      insumosGlobais: {
+        materiais: meta.insumos?.materiais || 0,
+        maquinas: meta.insumos?.maquinas || 0,
+        descartaveis: meta.insumos?.descartaveis || 0,
+        servicos: meta.insumos?.servicos || 0
+      }
+    };
+    
+    const resultado = calculateEnterprisePrice(calcInput);
+
+    if (returnObj.availableVersions && returnObj.availableVersions.length > 0) {
+      returnObj.availableVersions[0].resultado = resultado;
+    }
+
+    return returnObj;
+
   } catch (error) {
     console.error('Error fetching full proposta:', error);
     return null;

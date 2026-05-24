@@ -9,7 +9,11 @@ export async function getDocumentosProposta() {
       include: {
         client: true,
         empresaEmissora: true,
-        proposta: true,
+        proposta: {
+          include: {
+            versoes: { orderBy: { versao: 'desc' }, take: 1 }
+          }
+        },
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -21,7 +25,7 @@ export async function getDocumentosProposta() {
       valor: d.valorTotal,
       status: d.status,
       data: d.createdAt.toLocaleDateString('pt-BR'),
-      versaoFPV: d.proposta?.versoes?.[0]?.versao || 1 // Apenas estimativa visual
+      versaoFPV: d.proposta?.versoes?.[0]?.versao || 1
     }));
   } catch (error) {
     console.error('Erro ao buscar documentos de proposta:', error);

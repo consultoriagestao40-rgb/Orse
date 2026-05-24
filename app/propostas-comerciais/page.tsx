@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import { 
   FileText, Plus, Search, 
   LayoutList, LayoutGrid, UserSquare2,
-  Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation
+  Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getPropostas } from '@/app/propostas/actions';
@@ -76,6 +76,9 @@ export default function PropostasComerciaisDashboard() {
     String(d.numeroFPV).includes(searchTerm.toLowerCase()) ||
     d.cliente.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const fmtRef = (num: number, versao: number) =>
+    `FPV-${String(num).padStart(3, '0')}-REV-${String(versao).padStart(2, '0')}`;
 
   const activeCount = docs.length;
   const approvedCount = docs.filter(d => d.status === 'Aprovada').length;
@@ -195,7 +198,7 @@ export default function PropostasComerciaisDashboard() {
                       <td className="px-6 py-3">
                         <div className="flex items-center gap-2">
                           <Tag size={14} className="text-slate-400" />
-                          <span className="font-bold text-slate-800">#{doc.numeroFPV}</span>
+                          <span className="font-mono font-bold text-slate-800 text-xs">{fmtRef(doc.numeroFPV, doc.versaoFPV || 1)}</span>
                         </div>
                       </td>
                       <td className="px-6 py-3 font-semibold text-slate-700">{doc.cliente}</td>
@@ -216,15 +219,28 @@ export default function PropostasComerciaisDashboard() {
                       </td>
                       <td className="px-6 py-3 text-center">
                         <div className="flex justify-center gap-2">
-                          <button onClick={() => router.push(`/propostas-comerciais/${doc.id}`)} className="text-amber-500 hover:text-amber-600 p-1">
+                          <button
+                            onClick={() => router.push(`/propostas-comerciais/${doc.id}`)}
+                            title="Editar proposta"
+                            className="text-amber-500 hover:text-amber-600 p-1 transition-colors"
+                          >
                             <Edit2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => window.open(`/propostas-comerciais/${doc.id}/print`, '_blank')}
+                            title="Gerar PDF"
+                            className="text-slate-500 hover:text-[#1B4D3E] p-1 transition-colors"
+                          >
+                            <Printer size={16} />
                           </button>
                           <button onClick={async () => {
                             if(confirm('Excluir proposta comercial?')) {
                               await deleteDocumentoProposta(doc.id);
                               loadData();
                             }
-                          }} className="text-red-400 hover:text-red-600 p-1">
+                          }}
+                          title="Excluir proposta"
+                          className="text-red-400 hover:text-red-600 p-1 transition-colors">
                             <Trash2 size={16} />
                           </button>
                         </div>
