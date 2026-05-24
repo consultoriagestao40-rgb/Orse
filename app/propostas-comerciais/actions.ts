@@ -201,3 +201,64 @@ export async function getTemplatesProposta() {
     return [];
   }
 }
+
+export async function getTemplatePropostaById(id: string) {
+  try {
+    const t = await prisma.templatePropostaComercial.findUnique({
+      where: { id },
+      include: { secoes: { orderBy: { ordem: 'asc' } } }
+    });
+    return t;
+  } catch (error) {
+    console.error('Erro ao buscar template por id:', error);
+    return null;
+  }
+}
+
+export async function createTemplateProposta(nome: string, secoes: { titulo: string; texto: string; ordem: number }[]) {
+  try {
+    const t = await prisma.templatePropostaComercial.create({
+      data: {
+        nome,
+        secoes: {
+          create: secoes.map(s => ({ titulo: s.titulo, texto: s.texto, ordem: s.ordem }))
+        }
+      },
+      include: { secoes: true }
+    });
+    revalidatePath('/propostas-comerciais/templates');
+    return { success: true, data: t };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateTemplateProposta(id: string, nome: string, secoes: { titulo: string; texto: string; ordem: number }[]) {
+  try {
+    // Apagar seções antigas e recriar
+    await prisma.secaoTemplateProposta.deleteMany({ where: { templateId: id } });
+    await prisma.templatePropostaComercial.update({
+      where: { id },
+      data: {
+        nome,
+        secoes: {
+          create: secoes.map(s => ({ titulo: s.titulo, texto: s.texto, ordem: s.ordem }))
+        }
+      }
+    });
+    revalidatePath('/propostas-comerciais/templates');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteTemplateProposta(id: string) {
+  try {
+    await prisma.templatePropostaComercial.delete({ where: { id } });
+    revalidatePath('/propostas-comerciais/templates');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

@@ -135,6 +135,12 @@ export default function PropostasComerciaisDashboard() {
               </div>
 
               <button
+                onClick={() => router.push('/propostas-comerciais/templates')}
+                className="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold py-2.5 px-5 rounded text-sm flex items-center gap-2 shadow-sm transition-colors"
+              >
+                <FileText size={16} /> Templates
+              </button>
+              <button
                 onClick={() => setCreateModal({ isOpen: true, fpvId: '', templateId: '', empresaId: '', saving: false })}
                 className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold py-2.5 px-6 rounded text-sm flex items-center gap-2 shadow-sm transition-colors"
               >
