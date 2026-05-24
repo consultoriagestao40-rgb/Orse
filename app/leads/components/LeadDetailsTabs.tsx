@@ -233,14 +233,18 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
             )}
 
             <div className="space-y-3">
-              {activities.map(a => (
-                <div key={a.id} className="bg-white border-l-4 border-[#1B4D3E] p-3 rounded-r-xl shadow-sm">
-                  <p className="text-sm font-bold text-slate-800">{a.titulo}</p>
-                  <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                    <Calendar size={12}/> {new Date(a.dataInicio).toLocaleString()}
-                  </p>
-                </div>
-              ))}
+              {activities.map(a => {
+                const dateObj = a.dataInicio ? new Date(a.dataInicio) : null;
+                const dateStr = dateObj && !isNaN(dateObj.getTime()) ? dateObj.toLocaleString() : 'Data Inválida';
+                return (
+                  <div key={a.id} className="bg-white border-l-4 border-[#1B4D3E] p-3 rounded-r-xl shadow-sm">
+                    <p className="text-sm font-bold text-slate-800">{a.titulo}</p>
+                    <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                      <Calendar size={12}/> {dateStr}
+                    </p>
+                  </div>
+                );
+              })}
               {activities.length === 0 && !showMeetingForm && <p className="text-slate-400 text-sm text-center">Nenhuma reunião agendada.</p>}
             </div>
           </div>

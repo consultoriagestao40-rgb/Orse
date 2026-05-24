@@ -33,7 +33,9 @@ export default function CalendarPage() {
 
   const getActivitiesForDay = (day: number) => {
     return activities.filter(a => {
+      if (!a.dataInicio) return false;
       const d = new Date(a.dataInicio);
+      if (isNaN(d.getTime())) return false;
       return d.getDate() === day && d.getMonth() === currentDate.getMonth() && d.getFullYear() === currentDate.getFullYear();
     });
   };
@@ -78,11 +80,15 @@ export default function CalendarPage() {
                           {day}
                         </div>
                         <div className="space-y-1 overflow-y-auto max-h-[80px] scrollbar-hide">
-                          {dayActivities.map(a => (
-                            <div key={a.id} className="text-[10px] bg-[#1B4D3E] text-white p-1 rounded font-medium leading-tight truncate px-1.5 cursor-pointer hover:opacity-80 transition-opacity" title={a.titulo}>
-                              {new Date(a.dataInicio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {a.lead?.nomeFantasia || a.titulo}
-                            </div>
-                          ))}
+                          {dayActivities.map(a => {
+                            const dateObj = new Date(a.dataInicio);
+                            const timeStr = !isNaN(dateObj.getTime()) ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Hora Inválida';
+                            return (
+                              <div key={a.id} className="text-[10px] bg-[#1B4D3E] text-white p-1 rounded font-medium leading-tight truncate px-1.5 cursor-pointer hover:opacity-80 transition-opacity" title={a.titulo}>
+                                {timeStr} - {a.lead?.nomeFantasia || a.titulo}
+                              </div>
+                            );
+                          })}
                         </div>
                       </>
                     )}
