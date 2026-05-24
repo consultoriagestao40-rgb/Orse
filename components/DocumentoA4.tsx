@@ -514,11 +514,13 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
             </>
           )}
 
-          {/* Fallback de Segurança: Se as tabelas não foram injetadas pelas tags [TABELA], [ITENS], [TERMO_ACEITE], injetamos no final (apenas se houver clausulas) */}
+          {/* Fallback de Segurança: Se as tabelas não foram injetadas pelas tags, injetamos no final (apenas se houver clausulas) */}
           {(() => {
             if (!proposta.cliente?.clausulasA4 || proposta.cliente.clausulasA4.length === 0) return null;
             
             const textStr = JSON.stringify(proposta.cliente?.clausulasA4 || []);
+            const missObjeto = !textStr.includes('[OBJETO_PROPOSTA]') && !textStr.includes('[ESCOPO_TECNICO]');
+            const missCondicoes = !textStr.includes('[CONDICOES_COMERCIAIS]');
             const missTabela = !textStr.includes('[TABELA]');
             const missItens = !textStr.includes('[ITENS]');
             const missAceite = !textStr.includes('[TERMO_ACEITE]');
@@ -528,10 +530,46 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
             
             return (
               <div className="mt-8 space-y-8">
+                {missObjeto && (
+                  <div className="break-inside-avoid print:break-inside-avoid">
+                    <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
+                      CLÁUSULA {String(currentFallbackClause++).padStart(2,'0')} - DO OBJETO E ESCOPO
+                    </h4>
+                    <div className="pl-4 mt-2">
+                      {proposta.cliente?.objetoProposta && (
+                        <p className="mb-2 text-justify">
+                          <span className="font-bold mr-1">{currentFallbackClause - 1}.1.</span>{proposta.cliente.objetoProposta}
+                        </p>
+                      )}
+                      {proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico && (
+                        <p className="text-justify">
+                          <span className="font-bold mr-1">{currentFallbackClause - 1}.2.</span>{proposta.cliente.escopoTecnico}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {missCondicoes && (
+                  <div className="break-inside-avoid print:break-inside-avoid">
+                    <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
+                      CLÁUSULA {String(currentFallbackClause++).padStart(2,'0')} - DAS CONDIÇÕES COMERCIAIS
+                    </h4>
+                    <div className="pl-4 mt-2">
+                       {proposta.cliente?.condicoesCliente?.map((c: string, i: number) => (
+                          <p key={i} className="mb-2 text-justify">
+                            <span className="font-bold mr-1">{currentFallbackClause - 1}.{i+1}.</span>{c}
+                          </p>
+                       ))}
+                       {!proposta.cliente?.condicoesCliente?.length && (
+                         <p className="text-justify"><span className="font-bold mr-1">{currentFallbackClause - 1}.1.</span>As condições comerciais seguirão o padrão estipulado em contrato, com vencimento conforme acordado e validade da proposta de 30 dias.</p>
+                       )}
+                    </div>
+                  </div>
+                )}
                 {missTabela && (
                   <div className="break-inside-avoid print:break-inside-avoid">
                     <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
-                      CLÁUSULA {String(currentFallbackClause++).padStart(2,'0')} - RESUMO COMERCIAL DA PROPOSTA
+                      CLÁUSULA {String(currentFallbackClause++).padStart(2,'0')} - RESUMO FINANCEIRO
                     </h4>
                     {renderTabelaComercial()}
                   </div>
