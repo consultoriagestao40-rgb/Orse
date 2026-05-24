@@ -321,7 +321,7 @@ export default function ProposalsDashboard() {
                 onClick={() => router.push('/propostas/nova')}
                 className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold py-2.5 px-6 rounded text-sm flex items-center gap-2 shadow-sm transition-colors"
               >
-                <Plus size={18} /> Nova Proposta
+                <Plus size={18} /> Nova FPV
               </button>
             </div>
           </header>
