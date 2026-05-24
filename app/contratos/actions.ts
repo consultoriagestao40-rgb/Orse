@@ -144,9 +144,19 @@ export async function createContratoFromFPV(propostaId: string, empresaEmissoraI
 
     const proposta = await prisma.proposta.findUnique({
       where: { id: propostaId },
-      include: { client: true }
+      include: { 
+        client: true,
+        versoes: {
+          orderBy: { versao: 'desc' },
+          take: 1,
+          include: { items: true }
+        }
+      }
     });
     if (!proposta || !proposta.clientId) throw new Error('Proposta ou Cliente não encontrado');
+
+    const empresa = await prisma.empresaEmissora.findUnique({ where: { id: empresaEmissoraId } });
+    if (!empresa) throw new Error('Empresa Emissora não encontrada');
 
     const template = await prisma.templateContrato.findUnique({
       where: { id: templateId },
@@ -156,6 +166,32 @@ export async function createContratoFromFPV(propostaId: string, empresaEmissoraI
 
     const vigenciaMeses = 12;
     const valorTotal = valorMensal * vigenciaMeses;
+
+    const fmtMoeda = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+    const dateStr = new Date().toLocaleDateString('pt-BR');
+    
+    let tableItens = '';
+    if (proposta.versoes?.[0]?.items) {
+      tableItens = proposta.versoes[0].items.map(i => `${i.quantidade}x ${i.nomeCargo} (${i.escala})`).join('\n');
+    }
+
+    const replaceTags = (text: string) => {
+      let t = text || '';
+      t = t.replace(/\[RAZAO_SOCIAL_CLIENTE\]/g, proposta.client?.razaoSocial || proposta.client?.nomeFantasia || '');
+      t = t.replace(/\[CNPJ_CLIENTE\]/g, proposta.client?.cnpj || '');
+      t = t.replace(/\[ENDERECO_CLIENTE\]/g, proposta.client?.endereco || '');
+      t = t.replace(/\[RAZAO_SOCIAL_EMISSORA\]/g, empresa.razaoSocial || empresa.nomeFantasia || '');
+      t = t.replace(/\[CNPJ_EMISSORA\]/g, empresa.cnpj || '');
+      t = t.replace(/\[ENDERECO_EMISSORA\]/g, empresa.endereco || '');
+      t = t.replace(/\[CIDADE_EMISSORA\]/g, 'Curitiba/PR'); 
+      t = t.replace(/\[DATA_ATUAL\]/g, dateStr);
+      t = t.replace(/\[NUMERO_FPV\]/g, proposta.numero.toString());
+      t = t.replace(/\[TABELA_ITENS_FPV\]/g, tableItens);
+      t = t.replace(/\[VALOR_MENSAL\]/g, fmtMoeda(valorMensal));
+      t = t.replace(/\[VIGENCIA_MESES\]/g, vigenciaMeses.toString());
+      t = t.replace(/\[DATA_INICIO\]/g, '-');
+      return t;
+    };
 
     const contrato = await prisma.contrato.create({
       data: {
@@ -170,7 +206,7 @@ export async function createContratoFromFPV(propostaId: string, empresaEmissoraI
         clausulas: {
           create: template.clausulas.map(c => ({
             titulo: c.titulo,
-            texto: c.texto,
+            texto: replaceTags(c.texto),
             ordem: c.ordem
           }))
         }

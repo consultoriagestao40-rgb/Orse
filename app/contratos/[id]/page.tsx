@@ -21,6 +21,7 @@ export default function ContratoDetail() {
   const [dataInicio, setDataInicio] = useState('');
   const [dataReajuste, setDataReajuste] = useState('');
   const [indiceReajuste, setIndiceReajuste] = useState('');
+  const [vigenciaMeses, setVigenciaMeses] = useState(12);
   const [clausulas, setClausulas] = useState<{titulo: string; texto: string}[]>([]);
 
   const loadData = async () => {
@@ -32,6 +33,7 @@ export default function ContratoDetail() {
       setDataInicio(res.data.dataInicio ? new Date(res.data.dataInicio).toISOString().split('T')[0] : '');
       setDataReajuste(res.data.dataReajuste ? new Date(res.data.dataReajuste).toISOString().split('T')[0] : '');
       setIndiceReajuste(res.data.indiceReajuste || 'IPCA');
+      setVigenciaMeses(res.data.vigenciaMeses || 12);
       setClausulas(res.data.clausulas || []);
     }
     setLoading(false);
@@ -45,7 +47,9 @@ export default function ContratoDetail() {
       status,
       dataInicio: dataInicio ? new Date(dataInicio) : null,
       dataReajuste: dataReajuste ? new Date(dataReajuste) : null,
-      indiceReajuste
+      indiceReajuste,
+      vigenciaMeses: Number(vigenciaMeses),
+      valorTotal: (contrato?.valorMensal || 0) * Number(vigenciaMeses)
     });
 
     const payload = clausulas.map((c, i) => ({ ...c, ordem: i }));
@@ -65,6 +69,17 @@ export default function ContratoDetail() {
       return;
     }
     setClausulas(list);
+  };
+
+  const calcularDataFim = () => {
+    if (!dataInicio || !vigenciaMeses) return '-';
+    const d = new Date(dataInicio);
+    // Para não haver problema de fuso horário, usar UTC se foi setado assim, ou apenas string parsing simples:
+    // Pelo formato YYYY-MM-DD
+    const [y, m, day] = dataInicio.split('-');
+    const dataObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(day));
+    dataObj.setMonth(dataObj.getMonth() + Number(vigenciaMeses));
+    return dataObj.toLocaleDateString('pt-BR');
   };
 
   if (loading) return <div className="p-10 text-center text-slate-500">Carregando...</div>;
@@ -87,6 +102,7 @@ export default function ContratoDetail() {
             </div>
             <div className="flex gap-3">
               <button
+                onClick={() => window.open(`/contratos/${id}/print`, '_blank')}
                 className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold py-2.5 px-6 rounded text-sm flex items-center gap-2 shadow-sm transition-colors"
               >
                 <Printer size={18} /> Gerar PDF
@@ -136,6 +152,28 @@ export default function ContratoDetail() {
                   </div>
 
                   <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Prazo (Meses)</label>
+                    <select 
+                      value={vigenciaMeses}
+                      onChange={e => setVigenciaMeses(Number(e.target.value))}
+                      className="w-full border border-slate-300 rounded-lg p-2 text-sm font-bold text-slate-700 focus:ring-1 focus:ring-[#1B4D3E]"
+                    >
+                      <option value={12}>12 Meses</option>
+                      <option value={24}>24 Meses</option>
+                      <option value={36}>36 Meses</option>
+                      <option value={48}>48 Meses</option>
+                      <option value={60}>60 Meses</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Data de Vencimento</label>
+                    <div className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 text-sm font-bold text-slate-500">
+                      {calcularDataFim()}
+                    </div>
+                  </div>
+
+                  <div>
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Previsão de Reajuste</label>
                     <input 
                       type="date"
@@ -168,12 +206,12 @@ export default function ContratoDetail() {
                     <span className="text-sm font-black text-[#1B4D3E]">{fmt(contrato.valorMensal)}</span>
                   </div>
                   <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                    <span className="text-xs font-bold text-slate-500">Vigência Inicial</span>
-                    <span className="text-sm font-black text-slate-800">{contrato.vigenciaMeses} meses</span>
+                    <span className="text-xs font-bold text-slate-500">Vigência Atual</span>
+                    <span className="text-sm font-black text-slate-800">{vigenciaMeses} meses</span>
                   </div>
                   <div className="flex justify-between items-center pt-1">
                     <span className="text-xs font-black text-slate-700">Valor Total Estimado</span>
-                    <span className="text-sm font-black text-slate-800">{fmt(contrato.valorTotal)}</span>
+                    <span className="text-sm font-black text-slate-800">{fmt((contrato.valorMensal || 0) * vigenciaMeses)}</span>
                   </div>
                 </div>
               </div>
