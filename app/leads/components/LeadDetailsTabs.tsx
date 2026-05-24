@@ -4,6 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { getComments, addComment, getFiles, uploadFileBase64, downloadFile, getActivities, createActivity, getLeadShares, addLeadShare, removeLeadShare, getAllUsers } from '../actions';
 import { MessageSquare, Paperclip, Calendar, Users, Send, Download, Plus, X, Trash2 } from 'lucide-react';
 
+const safeDate = (val: any, time = false) => {
+  if (!val) return 'Data Inválida';
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? 'Data Inválida' : (time ? d.toLocaleString() : d.toLocaleDateString());
+};
+
 export default function LeadDetailsTabs({ lead }: { lead: any }) {
   const [activeTab, setActiveTab] = useState('infos');
   
@@ -122,7 +128,7 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                     <div className="w-[calc(100%-2rem)] md:w-[calc(50%-1.5rem)] bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-bold text-slate-800 text-xs">{hist.tipo}</span>
-                        <span className="text-[9px] text-slate-400 font-medium">{new Date(hist.createdAt).toLocaleDateString()}</span>
+                        <span className="text-[9px] text-slate-400 font-medium">{safeDate(hist.createdAt)}</span>
                       </div>
                       <p className="text-xs text-slate-600">{hist.descricao}</p>
                     </div>
@@ -140,7 +146,7 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                 <div key={c.id} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-bold text-sm text-slate-800">{c.user?.nome || 'Usuário Desconhecido'}</span>
-                    <span className="text-[10px] text-slate-400">{new Date(c.createdAt).toLocaleString()}</span>
+                    <span className="text-[10px] text-slate-400">{safeDate(c.createdAt, true)}</span>
                   </div>
                   <p className="text-sm text-slate-600 whitespace-pre-wrap">{c.texto}</p>
                 </div>
@@ -233,18 +239,14 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
             )}
 
             <div className="space-y-3">
-              {activities.map(a => {
-                const dateObj = a.dataInicio ? new Date(a.dataInicio) : null;
-                const dateStr = dateObj && !isNaN(dateObj.getTime()) ? dateObj.toLocaleString() : 'Data Inválida';
-                return (
-                  <div key={a.id} className="bg-white border-l-4 border-[#1B4D3E] p-3 rounded-r-xl shadow-sm">
-                    <p className="text-sm font-bold text-slate-800">{a.titulo}</p>
-                    <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                      <Calendar size={12}/> {dateStr}
-                    </p>
-                  </div>
-                );
-              })}
+              {activities.map(a => (
+                <div key={a.id} className="bg-white border-l-4 border-[#1B4D3E] p-3 rounded-r-xl shadow-sm">
+                  <p className="text-sm font-bold text-slate-800">{a.titulo}</p>
+                  <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                    <Calendar size={12}/> {safeDate(a.dataInicio, true)}
+                  </p>
+                </div>
+              ))}
               {activities.length === 0 && !showMeetingForm && <p className="text-slate-400 text-sm text-center">Nenhuma reunião agendada.</p>}
             </div>
           </div>

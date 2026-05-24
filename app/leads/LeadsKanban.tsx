@@ -7,6 +7,12 @@ import { useRouter } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
 
+const safeDate = (val: any) => {
+  if (!val) return 'Data Inválida';
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? 'Data Inválida' : d.toLocaleDateString();
+};
+
 export default function LeadsKanban() {
   const router = useRouter();
   const [stages, setStages] = useState<any[]>([]);
@@ -205,7 +211,7 @@ export default function LeadsKanban() {
                              <User size={12} /> {lead.assignedTo.nome.split(' ')[0]}
                            </div>
                            <div className="text-[10px] text-slate-400">
-                             {new Date(lead.updatedAt).toLocaleDateString()}
+                             {safeDate(lead.updatedAt)}
                            </div>
                         </div>
                       )}
