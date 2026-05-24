@@ -156,8 +156,9 @@ export default function DocumentoPropostaDetail() {
             <div className="lg:col-span-2 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-black text-slate-800 uppercase tracking-wider">Corpo da Proposta</h2>
-                <div className="text-[10px] font-bold text-slate-400">
-                  Tags disponíveis: [CLIENTE_NOME], [VALOR_TOTAL]
+                <div className="text-[10px] font-bold text-slate-400 max-w-sm text-right">
+                  Tags de Texto: [CLIENTE_NOME], [VALOR_TOTAL]<br/>
+                  Tags de Tabelas: <strong className="text-emerald-600">[TABELA]</strong>, <strong className="text-emerald-600">[ITENS]</strong>, <strong className="text-emerald-600">[TERMO_ACEITE]</strong>
                 </div>
               </div>
 
