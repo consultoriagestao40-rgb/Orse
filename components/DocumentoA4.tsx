@@ -41,8 +41,9 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
   const renderTabelaComercial = () => (
     <div className="mt-8 pr-2 font-sans">
         {/* QUADRO EFETIVO */}
-        <h5 className="font-black uppercase mb-2 text-[10px]">QUADRO EFETIVO / SERVIÇOS</h5>
-        <table className="w-full text-left border-collapse border border-slate-300 mb-6 text-xs break-inside-avoid print:break-inside-avoid">
+        <div className="break-inside-avoid print:break-inside-avoid mb-6">
+          <h5 className="font-black uppercase mb-2 text-[10px]">QUADRO EFETIVO / SERVIÇOS</h5>
+          <table className="w-full text-left border-collapse border border-slate-300 text-xs">
           <thead>
             <tr className="bg-slate-900 text-white font-bold uppercase text-[10px]">
               <th className="p-2 border border-slate-300">Cargo / Função</th>
@@ -78,10 +79,12 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
             </tr>
           </tfoot>
         </table>
+        </div>
 
         {/* INSUMOS E MATERIAIS */}
-        <h5 className="font-black uppercase mb-2 text-[10px]">EQUIPAMENTOS E INSUMOS</h5>
-        <table className="w-full text-left border-collapse border border-slate-300 mb-6 text-xs break-inside-avoid print:break-inside-avoid">
+        <div className="break-inside-avoid print:break-inside-avoid mb-6">
+          <h5 className="font-black uppercase mb-2 text-[10px]">EQUIPAMENTOS E INSUMOS</h5>
+          <table className="w-full text-left border-collapse border border-slate-300 text-xs">
           <thead>
             <tr className="bg-slate-900 text-white font-bold uppercase text-[10px]">
               <th className="p-2 border border-slate-300">Descrição</th>
@@ -115,6 +118,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
             </tr>
           </tfoot>
         </table>
+        </div>
 
         {/* VALOR TOTAL */}
         <div className="w-full mt-8 p-4 bg-green-50 border-2 border-green-600 flex justify-center items-center text-center text-green-900 font-black text-lg mb-2 uppercase tracking-wide">
@@ -449,7 +453,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                 {renderTabelaComercial()}
               </div>
 
-              <div className="mt-6">
+              <div className="mt-6 break-inside-avoid print:break-inside-avoid">
                 <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">CLÁUSULA 04 - ITENS INCLUSOS E EXCLUSOS</h4>
                 {renderTabelaItensInclusosExcluidos()}
               </div>
