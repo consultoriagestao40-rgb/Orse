@@ -21,6 +21,7 @@ model EmpresaEmissora {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   contratos    Contrato[]
+  documentosProposta DocumentoProposta[] @relation("EmpresaToDocumento")
 }
 
 model User {
@@ -53,6 +54,7 @@ model Client {
   createdAt    DateTime   @default(now())
   propostas    Proposta[]
   contratos    Contrato[]
+  documentosProposta DocumentoProposta[] @relation("ClientToDocumento")
 }
 
 model CCT {
@@ -119,6 +121,7 @@ model Proposta {
   shares    PropostaShare[]
   auditLogs AuditLog[]
   contrato  Contrato?
+  documentoComercial DocumentoProposta? @relation("FpvToDocumento")
 }
 
 model PropostaVersao {
@@ -271,5 +274,47 @@ model ClausulaContrato {
   titulo     String
   texto      String
   contrato   Contrato @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+}
+
+model TemplatePropostaComercial {
+  id        String             @id @default(uuid())
+  nome      String             @unique
+  secoes    SecaoTemplateProposta[]
+  createdAt DateTime           @default(now())
+}
+
+model SecaoTemplateProposta {
+  id         String                    @id @default(uuid())
+  templateId String
+  ordem      Int                       @default(0)
+  titulo     String
+  texto      String
+  template   TemplatePropostaComercial @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
+
+model DocumentoProposta {
+  id                String             @id @default(cuid())
+  propostaId        String             @unique 
+  clientId          String
+  empresaEmissoraId String
+  templateOrigemId  String?
+  status            String             @default("Rascunho")
+  valorTotal        Float              @default(0)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  proposta        Proposta         @relation("FpvToDocumento", fields: [propostaId], references: [id])
+  client          Client           @relation("ClientToDocumento", fields: [clientId], references: [id])
+  empresaEmissora EmpresaEmissora  @relation("EmpresaToDocumento", fields: [empresaEmissoraId], references: [id])
+  secoes          SecaoDocumentoProposta[]
+}
+
+model SecaoDocumentoProposta {
+  id         String            @id @default(uuid())
+  documentoId String
+  ordem      Int               @default(0)
+  titulo     String
+  texto      String
+  documento  DocumentoProposta @relation(fields: [documentoId], references: [id], onDelete: Cascade)
 }
 

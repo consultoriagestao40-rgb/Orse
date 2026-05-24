@@ -32,8 +32,7 @@ const TABS = [
   { id: 'descartaveis', label: '7. Descartáveis', icon: Trash },
   { id: 'extrato', label: '8. Extrato de Custos', icon: FileText },
   { id: 'resumo', label: '9. Resumo da Proposta', icon: ClipboardList },
-  { id: 'dre', label: '10. DRE Projeto', icon: PieChart },
-  { id: 'comercial', label: '11. Proposta Comercial', icon: Presentation }
+  { id: 'dre', label: '10. DRE Projeto', icon: PieChart }
 ];
 
 const MONTHS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
