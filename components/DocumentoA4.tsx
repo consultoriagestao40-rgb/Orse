@@ -417,7 +417,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                   let rawTitulo = clausula.titulo.replace(/^(?:CL[ÁA]US[U]?L[A]?|CL[ÁA]US[U]?|CL[ÁA]US)?\s*\d*\s*[.-–]?\s*/i, '').trim();
                   rawTitulo = rawTitulo.replace(/^[\d.\s-]*\s*/, '').trim();
                   
-                  const tituloFinal = `CLÁUSULA ${String(clauseNum).padStart(2,'0')} - ${rawTitulo}`;
+                  const tituloFinal = `${String(clauseNum).padStart(2,'0')} - ${rawTitulo}`;
                   
                   const txt = clausula.texto || '';
                   const hasTabela = txt.includes('[TABELA]');
@@ -465,7 +465,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
           ) : (
             <>
               <div>
-                <h4 className="font-bold uppercase">CLÁUSULA 01 - DO OBJETO E ESCOPO</h4>
+                <h4 className="font-bold uppercase">01 - DO OBJETO E ESCOPO</h4>
                 <div className="pl-4 mt-2">
                   {proposta.cliente?.objetoProposta && (
                     <p className="mb-2 text-justify">
@@ -481,7 +481,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
               </div>
               
               <div>
-                <h4 className="font-bold uppercase mt-6">CLÁUSULA 02 - DAS CONDIÇÕES COMERCIAIS</h4>
+                <h4 className="font-bold uppercase mt-6">02 - DAS CONDIÇÕES COMERCIAIS</h4>
                 <div className="pl-4 mt-2">
                    {proposta.cliente?.condicoesCliente?.map((c: string, i: number) => (
                       <p key={i} className="mb-2 text-justify">
@@ -495,7 +495,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
               </div>
 
               <div className="mt-6">
-                <h4 className="font-bold uppercase">CLÁUSULA 03 - RESUMO COMERCIAL DA PROPOSTA</h4>
+                <h4 className="font-bold uppercase">03 - RESUMO COMERCIAL DA PROPOSTA</h4>
                 <div className="pl-4 mt-2">
                   <p className="text-justify"><span className="font-bold mr-1">3.1.</span>Valores referentes aos serviços prestados, equipe alocada e insumos, conforme detalhamento a seguir:</p>
                 </div>
@@ -503,12 +503,12 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
               </div>
 
               <div className="mt-6 break-inside-avoid print:break-inside-avoid">
-                <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">CLÁUSULA 04 - ITENS INCLUSOS E EXCLUSOS</h4>
+                <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">04 - ITENS INCLUSOS E EXCLUSOS</h4>
                 {renderTabelaItensInclusosExcluidos()}
               </div>
 
               <div className="mt-16">
-                <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">CLÁUSULA 05 - TERMO DE ACEITE</h4>
+                <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">05 - TERMO DE ACEITE</h4>
                 {renderTermoDeAceite(5, 0)}
               </div>
             </>
@@ -533,7 +533,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                 {missObjeto && (
                   <div className="break-inside-avoid print:break-inside-avoid">
                     <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
-                      CLÁUSULA {String(currentFallbackClause++).padStart(2,'0')} - DO OBJETO E ESCOPO
+                      {String(currentFallbackClause++).padStart(2,'0')} - DO OBJETO E ESCOPO
                     </h4>
                     <div className="pl-4 mt-2">
                       {proposta.cliente?.objetoProposta && (
@@ -552,7 +552,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                 {missCondicoes && (
                   <div className="break-inside-avoid print:break-inside-avoid">
                     <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
-                      CLÁUSULA {String(currentFallbackClause++).padStart(2,'0')} - DAS CONDIÇÕES COMERCIAIS
+                      {String(currentFallbackClause++).padStart(2,'0')} - DAS CONDIÇÕES COMERCIAIS
                     </h4>
                     <div className="pl-4 mt-2">
                        {proposta.cliente?.condicoesCliente?.map((c: string, i: number) => (
@@ -569,7 +569,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                 {missTabela && (
                   <div className="break-inside-avoid print:break-inside-avoid">
                     <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
-                      CLÁUSULA {String(currentFallbackClause++).padStart(2,'0')} - RESUMO FINANCEIRO
+                      {String(currentFallbackClause++).padStart(2,'0')} - RESUMO FINANCEIRO
                     </h4>
                     {renderTabelaComercial()}
                   </div>
@@ -577,7 +577,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                 {missItens && (
                   <div className="break-inside-avoid print:break-inside-avoid">
                     <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
-                      CLÁUSULA {String(currentFallbackClause++).padStart(2,'0')} - ITENS INCLUSOS E EXCLUSOS
+                      {String(currentFallbackClause++).padStart(2,'0')} - ITENS INCLUSOS E EXCLUSOS
                     </h4>
                     {renderTabelaItensInclusosExcluidos()}
                   </div>
@@ -585,7 +585,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                 {missAceite && (
                   <div className="break-inside-avoid print:break-inside-avoid">
                     <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
-                      CLÁUSULA {String(currentFallbackClause++).padStart(2,'0')} - TERMO DE ACEITE
+                      {String(currentFallbackClause++).padStart(2,'0')} - TERMO DE ACEITE
                     </h4>
                     {renderTermoDeAceite(currentFallbackClause - 1, 0)}
                   </div>
