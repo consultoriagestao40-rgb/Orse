@@ -42,7 +42,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
     <div className="mt-8 pr-2 font-sans">
         {/* QUADRO EFETIVO */}
         <h5 className="font-black uppercase mb-2 text-[10px]">QUADRO EFETIVO / SERVIÇOS</h5>
-        <table className="w-full text-left border-collapse border border-slate-300 mb-6 text-xs">
+        <table className="w-full text-left border-collapse border border-slate-300 mb-6 text-xs break-inside-avoid print:break-inside-avoid">
           <thead>
             <tr className="bg-slate-900 text-white font-bold uppercase text-[10px]">
               <th className="p-2 border border-slate-300">Cargo / Função</th>
@@ -81,7 +81,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
 
         {/* INSUMOS E MATERIAIS */}
         <h5 className="font-black uppercase mb-2 text-[10px]">EQUIPAMENTOS E INSUMOS</h5>
-        <table className="w-full text-left border-collapse border border-slate-300 mb-6 text-xs">
+        <table className="w-full text-left border-collapse border border-slate-300 mb-6 text-xs break-inside-avoid print:break-inside-avoid">
           <thead>
             <tr className="bg-slate-900 text-white font-bold uppercase text-[10px]">
               <th className="p-2 border border-slate-300">Descrição</th>
@@ -131,7 +131,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
   const renderTabelaItensInclusosExcluidos = () => {
     return (
       <div className="w-full mt-4 break-inside-avoid print:break-inside-avoid">
-        <table className="w-full text-left border-collapse border border-slate-300">
+        <table className="w-full text-left border-collapse border border-slate-300 break-inside-avoid print:break-inside-avoid">
           <thead>
             <tr className="bg-slate-100 text-[10px] font-bold uppercase tracking-wider border-b border-slate-300">
               <th className="px-4 py-2 border-r border-slate-300 w-16">Item</th>
@@ -167,7 +167,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
       </div>
       
       <div className="w-full mt-4">
-        <table className="w-full text-left border-collapse border border-slate-300">
+        <table className="w-full text-left border-collapse border border-slate-300 break-inside-avoid print:break-inside-avoid">
           <tbody>
             <tr className="border-b border-slate-300 text-[10px] text-slate-800">
               <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 w-1/4 uppercase">Razão Social</td>
@@ -314,7 +314,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
       `}} />
 
       <div className="print-a4-page bg-white w-[210mm] min-h-[297mm] print:min-h-0 shadow-2xl print:shadow-none mx-auto relative text-slate-900 text-xs">
-        <table className="w-full border-collapse">
+        <table className="w-full border-collapse break-inside-avoid print:break-inside-avoid">
           <thead>
             <tr><td className="print-margin-header border-none p-0"></td></tr>
           </thead>
