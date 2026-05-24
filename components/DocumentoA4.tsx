@@ -413,54 +413,34 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
              <>
                {proposta.cliente.clausulasA4.map((clausula: any, idx: number) => {
                   const clauseNum = idx + 1;
-                  const rawTitulo = clausula.titulo.replace(/^(?:CL[ÁA]US[U]?L[A]?|CL[ÁA]US[U]?|CL[ÁA]US)?\s*\d*\s*[-–]?\s*/i, '').trim();
-                  const tituloFinal = `CLÁUSULA ${String(clauseNum).padStart(2,'0')} - ${rawTitulo}`;
+                  // Limpa prefixos como "CLÁUSULA 1 -", "1.", "1 -", etc.
+                  let rawTitulo = clausula.titulo.replace(/^(?:CL[ÁA]US[U]?L[A]?|CL[ÁA]US[U]?|CL[ÁA]US)?\s*\d*\s*[.-–]?\s*/i, '').trim();
+                  rawTitulo = rawTitulo.replace(/^[\d.\s-]*\s*/, '').trim();
                   
-                  const tituloUpper = clausula.titulo.toUpperCase();
-                  const isObjetoEscopo = tituloUpper.includes('OBJETO') || tituloUpper.includes('ESCOPO');
-                  const isCondicoes = tituloUpper.includes('CONDI') && (tituloUpper.includes('COMERCI') || tituloUpper.includes('CLIENTE'));
+                  const tituloFinal = `CLÁUSULA ${String(clauseNum).padStart(2,'0')} - ${rawTitulo}`;
                   
                   const txt = clausula.texto || '';
                   const hasTabela = txt.includes('[TABELA]');
                   const hasItens = txt.includes('[ITENS]');
                   const hasAceite = txt.includes('[TERMO_ACEITE]');
 
-                  // Determinar parágrafos: prioridade para dados reais do FPV
-                  let paragrafos: string[] = [];
+                  // Substituir todas as tags dinâmicas
+                  const nomeCliente = proposta.cliente?.nomeFantasia || proposta.cliente?.razaoSocial || '';
+                  
+                  const textoLimpo = txt
+                    .replace(/\[CLIENTE_NOME\]/g, nomeCliente)
+                    .replace(/\[TABELA\]/g, '')
+                    .replace(/\[ITENS\]/g, '')
+                    .replace(/\[TERMO_ACEITE\]/g, '')
+                    .replace(/\[OBJETO_PROPOSTA\]/g, proposta.cliente?.objetoProposta || '')
+                    .replace(/\[ESCOPO_TECNICO\]/g, (proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico) ? proposta.cliente.escopoTecnico : '')
+                    .replace(/\[CONDICOES_COMERCIAIS\]/g, (proposta.cliente?.condicoesCliente || []).join('\n'))
+                    .replace(/\[VALOR_TOTAL\]/g, fmt(totalGeral))
+                    .trim();
 
-                  if (isObjetoEscopo) {
-                    // Sempre usar dados reais da FPV para objeto/escopo
-                    if (proposta.cliente?.objetoProposta) {
-                      proposta.cliente.objetoProposta.split(/\n/).filter((p: string) => p.trim()).forEach((p: string) => paragrafos.push(p.trim()));
-                    }
-                    if (proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico) {
-                      proposta.cliente.escopoTecnico.split(/\n/).filter((p: string) => p.trim()).forEach((p: string) => paragrafos.push(p.trim()));
-                    }
-                  } else if (isCondicoes) {
-                    // Sempre usar condições reais do FPV
-                    const conds: string[] = proposta.cliente?.condicoesCliente?.length > 0
-                      ? proposta.cliente.condicoesCliente
-                      : [
-                          proposta.cliente?.condicaoCliente1,
-                          proposta.cliente?.condicaoCliente2,
-                          proposta.cliente?.condicaoCliente3
-                        ].filter(Boolean);
-                    paragrafos = conds;
-                  } else {
-                    // Para outras cláusulas: substituir tags e usar o texto salvo
-                    const textoLimpo = txt
-                      .replace(/\[TABELA\]/g, '')
-                      .replace(/\[ITENS\]/g, '')
-                      .replace(/\[TERMO_ACEITE\]/g, '')
-                      .replace(/\[OBJETO_PROPOSTA\]/g, proposta.cliente?.objetoProposta || '')
-                      .replace(/\[ESCOPO_TECNICO\]/g, (proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico) ? proposta.cliente.escopoTecnico : '')
-                      .replace(/\[CONDICOES_COMERCIAIS\]/g, (proposta.cliente?.condicoesCliente || []).join('\n'))
-                      .replace(/\[VALOR_TOTAL\]/g, fmt(totalGeral))
-                      .trim();
-                    paragrafos = textoLimpo
-                      ? textoLimpo.split(/\n/).filter((p: string) => p.trim() !== '')
-                      : [];
-                  }
+                  let paragrafos = textoLimpo
+                    ? textoLimpo.split(/\n/).filter((p: string) => p.trim() !== '')
+                    : [];
                     
                   return (
                     <div key={idx} className={idx > 0 ? "mt-6 break-inside-avoid print:break-inside-avoid" : ""}>
