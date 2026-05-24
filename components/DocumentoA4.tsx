@@ -227,6 +227,34 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
     </div>
   );
 
+  const moveClausula = (idx: number, dir: 'up' | 'down') => {
+    if (!onUpdateClausulas || !proposta.cliente.clausulasA4) return;
+    const list = [...proposta.cliente.clausulasA4];
+    if (dir === 'up' && idx > 0) {
+      [list[idx], list[idx - 1]] = [list[idx - 1], list[idx]];
+    } else if (dir === 'down' && idx < list.length - 1) {
+      [list[idx], list[idx + 1]] = [list[idx + 1], list[idx]];
+    } else {
+      return;
+    }
+    
+    const renumbered = list.map((c, newIdx) => {
+       const clauseNum = newIdx + 1;
+       const rawTitulo = c.titulo.replace(/^(?:CL[ÁA]US[U]?L[A]?|CL[ÁA]US[U]?|CL[ÁA]US)?\s*\d*\s*[-–]?\s*/i, '').trim();
+       const novoTitulo = `CLÁUSULA ${String(clauseNum).padStart(2,'0')} - ${rawTitulo}`;
+       
+       const novoTexto = c.texto.split('\n').map((linha: string) => {
+         return linha.replace(/^(\s*)\d+\.(\d+)\.?(\s*)/, (m: any, p1: any, minor: any, p3: any) => {
+           return `${p1}${clauseNum}.${minor}.${p3}`;
+         });
+       }).join('\n');
+       
+       return { ...c, titulo: novoTitulo, texto: novoTexto };
+    });
+    
+    onUpdateClausulas(renumbered);
+  };
+
   return (
     <div className="bg-slate-200 min-h-screen py-8 flex flex-col items-center overflow-auto print:bg-white print:py-0">
       
@@ -553,19 +581,37 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                  
                  {(proposta.cliente.clausulasA4 || []).map((clausula: any, idx: number) => (
                    <div key={idx} className="bg-white border border-slate-300 p-4 rounded-xl space-y-3 relative shadow-sm">
-                      <button 
-                        onClick={() => {
-                          if (onUpdateClausulas) {
-                            const list = [...proposta.cliente.clausulasA4];
-                            list.splice(idx, 1);
-                            onUpdateClausulas(list);
-                          }
-                        }}
-                        className="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition-colors"
-                        title="Remover Cláusula"
-                      >
-                        ✕
-                      </button>
+                      <div className="absolute top-4 right-4 flex items-center gap-2">
+                        <button 
+                          onClick={() => moveClausula(idx, 'up')}
+                          disabled={idx === 0}
+                          className="text-slate-400 hover:text-blue-500 disabled:opacity-30 transition-colors"
+                          title="Mover para cima"
+                        >
+                          ⬆️
+                        </button>
+                        <button 
+                          onClick={() => moveClausula(idx, 'down')}
+                          disabled={idx === (proposta.cliente.clausulasA4.length - 1)}
+                          className="text-slate-400 hover:text-blue-500 disabled:opacity-30 transition-colors"
+                          title="Mover para baixo"
+                        >
+                          ⬇️
+                        </button>
+                        <button 
+                          onClick={() => {
+                            if (onUpdateClausulas) {
+                              const list = [...proposta.cliente.clausulasA4];
+                              list.splice(idx, 1);
+                              onUpdateClausulas(list);
+                            }
+                          }}
+                          className="text-slate-400 hover:text-red-500 ml-2 transition-colors"
+                          title="Remover Cláusula"
+                        >
+                          ✕
+                        </button>
+                      </div>
                       <div>
                         <input 
                           className="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm px-4 py-2.5 font-bold focus:outline-none focus:border-[#1e4480]"
