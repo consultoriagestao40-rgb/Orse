@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { FileText, ArrowLeft, Save, Printer, Building2, Tag, Trash2, ShieldCheck } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
-import { getDocumentoPropostaById, updateDocumentoStatus, updateSecaoDocumento, deleteDocumentoProposta } from '../actions';
+import { getDocumentoPropostaById, updateDocumentoStatus, updateSecoesDocumento, deleteDocumentoProposta } from '../actions';
+import { Plus, ChevronUp, ChevronDown, X } from 'lucide-react';
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
@@ -17,7 +18,7 @@ export default function DocumentoPropostaDetail() {
   const [saving, setSaving] = useState(false);
 
   const [status, setStatus] = useState('');
-  const [secoes, setSecoes] = useState<{id: string; titulo: string; texto: string}[]>([]);
+  const [secoes, setSecoes] = useState<{id?: string; titulo: string; texto: string; ordem?: number}[]>([]);
 
   const loadData = async () => {
     setLoading(true);
@@ -34,14 +35,13 @@ export default function DocumentoPropostaDetail() {
 
   const handleSave = async () => {
     setSaving(true);
-    // Salvar status
     if (status !== doc.status) {
       await updateDocumentoStatus(id, status);
     }
-    // Salvar seções
-    for (const secao of secoes) {
-      await updateSecaoDocumento(secao.id, secao.texto);
-    }
+    
+    const payload = secoes.map((s, i) => ({ ...s, ordem: i + 1 }));
+    await updateSecoesDocumento(id, payload);
+    
     alert('Proposta Comercial atualizada com sucesso!');
     setSaving(false);
   };
@@ -57,6 +57,16 @@ export default function DocumentoPropostaDetail() {
         setSaving(false);
       }
     }
+  };
+
+  const moveSecao = (idx: number, dir: 'up' | 'down') => {
+    const list = [...secoes];
+    if (dir === 'up' && idx > 0) {
+      [list[idx], list[idx - 1]] = [list[idx - 1], list[idx]];
+    } else if (dir === 'down' && idx < list.length - 1) {
+      [list[idx], list[idx + 1]] = [list[idx + 1], list[idx]];
+    } else return;
+    setSecoes(list);
   };
 
   if (loading) return <div className="p-10 text-center text-slate-500">Carregando...</div>;
@@ -155,19 +165,70 @@ export default function DocumentoPropostaDetail() {
             {/* LADO DIREITO: EDITOR DE SEÇÕES */}
             <div className="lg:col-span-2 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-black text-slate-800 uppercase tracking-wider">Corpo da Proposta</h2>
+                <h2 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  Corpo da Proposta
+                  <button
+                    onClick={() => setSecoes([...secoes, { titulo: 'NOVA CLÁUSULA', texto: '' }])}
+                    className="ml-4 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors flex items-center gap-1"
+                  >
+                    <Plus size={13} /> Adicionar Cláusula
+                  </button>
+                </h2>
                 <div className="text-[10px] font-bold text-slate-400 max-w-sm text-right leading-tight">
                   Variáveis: <strong className="text-[#1e4480]">[OBJETO_PROPOSTA]</strong>, <strong className="text-[#1e4480]">[ESCOPO_TECNICO]</strong>, <strong className="text-[#1e4480]">[CONDICOES_COMERCIAIS]</strong><br/>
                   Tags de Tabelas: <strong className="text-emerald-600">[TABELA]</strong>, <strong className="text-emerald-600">[ITENS]</strong>, <strong className="text-emerald-600">[TERMO_ACEITE]</strong>
                 </div>
               </div>
 
+              {secoes.length === 0 && (
+                <p className="text-slate-400 text-sm text-center py-6">Nenhuma cláusula adicionada ainda.</p>
+              )}
+
               {secoes.map((s, idx) => (
-                  <div key={s.id} className="border border-slate-200 bg-white shadow-sm p-4 rounded-xl relative space-y-3 hover:border-slate-300 transition-colors">
-                    <div>
-                      <div className="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm px-4 py-2 font-bold text-slate-700">
-                        {s.titulo}
-                      </div>
+                  <div key={idx} className="border border-slate-200 bg-white shadow-sm p-4 rounded-xl relative space-y-3 hover:border-slate-300 transition-colors">
+                    <div className="absolute top-3 right-3 flex items-center gap-1">
+                      <button
+                        onClick={() => moveSecao(idx, 'up')}
+                        disabled={idx === 0}
+                        className="p-1 text-slate-400 hover:text-blue-500 disabled:opacity-25 transition-colors"
+                        title="Mover para cima"
+                      >
+                        <ChevronUp size={16} />
+                      </button>
+                      <button
+                        onClick={() => moveSecao(idx, 'down')}
+                        disabled={idx === secoes.length - 1}
+                        className="p-1 text-slate-400 hover:text-blue-500 disabled:opacity-25 transition-colors"
+                        title="Mover para baixo"
+                      >
+                        <ChevronDown size={16} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          const list = [...secoes];
+                          list.splice(idx, 1);
+                          setSecoes(list);
+                        }}
+                        className="p-1 text-slate-400 hover:text-red-500 transition-colors ml-1"
+                        title="Remover cláusula"
+                      >
+                        <X size={15} />
+                      </button>
+                    </div>
+
+                    <div className="pr-24">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                        Título da Cláusula {idx + 1}
+                      </label>
+                      <input
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg text-sm px-4 py-2 font-bold focus:outline-none focus:border-[#1B4D3E] focus:bg-white transition-colors text-slate-700"
+                        value={s.titulo}
+                        onChange={(e) => {
+                          const list = [...secoes];
+                          list[idx].titulo = e.target.value;
+                          setSecoes(list);
+                        }}
+                      />
                     </div>
                     <div>
                       <textarea 

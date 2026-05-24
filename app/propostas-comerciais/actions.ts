@@ -113,15 +113,27 @@ export async function createDocumentoProposta(propostaId: string, templateId: st
   }
 }
 
-export async function updateSecaoDocumento(secaoId: string, texto: string) {
+export async function updateSecoesDocumento(documentoId: string, secoes: { id?: string; titulo: string; texto: string; ordem: number }[]) {
   try {
-    await prisma.secaoDocumentoProposta.update({
-      where: { id: secaoId },
-      data: { texto }
+    // Para simplificar: apaga todas as seções e recria na ordem correta
+    await prisma.secaoDocumentoProposta.deleteMany({ where: { documentoId } });
+    
+    await prisma.documentoProposta.update({
+      where: { id: documentoId },
+      data: {
+        secoes: {
+          create: secoes.map(s => ({
+            titulo: s.titulo,
+            texto: s.texto,
+            ordem: s.ordem
+          }))
+        }
+      }
     });
+    
     return { success: true };
   } catch (error: any) {
-    console.error('Erro ao atualizar seção:', error);
+    console.error('Erro ao atualizar seções:', error);
     return { success: false, error: error.message };
   }
 }
