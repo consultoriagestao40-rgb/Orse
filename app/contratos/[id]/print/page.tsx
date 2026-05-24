@@ -32,22 +32,30 @@ export default function ContratoPrint() {
 
   useEffect(() => {
     if (!loading && contrato) {
-      const numContrato = gerarNumeroContrato(contrato);
-      const emissora = contrato.empresaEmissora?.nomeFantasia || contrato.empresaEmissora?.razaoSocial || '';
-      const cliente = contrato.client?.nomeFantasia || contrato.client?.razaoSocial || '';
-      document.title = `CONTRATO - ${numContrato} - ${emissora} X ${cliente}`.toUpperCase();
-
       setTimeout(() => {
         window.print();
       }, 1000);
     }
   }, [loading, contrato]);
 
+  let docTitle = 'CONTRATO';
+  if (contrato) {
+    const numContrato = gerarNumeroContrato(contrato);
+    const emissora = contrato.empresaEmissora?.nomeFantasia || contrato.empresaEmissora?.razaoSocial || '';
+    const cliente = contrato.client?.nomeFantasia || contrato.client?.razaoSocial || '';
+    docTitle = `CONTRATO - ${numContrato} - ${emissora} X ${cliente}`.toUpperCase();
+    if (typeof document !== 'undefined') {
+      document.title = docTitle;
+    }
+  }
+
   if (loading) return <div className="p-10 text-center">Preparando documento...</div>;
   if (!contrato) return <div className="p-10 text-center">Contrato não encontrado.</div>;
 
   return (
-    <div className="bg-white min-h-screen text-black">
+    <>
+      <title>{docTitle}</title>
+      <div className="bg-white min-h-screen text-black">
       <style dangerouslySetInnerHTML={{__html: `
         @page {
           size: A4;
