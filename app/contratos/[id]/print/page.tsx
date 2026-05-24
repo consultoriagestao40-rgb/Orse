@@ -24,7 +24,7 @@ export default function ContratoPrint() {
     if (!loading && contrato) {
       setTimeout(() => {
         window.print();
-      }, 500);
+      }, 1000);
     }
   }, [loading, contrato]);
 
@@ -33,7 +33,25 @@ export default function ContratoPrint() {
 
   return (
     <div className="bg-white min-h-screen text-black">
-      <div className="max-w-[800px] mx-auto p-12 text-justify">
+      <style dangerouslySetInnerHTML={{__html: `
+        @page {
+          size: A4;
+          margin-top: 35mm;    /* Margem maior a partir da segunda página */
+          margin-bottom: 20mm;
+          margin-left: 20mm;
+          margin-right: 20mm;
+        }
+        @page :first {
+          margin-top: 20mm;    /* Margem menor na primeira página */
+        }
+      `}} />
+      
+      {/* Aviso visível apenas na tela, oculto na impressão */}
+      <div className="print:hidden bg-amber-50 border-b border-amber-200 p-4 text-center text-amber-800 text-sm font-semibold shadow-sm">
+        💡 Dica: Para remover a data e os links que o navegador coloca automaticamente nas bordas, desmarque a opção <strong>"Cabeçalhos e rodapés" (Headers and footers)</strong> nas <em>"Mais definições"</em> da tela de impressão!
+      </div>
+
+      <div className="max-w-[800px] mx-auto p-12 print:p-0 text-justify">
         <div className="text-center mb-12">
           <h1 className="text-xl font-bold uppercase tracking-widest mb-2">CONTRATO DE PRESTAÇÃO DE SERVIÇOS</h1>
           <p className="text-sm font-semibold uppercase">{contrato.empresaEmissora?.razaoSocial} E {contrato.client?.razaoSocial}</p>
