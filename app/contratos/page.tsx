@@ -75,8 +75,9 @@ export default function ContratosDashboard() {
   const pendentesReajuste = contratos.filter(c => c.status === 'Reajuste Pendente');
   const encerrados = contratos.filter(c => c.status === 'Encerrado');
   
-  const valorMensalTotal = ativos.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
-  const valorGlobalTotal = ativos.reduce((acc, c) => acc + (c.valorTotal || 0), 0);
+  const contratosValidosParaReceita = contratos.filter(c => c.status !== 'Encerrado');
+  const valorMensalTotal = contratosValidosParaReceita.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
+  const valorGlobalTotal = contratosValidosParaReceita.reduce((acc, c) => acc + (c.valorTotal || 0), 0);
 
   const statusList = ['Pendente de Assinatura', 'Vigente', 'Reajuste Pendente', 'Encerrado'];
 
