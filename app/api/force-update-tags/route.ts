@@ -43,12 +43,13 @@ export async function GET() {
     }
 
     // 3. Atualizar TODOS os Documentos já gerados
-    const documentos = await prisma.documentoProposta.findMany({
-      include: { templateOrigem: true }
-    });
+    const documentos = await prisma.documentoProposta.findMany();
     
+    // Mapear templates simples
+    const simpleTemplatesIds = templates.filter(t => t.nome.includes('Simples')).map(t => t.id);
+
     for (const doc of documentos) {
-      if (doc.templateOrigem?.nome?.includes('Simples')) {
+      if (doc.templateOrigemId && simpleTemplatesIds.includes(doc.templateOrigemId)) {
         await prisma.secaoDocumentoProposta.deleteMany({ where: { documentoId: doc.id } });
         await prisma.secaoDocumentoProposta.createMany({
           data: [
