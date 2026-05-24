@@ -14,6 +14,7 @@ const replaceTags = (text: string, doc: any) => {
 
 import DocumentoA4 from '@/components/DocumentoA4';
 import PropostaApresentacao from '@/components/PropostaApresentacao';
+import PropostaApresentacaoPrint from '@/components/PropostaApresentacaoPrint';
 
 export default function PrintClient({ doc, fullProposta }: { doc: any, fullProposta: any }) {
   const [presentationMode, setPresentationMode] = React.useState(true);
@@ -53,20 +54,24 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
 
   if (isSlide) {
     return (
-      <div className="bg-slate-900 min-h-screen text-white font-sans overflow-hidden">
-        <PropostaApresentacao 
-          proposta={mergedProposta} 
-          resultado={versao?.resultado} 
-          empresaEmissora={doc.empresaEmissora} 
-          presentationMode={presentationMode}
-          setPresentationMode={setPresentationMode}
-        />
+      <div className="bg-slate-900 w-full min-h-screen text-white font-sans print:bg-white">
+        <div className="print:hidden">
+          <PropostaApresentacao 
+            proposta={mergedProposta} 
+            resultado={versao?.resultado} 
+            empresaEmissora={doc.empresaEmissora} 
+            presentationMode={presentationMode}
+            setPresentationMode={setPresentationMode}
+          />
+        </div>
+        <PropostaApresentacaoPrint proposta={mergedProposta} />
+        
         <button
           onClick={() => {
             setPresentationMode(false);
             setTimeout(() => window.print(), 500);
           }}
-          className="fixed bottom-6 right-6 z-[999999] bg-[#1e4480] hover:bg-[#13382d] text-white p-4 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 border-2 border-white/20"
+          className="fixed bottom-6 right-6 z-[999999] bg-[#1e4480] hover:bg-[#13382d] text-white p-4 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 border-2 border-white/20 print:hidden"
           title="Imprimir / Salvar PDF"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

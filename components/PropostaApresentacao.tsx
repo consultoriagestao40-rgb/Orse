@@ -15,13 +15,13 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
       
       <div className={presentationMode 
          ? "fixed inset-0 bg-slate-950/98 z-[99999] flex flex-col justify-center items-center select-none p-6 presentation-mode-active" 
-         : "w-full flex justify-center items-center relative print:bg-white print:p-0 print-container-outer"
+         : "w-full bg-slate-900/5 rounded-3xl p-8 border border-slate-200/40 flex justify-center items-center overflow-hidden relative"
       }>
                      {/* BOTÃO VOLTAR (ESQUERDA) */}
                      <button
                         type="button"
                         onClick={() => setCurrentSlide(currentSlide === 1 ? 13 : currentSlide - 1)}
-                        className={`absolute left-4 top-1/2 -translate-y-1/2 z-[100] w-14 h-14 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-[#1e4480] hover:text-white hover:border-[#1e4480] shadow-xl active:scale-95 transition-all cursor-pointer ${presentationMode ? 'bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30 backdrop-blur-sm' : 'hidden print:hidden'}`}
+                        className={`absolute left-4 top-1/2 -translate-y-1/2 z-[100] w-14 h-14 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-[#1e4480] hover:text-white hover:border-[#1e4480] shadow-xl active:scale-95 transition-all cursor-pointer ${presentationMode ? 'bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30 backdrop-blur-sm' : ''}`}
                      >
                         <ChevronLeft size={28} className="stroke-[3] -ml-1" />
                      </button>
@@ -30,19 +30,19 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                      <button
                         type="button"
                         onClick={() => setCurrentSlide(currentSlide === 13 ? 1 : currentSlide + 1)}
-                        className={`absolute right-4 top-1/2 -translate-y-1/2 z-[100] w-14 h-14 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-[#1e4480] hover:text-white hover:border-[#1e4480] shadow-xl active:scale-95 transition-all cursor-pointer ${presentationMode ? 'bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30 backdrop-blur-sm' : 'hidden print:hidden'}`}
+                        className={`absolute right-4 top-1/2 -translate-y-1/2 z-[100] w-14 h-14 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-[#1e4480] hover:text-white hover:border-[#1e4480] shadow-xl active:scale-95 transition-all cursor-pointer ${presentationMode ? 'bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30 backdrop-blur-sm' : ''}`}
                      >
                         <ChevronRight size={28} className="stroke-[3] -mr-1" />
                      </button>
 
                      <div className={presentationMode
                         ? "w-[90vw] h-[50.625vw] max-h-[85vh] max-w-[151.1vh] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative flex flex-col justify-between"
-                        : "w-full max-w-[1123px] flex flex-col gap-12 bg-transparent select-none print-container"
+                        : "w-full max-w-[960px] aspect-[16/9] min-w-[760px] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative select-none flex flex-col justify-between"
                      }>
                         
                         {/* SLIDE 01 (MENSAGEM DE VISITA E AGRADECIMENTO) */}
-                        {(!presentationMode || currentSlide === 2) && (
-                           <div className={presentationMode ? "absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 animate-fadeIn bg-white overflow-hidden text-slate-800" : "relative w-full aspect-[16/9] shrink-0 border border-slate-200 print-slide flex flex-col justify-between p-16 z-10 animate-fadeIn bg-white overflow-hidden text-slate-800"}>
+                        {currentSlide === 2 && (
+                           <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 animate-fadeIn bg-white overflow-hidden text-slate-800">
                               {/* Linhas diagonais decorativas */}
                               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" xmlns="http://www.w3.org/2000/svg">
                                  <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
@@ -104,8 +104,8 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                         )}
 
                         {/* SLIDE 02 (CAPA DA PROPOSTA - COM FOTO E FILTRO AZUL) */}
-                        {(!presentationMode || currentSlide === 1) && (
-                           <div className={presentationMode ? "absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 text-white overflow-hidden bg-slate-950" : "relative w-full aspect-[16/9] shrink-0 border border-slate-200 print-slide flex flex-col justify-between p-16 z-10 text-white overflow-hidden bg-slate-950"}>
+                        {currentSlide === 1 && (
+                           <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 text-white overflow-hidden bg-slate-950">
                               {/* Imagem de Fundo Nativa HTML para Garantir Renderização */}
                               <img 
                                  src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200" 
@@ -158,8 +158,8 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                         )}
 
                         
-                         {(!presentationMode || currentSlide === 3) && (
-                            <div className={`bg-[#1e4480] p-16 flex flex-col justify-between relative overflow-hidden text-white rounded-2xl border border-slate-200 select-none ${presentationMode ? "absolute inset-0 w-full h-full" : "relative w-full aspect-[16/9] shrink-0 shadow-xl rounded-2xl border border-slate-200 print-slide"}`}>
+                         {currentSlide === 3 && (
+                            <div className="w-full h-full bg-[#1e4480] p-16 flex flex-col justify-between relative overflow-hidden text-white rounded-2xl border border-slate-200 select-none">
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
                                   <line x1="-50" y1="150" x2="350" y2="-250" stroke="#FFFFFF" strokeWidth="10" />
                                   <line x1="-50" y1="200" x2="400" y2="-250" stroke="#FFFFFF" strokeWidth="6" />
@@ -251,8 +251,8 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                             </div>
                          )}
 
-                         {(!presentationMode || currentSlide === 4) && (
-                            <div className={`bg-white p-16 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none ${presentationMode ? "absolute inset-0 w-full h-full" : "relative w-full aspect-[16/9] shrink-0 shadow-xl rounded-2xl border border-slate-200 print-slide"}`}>
+                         {currentSlide === 4 && (
+                            <div className="w-full h-full bg-white p-16 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none">
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" xmlns="http://www.w3.org/2000/svg">
                                   <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
                                   <line x1="-50" y1="200" x2="400" y2="-250" stroke="#E2E8F0" strokeWidth="6" />
@@ -305,8 +305,8 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                             </div>
                          )}
 
-                         {(!presentationMode || currentSlide === 5) && (
-                            <div className={`bg-white p-16 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none ${presentationMode ? "absolute inset-0 w-full h-full" : "relative w-full aspect-[16/9] shrink-0 shadow-xl rounded-2xl border border-slate-200 print-slide"}`}>
+                         {currentSlide === 5 && (
+                            <div className="w-full h-full bg-white p-16 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none">
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" xmlns="http://www.w3.org/2000/svg">
                                   <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
                                   <line x1="-100" y1="150" x2="450" y2="-400" stroke="#F1F5F9" strokeWidth="12" />
@@ -480,8 +480,8 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                             </div>
                          )}
 
-                         {(!presentationMode || currentSlide === 6) && (
-                            <div className={`bg-[#1e4480] p-16 flex flex-col justify-between relative overflow-hidden text-white rounded-2xl border border-slate-200 select-none ${presentationMode ? "absolute inset-0 w-full h-full" : "relative w-full aspect-[16/9] shrink-0 shadow-xl rounded-2xl border border-slate-200 print-slide"}`}>
+                         {currentSlide === 6 && (
+                            <div className="w-full h-full bg-[#1e4480] p-16 flex flex-col justify-between relative overflow-hidden text-white rounded-2xl border border-slate-200 select-none">
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
                                   <line x1="-50" y1="150" x2="350" y2="-250" stroke="#FFFFFF" strokeWidth="10" />
                                   <line x1="600" y1="800" x2="1100" y2="300" stroke="#FFFFFF" strokeWidth="10" />
@@ -585,7 +585,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                             </div>
                          )}
 {/* SLIDE 07 (PRINCIPAIS FERRAMENTAS - DIVIDIDO LADO A LADO) */}
-                         {(!presentationMode || currentSlide === 7) && (
+                         {currentSlide === 7 && (
                             <div className="absolute inset-0 w-full h-full grid grid-cols-2 z-10 animate-fadeIn bg-white overflow-hidden">
                                {/* Metade Esquerda (Branca) */}
                                <div className="col-span-1 bg-white p-16 flex flex-col justify-between relative h-full text-slate-800 border-r border-slate-100">
@@ -737,7 +737,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                             </div>
                          )}
 
-                          {(!presentationMode || currentSlide === 8) && (
+                          {currentSlide === 8 && (
                             <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 text-slate-800 overflow-hidden bg-white">
                                {/* Linhas diagonais decorativas da marca */}
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
@@ -807,8 +807,8 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                           )}
 
 
-                         {(!presentationMode || currentSlide === 9) && (
-                            <div className={`bg-white p-12 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none ${presentationMode ? "absolute inset-0 w-full h-full" : "relative w-full aspect-[16/9] shrink-0 shadow-xl rounded-2xl border border-slate-200 print-slide"}`}>
+                         {currentSlide === 9 && (
+                            <div className="w-full h-full bg-white p-12 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none">
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
                                   <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
                                   <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
@@ -897,8 +897,8 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                             </div>
                          )}
 
-                         {(!presentationMode || currentSlide === 10) && (
-                            <div className={`bg-white p-12 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none ${presentationMode ? "absolute inset-0 w-full h-full" : "relative w-full aspect-[16/9] shrink-0 shadow-xl rounded-2xl border border-slate-200 print-slide"}`}>
+                         {currentSlide === 10 && (
+                            <div className="w-full h-full bg-white p-12 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none">
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
                                   <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
                                   <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
@@ -958,7 +958,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                             </div>
                          )}
 
-                         {(!presentationMode || currentSlide === 11) && (() => {
+                         {currentSlide === 11 && (() => {
                             const fc = formatCurrency;
                             const divisorTributos = resultado?.divisor || 1;
                             const txAdm = (proposta.premissas.taxaAdm || 0) / 100;
@@ -992,7 +992,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                             };
 
                             return (
-                               <div className={`bg-white p-12 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none ${presentationMode ? "absolute inset-0 w-full h-full" : "relative w-full aspect-[16/9] shrink-0 shadow-xl rounded-2xl border border-slate-200 print-slide"}`}>
+                               <div className="w-full h-full bg-white p-12 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none">
                                   <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
                                      <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
                                      <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
@@ -1068,8 +1068,8 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                             );
                          })()}
 
-                         {(!presentationMode || currentSlide === 12) && (
-                            <div className={`bg-white p-12 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none ${presentationMode ? "absolute inset-0 w-full h-full" : "relative w-full aspect-[16/9] shrink-0 shadow-xl rounded-2xl border border-slate-200 print-slide"}`}>
+                         {currentSlide === 12 && (
+                            <div className="w-full h-full bg-white p-12 flex flex-col justify-between relative overflow-hidden text-slate-800 rounded-2xl border border-slate-200 select-none">
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
                                   <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
                                   <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
@@ -1178,8 +1178,8 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                             </div>
                          )}
 
-                         {(!presentationMode || currentSlide === 13) && (
-                            <div className={`bg-[#1e4480] p-12 flex flex-col justify-between relative overflow-hidden text-white rounded-2xl border border-slate-200 select-none ${presentationMode ? "absolute inset-0 w-full h-full" : "relative w-full aspect-[16/9] shrink-0 shadow-xl rounded-2xl border border-slate-200 print-slide"}`}>
+                         {currentSlide === 13 && (
+                            <div className="w-full h-full bg-[#1e4480] p-12 flex flex-col justify-between relative overflow-hidden text-white rounded-2xl border border-slate-200 select-none">
                                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
                                   <line x1="-50" y1="150" x2="350" y2="-250" stroke="#FFFFFF" strokeWidth="10" />
                                   <line x1="600" y1="800" x2="1100" y2="300" stroke="#FFFFFF" strokeWidth="10" />
