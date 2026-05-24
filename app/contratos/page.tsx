@@ -26,7 +26,7 @@ export default function ContratosDashboard() {
     setLoading(true);
     const res = await getContratos();
     if (res.success) {
-      setContratos(res.data);
+      setContratos(res.data || []);
     }
     setLoading(false);
   };

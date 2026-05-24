@@ -27,7 +27,7 @@ export default function ContratoDetail() {
     setLoading(true);
     const res = await getContratoById(id);
     if (res.success && res.data) {
-      setContrato(res.data);
+      setContrato(res.data as any);
       setStatus(res.data.status);
       setDataInicio(res.data.dataInicio ? new Date(res.data.dataInicio).toISOString().split('T')[0] : '');
       setDataReajuste(res.data.dataReajuste ? new Date(res.data.dataReajuste).toISOString().split('T')[0] : '');

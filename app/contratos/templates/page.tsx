@@ -20,7 +20,7 @@ export default function TemplatesContrato() {
     setLoading(true);
     const res = await getTemplates();
     if (res.success) {
-      setTemplates(res.data);
+      setTemplates(res.data || []);
     }
     setLoading(false);
   };
