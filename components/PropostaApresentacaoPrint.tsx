@@ -192,7 +192,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado }: { pro
                               </h2>
                               <div className="text-slate-600 text-xs leading-relaxed space-y-4 font-medium">
                                  <p>
-                                    O desenvolvimento deste projeto teve como base as informações reunidas por meio da visita técnica realizada, com o objetivo de corresponder, da forma mais eficaz possível, às necessidades do <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> no que se refere aos serviços de <strong className="font-extrabold text-slate-800">{proposta.cliente.tipoServicos || proposta.cliente.objetoProposta || "Limpeza e conservação"}</strong>.
+                                    O desenvolvimento deste projeto teve como base as informações reunidas por meio da visita técnica realizada, com o objetivo de corresponder, da forma mais eficaz possível, às necessidades do <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">{proposta.cliente.nomeFantasia || proposta.cliente.razaoSocial || "Cliente Não Informado"}</strong> no que se refere aos serviços de <strong className="font-extrabold text-slate-800">{proposta.cliente.tipoServicos || proposta.cliente.objetoProposta || "Limpeza e conservação"}</strong>.
                                  </p>
                                  <p className="font-semibold text-slate-700">
                                     Estamos imensamente gratos desde já pela oportunidade!
@@ -1243,7 +1243,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado }: { pro
                                <div className="col-span-6 space-y-4">
                                   <h3 className="text-lg font-black tracking-tight leading-snug">Estamos prontos para iniciar a nossa parceria de sucesso!</h3>
                                   <div className="text-white/80 text-[10px] leading-relaxed space-y-2 font-semibold text-justify">
-                                     <p>Ao assinar este termo de aceite, o <strong className="text-white font-extrabold">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
+                                     <p>Ao assinar este termo de aceite, o <strong className="text-white font-extrabold">{proposta.cliente.nomeFantasia || proposta.cliente.razaoSocial || "Cliente Não Informado"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
                                      <p>Este documento servirá como base oficial para a elaboração do instrumento jurídico definitivo (Contrato de Prestação de Serviços) entre as partes.</p>
                                   </div>
                                   <div className="bg-white/5 border border-white/10 rounded-xl p-3 mt-3.5 space-y-2 text-[9px] font-semibold text-white/90">
@@ -1276,7 +1276,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado }: { pro
                                   <div className="bg-white/10 rounded-2xl p-5 border border-white/15 shadow-md flex flex-col justify-between h-40">
                                      <div className="flex flex-col">
                                         <span className="text-[10px] font-black tracking-[0.2em] uppercase text-white/90">CONTRATANTE</span>
-                                        <span className="text-[8.5px] text-white/70 font-semibold mt-1 truncate">{proposta.cliente.cliente || "Erasto Gaertner"}</span>
+                                        <span className="text-[8.5px] text-white/70 font-semibold mt-1 truncate">{proposta.cliente.nomeFantasia || proposta.cliente.razaoSocial || "Cliente Não Informado"}</span>
                                      </div>
                                      <div className="border-t border-white/30 pt-3 mt-auto flex flex-col text-center">
                                         <div className="h-6 w-full mb-1"></div>

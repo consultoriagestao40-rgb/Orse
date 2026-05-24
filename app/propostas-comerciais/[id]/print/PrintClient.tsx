@@ -64,7 +64,7 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
             setPresentationMode={setPresentationMode}
           />
         </div>
-        <PropostaApresentacaoPrint proposta={mergedProposta} />
+        <PropostaApresentacaoPrint proposta={mergedProposta} resultado={versao?.resultado} />
         
         <button
           onClick={() => {
