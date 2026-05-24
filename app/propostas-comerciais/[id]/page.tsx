@@ -21,7 +21,7 @@ export default function DocumentoPropostaDetail() {
 
   const loadData = async () => {
     setLoading(true);
-    const res = await getDocumentoPropostaById(id);
+    const res: any = await getDocumentoPropostaById(id);
     if (res) {
       setDoc(res);
       setStatus(res.status);

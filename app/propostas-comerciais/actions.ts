@@ -36,7 +36,17 @@ export async function getDocumentoPropostaById(id: string) {
       include: {
         client: true,
         empresaEmissora: true,
-        proposta: true,
+        proposta: {
+          include: {
+            versoes: {
+              orderBy: { versao: 'desc' },
+              take: 1,
+              include: {
+                items: true
+              }
+            }
+          }
+        },
         secoes: {
           orderBy: { ordem: 'asc' }
         }
@@ -164,6 +174,16 @@ export async function getTemplatesProposta() {
             create: [
               { ordem: 1, titulo: '1. CARTA DE APRESENTAÇÃO', texto: 'Prezado(a) Síndico(a)/Gestor(a) do [CLIENTE_NOME]...' },
               { ordem: 2, titulo: '2. VALORES', texto: 'Valor: [VALOR_TOTAL].' }
+            ]
+          }
+        }
+      });
+      await prisma.templatePropostaComercial.create({
+        data: {
+          nome: 'Apresentação (Slide Deck)',
+          secoes: {
+            create: [
+              { ordem: 1, titulo: 'Instruções', texto: 'Este template não usa estas seções de texto. Ele renderiza os slides fixos da FPV com as imagens e valores em tela cheia.' }
             ]
           }
         }

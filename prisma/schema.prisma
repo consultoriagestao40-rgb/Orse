@@ -121,7 +121,7 @@ model Proposta {
   shares    PropostaShare[]
   auditLogs AuditLog[]
   contrato  Contrato?
-  documentoComercial DocumentoProposta? @relation("FpvToDocumento")
+  documentosComerciais DocumentoProposta[] @relation("FpvToDocumento")
 }
 
 model PropostaVersao {
@@ -294,7 +294,7 @@ model SecaoTemplateProposta {
 
 model DocumentoProposta {
   id                String             @id @default(cuid())
-  propostaId        String             @unique 
+  propostaId        String
   clientId          String
   empresaEmissoraId String
   templateOrigemId  String?

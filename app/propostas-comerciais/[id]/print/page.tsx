@@ -5,7 +5,7 @@ import { Metadata } from 'next';
 
 export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const params = await props.params;
-  const res = await getDocumentoPropostaById(params.id);
+  const res: any = await getDocumentoPropostaById(params.id);
   
   if (!res) return { title: 'Proposta Comercial não encontrada' };
   
@@ -16,13 +16,17 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
   };
 }
 
+import { getPropostaCompleta } from '@/app/propostas/actions';
+
 export default async function PropostaPrintServer(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
-  const res = await getDocumentoPropostaById(params.id);
+  const res: any = await getDocumentoPropostaById(params.id);
 
   if (!res) {
     return <div className="p-10 text-center">Proposta não encontrada.</div>;
   }
 
-  return <PrintClient doc={res} />;
+  const fullProposta = await getPropostaCompleta(res.propostaId);
+
+  return <PrintClient doc={res} fullProposta={fullProposta} />;
 }
