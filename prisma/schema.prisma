@@ -39,6 +39,7 @@ model User {
   subordinates   User[]          @relation("UserToManager")
   propostaShares PropostaShare[]
   auditLogs      AuditLog[]
+  leads          Lead[]
 }
 
 model Client {
@@ -321,3 +322,44 @@ model SecaoDocumentoProposta {
   documento  DocumentoProposta @relation(fields: [documentoId], references: [id], onDelete: Cascade)
 }
 
+model LeadStage {
+  id        String   @id @default(cuid())
+  nome      String
+  ordem     Int      @default(0)
+  color     String   @default("bg-slate-100")
+  createdAt DateTime @default(now())
+  leads     Lead[]
+}
+
+model Lead {
+  id           String        @id @default(cuid())
+  nomeFantasia String
+  razaoSocial  String?
+  cnpj         String?
+  email        String?
+  telefone     String?
+  endereco     String?
+  cidade       String?
+  uf           String?
+  segmento     String?
+  contatoNome  String?
+  valorEst     Float         @default(0)
+  stageId      String
+  assignedToId String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  stage        LeadStage     @relation(fields: [stageId], references: [id])
+  assignedTo   User?         @relation(fields: [assignedToId], references: [id])
+  history      LeadHistory[]
+}
+
+model LeadHistory {
+  id        String   @id @default(cuid())
+  leadId    String
+  tipo      String   // Ex: 'LIGACAO', 'EMAIL', 'REUNIAO', 'ANOTACAO', 'MUDANCA_FASE', 'PROSPECCAO'
+  descricao String
+  createdAt DateTime @default(now())
+
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}

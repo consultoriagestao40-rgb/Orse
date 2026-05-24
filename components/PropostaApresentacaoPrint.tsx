@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, ChevronLeft, Factory, Store, Bus, Building, Hospital, ShoppingBag, GraduationCap, Share2, Clock, Smartphone, Cpu, CreditCard, User, Calendar, UserCheck, Briefcase, MapPin, ShieldCheck } from 'lucide-react';
 import BrazilMap from '@/components/BrazilMap';
 
-export default function PropostaApresentacaoPrint({ proposta, resultado }: { proposta: any, resultado?: any }) {
+export default function PropostaApresentacaoPrint({ proposta, resultado, empresaEmissora }: { proposta: any, resultado?: any, empresaEmissora?: any }) {
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
   
   // Variáveis falsas que o FPV antigo usava no slide DRE (que não usamos mais para impressão)
@@ -1288,7 +1288,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado }: { pro
                                   <div className="bg-white/10 rounded-2xl p-5 border border-white/15 shadow-md flex flex-col justify-between h-40">
                                      <div className="flex flex-col">
                                         <span className="text-[10px] font-black tracking-[0.2em] uppercase text-white/90">CONTRATADA</span>
-                                        <span className="text-[8.5px] text-white/70 font-semibold mt-1 truncate">JVS Serv. Terceirizados Ltda.</span>
+                                        <span className="text-[8.5px] text-white/70 font-semibold mt-1 truncate">{empresaEmissora?.razaoSocial || empresaEmissora?.nomeFantasia || "JVS Serv. Terceirizados Ltda."}</span>
                                      </div>
                                      <div className="border-t border-white/30 pt-3 mt-auto flex flex-col text-center">
                                         <div className="h-6 w-full mb-1 flex items-center justify-center">

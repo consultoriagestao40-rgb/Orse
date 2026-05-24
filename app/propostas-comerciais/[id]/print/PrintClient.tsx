@@ -38,6 +38,7 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
     ...fullProposta,
     cliente: {
       ...(fullProposta?.cliente || {}),
+      ...doc.client, // Importante: sobrescreve dados de meta com o Cliente REAL do BD!
       clausulasA4: doc.secoes?.map((s: any) => ({ titulo: s.titulo, texto: s.texto })) || [],
       ...(doc.configApresentacao ? {
         condicoesCliente: doc.configApresentacao.condicoesCliente,
@@ -59,12 +60,16 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
           <PropostaApresentacao 
             proposta={mergedProposta} 
             resultado={versao?.resultado} 
-            empresaEmissora={doc.empresaEmissora} 
+            empresaEmissora={doc.empresaEmissora}
             presentationMode={presentationMode}
             setPresentationMode={setPresentationMode}
           />
         </div>
-        <PropostaApresentacaoPrint proposta={mergedProposta} resultado={versao?.resultado} />
+        <PropostaApresentacaoPrint 
+          proposta={mergedProposta} 
+          resultado={versao?.resultado} 
+          empresaEmissora={doc.empresaEmissora}
+        />
         
         <button
           onClick={() => {

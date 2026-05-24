@@ -1243,7 +1243,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                         <div className="bg-white/10 rounded-2xl p-5 border border-white/15 shadow-md flex flex-col justify-between h-40">
                                            <div className="flex flex-col">
                                               <span className="text-[10px] font-black tracking-[0.2em] uppercase text-white/90">CONTRATADA</span>
-                                              <span className="text-[8.5px] text-white/70 font-semibold mt-1 truncate">JVS Serv. Terceirizados Ltda.</span>
+                                              <span className="text-[8.5px] text-white/70 font-semibold mt-1 truncate">{empresaEmissora?.razaoSocial || empresaEmissora?.nomeFantasia || "JVS Serv. Terceirizados Ltda."}</span>
                                            </div>
                                            <div className="border-t border-white/30 pt-3 mt-auto flex flex-col text-center">
                                               <div className="h-6 w-full mb-1 flex items-center justify-center">
