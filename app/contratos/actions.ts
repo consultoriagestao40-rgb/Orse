@@ -175,6 +175,10 @@ export async function createContratoFromFPV(propostaId: string, empresaEmissoraI
       tableItens = proposta.versoes[0].items.map(i => `${i.quantidade}x ${i.nomeCargo} (${i.escala})`).join('\n');
     }
 
+    const numFormatted = proposta.numero.toString().padStart(3, '0');
+    const versaoFormatted = (proposta.versoes?.[0]?.versao || 1).toString().padStart(2, '0');
+    const tagNumFpv = `FPV-${numFormatted}-REV-${versaoFormatted}`;
+
     const replaceTags = (text: string) => {
       let t = text || '';
       t = t.replace(/\[RAZAO_SOCIAL_CLIENTE\]/g, proposta.client?.razaoSocial || proposta.client?.nomeFantasia || '');
@@ -185,7 +189,7 @@ export async function createContratoFromFPV(propostaId: string, empresaEmissoraI
       t = t.replace(/\[ENDERECO_EMISSORA\]/g, empresa.endereco || '');
       t = t.replace(/\[CIDADE_EMISSORA\]/g, 'Curitiba/PR'); 
       t = t.replace(/\[DATA_ATUAL\]/g, dateStr);
-      t = t.replace(/\[NUMERO_FPV\]/g, proposta.numero.toString());
+      t = t.replace(/\[NUMERO_FPV\]/g, tagNumFpv);
       t = t.replace(/\[TABELA_ITENS_FPV\]/g, tableItens);
       t = t.replace(/\[VALOR_MENSAL\]/g, fmtMoeda(valorMensal));
       t = t.replace(/\[VIGENCIA_MESES\]/g, vigenciaMeses.toString());
