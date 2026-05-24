@@ -502,6 +502,49 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
               </div>
             </>
           )}
+
+          {/* Fallback de Segurança: Se as tabelas não foram injetadas pelas tags [TABELA], [ITENS], [TERMO_ACEITE], injetamos no final (apenas se houver clausulas) */}
+          {(() => {
+            if (!proposta.cliente?.clausulasA4 || proposta.cliente.clausulasA4.length === 0) return null;
+            
+            const textStr = JSON.stringify(proposta.cliente?.clausulasA4 || []);
+            const missTabela = !textStr.includes('[TABELA]');
+            const missItens = !textStr.includes('[ITENS]');
+            const missAceite = !textStr.includes('[TERMO_ACEITE]');
+            
+            const clauseOffset = proposta.cliente.clausulasA4.length + 1;
+            let currentFallbackClause = clauseOffset;
+            
+            return (
+              <div className="mt-8 space-y-8">
+                {missTabela && (
+                  <div className="break-inside-avoid print:break-inside-avoid">
+                    <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
+                      CLÁUSULA {String(currentFallbackClause++).padStart(2,'0')} - RESUMO COMERCIAL DA PROPOSTA
+                    </h4>
+                    {renderTabelaComercial()}
+                  </div>
+                )}
+                {missItens && (
+                  <div className="break-inside-avoid print:break-inside-avoid">
+                    <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
+                      CLÁUSULA {String(currentFallbackClause++).padStart(2,'0')} - ITENS INCLUSOS E EXCLUSOS
+                    </h4>
+                    {renderTabelaItensInclusosExcluidos()}
+                  </div>
+                )}
+                {missAceite && (
+                  <div className="break-inside-avoid print:break-inside-avoid">
+                    <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
+                      CLÁUSULA {String(currentFallbackClause++).padStart(2,'0')} - TERMO DE ACEITE
+                    </h4>
+                    {renderTermoDeAceite(currentFallbackClause - 1, 0)}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
         </div>
               </td>
             </tr>
