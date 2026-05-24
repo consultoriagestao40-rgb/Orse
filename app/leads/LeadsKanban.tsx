@@ -5,6 +5,7 @@ import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClie
 import { Plus, User, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
+import LeadDetailsTabs from './components/LeadDetailsTabs';
 
 export default function LeadsKanban() {
   const router = useRouter();
@@ -257,37 +258,8 @@ export default function LeadsKanban() {
               <button onClick={() => setSelectedLead(null)} className="text-slate-400 hover:text-slate-600 bg-slate-100 p-2 rounded-full"><X size={16}/></button>
             </div>
             
-            <div className="p-6 flex-1 overflow-y-auto space-y-8">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                  <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Telefone</div>
-                  <div className="text-sm font-medium text-slate-700">{selectedLead.telefone || '-'}</div>
-                </div>
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                  <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Contato</div>
-                  <div className="text-sm font-medium text-slate-700">{selectedLead.contatoNome || '-'}</div>
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-                  <Clock size={16} className="text-slate-400" /> Histórico de Interações
-                </h3>
-                <div className="space-y-4 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
-                  {selectedLead.history?.map((hist: any, idx: number) => (
-                    <div key={idx} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                      <div className="flex items-center justify-center w-4 h-4 rounded-full border border-white bg-emerald-400 text-slate-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
-                      <div className="w-[calc(100%-2rem)] md:w-[calc(50%-1.5rem)] bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-bold text-slate-800 text-xs">{hist.tipo}</span>
-                          <span className="text-[9px] text-slate-400 font-medium">{new Date(hist.createdAt).toLocaleDateString()}</span>
-                        </div>
-                        <p className="text-xs text-slate-600">{hist.descricao}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <div className="flex-1 overflow-hidden">
+              <LeadDetailsTabs lead={selectedLead} />
             </div>
             
             <div className="p-6 border-t border-slate-100 bg-slate-50 shrink-0">

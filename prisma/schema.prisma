@@ -40,6 +40,10 @@ model User {
   propostaShares PropostaShare[]
   auditLogs      AuditLog[]
   leads          Lead[]
+  leadShares     LeadShare[]
+  activities     Activity[]
+  comments       Comment[]
+  files          FileAttachment[]
 }
 
 model Client {
@@ -352,6 +356,10 @@ model Lead {
   stage        LeadStage     @relation(fields: [stageId], references: [id])
   assignedTo   User?         @relation(fields: [assignedToId], references: [id])
   history      LeadHistory[]
+  shares       LeadShare[]
+  activities   Activity[]
+  comments     Comment[]
+  files        FileAttachment[]
 }
 
 model LeadHistory {
@@ -362,4 +370,57 @@ model LeadHistory {
   createdAt DateTime @default(now())
 
   lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+model LeadShare {
+  id        String   @id @default(cuid())
+  leadId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([leadId, userId])
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  leadId      String?
+  userId      String
+  titulo      String
+  descricao   String?
+  tipo        String   @default("REUNIAO") // REUNIAO, LIGACAO, EMAIL, TAREFA
+  dataInicio  DateTime
+  dataFim     DateTime
+  status      String   @default("PENDENTE") // PENDENTE, CONCLUIDA, CANCELADA
+  createdAt   DateTime @default(now())
+
+  lead        Lead?    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  leadId      String
+  userId      String
+  texto       String
+  createdAt   DateTime @default(now())
+
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FileAttachment {
+  id          String   @id @default(cuid())
+  leadId      String
+  userId      String
+  nome        String
+  tamanho     Int      // bytes
+  tipo        String   // mimetype
+  base64Data  String   @db.Text
+  createdAt   DateTime @default(now())
+
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
