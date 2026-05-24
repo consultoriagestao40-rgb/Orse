@@ -49,7 +49,7 @@ export default function NovoContrato() {
 
     const res = await createContratoFromFPV(selectedProposta, selectedEmpresa, selectedTemplate, valorMensal);
     if (res.success) {
-      router.push(`/contratos/${res.data.id}`);
+      router.push(`/contratos/${res.data?.id}`);
     } else {
       alert('Erro: ' + res.error);
       setSubmitting(false);
