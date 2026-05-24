@@ -11,13 +11,6 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .animate-fadeIn { animation: fadeIn 0.5s ease-in-out; }
-        @media print {
-          body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          .print-slide { page-break-after: always !important; page-break-inside: avoid !important; margin: 0 !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; width: 100vw !important; height: 100vh !important; aspect-ratio: auto !important; }
-          .print-container { gap: 0 !important; }
-          @page { size: landscape; margin: 0; }
-        }
-
       `}} />
       
       <div className={presentationMode 
