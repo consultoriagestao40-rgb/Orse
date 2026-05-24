@@ -32,7 +32,8 @@ const TABS = [
   { id: 'descartaveis', label: '7. Descartáveis', icon: Trash },
   { id: 'extrato', label: '8. Extrato de Custos', icon: FileText },
   { id: 'resumo', label: '9. Resumo da Proposta', icon: ClipboardList },
-  { id: 'dre', label: '10. DRE Projeto', icon: PieChart }
+  { id: 'dre', label: '10. DRE Projeto', icon: PieChart },
+  { id: 'comercial', label: '11. Proposta Comercial', icon: Presentation }
 ];
 
 const MONTHS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
@@ -1360,88 +1361,6 @@ function PropostaEditor() {
                           ></textarea>
                        </div>
                     )}
-
-                    {/* ITENS INCLUSOS E EXCLUSOS (Aba 1) */}
-                    <div className="md:col-span-2 space-y-4 pt-6 mt-4 border-t border-slate-200">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Itens Inclusos e Exclusos</h3>
-                                <p className="text-xs text-slate-500 mt-1">Configure os itens que farão parte do escopo desta proposta.</p>
-                            </div>
-                            <button
-                                type="button"
-                                className="px-4 py-2 bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold text-[10px] uppercase tracking-wider rounded transition-all active:scale-95 shadow-sm cursor-pointer"
-                                onClick={() => {
-                                   const newId = String(Date.now());
-                                   const newItem = { id: newId, descricao: 'Novo Item', incluso: true };
-                                   const newList = [...(proposta.itensInclusosExcluidos || []), newItem];
-                                   setProposta({ ...proposta, itensInclusosExcluidos: newList });
-                                }}
-                             >
-                                ➕ Novo Item
-                             </button>
-                        </div>
-                        
-                        <div className="overflow-hidden border border-slate-200 rounded-lg">
-                           <table className="w-full text-left border-collapse">
-                              <thead>
-                                 <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
-                                    <th className="px-4 py-3 w-16 text-center">Item</th>
-                                    <th className="px-4 py-3">Descrição</th>
-                                    <th className="px-4 py-3 text-center w-28">Incluso?</th>
-                                    <th className="px-4 py-3 text-center w-16">Ação</th>
-                                 </tr>
-                              </thead>
-                              <tbody>
-                                 {(proposta.itensInclusosExcluidos || []).map((p: any, idx: number) => (
-                                    <tr key={p.id || idx} className="border-b border-slate-100 hover:bg-slate-50/50 bg-white">
-                                       <td className="px-4 py-3 text-center text-xs font-bold text-slate-400">
-                                          {String(idx + 1).padStart(2, '0')}
-                                       </td>
-                                       <td className="px-4 py-3">
-                                          <input 
-                                             type="text" 
-                                             className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-700 outline-none focus:border-[#1B4D3E] font-medium"
-                                             value={p.descricao || ''}
-                                             onChange={(e) => {
-                                                const newList = proposta.itensInclusosExcluidos.map((item: any) => 
-                                                   item.id === p.id ? { ...item, descricao: e.target.value } : item
-                                                );
-                                                setProposta({ ...proposta, itensInclusosExcluidos: newList });
-                                             }}
-                                          />
-                                       </td>
-                                       <td className="px-4 py-3 text-center">
-                                          <input 
-                                             type="checkbox" 
-                                             className="w-4 h-4 text-[#1B4D3E] focus:ring-[#1B4D3E] border-slate-300 rounded cursor-pointer"
-                                             checked={!!p.incluso}
-                                             onChange={(e) => {
-                                                const newList = proposta.itensInclusosExcluidos.map((item: any) => 
-                                                   item.id === p.id ? { ...item, incluso: e.target.checked } : item
-                                                );
-                                                setProposta({ ...proposta, itensInclusosExcluidos: newList });
-                                             }}
-                                          />
-                                       </td>
-                                       <td className="px-4 py-3 text-center">
-                                          <button
-                                             type="button"
-                                             className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-all cursor-pointer"
-                                             onClick={() => {
-                                                const newList = proposta.itensInclusosExcluidos.filter((item: any) => item.id !== p.id);
-                                                setProposta({ ...proposta, itensInclusosExcluidos: newList });
-                                             }}
-                                          >
-                                             <Trash2 size={16} />
-                                          </button>
-                                       </td>
-                                    </tr>
-                                 ))}
-                              </tbody>
-                           </table>
-                        </div>
-                    </div>
                  </div>
               </div>
            )}

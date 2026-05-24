@@ -28,5 +28,20 @@ export default async function PropostaPrintServer(props: { params: Promise<{ id:
 
   const fullProposta = await getPropostaCompleta(res.propostaId);
 
-  return <PrintClient doc={res} fullProposta={fullProposta} />;
+  // Precisamos do nome do template para o PrintClient saber se é slide ou não
+  let templateOrigem = null;
+  if (res.templateOrigemId) {
+    const { prisma } = await import('@/lib/prisma');
+    templateOrigem = await prisma.templatePropostaComercial.findUnique({
+      where: { id: res.templateOrigemId }
+    });
+  }
+
+  // Anexar o templateOrigem mockado no doc para manter a compatibilidade
+  const docWithTemplate = {
+    ...res,
+    templateOrigem
+  };
+
+  return <PrintClient doc={docWithTemplate} fullProposta={fullProposta} />;
 }

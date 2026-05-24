@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Sidebar from '@/components/Sidebar';
@@ -28,11 +28,12 @@ const TABS = [
   { id: 'encargos', label: '3. Encargos CLT', icon: ShieldCheck },
   { id: 'quadro', label: '4. Quadro Equipe', icon: UserCheck },
   { id: 'materiais', label: '5. Materiais', icon: Box },
-  { id: 'maquinas', label: '6. Máquinas', icon: Drill },
-  { id: 'descartaveis', label: '7. Descartáveis', icon: Trash },
+  { id: 'maquinas', label: '6. M├íquinas', icon: Drill },
+  { id: 'descartaveis', label: '7. Descart├íveis', icon: Trash },
   { id: 'extrato', label: '8. Extrato de Custos', icon: FileText },
   { id: 'resumo', label: '9. Resumo da Proposta', icon: ClipboardList },
-  { id: 'dre', label: '10. DRE Projeto', icon: PieChart }
+  { id: 'dre', label: '10. DRE Projeto', icon: PieChart },
+  { id: 'comercial', label: '11. Proposta Comercial', icon: Presentation }
 ];
 
 const MONTHS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
@@ -97,14 +98,14 @@ function PropostaEditor() {
             numeroProposta: (fullData as any).numero || '',
             revisao: `R${String(fullData.versao).padStart(2, '0')}`,
             tipoServicos: fullData.cliente.tipoServicos || '',
-            vendedorNome: (!fullData.cliente.vendedorNome || fullData.cliente.vendedorNome === 'Ádamo Quadros') ? (currentUser?.nome || 'Ádamo Quadros') : fullData.cliente.vendedorNome,
-            vendedorCargo: (!fullData.cliente.vendedorCargo || fullData.cliente.vendedorCargo === 'Novos Negócios') ? (currentUser?.cargo || (currentUser?.role === 'ADMIN' ? 'Diretor Comercial' : currentUser?.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios')) : fullData.cliente.vendedorCargo,
+            vendedorNome: (!fullData.cliente.vendedorNome || fullData.cliente.vendedorNome === '├üdamo Quadros') ? (currentUser?.nome || '├üdamo Quadros') : fullData.cliente.vendedorNome,
+            vendedorCargo: (!fullData.cliente.vendedorCargo || fullData.cliente.vendedorCargo === 'Novos Neg├│cios') ? (currentUser?.cargo || (currentUser?.role === 'ADMIN' ? 'Diretor Comercial' : currentUser?.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Neg├│cios')) : fullData.cliente.vendedorCargo,
             vendedorTelefone: (!fullData.cliente.vendedorTelefone || fullData.cliente.vendedorTelefone === '(41) 9 9737-0880') ? (currentUser?.celular || '(41) 9 9737-0880') : fullData.cliente.vendedorTelefone,
             vendedorEmail: (!fullData.cliente.vendedorEmail || fullData.cliente.vendedorEmail === 'adamo@grupojvsserv.com.br') ? (currentUser?.email || 'adamo@grupojvsserv.com.br') : fullData.cliente.vendedorEmail,
-            quadroEfetivoSubtitulo: fullData.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
-            quadroEfetivoClausula1: fullData.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
-            quadroEfetivoClausula2: fullData.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
-            quadroEfetivoClausula3: fullData.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
+            quadroEfetivoSubtitulo: fullData.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Op├º├Áes',
+            quadroEfetivoClausula1: fullData.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcion├írio dever├í ter duas folgas compensat├│rias em sequ├¬ncia;',
+            quadroEfetivoClausula2: fullData.cliente.quadroEfetivoClausula2 || 'Para redu├º├Áes no efetivo prazo de 30 (trinta) dias;',
+            quadroEfetivoClausula3: fullData.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h di├írias de no m├¡nimo 60 minutos, entre 4h a 6h o intervalo ser├í de 15 minutos (CLT).',
             condicoesColaboradores: fullData.cliente.condicoesColaboradores || [],
             condicoesCliente: fullData.cliente.condicoesCliente || [],
             razaoSocial: fullData.cliente.razaoSocial || '',
@@ -112,27 +113,27 @@ function PropostaEditor() {
             dataInicio: fullData.cliente.dataInicio || '',
             dataVencimento: fullData.cliente.dataVencimento || '',
             contatoCargo: fullData.cliente.contatoCargo || '',
-            condicaoColaboradores1: fullData.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
+            condicaoColaboradores1: fullData.cliente.condicaoColaboradores1 || 'Vale alimenta├º├úo de R$900,00;',
             condicaoColaboradores2: fullData.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
             condicaoColaboradores3: fullData.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.',
-            condicaoCliente1: fullData.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
-            condicaoCliente2: fullData.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
-            condicaoCliente3: fullData.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.'
+            condicaoCliente1: fullData.cliente.condicaoCliente1 || 'Faturamento dos servi├ºos aos dias 15 ou 30 de cada m├¬s com vencimento nos pr├│ximos 15 dias;',
+            condicaoCliente2: fullData.cliente.condicaoCliente2 || 'Reajuste anual, autom├ítico e equivalente ao diss├¡dio da categoria (SIEMACO) todo m├¬s fevereiro de cada ano subsequente;',
+            condicaoCliente3: fullData.cliente.condicaoCliente3 || 'Pr├│ximo reajuste Fevereiro/2026.'
           },
           dreTaxPercent: (fullData as any).dreTaxPercent,
           dreEncargos: (fullData as any).dreEncargos,
           itensInclusosExcluidos: (fullData as any).itensInclusosExcluidos || [
-            { id: '1', descricao: 'Fornecimento de mão de obra', incluso: true },
-            { id: '2', descricao: 'Fornecimento de insumos necessario para a prestação dos serviços', incluso: true },
+            { id: '1', descricao: 'Fornecimento de m├úo de obra', incluso: true },
+            { id: '2', descricao: 'Fornecimento de insumos necessario para a presta├º├úo dos servi├ºos', incluso: true },
             { id: '3', descricao: 'Maquinas e equipamentos', incluso: false },
-            { id: '4', descricao: 'Produtos químicos', incluso: false },
+            { id: '4', descricao: 'Produtos qu├¡micos', incluso: false },
             { id: '5', descricao: 'Descartaveis', incluso: false }
           ],
         });
       }
     } catch (err) {
-      console.error('Erro ao trocar versão:', err);
-      alert('Erro ao carregar versão selecionada.');
+      console.error('Erro ao trocar vers├úo:', err);
+      alert('Erro ao carregar vers├úo selecionada.');
     } finally {
       setLoading(false);
     }
@@ -184,31 +185,31 @@ function PropostaEditor() {
       vendedorCargo: '',
       vendedorTelefone: '',
       vendedorEmail: '',
-      quadroEfetivoSubtitulo: 'Quadro efetivo - Opções',
-      quadroEfetivoClausula1: 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
-      quadroEfetivoClausula2: 'Para reduções no efetivo prazo de 30 (trinta) dias;',
-      quadroEfetivoClausula3: 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
+      quadroEfetivoSubtitulo: 'Quadro efetivo - Op├º├Áes',
+      quadroEfetivoClausula1: 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcion├írio dever├í ter duas folgas compensat├│rias em sequ├¬ncia;',
+      quadroEfetivoClausula2: 'Para redu├º├Áes no efetivo prazo de 30 (trinta) dias;',
+      quadroEfetivoClausula3: 'Intervalo para jornadas acima de 6h di├írias de no m├¡nimo 60 minutos, entre 4h a 6h o intervalo ser├í de 15 minutos (CLT).',
       condicoesColaboradores: [
-         'Vale alimentação de R$900,00;',
+         'Vale alimenta├º├úo de R$900,00;',
          'Cesta trimestral de assiduidade;',
          '2 Vales transporte por dia.'
       ],
       condicoesCliente: [
-         'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
-         'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
-         'Próximo reajuste Fevereiro/2026.'
+         'Faturamento dos servi├ºos aos dias 15 ou 30 de cada m├¬s com vencimento nos pr├│ximos 15 dias;',
+         'Reajuste anual, autom├ítico e equivalente ao diss├¡dio da categoria (SIEMACO) todo m├¬s fevereiro de cada ano subsequente;',
+         'Pr├│ximo reajuste Fevereiro/2026.'
       ],
       razaoSocial: '',
       cnpj: '',
       dataInicio: '',
       dataVencimento: '',
       contatoCargo: '',
-      condicaoColaboradores1: 'Vale alimentação de R$900,00;',
+      condicaoColaboradores1: 'Vale alimenta├º├úo de R$900,00;',
       condicaoColaboradores2: 'Cesta trimestral de assiduidade;',
       condicaoColaboradores3: '2 Vales transporte por dia.',
-      condicaoCliente1: 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
-      condicaoCliente2: 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
-      condicaoCliente3: 'Próximo reajuste Fevereiro/2026.'
+      condicaoCliente1: 'Faturamento dos servi├ºos aos dias 15 ou 30 de cada m├¬s com vencimento nos pr├│ximos 15 dias;',
+      condicaoCliente2: 'Reajuste anual, autom├ítico e equivalente ao diss├¡dio da categoria (SIEMACO) todo m├¬s fevereiro de cada ano subsequente;',
+      condicaoCliente3: 'Pr├│ximo reajuste Fevereiro/2026.'
     },
     premissas: { 
       taxaAdm: 5, 
@@ -244,10 +245,10 @@ function PropostaEditor() {
       detalheDescartaveis: []
     },
     itensInclusosExcluidos: [
-      { id: '1', descricao: 'Fornecimento de mão de obra', incluso: true },
-      { id: '2', descricao: 'Fornecimento de insumos necessario para a prestação dos serviços', incluso: true },
+      { id: '1', descricao: 'Fornecimento de m├úo de obra', incluso: true },
+      { id: '2', descricao: 'Fornecimento de insumos necessario para a presta├º├úo dos servi├ºos', incluso: true },
       { id: '3', descricao: 'Maquinas e equipamentos', incluso: false },
-      { id: '4', descricao: 'Produtos químicos', incluso: false },
+      { id: '4', descricao: 'Produtos qu├¡micos', incluso: false },
       { id: '5', descricao: 'Descartaveis', incluso: false }
     ]
   });
@@ -258,7 +259,7 @@ function PropostaEditor() {
   const [currentSlide, setCurrentSlide] = useState(1);
 
   // =========================================================================
-  // ESTADOS DA DRE PARAMETRIZADA E EDITÁVEL
+  // ESTADOS DA DRE PARAMETRIZADA E EDIT├üVEL
   // =========================================================================
   const [dreTaxPercent, setDreTaxPercent] = useState<number | ''>(12.5);
   const [showChangelogModal, setShowChangelogModal] = useState(false);
@@ -273,7 +274,7 @@ function PropostaEditor() {
      inss: 20.00
   });
 
-  // Estado para controlar a expansão e retração das contas do DRE
+  // Estado para controlar a expans├úo e retra├º├úo das contas do DRE
   const [dreExpandedRows, setDreExpandedRows] = useState<Record<string, boolean>>({
      '01': true,
      '01.1': false,
@@ -292,13 +293,13 @@ function PropostaEditor() {
      '03.9': false
   });
 
-  // Sincroniza parâmetros padrão do DRE com os dados da Proposta quando carregada
+  // Sincroniza par├ómetros padr├úo do DRE com os dados da Proposta quando carregada
   useEffect(() => {
      if (proposta && proposta.id) {
         if (proposta.dreTaxPercent !== undefined && proposta.dreTaxPercent !== null) {
            setDreTaxPercent(proposta.dreTaxPercent);
         } else {
-           // Tributos padrão (soma de todos os impostos)
+           // Tributos padr├úo (soma de todos os impostos)
            const totalTributos = (proposta.premissas?.tributos || []).reduce((acc: number, t: any) => acc + (t.percent || 0), 0);
            if (totalTributos > 0) {
               setDreTaxPercent(totalTributos);
@@ -308,7 +309,7 @@ function PropostaEditor() {
         if (proposta.dreEncargos && typeof proposta.dreEncargos === 'object') {
            setDreEncargos(proposta.dreEncargos);
         } else {
-           // Encargos padrão dos grupos
+           // Encargos padr├úo dos grupos
            const fgtsVal = proposta.encargos?.grupoA?.fgts ?? 8.00;
            const inssVal = proposta.encargos?.grupoA?.previdenciaSocial ?? 20.00;
            const decimoTerceiroVal = proposta.encargos?.grupoC?.decimoTerceiro ?? 9.39;
@@ -370,7 +371,7 @@ function PropostaEditor() {
         setEmpresasEmissoras(dataEmpresas || []);
         if (dataEmpresas && dataEmpresas.length > 0) setSelectedEmpresaId(dataEmpresas[0].id);
         setCurrentUser(loggedUser || null);
-        console.log('CCTs, Escalas, Produtos, Tipos de Serviço e Segmentos carregados.');
+        console.log('CCTs, Escalas, Produtos, Tipos de Servi├ºo e Segmentos carregados.');
         
         const { getClientes } = await import('@/app/clientes/actions');
         const clientesData = await getClientes();
@@ -386,7 +387,7 @@ function PropostaEditor() {
             const clientObj = (clientesData || []).find((c: any) => c.id === fullData.clientId);
             let savedSindicatoId = (fullData.premissas as any)?.meta?.sindicatoId || '';
             
-            // Fallback para propostas antigas: Se não houver sindicatoId no meta, pega do primeiro cargo
+            // Fallback para propostas antigas: Se n├úo houver sindicatoId no meta, pega do primeiro cargo
             if (!savedSindicatoId && (fullData.equipe?.[0] as any)?.cargo?.cctId) {
                savedSindicatoId = (fullData.equipe[0] as any).cargo.cctId;
             }
@@ -410,14 +411,14 @@ function PropostaEditor() {
                  numeroProposta: (fullData as any).numero || '',
                  revisao: `R${String(fullData.versao).padStart(2, '0')}`,
                  tipoServicos: fullData.cliente.tipoServicos || '',
-                 vendedorNome: (!fullData.cliente.vendedorNome || fullData.cliente.vendedorNome === 'Ádamo Quadros') ? (loggedUser?.nome || 'Ádamo Quadros') : fullData.cliente.vendedorNome,
-                 vendedorCargo: (!fullData.cliente.vendedorCargo || fullData.cliente.vendedorCargo === 'Novos Negócios') ? (loggedUser?.cargo || (loggedUser?.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser?.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios')) : fullData.cliente.vendedorCargo,
+                 vendedorNome: (!fullData.cliente.vendedorNome || fullData.cliente.vendedorNome === '├üdamo Quadros') ? (loggedUser?.nome || '├üdamo Quadros') : fullData.cliente.vendedorNome,
+                 vendedorCargo: (!fullData.cliente.vendedorCargo || fullData.cliente.vendedorCargo === 'Novos Neg├│cios') ? (loggedUser?.cargo || (loggedUser?.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser?.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Neg├│cios')) : fullData.cliente.vendedorCargo,
                  vendedorTelefone: (!fullData.cliente.vendedorTelefone || fullData.cliente.vendedorTelefone === '(41) 9 9737-0880' || fullData.cliente.vendedorTelefone === '(41) 99737-0880') ? (loggedUser?.celular || '(41) 9 9737-0880') : fullData.cliente.vendedorTelefone,
                  vendedorEmail: (!fullData.cliente.vendedorEmail || fullData.cliente.vendedorEmail === 'adamo@grupojvsserv.com.br') ? (loggedUser?.email || 'adamo@grupojvsserv.com.br') : fullData.cliente.vendedorEmail,
-                  quadroEfetivoSubtitulo: fullData.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
-                  quadroEfetivoClausula1: fullData.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
-                  quadroEfetivoClausula2: fullData.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
-                  quadroEfetivoClausula3: fullData.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
+                  quadroEfetivoSubtitulo: fullData.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Op├º├Áes',
+                  quadroEfetivoClausula1: fullData.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcion├írio dever├í ter duas folgas compensat├│rias em sequ├¬ncia;',
+                  quadroEfetivoClausula2: fullData.cliente.quadroEfetivoClausula2 || 'Para redu├º├Áes no efetivo prazo de 30 (trinta) dias;',
+                  quadroEfetivoClausula3: fullData.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h di├írias de no m├¡nimo 60 minutos, entre 4h a 6h o intervalo ser├í de 15 minutos (CLT).',
                condicoesColaboradores: fullData.cliente.condicoesColaboradores || [],
                condicoesCliente: fullData.cliente.condicoesCliente || [],
                razaoSocial: clientObj?.razaoSocial || (fullData.cliente as any).razaoSocial || '',
@@ -425,12 +426,12 @@ function PropostaEditor() {
                dataInicio: fullData.cliente.dataInicio || '',
                dataVencimento: fullData.cliente.dataVencimento || '',
                contatoCargo: fullData.cliente.contatoCargo || '',
-               condicaoColaboradores1: fullData.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
+               condicaoColaboradores1: fullData.cliente.condicaoColaboradores1 || 'Vale alimenta├º├úo de R$900,00;',
                condicaoColaboradores2: fullData.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
                condicaoColaboradores3: fullData.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.',
-               condicaoCliente1: fullData.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
-               condicaoCliente2: fullData.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
-               condicaoCliente3: fullData.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.'
+               condicaoCliente1: fullData.cliente.condicaoCliente1 || 'Faturamento dos servi├ºos aos dias 15 ou 30 de cada m├¬s com vencimento nos pr├│ximos 15 dias;',
+               condicaoCliente2: fullData.cliente.condicaoCliente2 || 'Reajuste anual, autom├ítico e equivalente ao diss├¡dio da categoria (SIEMACO) todo m├¬s fevereiro de cada ano subsequente;',
+               condicaoCliente3: fullData.cliente.condicaoCliente3 || 'Pr├│ximo reajuste Fevereiro/2026.'
                },
                premissas: {
                  ...fullData.premissas,
@@ -446,10 +447,10 @@ function PropostaEditor() {
                dreEncargos: (fullData as any).dreEncargos,
                encargos: (fullData as any).encargos || proposta.encargos,
                itensInclusosExcluidos: (fullData.cliente as any).itensInclusosExcluidos || [
-                  { id: '1', descricao: 'Fornecimento de mão de obra', incluso: true },
-                  { id: '2', descricao: 'Fornecimento de insumos necessario para a prestação dos serviços', incluso: true },
+                  { id: '1', descricao: 'Fornecimento de m├úo de obra', incluso: true },
+                  { id: '2', descricao: 'Fornecimento de insumos necessario para a presta├º├úo dos servi├ºos', incluso: true },
                   { id: '3', descricao: 'Maquinas e equipamentos', incluso: false },
-                  { id: '4', descricao: 'Produtos químicos', incluso: false },
+                  { id: '4', descricao: 'Produtos qu├¡micos', incluso: false },
                   { id: '5', descricao: 'Descartaveis', incluso: false }
                ],
                dreTaxPercent: (fullData as any).dreTaxPercent
@@ -457,7 +458,7 @@ function PropostaEditor() {
             setVersions(fullData.availableVersions || []);
             console.log('Estado da proposta atualizado.');
           } else {
-             console.warn('Proposta não encontrada no banco.');
+             console.warn('Proposta n├úo encontrada no banco.');
           }
         } else if (loggedUser) {
            console.log('Nova proposta: inicializando com o perfil do vendedor logado...');
@@ -466,7 +467,7 @@ function PropostaEditor() {
               cliente: {
                  ...prev.cliente,
                  vendedorNome: loggedUser.nome,
-                 vendedorCargo: loggedUser.cargo || (loggedUser.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios'),
+                 vendedorCargo: loggedUser.cargo || (loggedUser.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Neg├│cios'),
                  vendedorTelefone: loggedUser.celular || '(41) 9 9737-0880',
                  vendedorEmail: loggedUser.email
               }
@@ -524,7 +525,7 @@ function PropostaEditor() {
     }
   }, [proposta.cliente.sindicatoId, ccts]);
 
-  // Atalhos de teclado para o Modo Apresentação
+  // Atalhos de teclado para o Modo Apresenta├º├úo
   useEffect(() => {
     if (!presentationMode) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -670,7 +671,7 @@ function PropostaEditor() {
         noturnasMinutos += Math.max(0, (24 * 60) - Math.max(inicio, NOTURNO_INICIO));
         noturnasMinutos += Math.max(0, Math.min(fim, NOTURNO_FIM));
         
-        // Súmula 60 TST: Prorrogação se trabalhou todo o período noturno
+        // S├║mula 60 TST: Prorroga├º├úo se trabalhou todo o per├¡odo noturno
         if (inicio <= NOTURNO_INICIO && fim >= NOTURNO_FIM) {
           noturnasMinutos += Math.max(0, fim - NOTURNO_FIM);
         }
@@ -700,10 +701,10 @@ function PropostaEditor() {
         setShowNewTipoModal(false);
         setNewTipoName('');
       } else {
-        alert("Erro ao criar tipo de serviço: " + res.error);
+        alert("Erro ao criar tipo de servi├ºo: " + res.error);
       }
     } catch (e) {
-      alert("Erro ao criar tipo de serviço");
+      alert("Erro ao criar tipo de servi├ºo");
     } finally {
       setIsSavingTipo(false);
     }
@@ -730,7 +731,7 @@ function PropostaEditor() {
   };
 
   const handleSaveNewClient = async () => {
-    if (!newClientForm.nomeFantasia.trim()) return alert('Nome Fantasia é obrigatório');
+    if (!newClientForm.nomeFantasia.trim()) return alert('Nome Fantasia ├® obrigat├│rio');
     setSavingClient(true);
     try {
       const res = await createCliente(newClientForm);
@@ -764,7 +765,7 @@ function PropostaEditor() {
   };
 
   const handleSaveNewProduct = async () => {
-    if (!newProductForm.descricao.trim()) return alert('Descrição é obrigatória');
+    if (!newProductForm.descricao.trim()) return alert('Descri├º├úo ├® obrigat├│ria');
     setSavingProduct(true);
     try {
       const res = await createProduto(newProductForm);
@@ -790,18 +791,18 @@ function PropostaEditor() {
     if (!proposta.cliente.cliente) return alert('Por favor, selecione ou informe o cliente.');
     if (proposta.equipe.length === 0) return alert('Adicione ao menos um posto no quadro de equipe.');
 
-    // Se for nova proposta, salva direto sem escolha de versão
+    // Se for nova proposta, salva direto sem escolha de vers├úo
     if (!proposta.id) {
-      await executeSave('Criação inicial da proposta', false);
+      await executeSave('Cria├º├úo inicial da proposta', false);
       return;
     }
 
-    // Se for edição, abre modal de escolha: mesma versão ou nova versão
+    // Se for edi├º├úo, abre modal de escolha: mesma vers├úo ou nova vers├úo
     setShowSaveChoiceModal(true);
   };
 
-  // novaVersao=false → salva sobrepondo a versão atual (mesma versão)
-  // novaVersao=true  → cria nova revisão com changelog
+  // novaVersao=false ÔåÆ salva sobrepondo a vers├úo atual (mesma vers├úo)
+  // novaVersao=true  ÔåÆ cria nova revis├úo com changelog
   const executeSave = async (changelog: string, novaVersao: boolean = false) => {
     try {
       setSaving(true);
@@ -815,8 +816,8 @@ function PropostaEditor() {
       });
       if (res.success) {
         const msg = novaVersao
-          ? `Nova Revisão R${String(res.versao).padStart(2, '0')} salva com sucesso!`
-          : `Proposta salva na mesma versão R${String(res.versao).padStart(2, '0')}.`;
+          ? `Nova Revis├úo R${String(res.versao).padStart(2, '0')} salva com sucesso!`
+          : `Proposta salva na mesma vers├úo R${String(res.versao).padStart(2, '0')}.`;
         alert(msg);
         const novoNumero = res.numeroProposta || proposta.cliente.numeroProposta;
         const novaRevisao = `R${String(res.versao).padStart(2, '0')}`;
@@ -973,13 +974,13 @@ function PropostaEditor() {
           <table className="w-full text-left text-sm border-collapse">
             <thead>
               <tr className="bg-slate-100 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
-                <th className="px-4 py-2 w-20">Cód.</th>
-                <th className="px-4 py-2">Descrição</th>
-                <th className="px-4 py-2 text-right">Preço Unit.</th>
+                <th className="px-4 py-2 w-20">C├│d.</th>
+                <th className="px-4 py-2">Descri├º├úo</th>
+                <th className="px-4 py-2 text-right">Pre├ºo Unit.</th>
                 <th className="px-4 py-2 text-center w-20">Qtd.</th>
-                <th className="px-4 py-2 text-center w-24">Vida Útil (Meses)</th>
+                <th className="px-4 py-2 text-center w-24">Vida ├Ütil (Meses)</th>
                 <th className="px-4 py-2 text-right">Custo Mensal</th>
-                <th className="px-4 py-2 text-center w-16">Ação</th>
+                <th className="px-4 py-2 text-center w-16">A├º├úo</th>
               </tr>
             </thead>
             <tbody>
@@ -1085,7 +1086,7 @@ function PropostaEditor() {
             <div className="flex flex-col">
               <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
-                   FPV - Formação de Preço de Vendas
+                   FPV - Forma├º├úo de Pre├ºo de Vendas
                 </h1>
                 {id && versions.length > 1 && (
                   <div className="flex flex-col ml-4">
@@ -1098,16 +1099,16 @@ function PropostaEditor() {
                       >
                         {versions.map((v) => (
                           <option key={v.id} value={v.id}>
-                            Versão {v.versao} ({v.data})
+                            Vers├úo {v.versao} ({v.data})
                           </option>
                         ))}
                       </select>
                     </div>
                     <div 
                       className="text-[9px] text-slate-400 mt-1 max-w-[280px] truncate hover:text-slate-700 hover:whitespace-normal transition-all font-semibold uppercase tracking-tighter"
-                      title={versions.find(v => v.versao === proposta.versao)?.changelog || 'Sem descrição.'}
+                      title={versions.find(v => v.versao === proposta.versao)?.changelog || 'Sem descri├º├úo.'}
                     >
-                      💡 {versions.find(v => v.versao === proposta.versao)?.changelog || 'Criação inicial da proposta'}
+                      ­ƒÆí {versions.find(v => v.versao === proposta.versao)?.changelog || 'Cria├º├úo inicial da proposta'}
                     </div>
                   </div>
                 )}
@@ -1115,7 +1116,7 @@ function PropostaEditor() {
             </div>
             <div className="flex items-center gap-4">
                {id && versions.length <= 1 && (
-                 <span className="text-xs text-slate-500 bg-slate-200 px-3 py-1 rounded-full font-medium">Revisão {proposta.versao}</span>
+                 <span className="text-xs text-slate-500 bg-slate-200 px-3 py-1 rounded-full font-medium">Revis├úo {proposta.versao}</span>
                )}
                {!id && (
                  <span className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full font-medium">Nova Proposta</span>
@@ -1137,7 +1138,7 @@ function PropostaEditor() {
             </div>
         </header>
 
-        {/* NAVEGAÇÃO POR ABAS - ESTILO MULTI-LINHA PARA EVITAR SCROLL */}
+        {/* NAVEGA├ç├âO POR ABAS - ESTILO MULTI-LINHA PARA EVITAR SCROLL */}
         {activeTab !== 'comercial' && (
            <div className="w-full max-w-7xl mb-8 border-b border-slate-200 pb-2">
               <nav className="flex flex-wrap gap-x-6 gap-y-2">
@@ -1160,7 +1161,7 @@ function PropostaEditor() {
            </div>
         )}
 
-        {/* ÁREA DE CONTEÚDO */}
+        {/* ├üREA DE CONTE├ÜDO */}
         <div className="w-full max-w-7xl min-h-[600px]">
            
            {/* ABA 1: CLIENTE (Layout Profissional) */}
@@ -1168,7 +1169,7 @@ function PropostaEditor() {
               <div className="bg-white border border-slate-300 rounded-md shadow-sm">
                  <div className="bg-[#1B4D3E] px-6 py-3 border-b border-[#13382D] rounded-t-md">
                     <h2 className="text-white text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                       <FileText size={16} /> Identificação do Projeto
+                       <FileText size={16} /> Identifica├º├úo do Projeto
                     </h2>
                  </div>
                  <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
@@ -1237,13 +1238,13 @@ function PropostaEditor() {
                     </div>
 
                     <div className="space-y-1">
-                       <label className="text-xs font-semibold text-slate-700">Data de Elaboração</label>
+                       <label className="text-xs font-semibold text-slate-700">Data de Elabora├º├úo</label>
                        <input type="date" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]" value={proposta.cliente.dataElaboracao} onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, dataElaboracao: e.target.value}})} />
                     </div>
 
                      <div className="space-y-1">
                         <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                          Nº da Proposta
+                          N┬║ da Proposta
                           <span className="text-[9px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded font-bold uppercase">Auto</span>
                         </label>
                         <input 
@@ -1257,7 +1258,7 @@ function PropostaEditor() {
 
                      <div className="space-y-1">
                         <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                          Revisão
+                          Revis├úo
                           <span className="text-[9px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded font-bold uppercase">Auto</span>
                         </label>
                         <input 
@@ -1269,7 +1270,7 @@ function PropostaEditor() {
                      </div>
 
                      <div className="space-y-1">
-                        <label className="text-xs font-semibold text-slate-700">Sindicato / Regra Técnica</label>
+                        <label className="text-xs font-semibold text-slate-700">Sindicato / Regra T├®cnica</label>
                         <select 
                            className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium"
                            value={proposta.cliente.sindicatoId}
@@ -1284,7 +1285,7 @@ function PropostaEditor() {
 
                     <div className="space-y-1">
                        <div className="flex justify-between items-center mb-1">
-                          <label className="text-xs font-semibold text-slate-700">Tipo dos Serviços</label>
+                          <label className="text-xs font-semibold text-slate-700">Tipo dos Servi├ºos</label>
                           <button onClick={() => setShowNewTipoModal(true)} className="text-[10px] bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-bold px-2 py-0.5 rounded transition-colors flex items-center gap-1"><Plus size={12}/> Novo</button>
                        </div>
                        <select 
@@ -1300,7 +1301,7 @@ function PropostaEditor() {
                     </div>
 
                     <div className="space-y-1">
-                       <label className="text-xs font-semibold text-slate-700">Contato / Responsável</label>
+                       <label className="text-xs font-semibold text-slate-700">Contato / Respons├ível</label>
                        <input type="text" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]" value={proposta.cliente.contato} onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, contato: e.target.value}})} />
                     </div>
 
@@ -1345,103 +1346,21 @@ function PropostaEditor() {
                           onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, hasEscopoTecnico: e.target.checked}})}
                        />
                        <label htmlFor="hasEscopoTecnico" className="text-xs font-bold text-slate-700 cursor-pointer select-none">
-                          📋 Incluir Escopo Técnico na Proposta
+                          ­ƒôï Incluir Escopo T├®cnico na Proposta
                        </label>
                     </div>
 
                     {proposta.cliente.hasEscopoTecnico && (
                        <div className="md:col-span-2 space-y-1">
-                          <label className="text-xs font-semibold text-slate-700">Detalhamento do Escopo Técnico</label>
+                          <label className="text-xs font-semibold text-slate-700">Detalhamento do Escopo T├®cnico</label>
                           <textarea 
                              className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] min-h-[120px]" 
                              value={proposta.cliente.escopoTecnico || ''} 
-                             placeholder="Descreva aqui de forma detalhada o escopo técnico a ser executado..."
+                             placeholder="Descreva aqui de forma detalhada o escopo t├®cnico a ser executado..."
                              onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, escopoTecnico: e.target.value}})}
                           ></textarea>
                        </div>
                     )}
-
-                    {/* ITENS INCLUSOS E EXCLUSOS (Aba 1) */}
-                    <div className="md:col-span-2 space-y-4 pt-6 mt-4 border-t border-slate-200">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Itens Inclusos e Exclusos</h3>
-                                <p className="text-xs text-slate-500 mt-1">Configure os itens que farão parte do escopo desta proposta.</p>
-                            </div>
-                            <button
-                                type="button"
-                                className="px-4 py-2 bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold text-[10px] uppercase tracking-wider rounded transition-all active:scale-95 shadow-sm cursor-pointer"
-                                onClick={() => {
-                                   const newId = String(Date.now());
-                                   const newItem = { id: newId, descricao: 'Novo Item', incluso: true };
-                                   const newList = [...(proposta.itensInclusosExcluidos || []), newItem];
-                                   setProposta({ ...proposta, itensInclusosExcluidos: newList });
-                                }}
-                             >
-                                ➕ Novo Item
-                             </button>
-                        </div>
-                        
-                        <div className="overflow-hidden border border-slate-200 rounded-lg">
-                           <table className="w-full text-left border-collapse">
-                              <thead>
-                                 <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
-                                    <th className="px-4 py-3 w-16 text-center">Item</th>
-                                    <th className="px-4 py-3">Descrição</th>
-                                    <th className="px-4 py-3 text-center w-28">Incluso?</th>
-                                    <th className="px-4 py-3 text-center w-16">Ação</th>
-                                 </tr>
-                              </thead>
-                              <tbody>
-                                 {(proposta.itensInclusosExcluidos || []).map((p: any, idx: number) => (
-                                    <tr key={p.id || idx} className="border-b border-slate-100 hover:bg-slate-50/50 bg-white">
-                                       <td className="px-4 py-3 text-center text-xs font-bold text-slate-400">
-                                          {String(idx + 1).padStart(2, '0')}
-                                       </td>
-                                       <td className="px-4 py-3">
-                                          <input 
-                                             type="text" 
-                                             className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-700 outline-none focus:border-[#1B4D3E] font-medium"
-                                             value={p.descricao || ''}
-                                             onChange={(e) => {
-                                                const newList = proposta.itensInclusosExcluidos.map((item: any) => 
-                                                   item.id === p.id ? { ...item, descricao: e.target.value } : item
-                                                );
-                                                setProposta({ ...proposta, itensInclusosExcluidos: newList });
-                                             }}
-                                          />
-                                       </td>
-                                       <td className="px-4 py-3 text-center">
-                                          <input 
-                                             type="checkbox" 
-                                             className="w-4 h-4 text-[#1B4D3E] focus:ring-[#1B4D3E] border-slate-300 rounded cursor-pointer"
-                                             checked={!!p.incluso}
-                                             onChange={(e) => {
-                                                const newList = proposta.itensInclusosExcluidos.map((item: any) => 
-                                                   item.id === p.id ? { ...item, incluso: e.target.checked } : item
-                                                );
-                                                setProposta({ ...proposta, itensInclusosExcluidos: newList });
-                                             }}
-                                          />
-                                       </td>
-                                       <td className="px-4 py-3 text-center">
-                                          <button
-                                             type="button"
-                                             className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-all cursor-pointer"
-                                             onClick={() => {
-                                                const newList = proposta.itensInclusosExcluidos.filter((item: any) => item.id !== p.id);
-                                                setProposta({ ...proposta, itensInclusosExcluidos: newList });
-                                             }}
-                                          >
-                                             <Trash2 size={16} />
-                                          </button>
-                                       </td>
-                                    </tr>
-                                 ))}
-                              </tbody>
-                           </table>
-                        </div>
-                    </div>
                  </div>
               </div>
            )}
@@ -1462,13 +1381,13 @@ function PropostaEditor() {
 
                  <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden">
                     <div className="bg-slate-50 border-b border-slate-300 px-6 py-4 flex justify-between items-center">
-                       <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Composição Tributária</h3>
+                       <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Composi├º├úo Tribut├íria</h3>
                        <button onClick={addTributo} className="text-[#1B4D3E] hover:text-[#13382D] text-xs font-semibold flex items-center gap-1"><Plus size={14}/> Nova Linha</button>
                     </div>
                     <div className="p-6 space-y-3">
                        {proposta.premissas.tributos.map((t: any) => (
                           <div key={t.id} className="flex gap-4 items-center">
-                             <input type="text" className="flex-1 bg-white border border-slate-300 rounded px-3 py-2 text-sm text-slate-800 focus:border-[#1B4D3E] outline-none" placeholder="Descrição do Imposto..." value={t.nome} onChange={(e) => {
+                             <input type="text" className="flex-1 bg-white border border-slate-300 rounded px-3 py-2 text-sm text-slate-800 focus:border-[#1B4D3E] outline-none" placeholder="Descri├º├úo do Imposto..." value={t.nome} onChange={(e) => {
                                 const newT = proposta.premissas.tributos.map((x: any) => x.id === t.id ? {...x, nome: e.target.value} : x);
                                 setProposta({...proposta, premissas: {...proposta.premissas, tributos: newT}});
                              }} />
@@ -1484,7 +1403,7 @@ function PropostaEditor() {
                        ))}
                     </div>
                     <div className="bg-[#1B4D3E] text-white px-6 py-4 flex justify-between items-center">
-                       <span className="font-bold uppercase text-xs tracking-wider">Carga Tributária Consolidada</span>
+                       <span className="font-bold uppercase text-xs tracking-wider">Carga Tribut├íria Consolidada</span>
                        <span className="text-xl font-bold">{totalTributos.toFixed(2)}%</span>
                     </div>
                  </div>
@@ -1496,19 +1415,19 @@ function PropostaEditor() {
               <div className="space-y-6">
                  <div className="flex items-center gap-2 mb-4">
                     <ShieldCheck size={20} className="text-[#1B4D3E]" />
-                    <h2 className="text-lg font-bold text-slate-800">Parâmetros Sociais e Trabalhistas</h2>
+                    <h2 className="text-lg font-bold text-slate-800">Par├ómetros Sociais e Trabalhistas</h2>
                  </div>
                  
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6">
                     <div>
-                       {renderEncargoTable('Grupo A', 'Encargos Sociais - Grupo A', 'Obrigações que incidem diretamente sobre a folha de pagamento', proposta.encargos.grupoA, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoA: val}}))}
-                       {renderEncargoTable('Grupo B', 'Encargos Sociais - Grupo B', 'Ocorrências de faltas / ausências justificadas. Incide o Grupo A', proposta.encargos.grupoB, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoB: val}}))}
-                       {renderEncargoTable('Grupo C', 'Encargos Sociais - Grupo C', 'Provisionamento de 13º e férias. Incide o Grupo A', proposta.encargos.grupoC, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoC: val}}))}
+                       {renderEncargoTable('Grupo A', 'Encargos Sociais - Grupo A', 'Obriga├º├Áes que incidem diretamente sobre a folha de pagamento', proposta.encargos.grupoA, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoA: val}}))}
+                       {renderEncargoTable('Grupo B', 'Encargos Sociais - Grupo B', 'Ocorr├¬ncias de faltas / aus├¬ncias justificadas. Incide o Grupo A', proposta.encargos.grupoB, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoB: val}}))}
+                       {renderEncargoTable('Grupo C', 'Encargos Sociais - Grupo C', 'Provisionamento de 13┬║ e f├®rias. Incide o Grupo A', proposta.encargos.grupoC, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoC: val}}))}
                     </div>
                     <div>
-                       {renderEncargoTable('Grupo D', 'Encargos Sociais - Grupo D', 'Demissão sem justa causa e indenizações', proposta.encargos.grupoD, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoD: val}}))}
+                       {renderEncargoTable('Grupo D', 'Encargos Sociais - Grupo D', 'Demiss├úo sem justa causa e indeniza├º├Áes', proposta.encargos.grupoD, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoD: val}}))}
                        {renderEncargoTable('Grupo E', 'Encargos Sociais - Grupo E', 'Provisionamento de casos especiais (maternidade, etc)', proposta.encargos.grupoE, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoE: val}}))}
-                       {renderEncargoTable('Grupo F', 'Encargos Sociais - Grupo F', 'Incidências cumulativas do Grupo A sobre B e C', proposta.encargos.grupoF, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoF: val}}))}
+                       {renderEncargoTable('Grupo F', 'Encargos Sociais - Grupo F', 'Incid├¬ncias cumulativas do Grupo A sobre B e C', proposta.encargos.grupoF, (val: any) => setProposta({...proposta, encargos: {...proposta.encargos, grupoF: val}}))}
                     </div>
                  </div>
 
@@ -1530,7 +1449,7 @@ function PropostaEditor() {
                            ...proposta, 
                            equipe: [...proposta.equipe, { 
                               id: newId, 
-                              nomeCargo: 'Selecione a Função', 
+                              nomeCargo: 'Selecione a Fun├º├úo', 
                               quantidade: 1, 
                               escala: '', 
                               cargo: {}, 
@@ -1557,9 +1476,9 @@ function PropostaEditor() {
                        <thead>
                           <tr className="bg-slate-100 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
                              <th className="px-6 py-3 w-16 text-center">Qtd.</th>
-                             <th className="px-6 py-3">Função Vinculada à CCT</th>
+                             <th className="px-6 py-3">Fun├º├úo Vinculada ├á CCT</th>
                              <th className="px-6 py-3">Escala</th>
-                             <th className="px-6 py-3 text-right">Ação</th>
+                             <th className="px-6 py-3 text-right">A├º├úo</th>
                           </tr>
                        </thead>
                        <tbody>
@@ -1582,9 +1501,9 @@ function PropostaEditor() {
                                             }
                                          }
                                       }}>
-                                         <option value="">Selecione a Função...</option>
+                                         <option value="">Selecione a Fun├º├úo...</option>
                                          {!proposta.cliente.sindicatoId && (
-                                             <option value="" disabled className="text-red-500 font-bold italic">⚠️ Selecione o Sindicato na Aba 1 primeiro</option>
+                                             <option value="" disabled className="text-red-500 font-bold italic">ÔÜá´©Å Selecione o Sindicato na Aba 1 primeiro</option>
                                           )}
                                           {ccts.filter((c: any) => !proposta.cliente.sindicatoId || c.id === proposta.cliente.sindicatoId).map((c: any) => (
                                             <optgroup key={c.id} label={`${c.nome} (${c.uf})`}>
@@ -1619,7 +1538,7 @@ function PropostaEditor() {
                                              className="px-3.5 py-2 rounded-xl border border-slate-200/80 bg-white hover:border-[#1B4D3E] hover:bg-emerald-50/30 text-slate-700 hover:text-[#1B4D3E] font-extrabold text-xs flex items-center gap-2 transition-all shadow-xs active:scale-[0.97]"
                                              title="Configurar Adicionais e Jornada"
                                           >
-                                             <span>⚙️</span> Adicionais
+                                             <span>ÔÜÖ´©Å</span> Adicionais
                                           </button>
                                           
                                           <button 
@@ -1627,7 +1546,7 @@ function PropostaEditor() {
                                              className="px-3.5 py-2 rounded-xl border border-slate-200/80 bg-white hover:border-[#1B4D3E] hover:bg-emerald-50/30 text-slate-700 hover:text-[#1B4D3E] font-extrabold text-xs flex items-center gap-2 transition-all shadow-xs active:scale-[0.97]"
                                              title="Configurar EPIs Especiais do Posto"
                                           >
-                                             <span>🛡️</span> EPIs Especiais
+                                             <span>­ƒøí´©Å</span> EPIs Especiais
                                              {((p.parametrosPosto?.episAdicionais || []).length > 0) && (
                                                 <span className="bg-[#1B4D3E] text-white text-[9px] px-2 py-0.5 rounded-full font-black shadow-xs">
                                                    {(p.parametrosPosto?.episAdicionais || []).length}
@@ -1650,7 +1569,7 @@ function PropostaEditor() {
                           {proposta.equipe.length === 0 && (
                              <tr>
                                 <td colSpan={4} className="px-6 py-12 text-center text-slate-400 text-sm">
-                                   Nenhum posto adicionado. Clique em "Inserir Posto" para começar.
+                                   Nenhum posto adicionado. Clique em "Inserir Posto" para come├ºar.
                                 </td>
                              </tr>
                           )}
@@ -1660,14 +1579,14 @@ function PropostaEditor() {
               </div>
            )}
             {activeTab === 'materiais' && renderInsumosTab('detalheMateriais', ['MATERIAIS E INSUMO', 'PRODUTOS E INSUMOS', 'MATERIAIS', 'INSUMOS', 'PRODUTOS DE LIMPEZA'], 'Materiais e Produtos de Limpeza')}
-            {activeTab === 'maquinas' && renderInsumosTab('detalheMaquinas', ['EQUIPAMENTOS LOCADO', 'EQUIPAMENTOS DEPRECIADOS', 'MAQUINAS', 'EQUIPAMENTOS'], 'Máquinas e Equipamentos')}
-            {activeTab === 'descartaveis' && renderInsumosTab('detalheDescartaveis', ['DESCARTÁVEIS', 'DESCARTAVEIS'], 'Descartáveis')}
+            {activeTab === 'maquinas' && renderInsumosTab('detalheMaquinas', ['EQUIPAMENTOS LOCADO', 'EQUIPAMENTOS DEPRECIADOS', 'MAQUINAS', 'EQUIPAMENTOS'], 'M├íquinas e Equipamentos')}
+            {activeTab === 'descartaveis' && renderInsumosTab('detalheDescartaveis', ['DESCART├üVEIS', 'DESCARTAVEIS'], 'Descart├íveis')}
 
             {/* ABA 5: EXTRATO (100% IGUAL AO PRINT - PLANILHA DE CUSTOS) */}
            {activeTab === 'extrato' && (
               <div className="w-full bg-white border border-[#1B4D3E] shadow-xl text-xs rounded overflow-hidden print:border-none print:shadow-none">
                  
-                 {/* CABEÇALHO PLANILHA */}
+                 {/* CABE├çALHO PLANILHA */}
                  <div className="bg-[#1B4D3E] text-white flex justify-center items-center px-6 py-4 border-b border-white">
                     <h2 className="font-bold uppercase text-xl tracking-widest">Planilha de Custos</h2>
                  </div>
@@ -1676,10 +1595,10 @@ function PropostaEditor() {
                     <thead>
                        {/* MONTANTE A */}
                        <tr className="bg-[#1B4D3E] text-white border-b border-white/20">
-                          <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "A" - Mão-de-obra</th>
+                          <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "A" - M├úo-de-obra</th>
                        </tr>
                        <tr className="bg-slate-100 font-bold border-b border-slate-300 text-[10px] uppercase tracking-wider">
-                          <th className="py-2 px-6 w-[50%]">1) Função</th>
+                          <th className="py-2 px-6 w-[50%]">1) Fun├º├úo</th>
                           <th className="py-2 px-6 text-center">Qtd.</th>
                           <th className="py-2 px-6 text-right">Custo Unit</th>
                           <th className="py-2 px-6 text-right">Total</th>
@@ -1700,9 +1619,9 @@ function PropostaEditor() {
                           );
                        })}
                        
-                       {/* Total Função */}
+                       {/* Total Fun├º├úo */}
                        <tr className="bg-[#3b8026] text-white font-bold border-y border-[#2d631d]">
-                          <td colSpan={3} className="py-1.5 px-6 text-right">Total Função</td>
+                          <td colSpan={3} className="py-1.5 px-6 text-right">Total Fun├º├úo</td>
                           <td className="py-1.5 px-6 text-right">
                              {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.remuneracao || 0) * i.quantidade), 0) || 0)}
                           </td>
@@ -1751,9 +1670,9 @@ function PropostaEditor() {
                            const rows = [
                               { label: '1) Uniformes e EPI\'s', val: b.ativos },
                               { label: '2) Materiais e produtos de limpeza', val: proposta.insumos.materiais },
-                              { label: '3) Máquinas e equipamentos', val: proposta.insumos.maquinas },
-                              { label: '4) Descartáveis', val: proposta.insumos.descartaveis },
-                              { label: '5) Serviços (Descriminar)', val: proposta.insumos.servicos },
+                              { label: '3) M├íquinas e equipamentos', val: proposta.insumos.maquinas },
+                              { label: '4) Descart├íveis', val: proposta.insumos.descartaveis },
+                              { label: '5) Servi├ºos (Descriminar)', val: proposta.insumos.servicos },
                            ];
 
                            return rows.map((row, i) => (
@@ -1779,7 +1698,7 @@ function PropostaEditor() {
 
                         {/* MONTANTE C */}
                         <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
-                           <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "C" - Benefícios Detalhados (13 Itens)</th>
+                           <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "C" - Benef├¡cios Detalhados (13 Itens)</th>
                         </tr>
                         {(() => {
                            const b = resultado?.items?.reduce((acc: any, i: any) => {
@@ -1802,16 +1721,16 @@ function PropostaEditor() {
                             }, { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 }) || { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 };
 
                            const rows: any[] = [
-                               { label: '1) Vale Alimentação', val: b.va },
+                               { label: '1) Vale Alimenta├º├úo', val: b.va },
                                { label: '2) Vale Transporte', val: b.vt },
                                { label: '3) Custos com Sindicatos', val: b.custosSindicato },
-                               { label: '4) Vale Alimentação Sobre Férias', val: b.vaFerias },
-                               { label: '5) Cesta Básica Assiduidade(+)', val: b.cestaBasica },
+                               { label: '4) Vale Alimenta├º├úo Sobre F├®rias', val: b.vaFerias },
+                               { label: '5) Cesta B├ísica Assiduidade(+)', val: b.cestaBasica },
                                { label: '6) Desconto de VA(-)', val: b.descontoVA, red: true },
                                { label: '7) Desconto de VT(-)', val: b.descontoVT, red: true },
-                               { label: '8) Exames Médicos', val: b.exames },
-                               { label: '9) Reservas Técnicas', val: b.reservaTecnica, pct: b.reservaTecnicaPct, field: 'reservaTecnicaPct' },
-                               { label: '10) Manutenção Equipamentos', val: b.manutencao, pct: b.manutencaoPct, field: 'manutencaoPct' },
+                               { label: '8) Exames M├®dicos', val: b.exames },
+                               { label: '9) Reservas T├®cnicas', val: b.reservaTecnica, pct: b.reservaTecnicaPct, field: 'reservaTecnicaPct' },
+                               { label: '10) Manuten├º├úo Equipamentos', val: b.manutencao, pct: b.manutencaoPct, field: 'manutencaoPct' },
                                { label: '11) Outros (especificar)', val: b.outros },
                              ];
 
@@ -1857,7 +1776,7 @@ function PropostaEditor() {
                            <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "D" - BDI</th>
                         </tr>
                         <tr className="border-b border-slate-200 border-dotted">
-                           <td className="py-1.5 px-6 font-bold w-[50%]">Administração</td>
+                           <td className="py-1.5 px-6 font-bold w-[50%]">Administra├º├úo</td>
                            <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{proposta.premissas.taxaAdm.toFixed(2)}%</td>
                            <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
                               {formatCurrency(resultado?.taxaAdm || 0)}
@@ -1918,7 +1837,7 @@ function PropostaEditor() {
               const txAdm = (proposta.premissas.taxaAdm || 0) / 100;
               const txLucro = (proposta.premissas.margemLucro || 0) / 100;
 
-              // Função auxiliar para aplicar a cascata solicitada a um custo direto
+              // Fun├º├úo auxiliar para aplicar a cascata solicitada a um custo direto
               const applyCascata = (custo: any) => {
                 const cD = Number(custo) || 0;
                 const comAdm = cD * (1 + txAdm);
@@ -1929,20 +1848,20 @@ function PropostaEditor() {
               return (
                 <div className="space-y-6">
 
-                  {/* BLOCO 1: MÃO DE OBRA */}
+                  {/* BLOCO 1: M├âO DE OBRA */}
                   <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden">
                     <div className="bg-[#1B4D3E] px-6 py-3 flex items-center gap-2">
                       <UserCheck size={16} className="text-emerald-300" />
-                      <h2 className="text-xs font-black text-white uppercase tracking-widest">1) Mão de Obra — Quadro de Colaboradores</h2>
+                      <h2 className="text-xs font-black text-white uppercase tracking-widest">1) M├úo de Obra ÔÇö Quadro de Colaboradores</h2>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse text-xs">
                         <thead>
                           <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
                             <th className="px-4 py-2 w-10 text-center">Item</th>
-                            <th className="px-4 py-2">Descrição — Mão de Obra</th>
+                            <th className="px-4 py-2">Descri├º├úo ÔÇö M├úo de Obra</th>
                             <th className="px-4 py-2 text-center">Qtd.</th>
-                            <th className="px-4 py-2 text-right">Preço Unit. Venda</th>
+                            <th className="px-4 py-2 text-right">Pre├ºo Unit. Venda</th>
                             <th className="px-4 py-2 text-right">Total</th>
                           </tr>
                         </thead>
@@ -1968,7 +1887,7 @@ function PropostaEditor() {
                         </tbody>
                         <tfoot>
                           <tr className="bg-[#1B4D3E] text-white font-black">
-                            <td colSpan={4} className="px-4 py-2.5 text-right uppercase tracking-wider text-xs">Subtotal Mão de Obra (Preço de Venda Final)</td>
+                            <td colSpan={4} className="px-4 py-2.5 text-right uppercase tracking-wider text-xs">Subtotal M├úo de Obra (Pre├ºo de Venda Final)</td>
                             <td className="px-4 py-2.5 text-right text-emerald-300">
                                {fc(resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0)}
                             </td>
@@ -1989,8 +1908,8 @@ function PropostaEditor() {
                         <thead>
                           <tr className="bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200">
                             <th className="px-6 py-2 w-10 text-center">Item</th>
-                            <th className="px-6 py-2">Descrição</th>
-                            <th className="px-6 py-2 text-right w-48">Preço de Venda (R$)</th>
+                            <th className="px-6 py-2">Descri├º├úo</th>
+                            <th className="px-6 py-2 text-right w-48">Pre├ºo de Venda (R$)</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2003,14 +1922,14 @@ function PropostaEditor() {
                           </tr>
                           <tr className="border-b border-slate-200 hover:bg-slate-50">
                             <td className="px-6 py-2.5 text-center font-bold text-slate-500">3</td>
-                            <td className="px-6 py-2.5 font-semibold text-slate-700">Máquinas e equipamentos</td>
+                            <td className="px-6 py-2.5 font-semibold text-slate-700">M├íquinas e equipamentos</td>
                             <td className="px-6 py-2.5 text-right font-bold text-slate-800">
                               {fc(applyCascata(proposta.insumos.maquinas))}
                             </td>
                           </tr>
                           <tr className="border-b border-slate-200 hover:bg-slate-50">
                             <td className="px-6 py-2.5 text-center font-bold text-slate-500">4</td>
-                            <td className="px-6 py-2.5 font-semibold text-slate-700">Descartáveis</td>
+                            <td className="px-6 py-2.5 font-semibold text-slate-700">Descart├íveis</td>
                             <td className="px-6 py-2.5 text-right font-bold text-slate-800">
                               {fc(applyCascata(proposta.insumos.descartaveis))}
                             </td>
@@ -2018,7 +1937,7 @@ function PropostaEditor() {
                           <tr className="border-b border-slate-200 hover:bg-slate-50">
                             <td className="px-6 py-2.5 text-center font-bold text-slate-500">5</td>
                             <td className="px-6 py-2.5 font-semibold text-slate-700">
-                              Serviços {proposta.insumos.servicosDescricao ? `(${proposta.insumos.servicosDescricao})` : ''}
+                              Servi├ºos {proposta.insumos.servicosDescricao ? `(${proposta.insumos.servicosDescricao})` : ''}
                             </td>
                             <td className="px-6 py-2.5 text-right font-bold text-slate-800">
                               {fc(applyCascata(proposta.insumos.servicos))}
@@ -2027,7 +1946,7 @@ function PropostaEditor() {
                         </tbody>
                         <tfoot>
                           <tr className="bg-slate-700 text-white font-black">
-                            <td colSpan={2} className="px-6 py-2.5 text-right uppercase tracking-wider text-xs">Subtotal Materiais e Insumos (Preço de Venda Final)</td>
+                            <td colSpan={2} className="px-6 py-2.5 text-right uppercase tracking-wider text-xs">Subtotal Materiais e Insumos (Pre├ºo de Venda Final)</td>
                             <td className="px-6 py-2.5 text-right text-emerald-300">
                               {fc(applyCascata(
                                 Number(proposta.insumos.materiais || 0) + 
@@ -2046,7 +1965,7 @@ function PropostaEditor() {
                   <div className="bg-[#1B4D3E] p-8 rounded-xl border-t-4 border-emerald-400 flex flex-col md:flex-row justify-between items-center gap-6 shadow-xl">
                     <div className="text-white">
                       <h3 className="text-sm font-black uppercase tracking-widest text-emerald-300 mb-1">Total Geral da Proposta</h3>
-                      <p className="text-[10px] font-bold text-emerald-100/60 uppercase">Mão de Obra + Insumos Globais — Valor Final de Venda</p>
+                      <p className="text-[10px] font-bold text-emerald-100/60 uppercase">M├úo de Obra + Insumos Globais ÔÇö Valor Final de Venda</p>
                     </div>
                     <div className="text-5xl font-black text-emerald-400 tracking-tighter">
                       {fc(resultado?.faturamentoBruto || 0)}
@@ -2057,9 +1976,9 @@ function PropostaEditor() {
               );
             })()}
 
-           {/* ABA 7: DRE - ORÇAMENTO EXECUTIVO E DRE ULTRA PREMIUM */}
+           {/* ABA 7: DRE - OR├çAMENTO EXECUTIVO E DRE ULTRA PREMIUM */}
             {activeTab === 'dre' && (() => {
-               // 1. Cálculos de Remuneração e Adicionais dos Colaboradores
+               // 1. C├ílculos de Remunera├º├úo e Adicionais dos Colaboradores
                let totalSalarios = 0;
                let totalInsalubridade = 0;
                let totalPericulosidade = 0;
@@ -2108,7 +2027,7 @@ function PropostaEditor() {
 
                const totalRemuneracaoBase = totalSalarios + totalInsalubridade + totalPericulosidade + totalNoturno + totalIntrajornada + totalDsr;
 
-               // 2. Cálculos de Encargos Parametrizados na Tela
+               // 2. C├ílculos de Encargos Parametrizados na Tela
                const encargosValores = {
                   fgts: totalRemuneracaoBase * (dreEncargos.fgts / 100),
                   decimoTerceiro: totalRemuneracaoBase * (dreEncargos.decimoTerceiro / 100),
@@ -2119,7 +2038,7 @@ function PropostaEditor() {
                };
                const totalEncargosSociais = Object.values(encargosValores).reduce((a, b) => a + b, 0);
 
-               // 3. Cálculos de Benefícios a partir do Pricing Engine
+               // 3. C├ílculos de Benef├¡cios a partir do Pricing Engine
                const totalVT = resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.detalheBlocoC?.vt || 0) * i.quantidade), 0) || 0;
                const totalVA = resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.detalheBlocoC?.va || 0) * i.quantidade), 0) || 0;
                const totalVAFerias = resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.detalheBlocoC?.vaFerias || 0) * i.quantidade), 0) || 0;
@@ -2131,7 +2050,7 @@ function PropostaEditor() {
 
                const totalBeneficiosSubtotal = (totalVT + totalVA + totalVAFerias + totalCesta + totalSindicato + totalOutrosBen) - (totalDescontoVA + totalDescontoVT);
 
-               // 4. Cálculos de SSMA
+               // 4. C├ílculos de SSMA
                const totalEpi = resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.ativos || 0) * i.quantidade), 0) || 0;
                const totalExames = resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.detalheBlocoC?.exames || 0) * i.quantidade), 0) || 0;
                const totalSSMASubtotal = totalEpi + totalExames;
@@ -2148,7 +2067,7 @@ function PropostaEditor() {
                const custoOperacionalMensal = totalRemuneracaoBase + totalEncargosSociais + totalBeneficiosSubtotal + totalSSMASubtotal + totalMateriais + totalMaquinas;
                const margemBrutaMensal = receitaLiquidaMensal - custoOperacionalMensal;
 
-               // Função de renderização de célula de moeda e percentual vertical
+               // Fun├º├úo de renderiza├º├úo de c├®lula de moeda e percentual vertical
                const renderValueCell = (value: number, baseValue: number, isMargem = false) => {
                   const pct = baseValue > 0 ? (value / baseValue) * 100 : 0;
                   return (
@@ -2169,7 +2088,7 @@ function PropostaEditor() {
 
                return (
                   <div className="w-full bg-white border border-slate-100 shadow-[0_20px_50px_rgba(27,77,62,0.06)] rounded-2xl overflow-hidden flex flex-col">
-                     {/* Cabeçalho da DRE */}
+                     {/* Cabe├ºalho da DRE */}
                      <div className="bg-gradient-to-r from-[#1B4D3E] via-[#215E4C] to-[#12362b] text-white p-5 flex items-center justify-between border-b border-emerald-500/20">
                         <div className="flex items-center gap-3">
                            <div className="bg-white/10 p-2.5 rounded-xl border border-white/10 shadow-inner">
@@ -2177,7 +2096,7 @@ function PropostaEditor() {
                            </div>
                            <div>
                               <h3 className="font-extrabold text-xs uppercase tracking-widest text-emerald-100/90">DRE do Projeto</h3>
-                              <p className="text-[10px] text-emerald-200 uppercase font-bold tracking-wider mt-0.5">Demonstração do Resultado & Orçamento Executivo</p>
+                              <p className="text-[10px] text-emerald-200 uppercase font-bold tracking-wider mt-0.5">Demonstra├º├úo do Resultado & Or├ºamento Executivo</p>
                            </div>
                         </div>
                         <div className="text-right">
@@ -2187,7 +2106,7 @@ function PropostaEditor() {
                         </div>
                      </div>
 
-                     {/* Planilha de Cálculo */}
+                     {/* Planilha de C├ílculo */}
                      <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse min-w-[1400px]">
                            <thead>
@@ -2205,7 +2124,7 @@ function PropostaEditor() {
                               <tr className="bg-slate-50/60 font-bold border-b border-slate-200/60 hover:bg-slate-100/40 transition-colors">
                                  <td className="p-3 pl-4 flex items-center gap-2">
                                     <button onClick={() => toggleRow('01')} className="text-slate-400 hover:text-[#1B4D3E] p-1 rounded hover:bg-slate-200/50 transition-colors">
-                                       <span className="text-xs transition-transform duration-200 block">{dreExpandedRows['01'] ? '▼' : '►'}</span>
+                                       <span className="text-xs transition-transform duration-200 block">{dreExpandedRows['01'] ? 'Ôû╝' : 'Ôû║'}</span>
                                     </button>
                                     <span className="text-xs uppercase tracking-wider font-extrabold text-blue-700">01. RECEITA BRUTA</span>
                                  </td>
@@ -2216,14 +2135,14 @@ function PropostaEditor() {
                                  </td>
                               </tr>
 
-                              {/* 01.1 - Receita de Serviços */}
+                              {/* 01.1 - Receita de Servi├ºos */}
                               {dreExpandedRows['01'] && (
                                  <tr className="bg-slate-50/30 font-semibold border-b border-slate-100">
                                     <td className="p-2.5 pl-8 flex items-center gap-1.5">
                                        <button onClick={() => toggleRow('01.1')} className="text-slate-400 hover:text-[#1B4D3E] p-0.5 rounded">
-                                          <span className="text-[10px]">{dreExpandedRows['01.1'] ? '▼' : '►'}</span>
+                                          <span className="text-[10px]">{dreExpandedRows['01.1'] ? 'Ôû╝' : 'Ôû║'}</span>
                                        </button>
-                                       <span className="text-xs text-slate-700">01.1 - Receita de Serviços</span>
+                                       <span className="text-xs text-slate-700">01.1 - Receita de Servi├ºos</span>
                                     </td>
                                     {MONTHS.map(m => renderValueCell(receitaMensal, receitaMensal))}
                                     <td className="p-2.5 text-right bg-slate-50/50 font-bold border-l border-slate-200/40">
@@ -2233,10 +2152,10 @@ function PropostaEditor() {
                                  </tr>
                               )}
 
-                              {/* 01.1.1 - Serviços Vendidos */}
+                              {/* 01.1.1 - Servi├ºos Vendidos */}
                               {dreExpandedRows['01'] && dreExpandedRows['01.1'] && (
                                  <tr className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
-                                    <td className="p-2 pl-14 text-xs text-slate-500 font-medium">01.1.1 - Serviços Vendidos</td>
+                                    <td className="p-2 pl-14 text-xs text-slate-500 font-medium">01.1.1 - Servi├ºos Vendidos</td>
                                     {MONTHS.map(m => renderValueCell(receitaMensal, receitaMensal))}
                                     <td className="p-2 text-right font-semibold border-l border-slate-100 text-slate-600">
                                        <div className="text-[11px]">{formatCurrency(receitaMensal * 12)}</div>
@@ -2245,8 +2164,8 @@ function PropostaEditor() {
                                  </tr>
                               )}
 
-                              {/* 01.1.2 a 01.1.5 (Zeradões) */}
-                              {dreExpandedRows['01'] && dreExpandedRows['01.1'] && ['01.1.2 - Serviços Extras', '01.1.3 - Assistência Técnica', '01.1.4 - Vendas de Produtos', '01.1.5 - Comissão de Vendas'].map(lbl => (
+                              {/* 01.1.2 a 01.1.5 (Zerad├Áes) */}
+                              {dreExpandedRows['01'] && dreExpandedRows['01.1'] && ['01.1.2 - Servi├ºos Extras', '01.1.3 - Assist├¬ncia T├®cnica', '01.1.4 - Vendas de Produtos', '01.1.5 - Comiss├úo de Vendas'].map(lbl => (
                                  <tr key={lbl} className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors text-slate-400">
                                     <td className="p-2 pl-14 text-xs font-medium">{lbl}</td>
                                     {MONTHS.map(m => <td key={m} className="p-2 text-right">-</td>)}
@@ -2259,7 +2178,7 @@ function PropostaEditor() {
                                  <tr className="bg-slate-50/30 font-semibold border-b border-slate-100 text-slate-400">
                                     <td className="p-2.5 pl-8 flex items-center gap-1.5">
                                        <button onClick={() => toggleRow('01.2')} className="text-slate-300 p-0.5 rounded">
-                                          <span className="text-[10px]">{dreExpandedRows['01.2'] ? '▼' : '►'}</span>
+                                          <span className="text-[10px]">{dreExpandedRows['01.2'] ? 'Ôû╝' : 'Ôû║'}</span>
                                        </button>
                                        <span className="text-xs">01.2 - Receita de Vendas</span>
                                     </td>
@@ -2281,7 +2200,7 @@ function PropostaEditor() {
                               <tr className="bg-slate-50/60 font-bold border-b border-slate-200/60 hover:bg-slate-100/40 transition-colors">
                                  <td className="p-3 pl-4 flex items-center gap-2">
                                     <button onClick={() => toggleRow('02')} className="text-slate-400 hover:text-[#1B4D3E] p-1 rounded hover:bg-slate-200/50 transition-colors">
-                                       <span className="text-xs transition-transform duration-200 block">{dreExpandedRows['02'] ? '▼' : '►'}</span>
+                                       <span className="text-xs transition-transform duration-200 block">{dreExpandedRows['02'] ? 'Ôû╝' : 'Ôû║'}</span>
                                     </button>
                                     <span className="text-xs uppercase tracking-wider font-extrabold text-red-600">02. TRIBUTO SOBRE FATURAMENTO</span>
                                  </td>
@@ -2299,7 +2218,7 @@ function PropostaEditor() {
                                  <tr className="bg-slate-50/30 font-semibold border-b border-slate-100">
                                     <td className="p-2.5 pl-8 flex items-center gap-1.5">
                                        <button onClick={() => toggleRow('02.1')} className="text-slate-400 hover:text-[#1B4D3E] p-0.5 rounded">
-                                          <span className="text-[10px]">{dreExpandedRows['02.1'] ? '▼' : '►'}</span>
+                                          <span className="text-[10px]">{dreExpandedRows['02.1'] ? 'Ôû╝' : 'Ôû║'}</span>
                                        </button>
                                        <span className="text-xs text-slate-700">02.1 - Tributos</span>
                                     </td>
@@ -2313,7 +2232,7 @@ function PropostaEditor() {
                                  </tr>
                               )}
 
-                              {/* 02.1.1 - Simples Nacional - DAS (EDITÁVEL NA TELA!) */}
+                              {/* 02.1.1 - Simples Nacional - DAS (EDIT├üVEL NA TELA!) */}
                               {dreExpandedRows['02'] && dreExpandedRows['02.1'] && (
                                  <tr className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
                                     <td className="p-3 pl-14">
@@ -2339,8 +2258,8 @@ function PropostaEditor() {
                                  </tr>
                               )}
 
-                              {/* 02.1.2 e 02.1.3 (Zeradões) */}
-                              {dreExpandedRows['02'] && dreExpandedRows['02.1'] && ['02.1.2 - Sefaz', '02.1.3 - Retenção na fonte'].map(lbl => (
+                              {/* 02.1.2 e 02.1.3 (Zerad├Áes) */}
+                              {dreExpandedRows['02'] && dreExpandedRows['02.1'] && ['02.1.2 - Sefaz', '02.1.3 - Reten├º├úo na fonte'].map(lbl => (
                                  <tr key={lbl} className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors text-slate-400">
                                     <td className="p-2 pl-14 text-xs font-medium">{lbl}</td>
                                     {MONTHS.map(m => <td key={m} className="p-2 text-right">-</td>)}
@@ -2348,9 +2267,9 @@ function PropostaEditor() {
                                  </tr>
                               ))}
 
-                              {/* (=) RECEITA LÍQUIDA */}
+                              {/* (=) RECEITA L├ìQUIDA */}
                               <tr className="bg-blue-50/40 font-black border-y border-slate-200/80 text-blue-900">
-                                 <td className="p-3.5 pl-6 text-xs uppercase tracking-wider">(=) RECEITA LÍQUIDA</td>
+                                 <td className="p-3.5 pl-6 text-xs uppercase tracking-wider">(=) RECEITA L├ìQUIDA</td>
                                  {MONTHS.map(m => renderValueCell(receitaLiquidaMensal, receitaMensal))}
                                  <td className="p-3.5 text-right bg-blue-100/20 font-black border-l border-slate-300">
                                     <div className="text-xs">{formatCurrency(receitaLiquidaMensal * 12)}</div>
@@ -2364,7 +2283,7 @@ function PropostaEditor() {
                               <tr className="bg-slate-50/60 font-bold border-b border-slate-200/60 hover:bg-slate-100/40 transition-colors">
                                  <td className="p-3 pl-4 flex items-center gap-2">
                                     <button onClick={() => toggleRow('03')} className="text-slate-400 hover:text-[#1B4D3E] p-1 rounded hover:bg-slate-200/50 transition-colors">
-                                       <span className="text-xs transition-transform duration-200 block">{dreExpandedRows['03'] ? '▼' : '►'}</span>
+                                       <span className="text-xs transition-transform duration-200 block">{dreExpandedRows['03'] ? 'Ôû╝' : 'Ôû║'}</span>
                                     </button>
                                     <span className="text-xs uppercase tracking-wider font-extrabold text-[#1B4D3E]">03. CUSTO OPERACIONAL</span>
                                  </td>
@@ -2377,14 +2296,14 @@ function PropostaEditor() {
                                  </td>
                               </tr>
 
-                              {/* 03.1 - Salários e Remuneração */}
+                              {/* 03.1 - Sal├írios e Remunera├º├úo */}
                               {dreExpandedRows['03'] && (
                                  <tr className="bg-slate-50/30 font-semibold border-b border-slate-100">
                                     <td className="p-2.5 pl-8 flex items-center gap-1.5">
                                        <button onClick={() => toggleRow('03.1')} className="text-slate-400 hover:text-[#1B4D3E] p-0.5 rounded">
-                                          <span className="text-[10px]">{dreExpandedRows['03.1'] ? '▼' : '►'}</span>
+                                          <span className="text-[10px]">{dreExpandedRows['03.1'] ? 'Ôû╝' : 'Ôû║'}</span>
                                        </button>
-                                       <span className="text-xs text-slate-700">03.1 - Salários e Remuneração</span>
+                                       <span className="text-xs text-slate-700">03.1 - Sal├írios e Remunera├º├úo</span>
                                     </td>
                                     {MONTHS.map(m => renderValueCell(totalRemuneracaoBase, receitaMensal))}
                                     <td className="p-2.5 text-right bg-slate-50/50 font-bold border-l border-slate-200/40">
@@ -2396,10 +2315,10 @@ function PropostaEditor() {
                                  </tr>
                               )}
 
-                              {/* 03.1.1 - Salários */}
+                              {/* 03.1.1 - Sal├írios */}
                               {dreExpandedRows['03'] && dreExpandedRows['03.1'] && (
                                  <tr className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
-                                    <td className="p-2 pl-14 text-xs text-slate-500 font-medium">03.1.1 - Salários</td>
+                                    <td className="p-2 pl-14 text-xs text-slate-500 font-medium">03.1.1 - Sal├írios</td>
                                     {MONTHS.map(m => renderValueCell(totalSalarios, receitaMensal))}
                                     <td className="p-2 text-right font-semibold border-l border-slate-100 text-slate-600">
                                        <div className="text-[11px]">{formatCurrency(totalSalarios * 12)}</div>
@@ -2444,12 +2363,12 @@ function PropostaEditor() {
                                  </tr>
                               )}
 
-                              {/* 03.2 - Encargos Sociais (EDITÁVEL NA TELA!) */}
+                              {/* 03.2 - Encargos Sociais (EDIT├üVEL NA TELA!) */}
                               {dreExpandedRows['03'] && (
                                  <tr className="bg-slate-50/30 font-semibold border-b border-slate-100">
                                     <td className="p-2.5 pl-8 flex items-center gap-1.5">
                                        <button onClick={() => toggleRow('03.2')} className="text-slate-400 hover:text-[#1B4D3E] p-0.5 rounded">
-                                          <span className="text-[10px]">{dreExpandedRows['03.2'] ? '▼' : '►'}</span>
+                                          <span className="text-[10px]">{dreExpandedRows['03.2'] ? 'Ôû╝' : 'Ôû║'}</span>
                                        </button>
                                        <span className="text-xs text-slate-700">03.2 - Encargos Sociais</span>
                                     </td>
@@ -2463,12 +2382,12 @@ function PropostaEditor() {
                                  </tr>
                               )}
 
-                              {/* Sub-itens de encargos editáveis */}
+                              {/* Sub-itens de encargos edit├íveis */}
                               {dreExpandedRows['03'] && dreExpandedRows['03.2'] && [
                                  { key: 'fgts', lbl: '03.2.1 - Recolhimento FGTS', val: encargosValores.fgts },
-                                 { key: 'decimoTerceiro', lbl: '03.2.2 - 13º Salário', val: encargosValores.decimoTerceiro },
-                                 { key: 'ferias', lbl: '03.2.3 - Férias', val: encargosValores.ferias },
-                                 { key: 'fgtsRescisorio', lbl: '03.2.4 - FGTS Rescisório', val: encargosValores.fgtsRescisorio },
+                                 { key: 'decimoTerceiro', lbl: '03.2.2 - 13┬║ Sal├írio', val: encargosValores.decimoTerceiro },
+                                 { key: 'ferias', lbl: '03.2.3 - F├®rias', val: encargosValores.ferias },
+                                 { key: 'fgtsRescisorio', lbl: '03.2.4 - FGTS Rescis├│rio', val: encargosValores.fgtsRescisorio },
                                  { key: 'outros', lbl: '03.2.5 - Outros Encargos', val: encargosValores.outros },
                                  { key: 'inss', lbl: '03.2.6 - INSS', val: encargosValores.inss }
                               ].map(item => (
@@ -2496,14 +2415,14 @@ function PropostaEditor() {
                                  </tr>
                               ))}
 
-                              {/* 03.3 - Benefícios */}
+                              {/* 03.3 - Benef├¡cios */}
                               {dreExpandedRows['03'] && (
                                  <tr className="bg-slate-50/30 font-semibold border-b border-slate-100">
                                     <td className="p-2.5 pl-8 flex items-center gap-1.5">
                                        <button onClick={() => toggleRow('03.3')} className="text-slate-400 hover:text-[#1B4D3E] p-0.5 rounded">
-                                          <span className="text-[10px]">{dreExpandedRows['03.3'] ? '▼' : '►'}</span>
+                                          <span className="text-[10px]">{dreExpandedRows['03.3'] ? 'Ôû╝' : 'Ôû║'}</span>
                                        </button>
-                                       <span className="text-xs text-slate-700">03.3 - Benefícios</span>
+                                       <span className="text-xs text-slate-700">03.3 - Benef├¡cios</span>
                                     </td>
                                     {MONTHS.map(m => renderValueCell(totalBeneficiosSubtotal, receitaMensal))}
                                     <td className="p-2.5 text-right bg-slate-50/50 font-bold border-l border-slate-200/40">
@@ -2515,12 +2434,12 @@ function PropostaEditor() {
                                  </tr>
                               )}
 
-                              {/* Sub-itens de Benefícios */}
+                              {/* Sub-itens de Benef├¡cios */}
                               {dreExpandedRows['03'] && dreExpandedRows['03.3'] && [
                                  { lbl: '03.3.1 - Vale Transporte', val: totalVT - totalDescontoVT },
-                                 { lbl: '03.3.2 - Vale Alimentação', val: totalVA - totalDescontoVA },
-                                 { lbl: '03.3.3 - Vale Alimentação Sobre Férias', val: totalVAFerias },
-                                 { lbl: '03.3.4 - Cesta Básica / Benefícios CCT', val: totalCesta + totalSindicato + totalOutrosBen }
+                                 { lbl: '03.3.2 - Vale Alimenta├º├úo', val: totalVA - totalDescontoVA },
+                                 { lbl: '03.3.3 - Vale Alimenta├º├úo Sobre F├®rias', val: totalVAFerias },
+                                 { lbl: '03.3.4 - Cesta B├ísica / Benef├¡cios CCT', val: totalCesta + totalSindicato + totalOutrosBen }
                               ].map(item => (
                                  <tr key={item.lbl} className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
                                     <td className="p-2 pl-14 text-xs text-slate-500 font-medium">{item.lbl}</td>
@@ -2534,14 +2453,14 @@ function PropostaEditor() {
                                  </tr>
                               ))}
 
-                              {/* 03.4 - Diárias (Zeradão) */}
+                              {/* 03.4 - Di├írias (Zerad├úo) */}
                               {dreExpandedRows['03'] && (
                                  <tr className="bg-slate-50/30 font-semibold border-b border-slate-100 text-slate-400">
                                     <td className="p-2.5 pl-8 flex items-center gap-1.5">
                                        <button onClick={() => toggleRow('03.4')} className="text-slate-300 p-0.5 rounded">
-                                          <span className="text-[10px]">{dreExpandedRows['03.4'] ? '▼' : '►'}</span>
+                                          <span className="text-[10px]">{dreExpandedRows['03.4'] ? 'Ôû╝' : 'Ôû║'}</span>
                                        </button>
-                                       <span className="text-xs">03.4 - Diárias</span>
+                                       <span className="text-xs">03.4 - Di├írias</span>
                                     </td>
                                     {MONTHS.map(m => <td key={m} className="p-2.5 text-right">-</td>)}
                                     <td className="p-2.5 text-right font-bold border-l border-slate-200/40">-</td>
@@ -2553,7 +2472,7 @@ function PropostaEditor() {
                                  <tr className="bg-slate-50/30 font-semibold border-b border-slate-100">
                                     <td className="p-2.5 pl-8 flex items-center gap-1.5">
                                        <button onClick={() => toggleRow('03.5')} className="text-slate-400 hover:text-[#1B4D3E] p-0.5 rounded">
-                                          <span className="text-[10px]">{dreExpandedRows['03.5'] ? '▼' : '►'}</span>
+                                          <span className="text-[10px]">{dreExpandedRows['03.5'] ? 'Ôû╝' : 'Ôû║'}</span>
                                        </button>
                                        <span className="text-xs text-slate-700">03.5 - SSMA</span>
                                     </td>
@@ -2569,8 +2488,8 @@ function PropostaEditor() {
 
                               {/* Sub-itens SSMA */}
                               {dreExpandedRows['03'] && dreExpandedRows['03.5'] && [
-                                 { lbl: '03.5.1 - Equipamento de Proteção Individual (EPI)', val: totalEpi },
-                                 { lbl: '03.5.3 - Exames Médicos / Periódicos', val: totalExames }
+                                 { lbl: '03.5.1 - Equipamento de Prote├º├úo Individual (EPI)', val: totalEpi },
+                                 { lbl: '03.5.3 - Exames M├®dicos / Peri├│dicos', val: totalExames }
                               ].map(item => (
                                  <tr key={item.lbl} className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
                                     <td className="p-2 pl-14 text-xs text-slate-500 font-medium">{item.lbl}</td>
@@ -2589,7 +2508,7 @@ function PropostaEditor() {
                                  <tr className="bg-slate-50/30 font-semibold border-b border-slate-100">
                                     <td className="p-2.5 pl-8 flex items-center gap-1.5">
                                        <button onClick={() => toggleRow('03.6')} className="text-slate-400 hover:text-[#1B4D3E] p-0.5 rounded">
-                                          <span className="text-[10px]">{dreExpandedRows['03.6'] ? '▼' : '►'}</span>
+                                          <span className="text-[10px]">{dreExpandedRows['03.6'] ? 'Ôû╝' : 'Ôû║'}</span>
                                        </button>
                                        <span className="text-xs text-slate-700">03.6 - Materiais</span>
                                     </td>
@@ -2620,7 +2539,7 @@ function PropostaEditor() {
                                  <tr className="bg-slate-50/30 font-semibold border-b border-slate-100">
                                     <td className="p-2.5 pl-8 flex items-center gap-1.5">
                                        <button onClick={() => toggleRow('03.7')} className="text-slate-400 hover:text-[#1B4D3E] p-0.5 rounded">
-                                          <span className="text-[10px]">{dreExpandedRows['03.7'] ? '▼' : '►'}</span>
+                                          <span className="text-[10px]">{dreExpandedRows['03.7'] ? 'Ôû╝' : 'Ôû║'}</span>
                                        </button>
                                        <span className="text-xs text-slate-700">03.7 - Equipamentos</span>
                                     </td>
@@ -2637,7 +2556,7 @@ function PropostaEditor() {
                               {/* Sub-itens Equipamentos */}
                               {dreExpandedRows['03'] && dreExpandedRows['03.7'] && (
                                  <tr className="border-b border-slate-100/50 hover:bg-slate-50/30 transition-colors">
-                                    <td className="p-2 pl-14 text-xs text-slate-500 font-medium">03.7.2 - Depreciação / Locação de Equipamentos</td>
+                                    <td className="p-2 pl-14 text-xs text-slate-500 font-medium">03.7.2 - Deprecia├º├úo / Loca├º├úo de Equipamentos</td>
                                     {MONTHS.map(m => renderValueCell(totalMaquinas, receitaMensal))}
                                     <td className="p-2 text-right font-semibold border-l border-slate-100 text-slate-600">
                                        <div className="text-[11px]">{formatCurrency(totalMaquinas * 12)}</div>
@@ -2649,7 +2568,7 @@ function PropostaEditor() {
                               {/* (=) MARGEM BRUTA */}
                               <tr className="bg-emerald-50 font-black border-t-2 border-emerald-500/30 text-[#1B4D3E]">
                                  <td className="p-3.5 pl-6 text-xs uppercase tracking-widest flex items-center gap-2">
-                                    <span>📈</span> (=) MARGEM BRUTA
+                                    <span>­ƒôê</span> (=) MARGEM BRUTA
                                  </td>
                                  {MONTHS.map(m => renderValueCell(margemBrutaMensal, receitaMensal, true))}
                                  <td className="p-3.5 text-right bg-[#1B4D3E] font-black text-emerald-300 border-l border-emerald-700 shadow-inner">
@@ -2669,9 +2588,9 @@ function PropostaEditor() {
 
             {activeTab === 'comercial' && (
                <div className="space-y-8 animate-fadeIn">
-                  {/* ESTILOS DE IMPRESSÃO EXCLUSIVOS PARA O SLIDE DECK */}
+                  {/* ESTILOS DE IMPRESS├âO EXCLUSIVOS PARA O SLIDE DECK */}
                   <style>{`
-                     /* Estilos exclusivos para o Modo Apresentação - Aumento de Fontes */
+                     /* Estilos exclusivos para o Modo Apresenta├º├úo - Aumento de Fontes */
                      .presentation-mode-active .text-[10px] { font-size: 14px !important; }
                      .presentation-mode-active .text-[11px] { font-size: 15px !important; }
                      .presentation-mode-active .text-[13px] { font-size: 18px !important; }
@@ -2767,27 +2686,27 @@ function PropostaEditor() {
                         .print-slide-deck .gap-8 { gap: 2rem !important; }
                         .print-slide-deck .gap-6 { gap: 1.5rem !important; }
 
-                        /* REDIMENSIONAR E AMPLIAR CÍRCULOS DE ÍCONES NO PRINT */
+                        /* REDIMENSIONAR E AMPLIAR C├ìRCULOS DE ├ìCONES NO PRINT */
                         .print-slide-deck .w-10 { width: 4rem !important; height: 4rem !important; }
                         .print-slide-deck .h-10 { height: 4rem !important; }
                         .print-slide-deck .w-12 { width: 5rem !important; height: 5rem !important; }
                         .print-slide-deck .h-12 { height: 5rem !important; }
                         
-                        /* GARANTIR QUE OS SVGS DO LUCIDE CRESÇAM PROPORCIONALMENTE NO PRINT */
+                        /* GARANTIR QUE OS SVGS DO LUCIDE CRES├çAM PROPORCIONALMENTE NO PRINT */
                         .print-slide-deck svg[viewBox="0 0 24 24"] { 
                            width: 2.2rem !important; 
                            height: 2.2rem !important; 
                            stroke-width: 2.5 !important;
                         }
 
-                        /* AUMENTAR A GAP DO GRID DE KPIS E LARGURA DE DESCRIÇÕES NO PRINT */
+                        /* AUMENTAR A GAP DO GRID DE KPIS E LARGURA DE DESCRI├ç├òES NO PRINT */
                         .print-slide-deck .gap-1.5 { gap: 2rem !important; }
                         .print-slide-deck .max-w-\[65px\] { max-w: 130px !important; }
                         .print-slide-deck .max-w-\[80px\] { max-w: 160px !important; }
                         .print-slide-deck .max-w-\[90px\] { max-w: 170px !important; }
                         .print-slide-deck .max-w-\[100px\] { max-w: 190px !important; }
 
-                        /* GENEROSO ESPAÇAMENTO E BORDAS NAS TABELAS NO PRINT */
+                        /* GENEROSO ESPA├çAMENTO E BORDAS NAS TABELAS NO PRINT */
                         .print-slide-deck table th, 
                         .print-slide-deck table td {
                            padding: 0.75rem 1rem !important;
@@ -2810,7 +2729,7 @@ function PropostaEditor() {
                             border: none !important;
                          }
 
-                        /* FORÇAR RENDERIZAÇÃO DE CORES DE FUNDO EXPLICITAMENTE */
+                        /* FOR├çAR RENDERIZA├ç├âO DE CORES DE FUNDO EXPLICITAMENTE */
                         .print-slide.bg-[#1e4480], .print-slide[class*="bg-[#1e4480]"] {
                            background-color: #1e4480 !important;
                         }
@@ -2824,7 +2743,7 @@ function PropostaEditor() {
                   `}} />
                   )}
 
-                  {/* CONTROLES E AÇÕES */}
+                  {/* CONTROLES E A├ç├òES */}
                   <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row justify-between items-center gap-4">
                      <div className="flex-1 w-full overflow-x-auto pb-1 scrollbar-hide">
                         <div className="flex items-center gap-8 min-w-max">
@@ -2857,7 +2776,7 @@ function PropostaEditor() {
                                  `}
                               >
                                  <Presentation size={16} className={viewMode === 'slide' ? 'text-[#10B981]' : 'text-slate-400'} />
-                                 Slide Deck (Apresentação)
+                                 Slide Deck (Apresenta├º├úo)
                               </button>
                            </nav>
 
@@ -2885,7 +2804,7 @@ function PropostaEditor() {
                                  onClick={() => setPresentationMode(true)}
                                  className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
                               >
-                                 <span>🖥️</span> Apresentar
+                                 <span>­ƒûÑ´©Å</span> Apresentar
                               </button>
                               <button
                                  type="button"
@@ -2900,7 +2819,7 @@ function PropostaEditor() {
                                  }}
                                  className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
                               >
-                                 <span>🖨️</span> Salvar PDF / Imprimir
+                                 <span>­ƒû¿´©Å</span> Salvar PDF / Imprimir
                               </button>
                            </div>
                         </div>
@@ -2922,12 +2841,12 @@ function PropostaEditor() {
                      </div>
                   )}
 
-                  {/* CONTAINER DOS SLIDES PARA VISUALIZAÇÃO EM TELA */}
+                  {/* CONTAINER DOS SLIDES PARA VISUALIZA├ç├âO EM TELA */}
                   <div className={viewMode === 'document' ? 'hidden' : (presentationMode 
                      ? "fixed inset-0 bg-slate-950/98 z-[99999] flex flex-col justify-center items-center select-none p-6 presentation-mode-active" 
                      : "w-full bg-slate-900/5 rounded-3xl p-8 border border-slate-200/40 flex justify-center items-center overflow-hidden relative"
                   )}>
-                     {/* BOTÃO VOLTAR (ESQUERDA) */}
+                     {/* BOT├âO VOLTAR (ESQUERDA) */}
                      <button
                         type="button"
                         onClick={() => setCurrentSlide(currentSlide === 1 ? 13 : currentSlide - 1)}
@@ -2936,7 +2855,7 @@ function PropostaEditor() {
                         <ChevronLeft size={28} className="stroke-[3] -ml-1" />
                      </button>
                      
-                     {/* BOTÃO AVANÇAR (DIREITA) */}
+                     {/* BOT├âO AVAN├çAR (DIREITA) */}
                      <button
                         type="button"
                         onClick={() => setCurrentSlide(currentSlide === 13 ? 1 : currentSlide + 1)}
@@ -2966,18 +2885,18 @@ function PropostaEditor() {
 
                               <div className="grid grid-cols-12 gap-8 items-center h-full relative z-10">
                                  <div className="col-span-8 flex flex-col justify-center space-y-5 pr-4">
-                                    {/* Olá, Karin! */}
+                                    {/* Ol├í, Karin! */}
                                     <h2 className="text-3xl font-black text-[#1E3A8A] tracking-tight leading-none">
-                                       Olá, {proposta.cliente.contato || "Karin"}!
+                                       Ol├í, {proposta.cliente.contato || "Karin"}!
                                     </h2>
 
                                     {/* Mensagem Principal */}
                                     <div className="text-slate-600 text-xs leading-relaxed space-y-4 font-medium">
                                        <p>
-                                          O desenvolvimento deste projeto teve como base as informações reunidas por meio da visita técnica realizada, com o objetivo de corresponder, da forma mais eficaz possível, às necessidades do <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> no que se refere aos serviços de <strong className="font-extrabold text-slate-800">{proposta.cliente.tipoServicos || proposta.cliente.objetoProposta || "Limpeza e conservação"}</strong>.
+                                          O desenvolvimento deste projeto teve como base as informa├º├Áes reunidas por meio da visita t├®cnica realizada, com o objetivo de corresponder, da forma mais eficaz poss├¡vel, ├ás necessidades do <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> no que se refere aos servi├ºos de <strong className="font-extrabold text-slate-800">{proposta.cliente.tipoServicos || proposta.cliente.objetoProposta || "Limpeza e conserva├º├úo"}</strong>.
                                        </p>
                                        <p className="font-semibold text-slate-700">
-                                          Estamos imensamente gratos desde já pela oportunidade!
+                                          Estamos imensamente gratos desde j├í pela oportunidade!
                                        </p>
                                     </div>
 
@@ -2986,8 +2905,8 @@ function PropostaEditor() {
                                        
                                        {/* Seller Card (Pill card) */}
                                        <div className="bg-[#2B547E] text-white px-5 py-3 rounded-2xl inline-flex flex-col space-y-0.5 shadow-md max-w-sm">
-                                          <span className="text-sm font-black tracking-tight">{proposta.cliente.vendedorNome || "Ádamo Quadros"}</span>
-                                          <span className="text-[10px] text-slate-200/80 font-bold uppercase tracking-wider">{proposta.cliente.vendedorCargo || "Novos Negócios"}</span>
+                                          <span className="text-sm font-black tracking-tight">{proposta.cliente.vendedorNome || "├üdamo Quadros"}</span>
+                                          <span className="text-[10px] text-slate-200/80 font-bold uppercase tracking-wider">{proposta.cliente.vendedorCargo || "Novos Neg├│cios"}</span>
                                           <span className="text-[10px] text-slate-200/80 font-bold">{proposta.cliente.vendedorTelefone || "(41) 9 9737-0880"}</span>
                                           <span className="text-[10px] text-slate-200/80 font-bold truncate">{proposta.cliente.vendedorEmail || "adamo@grupojvsserv.com.br"}</span>
                                        </div>
@@ -3016,7 +2935,7 @@ function PropostaEditor() {
                         {/* SLIDE 02 (CAPA DA PROPOSTA - COM FOTO E FILTRO AZUL) */}
                         {currentSlide === 1 && (
                            <div className="absolute inset-0 w-full h-full flex flex-col justify-between p-16 z-10 text-white overflow-hidden bg-slate-950">
-                              {/* Imagem de Fundo Nativa HTML para Garantir Renderização */}
+                              {/* Imagem de Fundo Nativa HTML para Garantir Renderiza├º├úo */}
                               <img 
                                  src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200" 
                                  alt="Capa Fundo" 
@@ -3026,7 +2945,7 @@ function PropostaEditor() {
                               {/* Overlay Azul Escuro do Print */}
                               <div className="absolute inset-0 bg-[#1e4480]/85 backdrop-blur-[1px]"></div>
 
-                              {/* Conteúdo Central */}
+                              {/* Conte├║do Central */}
                               <div className="relative z-20 flex flex-col justify-center items-center h-full w-full space-y-12">
                                  {/* Logo JVS Facilities em Branco Puro */}
                                  <div className="flex flex-col items-center space-y-4 animate-fadeIn">
@@ -3038,19 +2957,19 @@ function PropostaEditor() {
                                     <div className="text-[11px] font-black tracking-[0.3em] text-white/90 uppercase pl-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">FACILITIES</div>
                                  </div>
 
-                                 {/* Caixa de Texto Pílula "PROPOSTA COMERCIAL" idêntica ao Print */}
+                                 {/* Caixa de Texto P├¡lula "PROPOSTA COMERCIAL" id├¬ntica ao Print */}
                                  <div className="w-full max-w-2xl border-2 border-white rounded-full bg-white/10 px-12 py-4 shadow-xl backdrop-blur-md text-center hover:bg-white/15 transition-all duration-300 transform hover:scale-[1.01]">
                                     <span className="text-white text-base font-black tracking-[0.25em] uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.15)]">
                                        PROPOSTA COMERCIAL
                                     </span>
                                  </div>
                               </div>
-                              {/* Rodapé Interno do Slide */}
+                              {/* Rodap├® Interno do Slide */}
                               <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-28">
                                  <div className="flex gap-16">
                                     <div className="space-y-1">
                                        <div>Cliente: <strong className="text-white">{proposta.cliente.cliente || "Nome do Cliente"}</strong></div>
-                                       <div>Nº Proposta: <strong className="text-white">{proposta.cliente.numeroProposta || "FPV-XXXX"}</strong></div>
+                                       <div>N┬║ Proposta: <strong className="text-white">{proposta.cliente.numeroProposta || "FPV-XXXX"}</strong></div>
                                     </div>
                                     <div className="space-y-1">
                                        <div>Data: <strong className="text-white">
@@ -3058,7 +2977,7 @@ function PropostaEditor() {
                                              ? new Date(proposta.cliente.dataElaboracao + 'T12:00:00').toLocaleDateString('pt-BR') 
                                              : new Date().toLocaleDateString('pt-BR')}
                                        </strong></div>
-                                       <div>Revisão: <strong className="text-white">{proposta.cliente.revisao || "R01"}</strong></div>
+                                       <div>Revis├úo: <strong className="text-white">{proposta.cliente.revisao || "R01"}</strong></div>
                                     </div>
                                  </div>
                                  <span className="text-[9px] font-black text-white/80 bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">01</span>
@@ -3087,7 +3006,7 @@ function PropostaEditor() {
                                            QUEM SOMOS
                                         </h2>
                                         <p className="text-white/95 text-[14px] font-semibold leading-relaxed mt-4 max-w-xl">
-                                           Há mais de 30 anos no mercado de Facilities, somos especialistas em prestações de serviços de limpeza profissional e similares.
+                                           H├í mais de 30 anos no mercado de Facilities, somos especialistas em presta├º├Áes de servi├ºos de limpeza profissional e similares.
                                         </p>
                                      </div>
 
@@ -3098,7 +3017,7 @@ function PropostaEditor() {
                                            </div>
                                            <span className="text-[14px] font-bold text-white leading-none whitespace-nowrap">+de <strong className="text-xl font-black">30</strong></span>
                                            <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
-                                              Anos de atuação em Facilities
+                                              Anos de atua├º├úo em Facilities
                                            </span>
                                         </div>
 
@@ -3126,7 +3045,7 @@ function PropostaEditor() {
                                            <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
                                               <ShieldCheck size={26} className="text-white shrink-0" />
                                            </div>
-                                           <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap block w-full text-center"><strong className="text-base font-black">+100</strong> mil m²</span>
+                                           <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap block w-full text-center"><strong className="text-base font-black">+100</strong> mil m┬▓</span>
                                            <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
                                               de limpeza em altura
                                            </span>
@@ -3136,7 +3055,7 @@ function PropostaEditor() {
                                            <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
                                               <Sparkles size={26} className="text-white shrink-0" />
                                            </div>
-                                           <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap block w-full text-center"><strong className="text-base font-black">+500</strong> mil m²</span>
+                                           <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap block w-full text-center"><strong className="text-base font-black">+500</strong> mil m┬▓</span>
                                            <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
                                               de Pisos tratados
                                            </span>
@@ -3149,7 +3068,7 @@ function PropostaEditor() {
                                         <BrazilMap highlightedStates={['PR', 'SC', 'RS']} className="w-full h-full" />
                                      </div>
                                      <div className="text-[13px] font-black text-white uppercase tracking-widest mt-4 bg-white/10 px-4 py-1.5 rounded-full shadow-sm">
-                                        Atendimento em toda Região Sul
+                                        Atendimento em toda Regi├úo Sul
                                      </div>
                                   </div>
                                </div>
@@ -3180,7 +3099,7 @@ function PropostaEditor() {
                                            NOSSOS VALORES
                                         </h2>
                                         <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-5 text-justify">
-                                           Nosso compromisso é guiado por princípios sólidos: agimos com <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">ética</strong>, mantendo a integridade acima de benefícios momentâneos. Buscamos <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">agilidade</strong>, <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">eficiência</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">excelência</strong> através do aprimoramento contínuo de processos e sistemas. <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">Valorizamos nossas pessoas</strong>, promovendo um ambiente humanizado e soluções que garantem a satisfação e a permanência dos colaboradores. Somos comprometidos com a <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">entrega</strong> dos nossos acordos, mesmo diante de desafios. Além disso, investimos em <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">inovação</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">tecnologia</strong> para otimizar a automação, produtividade e eficiência.
+                                           Nosso compromisso ├® guiado por princ├¡pios s├│lidos: agimos com <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">├®tica</strong>, mantendo a integridade acima de benef├¡cios moment├óneos. Buscamos <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">agilidade</strong>, <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">efici├¬ncia</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">excel├¬ncia</strong> atrav├®s do aprimoramento cont├¡nuo de processos e sistemas. <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">Valorizamos nossas pessoas</strong>, promovendo um ambiente humanizado e solu├º├Áes que garantem a satisfa├º├úo e a perman├¬ncia dos colaboradores. Somos comprometidos com a <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">entrega</strong> dos nossos acordos, mesmo diante de desafios. Al├®m disso, investimos em <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">inova├º├úo</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">tecnologia</strong> para otimizar a automa├º├úo, produtividade e efici├¬ncia.
                                         </p>
                                      </div>
                                   </div>
@@ -3190,7 +3109,7 @@ function PropostaEditor() {
                                      <div className="relative w-full h-[220px] z-20">
                                         <img 
                                            src="/hand-support.png" 
-                                           alt="Mão de suporte"
+                                           alt="M├úo de suporte"
                                            className="absolute right-[-10px] bottom-[-85px] w-[320px] h-auto pointer-events-none opacity-90 z-0 mix-blend-multiply"
                                         />
                                         <div className="absolute top-[-12px] left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
@@ -3230,14 +3149,14 @@ function PropostaEditor() {
                                <div className="relative z-10 flex flex-col h-[calc(100%-30px)] justify-between">
                                   <div>
                                      <h2 className="text-3xl font-black text-[#1e4480] uppercase tracking-tight leading-none mb-6">
-                                        PRINCIPAIS SERVIÇOS PRESTADOS
+                                        PRINCIPAIS SERVI├çOS PRESTADOS
                                      </h2>
 
                                      <div className="grid grid-cols-2 gap-12 mt-2">
                                         <div className="flex flex-col space-y-3">
                                            <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-2">
                                               <span className="text-[#1e4480] text-[15px] font-black tracking-wide uppercase leading-tight max-w-[300px]">
-                                                 TERCEIRIZAÇÃO DE SERVIÇOS DE FACILITIES
+                                                 TERCEIRIZA├ç├âO DE SERVI├çOS DE FACILITIES
                                               </span>
                                               <div className="text-[#1e4480] shrink-0">
                                                  <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-14 h-14 shrink-0">
@@ -3251,7 +3170,7 @@ function PropostaEditor() {
                                               </div>
                                            </div>
                                            <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
-                                              Gestão e execução de serviços essenciais, como limpeza, manutenção e segurança, que garantem o bom funcionamento e organização de um ambiente de trabalho. Nossa função é cuidar de tudo isso para que a empresa possa focar no que faz de melhor, enquanto oferecemos um space eficiente, seguro e bem cuidado.
+                                              Gest├úo e execu├º├úo de servi├ºos essenciais, como limpeza, manuten├º├úo e seguran├ºa, que garantem o bom funcionamento e organiza├º├úo de um ambiente de trabalho. Nossa fun├º├úo ├® cuidar de tudo isso para que a empresa possa focar no que faz de melhor, enquanto oferecemos um space eficiente, seguro e bem cuidado.
                                            </p>
                                         </div>
 
@@ -3275,7 +3194,7 @@ function PropostaEditor() {
                                               </div>
                                            </div>
                                            <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
-                                              Serviço que é realizado em áreas de difícil acesso, como fachadas de prédios, janelas externas e estruturas elevadas. Usamos equipamentos específicos e técnicas seguras para garantir que essas superfícies sejam limpas de maneira eficiente, mantendo a estética e a segurança dos espaços altos, onde o cuidado e a precisão são essenciais.
+                                              Servi├ºo que ├® realizado em ├íreas de dif├¡cil acesso, como fachadas de pr├®dios, janelas externas e estruturas elevadas. Usamos equipamentos espec├¡ficos e t├®cnicas seguras para garantir que essas superf├¡cies sejam limpas de maneira eficiente, mantendo a est├®tica e a seguran├ºa dos espa├ºos altos, onde o cuidado e a precis├úo s├úo essenciais.
                                            </p>
                                         </div>
                                      </div>
@@ -3338,7 +3257,7 @@ function PropostaEditor() {
                                            </svg>
                                         </div>
                                         <span className="text-[#1e4480] text-[12px] font-black tracking-wider uppercase mt-2.5">
-                                           RECEPÇÃO
+                                           RECEP├ç├âO
                                         </span>
                                      </div>
 
@@ -3358,7 +3277,7 @@ function PropostaEditor() {
                                            </svg>
                                         </div>
                                         <span className="text-[#1e4480] text-[12px] font-black tracking-wider uppercase mt-2.5">
-                                           MANUTENÇÃO
+                                           MANUTEN├ç├âO
                                         </span>
                                      </div>
 
@@ -3409,7 +3328,7 @@ function PropostaEditor() {
                                               <div style={{ width: '48px', height: '4px', backgroundColor: 'white', marginBottom: '8px' }}></div>
                                               <div className="flex items-center justify-between gap-4">
                                                  <span className="text-white text-[15px] font-black tracking-wide uppercase leading-tight">
-                                                    INDÚSTRIA
+                                                    IND├ÜSTRIA
                                                  </span>
                                                  <div className="bg-white/10 p-2 rounded-xl text-white shrink-0 shadow-sm">
                                                     <Factory size={22} className="stroke-[2.5]" />
@@ -3417,7 +3336,7 @@ function PropostaEditor() {
                                               </div>
                                            </div>
                                            <p className="text-white/90 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
-                                              Com processos minuciosos e detalhados, o setor industrial trouxe para o escopo da JVS Facilities a capacidade de atender clientes de alta exigência. Possuímos qualidade técnica validada no mercado para atender as mais variadas necessidades da indústria.
+                                              Com processos minuciosos e detalhados, o setor industrial trouxe para o escopo da JVS Facilities a capacidade de atender clientes de alta exig├¬ncia. Possu├¡mos qualidade t├®cnica validada no mercado para atender as mais variadas necessidades da ind├║stria.
                                            </p>
                                         </div>
 
@@ -3434,7 +3353,7 @@ function PropostaEditor() {
                                               </div>
                                            </div>
                                            <p className="text-white/90 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
-                                              Um dos setores com maior participação em nossa carteira de clientes, o varejo exigiu resiliência e trabalho árduo em busca de superar os desafios operacionais, que por fim, resultaram em constantes avaliações positivas de satisfação e controle dos indicadores de rotatividade e absenteísmo.
+                                              Um dos setores com maior participa├º├úo em nossa carteira de clientes, o varejo exigiu resili├¬ncia e trabalho ├írduo em busca de superar os desafios operacionais, que por fim, resultaram em constantes avalia├º├Áes positivas de satisfa├º├úo e controle dos indicadores de rotatividade e absente├¡smo.
                                            </p>
                                         </div>
                                      </div>
@@ -3446,7 +3365,7 @@ function PropostaEditor() {
                                            <Bus size={22} className="stroke-[2]" />
                                         </div>
                                         <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[100px] leading-tight">
-                                           TRANSPORTE<br />E LOGÍSTICA
+                                           TRANSPORTE<br />E LOG├ìSTICA
                                         </span>
                                      </div>
 
@@ -3455,7 +3374,7 @@ function PropostaEditor() {
                                            <Building size={22} className="stroke-[2]" />
                                         </div>
                                         <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[110px] leading-tight">
-                                           CONDOMÍNIOS<br />E EDIFÍCIOS
+                                           CONDOM├ìNIOS<br />E EDIF├ìCIOS
                                         </span>
                                      </div>
 
@@ -3464,7 +3383,7 @@ function PropostaEditor() {
                                            <Hospital size={22} className="stroke-[2]" />
                                         </div>
                                         <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[100px] leading-tight">
-                                           CLÍNICAS E<br />HOSPITAIS
+                                           CL├ìNICAS E<br />HOSPITAIS
                                         </span>
                                      </div>
 
@@ -3507,7 +3426,7 @@ function PropostaEditor() {
                                   </svg>
 
                                   <div className="relative z-10 flex flex-col h-full justify-between">
-                                     {/* Título */}
+                                     {/* T├¡tulo */}
                                      <div>
                                         <h2 className="text-3xl font-black text-[#1e4480] uppercase tracking-tight leading-none mb-8">
                                            PRINCIPAIS<br />
@@ -3525,7 +3444,7 @@ function PropostaEditor() {
                                            <div className="space-y-1">
                                               <h3 className="text-[#1e4480] text-xs font-black tracking-wider uppercase">BITRIX24</h3>
                                               <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
-                                                 CRM, armazenamento de dados e documentos, gestão de resultados, planejamento estratégico.
+                                                 CRM, armazenamento de dados e documentos, gest├úo de resultados, planejamento estrat├®gico.
                                               </p>
                                               {/* Logo Bitrix24 */}
                                               <div className="pt-2 flex items-center gap-1 select-none">
@@ -3544,7 +3463,7 @@ function PropostaEditor() {
                                            <div className="space-y-1">
                                               <h3 className="text-[#1e4480] text-xs font-black tracking-wider uppercase">SECULLUM</h3>
                                               <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
-                                                 Controle de ponto digital, envio e assinatura de holerites e documentos administrativos, controle e gestão de turnover.
+                                                 Controle de ponto digital, envio e assinatura de holerites e documentos administrativos, controle e gest├úo de turnover.
                                               </p>
                                               {/* Logo Secullum */}
                                               <div className="pt-2 flex flex-col select-none">
@@ -3552,13 +3471,13 @@ function PropostaEditor() {
                                                     <Award size={14} className="text-amber-500 shrink-0" />
                                                     <span className="text-slate-700 font-black text-xs tracking-tight lowercase">secullum</span>
                                                  </div>
-                                                 <span className="text-slate-400 text-[7px] font-bold pl-5 leading-none">Ser fácil para ser humano.</span>
+                                                 <span className="text-slate-400 text-[7px] font-bold pl-5 leading-none">Ser f├ícil para ser humano.</span>
                                               </div>
                                            </div>
                                         </div>
                                      </div>
 
-                                     {/* Rodapé Esquerdo */}
+                                     {/* Rodap├® Esquerdo */}
                                      <div className="pt-4 border-t border-slate-100 flex items-center text-slate-400 text-[9px] font-bold uppercase tracking-widest">
                                         <span>www.grupojvsserv.com.br</span>
                                      </div>
@@ -3575,7 +3494,7 @@ function PropostaEditor() {
                                   </svg>
 
                                   <div className="relative z-10 flex flex-col h-full justify-between">
-                                     {/* Espaço superior para alinhar com o título da esquerda */}
+                                     {/* Espa├ºo superior para alinhar com o t├¡tulo da esquerda */}
                                      <div className="h-12"></div>
 
                                      {/* Itens da direita */}
@@ -3591,7 +3510,7 @@ function PropostaEditor() {
                                                  <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[7px] px-1.5 py-0.5 rounded-full font-black tracking-widest uppercase">IA CORE</span>
                                               </div>
                                               <p className="text-white/80 text-[8px] font-semibold leading-relaxed">
-                                                 Mesa de operação inteligente baseada em IA, otimizando agendamentos de frotas, distribuição de escalas e monitoramento de serviços em tempo real.
+                                                 Mesa de opera├º├úo inteligente baseada em IA, otimizando agendamentos de frotas, distribui├º├úo de escalas e monitoramento de servi├ºos em tempo real.
                                               </p>
                                               {/* Logo Nexus */}
                                               <div className="pt-1 flex items-center gap-1 select-none">
@@ -3609,7 +3528,7 @@ function PropostaEditor() {
                                            <div className="space-y-1">
                                               <h3 className="text-white text-xs font-black tracking-wider uppercase">ONVIO</h3>
                                               <p className="text-white/80 text-[8px] font-semibold leading-relaxed">
-                                                 Registro e gestão de documentação de funcionários.
+                                                 Registro e gest├úo de documenta├º├úo de funcion├írios.
                                               </p>
                                               {/* Logo Onvio */}
                                               <div className="pt-1.5 flex flex-col select-none">
@@ -3619,25 +3538,25 @@ function PropostaEditor() {
                                            </div>
                                         </div>
 
-                                        {/* Check-List Fácil */}
+                                        {/* Check-List F├ícil */}
                                         <div className="flex gap-4 items-start">
                                            <div className="bg-white/10 p-2 rounded-xl text-white shrink-0 mt-1">
                                               <Smartphone size={20} className="stroke-[2.5]" />
                                            </div>
                                            <div className="space-y-1">
-                                              <h3 className="text-white text-xs font-black tracking-wider uppercase">CHECK-LIST FÁCIL</h3>
+                                              <h3 className="text-white text-xs font-black tracking-wider uppercase">CHECK-LIST F├üCIL</h3>
                                               <p className="text-white/80 text-[8px] font-semibold leading-relaxed">
-                                                 Plataforma digital de desenvolvimento e gestão de processos internos com registro fotográfico, SLA's etc.
+                                                 Plataforma digital de desenvolvimento e gest├úo de processos internos com registro fotogr├ífico, SLA's etc.
                                               </p>
-                                              {/* Logo Check-List Fácil */}
+                                              {/* Logo Check-List F├ícil */}
                                               <div className="pt-1.5 flex items-center gap-1 select-none text-[#10B981]">
-                                                 <span className="text-sm font-black tracking-tight flex items-center gap-1">✔ checklistfácil</span>
+                                                 <span className="text-sm font-black tracking-tight flex items-center gap-1">Ô£ö checklistf├ícil</span>
                                               </div>
                                            </div>
                                         </div>
                                      </div>
 
-                                     {/* Rodapé Direito */}
+                                     {/* Rodap├® Direito */}
                                      <div className="pt-4 border-t border-white/20 flex justify-between items-center text-white/60 text-[9px] font-bold">
                                         <span className="uppercase tracking-widest">www.grupojvsserv.com.br</span>
                                         <span className="text-white/80 bg-white/10 px-2.5 py-0.5 rounded font-black">07</span>
@@ -3664,7 +3583,7 @@ function PropostaEditor() {
                                   {/* Header */}
                                   <div className="flex justify-between items-start pb-4 border-b border-slate-100">
                                      <h2 className="text-3xl font-black text-[#1e4480] tracking-tight leading-none uppercase">
-                                        OBJETO & ESCOPO TÉCNICO
+                                        OBJETO & ESCOPO T├ëCNICO
                                      </h2>
                                      <img 
                                         src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
@@ -3682,17 +3601,17 @@ function PropostaEditor() {
                                               <div>
                                                  <span className="text-[10px] font-black text-[#1e4480] uppercase tracking-widest block mb-2">01. OBJETO DA PROPOSTA</span>
                                                  <p className="text-xs font-semibold leading-relaxed text-slate-700 whitespace-pre-line">
-                                                    {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
+                                                    {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Presta├º├úo de servi├ºos especializados de limpeza, conserva├º├úo e facilities.'}
                                                  </p>
                                               </div>
                                            </div>
 
-                                           {/* Right: Escopo Técnico */}
+                                           {/* Right: Escopo T├®cnico */}
                                            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
                                               <div>
-                                                 <span className="text-[10px] font-black text-[#1e4480] uppercase tracking-widest block mb-2">02. ESCOPO TÉCNICO</span>
+                                                 <span className="text-[10px] font-black text-[#1e4480] uppercase tracking-widest block mb-2">02. ESCOPO T├ëCNICO</span>
                                                  <p className="text-xs font-semibold leading-relaxed text-slate-700 whitespace-pre-line overflow-y-auto max-h-[160px]">
-                                                    {proposta.cliente.escopoTecnico || 'Detalhamento das atividades operacionais conforme solicitação e cronograma alinhado.'}
+                                                    {proposta.cliente.escopoTecnico || 'Detalhamento das atividades operacionais conforme solicita├º├úo e cronograma alinhado.'}
                                                  </p>
                                               </div>
                                            </div>
@@ -3701,7 +3620,7 @@ function PropostaEditor() {
                                         <div className="max-w-2xl mx-auto bg-slate-50 border border-slate-200/80 rounded-2xl p-8 text-center shadow-sm">
                                            <span className="text-[10px] font-black text-[#1e4480] uppercase tracking-widest block mb-3">OBJETO DA PROPOSTA</span>
                                            <p className="text-sm font-bold leading-relaxed text-slate-700 whitespace-pre-line">
-                                              {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
+                                              {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Presta├º├úo de servi├ºos especializados de limpeza, conserva├º├úo e facilities.'}
                                            </p>
                                         </div>
                                      )}
@@ -3736,29 +3655,29 @@ function PropostaEditor() {
                                   <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-stretch">
                                      <div className="col-span-8 bg-white rounded-2xl border border-slate-150 shadow-lg overflow-hidden flex flex-col">
                                         <div className="bg-[#1e4480] text-center py-3">
-                                           <h3 className="text-white text-xs font-black tracking-widest uppercase">{proposta.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções'}</h3>
+                                           <h3 className="text-white text-xs font-black tracking-widest uppercase">{proposta.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Op├º├Áes'}</h3>
                                         </div>
                                         <div className="flex-1">
                                            <table className="w-full text-left border-collapse">
                                               <thead>
                                                  <tr className="bg-slate-50 text-[#1e4480] text-[10px] font-black uppercase tracking-wider border-b border-slate-200">
-                                                    <th className="px-5 py-3">Função</th>
+                                                    <th className="px-5 py-3">Fun├º├úo</th>
                                                     <th className="px-5 py-3 text-center w-24">Qtd.</th>
                                                     <th className="px-5 py-3 text-center w-28">Escala</th>
-                                                    <th className="px-5 py-3 text-center w-36">Horário</th>
+                                                    <th className="px-5 py-3 text-center w-36">Hor├írio</th>
                                                  </tr>
                                               </thead>
                                               <tbody>
                                                  {proposta.equipe && proposta.equipe.length > 0 ? (
                                                     proposta.equipe.map((p: any, idx: number) => (
                                                        <tr key={p.id || idx} className={`border-b border-slate-100 text-[10px] font-bold text-slate-700 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}`}>
-                                                          <td className="px-5 py-3.5 font-black text-slate-800">{p.nomeCargo || "Selecione a Função"}</td>
+                                                          <td className="px-5 py-3.5 font-black text-slate-800">{p.nomeCargo || "Selecione a Fun├º├úo"}</td>
                                                           <td className="px-5 py-3.5 text-center font-black text-[#1e4480]">{(p.quantidade || 0).toFixed(2).replace('.', ',')}</td>
                                                           <td className="px-5 py-3.5 text-center">{p.escala || "A definir"}</td>
                                                           <td className="px-5 py-3.5 text-center font-semibold text-slate-500">
                                                              {p.parametrosPosto?.horarioInicio && p.parametrosPosto?.horarioFim 
-                                                                ? `${p.parametrosPosto.horarioInicio} às ${p.parametrosPosto.horarioFim}` 
-                                                                : '08:00 às 17:00'}
+                                                                ? `${p.parametrosPosto.horarioInicio} ├ás ${p.parametrosPosto.horarioFim}` 
+                                                                : '08:00 ├ás 17:00'}
                                                           </td>
                                                        </tr>
                                                     ))
@@ -3781,9 +3700,9 @@ function PropostaEditor() {
                                            <div className="space-y-3">
                                               {(() => {
                                                  const clausulas = proposta.cliente.quadroEfetivoClausulas || [
-                                                    proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
-                                                    proposta.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
-                                                    proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
+                                                    proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcion├írio dever├í ter duas folgas compensat├│rias em sequ├¬ncia;',
+                                                    proposta.cliente.quadroEfetivoClausula2 || 'Para redu├º├Áes no efetivo prazo de 30 (trinta) dias;',
+                                                    proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h di├írias de no m├¡nimo 60 minutos, entre 4h a 6h o intervalo ser├í de 15 minutos (CLT).'
                                                  ];
                                                  return clausulas.map((c: string, cIdx: number) => (
                                                     <div key={cIdx} className="flex items-start gap-2.5">
@@ -3818,7 +3737,7 @@ function PropostaEditor() {
                                   <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                      <div className="flex flex-col">
                                         <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
-                                        <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUSÍDOS</h2>
+                                        <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUS├ìDOS</h2>
                                      </div>
                                      <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
@@ -3829,7 +3748,7 @@ function PropostaEditor() {
                                            <thead>
                                               <tr className="bg-[#1e4480] text-white text-[10px] font-black uppercase tracking-wider border-b border-slate-200">
                                                  <th className="px-6 py-3.5 w-32">Item</th>
-                                                 <th className="px-6 py-3.5">Descrição</th>
+                                                 <th className="px-6 py-3.5">Descri├º├úo</th>
                                                  <th className="px-6 py-3.5 text-center w-40">Status</th>
                                               </tr>
                                            </thead>
@@ -3928,12 +3847,12 @@ function PropostaEditor() {
                                               </thead>
                                               <tbody>
                                                  <tr className="border-b border-slate-100 text-slate-700 font-bold">
-                                                    <td className="py-3.5 px-4 font-black">Mão de Obra Efetiva (Postos)</td>
+                                                    <td className="py-3.5 px-4 font-black">M├úo de Obra Efetiva (Postos)</td>
                                                     <td className="py-3.5 px-4 text-right font-black text-[#1e4480]">{fc(maoDeObraSubtotal)}</td>
                                                  </tr>
                                                  {renderInsumoRow('Materiais e Equipamentos', applyCascata(Number(proposta.insumos.materiais || 0) + Number(proposta.insumos.maquinas || 0)))}
-                                                 {renderInsumoRow('Descartáveis e Higiene', applyCascata(Number(proposta.insumos.descartaveis || 0)))}
-                                                 {renderInsumoRow('Outros Serviços / Operações', applyCascata(Number(proposta.insumos.servicos || 0)))}
+                                                 {renderInsumoRow('Descart├íveis e Higiene', applyCascata(Number(proposta.insumos.descartaveis || 0)))}
+                                                 {renderInsumoRow('Outros Servi├ºos / Opera├º├Áes', applyCascata(Number(proposta.insumos.servicos || 0)))}
                                               </tbody>
                                            </table>
                                            
@@ -3956,13 +3875,13 @@ function PropostaEditor() {
                                                     <svg className="w-4 h-4 text-[#1e4480] shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                     </svg>
-                                                    <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">Os valores propostos contemplam todos os encargos sociais, tributos (PIS, COFINS, ISS), taxas de administração e insumos descritos na proposta;</p>
+                                                    <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">Os valores propostos contemplam todos os encargos sociais, tributos (PIS, COFINS, ISS), taxas de administra├º├úo e insumos descritos na proposta;</p>
                                                  </div>
                                                  <div className="flex items-start gap-2.5">
                                                     <svg className="w-4 h-4 text-[#1e4480] shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                     </svg>
-                                                    <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">Faturamento mensal com vencimento a ser pactuado nas condições gerais da contratação, emitido após a prestação dos serviços.</p>
+                                                    <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">Faturamento mensal com vencimento a ser pactuado nas condi├º├Áes gerais da contrata├º├úo, emitido ap├│s a presta├º├úo dos servi├ºos.</p>
                                                  </div>
                                               </div>
                                            </div>
@@ -3989,21 +3908,21 @@ function PropostaEditor() {
                                   <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                      <div className="flex flex-col">
                                         <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
-                                        <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">CONDIÇÕES GERAIS DA PROPOSTA</h2>
+                                        <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">CONDI├ç├òES GERAIS DA PROPOSTA</h2>
                                      </div>
                                      <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
                              {(() => {
                                 const condsColab = [
-                                   proposta.cliente?.condicaoColaboradores1 || "Vale alimentação de R$900,00;",
+                                   proposta.cliente?.condicaoColaboradores1 || "Vale alimenta├º├úo de R$900,00;",
                                    proposta.cliente?.condicaoColaboradores2 || "Cesta trimestral de assiduidade;",
                                    proposta.cliente?.condicaoColaboradores3 || "2 Vales transporte por dia."
                                 ].filter(Boolean);
 
                                 const condsCli = [
-                                   proposta.cliente?.condicaoCliente1 || "Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;",
-                                   proposta.cliente?.condicaoCliente2 || "Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;",
-                                   proposta.cliente?.condicaoCliente3 || "Próximo reajuste Fevereiro/2026."
+                                   proposta.cliente?.condicaoCliente1 || "Faturamento dos servi├ºos aos dias 15 ou 30 de cada m├¬s com vencimento nos pr├│ximos 15 dias;",
+                                   proposta.cliente?.condicaoCliente2 || "Reajuste anual, autom├ítico e equivalente ao diss├¡dio da categoria (SIEMACO) todo m├¬s fevereiro de cada ano subsequente;",
+                                   proposta.cliente?.condicaoCliente3 || "Pr├│ximo reajuste Fevereiro/2026."
                                 ].filter(Boolean);
 
                                 return (
@@ -4019,11 +3938,11 @@ function PropostaEditor() {
                                                <span className="text-slate-800 font-black">{proposta.condicoes?.validadeProposta || "15 (quinze) dias"}</span>
                                             </div>
                                             <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
-                                               <span className="text-slate-500 font-bold">Prazo de Início dos Serviços:</span>
+                                               <span className="text-slate-500 font-bold">Prazo de In├¡cio dos Servi├ºos:</span>
                                                <span className="text-slate-800 font-black">{proposta.condicoes?.prazoInicio || "20 (vinte) dias"}</span>
                                             </div>
                                             <div className="flex justify-between items-center text-[10px] pb-0.5">
-                                               <span className="text-slate-500 font-bold">Vigência Contratual Mínima:</span>
+                                               <span className="text-slate-500 font-bold">Vig├¬ncia Contratual M├¡nima:</span>
                                                <span className="text-slate-800 font-black">{proposta.condicoes?.vigenciaContratual || "12 (doze) meses"}</span>
                                             </div>
                                          </div>
@@ -4037,11 +3956,11 @@ function PropostaEditor() {
                                          <div className="space-y-2">
                                             <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
                                                <span className="text-slate-500 font-bold">Prazo de Pagamento:</span>
-                                               <span className="text-slate-800 font-black">{proposta.condicoes?.prazoPagamento || "30 dias líquido"}</span>
+                                               <span className="text-slate-800 font-black">{proposta.condicoes?.prazoPagamento || "30 dias l├¡quido"}</span>
                                             </div>
                                             <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
                                                <span className="text-slate-500 font-bold">Base de Reajuste Anual:</span>
-                                               <span className="text-slate-800 font-black">{proposta.condicoes?.baseReajuste || "Convenção Coletiva (CCT) / IPCA"}</span>
+                                               <span className="text-slate-800 font-black">{proposta.condicoes?.baseReajuste || "Conven├º├úo Coletiva (CCT) / IPCA"}</span>
                                             </div>
                                             <div className="flex justify-between items-center text-[10px] pb-0.5">
                                                <span className="text-slate-500 font-bold">Garantias e Seguros:</span>
@@ -4053,11 +3972,11 @@ function PropostaEditor() {
                                       <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-5 shadow-xs space-y-3">
                                          <div className="flex items-center gap-2 border-b border-slate-200 pb-1.5">
                                             <UserCheck size={16} className="text-[#1e4480]" />
-                                            <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condições dos Colaboradores</h4>
+                                            <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condi├º├Áes dos Colaboradores</h4>
                                          </div>
                                          <div className="space-y-1">
                                             {condsColab.map((cond, idx) => (
-                                               <div key={idx} className="text-slate-700 font-semibold text-[9.5px] leading-normal pl-1.5 relative before:content-['•'] before:absolute before:left-0 before:text-[#1b4d3e]">
+                                               <div key={idx} className="text-slate-700 font-semibold text-[9.5px] leading-normal pl-1.5 relative before:content-['ÔÇó'] before:absolute before:left-0 before:text-[#1b4d3e]">
                                                   {cond}
                                                </div>
                                             ))}
@@ -4067,11 +3986,11 @@ function PropostaEditor() {
                                       <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-5 shadow-xs space-y-3">
                                          <div className="flex items-center gap-2 border-b border-slate-200 pb-1.5">
                                             <Briefcase size={16} className="text-[#1e4480]" />
-                                            <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condições para o Cliente</h4>
+                                            <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condi├º├Áes para o Cliente</h4>
                                          </div>
                                          <div className="space-y-1">
                                             {condsCli.map((cond, idx) => (
-                                               <div key={idx} className="text-slate-700 font-semibold text-[9.5px] leading-normal pl-1.5 relative before:content-['•'] before:absolute before:left-0 before:text-[#1b4d3e]">
+                                               <div key={idx} className="text-slate-700 font-semibold text-[9.5px] leading-normal pl-1.5 relative before:content-['ÔÇó'] before:absolute before:left-0 before:text-[#1b4d3e]">
                                                   {cond}
                                                </div>
                                             ))}
@@ -4099,7 +4018,7 @@ function PropostaEditor() {
                                   <div className="flex justify-between items-center w-full pb-4 border-b border-white/20">
                                      <div className="flex flex-col">
                                         <span className="text-white/70 text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
-                                        <h2 className="text-xl font-black text-white uppercase tracking-tight">TERMO DE ACEITE E CONTRATAÇÃO</h2>
+                                        <h2 className="text-xl font-black text-white uppercase tracking-tight">TERMO DE ACEITE E CONTRATA├ç├âO</h2>
                                      </div>
                                      <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
@@ -4108,21 +4027,21 @@ function PropostaEditor() {
                                      <div className="col-span-6 space-y-4">
                                         <h3 className="text-lg font-black tracking-tight leading-snug">Estamos prontos para iniciar a nossa parceria de sucesso!</h3>
                                         <div className="text-white/80 text-[10px] leading-relaxed space-y-2 font-semibold text-justify">
-                                           <p>Ao assinar este termo de aceite, o <strong className="text-white font-extrabold">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
-                                           <p>Este documento servirá como base oficial para a elaboração do instrumento jurídico definitivo (Contrato de Prestação de Serviços) entre as partes.</p>
+                                           <p>Ao assinar este termo de aceite, o <strong className="text-white font-extrabold">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> manifesta sua concord├óncia com os valores descritos, premissas de investimento e condi├º├Áes comerciais apresentadas nesta proposta comercial.</p>
+                                           <p>Este documento servir├í como base oficial para a elabora├º├úo do instrumento jur├¡dico definitivo (Contrato de Presta├º├úo de Servi├ºos) entre as partes.</p>
                                         </div>
                                         <div className="bg-white/5 border border-white/10 rounded-xl p-3 mt-3.5 space-y-2 text-[9px] font-semibold text-white/90">
                                            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                                               <div className="flex flex-col">
-                                                 <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Razão Social</span>
-                                                 <span className="truncate text-white font-bold">{proposta.cliente.razaoSocial || proposta.cliente.cliente || "Não informada"}</span>
+                                                 <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Raz├úo Social</span>
+                                                 <span className="truncate text-white font-bold">{proposta.cliente.razaoSocial || proposta.cliente.cliente || "N├úo informada"}</span>
                                               </div>
                                               <div className="flex flex-col">
                                                  <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">CNPJ</span>
-                                                 <span className="text-white font-bold">{proposta.cliente.cnpj || "Não informado"}</span>
+                                                 <span className="text-white font-bold">{proposta.cliente.cnpj || "N├úo informado"}</span>
                                               </div>
                                               <div className="flex flex-col">
-                                                 <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Data de Início</span>
+                                                 <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Data de In├¡cio</span>
                                                  <span className="text-white font-bold">{proposta.cliente.dataInicio ? proposta.cliente.dataInicio.split('-').reverse().join('/') : "A definir"}</span>
                                               </div>
                                               <div className="flex flex-col">
@@ -4159,8 +4078,8 @@ function PropostaEditor() {
                                               <div className="h-6 w-full mb-1 flex items-center justify-center">
                                                  <span className="text-[8px] text-emerald-300 font-extrabold tracking-wider bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/35 uppercase select-none">Assinado Digitalmente</span>
                                               </div>
-                                              <span className="text-[9px] font-black text-white">{proposta.cliente.vendedorNome || "Ádamo Quadros"}</span>
-                                              <span className="text-[8px] text-white/50 font-bold uppercase mt-0.5">{proposta.cliente.vendedorCargo || "Novos Negócios"}</span>
+                                              <span className="text-[9px] font-black text-white">{proposta.cliente.vendedorNome || "├üdamo Quadros"}</span>
+                                              <span className="text-[8px] text-white/50 font-bold uppercase mt-0.5">{proposta.cliente.vendedorCargo || "Novos Neg├│cios"}</span>
                                            </div>
                                         </div>
                                      </div>
@@ -4175,18 +4094,18 @@ function PropostaEditor() {
                          )}
                      </div>
                   </div>
-{/* OS CONTROLES DE NAVEGAÇÃO FORAM MOVIDOS PARA AS LATERAIS DO CONTAINER DOS SLIDES */}
+{/* OS CONTROLES DE NAVEGA├ç├âO FORAM MOVIDOS PARA AS LATERAIS DO CONTAINER DOS SLIDES */}
 
-                  {/* FORMULÁRIO DE ATUALIZAÇÃO DOS DADOS DOS SLIDES E DO VENDEDOR */}
+                  {/* FORMUL├üRIO DE ATUALIZA├ç├âO DOS DADOS DOS SLIDES E DO VENDEDOR */}
                   {viewMode !== 'document' && (
                   <div className="space-y-6">
                      {currentSlide === 2 && (
                         <>
-                           {/* SEÇÃO 1: DADOS DO CLIENTE E CONTEÚDO */}
+                           {/* SE├ç├âO 1: DADOS DO CLIENTE E CONTE├ÜDO */}
                      <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm">
                         <div className="bg-slate-800 -mx-8 -mt-8 px-6 py-4 border-b border-slate-700 rounded-t-2xl mb-6">
                            <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
-                              📝 Personalizar Conteúdo dos Slides (Dados do Cliente)
+                              ­ƒôØ Personalizar Conte├║do dos Slides (Dados do Cliente)
                            </h3>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -4209,23 +4128,23 @@ function PropostaEditor() {
                               />
                            </div>
                            <div className="space-y-1">
-                              <label className="text-xs font-semibold text-slate-700">Serviços / Escopo da Proposta</label>
+                              <label className="text-xs font-semibold text-slate-700">Servi├ºos / Escopo da Proposta</label>
                               <input 
                                  type="text" 
                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] font-medium" 
                                  value={proposta.cliente.tipoServicos || ''} 
-                                 placeholder="ex: Limpeza e conservação, Portaria"
+                                 placeholder="ex: Limpeza e conserva├º├úo, Portaria"
                                  onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, tipoServicos: e.target.value}})} 
                               />
                            </div>
                         </div>
                      </div>
 
-                     {/* SEÇÃO 2: DADOS DO VENDEDOR */}
+                     {/* SE├ç├âO 2: DADOS DO VENDEDOR */}
                      <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm">
                         <div className="bg-[#1B4D3E] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
                            <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
-                              👤 Personalizar Dados do Emissor / Vendedor Comercial
+                              ­ƒæñ Personalizar Dados do Emissor / Vendedor Comercial
                            </h3>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -4274,7 +4193,7 @@ function PropostaEditor() {
                       <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                          <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#16325e] rounded-t-2xl mb-6">
                             <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
-                               ⚙️ Objeto & Escopo Técnico (Slide 8)
+                               ÔÜÖ´©Å Objeto & Escopo T├®cnico (Slide 8)
                             </h3>
                          </div>
                          
@@ -4295,16 +4214,16 @@ function PropostaEditor() {
                                   checked={proposta.cliente.hasEscopoTecnico}
                                   onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, hasEscopoTecnico: e.target.checked}})}
                                />
-                               <label htmlFor="hasEscopoTecnicoSlide" className="text-xs font-bold text-slate-600">Inserir Escopo Técnico</label>
+                               <label htmlFor="hasEscopoTecnicoSlide" className="text-xs font-bold text-slate-600">Inserir Escopo T├®cnico</label>
                             </div>
                             {proposta.cliente.hasEscopoTecnico && (
                                <div>
-                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Escopo Técnico Detalhado</label>
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Escopo T├®cnico Detalhado</label>
                                   <textarea 
                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold min-h-[120px]"
                                      value={proposta.cliente.escopoTecnico || ''}
                                      onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, escopoTecnico: e.target.value}})}
-                                     placeholder="Descreva aqui de forma detalhada o escopo técnico a ser executado..."
+                                     placeholder="Descreva aqui de forma detalhada o escopo t├®cnico a ser executado..."
                                   />
                                </div>
                             )}
@@ -4316,18 +4235,18 @@ function PropostaEditor() {
                       <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                          <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#16325e] rounded-t-2xl mb-6">
                             <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
-                               📋 Personalizar Quadro Efetivo & Observações (Slide 09)
+                               ­ƒôï Personalizar Quadro Efetivo & Observa├º├Áes (Slide 09)
                             </h3>
                          </div>
                          
-                         {/* SEÇÃO 1: INTEGRANTES DO QUADRO EFETIVO (LEITURA) */}
+                         {/* SE├ç├âO 1: INTEGRANTES DO QUADRO EFETIVO (LEITURA) */}
                          <div className="space-y-4 border-b border-slate-100 pb-6 mb-6">
                             <div>
                                <h4 className="text-xs font-black text-[#1e4480] uppercase tracking-wider flex items-center gap-1.5">
-                                  👥 Integrantes do Quadro Efetivo (Visualização)
+                                  ­ƒæÑ Integrantes do Quadro Efetivo (Visualiza├º├úo)
                                </h4>
                                <p className="text-slate-500 text-[10px] font-semibold mt-1">
-                                  ℹ️ Estes itens são importados automaticamente da <strong>Aba 4 (Quadro de Equipe)</strong> e não podem ser alterados diretamente neste slide.
+                                  Ôä╣´©Å Estes itens s├úo importados automaticamente da <strong>Aba 4 (Quadro de Equipe)</strong> e n├úo podem ser alterados diretamente neste slide.
                                </p>
                             </div>
 
@@ -4335,22 +4254,22 @@ function PropostaEditor() {
                                <table className="w-full text-left border-collapse border border-slate-200 rounded-xl overflow-hidden">
                                   <thead>
                                      <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
-                                        <th className="px-4 py-2.5">Função</th>
+                                        <th className="px-4 py-2.5">Fun├º├úo</th>
                                         <th className="px-4 py-2.5 text-center w-24">Qtd</th>
                                         <th className="px-4 py-2.5 text-center w-32">Escala</th>
-                                        <th className="px-4 py-2.5 text-center w-36">Horário</th>
+                                        <th className="px-4 py-2.5 text-center w-36">Hor├írio</th>
                                      </tr>
                                   </thead>
                                   <tbody>
                                      {(proposta.equipe || []).map((p: any, idx: number) => (
                                         <tr key={p.id || idx} className="border-b border-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-50/30">
-                                           <td className="px-4 py-2.5 font-black text-slate-800">{p.nomeCargo || "Nova Função"}</td>
+                                           <td className="px-4 py-2.5 font-black text-slate-800">{p.nomeCargo || "Nova Fun├º├úo"}</td>
                                            <td className="px-4 py-2.5 text-center">{p.quantidade || 0}</td>
-                                           <td className="px-4 py-2.5 text-center">{p.escala || "Á definir"}</td>
+                                           <td className="px-4 py-2.5 text-center">{p.escala || "├ü definir"}</td>
                                            <td className="px-4 py-2.5 text-center">
                                               {p.parametrosPosto?.horarioInicio && p.parametrosPosto?.horarioFim 
-                                                 ? `${p.parametrosPosto.horarioInicio} às ${p.parametrosPosto.horarioFim}` 
-                                                 : '08:00 às 17:00'}
+                                                 ? `${p.parametrosPosto.horarioInicio} ├ás ${p.parametrosPosto.horarioFim}` 
+                                                 : '08:00 ├ás 17:00'}
                                            </td>
                                         </tr>
                                      ))}
@@ -4366,15 +4285,15 @@ function PropostaEditor() {
                             </div>
                          </div>
 
-                         {/* SEÇÃO 2: CLÁUSULAS OPERACIONAIS DINÂMICAS */}
+                         {/* SE├ç├âO 2: CL├üUSULAS OPERACIONAIS DIN├éMICAS */}
                          <div className="space-y-4">
                             <div className="flex justify-between items-center">
                                <div>
                                   <h4 className="text-xs font-black text-[#1e4480] uppercase tracking-wider">
-                                     📝 Cláusulas & Observações Operacionais
+                                     ­ƒôØ Cl├íusulas & Observa├º├Áes Operacionais
                                   </h4>
                                   <p className="text-slate-500 text-[10px] font-semibold mt-1">
-                                     Adicione, remova ou edite as observações e regras operacionais exibidas na base do Slide 09.
+                                     Adicione, remova ou edite as observa├º├Áes e regras operacionais exibidas na base do Slide 09.
                                   </p>
                                </div>
                                <button
@@ -4382,11 +4301,11 @@ function PropostaEditor() {
                                   className="px-3 py-1.5 bg-[#1e4480] hover:bg-[#16325e] text-white font-bold text-[10px] uppercase tracking-wider rounded-lg transition-all active:scale-95 shadow-sm cursor-pointer shrink-0"
                                   onClick={() => {
                                      const currentClausulas = proposta.cliente.quadroEfetivoClausulas || [
-                                        proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
-                                        proposta.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
-                                        proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
+                                        proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcion├írio dever├í ter duas folgas compensat├│rias em sequ├¬ncia;',
+                                        proposta.cliente.quadroEfetivoClausula2 || 'Para redu├º├Áes no efetivo prazo de 30 (trinta) dias;',
+                                        proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h di├írias de no m├¡nimo 60 minutos, entre 4h a 6h o intervalo ser├í de 15 minutos (CLT).'
                                      ];
-                                     const newList = [...currentClausulas, 'Nova cláusula ou observação...'];
+                                     const newList = [...currentClausulas, 'Nova cl├íusula ou observa├º├úo...'];
                                      setProposta({
                                         ...proposta,
                                         cliente: {
@@ -4396,16 +4315,16 @@ function PropostaEditor() {
                                      });
                                   }}
                                >
-                                  ➕ Nova Cláusula
+                                  Ô×ò Nova Cl├íusula
                                </button>
                             </div>
 
                             <div className="space-y-3">
                                {(() => {
                                   const currentClausulas = proposta.cliente.quadroEfetivoClausulas || [
-                                     proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
-                                     proposta.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
-                                     proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
+                                     proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcion├írio dever├í ter duas folgas compensat├│rias em sequ├¬ncia;',
+                                     proposta.cliente.quadroEfetivoClausula2 || 'Para redu├º├Áes no efetivo prazo de 30 (trinta) dias;',
+                                     proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h di├írias de no m├¡nimo 60 minutos, entre 4h a 6h o intervalo ser├í de 15 minutos (CLT).'
                                   ];
                                   return currentClausulas.map((c: string, idx: number) => (
                                      <div key={idx} className="flex gap-3 items-start bg-slate-50 p-4 border border-slate-200 rounded-xl">
@@ -4451,7 +4370,7 @@ function PropostaEditor() {
 
                             <div className="grid grid-cols-1 gap-4 pt-4 border-t border-slate-100">
                                <div className="space-y-1">
-                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Subtítulo / Título da Tabela</label>
+                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Subt├¡tulo / T├¡tulo da Tabela</label>
                                   <input 
                                      type="text" 
                                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-[#1e4480] font-semibold" 
@@ -4467,13 +4386,13 @@ function PropostaEditor() {
                       <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                          <div className="bg-[#1B4D3E] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
                             <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
-                               📋 Personalizar Tabela de Itens Inclusos e Excluídos (Slide 09)
+                               ­ƒôï Personalizar Tabela de Itens Inclusos e Exclu├¡dos (Slide 09)
                             </h3>
                          </div>
                          <div className="space-y-4">
                             <div className="flex justify-between items-center">
                                <p className="text-slate-500 text-xs font-semibold">
-                                  Abaixo você pode editar os nomes, descrições e o status de inclusão de cada item exibido no Slide 09. Marque a caixa para definir o item como "Incluso" (Sim) ou desmarque para deixá-lo "Excluído" (Não).
+                                  Abaixo voc├¬ pode editar os nomes, descri├º├Áes e o status de inclus├úo de cada item exibido no Slide 09. Marque a caixa para definir o item como "Incluso" (Sim) ou desmarque para deix├í-lo "Exclu├¡do" (N├úo).
                                </p>
                                <button
                                   type="button"
@@ -4485,7 +4404,7 @@ function PropostaEditor() {
                                      setProposta({ ...proposta, itensInclusosExcluidos: newList });
                                   }}
                                >
-                                  ➕ Novo Item
+                                  Ô×ò Novo Item
                                </button>
                             </div>
                             <div className="overflow-x-auto">
@@ -4493,9 +4412,9 @@ function PropostaEditor() {
                                   <thead>
                                      <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
                                         <th className="px-4 py-3 w-28 text-center">Item</th>
-                                        <th className="px-4 py-3">Descrição</th>
+                                        <th className="px-4 py-3">Descri├º├úo</th>
                                         <th className="px-4 py-3 text-center w-28">Incluso?</th>
-                                        <th className="px-4 py-3 text-center w-20">Ações</th>
+                                        <th className="px-4 py-3 text-center w-20">A├º├Áes</th>
                                      </tr>
                                   </thead>
                                   <tbody>
@@ -4557,7 +4476,7 @@ function PropostaEditor() {
                       <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                          <div className="bg-[#1B4D3E] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
                             <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
-                               📋 Resumo Comercial da Proposta (Slide 10)
+                               ­ƒôï Resumo Comercial da Proposta (Slide 10)
                             </h3>
                          </div>
                          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-start gap-3">
@@ -4565,12 +4484,12 @@ function PropostaEditor() {
                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                             <div>
-                               <p className="font-bold mb-1">Cálculo Automático de Valores</p>
+                               <p className="font-bold mb-1">C├ílculo Autom├ítico de Valores</p>
                                <p className="leading-relaxed">
-                                  Os valores e quantitativos exibidos no Slide 10 são compilados e consolidados em tempo real com base no Quadro de Equipe (Mão de Obra) e nos Insumos (Materiais, Máquinas, Descartáveis, Serviços).
+                                  Os valores e quantitativos exibidos no Slide 10 s├úo compilados e consolidados em tempo real com base no Quadro de Equipe (M├úo de Obra) e nos Insumos (Materiais, M├íquinas, Descart├íveis, Servi├ºos).
                                </p>
                                <p className="mt-2 font-black">
-                                  Para modificar qualquer preço de venda ou quantidade, ajuste as respectivas abas do editor à esquerda.
+                                  Para modificar qualquer pre├ºo de venda ou quantidade, ajuste as respectivas abas do editor ├á esquerda.
                                </p>
                             </div>
                          </div>
@@ -4581,7 +4500,7 @@ function PropostaEditor() {
                       <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                          <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
                             <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
-                               ⚙️ Condições Gerais da Proposta (Slide 12)
+                               ÔÜÖ´©Å Condi├º├Áes Gerais da Proposta (Slide 12)
                             </h3>
                          </div>
                          
@@ -4589,11 +4508,11 @@ function PropostaEditor() {
                             {/* Colaboradores */}
                             <div>
                                <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider mb-3">
-                                  Condições para os Colaboradores
+                                  Condi├º├Áes para os Colaboradores
                                 </h4>
                                <div className="space-y-3">
                                   <div>
-                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condição 1</label>
+                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condi├º├úo 1</label>
                                      <input 
                                         type="text" 
                                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
@@ -4602,7 +4521,7 @@ function PropostaEditor() {
                                      />
                                   </div>
                                   <div>
-                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condição 2</label>
+                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condi├º├úo 2</label>
                                      <input 
                                         type="text" 
                                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
@@ -4611,7 +4530,7 @@ function PropostaEditor() {
                                      />
                                   </div>
                                   <div>
-                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condição 3</label>
+                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condi├º├úo 3</label>
                                      <input 
                                         type="text" 
                                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
@@ -4625,11 +4544,11 @@ function PropostaEditor() {
                             {/* Cliente */}
                             <div className="border-t border-slate-150 pt-5">
                                <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider mb-3">
-                                  Condições para o Cliente
+                                  Condi├º├Áes para o Cliente
                                </h4>
                                <div className="space-y-3">
                                   <div>
-                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condição 1</label>
+                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condi├º├úo 1</label>
                                      <input 
                                         type="text" 
                                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
@@ -4638,7 +4557,7 @@ function PropostaEditor() {
                                      />
                                   </div>
                                   <div>
-                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condição 2</label>
+                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condi├º├úo 2</label>
                                      <input 
                                         type="text" 
                                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
@@ -4647,7 +4566,7 @@ function PropostaEditor() {
                                      />
                                   </div>
                                   <div>
-                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condição 3</label>
+                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Condi├º├úo 3</label>
                                      <input 
                                         type="text" 
                                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
@@ -4663,21 +4582,21 @@ function PropostaEditor() {
 
                      {currentSlide === 12 && (() => {
                         const condsColab = proposta.cliente.condicoesColaboradores || [
-                           proposta.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
+                           proposta.cliente.condicaoColaboradores1 || 'Vale alimenta├º├úo de R$900,00;',
                            proposta.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
                            proposta.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.'
                         ];
                         const condsCli = proposta.cliente.condicoesCliente || [
-                           proposta.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
-                           proposta.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
-                           proposta.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.'
+                           proposta.cliente.condicaoCliente1 || 'Faturamento dos servi├ºos aos dias 15 ou 30 de cada m├¬s com vencimento nos pr├│ximos 15 dias;',
+                           proposta.cliente.condicaoCliente2 || 'Reajuste anual, autom├ítico e equivalente ao diss├¡dio da categoria (SIEMACO) todo m├¬s fevereiro de cada ano subsequente;',
+                           proposta.cliente.condicaoCliente3 || 'Pr├│ximo reajuste Fevereiro/2026.'
                         ];
 
                         return (
                            <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                               <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
                                  <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
-                                    ⚙️ Condições Gerais da Proposta (Slide 11)
+                                    ÔÜÖ´©Å Condi├º├Áes Gerais da Proposta (Slide 11)
                                  </h3>
                               </div>
                               
@@ -4686,13 +4605,13 @@ function PropostaEditor() {
                                  <div>
                                     <div className="flex justify-between items-center mb-3">
                                        <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">
-                                          Condições para os Colaboradores
+                                          Condi├º├Áes para os Colaboradores
                                        </h4>
                                        <button
                                           type="button"
                                           className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors border border-emerald-200"
                                           onClick={() => {
-                                             const newList = [...condsColab, 'Nova condição de colaborador...'];
+                                             const newList = [...condsColab, 'Nova condi├º├úo de colaborador...'];
                                              setProposta({...proposta, cliente: {...proposta.cliente, condicoesColaboradores: newList}});
                                           }}
                                        >
@@ -4734,13 +4653,13 @@ function PropostaEditor() {
                                  <div className="border-t border-slate-150 pt-5">
                                     <div className="flex justify-between items-center mb-3">
                                        <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">
-                                          Condições para o Cliente
+                                          Condi├º├Áes para o Cliente
                                        </h4>
                                        <button
                                           type="button"
                                           className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors border border-emerald-200"
                                           onClick={() => {
-                                             const newList = [...condsCli, 'Nova condição de cliente...'];
+                                             const newList = [...condsCli, 'Nova condi├º├úo de cliente...'];
                                              setProposta({...proposta, cliente: {...proposta.cliente, condicoesCliente: newList}});
                                           }}
                                        >
@@ -4786,13 +4705,13 @@ function PropostaEditor() {
                       <div className="bg-white p-8 rounded-2xl border border-slate-300 shadow-sm mt-6">
                          <div className="bg-[#1e4480] -mx-8 -mt-8 px-6 py-4 border-b border-[#13382D] rounded-t-2xl mb-6">
                             <h3 className="text-white text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
-                               📝 Informações de Aceite (Slide 13)
+                               ­ƒôØ Informa├º├Áes de Aceite (Slide 13)
                             </h3>
                          </div>
                          
                          <div className="space-y-4">
                             <div>
-                               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Razão Social</label>
+                               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Raz├úo Social</label>
                                <input 
                                   type="text" 
                                   placeholder="Preenchido automaticamente ao buscar cliente..."
@@ -4813,7 +4732,7 @@ function PropostaEditor() {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                <div>
-                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Data Início</label>
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Data In├¡cio</label>
                                   <input 
                                      type="date" 
                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1e4480] font-semibold"
@@ -4847,7 +4766,7 @@ function PropostaEditor() {
                   </div>
                   )}
                      
-                     {/* Floating Controls Dock no Modo Apresentação */}
+                     {/* Floating Controls Dock no Modo Apresenta├º├úo */}
                      {presentationMode && (
                         <div className="absolute bottom-6 bg-slate-900/90 backdrop-blur text-white px-6 py-3 rounded-full flex items-center gap-6 shadow-2xl z-[100000] border border-slate-700/50">
                            <button 
@@ -4855,7 +4774,7 @@ function PropostaEditor() {
                               onClick={() => setCurrentSlide(prev => (prev === 1 ? 13 : prev - 1))}
                               className="hover:text-emerald-400 font-extrabold text-sm transition-all"
                            >
-                              ◀ Anterior
+                              ÔùÇ Anterior
                            </button>
                            <span className="font-extrabold text-xs tracking-widest text-slate-400">
                               SLIDE {String(currentSlide).padStart(2, '0')} / 13
@@ -4865,7 +4784,7 @@ function PropostaEditor() {
                               onClick={() => setCurrentSlide(prev => (prev === 13 ? 1 : prev + 1))}
                               className="hover:text-emerald-400 font-extrabold text-sm transition-all"
                            >
-                              Próximo ▶
+                              Pr├│ximo ÔûÂ
                            </button>
                            <div className="h-4 w-px bg-slate-700" />
                            <button 
@@ -4873,7 +4792,7 @@ function PropostaEditor() {
                               onClick={() => setPresentationMode(false)}
                               className="text-rose-400 hover:text-rose-300 font-extrabold text-xs uppercase tracking-wider transition-all"
                            >
-                              Sair (ESC) 🚪
+                              Sair (ESC) ­ƒÜ¬
                            </button>
                         </div>
                      )}
@@ -4885,7 +4804,7 @@ function PropostaEditor() {
       
          
          {/* ========================================================================= */}
-         {/* ESTILOS DE ANIMAÇÃO PARA OS MODAIS ULTRA PREMIUM                          */}
+         {/* ESTILOS DE ANIMA├ç├âO PARA OS MODAIS ULTRA PREMIUM                          */}
          {/* ========================================================================= */}
          <style>{`
             @keyframes modalFadeIn {
@@ -4907,14 +4826,14 @@ function PropostaEditor() {
             return (
                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 transition-all duration-300">
                   <div className="bg-white/95 rounded-2xl border border-slate-100 shadow-[0_25px_60px_-15px_rgba(27,77,62,0.18)] max-w-2xl w-full flex flex-col max-h-[90vh] overflow-hidden animate-modal-in">
-                     {/* Cabeçalho */}
+                     {/* Cabe├ºalho */}
                      <div className="bg-gradient-to-r from-[#1B4D3E] via-[#215E4C] to-[#12362b] text-white p-5 flex items-center justify-between border-b-2 border-emerald-500/20">
                         <div className="flex items-center gap-3">
                            <div className="bg-white/10 p-2 rounded-xl border border-white/10">
-                              <span className="text-lg">⚙️</span>
+                              <span className="text-lg">ÔÜÖ´©Å</span>
                            </div>
                            <div>
-                              <h3 className="font-extrabold text-xs uppercase tracking-widest text-emerald-100/90">Parâmetros & Jornada</h3>
+                              <h3 className="font-extrabold text-xs uppercase tracking-widest text-emerald-100/90">Par├ómetros & Jornada</h3>
                               <div className="mt-1 flex items-center gap-2">
                                  <span className="bg-[#D4AF37]/15 text-[#e5c158] border border-[#D4AF37]/35 text-[9px] px-2 py-0.5 rounded-full font-black tracking-wider uppercase">
                                     Posto: {p.nomeCargo}
@@ -4930,7 +4849,7 @@ function PropostaEditor() {
                         </button>
                      </div>
 
-                     {/* Conteúdo */}
+                     {/* Conte├║do */}
                      <div className="p-6 overflow-y-auto space-y-6">
                         {/* Grid 1: Adicionais */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -4944,7 +4863,7 @@ function PropostaEditor() {
                                     updatePosto(p.id, 'parametrosPosto', param);
                                  }}
                               >
-                                 <option value="NAO">Não</option>
+                                 <option value="NAO">N├úo</option>
                                  <option value="SIM">Sim (30%)</option>
                               </select>
                            </div>
@@ -4960,14 +4879,14 @@ function PropostaEditor() {
                                  }}
                               >
                                  <option value={0}>0%</option>
-                                 <option value={10}>10% (Mínimo)</option>
-                                 <option value={20}>20% (Médio)</option>
-                                 <option value={40}>40% (Máximo)</option>
+                                 <option value={10}>10% (M├¡nimo)</option>
+                                 <option value={20}>20% (M├®dio)</option>
+                                 <option value={40}>40% (M├íximo)</option>
                               </select>
                            </div>
 
                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Horas Noturnas (Mês)</label>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Horas Noturnas (M├¬s)</label>
                               <input 
                                  type="number" 
                                  className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
@@ -4980,7 +4899,7 @@ function PropostaEditor() {
                            </div>
 
                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Intrajornada (Horas/Mês)</label>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Intrajornada (Horas/M├¬s)</label>
                               <input 
                                  type="number" 
                                  className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-4 focus:ring-emerald-500/10 shadow-xs transition-all duration-200" 
@@ -5007,14 +4926,14 @@ function PropostaEditor() {
                            </div>
                         </div>
 
-                        {/* Seção de Jornada */}
+                        {/* Se├º├úo de Jornada */}
                         <div className="bg-[#F8FAFC]/80 border border-slate-100 rounded-2xl p-5 shadow-xs space-y-4 relative overflow-hidden">
                            <h4 className="text-xs font-extrabold text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2 border-b border-slate-200/60 pb-2.5">
-                              <span>📅</span> Horários & Dias Trabalhados
+                              <span>­ƒôà</span> Hor├írios & Dias Trabalhados
                            </h4>
                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               <div className="space-y-1.5">
-                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Horário de Início</label>
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Hor├írio de In├¡cio</label>
                                  <input 
                                     type="time" 
                                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] transition-all" 
@@ -5031,7 +4950,7 @@ function PropostaEditor() {
                               </div>
 
                               <div className="space-y-1.5">
-                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Horário de Saída</label>
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Hor├írio de Sa├¡da</label>
                                  <input 
                                     type="time" 
                                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] transition-all" 
@@ -5048,7 +4967,7 @@ function PropostaEditor() {
                               </div>
 
                               <div className="space-y-1.5">
-                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Dias Trab. / Mês</label>
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Dias Trab. / M├¬s</label>
                                  <input 
                                     type="number" 
                                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] transition-all" 
@@ -5066,15 +4985,15 @@ function PropostaEditor() {
                            </div>
 
                            <div className="bg-emerald-50/50 text-[#1B4D3E] p-4 rounded-xl text-xs font-bold border border-emerald-100/50 flex items-center justify-between shadow-xs">
-                              <span className="flex items-center gap-1.5 text-emerald-950 font-bold">⏰ Cálculo automático de adicionais:</span>
+                              <span className="flex items-center gap-1.5 text-emerald-950 font-bold">ÔÅ░ C├ílculo autom├ítico de adicionais:</span>
                               <span className="bg-[#1B4D3E] text-white px-3 py-1 rounded-lg font-black text-xs shadow-sm">
-                                 {p.parametrosPosto?.adicionalNoturnoHoras || 0}h / mês
+                                 {p.parametrosPosto?.adicionalNoturnoHoras || 0}h / m├¬s
                               </span>
                            </div>
                         </div>
                      </div>
 
-                     {/* Rodapé */}
+                     {/* Rodap├® */}
                      <div className="bg-[#F8FAFC] px-6 py-4.5 flex justify-end border-t border-slate-100/60 rounded-b-2xl">
                         <button 
                            onClick={() => setActiveAdicionaisPostoId(null)}
@@ -5098,11 +5017,11 @@ function PropostaEditor() {
             return (
                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 transition-all duration-300">
                   <div className="bg-white/95 rounded-2xl border border-slate-100 shadow-[0_25px_60px_-15px_rgba(27,77,62,0.18)] max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden animate-modal-in">
-                     {/* Cabeçalho */}
+                     {/* Cabe├ºalho */}
                      <div className="bg-gradient-to-r from-[#1B4D3E] via-[#215E4C] to-[#12362b] text-white p-5 flex items-center justify-between border-b-2 border-emerald-500/20">
                         <div className="flex items-center gap-3">
                            <div className="bg-white/10 p-2 rounded-xl border border-white/10">
-                              <span className="text-lg">🛡️</span>
+                              <span className="text-lg">­ƒøí´©Å</span>
                            </div>
                            <div>
                               <h3 className="font-extrabold text-xs uppercase tracking-widest text-emerald-100/90">EPIs & Uniformes Especiais</h3>
@@ -5121,11 +5040,11 @@ function PropostaEditor() {
                         </button>
                      </div>
 
-                     {/* Conteúdo */}
+                     {/* Conte├║do */}
                      <div className="p-6 overflow-y-auto space-y-4">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                            <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">
-                              Cadastre itens adicionais específicos para este posto
+                              Cadastre itens adicionais espec├¡ficos para este posto
                            </p>
                            <button 
                               onClick={() => {
@@ -5144,11 +5063,11 @@ function PropostaEditor() {
                               <table className="w-full text-xs">
                                  <thead className="bg-[#F8FAFC] text-slate-400 uppercase text-[9px] tracking-wider font-extrabold border-b border-slate-100">
                                     <tr>
-                                       <th className="px-5 py-3 text-left">Descrição do Item</th>
+                                       <th className="px-5 py-3 text-left">Descri├º├úo do Item</th>
                                        <th className="px-5 py-3 text-center w-24">Qtd</th>
-                                       <th className="px-5 py-3 text-center w-36">Preço Unitário</th>
-                                       <th className="px-5 py-3 text-center w-32">Vida Útil (meses)</th>
-                                       <th className="px-5 py-3 text-right w-36">Custo / Mês</th>
+                                       <th className="px-5 py-3 text-center w-36">Pre├ºo Unit├írio</th>
+                                       <th className="px-5 py-3 text-center w-32">Vida ├Ütil (meses)</th>
+                                       <th className="px-5 py-3 text-right w-36">Custo / M├¬s</th>
                                        <th className="px-5 py-3 text-center w-16"></th>
                                     </tr>
                                  </thead>
@@ -5159,7 +5078,7 @@ function PropostaEditor() {
                                              <input 
                                                 type="text" 
                                                 className="w-full bg-slate-50/40 border border-slate-200/60 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:bg-white focus:border-[#1B4D3E] focus:ring-2 focus:ring-emerald-500/5 outline-none transition-all" 
-                                                placeholder="Ex: Roupa Térmica p/ Câmara Fria"
+                                                placeholder="Ex: Roupa T├®rmica p/ C├ómara Fria"
                                                 value={epi.descricao}
                                                 onChange={(e) => {
                                                    const newEpis = [...p.parametrosPosto.episAdicionais];
@@ -5231,17 +5150,17 @@ function PropostaEditor() {
                         ) : (
                            <div className="bg-[#F8FAFC] border border-dashed border-slate-200 rounded-2xl py-12 text-center">
                               <p className="text-sm text-slate-400 font-medium italic">Nenhum EPI ou uniforme especial adicionado a este posto.</p>
-                              <p className="text-xs text-slate-300 mt-1.5">Clique em "Inserir Item" no canto superior direito para começar.</p>
+                              <p className="text-xs text-slate-300 mt-1.5">Clique em "Inserir Item" no canto superior direito para come├ºar.</p>
                            </div>
                         )}
                      </div>
 
-                     {/* Rodapé */}
+                     {/* Rodap├® */}
                      <div className="bg-[#F8FAFC] px-6 py-4.5 flex justify-between items-center border-t border-slate-100/60 rounded-b-2xl">
                         <div>
                            <span className="text-[10px] font-bold text-slate-400 uppercase block tracking-wider">Custo Total Especial</span>
                            <span className="text-base font-black text-[#1B4D3E]">
-                              R$ {((p.parametrosPosto?.episAdicionais || []).reduce((acc: number, item: any) => acc + ((item.precoUnitario * item.quantidade) / (item.vidaUtil || 1)), 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">/ mês</span>
+                              R$ {((p.parametrosPosto?.episAdicionais || []).reduce((acc: number, item: any) => acc + ((item.precoUnitario * item.quantidade) / (item.vidaUtil || 1)), 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">/ m├¬s</span>
                            </span>
                         </div>
                         <button 
@@ -5263,7 +5182,7 @@ function PropostaEditor() {
             <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
                <div className="bg-white rounded-md shadow-2xl w-full max-w-sm overflow-hidden flex flex-col border border-slate-300">
                   <div className="bg-[#1B4D3E] px-4 py-3 flex justify-between items-center">
-                     <h2 className="text-white text-xs font-bold uppercase flex items-center gap-2"><Plus size={14}/> Novo Tipo de Serviço</h2>
+                     <h2 className="text-white text-xs font-bold uppercase flex items-center gap-2"><Plus size={14}/> Novo Tipo de Servi├ºo</h2>
                      <button onClick={() => setShowNewTipoModal(false)} className="text-white/60 hover:text-white transition-colors"><X size={16}/></button>
                   </div>
                   <div className="p-4 space-y-4">
@@ -5290,7 +5209,7 @@ function PropostaEditor() {
                   <div className="p-4 space-y-4">
                      <div className="space-y-1">
                         <label className="text-xs font-bold text-slate-600 uppercase">Nome do Segmento</label>
-                        <input type="text" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm outline-none focus:border-[#1B4D3E]" value={newSegmentoName} onChange={e => setNewSegmentoName(e.target.value)} placeholder="Ex: Condomínios" autoFocus />
+                        <input type="text" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm outline-none focus:border-[#1B4D3E]" value={newSegmentoName} onChange={e => setNewSegmentoName(e.target.value)} placeholder="Ex: Condom├¡nios" autoFocus />
                      </div>
                      <button disabled={isSavingSegmento} onClick={handleSaveSegmento} className="w-full bg-[#1B4D3E] hover:bg-[#13382D] text-white font-bold py-2 rounded text-sm transition-colors shadow-sm disabled:opacity-50">
                         {isSavingSegmento ? 'Salvando...' : 'Salvar Segmento'}
@@ -5314,7 +5233,7 @@ function PropostaEditor() {
                         <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newClientForm.nomeFantasia} onChange={e => setNewClientForm({...newClientForm, nomeFantasia: e.target.value})} />
                      </div>
                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">Razão Social</label>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">Raz├úo Social</label>
                         <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newClientForm.razaoSocial} onChange={e => setNewClientForm({...newClientForm, razaoSocial: e.target.value})} />
                      </div>
                      <div className="space-y-1">
@@ -5330,7 +5249,7 @@ function PropostaEditor() {
                         <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newClientForm.whatsapp} onChange={e => setNewClientForm({...newClientForm, whatsapp: e.target.value})} />
                      </div>
                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">Contato (Responsável)</label>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">Contato (Respons├ível)</label>
                         <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newClientForm.contato} onChange={e => setNewClientForm({...newClientForm, contato: e.target.value})} />
                      </div>
                      <div className="space-y-1">
@@ -5361,12 +5280,12 @@ function PropostaEditor() {
                   </div>
                   <div className="p-6 space-y-4">
                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase">Descrição *</label>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">Descri├º├úo *</label>
                         <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newProductForm.descricao} onChange={e => setNewProductForm({...newProductForm, descricao: e.target.value})} />
                      </div>
                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
-                           <label className="text-[10px] font-bold text-slate-500 uppercase">Preço Unitário (R$)</label>
+                           <label className="text-[10px] font-bold text-slate-500 uppercase">Pre├ºo Unit├írio (R$)</label>
                            <input type="number" step="0.01" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newProductForm.precoUnitario} onChange={e => setNewProductForm({...newProductForm, precoUnitario: Number(e.target.value)})} />
                         </div>
                         <div className="space-y-1">
@@ -5379,8 +5298,8 @@ function PropostaEditor() {
                         <select className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newProductForm.categoria} onChange={e => setNewProductForm({...newProductForm, categoria: e.target.value})}>
                            <option value="Geral">Geral</option>
                            <option value="MATERIAL DE LIMPEZA">Material de Limpeza</option>
-                           <option value="DESCARTAVEIS">Descartáveis</option>
-                           <option value="MAQUINAS E EQUIPAMENTOS">Máquinas e Equipamentos</option>
+                           <option value="DESCARTAVEIS">Descart├íveis</option>
+                           <option value="MAQUINAS E EQUIPAMENTOS">M├íquinas e Equipamentos</option>
                            <option value="EPI">EPI</option>
                            <option value="UNIFORME">Uniforme</option>
                         </select>
@@ -5397,7 +5316,7 @@ function PropostaEditor() {
          )}
 
 
-         {/* MODAL DE ESCOLHA DE SALVAMENTO (EDIÇÃO) */}
+         {/* MODAL DE ESCOLHA DE SALVAMENTO (EDI├ç├âO) */}
       {showSaveChoiceModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
           <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 transform scale-100 transition-all duration-300">
@@ -5407,21 +5326,21 @@ function PropostaEditor() {
               </div>
               <h3 className="text-xl font-black text-slate-800 mb-2">Como deseja salvar?</h3>
               <p className="text-sm text-slate-500 mb-8 px-2 font-medium">
-                Escolha se esta alteração deve gerar uma nova revisão da proposta ou sobrescrever a versão atual.
+                Escolha se esta altera├º├úo deve gerar uma nova revis├úo da proposta ou sobrescrever a vers├úo atual.
               </p>
             </div>
             
             <div className="space-y-4">
               <button
-                onClick={() => executeSave('Atualização na mesma revisão', false)}
+                onClick={() => executeSave('Atualiza├º├úo na mesma revis├úo', false)}
                 className="w-full text-left p-4 rounded-2xl border border-slate-200 hover:border-[#1B4D3E]/30 hover:bg-[#1B4D3E]/5 hover:shadow-md transition-all group flex items-start gap-4"
               >
                 <div className="w-10 h-10 bg-slate-100 group-hover:bg-white rounded-xl flex items-center justify-center text-slate-500 group-hover:text-[#1B4D3E] shadow-sm">
                   <Save size={20} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-800 group-hover:text-[#1B4D3E] mb-0.5">Salvar mesma Versão</h4>
-                  <p className="text-xs text-slate-500">Sobrescreve a revisão atual sem criar histórico</p>
+                  <h4 className="font-bold text-slate-800 group-hover:text-[#1B4D3E] mb-0.5">Salvar mesma Vers├úo</h4>
+                  <p className="text-xs text-slate-500">Sobrescreve a revis├úo atual sem criar hist├│rico</p>
                 </div>
               </button>
 
@@ -5436,8 +5355,8 @@ function PropostaEditor() {
                   <History size={20} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-[#1B4D3E] mb-0.5">Salvar Nova Versão</h4>
-                  <p className="text-xs text-[#1B4D3E]/70">Cria a Revisão R{String((proposta.versao || 1) + 1).padStart(2, '0')} com histórico de mudanças</p>
+                  <h4 className="font-bold text-[#1B4D3E] mb-0.5">Salvar Nova Vers├úo</h4>
+                  <p className="text-xs text-[#1B4D3E]/70">Cria a Revis├úo R{String((proposta.versao || 1) + 1).padStart(2, '0')} com hist├│rico de mudan├ºas</p>
                 </div>
               </button>
             </div>
@@ -5452,7 +5371,7 @@ function PropostaEditor() {
         </div>
       )}
 
-      {/* MODAL OBRIGATÓRIO DE CHANGELOG PARA REVISÕES */}
+      {/* MODAL OBRIGAT├ôRIO DE CHANGELOG PARA REVIS├òES */}
       {showChangelogModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
           <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 transform scale-100 transition-all duration-300">
@@ -5460,22 +5379,22 @@ function PropostaEditor() {
               <div className="w-12 h-12 bg-amber-50 border border-amber-200 rounded-full flex items-center justify-center text-amber-600 mb-4 shadow-sm">
                 <History size={24} />
               </div>
-              <h2 className="text-xl font-black text-slate-800 tracking-tight">Descrever Alterações da Versão</h2>
+              <h2 className="text-xl font-black text-slate-800 tracking-tight">Descrever Altera├º├Áes da Vers├úo</h2>
               <p className="text-xs text-slate-400 mt-2 font-medium">
-                Como você está salvando a <strong className="text-amber-600 font-extrabold">Revisão R${String(proposta.versao + 1).padStart(2, '0')}</strong>, descreva de forma clara e obrigatória o que foi alterado nesta versão para fins de histórico.
+                Como voc├¬ est├í salvando a <strong className="text-amber-600 font-extrabold">Revis├úo R${String(proposta.versao + 1).padStart(2, '0')}</strong>, descreva de forma clara e obrigat├│ria o que foi alterado nesta vers├úo para fins de hist├│rico.
               </p>
             </div>
             
             <div className="mt-6">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Resumo das Mudanças</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Resumo das Mudan├ºas</label>
               <textarea 
                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#1B4D3E] focus:border-[#1B4D3E] focus:bg-white transition-all resize-none h-32"
-                placeholder="Ex: Ajuste na taxa tributária da DRE, aumento do percentual de férias dos colaboradores, correção de insumos de limpeza..."
+                placeholder="Ex: Ajuste na taxa tribut├íria da DRE, aumento do percentual de f├®rias dos colaboradores, corre├º├úo de insumos de limpeza..."
                 value={changelogText}
                 onChange={(e) => setChangelogText(e.target.value)}
               />
               <div className="flex justify-between items-center mt-2 px-1">
-                <span className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">Mínimo 5 caracteres</span>
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">M├¡nimo 5 caracteres</span>
                 <span className={`text-[10px] font-extrabold uppercase ${changelogText.trim().length >= 5 ? 'text-emerald-500' : 'text-amber-500'}`}>
                   {changelogText.trim().length} caracteres
                 </span>
@@ -5498,7 +5417,7 @@ function PropostaEditor() {
                 disabled={saving || changelogText.trim().length < 5}
                 className="flex-1 py-3.5 bg-[#1B4D3E] hover:bg-[#13382d] disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-extrabold rounded-2xl text-xs uppercase tracking-wider transition-colors active:scale-[0.98] cursor-pointer shadow-[0_4px_14px_rgba(27,77,62,0.2)]"
               >
-                {saving ? 'Salvando...' : 'Salvar Versão'}
+                {saving ? 'Salvando...' : 'Salvar Vers├úo'}
               </button>
             </div>
           </div>
@@ -5508,7 +5427,7 @@ function PropostaEditor() {
 <div className={`print-slide-deck hidden ${viewMode === 'slide' ? 'print:block' : ''}`}>
                      {/* SLIDE 01 PRINT - CAPA COMERCIAL */}
                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-[#020617] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
-                        {/* Imagem de Fundo Nativa HTML para Garantir Renderização */}
+                        {/* Imagem de Fundo Nativa HTML para Garantir Renderiza├º├úo */}
                         <img 
                            src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200" 
                            alt="Capa Fundo" 
@@ -5536,7 +5455,7 @@ function PropostaEditor() {
                            <div className="flex justify-start gap-16 text-white/70 text-[10px] font-extrabold uppercase tracking-wider">
                               <div className="space-y-1">
                                  <div>Cliente: <strong className="text-white">{proposta.cliente.cliente || "Nome do Cliente"}</strong></div>
-                                 <div>Nº Proposta: <strong className="text-white">{proposta.cliente.numeroProposta || "FPV-XXXX"}</strong></div>
+                                 <div>N┬║ Proposta: <strong className="text-white">{proposta.cliente.numeroProposta || "FPV-XXXX"}</strong></div>
                               </div>
                               <div className="space-y-1">
                                  <div>Data: <strong className="text-white">
@@ -5544,7 +5463,7 @@ function PropostaEditor() {
                                        ? new Date(proposta.cliente.dataElaboracao + 'T12:00:00').toLocaleDateString('pt-BR') 
                                        : new Date().toLocaleDateString('pt-BR')}
                                  </strong></div>
-                                 <div>Revisão: <strong className="text-white">{proposta.cliente.revisao || "R01"}</strong></div>
+                                 <div>Revis├úo: <strong className="text-white">{proposta.cliente.revisao || "R01"}</strong></div>
                               </div>
                            </div>
                            <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">01</span>
@@ -5566,21 +5485,21 @@ function PropostaEditor() {
                         <div className="grid grid-cols-12 gap-8 items-center h-full relative z-10">
                            <div className="col-span-8 flex flex-col justify-center space-y-6 pr-4">
                               <h2 className="text-3xl font-black text-[#1E3A8A] tracking-tight leading-none">
-                                 Olá, {proposta.cliente.contato || "Karin"}!
+                                 Ol├í, {proposta.cliente.contato || "Karin"}!
                               </h2>
                               <div className="text-slate-600 text-xs leading-relaxed space-y-4 font-medium">
                                  <p>
-                                    O desenvolvimento deste projeto teve como base as informações reunidas por meio da visita técnica realizada, com o objetivo de corresponder, da forma mais eficaz possível, às necessidades do <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> no que se refere aos serviços de <strong className="font-extrabold text-slate-800">{proposta.cliente.tipoServicos || proposta.cliente.objetoProposta || "Limpeza e conservação"}</strong>.
+                                    O desenvolvimento deste projeto teve como base as informa├º├Áes reunidas por meio da visita t├®cnica realizada, com o objetivo de corresponder, da forma mais eficaz poss├¡vel, ├ás necessidades do <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> no que se refere aos servi├ºos de <strong className="font-extrabold text-slate-800">{proposta.cliente.tipoServicos || proposta.cliente.objetoProposta || "Limpeza e conserva├º├úo"}</strong>.
                                  </p>
                                  <p className="font-semibold text-slate-700">
-                                    Estamos imensamente gratos desde já pela oportunidade!
+                                    Estamos imensamente gratos desde j├í pela oportunidade!
                                  </p>
                               </div>
                               <div className="space-y-4">
                                  <span className="text-xs font-bold text-slate-500 block">Att,</span>
                                  <div className="bg-[#2B547E] text-white px-5 py-3 rounded-2xl inline-flex flex-col space-y-0.5 shadow-md max-w-sm">
-                                    <span className="text-sm font-black tracking-tight">{proposta.cliente.vendedorNome || "Ádamo Quadros"}</span>
-                                    <span className="text-[10px] text-slate-200/80 font-bold uppercase tracking-wider">{proposta.cliente.vendedorCargo || "Novos Negócios"}</span>
+                                    <span className="text-sm font-black tracking-tight">{proposta.cliente.vendedorNome || "├üdamo Quadros"}</span>
+                                    <span className="text-[10px] text-slate-200/80 font-bold uppercase tracking-wider">{proposta.cliente.vendedorCargo || "Novos Neg├│cios"}</span>
                                     <span className="text-[10px] text-slate-200/80 font-bold">{proposta.cliente.vendedorTelefone || "(41) 9 9737-0880"}</span>
                                     <span className="text-[10px] text-slate-200/80 font-bold truncate">{proposta.cliente.vendedorEmail || "adamo@grupojvsserv.com.br"}</span>
                                  </div>
@@ -5620,7 +5539,7 @@ function PropostaEditor() {
                                      QUEM SOMOS
                                   </h2>
                                   <p className="text-white/95 text-[14px] font-semibold leading-relaxed mt-4 max-w-xl">
-                                     Há mais de 30 anos no mercado de Facilities, somos especialistas em prestações de serviços de limpeza profissional e similares.
+                                     H├í mais de 30 anos no mercado de Facilities, somos especialistas em presta├º├Áes de servi├ºos de limpeza profissional e similares.
                                   </p>
                                </div>
 
@@ -5631,7 +5550,7 @@ function PropostaEditor() {
                                      </div>
                                      <span className="text-[14px] font-bold text-white leading-none whitespace-nowrap">+de <strong className="text-xl font-black">30</strong></span>
                                      <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
-                                        Anos de atuação em Facilities
+                                        Anos de atua├º├úo em Facilities
                                      </span>
                                   </div>
 
@@ -5659,7 +5578,7 @@ function PropostaEditor() {
                                      <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
                                         <ShieldCheck size={26} className="text-white shrink-0" />
                                      </div>
-                                     <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap block w-full text-center"><strong className="text-base font-black">+100</strong> mil m²</span>
+                                     <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap block w-full text-center"><strong className="text-base font-black">+100</strong> mil m┬▓</span>
                                      <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
                                         de limpeza em altura
                                      </span>
@@ -5669,7 +5588,7 @@ function PropostaEditor() {
                                      <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
                                         <Sparkles size={26} className="text-white shrink-0" />
                                      </div>
-                                     <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap block w-full text-center"><strong className="text-base font-black">+500</strong> mil m²</span>
+                                     <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap block w-full text-center"><strong className="text-base font-black">+500</strong> mil m┬▓</span>
                                      <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
                                         de Pisos tratados
                                      </span>
@@ -5682,7 +5601,7 @@ function PropostaEditor() {
                                   <BrazilMap highlightedStates={['PR', 'SC', 'RS']} className="w-full h-full" />
                                </div>
                                <div className="text-[11px] font-black text-white uppercase tracking-widest mt-4 bg-white/10 px-4 py-1 rounded-full shadow-sm">
-                                  Atendimento em toda Região Sul
+                                  Atendimento em toda Regi├úo Sul
                                </div>
                             </div>
                          </div>
@@ -5712,7 +5631,7 @@ function PropostaEditor() {
                                      NOSSOS VALORES
                                   </h2>
                                   <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-5 text-justify">
-                                     Nosso compromisso é guiado por princípios sólidos: agimos com <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">ética</strong>, mantendo a integridade acima de benefícios momentâneos. Buscamos <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">agilidade</strong>, <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">eficiência</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">excelência</strong> através do aprimoramento contínuo de processos e sistemas. <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">Valorizamos nossas pessoas</strong>, promovendo um ambiente humanizado e soluções que garantem a satisfação e a permanência dos colaboradores. Somos comprometidos com a <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">entrega</strong> dos nossos acordos, mesmo diante de desafios. Além disso, investimos em <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">inovação</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">tecnologia</strong> para otimizar a automação, produtividade e eficiência.
+                                     Nosso compromisso ├® guiado por princ├¡pios s├│lidos: agimos com <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">├®tica</strong>, mantendo a integridade acima de benef├¡cios moment├óneos. Buscamos <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">agilidade</strong>, <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">efici├¬ncia</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">excel├¬ncia</strong> atrav├®s do aprimoramento cont├¡nuo de processos e sistemas. <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">Valorizamos nossas pessoas</strong>, promovendo um ambiente humanizado e solu├º├Áes que garantem a satisfa├º├úo e a perman├¬ncia dos colaboradores. Somos comprometidos com a <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">entrega</strong> dos nossos acordos, mesmo diante de desafios. Al├®m disso, investimos em <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">inova├º├úo</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">tecnologia</strong> para otimizar a automa├º├úo, produtividade e efici├¬ncia.
                                   </p>
                                </div>
                             </div>
@@ -5722,7 +5641,7 @@ function PropostaEditor() {
                                <div className="relative w-full h-[220px] z-20">
                                   <img 
                                      src="/hand-support.png" 
-                                     alt="Mão de suporte"
+                                     alt="M├úo de suporte"
                                      className="absolute right-[-10px] bottom-[-85px] w-[320px] h-auto pointer-events-none opacity-90 z-0 mix-blend-multiply"
                                   />
                                   <div className="absolute top-[-12px] left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
@@ -5746,7 +5665,7 @@ function PropostaEditor() {
                          </div>
                       </div>
 
-                      {/* SLIDE 05 PRINT - PRINCIPAIS SERVIÇOS PRESTADOS */}
+                      {/* SLIDE 05 PRINT - PRINCIPAIS SERVI├çOS PRESTADOS */}
                       <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
                          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" xmlns="http://www.w3.org/2000/svg">
                             <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
@@ -5759,14 +5678,14 @@ function PropostaEditor() {
                          <div className="relative z-10 flex flex-col h-[calc(100%-30px)] justify-between">
                             <div>
                                <h2 className="text-3xl font-black text-[#1e4480] uppercase tracking-tight leading-none mb-6">
-                                  PRINCIPAIS SERVIÇOS PRESTADOS
+                                  PRINCIPAIS SERVI├çOS PRESTADOS
                                </h2>
 
                                <div className="grid grid-cols-2 gap-12 mt-2">
                                   <div className="flex flex-col space-y-3">
                                      <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-2">
                                         <span className="text-[#1e4480] text-[15px] font-black tracking-wide uppercase leading-tight max-w-[300px]">
-                                           TERCEIRIZAÇÃO DE SERVIÇOS DE FACILITIES
+                                           TERCEIRIZA├ç├âO DE SERVI├çOS DE FACILITIES
                                         </span>
                                         <div className="text-[#1e4480] shrink-0">
                                            <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-14 h-14 shrink-0">
@@ -5780,7 +5699,7 @@ function PropostaEditor() {
                                         </div>
                                      </div>
                                      <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
-                                        Gestão e execução de serviços essenciais, como limpeza, manutenção e segurança, que garantem o bom funcionamento e organização de um ambiente de trabalho. Nossa função é cuidar de tudo isso para que a empresa possa focar no que faz de melhor, enquanto oferecemos um espaço eficiente, seguro e bem cuidado.
+                                        Gest├úo e execu├º├úo de servi├ºos essenciais, como limpeza, manuten├º├úo e seguran├ºa, que garantem o bom funcionamento e organiza├º├úo de um ambiente de trabalho. Nossa fun├º├úo ├® cuidar de tudo isso para que a empresa possa focar no que faz de melhor, enquanto oferecemos um espa├ºo eficiente, seguro e bem cuidado.
                                      </p>
                                   </div>
 
@@ -5804,7 +5723,7 @@ function PropostaEditor() {
                                         </div>
                                      </div>
                                      <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
-                                        Serviço que é realizado em áreas de difícil acesso, como fachadas de prédios, janelas externas e estruturas elevadas. Usamos equipamentos específicos e técnicas seguras para garantir que essas superfícies sejam limpas de maneira eficiente, mantendo a estética e a segurança dos espaços altos, onde o cuidado e a precisão são essenciais.
+                                        Servi├ºo que ├® realizado em ├íreas de dif├¡cil acesso, como fachadas de pr├®dios, janelas externas e estruturas elevadas. Usamos equipamentos espec├¡ficos e t├®cnicas seguras para garantir que essas superf├¡cies sejam limpas de maneira eficiente, mantendo a est├®tica e a seguran├ºa dos espa├ºos altos, onde o cuidado e a precis├úo s├úo essenciais.
                                      </p>
                                   </div>
                                </div>
@@ -5867,7 +5786,7 @@ function PropostaEditor() {
                                      </svg>
                                   </div>
                                   <span className="text-[#1e4480] text-[12px] font-black tracking-wider uppercase mt-2.5">
-                                     RECEPÇÃO
+                                     RECEP├ç├âO
                                   </span>
                                </div>
 
@@ -5887,7 +5806,7 @@ function PropostaEditor() {
                                      </svg>
                                   </div>
                                   <span className="text-[#1e4480] text-[12px] font-black tracking-wider uppercase mt-2.5">
-                                     MANUTENÇÃO
+                                     MANUTEN├ç├âO
                                   </span>
                                </div>
 
@@ -5937,7 +5856,7 @@ function PropostaEditor() {
                                         <div style={{ width: '48px', height: '4px', backgroundColor: 'white', marginBottom: '8px' }}></div>
                                         <div className="flex items-center justify-between gap-4">
                                            <span className="text-white text-[15px] font-black tracking-wide uppercase leading-tight">
-                                              INDÚSTRIA
+                                              IND├ÜSTRIA
                                            </span>
                                            <div className="bg-white/10 p-2 rounded-xl text-white shrink-0 shadow-sm">
                                               <Factory size={22} className="stroke-[2.5]" />
@@ -5945,7 +5864,7 @@ function PropostaEditor() {
                                         </div>
                                      </div>
                                      <p className="text-white/90 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
-                                        Com processos minuciosos e detalhados, o setor industrial trouxe para o escopo da JVS Facilities a capacidade de atender clientes de alta exigência. Possuímos qualidade técnica validada no mercado para atender as mais variadas necessidades da indústria.
+                                        Com processos minuciosos e detalhados, o setor industrial trouxe para o escopo da JVS Facilities a capacidade de atender clientes de alta exig├¬ncia. Possu├¡mos qualidade t├®cnica validada no mercado para atender as mais variadas necessidades da ind├║stria.
                                      </p>
                                   </div>
 
@@ -5962,7 +5881,7 @@ function PropostaEditor() {
                                         </div>
                                      </div>
                                      <p className="text-white/90 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
-                                        Um dos setores com maior participação em nossa carteira de clientes, o varejo exigiu resiliência e trabalho árduo em busca de superar os desafios operacionais, que por fim, resultaram in constantes avaliações positivas de satisfação e controle dos indicadores de rotatividade e absenteísmo.
+                                        Um dos setores com maior participa├º├úo em nossa carteira de clientes, o varejo exigiu resili├¬ncia e trabalho ├írduo em busca de superar os desafios operacionais, que por fim, resultaram in constantes avalia├º├Áes positivas de satisfa├º├úo e controle dos indicadores de rotatividade e absente├¡smo.
                                      </p>
                                   </div>
                                </div>
@@ -5974,7 +5893,7 @@ function PropostaEditor() {
                                      <Bus size={22} className="stroke-[2]" />
                                   </div>
                                   <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[100px] leading-tight">
-                                     TRANSPORTE<br />E LOGÍSTICA
+                                     TRANSPORTE<br />E LOG├ìSTICA
                                   </span>
                                </div>
 
@@ -5983,7 +5902,7 @@ function PropostaEditor() {
                                      <Building size={22} className="stroke-[2]" />
                                   </div>
                                   <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[110px] leading-tight">
-                                     CONDOMÍNIOS<br />E EDIFÍCIOS
+                                     CONDOM├ìNIOS<br />E EDIF├ìCIOS
                                   </span>
                                </div>
 
@@ -5992,7 +5911,7 @@ function PropostaEditor() {
                                      <Hospital size={22} className="stroke-[2]" />
                                   </div>
                                   <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[100px] leading-tight">
-                                     CLÍNICAS E<br />HOSPITAIS
+                                     CL├ìNICAS E<br />HOSPITAIS
                                   </span>
                                </div>
 
@@ -6050,7 +5969,7 @@ function PropostaEditor() {
                                      <div className="space-y-1">
                                         <h3 className="text-[#1e4480] text-xs font-black tracking-wider uppercase">BITRIX24</h3>
                                         <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
-                                           CRM, armazenamento de dados e documentos, gestão de resultados, planejamento estratégico.
+                                           CRM, armazenamento de dados e documentos, gest├úo de resultados, planejamento estrat├®gico.
                                         </p>
                                         <div className="pt-2 flex items-center gap-1 select-none">
                                            <span className="text-[#00A4E4] font-black text-sm tracking-tight">Bitrix</span>
@@ -6068,14 +5987,14 @@ function PropostaEditor() {
                                      <div className="space-y-1">
                                         <h3 className="text-[#1e4480] text-xs font-black tracking-wider uppercase">SECULLUM</h3>
                                         <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
-                                           Controle de ponto digital, envio e assinatura de holerites e documentos administrativos, controle e gestão de turnover.
+                                           Controle de ponto digital, envio e assinatura de holerites e documentos administrativos, controle e gest├úo de turnover.
                                         </p>
                                         <div className="pt-2 flex flex-col select-none">
                                            <div className="flex items-center gap-1">
                                               <Award size={14} className="text-amber-500 shrink-0" />
                                               <span className="text-slate-700 font-black text-xs tracking-tight lowercase">secullum</span>
                                            </div>
-                                           <span className="text-slate-400 text-[7px] font-bold pl-5 leading-none">Ser fácil para ser humano.</span>
+                                           <span className="text-slate-400 text-[7px] font-bold pl-5 leading-none">Ser f├ícil para ser humano.</span>
                                         </div>
                                      </div>
                                   </div>
@@ -6111,7 +6030,7 @@ function PropostaEditor() {
                                            <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[7px] px-1.5 py-0.5 rounded-full font-black tracking-widest uppercase">IA CORE</span>
                                         </div>
                                         <p className="text-white/80 text-[8px] font-semibold leading-relaxed">
-                                           Mesa de operação inteligente baseada em IA, otimizando agendamentos de frotas, distribuição de escalas e monitoramento de services em tempo real.
+                                           Mesa de opera├º├úo inteligente baseada em IA, otimizando agendamentos de frotas, distribui├º├úo de escalas e monitoramento de services em tempo real.
                                         </p>
                                         <div className="pt-1 flex items-center gap-1 select-none">
                                            <span className="text-emerald-400 font-black text-xs tracking-tight">Nexus</span>
@@ -6128,7 +6047,7 @@ function PropostaEditor() {
                                      <div className="space-y-1">
                                         <h3 className="text-white text-xs font-black tracking-wider uppercase">ONVIO</h3>
                                         <p className="text-white/80 text-[8.5px] font-semibold leading-relaxed">
-                                           Registro e gestão de documentação de funcionários.
+                                           Registro e gest├úo de documenta├º├úo de funcion├írios.
                                         </p>
                                         <div className="pt-1.5 flex flex-col select-none">
                                            <span className="text-orange-400/80 text-[6px] font-extrabold tracking-widest uppercase">THOMSON REUTERS</span>
@@ -6137,18 +6056,18 @@ function PropostaEditor() {
                                      </div>
                                   </div>
                                   
-                                  {/* Check-List Fácil */}
+                                  {/* Check-List F├ícil */}
                                   <div className="flex gap-4 items-start">
                                      <div className="bg-white/10 p-2 rounded-xl text-white shrink-0 mt-1">
                                         <Smartphone size={20} className="stroke-[2.5]" />
                                      </div>
                                      <div className="space-y-1">
-                                        <h3 className="text-white text-xs font-black tracking-wider uppercase">CHECK-LIST FÁCIL</h3>
+                                        <h3 className="text-white text-xs font-black tracking-wider uppercase">CHECK-LIST F├üCIL</h3>
                                         <p className="text-white/80 text-[8.5px] font-semibold leading-relaxed">
-                                           Plataforma digital de desenvolvimento e gestão de processos internos com registro fotográfico, SLA's etc.
+                                           Plataforma digital de desenvolvimento e gest├úo de processos internos com registro fotogr├ífico, SLA's etc.
                                         </p>
                                         <div className="pt-1.5 flex items-center gap-1 select-none text-[#10B981]">
-                                           <span className="text-sm font-black tracking-tight flex items-center gap-1">✔ checklistfácil</span>
+                                           <span className="text-sm font-black tracking-tight flex items-center gap-1">Ô£ö checklistf├ícil</span>
                                         </div>
                                      </div>
                                   </div>
@@ -6162,7 +6081,7 @@ function PropostaEditor() {
                          </div>
                       </div>
 
-{/* SLIDE 08 PRINT - OBJETO E ESCOPO TÉCNICO */}
+{/* SLIDE 08 PRINT - OBJETO E ESCOPO T├ëCNICO */}
                        <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800">
                           {/* Linhas diagonais decorativas da marca */}
                           <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
@@ -6179,7 +6098,7 @@ function PropostaEditor() {
                              {/* Header */}
                              <div className="flex justify-between items-start pb-4 border-b border-slate-100">
                                 <h2 className="text-3xl font-black text-[#1e4480] tracking-tight leading-none uppercase">
-                                   OBJETO & ESCOPO TÉCNICO
+                                   OBJETO & ESCOPO T├ëCNICO
                                 </h2>
                                 <img 
                                    src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
@@ -6197,17 +6116,17 @@ function PropostaEditor() {
                                          <div>
                                             <span className="text-[12px] font-black text-[#1e4480] uppercase tracking-widest block mb-3">01. OBJETO DA PROPOSTA</span>
                                             <p className="text-sm font-semibold leading-relaxed text-slate-700 whitespace-pre-line">
-                                               {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
+                                               {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Presta├º├úo de servi├ºos especializados de limpeza, conserva├º├úo e facilities.'}
                                             </p>
                                          </div>
                                       </div>
 
-                                      {/* Right: Escopo Técnico */}
+                                      {/* Right: Escopo T├®cnico */}
                                       <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-8 shadow-sm flex flex-col justify-between">
                                          <div>
-                                            <span className="text-[12px] font-black text-[#1e4480] uppercase tracking-widest block mb-3">02. ESCOPO TÉCNICO</span>
+                                            <span className="text-[12px] font-black text-[#1e4480] uppercase tracking-widest block mb-3">02. ESCOPO T├ëCNICO</span>
                                             <p className="text-sm font-semibold leading-relaxed text-slate-700 whitespace-pre-line overflow-y-auto max-h-[220px]">
-                                               {proposta.cliente.escopoTecnico || 'Detalhamento das atividades operacionais conforme solicitação e cronograma alinhado.'}
+                                               {proposta.cliente.escopoTecnico || 'Detalhamento das atividades operacionais conforme solicita├º├úo e cronograma alinhado.'}
                                             </p>
                                          </div>
                                       </div>
@@ -6216,7 +6135,7 @@ function PropostaEditor() {
                                    <div className="max-w-3xl mx-auto bg-slate-50 border border-slate-200/80 rounded-2xl p-10 text-center shadow-sm">
                                       <span className="text-[12px] font-black text-[#1e4480] uppercase tracking-widest block mb-4">OBJETO DA PROPOSTA</span>
                                       <p className="text-base font-bold leading-relaxed text-slate-700 whitespace-pre-line">
-                                         {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
+                                         {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Presta├º├úo de servi├ºos especializados de limpeza, conserva├º├úo e facilities.'}
                                       </p>
                                    </div>
                                 )}
@@ -6249,29 +6168,29 @@ function PropostaEditor() {
                             <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-stretch">
                                <div className="col-span-8 bg-white rounded-2xl border border-slate-150 shadow-lg overflow-hidden flex flex-col">
                                   <div className="bg-[#1e4480] text-center py-3">
-                                     <h3 className="text-white text-xs font-black tracking-widest uppercase">{proposta.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções'}</h3>
+                                     <h3 className="text-white text-xs font-black tracking-widest uppercase">{proposta.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Op├º├Áes'}</h3>
                                   </div>
                                   <div className="flex-1">
                                      <table className="w-full text-left border-collapse">
                                         <thead>
                                            <tr className="bg-slate-50 text-[#1e4480] text-[10px] font-black uppercase tracking-wider border-b border-slate-200">
-                                              <th className="px-5 py-3">Função</th>
+                                              <th className="px-5 py-3">Fun├º├úo</th>
                                               <th className="px-5 py-3 text-center w-24">Qtd.</th>
                                               <th className="px-5 py-3 text-center w-28">Escala</th>
-                                              <th className="px-5 py-3 text-center w-36">Horário</th>
+                                              <th className="px-5 py-3 text-center w-36">Hor├írio</th>
                                            </tr>
                                         </thead>
                                         <tbody>
                                            {proposta.equipe && proposta.equipe.length > 0 ? (
                                               proposta.equipe.map((p: any, idx: number) => (
                                                  <tr key={p.id || idx} className={`border-b border-slate-100 text-[10px] font-bold text-slate-700 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}`}>
-                                                    <td className="px-5 py-3.5 font-black text-slate-800">{p.nomeCargo || "Selecione a Função"}</td>
+                                                    <td className="px-5 py-3.5 font-black text-slate-800">{p.nomeCargo || "Selecione a Fun├º├úo"}</td>
                                                     <td className="px-5 py-3.5 text-center font-black text-[#1e4480]">{(p.quantidade || 0).toFixed(2).replace('.', ',')}</td>
                                                     <td className="px-5 py-3.5 text-center">{p.escala || "A definir"}</td>
                                                     <td className="px-5 py-3.5 text-center font-semibold text-slate-500">
                                                        {p.parametrosPosto?.horarioInicio && p.parametrosPosto?.horarioFim 
-                                                          ? `${p.parametrosPosto.horarioInicio} às ${p.parametrosPosto.horarioFim}` 
-                                                          : '08:00 às 17:00'}
+                                                          ? `${p.parametrosPosto.horarioInicio} ├ás ${p.parametrosPosto.horarioFim}` 
+                                                          : '08:00 ├ás 17:00'}
                                                     </td>
                                                  </tr>
                                               ))
@@ -6294,9 +6213,9 @@ function PropostaEditor() {
                                      <div className="space-y-3">
                                         {(() => {
                                            const clausulas = proposta.cliente.quadroEfetivoClausulas || [
-                                              proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
-                                              proposta.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
-                                              proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
+                                              proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcion├írio dever├í ter duas folgas compensat├│rias em sequ├¬ncia;',
+                                              proposta.cliente.quadroEfetivoClausula2 || 'Para redu├º├Áes no efetivo prazo de 30 (trinta) dias;',
+                                              proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h di├írias de no m├¡nimo 60 minutos, entre 4h a 6h o intervalo ser├í de 15 minutos (CLT).'
                                            ];
                                            return clausulas.map((c: string, cIdx: number) => (
                                               <div key={cIdx} className="flex items-start gap-2.5">
@@ -6319,7 +6238,7 @@ function PropostaEditor() {
                          </div>
                       </div>
 
-                      {/* SLIDE 10 PRINT - ITENS INCLUSOS E EXCLUSÍDOS */}
+                      {/* SLIDE 10 PRINT - ITENS INCLUSOS E EXCLUS├ìDOS */}
                       <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800">
                          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
                             <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
@@ -6330,7 +6249,7 @@ function PropostaEditor() {
                             <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                <div className="flex flex-col">
                                   <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
-                                  <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUSÍDOS</h2>
+                                  <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUS├ìDOS</h2>
                                </div>
                                <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
                             </div>
@@ -6341,7 +6260,7 @@ function PropostaEditor() {
                                      <thead>
                                         <tr className="bg-[#1e4480] text-white text-[10px] font-black uppercase tracking-wider border-b border-slate-200">
                                            <th className="px-6 py-3.5 w-32">Item</th>
-                                           <th className="px-6 py-3.5">Descrição</th>
+                                           <th className="px-6 py-3.5">Descri├º├úo</th>
                                            <th className="px-6 py-3.5 text-center w-40">Status</th>
                                         </tr>
                                      </thead>
@@ -6440,12 +6359,12 @@ function PropostaEditor() {
                                            </thead>
                                            <tbody>
                                               <tr className="border-b border-slate-100 text-slate-700 font-bold">
-                                                 <td className="py-3.5 px-4 font-black">Mão de Obra Efetiva (Postos)</td>
+                                                 <td className="py-3.5 px-4 font-black">M├úo de Obra Efetiva (Postos)</td>
                                                  <td className="py-3.5 px-4 text-right font-black text-[#1e4480]">{fc(maoDeObraSubtotal)}</td>
                                               </tr>
                                               {renderInsumoRow('Materiais e Equipamentos', applyCascata(Number(proposta.insumos.materiais || 0) + Number(proposta.insumos.maquinas || 0)))}
-                                              {renderInsumoRow('Descartáveis e Higiene', applyCascata(Number(proposta.insumos.descartaveis || 0)))}
-                                              {renderInsumoRow('Outros Serviços / Operações', applyCascata(Number(proposta.insumos.servicos || 0)))}
+                                              {renderInsumoRow('Descart├íveis e Higiene', applyCascata(Number(proposta.insumos.descartaveis || 0)))}
+                                              {renderInsumoRow('Outros Servi├ºos / Opera├º├Áes', applyCascata(Number(proposta.insumos.servicos || 0)))}
                                            </tbody>
                                         </table>
                                         
@@ -6468,13 +6387,13 @@ function PropostaEditor() {
                                                  <svg className="w-4 h-4 text-[#1e4480] shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                  </svg>
-                                                 <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">Os valores propostos contemplam todos os encargos sociais, tributos (PIS, COFINS, ISS), taxas de administração e insumos descritos na proposta;</p>
+                                                 <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">Os valores propostos contemplam todos os encargos sociais, tributos (PIS, COFINS, ISS), taxas de administra├º├úo e insumos descritos na proposta;</p>
                                               </div>
                                               <div className="flex items-start gap-2.5">
                                                  <svg className="w-4 h-4 text-[#1e4480] shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                  </svg>
-                                                 <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">Faturamento mensal com vencimento a ser pactuado nas condições gerais da contratação, emitido após a prestação dos serviços.</p>
+                                                 <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">Faturamento mensal com vencimento a ser pactuado nas condi├º├Áes gerais da contrata├º├úo, emitido ap├│s a presta├º├úo dos servi├ºos.</p>
                                               </div>
                                            </div>
                                         </div>
@@ -6490,7 +6409,7 @@ function PropostaEditor() {
                          );
                       })()}
 
-                      {/* SLIDE 12 PRINT - CONDIÇÕES DA PROPOSTA */}
+                      {/* SLIDE 12 PRINT - CONDI├ç├òES DA PROPOSTA */}
                       <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800">
                          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
                             <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
@@ -6501,7 +6420,7 @@ function PropostaEditor() {
                             <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                <div className="flex flex-col">
                                   <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
-                                  <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">CONDIÇÕES GERAIS DA PROPOSTA</h2>
+                                  <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">CONDI├ç├òES GERAIS DA PROPOSTA</h2>
                                </div>
                                <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
                             </div>
@@ -6509,15 +6428,15 @@ function PropostaEditor() {
                             
                                    {(() => {
                                       const condsColab = [
-                                         proposta.cliente?.condicaoColaboradores1 || "Vale alimentação de R$900,00;",
+                                         proposta.cliente?.condicaoColaboradores1 || "Vale alimenta├º├úo de R$900,00;",
                                          proposta.cliente?.condicaoColaboradores2 || "Cesta trimestral de assiduidade;",
                                          proposta.cliente?.condicaoColaboradores3 || "2 Vales transporte por dia."
                                       ].filter(Boolean);
 
                                       const condsCli = [
-                                         proposta.cliente?.condicaoCliente1 || "Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;",
-                                         proposta.cliente?.condicaoCliente2 || "Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;",
-                                         proposta.cliente?.condicaoCliente3 || "Próximo reajuste Fevereiro/2026."
+                                         proposta.cliente?.condicaoCliente1 || "Faturamento dos servi├ºos aos dias 15 ou 30 de cada m├¬s com vencimento nos pr├│ximos 15 dias;",
+                                         proposta.cliente?.condicaoCliente2 || "Reajuste anual, autom├ítico e equivalente ao diss├¡dio da categoria (SIEMACO) todo m├¬s fevereiro de cada ano subsequente;",
+                                         proposta.cliente?.condicaoCliente3 || "Pr├│ximo reajuste Fevereiro/2026."
                                       ].filter(Boolean);
 
                                       return (
@@ -6533,11 +6452,11 @@ function PropostaEditor() {
                                                      <span className="text-slate-800 font-black">{proposta.condicoes?.validadeProposta || "15 (quinze) dias"}</span>
                                                   </div>
                                                   <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
-                                                     <span className="text-slate-500 font-bold">Prazo de Início dos Serviços:</span>
+                                                     <span className="text-slate-500 font-bold">Prazo de In├¡cio dos Servi├ºos:</span>
                                                      <span className="text-slate-800 font-black">{proposta.condicoes?.prazoInicio || "20 (vinte) dias"}</span>
                                                   </div>
                                                   <div className="flex justify-between items-center text-[10px] pb-0.5">
-                                                     <span className="text-slate-500 font-bold">Vigência Contratual Mínima:</span>
+                                                     <span className="text-slate-500 font-bold">Vig├¬ncia Contratual M├¡nima:</span>
                                                      <span className="text-slate-800 font-black">{proposta.condicoes?.vigenciaContratual || "12 (doze) meses"}</span>
                                                   </div>
                                                </div>
@@ -6551,11 +6470,11 @@ function PropostaEditor() {
                                                <div className="space-y-2">
                                                   <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
                                                      <span className="text-slate-500 font-bold">Prazo de Pagamento:</span>
-                                                     <span className="text-slate-800 font-black">{proposta.condicoes?.prazoPagamento || "30 dias líquido"}</span>
+                                                     <span className="text-slate-800 font-black">{proposta.condicoes?.prazoPagamento || "30 dias l├¡quido"}</span>
                                                   </div>
                                                   <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
                                                      <span className="text-slate-500 font-bold">Base de Reajuste Anual:</span>
-                                                     <span className="text-slate-800 font-black">{proposta.condicoes?.baseReajuste || "Convenção Coletiva (CCT) / IPCA"}</span>
+                                                     <span className="text-slate-800 font-black">{proposta.condicoes?.baseReajuste || "Conven├º├úo Coletiva (CCT) / IPCA"}</span>
                                                   </div>
                                                   <div className="flex justify-between items-center text-[10px] pb-0.5">
                                                      <span className="text-slate-500 font-bold">Garantias e Seguros:</span>
@@ -6567,11 +6486,11 @@ function PropostaEditor() {
                                             <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-5 shadow-xs space-y-3">
                                                <div className="flex items-center gap-2 border-b border-slate-200 pb-1.5">
                                                   <UserCheck size={16} className="text-[#1e4480]" />
-                                                  <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condições dos Colaboradores</h4>
+                                                  <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condi├º├Áes dos Colaboradores</h4>
                                                </div>
                                                <div className="space-y-1">
                                                   {condsColab.map((cond, idx) => (
-                                                     <div key={idx} className="text-slate-700 font-semibold text-[9.5px] leading-normal pl-1.5 relative before:content-['•'] before:absolute before:left-0 before:text-[#1b4d3e]">
+                                                     <div key={idx} className="text-slate-700 font-semibold text-[9.5px] leading-normal pl-1.5 relative before:content-['ÔÇó'] before:absolute before:left-0 before:text-[#1b4d3e]">
                                                         {cond}
                                                      </div>
                                                   ))}
@@ -6581,11 +6500,11 @@ function PropostaEditor() {
                                             <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-5 shadow-xs space-y-3">
                                                <div className="flex items-center gap-2 border-b border-slate-200 pb-1.5">
                                                   <Briefcase size={16} className="text-[#1e4480]" />
-                                                  <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condições para o Cliente</h4>
+                                                  <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condi├º├Áes para o Cliente</h4>
                                                </div>
                                                <div className="space-y-1">
                                                   {condsCli.map((cond, idx) => (
-                                                     <div key={idx} className="text-slate-700 font-semibold text-[9.5px] leading-normal pl-1.5 relative before:content-['•'] before:absolute before:left-0 before:text-[#1b4d3e]">
+                                                     <div key={idx} className="text-slate-700 font-semibold text-[9.5px] leading-normal pl-1.5 relative before:content-['ÔÇó'] before:absolute before:left-0 before:text-[#1b4d3e]">
                                                         {cond}
                                                      </div>
                                                   ))}
@@ -6612,7 +6531,7 @@ function PropostaEditor() {
                             <div className="flex justify-between items-center w-full pb-4 border-b border-white/20">
                                <div className="flex flex-col">
                                   <span className="text-white/70 text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
-                                  <h2 className="text-xl font-black text-white uppercase tracking-tight">TERMO DE ACEITE E CONTRATAÇÃO</h2>
+                                  <h2 className="text-xl font-black text-white uppercase tracking-tight">TERMO DE ACEITE E CONTRATA├ç├âO</h2>
                                </div>
                                <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
                             </div>
@@ -6621,21 +6540,21 @@ function PropostaEditor() {
                                <div className="col-span-6 space-y-4">
                                   <h3 className="text-lg font-black tracking-tight leading-snug">Estamos prontos para iniciar a nossa parceria de sucesso!</h3>
                                   <div className="text-white/80 text-[10px] leading-relaxed space-y-2 font-semibold text-justify">
-                                     <p>Ao assinar este termo de aceite, o <strong className="text-white font-extrabold">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
-                                     <p>Este documento servirá como base oficial para a elaboração do instrumento jurídico definitivo (Contrato de Prestação de Serviços) entre as partes.</p>
+                                     <p>Ao assinar este termo de aceite, o <strong className="text-white font-extrabold">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> manifesta sua concord├óncia com os valores descritos, premissas de investimento e condi├º├Áes comerciais apresentadas nesta proposta comercial.</p>
+                                     <p>Este documento servir├í como base oficial para a elabora├º├úo do instrumento jur├¡dico definitivo (Contrato de Presta├º├úo de Servi├ºos) entre as partes.</p>
                                   </div>
                                   <div className="bg-white/5 border border-white/10 rounded-xl p-3 mt-3.5 space-y-2 text-[9px] font-semibold text-white/90">
                                      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                                         <div className="flex flex-col">
-                                           <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Razão Social</span>
-                                           <span className="truncate text-white font-bold">{proposta.cliente.razaoSocial || proposta.cliente.cliente || "Não informada"}</span>
+                                           <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Raz├úo Social</span>
+                                           <span className="truncate text-white font-bold">{proposta.cliente.razaoSocial || proposta.cliente.cliente || "N├úo informada"}</span>
                                         </div>
                                         <div className="flex flex-col">
                                            <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">CNPJ</span>
-                                           <span className="text-white font-bold">{proposta.cliente.cnpj || "Não informado"}</span>
+                                           <span className="text-white font-bold">{proposta.cliente.cnpj || "N├úo informado"}</span>
                                         </div>
                                         <div className="flex flex-col">
-                                           <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Data de Início</span>
+                                           <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Data de In├¡cio</span>
                                            <span className="text-white font-bold">{proposta.cliente.dataInicio || "A definir"}</span>
                                         </div>
                                         <div className="flex flex-col">
@@ -6672,8 +6591,8 @@ function PropostaEditor() {
                                         <div className="h-6 w-full mb-1 flex items-center justify-center">
                                            <span className="text-[8px] text-emerald-300 font-extrabold tracking-wider bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/35 uppercase select-none">Assinado Digitalmente</span>
                                         </div>
-                                        <span className="text-[9px] font-black text-white">{proposta.cliente.vendedorNome || "Ádamo Quadros"}</span>
-                                        <span className="text-[8px] text-white/50 font-bold uppercase mt-0.5">{proposta.cliente.vendedorCargo || "Novos Negócios"}</span>
+                                        <span className="text-[9px] font-black text-white">{proposta.cliente.vendedorNome || "├üdamo Quadros"}</span>
+                                        <span className="text-[8px] text-white/50 font-bold uppercase mt-0.5">{proposta.cliente.vendedorCargo || "Novos Neg├│cios"}</span>
                                      </div>
                                   </div>
                                </div>

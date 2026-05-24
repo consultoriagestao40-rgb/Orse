@@ -37,7 +37,15 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
     ...fullProposta,
     cliente: {
       ...(fullProposta?.cliente || {}),
-      clausulasA4: doc.secoes?.map((s: any) => ({ titulo: s.titulo, texto: s.texto })) || []
+      clausulasA4: doc.secoes?.map((s: any) => ({ titulo: s.titulo, texto: s.texto })) || [],
+      ...(doc.configApresentacao ? {
+        condicoesCliente: doc.configApresentacao.condicoesCliente,
+        condicoesColaboradores: doc.configApresentacao.condicoesColaboradores,
+        quadroEfetivoSubtitulo: doc.configApresentacao.quadroEfetivoSubtitulo,
+        quadroEfetivoClausula1: doc.configApresentacao.quadroEfetivoClausulas?.[0],
+        quadroEfetivoClausula2: doc.configApresentacao.quadroEfetivoClausulas?.[1],
+        quadroEfetivoClausula3: doc.configApresentacao.quadroEfetivoClausulas?.[2],
+      } : {})
     }
   };
 

@@ -323,7 +323,7 @@ export default function PropostasComerciaisDashboard() {
                 >
                   <option value="">-- Selecione o Template --</option>
                   {templates.map(t => (
-                    <option key={t.id} value={t.id}>{t.nome}</option>
+                    <option key={t.id} value={t.id}>{t.nome} {t.tipo === 'SLIDE_DECK' ? '(Apresentação)' : '(A4)'}</option>
                   ))}
                 </select>
               </div>

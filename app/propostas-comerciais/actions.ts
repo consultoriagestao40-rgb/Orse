@@ -94,6 +94,7 @@ export async function createDocumentoProposta(propostaId: string, templateId: st
         clientId: fpv.clientId,
         empresaEmissoraId: empresaId,
         templateOrigemId: template.id,
+        tipo: template.tipo || 'A4',
         valorTotal,
         secoes: {
           create: template.secoes.map((secao: any) => ({
@@ -134,6 +135,19 @@ export async function updateSecoesDocumento(documentoId: string, secoes: { id?: 
     return { success: true };
   } catch (error: any) {
     console.error('Erro ao atualizar seções:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateConfigApresentacao(id: string, config: any) {
+  try {
+    await prisma.documentoProposta.update({
+      where: { id },
+      data: { configApresentacao: config }
+    });
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao atualizar config apresentação:', error);
     return { success: false, error: error.message };
   }
 }

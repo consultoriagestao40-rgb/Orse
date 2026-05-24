@@ -279,6 +279,7 @@ model ClausulaContrato {
 model TemplatePropostaComercial {
   id        String             @id @default(uuid())
   nome      String             @unique
+  tipo      String             @default("A4") // "A4" ou "SLIDE_DECK"
   secoes    SecaoTemplateProposta[]
   createdAt DateTime           @default(now())
 }
@@ -298,6 +299,8 @@ model DocumentoProposta {
   clientId          String
   empresaEmissoraId String
   templateOrigemId  String?
+  tipo              String             @default("A4") // "A4" ou "SLIDE_DECK"
+  configApresentacao Json?
   status            String             @default("Rascunho")
   valorTotal        Float              @default(0)
   createdAt         DateTime           @default(now())
