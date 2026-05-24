@@ -28,21 +28,27 @@ const gerarNumeroContrato = (c: any) => {
 const renderVencimento = (dataInicio: any, vigenciaMeses: any) => {
   if (!dataInicio || !vigenciaMeses) return <span className="text-slate-400">-</span>;
   const d = new Date(dataInicio);
-  d.setMonth(d.getMonth() + vigenciaMeses);
   
+  // Extrai em UTC para evitar que 00:00Z vire 21:00 do dia anterior no BRT
+  const dRef = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + vigenciaMeses, d.getUTCDate()));
+  
+  // Pega o 'hoje' na perspectiva local e joga para UTC meia-noite
   const hoje = new Date();
-  const diasParaVencer = Math.ceil((d.getTime() - hoje.getTime()) / (1000 * 3600 * 24));
+  const hojeUTC = new Date(Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()));
   
-  const dataStr = d.toLocaleDateString('pt-BR');
+  const diasParaVencer = Math.round((dRef.getTime() - hojeUTC.getTime()) / (1000 * 3600 * 24));
+  
+  // Mostra a string formatada forçando timezone UTC para manter o dia correto
+  const dataStr = dRef.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   
   let colorClass = "bg-emerald-500";
   let title = "Contrato no prazo";
   
   if (diasParaVencer < 0) {
-    colorClass = "bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]";
+    colorClass = "bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]";
     title = `Vencido há ${Math.abs(diasParaVencer)} dias`;
   } else if (diasParaVencer <= 45) {
-    colorClass = "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]";
+    colorClass = "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]";
     title = `Vence em ${diasParaVencer} dias`;
   }
 
