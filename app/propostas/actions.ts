@@ -476,14 +476,13 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
     const impostos = v.impostos as any;
     const margens = v.margens as any;
 
-    return {
+    const returnObj: any = {
       id: proposta.id,
       numero: `FPV-${proposta.numero.toString().padStart(3, '0')}`,
       clientId: proposta.clientId,
       availableVersions,
       cliente: {
         id: proposta.clientId,
-        // Retorna nome salvo nos metadados como fallback confiável
         clienteNome: meta.clienteNome || '',
         contato: meta.contato || '',
         celular: meta.celular || '',
@@ -517,10 +516,10 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
         contatoCargo: meta.contatoCargo || '',
         condicoesColaboradores: meta.condicoesColaboradores || [],
         condicoesCliente: meta.condicoesCliente || [],
-      itensInclusosExcluidos: (() => {
-        const rawItens = meta.itensInclusosExcluidos || [];
-        return rawItens.length > 0 ? rawItens : defaultItensInclusosExcluidos;
-      })()
+        itensInclusosExcluidos: (() => {
+          const rawItens = meta.itensInclusosExcluidos || [];
+          return rawItens.length > 0 ? rawItens : defaultItensInclusosExcluidos;
+        })()
       },
       insumos: {
         materiais: meta.insumos?.materiais || 0,
@@ -549,7 +548,7 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
         })(),
         meta: { sindicatoId: impostos?.sindicatoId || '' }
       },
-      equipe: v.items.map(i => {
+      equipe: v.items.map((i: any) => {
         const itemAtivosConfig = (i.ativosConfig as any) || {};
         return {
           id: i.id,
