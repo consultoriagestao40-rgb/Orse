@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory } from './actions';
+import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor } from './actions';
 import { Plus, User, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
@@ -161,13 +161,27 @@ export default function LeadsKanban() {
             return (
               <div 
                 key={stage.id} 
-                className="w-80 shrink-0 flex flex-col h-full bg-slate-100 rounded-2xl border border-slate-200"
+                className={`w-80 shrink-0 flex flex-col h-full ${stage.color || 'bg-slate-100'} rounded-2xl border border-slate-200 transition-colors duration-300`}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, stage.id)}
               >
-                <div className="p-4 border-b border-slate-200 flex justify-between items-center">
-                  <h3 className="font-bold text-slate-700">{stage.nome}</h3>
-                  <span className="bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">
+                <div className="p-4 border-b border-slate-200/50 flex justify-between items-center group/header">
+                  <div className="flex items-center gap-2">
+                    <div className="relative group/picker">
+                      <div className="w-4 h-4 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-110 transition-transform" style={{backgroundColor: stage.color?.includes('blue') ? '#DBEAFE' : stage.color?.includes('emerald') ? '#D1FAE5' : stage.color?.includes('amber') ? '#FEF3C7' : stage.color?.includes('rose') ? '#FFE4E6' : stage.color?.includes('purple') ? '#F3E8FF' : '#F1F5F9'}}></div>
+                      <div className="absolute top-6 left-0 bg-white p-2 rounded-xl shadow-xl border border-slate-200 hidden group-hover/picker:flex gap-1 z-10 w-max">
+                        {['bg-slate-100', 'bg-blue-100', 'bg-emerald-100', 'bg-amber-100', 'bg-rose-100', 'bg-purple-100'].map(c => (
+                          <div 
+                            key={c} 
+                            onClick={async () => { await updateLeadStageColor(stage.id, c); fetchData(); }} 
+                            className={`w-6 h-6 rounded-full cursor-pointer hover:ring-2 ring-offset-1 ring-slate-400 ${c}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <h3 className="font-bold text-slate-700">{stage.nome}</h3>
+                  </div>
+                  <span className="bg-white/50 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">
                     {stageLeads.length}
                   </span>
                 </div>

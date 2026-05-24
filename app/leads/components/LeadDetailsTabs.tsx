@@ -17,61 +17,62 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
   const [shares, setShares] = useState<any[]>([]);
   const [newShareUserId, setNewShareUserId] = useState(''); // Precisa ser preenchido por um select de usuarios reais
 
+  // State for Users
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+
+  // State for Reuniões
+  const [showMeetingForm, setShowMeetingForm] = useState(false);
+  const [meetingForm, setMeetingForm] = useState({ titulo: '', data: '', hora: '' });
+
   useEffect(() => {
     if (activeTab === 'comentarios') loadComments();
     if (activeTab === 'arquivos') loadFiles();
     if (activeTab === 'reunioes') loadActivities();
-    if (activeTab === 'equipe') loadShares();
+    if (activeTab === 'equipe') {
+      loadShares();
+      loadAllUsers();
+    }
   }, [activeTab, lead.id]);
 
-  const loadComments = async () => {
-    const res = await getComments(lead.id);
-    if (res.success) setComments(res.comments);
+  const loadAllUsers = async () => {
+    const { getAllUsers } = await import('../actions');
+    const res = await getAllUsers();
+    if (res.success) setAllUsers(res.users);
   };
-  const handleAddComment = async (e: React.FormEvent) => {
+
+  const handleCreateMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
-    const res = await addComment(lead.id, newComment);
+    if (!meetingForm.titulo || !meetingForm.data || !meetingForm.hora) return;
+    
+    const dataInicio = new Date(`${meetingForm.data}T${meetingForm.hora}:00`);
+    const dataFim = new Date(dataInicio.getTime() + 60 * 60 * 1000); // +1 hora
+
+    const res = await createActivity({
+      leadId: lead.id,
+      titulo: meetingForm.titulo,
+      tipo: 'REUNIAO',
+      dataInicio,
+      dataFim
+    });
+
     if (res.success) {
-      setNewComment('');
-      loadComments();
+      setMeetingForm({ titulo: '', data: '', hora: '' });
+      setShowMeetingForm(false);
+      loadActivities();
+    } else {
+      alert('Erro ao agendar reunião');
     }
   };
 
-  const loadFiles = async () => {
-    const res = await getFiles(lead.id);
-    if (res.success) setFiles(res.files);
-  };
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const base64 = event.target?.result as string;
-      const res = await uploadFileBase64(lead.id, file.name, file.size, file.type, base64);
-      if (res.success) loadFiles();
-      else alert('Erro ao subir arquivo');
-    };
-    reader.readAsDataURL(file);
-  };
-  const handleDownload = async (fileId: string, nome: string) => {
-    const res = await downloadFile(fileId);
-    if (res.success && res.file) {
-      const link = document.createElement('a');
-      link.href = res.file.base64Data;
-      link.download = nome;
-      link.click();
+  const handleAddUser = async () => {
+    if (!newShareUserId) return;
+    const res = await addLeadShare(lead.id, newShareUserId);
+    if (res.success) {
+      setNewShareUserId('');
+      loadShares();
+    } else {
+      alert(res.error || 'Erro ao adicionar usuário');
     }
-  };
-
-  const loadActivities = async () => {
-    const res = await getActivities(lead.id);
-    if (res.success) setActivities(res.activities);
-  };
-
-  const loadShares = async () => {
-    const res = await getLeadShares(lead.id);
-    if (res.success) setShares(res.shares);
   };
 
   return (
@@ -167,7 +168,7 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
             <label className="border-2 border-dashed border-slate-300 rounded-xl p-6 flex flex-col items-center justify-center text-slate-500 hover:bg-slate-50 hover:text-[#1B4D3E] hover:border-[#1B4D3E] transition-colors cursor-pointer mb-6 bg-white">
               <Paperclip size={24} className="mb-2" />
               <span className="font-bold text-sm">Clique para Anexar um Arquivo</span>
-              <span className="text-xs mt-1">PDF, JPG, PNG, DOCX (Máx recomendado 5MB)</span>
+              <span className="text-xs mt-1">PDF, JPG, PNG, DOCX (Máx recomendado 10MB)</span>
               <input type="file" className="hidden" onChange={handleFileUpload} />
             </label>
 
@@ -203,9 +204,34 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
               </div>
             </div>
             
-            <button className="w-full bg-[#1B4D3E] text-white py-2 rounded-xl text-sm font-bold mb-4 shadow-md hover:bg-[#13382d] transition-colors flex items-center justify-center gap-2">
-              <Plus size={16}/> Agendar Reunião (Em Breve)
-            </button>
+            {!showMeetingForm ? (
+              <button onClick={() => setShowMeetingForm(true)} className="w-full bg-[#1B4D3E] text-white py-2 rounded-xl text-sm font-bold mb-4 shadow-md hover:bg-[#13382d] transition-colors flex items-center justify-center gap-2">
+                <Plus size={16}/> Agendar Reunião
+              </button>
+            ) : (
+              <form onSubmit={handleCreateMeeting} className="bg-white p-4 rounded-xl border border-slate-200 mb-4 shadow-sm">
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Título da Reunião</label>
+                    <input required value={meetingForm.titulo} onChange={e => setMeetingForm({...meetingForm, titulo: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" placeholder="Ex: Apresentação da Proposta" />
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <label className="block text-xs font-bold text-slate-600 mb-1">Data</label>
+                      <input type="date" required value={meetingForm.data} onChange={e => setMeetingForm({...meetingForm, data: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs font-bold text-slate-600 mb-1">Hora</label>
+                      <input type="time" required value={meetingForm.hora} onChange={e => setMeetingForm({...meetingForm, hora: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <button type="submit" className="flex-1 bg-[#1B4D3E] text-white p-2 rounded-lg text-sm font-bold">Salvar</button>
+                    <button type="button" onClick={() => setShowMeetingForm(false)} className="flex-1 bg-slate-100 text-slate-600 p-2 rounded-lg text-sm font-bold">Cancelar</button>
+                  </div>
+                </div>
+              </form>
+            )}
 
             <div className="space-y-3">
               {activities.map(a => (
@@ -216,6 +242,7 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                   </p>
                 </div>
               ))}
+              {activities.length === 0 && !showMeetingForm && <p className="text-slate-400 text-sm text-center">Nenhuma reunião agendada.</p>}
             </div>
           </div>
         )}
@@ -238,11 +265,19 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
               ))}
             </div>
 
-            <div className="border-t border-slate-200 pt-4">
-              <p className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Adicionar Colaborador (Em Breve Select)</p>
-              {/* O select de usuarios precisa vir do backend via action */}
-              <button className="w-full bg-slate-100 text-slate-600 py-2 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors">
-                Buscar Usuários...
+            <div className="border-t border-slate-200 pt-4 flex gap-2">
+              <select 
+                value={newShareUserId} 
+                onChange={(e) => setNewShareUserId(e.target.value)}
+                className="flex-1 border border-slate-200 rounded-xl p-2 text-sm bg-white"
+              >
+                <option value="">Selecione um usuário...</option>
+                {allUsers.filter(u => !shares.find(s => s.user.id === u.id)).map(u => (
+                  <option key={u.id} value={u.id}>{u.nome} ({u.cargo || 'Usuário'})</option>
+                ))}
+              </select>
+              <button onClick={handleAddUser} className="bg-[#1B4D3E] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#13382d] transition-colors">
+                Adicionar
               </button>
             </div>
           </div>

@@ -64,6 +64,19 @@ export async function updateLeadStage(leadId: string, stageId: string) {
   }
 }
 
+export async function updateLeadStageColor(stageId: string, color: string) {
+  try {
+    await prisma.leadStage.update({
+      where: { id: stageId },
+      data: { color }
+    });
+    revalidatePath('/leads');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 export async function createLead(data: any) {
   const user = await getLoggedUser();
   if (!user) return { success: false, error: 'Unauthorized' };
@@ -271,9 +284,20 @@ export async function getLeadShares(leadId: string) {
   try {
     const shares = await prisma.leadShare.findMany({
       where: { leadId },
-      include: { user: { select: { nome: true, email: true, cargo: true } } }
+      include: { user: { select: { id: true, nome: true, email: true, cargo: true } } }
     });
     return { success: true, shares };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getAllUsers() {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, nome: true, cargo: true, role: true }
+    });
+    return { success: true, users };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
