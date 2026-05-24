@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getComments, addComment, getFiles, uploadFileBase64, downloadFile, getActivities, createActivity, getLeadShares, addLeadShare, removeLeadShare } from '../actions';
+import { getComments, addComment, getFiles, uploadFileBase64, downloadFile, getActivities, createActivity, getLeadShares, addLeadShare, removeLeadShare, getAllUsers } from '../actions';
 import { MessageSquare, Paperclip, Calendar, Users, Send, Download, Plus, X, Trash2 } from 'lucide-react';
 
 export default function LeadDetailsTabs({ lead }: { lead: any }) {
@@ -35,7 +35,6 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
   }, [activeTab, lead.id]);
 
   const loadAllUsers = async () => {
-    const { getAllUsers } = await import('../actions');
     const res = await getAllUsers();
     if (res.success) setAllUsers(res.users);
   };
@@ -140,7 +139,7 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
               {comments.map(c => (
                 <div key={c.id} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="font-bold text-sm text-slate-800">{c.user.nome}</span>
+                    <span className="font-bold text-sm text-slate-800">{c.user?.nome || 'Usuário Desconhecido'}</span>
                     <span className="text-[10px] text-slate-400">{new Date(c.createdAt).toLocaleString()}</span>
                   </div>
                   <p className="text-sm text-slate-600 whitespace-pre-wrap">{c.texto}</p>
@@ -181,7 +180,7 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                     </div>
                     <div className="truncate">
                       <p className="text-sm font-bold text-slate-700 truncate">{f.nome}</p>
-                      <p className="text-xs text-slate-400">{(f.tamanho / 1024).toFixed(1)} KB • Por {f.user.nome}</p>
+                      <p className="text-xs text-slate-400">{(f.tamanho / 1024).toFixed(1)} KB • Por {f.user?.nome || 'Desconhecido'}</p>
                     </div>
                   </div>
                   <button onClick={() => handleDownload(f.id, f.nome)} className="text-slate-400 hover:text-[#1B4D3E] p-2 bg-slate-50 rounded-lg transition-colors">
@@ -255,8 +254,8 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
               {shares.map(s => (
                 <div key={s.id} className="bg-white border border-slate-200 rounded-xl p-3 flex justify-between items-center shadow-sm">
                   <div>
-                    <p className="text-sm font-bold text-slate-800">{s.user.nome}</p>
-                    <p className="text-xs text-slate-500">{s.user.cargo || 'Colaborador'}</p>
+                    <p className="text-sm font-bold text-slate-800">{s.user?.nome || 'Desconhecido'}</p>
+                    <p className="text-xs text-slate-500">{s.user?.cargo || 'Colaborador'}</p>
                   </div>
                   <button onClick={async () => { await removeLeadShare(lead.id, s.user.id); loadShares(); }} className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors">
                     <Trash2 size={16} />
