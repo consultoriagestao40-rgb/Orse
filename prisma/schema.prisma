@@ -18,8 +18,9 @@ model EmpresaEmissora {
   endereco     String?
   telefone     String?
   email        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  contratos    Contrato[]
 }
 
 model User {
@@ -51,6 +52,7 @@ model Client {
   contato      String?
   createdAt    DateTime   @default(now())
   propostas    Proposta[]
+  contratos    Contrato[]
 }
 
 model CCT {
@@ -116,6 +118,7 @@ model Proposta {
   versoes   PropostaVersao[]
   shares    PropostaShare[]
   auditLogs AuditLog[]
+  contrato  Contrato?
 }
 
 model PropostaVersao {
@@ -238,3 +241,35 @@ model ClausulaTemplate {
   texto      String
   template   TemplateContrato @relation(fields: [templateId], references: [id], onDelete: Cascade)
 }
+
+model Contrato {
+  id                String             @id @default(cuid())
+  propostaId        String             @unique
+  clientId          String
+  empresaEmissoraId String
+  templateOrigemId  String?
+  status            String             @default("Pendente de Assinatura") // Pendente de Assinatura, Vigente, Encerrado, Reajuste Pendente
+  dataInicio        DateTime?
+  vigenciaMeses     Int                @default(12)
+  dataReajuste      DateTime?
+  indiceReajuste    String?            @default("IPCA")
+  valorMensal       Float              @default(0)
+  valorTotal        Float              @default(0)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  proposta        Proposta         @relation(fields: [propostaId], references: [id])
+  client          Client           @relation(fields: [clientId], references: [id])
+  empresaEmissora EmpresaEmissora  @relation(fields: [empresaEmissoraId], references: [id])
+  clausulas       ClausulaContrato[]
+}
+
+model ClausulaContrato {
+  id         String   @id @default(uuid())
+  contratoId String
+  ordem      Int      @default(0)
+  titulo     String
+  texto      String
+  contrato   Contrato @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+}
+

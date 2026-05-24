@@ -1,0 +1,319 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Sidebar from '@/components/Sidebar';
+import { 
+  FileText, Plus, Search, 
+  Users, TrendingUp, Clock,
+  LayoutList, LayoutGrid, AlertCircle, Edit2, CheckCircle, Calendar, DollarSign
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { getContratos, updateContratoStatus } from './actions';
+
+type ViewMode = 'lista' | 'kanban-status';
+
+const fmt = (v: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
+
+export default function ContratosDashboard() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [contratos, setContratos] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>('lista');
+
+  const loadData = async () => {
+    setLoading(true);
+    const res = await getContratos();
+    if (res.success) {
+      setContratos(res.data);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { loadData(); }, []);
+
+  const getStatusColor = (status: string) => {
+    if (status === 'Pendente de Assinatura') return 'bg-amber-100 text-amber-700 border-amber-200';
+    if (status === 'Vigente') return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+    if (status === 'Reajuste Pendente') return 'bg-orange-100 text-orange-700 border-orange-200';
+    if (status === 'Encerrado') return 'bg-slate-200 text-slate-700 border-slate-300';
+    return 'bg-blue-100 text-blue-700 border-blue-200';
+  };
+
+  const filteredContratos = contratos.filter(c => 
+    c.client?.razaoSocial?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.client?.nomeFantasia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.empresaEmissora?.nomeFantasia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.proposta?.numero?.toString().includes(searchTerm)
+  );
+
+  const ativos = contratos.filter(c => c.status === 'Vigente');
+  const pendentesReajuste = contratos.filter(c => c.status === 'Reajuste Pendente');
+  const encerrados = contratos.filter(c => c.status === 'Encerrado');
+  
+  const valorMensalTotal = ativos.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
+  const valorGlobalTotal = ativos.reduce((acc, c) => acc + (c.valorTotal || 0), 0);
+
+  const statusList = ['Pendente de Assinatura', 'Vigente', 'Reajuste Pendente', 'Encerrado'];
+
+  const KanbanColumn = ({ status }: { status: string }) => {
+    const cards = filteredContratos.filter(c => c.status === status);
+    const total = cards.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
+
+    return (
+      <div 
+        className="flex-shrink-0 w-80 flex flex-col"
+        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-slate-200/50', 'rounded-xl'); }}
+        onDragLeave={(e) => e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl')}
+        onDrop={async (e) => {
+          e.preventDefault();
+          e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl');
+          const id = e.dataTransfer.getData('text/plain');
+          if (id) {
+            setContratos(prev => prev.map(c => c.id === id ? { ...c, status } : c));
+            await updateContratoStatus(id, status);
+          }
+        }}
+      >
+        <div className="bg-white border border-slate-200 rounded-xl mb-3 p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider border ${getStatusColor(status)}`}>
+              {status}
+            </span>
+            <span className="text-xs font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
+              {cards.length}
+            </span>
+          </div>
+          <p className="text-sm font-black text-[#1B4D3E]">{fmt(total)}<span className="text-[10px] text-slate-400 font-bold"> /mês</span></p>
+        </div>
+
+        <div className="flex flex-col gap-3 flex-1">
+          {cards.length === 0 ? (
+            <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
+              <p className="text-xs text-slate-300 font-medium">Vazio</p>
+            </div>
+          ) : (
+            cards.map(c => (
+              <div
+                key={c.id}
+                draggable
+                onDragStart={(e) => e.dataTransfer.setData('text/plain', c.id)}
+                onClick={() => router.push(`/contratos/${c.id}`)}
+                className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer cursor-grab active:cursor-grabbing"
+              >
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2">
+                    <FileText size={13} className="text-[#1B4D3E]" />
+                    <span className="text-xs font-black text-slate-700 tracking-wide">FPV-{c.proposta?.numero}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-bold bg-slate-100 px-2 py-0.5 rounded">{c.empresaEmissora?.nomeFantasia}</span>
+                </div>
+
+                <p className="text-sm font-bold text-slate-800 leading-tight mb-3 line-clamp-2">{c.client?.razaoSocial || c.client?.nomeFantasia}</p>
+                
+                <div className="grid grid-cols-2 gap-2 mb-3 border-t border-slate-100 pt-3">
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Início</p>
+                    <p className="text-[11px] font-bold text-slate-700">{c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : 'A definir'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Reajuste</p>
+                    <p className="text-[11px] font-bold text-orange-600">{c.dataReajuste ? new Date(c.dataReajuste).toLocaleDateString('pt-BR') : 'Não definido'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Mensal</p>
+                    <span className="text-sm font-black text-[#1B4D3E]">{fmt(c.valorMensal)}</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Vigência</p>
+                    <span className="text-[11px] font-bold text-slate-600">{c.vigenciaMeses} meses</span>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex min-h-screen bg-[#F8FAFC]">
+      <Sidebar />
+
+      <main className="flex-1 p-8 overflow-y-auto">
+        <div className="max-w-full mx-auto space-y-6">
+
+          {/* HEADER */}
+          <header className="flex justify-between items-end border-b border-slate-300 pb-4">
+            <div>
+              <h1 className="text-2xl font-bold text-[#1B4D3E] tracking-wider uppercase">Gestão de Contratos (CLM)</h1>
+              <p className="text-slate-500 text-sm mt-1">Ciclo de vida, Reajustes e Aditivos</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm gap-1">
+                <button
+                  onClick={() => setViewMode('lista')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                    viewMode === 'lista' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
+                  }`}
+                >
+                  <LayoutList size={14} /> Lista
+                </button>
+                <button
+                  onClick={() => setViewMode('kanban-status')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                    viewMode === 'kanban-status' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
+                  }`}
+                >
+                  <LayoutGrid size={14} /> Kanban
+                </button>
+              </div>
+
+              <button
+                onClick={() => router.push('/contratos/templates')}
+                className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold py-2.5 px-6 rounded text-sm flex items-center gap-2 shadow-sm transition-colors"
+              >
+                <FileText size={18} /> Minutas (Templates)
+              </button>
+              
+              <button
+                onClick={() => router.push('/contratos/novo')}
+                className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold py-2.5 px-6 rounded text-sm flex items-center gap-2 shadow-sm transition-colors"
+              >
+                <Plus size={18} /> Novo Contrato
+              </button>
+            </div>
+          </header>
+
+          {/* KPIs */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
+              <div className="p-3 bg-emerald-50 rounded border border-emerald-200 text-emerald-600"><CheckCircle size={20} /></div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Ativos (Vigentes)</p>
+                <p className="text-lg font-black text-slate-800 leading-none mt-1">{ativos.length}</p>
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
+              <div className="p-3 bg-blue-50 rounded border border-blue-200 text-blue-600"><DollarSign size={20} /></div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Receita Mensal</p>
+                <p className="text-base font-black text-slate-800 leading-none mt-1">{fmt(valorMensalTotal)}</p>
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
+              <div className="p-3 bg-indigo-50 rounded border border-indigo-200 text-indigo-600"><TrendingUp size={20} /></div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Valor Global</p>
+                <p className="text-base font-black text-slate-800 leading-none mt-1">{fmt(valorGlobalTotal)}</p>
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
+              <div className="p-3 bg-orange-50 rounded border border-orange-200 text-orange-600"><AlertCircle size={20} /></div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pendentes de Reajuste</p>
+                <p className="text-lg font-black text-slate-800 leading-none mt-1">{pendentesReajuste.length}</p>
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
+              <div className="p-3 bg-slate-100 rounded border border-slate-300 text-slate-600"><Calendar size={20} /></div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Encerrados</p>
+                <p className="text-lg font-black text-slate-800 leading-none mt-1">{encerrados.length}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* BARRA DE BUSCA */}
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+              <input
+                type="text"
+                placeholder="Buscar contrato, cliente ou emissora..."
+                className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:ring-1 focus:ring-[#1B4D3E] focus:outline-none shadow-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* VISUALIZAÇÃO EM LISTA */}
+          {viewMode === 'lista' && (
+            <div className="bg-white rounded-md shadow-sm border border-slate-300 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
+                      <th className="px-6 py-3">Proposta</th>
+                      <th className="px-6 py-3">Cliente</th>
+                      <th className="px-6 py-3">Empresa Grupo</th>
+                      <th className="px-6 py-3 text-center">Início</th>
+                      <th className="px-6 py-3 text-center">Vigência</th>
+                      <th className="px-6 py-3 text-center">Data Reajuste</th>
+                      <th className="px-6 py-3 text-right">Mensal</th>
+                      <th className="px-6 py-3 text-center">Status</th>
+                      <th className="px-6 py-3 text-center">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-sm">
+                    {loading ? (
+                      <tr><td colSpan={9} className="px-6 py-12 text-center text-slate-400">Carregando contratos...</td></tr>
+                    ) : filteredContratos.length === 0 ? (
+                      <tr><td colSpan={9} className="px-6 py-12 text-center text-slate-400">Nenhum contrato encontrado.</td></tr>
+                    ) : filteredContratos.map((c) => (
+                      <tr key={c.id} className="border-b border-slate-200 hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-3 font-bold text-slate-700">FPV-{c.proposta?.numero}</td>
+                        <td className="px-6 py-3 font-semibold text-slate-800">{c.client?.razaoSocial || c.client?.nomeFantasia}</td>
+                        <td className="px-6 py-3 text-slate-600">{c.empresaEmissora?.nomeFantasia}</td>
+                        <td className="px-6 py-3 text-center text-slate-600 font-medium">
+                          {c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : '-'}
+                        </td>
+                        <td className="px-6 py-3 text-center text-slate-600 font-medium">{c.vigenciaMeses}m</td>
+                        <td className="px-6 py-3 text-center text-orange-600 font-bold">
+                          {c.dataReajuste ? new Date(c.dataReajuste).toLocaleDateString('pt-BR') : '-'}
+                        </td>
+                        <td className="px-6 py-3 text-right font-black text-[#1B4D3E]">{fmt(c.valorMensal)}</td>
+                        <td className="px-6 py-3 text-center">
+                          <span className={`text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider border ${getStatusColor(c.status)}`}>
+                            {c.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3 text-center">
+                          <button
+                            onClick={() => router.push(`/contratos/${c.id}`)}
+                            className="text-amber-500 hover:text-amber-600 transition-colors p-1 bg-amber-50 rounded"
+                            title="Editar Contrato"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* KANBAN POR STATUS */}
+          {viewMode === 'kanban-status' && (
+            <div className="overflow-x-auto pb-6">
+              <div className="flex gap-5 min-w-max">
+                {statusList.map(status => (
+                  <KanbanColumn key={status} status={status} />
+                ))}
+              </div>
+            </div>
+          )}
+
+        </div>
+      </main>
+    </div>
+  );
+}
