@@ -164,7 +164,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
   };
 
   const renderTermoDeAceite = (clauseNum: number, startIdx: number) => (
-    <div className="break-inside-avoid print:break-inside-avoid mt-4">
+    <div className="mt-4">
       <div className="text-[13px] text-justify space-y-4 mb-6 text-slate-800 leading-relaxed pl-4">
          <p><span className="font-bold mr-1">{clauseNum}.{startIdx + 1}.</span>Ao assinar este termo de aceite, o <strong>{proposta.cliente?.cliente?.toUpperCase() || proposta.cliente?.razaoSocial?.toUpperCase() || "CLIENTE"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
          <p><span className="font-bold mr-1">{clauseNum}.{startIdx + 2}.</span>Este documento servirá como base oficial para a elaboração do instrumento jurídico definitivo (Contrato de Prestação de Serviços) entre as partes.</p>
@@ -458,7 +458,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                 {renderTabelaItensInclusosExcluidos()}
               </div>
 
-              <div className="mt-16 break-inside-avoid print:break-inside-avoid">
+              <div className="mt-16">
                 <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">CLÁUSULA 05 - TERMO DE ACEITE</h4>
                 {renderTermoDeAceite(5, 0)}
               </div>
