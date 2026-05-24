@@ -25,11 +25,33 @@ const gerarNumeroContrato = (c: any) => {
   return `${numProp}.${numRev}.${m}.${y}`;
 };
 
-const calcularVencimento = (dataInicio: any, vigenciaMeses: any) => {
-  if (!dataInicio || !vigenciaMeses) return '-';
+const renderVencimento = (dataInicio: any, vigenciaMeses: any) => {
+  if (!dataInicio || !vigenciaMeses) return <span className="text-slate-400">-</span>;
   const d = new Date(dataInicio);
   d.setMonth(d.getMonth() + vigenciaMeses);
-  return d.toLocaleDateString('pt-BR');
+  
+  const hoje = new Date();
+  const diasParaVencer = Math.ceil((d.getTime() - hoje.getTime()) / (1000 * 3600 * 24));
+  
+  const dataStr = d.toLocaleDateString('pt-BR');
+  
+  let colorClass = "bg-emerald-500";
+  let title = "Contrato no prazo";
+  
+  if (diasParaVencer < 0) {
+    colorClass = "bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]";
+    title = `Vencido há ${Math.abs(diasParaVencer)} dias`;
+  } else if (diasParaVencer <= 45) {
+    colorClass = "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]";
+    title = `Vence em ${diasParaVencer} dias`;
+  }
+
+  return (
+    <div className="flex items-center justify-center gap-2" title={title}>
+      <div className={`w-2.5 h-2.5 rounded-full ${colorClass}`}></div>
+      <span className="font-bold">{dataStr}</span>
+    </div>
+  );
 };
 
 export default function ContratosDashboard() {
@@ -314,8 +336,8 @@ export default function ContratosDashboard() {
                           {c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : '-'}
                         </td>
                         <td className="px-6 py-3 text-center text-slate-600 font-medium">{c.vigenciaMeses}m</td>
-                        <td className="px-6 py-3 text-center text-slate-600 font-bold">
-                          {calcularVencimento(c.dataInicio, c.vigenciaMeses)}
+                        <td className="px-6 py-3 text-center text-slate-600">
+                          {renderVencimento(c.dataInicio, c.vigenciaMeses)}
                         </td>
                         <td className="px-6 py-3 text-center text-orange-600 font-bold">
                           {c.dataReajuste ? new Date(c.dataReajuste).toLocaleDateString('pt-BR') : '-'}
