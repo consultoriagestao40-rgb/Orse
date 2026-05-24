@@ -2,9 +2,10 @@ import React from 'react';
 import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, ChevronLeft, Factory, Store, Bus, Building, Hospital, ShoppingBag, GraduationCap, Share2, Clock, Smartphone, Cpu, CreditCard, User, Calendar, UserCheck, Briefcase, MapPin, ShieldCheck } from 'lucide-react';
 import BrazilMap from '@/components/BrazilMap';
 
-export default function PropostaApresentacaoPrint({ proposta }: { proposta: any }) {
+export default function PropostaApresentacaoPrint({ proposta, resultado }: { proposta: any, resultado?: any }) {
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
   
+  // Variáveis falsas que o FPV antigo usava no slide DRE (que não usamos mais para impressão)
   const margemBrutaMensal = 0;
   const impostosValor = 0;
   const lucroLiquidoMensal = 0;
@@ -15,7 +16,6 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
   const mdoExtraMensal = 0;
   const provisaoRescisao = 0;
   const outrosCustosSubtotal = 0;
-  const resultado = { divisor: 1, items: [] };
   
   return (
     <>
@@ -130,7 +130,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
       <div className="print-slide-deck hidden print:block">
                      {/* SLIDE 01 PRINT - CAPA COMERCIAL */}
                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-[#020617] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
-                        {/* Imagem de Fundo Nativa HTML para Garantir Renderiza├º├úo */}
+                        {/* Imagem de Fundo Nativa HTML para Garantir Renderização */}
                         <img 
                            src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200" 
                            alt="Capa Fundo" 
@@ -158,7 +158,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                            <div className="flex justify-start gap-16 text-white/70 text-[10px] font-extrabold uppercase tracking-wider">
                               <div className="space-y-1">
                                  <div>Cliente: <strong className="text-white">{proposta.cliente.cliente || "Nome do Cliente"}</strong></div>
-                                 <div>N┬║ Proposta: <strong className="text-white">{proposta.cliente.numeroProposta || "FPV-XXXX"}</strong></div>
+                                 <div>Nº Proposta: <strong className="text-white">{proposta.cliente.numeroProposta || "FPV-XXXX"}</strong></div>
                               </div>
                               <div className="space-y-1">
                                  <div>Data: <strong className="text-white">
@@ -166,7 +166,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                        ? new Date(proposta.cliente.dataElaboracao + 'T12:00:00').toLocaleDateString('pt-BR') 
                                        : new Date().toLocaleDateString('pt-BR')}
                                  </strong></div>
-                                 <div>Revis├úo: <strong className="text-white">{proposta.cliente.revisao || "R01"}</strong></div>
+                                 <div>Revisão: <strong className="text-white">{proposta.cliente.revisao || "R01"}</strong></div>
                               </div>
                            </div>
                            <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">01</span>
@@ -188,21 +188,21 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                         <div className="grid grid-cols-12 gap-8 items-center h-full relative z-10">
                            <div className="col-span-8 flex flex-col justify-center space-y-6 pr-4">
                               <h2 className="text-3xl font-black text-[#1E3A8A] tracking-tight leading-none">
-                                 Ol├í, {proposta.cliente.contato || "Karin"}!
+                                 Olá, {proposta.cliente.contato || "Karin"}!
                               </h2>
                               <div className="text-slate-600 text-xs leading-relaxed space-y-4 font-medium">
                                  <p>
-                                    O desenvolvimento deste projeto teve como base as informa├º├Áes reunidas por meio da visita t├®cnica realizada, com o objetivo de corresponder, da forma mais eficaz poss├¡vel, ├ás necessidades do <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> no que se refere aos servi├ºos de <strong className="font-extrabold text-slate-800">{proposta.cliente.tipoServicos || proposta.cliente.objetoProposta || "Limpeza e conserva├º├úo"}</strong>.
+                                    O desenvolvimento deste projeto teve como base as informações reunidas por meio da visita técnica realizada, com o objetivo de corresponder, da forma mais eficaz possível, às necessidades do <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> no que se refere aos serviços de <strong className="font-extrabold text-slate-800">{proposta.cliente.tipoServicos || proposta.cliente.objetoProposta || "Limpeza e conservação"}</strong>.
                                  </p>
                                  <p className="font-semibold text-slate-700">
-                                    Estamos imensamente gratos desde j├í pela oportunidade!
+                                    Estamos imensamente gratos desde já pela oportunidade!
                                  </p>
                               </div>
                               <div className="space-y-4">
                                  <span className="text-xs font-bold text-slate-500 block">Att,</span>
                                  <div className="bg-[#2B547E] text-white px-5 py-3 rounded-2xl inline-flex flex-col space-y-0.5 shadow-md max-w-sm">
-                                    <span className="text-sm font-black tracking-tight">{proposta.cliente.vendedorNome || "├üdamo Quadros"}</span>
-                                    <span className="text-[10px] text-slate-200/80 font-bold uppercase tracking-wider">{proposta.cliente.vendedorCargo || "Novos Neg├│cios"}</span>
+                                    <span className="text-sm font-black tracking-tight">{proposta.cliente.vendedorNome || "Ádamo Quadros"}</span>
+                                    <span className="text-[10px] text-slate-200/80 font-bold uppercase tracking-wider">{proposta.cliente.vendedorCargo || "Novos Negócios"}</span>
                                     <span className="text-[10px] text-slate-200/80 font-bold">{proposta.cliente.vendedorTelefone || "(41) 9 9737-0880"}</span>
                                     <span className="text-[10px] text-slate-200/80 font-bold truncate">{proposta.cliente.vendedorEmail || "adamo@grupojvsserv.com.br"}</span>
                                  </div>
@@ -242,7 +242,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                      QUEM SOMOS
                                   </h2>
                                   <p className="text-white/95 text-[14px] font-semibold leading-relaxed mt-4 max-w-xl">
-                                     H├í mais de 30 anos no mercado de Facilities, somos especialistas em presta├º├Áes de servi├ºos de limpeza profissional e similares.
+                                     Há mais de 30 anos no mercado de Facilities, somos especialistas em prestações de serviços de limpeza profissional e similares.
                                   </p>
                                </div>
 
@@ -253,7 +253,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                      </div>
                                      <span className="text-[14px] font-bold text-white leading-none whitespace-nowrap">+de <strong className="text-xl font-black">30</strong></span>
                                      <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
-                                        Anos de atua├º├úo em Facilities
+                                        Anos de atuação em Facilities
                                      </span>
                                   </div>
 
@@ -281,7 +281,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                      <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
                                         <ShieldCheck size={26} className="text-white shrink-0" />
                                      </div>
-                                     <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap block w-full text-center"><strong className="text-base font-black">+100</strong> mil m┬▓</span>
+                                     <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap block w-full text-center"><strong className="text-base font-black">+100</strong> mil m²</span>
                                      <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
                                         de limpeza em altura
                                      </span>
@@ -291,7 +291,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                      <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-2 shadow-md">
                                         <Sparkles size={26} className="text-white shrink-0" />
                                      </div>
-                                     <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap block w-full text-center"><strong className="text-base font-black">+500</strong> mil m┬▓</span>
+                                     <span className="text-[11px] font-bold text-white leading-none whitespace-nowrap block w-full text-center"><strong className="text-base font-black">+500</strong> mil m²</span>
                                      <span className="text-[10px] font-extrabold text-white/90 uppercase mt-1 leading-tight tracking-wide block max-w-[85px]">
                                         de Pisos tratados
                                      </span>
@@ -304,7 +304,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                   <BrazilMap highlightedStates={['PR', 'SC', 'RS']} className="w-full h-full" />
                                </div>
                                <div className="text-[11px] font-black text-white uppercase tracking-widest mt-4 bg-white/10 px-4 py-1 rounded-full shadow-sm">
-                                  Atendimento em toda Regi├úo Sul
+                                  Atendimento em toda Região Sul
                                </div>
                             </div>
                          </div>
@@ -334,7 +334,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                      NOSSOS VALORES
                                   </h2>
                                   <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-5 text-justify">
-                                     Nosso compromisso ├® guiado por princ├¡pios s├│lidos: agimos com <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">├®tica</strong>, mantendo a integridade acima de benef├¡cios moment├óneos. Buscamos <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">agilidade</strong>, <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">efici├¬ncia</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">excel├¬ncia</strong> atrav├®s do aprimoramento cont├¡nuo de processos e sistemas. <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">Valorizamos nossas pessoas</strong>, promovendo um ambiente humanizado e solu├º├Áes que garantem a satisfa├º├úo e a perman├¬ncia dos colaboradores. Somos comprometidos com a <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">entrega</strong> dos nossos acordos, mesmo diante de desafios. Al├®m disso, investimos em <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">inova├º├úo</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">tecnologia</strong> para otimizar a automa├º├úo, produtividade e efici├¬ncia.
+                                     Nosso compromisso é guiado por princípios sólidos: agimos com <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">ética</strong>, mantendo a integridade acima de benefícios momentâneos. Buscamos <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">agilidade</strong>, <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">eficiência</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">excelência</strong> através do aprimoramento contínuo de processos e sistemas. <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">Valorizamos nossas pessoas</strong>, promovendo um ambiente humanizado e soluções que garantem a satisfação e a permanência dos colaboradores. Somos comprometidos com a <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">entrega</strong> dos nossos acordos, mesmo diante de desafios. Além disso, investimos em <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">inovação</strong> e <strong className="underline decoration-[#1B4D3E] decoration-2 font-black text-slate-800">tecnologia</strong> para otimizar a automação, produtividade e eficiência.
                                   </p>
                                </div>
                             </div>
@@ -344,7 +344,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                <div className="relative w-full h-[220px] z-20">
                                   <img 
                                      src="/hand-support.png" 
-                                     alt="M├úo de suporte"
+                                     alt="Mão de suporte"
                                      className="absolute right-[-10px] bottom-[-85px] w-[320px] h-auto pointer-events-none opacity-90 z-0 mix-blend-multiply"
                                   />
                                   <div className="absolute top-[-12px] left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
@@ -368,7 +368,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                          </div>
                       </div>
 
-                      {/* SLIDE 05 PRINT - PRINCIPAIS SERVI├çOS PRESTADOS */}
+                      {/* SLIDE 05 PRINT - PRINCIPAIS SERVIÇOS PRESTADOS */}
                       <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
                          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" xmlns="http://www.w3.org/2000/svg">
                             <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
@@ -381,14 +381,14 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                          <div className="relative z-10 flex flex-col h-[calc(100%-30px)] justify-between">
                             <div>
                                <h2 className="text-3xl font-black text-[#1e4480] uppercase tracking-tight leading-none mb-6">
-                                  PRINCIPAIS SERVI├çOS PRESTADOS
+                                  PRINCIPAIS SERVIÇOS PRESTADOS
                                </h2>
 
                                <div className="grid grid-cols-2 gap-12 mt-2">
                                   <div className="flex flex-col space-y-3">
                                      <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-2">
                                         <span className="text-[#1e4480] text-[15px] font-black tracking-wide uppercase leading-tight max-w-[300px]">
-                                           TERCEIRIZA├ç├âO DE SERVI├çOS DE FACILITIES
+                                           TERCEIRIZAÇÃO DE SERVIÇOS DE FACILITIES
                                         </span>
                                         <div className="text-[#1e4480] shrink-0">
                                            <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-14 h-14 shrink-0">
@@ -402,7 +402,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                         </div>
                                      </div>
                                      <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
-                                        Gest├úo e execu├º├úo de servi├ºos essenciais, como limpeza, manuten├º├úo e seguran├ºa, que garantem o bom funcionamento e organiza├º├úo de um ambiente de trabalho. Nossa fun├º├úo ├® cuidar de tudo isso para que a empresa possa focar no que faz de melhor, enquanto oferecemos um espa├ºo eficiente, seguro e bem cuidado.
+                                        Gestão e execução de serviços essenciais, como limpeza, manutenção e segurança, que garantem o bom funcionamento e organização de um ambiente de trabalho. Nossa função é cuidar de tudo isso para que a empresa possa focar no que faz de melhor, enquanto oferecemos um espaço eficiente, seguro e bem cuidado.
                                      </p>
                                   </div>
 
@@ -426,7 +426,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                         </div>
                                      </div>
                                      <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
-                                        Servi├ºo que ├® realizado em ├íreas de dif├¡cil acesso, como fachadas de pr├®dios, janelas externas e estruturas elevadas. Usamos equipamentos espec├¡ficos e t├®cnicas seguras para garantir que essas superf├¡cies sejam limpas de maneira eficiente, mantendo a est├®tica e a seguran├ºa dos espa├ºos altos, onde o cuidado e a precis├úo s├úo essenciais.
+                                        Serviço que é realizado em áreas de difícil acesso, como fachadas de prédios, janelas externas e estruturas elevadas. Usamos equipamentos específicos e técnicas seguras para garantir que essas superfícies sejam limpas de maneira eficiente, mantendo a estética e a segurança dos espaços altos, onde o cuidado e a precisão são essenciais.
                                      </p>
                                   </div>
                                </div>
@@ -489,7 +489,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                      </svg>
                                   </div>
                                   <span className="text-[#1e4480] text-[12px] font-black tracking-wider uppercase mt-2.5">
-                                     RECEP├ç├âO
+                                     RECEPÇÃO
                                   </span>
                                </div>
 
@@ -509,7 +509,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                      </svg>
                                   </div>
                                   <span className="text-[#1e4480] text-[12px] font-black tracking-wider uppercase mt-2.5">
-                                     MANUTEN├ç├âO
+                                     MANUTENÇÃO
                                   </span>
                                </div>
 
@@ -559,7 +559,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                         <div style={{ width: '48px', height: '4px', backgroundColor: 'white', marginBottom: '8px' }}></div>
                                         <div className="flex items-center justify-between gap-4">
                                            <span className="text-white text-[15px] font-black tracking-wide uppercase leading-tight">
-                                              IND├ÜSTRIA
+                                              INDÚSTRIA
                                            </span>
                                            <div className="bg-white/10 p-2 rounded-xl text-white shrink-0 shadow-sm">
                                               <Factory size={22} className="stroke-[2.5]" />
@@ -567,7 +567,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                         </div>
                                      </div>
                                      <p className="text-white/90 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
-                                        Com processos minuciosos e detalhados, o setor industrial trouxe para o escopo da JVS Facilities a capacidade de atender clientes de alta exig├¬ncia. Possu├¡mos qualidade t├®cnica validada no mercado para atender as mais variadas necessidades da ind├║stria.
+                                        Com processos minuciosos e detalhados, o setor industrial trouxe para o escopo da JVS Facilities a capacidade de atender clientes de alta exigência. Possuímos qualidade técnica validada no mercado para atender as mais variadas necessidades da indústria.
                                      </p>
                                   </div>
 
@@ -584,7 +584,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                         </div>
                                      </div>
                                      <p className="text-white/90 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
-                                        Um dos setores com maior participa├º├úo em nossa carteira de clientes, o varejo exigiu resili├¬ncia e trabalho ├írduo em busca de superar os desafios operacionais, que por fim, resultaram in constantes avalia├º├Áes positivas de satisfa├º├úo e controle dos indicadores de rotatividade e absente├¡smo.
+                                        Um dos setores com maior participação em nossa carteira de clientes, o varejo exigiu resiliência e trabalho árduo em busca de superar os desafios operacionais, que por fim, resultaram in constantes avaliações positivas de satisfação e controle dos indicadores de rotatividade e absenteísmo.
                                      </p>
                                   </div>
                                </div>
@@ -596,7 +596,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                      <Bus size={22} className="stroke-[2]" />
                                   </div>
                                   <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[100px] leading-tight">
-                                     TRANSPORTE<br />E LOG├ìSTICA
+                                     TRANSPORTE<br />E LOGÍSTICA
                                   </span>
                                </div>
 
@@ -605,7 +605,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                      <Building size={22} className="stroke-[2]" />
                                   </div>
                                   <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[110px] leading-tight">
-                                     CONDOM├ìNIOS<br />E EDIF├ìCIOS
+                                     CONDOMÍNIOS<br />E EDIFÍCIOS
                                   </span>
                                </div>
 
@@ -614,7 +614,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                      <Hospital size={22} className="stroke-[2]" />
                                   </div>
                                   <span className="text-white text-[11px] font-black tracking-wider uppercase mt-2.5 text-center max-w-[100px] leading-tight">
-                                     CL├ìNICAS E<br />HOSPITAIS
+                                     CLÍNICAS E<br />HOSPITAIS
                                   </span>
                                </div>
 
@@ -672,7 +672,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                      <div className="space-y-1">
                                         <h3 className="text-[#1e4480] text-xs font-black tracking-wider uppercase">BITRIX24</h3>
                                         <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
-                                           CRM, armazenamento de dados e documentos, gest├úo de resultados, planejamento estrat├®gico.
+                                           CRM, armazenamento de dados e documentos, gestão de resultados, planejamento estratégico.
                                         </p>
                                         <div className="pt-2 flex items-center gap-1 select-none">
                                            <span className="text-[#00A4E4] font-black text-sm tracking-tight">Bitrix</span>
@@ -690,14 +690,14 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                      <div className="space-y-1">
                                         <h3 className="text-[#1e4480] text-xs font-black tracking-wider uppercase">SECULLUM</h3>
                                         <p className="text-slate-500 text-[8.5px] font-semibold leading-relaxed">
-                                           Controle de ponto digital, envio e assinatura de holerites e documentos administrativos, controle e gest├úo de turnover.
+                                           Controle de ponto digital, envio e assinatura de holerites e documentos administrativos, controle e gestão de turnover.
                                         </p>
                                         <div className="pt-2 flex flex-col select-none">
                                            <div className="flex items-center gap-1">
                                               <Award size={14} className="text-amber-500 shrink-0" />
                                               <span className="text-slate-700 font-black text-xs tracking-tight lowercase">secullum</span>
                                            </div>
-                                           <span className="text-slate-400 text-[7px] font-bold pl-5 leading-none">Ser f├ícil para ser humano.</span>
+                                           <span className="text-slate-400 text-[7px] font-bold pl-5 leading-none">Ser fácil para ser humano.</span>
                                         </div>
                                      </div>
                                   </div>
@@ -733,7 +733,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                            <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[7px] px-1.5 py-0.5 rounded-full font-black tracking-widest uppercase">IA CORE</span>
                                         </div>
                                         <p className="text-white/80 text-[8px] font-semibold leading-relaxed">
-                                           Mesa de opera├º├úo inteligente baseada em IA, otimizando agendamentos de frotas, distribui├º├úo de escalas e monitoramento de services em tempo real.
+                                           Mesa de operação inteligente baseada em IA, otimizando agendamentos de frotas, distribuição de escalas e monitoramento de services em tempo real.
                                         </p>
                                         <div className="pt-1 flex items-center gap-1 select-none">
                                            <span className="text-emerald-400 font-black text-xs tracking-tight">Nexus</span>
@@ -750,7 +750,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                      <div className="space-y-1">
                                         <h3 className="text-white text-xs font-black tracking-wider uppercase">ONVIO</h3>
                                         <p className="text-white/80 text-[8.5px] font-semibold leading-relaxed">
-                                           Registro e gest├úo de documenta├º├úo de funcion├írios.
+                                           Registro e gestão de documentação de funcionários.
                                         </p>
                                         <div className="pt-1.5 flex flex-col select-none">
                                            <span className="text-orange-400/80 text-[6px] font-extrabold tracking-widest uppercase">THOMSON REUTERS</span>
@@ -759,18 +759,18 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                      </div>
                                   </div>
                                   
-                                  {/* Check-List F├ícil */}
+                                  {/* Check-List Fácil */}
                                   <div className="flex gap-4 items-start">
                                      <div className="bg-white/10 p-2 rounded-xl text-white shrink-0 mt-1">
                                         <Smartphone size={20} className="stroke-[2.5]" />
                                      </div>
                                      <div className="space-y-1">
-                                        <h3 className="text-white text-xs font-black tracking-wider uppercase">CHECK-LIST F├üCIL</h3>
+                                        <h3 className="text-white text-xs font-black tracking-wider uppercase">CHECK-LIST FÁCIL</h3>
                                         <p className="text-white/80 text-[8.5px] font-semibold leading-relaxed">
-                                           Plataforma digital de desenvolvimento e gest├úo de processos internos com registro fotogr├ífico, SLA's etc.
+                                           Plataforma digital de desenvolvimento e gestão de processos internos com registro fotográfico, SLA's etc.
                                         </p>
                                         <div className="pt-1.5 flex items-center gap-1 select-none text-[#10B981]">
-                                           <span className="text-sm font-black tracking-tight flex items-center gap-1">Ô£ö checklistf├ícil</span>
+                                           <span className="text-sm font-black tracking-tight flex items-center gap-1">✔ checklistfácil</span>
                                         </div>
                                      </div>
                                   </div>
@@ -784,7 +784,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                          </div>
                       </div>
 
-{/* SLIDE 08 PRINT - OBJETO E ESCOPO T├ëCNICO */}
+{/* SLIDE 08 PRINT - OBJETO E ESCOPO TÉCNICO */}
                        <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800">
                           {/* Linhas diagonais decorativas da marca */}
                           <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
@@ -801,7 +801,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                              {/* Header */}
                              <div className="flex justify-between items-start pb-4 border-b border-slate-100">
                                 <h2 className="text-3xl font-black text-[#1e4480] tracking-tight leading-none uppercase">
-                                   OBJETO & ESCOPO T├ëCNICO
+                                   OBJETO & ESCOPO TÉCNICO
                                 </h2>
                                 <img 
                                    src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
@@ -819,17 +819,17 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                          <div>
                                             <span className="text-[12px] font-black text-[#1e4480] uppercase tracking-widest block mb-3">01. OBJETO DA PROPOSTA</span>
                                             <p className="text-sm font-semibold leading-relaxed text-slate-700 whitespace-pre-line">
-                                               {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Presta├º├úo de servi├ºos especializados de limpeza, conserva├º├úo e facilities.'}
+                                               {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
                                             </p>
                                          </div>
                                       </div>
 
-                                      {/* Right: Escopo T├®cnico */}
+                                      {/* Right: Escopo Técnico */}
                                       <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-8 shadow-sm flex flex-col justify-between">
                                          <div>
-                                            <span className="text-[12px] font-black text-[#1e4480] uppercase tracking-widest block mb-3">02. ESCOPO T├ëCNICO</span>
+                                            <span className="text-[12px] font-black text-[#1e4480] uppercase tracking-widest block mb-3">02. ESCOPO TÉCNICO</span>
                                             <p className="text-sm font-semibold leading-relaxed text-slate-700 whitespace-pre-line overflow-y-auto max-h-[220px]">
-                                               {proposta.cliente.escopoTecnico || 'Detalhamento das atividades operacionais conforme solicita├º├úo e cronograma alinhado.'}
+                                               {proposta.cliente.escopoTecnico || 'Detalhamento das atividades operacionais conforme solicitação e cronograma alinhado.'}
                                             </p>
                                          </div>
                                       </div>
@@ -838,7 +838,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                    <div className="max-w-3xl mx-auto bg-slate-50 border border-slate-200/80 rounded-2xl p-10 text-center shadow-sm">
                                       <span className="text-[12px] font-black text-[#1e4480] uppercase tracking-widest block mb-4">OBJETO DA PROPOSTA</span>
                                       <p className="text-base font-bold leading-relaxed text-slate-700 whitespace-pre-line">
-                                         {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Presta├º├úo de servi├ºos especializados de limpeza, conserva├º├úo e facilities.'}
+                                         {proposta.cliente.objetoProposta || proposta.cliente.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.'}
                                       </p>
                                    </div>
                                 )}
@@ -871,29 +871,29 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                             <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-stretch">
                                <div className="col-span-8 bg-white rounded-2xl border border-slate-150 shadow-lg overflow-hidden flex flex-col">
                                   <div className="bg-[#1e4480] text-center py-3">
-                                     <h3 className="text-white text-xs font-black tracking-widest uppercase">{proposta.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Op├º├Áes'}</h3>
+                                     <h3 className="text-white text-xs font-black tracking-widest uppercase">{proposta.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções'}</h3>
                                   </div>
                                   <div className="flex-1">
                                      <table className="w-full text-left border-collapse">
                                         <thead>
                                            <tr className="bg-slate-50 text-[#1e4480] text-[10px] font-black uppercase tracking-wider border-b border-slate-200">
-                                              <th className="px-5 py-3">Fun├º├úo</th>
+                                              <th className="px-5 py-3">Função</th>
                                               <th className="px-5 py-3 text-center w-24">Qtd.</th>
                                               <th className="px-5 py-3 text-center w-28">Escala</th>
-                                              <th className="px-5 py-3 text-center w-36">Hor├írio</th>
+                                              <th className="px-5 py-3 text-center w-36">Horário</th>
                                            </tr>
                                         </thead>
                                         <tbody>
                                            {proposta.equipe && proposta.equipe.length > 0 ? (
                                               proposta.equipe.map((p: any, idx: number) => (
                                                  <tr key={p.id || idx} className={`border-b border-slate-100 text-[10px] font-bold text-slate-700 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}`}>
-                                                    <td className="px-5 py-3.5 font-black text-slate-800">{p.nomeCargo || "Selecione a Fun├º├úo"}</td>
+                                                    <td className="px-5 py-3.5 font-black text-slate-800">{p.nomeCargo || "Selecione a Função"}</td>
                                                     <td className="px-5 py-3.5 text-center font-black text-[#1e4480]">{(p.quantidade || 0).toFixed(2).replace('.', ',')}</td>
                                                     <td className="px-5 py-3.5 text-center">{p.escala || "A definir"}</td>
                                                     <td className="px-5 py-3.5 text-center font-semibold text-slate-500">
                                                        {p.parametrosPosto?.horarioInicio && p.parametrosPosto?.horarioFim 
-                                                          ? `${p.parametrosPosto.horarioInicio} ├ás ${p.parametrosPosto.horarioFim}` 
-                                                          : '08:00 ├ás 17:00'}
+                                                          ? `${p.parametrosPosto.horarioInicio} às ${p.parametrosPosto.horarioFim}` 
+                                                          : '08:00 às 17:00'}
                                                     </td>
                                                  </tr>
                                               ))
@@ -916,9 +916,9 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                      <div className="space-y-3">
                                         {(() => {
                                            const clausulas = proposta.cliente.quadroEfetivoClausulas || [
-                                              proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcion├írio dever├í ter duas folgas compensat├│rias em sequ├¬ncia;',
-                                              proposta.cliente.quadroEfetivoClausula2 || 'Para redu├º├Áes no efetivo prazo de 30 (trinta) dias;',
-                                              proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h di├írias de no m├¡nimo 60 minutos, entre 4h a 6h o intervalo ser├í de 15 minutos (CLT).'
+                                              proposta.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
+                                              proposta.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
+                                              proposta.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
                                            ];
                                            return clausulas.map((c: string, cIdx: number) => (
                                               <div key={cIdx} className="flex items-start gap-2.5">
@@ -941,7 +941,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                          </div>
                       </div>
 
-                      {/* SLIDE 10 PRINT - ITENS INCLUSOS E EXCLUS├ìDOS */}
+                      {/* SLIDE 10 PRINT - ITENS INCLUSOS E EXCLUSÍDOS */}
                       <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800">
                          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
                             <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
@@ -952,7 +952,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                             <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                <div className="flex flex-col">
                                   <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
-                                  <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUS├ìDOS</h2>
+                                  <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUSÍDOS</h2>
                                </div>
                                <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
                             </div>
@@ -963,7 +963,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                      <thead>
                                         <tr className="bg-[#1e4480] text-white text-[10px] font-black uppercase tracking-wider border-b border-slate-200">
                                            <th className="px-6 py-3.5 w-32">Item</th>
-                                           <th className="px-6 py-3.5">Descri├º├úo</th>
+                                           <th className="px-6 py-3.5">Descrição</th>
                                            <th className="px-6 py-3.5 text-center w-40">Status</th>
                                         </tr>
                                      </thead>
@@ -1062,12 +1062,12 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                            </thead>
                                            <tbody>
                                               <tr className="border-b border-slate-100 text-slate-700 font-bold">
-                                                 <td className="py-3.5 px-4 font-black">M├úo de Obra Efetiva (Postos)</td>
+                                                 <td className="py-3.5 px-4 font-black">Mão de Obra Efetiva (Postos)</td>
                                                  <td className="py-3.5 px-4 text-right font-black text-[#1e4480]">{fc(maoDeObraSubtotal)}</td>
                                               </tr>
                                               {renderInsumoRow('Materiais e Equipamentos', applyCascata(Number(proposta.insumos.materiais || 0) + Number(proposta.insumos.maquinas || 0)))}
-                                              {renderInsumoRow('Descart├íveis e Higiene', applyCascata(Number(proposta.insumos.descartaveis || 0)))}
-                                              {renderInsumoRow('Outros Servi├ºos / Opera├º├Áes', applyCascata(Number(proposta.insumos.servicos || 0)))}
+                                              {renderInsumoRow('Descartáveis e Higiene', applyCascata(Number(proposta.insumos.descartaveis || 0)))}
+                                              {renderInsumoRow('Outros Serviços / Operações', applyCascata(Number(proposta.insumos.servicos || 0)))}
                                            </tbody>
                                         </table>
                                         
@@ -1090,13 +1090,13 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                                  <svg className="w-4 h-4 text-[#1e4480] shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                  </svg>
-                                                 <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">Os valores propostos contemplam todos os encargos sociais, tributos (PIS, COFINS, ISS), taxas de administra├º├úo e insumos descritos na proposta;</p>
+                                                 <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">Os valores propostos contemplam todos os encargos sociais, tributos (PIS, COFINS, ISS), taxas de administração e insumos descritos na proposta;</p>
                                               </div>
                                               <div className="flex items-start gap-2.5">
                                                  <svg className="w-4 h-4 text-[#1e4480] shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                  </svg>
-                                                 <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">Faturamento mensal com vencimento a ser pactuado nas condi├º├Áes gerais da contrata├º├úo, emitido ap├│s a presta├º├úo dos servi├ºos.</p>
+                                                 <p className="text-slate-600 text-[8.5px] font-semibold leading-relaxed">Faturamento mensal com vencimento a ser pactuado nas condições gerais da contratação, emitido após a prestação dos serviços.</p>
                                               </div>
                                            </div>
                                         </div>
@@ -1112,7 +1112,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                          );
                       })()}
 
-                      {/* SLIDE 12 PRINT - CONDI├ç├òES DA PROPOSTA */}
+                      {/* SLIDE 12 PRINT - CONDIÇÕES DA PROPOSTA */}
                       <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800">
                          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
                             <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
@@ -1123,7 +1123,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                             <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                <div className="flex flex-col">
                                   <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
-                                  <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">CONDI├ç├òES GERAIS DA PROPOSTA</h2>
+                                  <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">CONDIÇÕES GERAIS DA PROPOSTA</h2>
                                </div>
                                <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
                             </div>
@@ -1131,15 +1131,15 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                             
                                    {(() => {
                                       const condsColab = [
-                                         proposta.cliente?.condicaoColaboradores1 || "Vale alimenta├º├úo de R$900,00;",
+                                         proposta.cliente?.condicaoColaboradores1 || "Vale alimentação de R$900,00;",
                                          proposta.cliente?.condicaoColaboradores2 || "Cesta trimestral de assiduidade;",
                                          proposta.cliente?.condicaoColaboradores3 || "2 Vales transporte por dia."
                                       ].filter(Boolean);
 
                                       const condsCli = [
-                                         proposta.cliente?.condicaoCliente1 || "Faturamento dos servi├ºos aos dias 15 ou 30 de cada m├¬s com vencimento nos pr├│ximos 15 dias;",
-                                         proposta.cliente?.condicaoCliente2 || "Reajuste anual, autom├ítico e equivalente ao diss├¡dio da categoria (SIEMACO) todo m├¬s fevereiro de cada ano subsequente;",
-                                         proposta.cliente?.condicaoCliente3 || "Pr├│ximo reajuste Fevereiro/2026."
+                                         proposta.cliente?.condicaoCliente1 || "Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;",
+                                         proposta.cliente?.condicaoCliente2 || "Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;",
+                                         proposta.cliente?.condicaoCliente3 || "Próximo reajuste Fevereiro/2026."
                                       ].filter(Boolean);
 
                                       return (
@@ -1155,11 +1155,11 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                                      <span className="text-slate-800 font-black">{proposta.condicoes?.validadeProposta || "15 (quinze) dias"}</span>
                                                   </div>
                                                   <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
-                                                     <span className="text-slate-500 font-bold">Prazo de In├¡cio dos Servi├ºos:</span>
+                                                     <span className="text-slate-500 font-bold">Prazo de Início dos Serviços:</span>
                                                      <span className="text-slate-800 font-black">{proposta.condicoes?.prazoInicio || "20 (vinte) dias"}</span>
                                                   </div>
                                                   <div className="flex justify-between items-center text-[10px] pb-0.5">
-                                                     <span className="text-slate-500 font-bold">Vig├¬ncia Contratual M├¡nima:</span>
+                                                     <span className="text-slate-500 font-bold">Vigência Contratual Mínima:</span>
                                                      <span className="text-slate-800 font-black">{proposta.condicoes?.vigenciaContratual || "12 (doze) meses"}</span>
                                                   </div>
                                                </div>
@@ -1173,11 +1173,11 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                                <div className="space-y-2">
                                                   <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
                                                      <span className="text-slate-500 font-bold">Prazo de Pagamento:</span>
-                                                     <span className="text-slate-800 font-black">{proposta.condicoes?.prazoPagamento || "30 dias l├¡quido"}</span>
+                                                     <span className="text-slate-800 font-black">{proposta.condicoes?.prazoPagamento || "30 dias líquido"}</span>
                                                   </div>
                                                   <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
                                                      <span className="text-slate-500 font-bold">Base de Reajuste Anual:</span>
-                                                     <span className="text-slate-800 font-black">{proposta.condicoes?.baseReajuste || "Conven├º├úo Coletiva (CCT) / IPCA"}</span>
+                                                     <span className="text-slate-800 font-black">{proposta.condicoes?.baseReajuste || "Convenção Coletiva (CCT) / IPCA"}</span>
                                                   </div>
                                                   <div className="flex justify-between items-center text-[10px] pb-0.5">
                                                      <span className="text-slate-500 font-bold">Garantias e Seguros:</span>
@@ -1189,11 +1189,11 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                             <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-5 shadow-xs space-y-3">
                                                <div className="flex items-center gap-2 border-b border-slate-200 pb-1.5">
                                                   <UserCheck size={16} className="text-[#1e4480]" />
-                                                  <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condi├º├Áes dos Colaboradores</h4>
+                                                  <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condições dos Colaboradores</h4>
                                                </div>
                                                <div className="space-y-1">
                                                   {condsColab.map((cond, idx) => (
-                                                     <div key={idx} className="text-slate-700 font-semibold text-[9.5px] leading-normal pl-1.5 relative before:content-['ÔÇó'] before:absolute before:left-0 before:text-[#1b4d3e]">
+                                                     <div key={idx} className="text-slate-700 font-semibold text-[9.5px] leading-normal pl-1.5 relative before:content-['•'] before:absolute before:left-0 before:text-[#1b4d3e]">
                                                         {cond}
                                                      </div>
                                                   ))}
@@ -1203,11 +1203,11 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                             <div className="bg-slate-50/70 border border-slate-150 rounded-2xl p-5 shadow-xs space-y-3">
                                                <div className="flex items-center gap-2 border-b border-slate-200 pb-1.5">
                                                   <Briefcase size={16} className="text-[#1e4480]" />
-                                                  <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condi├º├Áes para o Cliente</h4>
+                                                  <h4 className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Condições para o Cliente</h4>
                                                </div>
                                                <div className="space-y-1">
                                                   {condsCli.map((cond, idx) => (
-                                                     <div key={idx} className="text-slate-700 font-semibold text-[9.5px] leading-normal pl-1.5 relative before:content-['ÔÇó'] before:absolute before:left-0 before:text-[#1b4d3e]">
+                                                     <div key={idx} className="text-slate-700 font-semibold text-[9.5px] leading-normal pl-1.5 relative before:content-['•'] before:absolute before:left-0 before:text-[#1b4d3e]">
                                                         {cond}
                                                      </div>
                                                   ))}
@@ -1234,7 +1234,7 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                             <div className="flex justify-between items-center w-full pb-4 border-b border-white/20">
                                <div className="flex flex-col">
                                   <span className="text-white/70 text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
-                                  <h2 className="text-xl font-black text-white uppercase tracking-tight">TERMO DE ACEITE E CONTRATA├ç├âO</h2>
+                                  <h2 className="text-xl font-black text-white uppercase tracking-tight">TERMO DE ACEITE E CONTRATAÇÃO</h2>
                                </div>
                                <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
                             </div>
@@ -1243,21 +1243,21 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                <div className="col-span-6 space-y-4">
                                   <h3 className="text-lg font-black tracking-tight leading-snug">Estamos prontos para iniciar a nossa parceria de sucesso!</h3>
                                   <div className="text-white/80 text-[10px] leading-relaxed space-y-2 font-semibold text-justify">
-                                     <p>Ao assinar este termo de aceite, o <strong className="text-white font-extrabold">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> manifesta sua concord├óncia com os valores descritos, premissas de investimento e condi├º├Áes comerciais apresentadas nesta proposta comercial.</p>
-                                     <p>Este documento servir├í como base oficial para a elabora├º├úo do instrumento jur├¡dico definitivo (Contrato de Presta├º├úo de Servi├ºos) entre as partes.</p>
+                                     <p>Ao assinar este termo de aceite, o <strong className="text-white font-extrabold">{proposta.cliente.cliente || "Erasto Gaertner"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
+                                     <p>Este documento servirá como base oficial para a elaboração do instrumento jurídico definitivo (Contrato de Prestação de Serviços) entre as partes.</p>
                                   </div>
                                   <div className="bg-white/5 border border-white/10 rounded-xl p-3 mt-3.5 space-y-2 text-[9px] font-semibold text-white/90">
                                      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                                         <div className="flex flex-col">
-                                           <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Raz├úo Social</span>
-                                           <span className="truncate text-white font-bold">{proposta.cliente.razaoSocial || proposta.cliente.cliente || "N├úo informada"}</span>
+                                           <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Razão Social</span>
+                                           <span className="truncate text-white font-bold">{proposta.cliente.razaoSocial || proposta.cliente.cliente || "Não informada"}</span>
                                         </div>
                                         <div className="flex flex-col">
                                            <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">CNPJ</span>
-                                           <span className="text-white font-bold">{proposta.cliente.cnpj || "N├úo informado"}</span>
+                                           <span className="text-white font-bold">{proposta.cliente.cnpj || "Não informado"}</span>
                                         </div>
                                         <div className="flex flex-col">
-                                           <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Data de In├¡cio</span>
+                                           <span className="text-[7.5px] font-black text-white/55 uppercase tracking-wider">Data de Início</span>
                                            <span className="text-white font-bold">{proposta.cliente.dataInicio || "A definir"}</span>
                                         </div>
                                         <div className="flex flex-col">
@@ -1294,8 +1294,8 @@ export default function PropostaApresentacaoPrint({ proposta }: { proposta: any 
                                         <div className="h-6 w-full mb-1 flex items-center justify-center">
                                            <span className="text-[8px] text-emerald-300 font-extrabold tracking-wider bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/35 uppercase select-none">Assinado Digitalmente</span>
                                         </div>
-                                        <span className="text-[9px] font-black text-white">{proposta.cliente.vendedorNome || "├üdamo Quadros"}</span>
-                                        <span className="text-[8px] text-white/50 font-bold uppercase mt-0.5">{proposta.cliente.vendedorCargo || "Novos Neg├│cios"}</span>
+                                        <span className="text-[9px] font-black text-white">{proposta.cliente.vendedorNome || "Ádamo Quadros"}</span>
+                                        <span className="text-[8px] text-white/50 font-bold uppercase mt-0.5">{proposta.cliente.vendedorCargo || "Novos Negócios"}</span>
                                      </div>
                                   </div>
                                </div>
