@@ -425,6 +425,9 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                     .replace(/\[TABELA\]/g, '')
                     .replace(/\[ITENS\]/g, '')
                     .replace(/\[TERMO_ACEITE\]/g, '')
+                    .replace(/\[OBJETO_PROPOSTA\]/g, proposta.cliente?.objetoProposta || '')
+                    .replace(/\[ESCOPO_TECNICO\]/g, (proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico) ? proposta.cliente.escopoTecnico : '')
+                    .replace(/\[CONDICOES_COMERCIAIS\]/g, (proposta.cliente?.condicoesCliente || []).join('\n'))
                     .trim();
                     
                   const paragrafos = textoLimpo
