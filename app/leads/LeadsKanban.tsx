@@ -226,7 +226,7 @@ export default function LeadsKanban() {
     <div className="flex flex-col h-screen bg-slate-50 overflow-hidden">
       <div className="p-6 bg-white border-b border-slate-200 flex justify-between items-center shrink-0">
         <div>
-          <h1 className="text-2xl font-black text-slate-800">Pipeline de Vendas</h1>
+          <h1 className="text-2xl font-black text-slate-800">Pipeline de Leads</h1>
           <p className="text-sm text-slate-500">Gerencie seus leads e prospectos</p>
         </div>
         <div className="flex items-center gap-4">
