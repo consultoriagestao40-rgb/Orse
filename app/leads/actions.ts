@@ -150,7 +150,7 @@ export async function updateLeadStage(leadId: string, stageId: string) {
   }
 }
 
-export async function updateLeadData(leadId: string, data: { nomeFantasia?: string, contatoNome?: string, telefone?: string, email?: string }) {
+export async function updateLeadData(leadId: string, data: { nomeFantasia?: string, contatoNome?: string, telefone?: string, email?: string, segmento?: string }) {
   const user = await getLoggedUser();
   if (!user) return { success: false, error: 'Unauthorized' };
 

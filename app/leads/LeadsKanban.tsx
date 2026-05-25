@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact } from './actions';
-import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle } from 'lucide-react';
+import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
@@ -74,6 +74,14 @@ export default function LeadsKanban() {
   // Chat Center States
   const [showChatCenter, setShowChatCenter] = useState(false);
   const [selectedChatLeadId, setSelectedChatLeadId] = useState<string | null>(null);
+  const [isEditingInline, setIsEditingInline] = useState(false);
+  const [inlineForm, setInlineForm] = useState({
+    nomeFantasia: '',
+    contatoNome: '',
+    email: '',
+    assignedToId: '',
+    segmento: ''
+  });
   const [chatSearchTerm, setChatSearchTerm] = useState('');
   
   const [showConvertModal, setShowConvertModal] = useState(false);
@@ -345,6 +353,25 @@ export default function LeadsKanban() {
       fetchData();
     } else {
       alert(res.error);
+    }
+  };
+
+  const handleSaveInlineLeadEdit = async (leadId: string) => {
+    const res = await updateLeadData(leadId, {
+      nomeFantasia: inlineForm.nomeFantasia,
+      contatoNome: inlineForm.contatoNome,
+      email: inlineForm.email,
+      segmento: inlineForm.segmento || undefined
+    });
+
+    if (res.success) {
+      if (inlineForm.assignedToId) {
+        await changeLeadOwner(leadId, inlineForm.assignedToId);
+      }
+      setIsEditingInline(false);
+      fetchData();
+    } else {
+      alert("Erro ao salvar dados: " + res.error);
     }
   };
 
@@ -1265,28 +1292,29 @@ export default function LeadsKanban() {
 
       {/* Central de WhatsApp / Chat Center Modal */}
       {showChatCenter && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300 animate-fade-in">
           <div className="bg-white w-full max-w-6xl h-[85vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-slate-100 animate-scale-up">
             
-            {/* Modal Header */}
-            <div className="p-4 md:p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+            {/* Premium Header */}
+            <div className="p-4 md:p-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-900 to-slate-950 text-white shrink-0">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl">
-                  <MessageCircle size={22} className="fill-emerald-600" />
+                <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/30">
+                  <MessageCircle size={22} className="fill-emerald-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                  <h3 className="text-base md:text-lg font-black tracking-tight text-white flex items-center gap-2">
                     Central de Atendimento WhatsApp
                   </h3>
-                  <p className="text-xs text-slate-500">Acompanhe e responda todas as conversas do funil em tempo real</p>
+                  <p className="text-[10px] md:text-xs text-slate-400 font-medium">Acompanhe e responda todas as conversas do funil em tempo real</p>
                 </div>
               </div>
               <button 
                 onClick={() => {
                   setShowChatCenter(false);
                   setSelectedChatLeadId(null);
+                  setIsEditingInline(false);
                 }} 
-                className="text-slate-400 hover:text-slate-700 p-2 rounded-full hover:bg-slate-200 transition-colors"
+                className="text-slate-400 hover:text-white p-2 rounded-full hover:bg-slate-800 transition-colors"
               >
                 <X size={20} />
               </button>
@@ -1306,7 +1334,7 @@ export default function LeadsKanban() {
                       placeholder="Pesquisar conversas..."
                       value={chatSearchTerm}
                       onChange={e => setChatSearchTerm(e.target.value)}
-                      className="w-full pl-9 pr-8 py-2 border border-slate-200 rounded-xl text-xs md:text-sm bg-slate-50 focus:bg-white focus:border-emerald-500 outline-none transition-all"
+                      className="w-full pl-9 pr-8 py-2 border border-slate-200 rounded-xl text-xs md:text-sm bg-slate-50 focus:bg-white focus:border-emerald-500 outline-none transition-all font-semibold"
                     />
                     {chatSearchTerm && (
                       <button 
@@ -1332,10 +1360,13 @@ export default function LeadsKanban() {
                       return (
                         <div 
                           key={lead.id}
-                          onClick={() => setSelectedChatLeadId(lead.id)}
+                          onClick={() => {
+                            setSelectedChatLeadId(lead.id);
+                            setIsEditingInline(false);
+                          }}
                           className={`p-3.5 flex items-start gap-3 cursor-pointer transition-all duration-150 ${
                             isSelected 
-                              ? 'bg-emerald-50/70 border-l-4 border-emerald-500 font-bold' 
+                              ? 'bg-emerald-50/70 border-l-4 border-emerald-500 font-bold font-black' 
                               : 'hover:bg-white bg-slate-50/50'
                           }`}
                         >
@@ -1347,7 +1378,7 @@ export default function LeadsKanban() {
                           {/* Info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-baseline mb-0.5">
-                              <h4 className="text-xs md:text-sm font-black text-slate-800 truncate">{lead.nomeFantasia}</h4>
+                              <h4 className="text-xs md:text-sm font-bold text-slate-800 truncate">{lead.nomeFantasia}</h4>
                               {lead.latestMsg && (
                                 <span className="text-[10px] text-slate-400 shrink-0 font-medium ml-1">
                                   {new Date(lead.latestMsg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -1384,36 +1415,171 @@ export default function LeadsKanban() {
                     const activeLead = leads.find(l => l.id === selectedChatLeadId);
                     if (!activeLead) return null;
                     return (
-                      <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-100">
-                        {/* Selected Lead mini header */}
-                        <div className="p-3 bg-white border-b border-slate-100 flex justify-between items-center shrink-0">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div className="w-8 h-8 bg-emerald-600/10 text-emerald-700 font-bold text-xs rounded-lg flex items-center justify-center shrink-0 uppercase border border-emerald-100">
-                              {getInitials(activeLead.nomeFantasia)}
+                      <div className="flex-1 flex h-full overflow-hidden bg-slate-100 relative">
+                        {/* Main Chat Container */}
+                        <div className="flex-1 flex flex-col h-full overflow-hidden">
+                          {/* Selected Lead mini header */}
+                          <div className="p-4 bg-white border-b border-slate-100 flex justify-between items-center shrink-0">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-9 h-9 bg-emerald-50 text-emerald-800 font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-emerald-100">
+                                {getInitials(activeLead.nomeFantasia)}
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="text-xs md:text-sm font-bold text-slate-800 truncate leading-none mb-1">
+                                  {activeLead.nomeFantasia || 'Sem Nome'}
+                                </h4>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] text-slate-400 font-semibold">{activeLead.telefone}</span>
+                                  {activeLead.segmento && (
+                                    <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[9px] font-bold">
+                                      {activeLead.segmento}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                            <div className="min-w-0">
-                              <h4 className="text-xs md:text-sm font-black text-slate-800 truncate leading-none mb-1">{activeLead.nomeFantasia || 'Sem Nome'}</h4>
-                              <p className="text-[10px] text-slate-400 font-bold">{activeLead.telefone}</p>
+                            
+                            <div className="flex items-center gap-2 shrink-0">
+                              {/* Inline Edit Button */}
+                              <button
+                                onClick={() => {
+                                  setInlineForm({
+                                    nomeFantasia: activeLead.nomeFantasia || '',
+                                    contatoNome: activeLead.contatoNome || '',
+                                    email: activeLead.email || '',
+                                    assignedToId: activeLead.assignedToId || '',
+                                    segmento: activeLead.segmento || ''
+                                  });
+                                  setIsEditingInline(!isEditingInline);
+                                }}
+                                className={`text-[10px] font-bold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 border ${
+                                  isEditingInline 
+                                    ? 'bg-slate-800 text-white border-slate-800 hover:bg-slate-900' 
+                                    : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm'
+                                }`}
+                              >
+                                {isEditingInline ? (
+                                  <>
+                                    <X size={12} /> Fechar Edição
+                                  </>
+                                ) : (
+                                  <>
+                                    <UserCog size={12} /> Completar Cadastro
+                                  </>
+                                )}
+                              </button>
+
+                              {/* Button to view lead profile/funnel detail modal directly */}
+                              <button
+                                onClick={() => {
+                                  setSelectedLead(activeLead);
+                                  setShowChatCenter(false);
+                                }}
+                                className="bg-gradient-to-r from-emerald-600 to-[#1B4D3E] hover:from-emerald-700 hover:to-[#13382d] text-white font-extrabold text-[10px] px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-600/10 hover:shadow-emerald-600/20 active:scale-95"
+                                title="Ver no Funil"
+                              >
+                                <Target size={12} /> Ver no Funil
+                              </button>
                             </div>
                           </div>
-                          
-                          {/* Button to view lead profile/funnel detail modal directly! */}
-                          <button
-                            onClick={() => {
-                              setSelectedLead(activeLead);
-                              setShowChatCenter(false);
-                            }}
-                            className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[#1B4D3E] font-bold text-[10px] px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 shrink-0 animate-pulse"
-                            title="Ver no Funil"
-                          >
-                            Ver no Funil
-                          </button>
+
+                          {/* WhatsAppChat itself */}
+                          <div className="flex-1 overflow-hidden">
+                            <WhatsAppChat leadId={activeLead.id} leadPhone={activeLead.telefone} />
+                          </div>
                         </div>
 
-                        {/* WhatsAppChat itself */}
-                        <div className="flex-1 overflow-hidden">
-                          <WhatsAppChat leadId={activeLead.id} leadPhone={activeLead.telefone} />
-                        </div>
+                        {/* Sliding inline edit panel */}
+                        {isEditingInline && (
+                          <div className="w-80 bg-white border-l border-slate-200 shadow-xl flex flex-col shrink-0 animate-slide-left z-10">
+                            <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                              <h4 className="text-xs md:text-sm font-black text-slate-800 flex items-center gap-1.5">
+                                <UserCog size={16} className="text-emerald-600" />
+                                Completar Cadastro
+                              </h4>
+                              <button 
+                                onClick={() => setIsEditingInline(false)}
+                                className="text-slate-400 hover:text-slate-600"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Nome / Nome Fantasia</label>
+                                <input 
+                                  type="text" 
+                                  value={inlineForm.nomeFantasia}
+                                  onChange={e => setInlineForm({ ...inlineForm, nomeFantasia: e.target.value })}
+                                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs md:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Nome do Contato</label>
+                                <input 
+                                  type="text" 
+                                  value={inlineForm.contatoNome}
+                                  onChange={e => setInlineForm({ ...inlineForm, contatoNome: e.target.value })}
+                                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs md:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none"
+                                  placeholder="Ex: João Silva"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">E-mail</label>
+                                <input 
+                                  type="email" 
+                                  value={inlineForm.email}
+                                  onChange={e => setInlineForm({ ...inlineForm, email: e.target.value })}
+                                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs md:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none"
+                                  placeholder="Ex: contato@empresa.com"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Segmento</label>
+                                <select 
+                                  value={inlineForm.segmento}
+                                  onChange={e => setInlineForm({ ...inlineForm, segmento: e.target.value })}
+                                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs md:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none bg-white"
+                                >
+                                  <option value="">Selecione um segmento...</option>
+                                  {segmentos.map(seg => {
+                                    const val = seg.nome || seg;
+                                    return (
+                                      <option key={seg.id || seg} value={val}>{val}</option>
+                                    );
+                                  })}
+                                </select>
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Responsável pelo Lead</label>
+                                <select 
+                                  value={inlineForm.assignedToId}
+                                  onChange={e => setInlineForm({ ...inlineForm, assignedToId: e.target.value })}
+                                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs md:text-sm focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none bg-white"
+                                >
+                                  <option value="">Selecione um responsável...</option>
+                                  {filterUsers.map(u => (
+                                    <option key={u.id} value={u.id}>{u.nome}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+
+                            <div className="p-4 border-t border-slate-100 bg-slate-50 shrink-0">
+                              <button
+                                onClick={() => handleSaveInlineLeadEdit(activeLead.id)}
+                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-xl transition-all shadow-md shadow-emerald-600/10 hover:shadow-emerald-600/20 flex items-center justify-center gap-1.5"
+                              >
+                                <CheckCircle2 size={14} /> Salvar Alterações
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })()

@@ -144,6 +144,46 @@ export async function POST(req: Request) {
         }
       }
 
+      // Se AINDA não encontrou nenhum Lead, cria um automaticamente para não perder a mensagem nem o contato!
+      if (leads.length === 0) {
+        // Formatar telefone de forma elegante: +55 (DD) XXXXX-XXXX
+        let formattedPhone = phone;
+        if (phone.length === 13 && phone.startsWith('55')) {
+          formattedPhone = `+55 (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}`;
+        } else if (phone.length === 12 && phone.startsWith('55')) {
+          formattedPhone = `+55 (${phone.slice(2, 4)}) ${phone.slice(4, 8)}-${phone.slice(8)}`;
+        } else {
+          formattedPhone = `+${phone}`;
+        }
+
+        // Buscar a primeira etapa do funil (com menor ordem)
+        let firstStage = await prisma.leadStage.findFirst({
+          orderBy: { ordem: 'asc' }
+        });
+
+        if (!firstStage) {
+          firstStage = await prisma.leadStage.create({
+            data: {
+              nome: 'Sem Contato',
+              ordem: 0,
+              color: 'bg-slate-100'
+            }
+          });
+        }
+
+        // Criar o Lead automaticamente no funil
+        const newLead = await prisma.lead.create({
+          data: {
+            nomeFantasia: `WhatsApp: ${formattedPhone}`,
+            telefone: formattedPhone,
+            stageId: firstStage.id
+          }
+        });
+
+        leads = [newLead];
+        console.log(`Novo Lead criado automaticamente via WhatsApp: ${newLead.nomeFantasia}`);
+      }
+
       if (leads.length > 0) {
         const lead = leads[0];
 
@@ -168,8 +208,6 @@ export async function POST(req: Request) {
         });
 
         console.log(`Mensagem recebida vinculada ao Lead [${lead.nomeFantasia}]: ${text}`);
-      } else {
-        console.log(`Nenhum Lead correspondente encontrado para o telefone: ${phone}`);
       }
     }
 
