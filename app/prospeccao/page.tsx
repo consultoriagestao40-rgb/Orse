@@ -132,17 +132,35 @@ export default function ProspeccaoPage() {
           </div>
 
           {results.length > 0 && (
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <h3 className="font-bold text-slate-700">Resultados Encontrados ({results.length})</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
+                <div className="absolute inset-0 bg-blue-50/50 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                <div className="text-5xl font-black text-blue-600 mb-1 relative z-10">{results.length}</div>
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider relative z-10">Empresas Encontradas</div>
+              </div>
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
+                <div className="absolute inset-0 bg-emerald-50/50 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                <div className="text-5xl font-black text-emerald-600 mb-1 relative z-10">{selected.size}</div>
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider relative z-10">Selecionadas p/ Injetar</div>
+              </div>
+              <div className="bg-[#1B4D3E] p-6 rounded-2xl shadow-sm flex flex-col items-center justify-center text-white relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
                 <button 
                   disabled={selected.size === 0 || injecting}
                   onClick={handleInject}
-                  className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-all shadow-md"
+                  className="w-full h-full flex flex-col items-center justify-center z-10 disabled:opacity-50 transition-opacity"
                 >
-                  <Plus size={16} /> 
-                  {injecting ? 'Injetando...' : `Injetar Selecionados (${selected.size}) no Pipeline`}
+                  <Plus size={32} className="mb-2" /> 
+                  <div className="font-black uppercase tracking-wider">{injecting ? 'Injetando...' : 'Injetar no Funil'}</div>
                 </button>
+              </div>
+            </div>
+          )}
+
+          {results.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 className="font-bold text-slate-700">Lista de Empresas do Google</h3>
               </div>
               
               <div className="divide-y divide-slate-100">

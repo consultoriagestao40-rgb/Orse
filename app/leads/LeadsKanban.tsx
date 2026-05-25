@@ -399,7 +399,8 @@ export default function LeadsKanban() {
                       draggable
                       onDragStart={(e) => handleDragStart(e, lead.id)}
                       onClick={() => setSelectedLead(lead)}
-                      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-emerald-200 transition-all group" onClick={() => setSelectedLead(lead)}>
+                      className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-emerald-200 transition-all group"
+                    >
                         <div className="font-bold text-slate-800 mb-1">{lead.nomeFantasia}</div>
                         <div className="text-xs text-slate-500 flex items-center gap-1 mb-2">
                           <Building size={12} /> {lead.segmento || 'Sem segmento'}
