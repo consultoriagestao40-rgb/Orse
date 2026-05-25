@@ -8,9 +8,10 @@ import { revalidatePath } from 'next/cache';
 async function dispatchZApiMessage(phone: string, text: string) {
   const instanceId = process.env.ZAPI_INSTANCE_ID;
   const token = process.env.ZAPI_TOKEN;
+  const clientToken = process.env.ZAPI_CLIENT_TOKEN;
 
-  if (!instanceId || !token) {
-    console.warn('Z-API credentials missing. Mocking success.');
+  if (!instanceId || !token || !clientToken) {
+    console.warn('Z-API credentials or client-token missing. Mocking success.');
     return { success: true, messageId: 'mock-' + Date.now() };
   }
 
@@ -18,7 +19,10 @@ async function dispatchZApiMessage(phone: string, text: string) {
     const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`;
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Client-Token': clientToken
+      },
       body: JSON.stringify({
         phone: phone.replace(/\D/g, ''),
         message: text
