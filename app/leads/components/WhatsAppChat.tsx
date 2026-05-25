@@ -2,11 +2,170 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { getWhatsAppMessages, sendWhatsAppMessage, sendWhatsAppMedia, markWhatsAppMessagesAsRead } from '../whatsapp-actions';
-import { Send, MessageSquare, Paperclip, Smile, X } from 'lucide-react';
+import { Send, MessageSquare, Paperclip, Smile, X, Download, FileText } from 'lucide-react';
 
 interface WhatsAppChatProps {
   leadId: string;
   leadPhone?: string | null;
+}
+
+function renderMessageContent(texto: string) {
+  if (!texto) return null;
+
+  // Check if it's a photo message
+  if (texto.includes('📷 Foto:')) {
+    const lines = texto.split('\n');
+    const header = lines[0]; // e.g. "📷 Foto:" or "📷 Foto: legenda"
+    const caption = header.replace('📷 Foto:', '').trim();
+    // Find any URL in the text
+    const urlMatch = texto.match(/https?:\/\/[^\s]+/);
+    if (urlMatch) {
+      const url = urlMatch[0];
+      return (
+        <div className="flex flex-col gap-2">
+          <div className="relative group overflow-hidden rounded-lg border border-slate-200 bg-black/5 max-w-sm">
+            <img 
+              src={url} 
+              alt="WhatsApp Photo" 
+              className="max-w-full max-h-64 object-contain rounded-lg hover:scale-[1.02] transition-transform duration-200 cursor-pointer"
+              onClick={() => window.open(url, '_blank')}
+            />
+          </div>
+          {caption && <span className="text-slate-800 font-medium block">{caption}</span>}
+          <a 
+            href={url} 
+            download 
+            target="_blank" 
+            rel="noreferrer"
+            className="text-xs text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-1 mt-1"
+            onClick={e => e.stopPropagation()}
+          >
+            <Download size={12} /> Baixar Foto
+          </a>
+        </div>
+      );
+    }
+  }
+
+  // Check if it's a video message
+  if (texto.includes('🎥 Vídeo:')) {
+    const lines = texto.split('\n');
+    const header = lines[0];
+    const caption = header.replace('🎥 Vídeo:', '').trim();
+    const urlMatch = texto.match(/https?:\/\/[^\s]+/);
+    if (urlMatch) {
+      const url = urlMatch[0];
+      return (
+        <div className="flex flex-col gap-2 w-full max-w-sm">
+          <video 
+            src={url} 
+            controls 
+            className="w-full max-h-64 object-contain rounded-lg bg-black"
+          />
+          {caption && <span className="text-slate-800 font-medium block">{caption}</span>}
+          <a 
+            href={url} 
+            download 
+            target="_blank" 
+            rel="noreferrer"
+            className="text-xs text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-1"
+            onClick={e => e.stopPropagation()}
+          >
+            <Download size={12} /> Baixar Vídeo
+          </a>
+        </div>
+      );
+    }
+  }
+
+  // Check if it's an audio message
+  if (texto.includes('🎵 Áudio:')) {
+    const urlMatch = texto.match(/https?:\/\/[^\s]+/);
+    if (urlMatch) {
+      const url = urlMatch[0];
+      return (
+        <div className="flex flex-col gap-1.5 min-w-[200px]">
+          <div className="text-[11px] text-slate-400 font-bold flex items-center gap-1">🎵 Mensagem de Voz</div>
+          <audio src={url} controls className="w-full h-8" />
+          <a 
+            href={url} 
+            download 
+            target="_blank" 
+            rel="noreferrer"
+            className="text-[10px] text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-0.5 mt-1"
+            onClick={e => e.stopPropagation()}
+          >
+            <Download size={10} /> Baixar Áudio
+          </a>
+        </div>
+      );
+    }
+  }
+
+  // Check if it's a document message
+  if (texto.includes('📄 Documento:')) {
+    const lines = texto.split('\n');
+    const header = lines[0];
+    const docName = header.replace('📄 Documento:', '').trim() || 'Documento';
+    const urlMatch = texto.match(/https?:\/\/[^\s]+/);
+    if (urlMatch) {
+      const url = urlMatch[0];
+      return (
+        <div className="flex flex-col gap-1">
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex items-center gap-3">
+            <div className="bg-emerald-100 text-emerald-700 p-2 rounded-lg">
+              <FileText size={18} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-bold text-slate-700 truncate" title={docName}>{docName}</div>
+              <div className="text-[10px] text-slate-400">Documento PDF/Office</div>
+            </div>
+            <a 
+              href={url} 
+              download 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 shrink-0"
+              onClick={e => e.stopPropagation()}
+            >
+              Baixar
+            </a>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // If it's a general URL (not formatted specifically but is a web link)
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  if (urlRegex.test(texto)) {
+    // If it's just a general web URL, make it a clickable link!
+    const parts = texto.split(urlRegex);
+    return (
+      <>
+        {parts.map((part, i) => {
+          if (urlRegex.test(part) || (part.startsWith('http://') || part.startsWith('https://'))) {
+            return (
+              <a 
+                key={i} 
+                href={part} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="text-blue-600 hover:underline font-semibold break-all"
+                onClick={e => e.stopPropagation()}
+              >
+                {part}
+              </a>
+            );
+          }
+          return part;
+        })}
+      </>
+    );
+  }
+
+  // Plain text
+  return texto;
 }
 
 const EMOJIS = ['👍', '✔️', '😊', '👏', '🤝', '😉', '🚀', '⭐', '💡', '📅', '📞', '❤️', '❌', '⚠️'];
@@ -27,22 +186,31 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
   // Play digital high-quality chime notification sound client-side
   const playNotificationSound = () => {
     try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
       
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5 note
-      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08); // A5 note
-      
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-      
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      
-      osc.start();
-      osc.stop(ctx.currentTime + 0.3);
+      const playTone = (freq: number, startTime: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        
+        gainNode.gain.setValueAtTime(0, startTime);
+        gainNode.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        
+        osc.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+
+      const now = ctx.currentTime;
+      playTone(880, now, 0.15);
+      playTone(1046.50, now + 0.09, 0.20);
     } catch (e) {
       console.warn("AudioContext block", e);
     }
@@ -179,7 +347,7 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
                       : 'bg-white text-slate-800 rounded-tl-none'
                   }`}
                 >
-                  {msg.texto}
+                  {renderMessageContent(msg.texto)}
                   <div className={`text-[10px] mt-1 flex items-center justify-end gap-1 ${isOutbound ? 'text-emerald-700/60' : 'text-slate-400'}`}>
                     <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     {isOutbound && (

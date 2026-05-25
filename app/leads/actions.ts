@@ -42,6 +42,7 @@ export async function getLeads(filters?: { startDate?: string; endDate?: string;
         contacts: true,
         whatsappMessages: {
           select: {
+            id: true,
             direction: true,
             status: true
           }

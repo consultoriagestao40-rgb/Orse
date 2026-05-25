@@ -14,6 +14,38 @@ const safeDate = (val: any) => {
   return isNaN(d.getTime()) ? 'Data Inválida' : d.toLocaleDateString();
 };
 
+const playWhatsAppChime = () => {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    
+    const playTone = (freq: number, startTime: number, duration: number) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    const now = ctx.currentTime;
+    playTone(880, now, 0.15);
+    playTone(1046.50, now + 0.09, 0.20);
+  } catch (e) {
+    console.warn("Web Audio chime blocked", e);
+  }
+};
+
 export default function LeadsKanban() {
   const router = useRouter();
   const [stages, setStages] = useState<any[]>([]);
@@ -56,8 +88,13 @@ export default function LeadsKanban() {
   const [editingStageName, setEditingStageName] = useState('');
   const [isDragging, setIsDragging] = useState(false);
 
+  const knownUnreadMessageIdsRef = React.useRef<Set<string>>(new Set());
+  const isFirstLoadRef = React.useRef(true);
+
   useEffect(() => {
     fetchData();
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -110,7 +147,39 @@ export default function LeadsKanban() {
     }
 
     const res = await getLeads({ startDate: sDate, endDate: eDate, userId: userFilter });
-    if (res.success) setLeads(res.leads);
+    if (res.success) {
+      setLeads(res.leads);
+
+      // Real-time unread message checks & smartphone chime trigger
+      let hasNewUnread = false;
+      const currentUnreadIds = new Set<string>();
+
+      res.leads.forEach(lead => {
+        lead.whatsappMessages?.forEach((msg: any) => {
+          if (msg.direction === 'INBOUND' && msg.status !== 'READ' && msg.id) {
+            currentUnreadIds.add(msg.id);
+            if (!knownUnreadMessageIdsRef.current.has(msg.id)) {
+              hasNewUnread = true;
+              knownUnreadMessageIdsRef.current.add(msg.id);
+            }
+          }
+        });
+      });
+
+      // Clear read messages from known cache to prevent stale tracking
+      knownUnreadMessageIdsRef.current.forEach(id => {
+        if (!currentUnreadIds.has(id)) {
+          knownUnreadMessageIdsRef.current.delete(id);
+        }
+      });
+
+      // Sweet chimes only trigger after page initial load (to prevent loud chime on mount)
+      if (hasNewUnread && !isFirstLoadRef.current) {
+        playWhatsAppChime();
+      }
+
+      isFirstLoadRef.current = false;
+    }
     setLoading(false);
   };
 
