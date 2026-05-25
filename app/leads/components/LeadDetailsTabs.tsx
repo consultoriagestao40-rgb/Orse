@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { getComments, addComment, getFiles, uploadFileBase64, downloadFile, getActivities, createActivity, getLeadShares, addLeadShare, removeLeadShare, getAllUsers } from '../actions';
-import { MessageSquare, Paperclip, Calendar, Users, Send, Download, Plus, X, Trash2, MapPin, Navigation, Mail, Phone, Map } from 'lucide-react';
+import { MessageSquare, Paperclip, Calendar, Users, Send, Download, Plus, X, Trash2, MapPin, Navigation, Mail, Phone, Map, MessageCircle } from 'lucide-react';
+import WhatsAppChat from './WhatsAppChat';
 
 const safeDate = (val: any, time = false) => {
   if (!val) return 'Data Inválida';
@@ -158,6 +159,9 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
         </button>
         <button onClick={() => setActiveTab('reunioes')} className={`px-4 py-3 text-sm font-bold flex gap-2 items-center border-b-2 whitespace-nowrap transition-colors ${activeTab === 'reunioes' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
           <Calendar size={16}/> Agenda
+        </button>
+        <button onClick={() => setActiveTab('whatsapp')} className={`px-4 py-3 text-sm font-bold flex gap-2 items-center border-b-2 whitespace-nowrap transition-colors ${activeTab === 'whatsapp' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+          <MessageCircle size={16}/> WhatsApp
         </button>
         <button onClick={() => setActiveTab('equipe')} className={`px-4 py-3 text-sm font-bold flex gap-2 items-center border-b-2 whitespace-nowrap transition-colors ${activeTab === 'equipe' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
           <Users size={16}/> Equipe
@@ -413,6 +417,12 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                 Adicionar
               </button>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'whatsapp' && (
+          <div className="h-full -m-4">
+            <WhatsAppChat leadId={lead.id} leadPhone={lead.telefone} />
           </div>
         )}
 

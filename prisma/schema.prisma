@@ -44,6 +44,7 @@ model User {
   activities     Activity[]
   comments       Comment[]
   files          FileAttachment[]
+  whatsappMessages WhatsAppMessage[]
 }
 
 model Client {
@@ -360,6 +361,7 @@ model Lead {
   activities   Activity[]
   comments     Comment[]
   files        FileAttachment[]
+  whatsappMessages WhatsAppMessage[]
 }
 
 model LeadHistory {
@@ -423,4 +425,18 @@ model FileAttachment {
 
   lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WhatsAppMessage {
+  id          String   @id @default(cuid())
+  leadId      String
+  userId      String?  // Pode ser nulo se foi o cliente quem enviou
+  messageId   String?  @unique // ID da mensagem na Z-API para evitar duplicidade
+  texto       String   @db.Text
+  direction   String   // 'INBOUND' (cliente -> empresa) ou 'OUTBOUND' (empresa -> cliente)
+  status      String   @default("SENT") // SENT, DELIVERED, READ (para outbound)
+  createdAt   DateTime @default(now())
+
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id])
 }
