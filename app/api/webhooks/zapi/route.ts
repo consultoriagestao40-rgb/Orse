@@ -91,10 +91,27 @@ export async function POST(req: Request) {
     }
 
     // 3. Eventos de mensagem recebida (Inbound)
-    if (body.isGroup === false && body.text && body.phone) {
+    if (body.isGroup === false && body.phone && (body.text || body.image || body.video || body.audio || body.document)) {
       const phone = body.phone.replace(/\D/g, ''); // Telefone do cliente
       const messageId = body.messageId;
-      const text = body.text.message || body.text;
+      
+      let text = '';
+      if (body.text) {
+        text = body.text.message || body.text;
+      } else if (body.image) {
+        const caption = body.image.caption ? ` ${body.image.caption}` : '';
+        text = `📷 Foto:${caption}\n${body.image.imageUrl || body.image.url || ''}`;
+      } else if (body.video) {
+        const caption = body.video.caption ? ` ${body.video.caption}` : '';
+        text = `🎥 Vídeo:${caption}\n${body.video.videoUrl || body.video.url || ''}`;
+      } else if (body.audio) {
+        text = `🎵 Áudio:\n${body.audio.audioUrl || body.audio.url || ''}`;
+      } else if (body.document) {
+        const docName = body.document.fileName || 'Arquivo';
+        text = `📄 Documento: ${docName}\n${body.document.documentUrl || body.document.url || ''}`;
+      } else {
+        text = '[Mensagem de mídia recebida]';
+      }
 
       // Procurar lead que tenha esse número no campo telefone (ou contatos adicionais!)
       // Busca os últimos 8 dígitos para ser flexível com DDI/DDD

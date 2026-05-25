@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { getWhatsAppMessages, sendWhatsAppMessage, sendWhatsAppMedia } from '../whatsapp-actions';
+import { getWhatsAppMessages, sendWhatsAppMessage, sendWhatsAppMedia, markWhatsAppMessagesAsRead } from '../whatsapp-actions';
 import { Send, MessageSquare, Paperclip, Smile, X } from 'lucide-react';
 
 interface WhatsAppChatProps {
@@ -68,6 +68,9 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
       setMessages(newMessages);
       setIsTyping(!!res.isTyping);
       setIsRecording(!!res.isRecording);
+      
+      // Mark as read in background
+      markWhatsAppMessagesAsRead(leadId);
     }
     setLoading(false);
   };

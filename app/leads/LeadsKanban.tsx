@@ -603,7 +603,22 @@ export default function LeadsKanban() {
                       onClick={() => setSelectedLead(lead)}
                       className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-emerald-200 transition-all group"
                     >
-                        <div className="font-bold text-slate-800 mb-1">{lead.nomeFantasia}</div>
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <div className="font-bold text-slate-800 truncate">{lead.nomeFantasia}</div>
+                          {(() => {
+                            const unreadCount = lead.whatsappMessages?.filter(
+                              (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
+                            ).length || 0;
+                            if (unreadCount > 0) {
+                              return (
+                                <span className="bg-emerald-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0 animate-pulse shadow-sm shadow-emerald-500/30" title={`${unreadCount} mensagens não lidas`}>
+                                  <MessageSquare size={10} fill="white" /> {unreadCount}
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
                         <div className="text-xs text-slate-500 flex items-center gap-1 mb-2">
                           <Building size={12} /> {lead.segmento || 'Sem segmento'}
                         </div>

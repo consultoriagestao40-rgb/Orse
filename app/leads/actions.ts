@@ -39,7 +39,13 @@ export async function getLeads(filters?: { startDate?: string; endDate?: string;
         shares: {
           include: { user: true }
         },
-        contacts: true
+        contacts: true,
+        whatsappMessages: {
+          select: {
+            direction: true,
+            status: true
+          }
+        }
       },
       orderBy: { updatedAt: 'desc' }
     });

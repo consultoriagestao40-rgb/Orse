@@ -203,3 +203,23 @@ export async function sendWhatsAppMedia(
     return { success: false, error: err.message };
   }
 }
+
+export async function markWhatsAppMessagesAsRead(leadId: string) {
+  try {
+    await prisma.whatsAppMessage.updateMany({
+      where: {
+        leadId,
+        direction: 'INBOUND',
+        status: { not: 'READ' }
+      },
+      data: {
+        status: 'READ'
+      }
+    });
+    revalidatePath('/leads');
+    return { success: true };
+  } catch (err: any) {
+    console.error('markWhatsAppMessagesAsRead error:', err);
+    return { success: false, error: err.message };
+  }
+}
