@@ -9,6 +9,119 @@ interface WhatsAppChatProps {
   leadPhone?: string | null;
 }
 
+class WavAudioRecorder {
+  private audioContext: AudioContext | null = null;
+  private processor: ScriptProcessorNode | null = null;
+  private input: MediaStreamAudioSourceNode | null = null;
+  private stream: MediaStream | null = null;
+  private leftchannel: Float32Array[] = [];
+  private recordingLength = 0;
+  private sampleRate = 44100;
+
+  async start() {
+    this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    this.audioContext = new AudioContextClass();
+    this.sampleRate = this.audioContext.sampleRate;
+    
+    // Create script processor with buffer size 2048, 1 input channel, 1 output channel
+    this.processor = this.audioContext.createScriptProcessor(2048, 1, 1);
+    this.input = this.audioContext.createMediaStreamSource(this.stream);
+    
+    this.leftchannel = [];
+    this.recordingLength = 0;
+
+    this.processor.onaudioprocess = (e) => {
+      const left = e.inputBuffer.getChannelData(0);
+      this.leftchannel.push(new Float32Array(left));
+      this.recordingLength += left.length;
+    };
+
+    this.input.connect(this.processor);
+    this.processor.connect(this.audioContext.destination);
+  }
+
+  cancel() {
+    if (this.input) this.input.disconnect();
+    if (this.processor) this.processor.disconnect();
+    if (this.audioContext) {
+      try {
+        this.audioContext.close();
+      } catch (e) {}
+    }
+    if (this.stream) {
+      this.stream.getTracks().forEach(track => track.stop());
+    }
+  }
+
+  stop(): Blob {
+    this.cancel();
+
+    // Flatten channel data
+    const leftBuffer = this.mergeBuffers(this.leftchannel, this.recordingLength);
+    
+    // Create WAV container
+    const buffer = new ArrayBuffer(44 + this.recordingLength * 2);
+    const view = new DataView(buffer);
+
+    // RIFF identifier
+    this.writeString(view, 0, 'RIFF');
+    // file length
+    view.setUint32(4, 36 + this.recordingLength * 2, true);
+    // RIFF type
+    this.writeString(view, 8, 'WAVE');
+    // format chunk identifier
+    this.writeString(view, 12, 'fmt ');
+    // format chunk length
+    view.setUint32(16, 16, true);
+    // sample format (raw PCM)
+    view.setUint16(20, 1, true);
+    // channel count (1 = mono)
+    view.setUint16(22, 1, true);
+    // sample rate
+    view.setUint32(24, this.sampleRate, true);
+    // byte rate (sample rate * block align)
+    view.setUint32(28, this.sampleRate * 2, true);
+    // block align (channel count * bytes per sample)
+    view.setUint16(32, 2, true);
+    // bits per sample
+    view.setUint16(34, 16, true);
+    // data chunk identifier
+    this.writeString(view, 36, 'data');
+    // data chunk length
+    view.setUint32(40, this.recordingLength * 2, true);
+
+    // Write PCM audio samples
+    let index = 44;
+    for (let i = 0; i < leftBuffer.length; i++) {
+      // Clamp sample between -1 and 1
+      const s = Math.max(-1, Math.min(1, leftBuffer[i]));
+      // Convert to 16-bit signed integer
+      view.setInt16(index, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+      index += 2;
+    }
+
+    return new Blob([view], { type: 'audio/wav' });
+  }
+
+  private mergeBuffers(channelBuffer: Float32Array[], recordingLength: number): Float32Array {
+    const result = new Float32Array(recordingLength);
+    let offset = 0;
+    for (let i = 0; i < channelBuffer.length; i++) {
+      const buffer = channelBuffer[i];
+      result.set(buffer, offset);
+      offset += buffer.length;
+    }
+    return result;
+  }
+
+  private writeString(view: DataView, offset: number, string: string) {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
+    }
+  }
+}
+
 function renderMessageContent(texto: string) {
   if (!texto) return null;
 
@@ -227,64 +340,18 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
     }
   };
 
-  // Audio Recording States & Functions
+  // Audio Recording States & Functions (WAV format for full mobile WhatsApp compatibility)
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const wavRecorderRef = useRef<WavAudioRecorder | null>(null);
   const recordingIntervalRef = useRef<any>(null);
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new WavAudioRecorder();
+      wavRecorderRef.current = recorder;
+      await recorder.start();
       
-      // Determine best mimeType supported
-      let options = { mimeType: 'audio/webm' };
-      if (!MediaRecorder.isTypeSupported('audio/webm')) {
-        options = { mimeType: 'audio/mp4' };
-      }
-      
-      const mediaRecorder = new MediaRecorder(stream, options);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        // Stop all audio tracks from stream to release mic indicator
-        stream.getTracks().forEach(track => track.stop());
-
-        // Check if recording was cancelled (chunks array empty)
-        if (audioChunksRef.current.length === 0) {
-          return;
-        }
-
-        const audioBlob = new Blob(audioChunksRef.current, { type: options.mimeType });
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          const base64 = reader.result as string;
-          setSending(true);
-          
-          // Generate a friendly name and format
-          const ext = options.mimeType.split('/')[1] || 'webm';
-          const fileName = `audio_${Date.now()}.${ext}`;
-          
-          const res = await sendWhatsAppMedia(leadId, base64, fileName, options.mimeType);
-          if (res.success) {
-            fetchMessages();
-          } else {
-            alert('Erro ao enviar mensagem de voz: ' + res.error);
-          }
-          setSending(false);
-        };
-        reader.readAsDataURL(audioBlob);
-      };
-
-      mediaRecorder.start();
       setIsRecordingVoice(true);
       setRecordingDuration(0);
       
@@ -298,24 +365,49 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
   };
 
   const stopAndSendRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-    }
     if (recordingIntervalRef.current) {
       clearInterval(recordingIntervalRef.current);
     }
     setIsRecordingVoice(false);
+    
+    if (wavRecorderRef.current) {
+      try {
+        const audioBlob = wavRecorderRef.current.stop();
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64 = reader.result as string;
+          setSending(true);
+          
+          const fileName = `audio_${Date.now()}.wav`;
+          
+          const res = await sendWhatsAppMedia(leadId, base64, fileName, 'audio/wav');
+          if (res.success) {
+            fetchMessages();
+          } else {
+            alert('Erro ao enviar mensagem de voz: ' + res.error);
+          }
+          setSending(false);
+        };
+        reader.readAsDataURL(audioBlob);
+      } catch (err) {
+        console.error('Wav stop error:', err);
+      }
+    }
   };
 
   const cancelRecording = () => {
-    audioChunksRef.current = []; // emptying chunks cancels the sending block
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-    }
     if (recordingIntervalRef.current) {
       clearInterval(recordingIntervalRef.current);
     }
     setIsRecordingVoice(false);
+    
+    if (wavRecorderRef.current) {
+      try {
+        wavRecorderRef.current.cancel();
+      } catch (err) {
+        console.error('Wav cancel error:', err);
+      }
+    }
   };
 
   const formatDuration = (seconds: number) => {
