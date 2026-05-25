@@ -181,16 +181,26 @@ export default function LeadsKanban() {
         <PipelineMetrics leads={leads} stages={stages} />
         <div className="flex-1 overflow-x-auto pb-4">
           <div className="flex gap-4 h-full min-h-0">
-          {stages.map(stage => {
+          {stages.map((stage, idx) => {
             const stageLeads = leads.filter(l => l.stageId === stage.id);
+            const isFirst = idx === 0;
+            const clipPathStyle = isFirst 
+              ? 'polygon(0% 0%, calc(100% - 16px) 0%, 100% 50%, calc(100% - 16px) 100%, 0% 100%, 0% 50%)' 
+              : 'polygon(0% 0%, calc(100% - 16px) 0%, 100% 50%, calc(100% - 16px) 100%, 0% 100%, 16px 50%)';
+            
+            const headerBg = (stage.color || 'bg-slate-100').replace('100', '200');
+
             return (
               <div 
                 key={stage.id} 
-                className={`w-80 shrink-0 flex flex-col h-full ${stage.color || 'bg-slate-100'} rounded-2xl border border-slate-200 transition-colors duration-300`}
+                className={`w-80 shrink-0 flex flex-col h-full ${stage.color || 'bg-slate-100'} rounded-2xl border border-slate-200 transition-colors duration-300 overflow-hidden`}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, stage.id)}
               >
-                <div className="p-4 border-b border-slate-200/50 flex justify-between items-center group/header">
+                <div 
+                  className={`py-4 ${isFirst ? 'pl-4' : 'pl-6'} pr-6 flex justify-between items-center group/header ${headerBg}`}
+                  style={{ clipPath: clipPathStyle }}
+                >
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-slate-700">{stage.nome}</h3>
                     <div className="relative group/picker ml-2">
