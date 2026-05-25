@@ -277,6 +277,7 @@ export default function LeadsKanban() {
           <div className="flex gap-4 h-full min-h-0 pr-6">
           {stages.map((stage, idx) => {
             const stageLeads = leads.filter(l => l.stageId === stage.id);
+            const isFirst = idx === 0;
             const isLast = idx === stages.length - 1;
             const headerBg = (stage.color || 'bg-slate-100').replace('100', '200').replace('50', '200');
             const headerTextColorClass = headerBg.replace('bg-', 'text-');
