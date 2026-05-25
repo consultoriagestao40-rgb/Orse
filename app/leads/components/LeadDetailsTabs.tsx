@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { getComments, addComment, getFiles, uploadFileBase64, downloadFile, getActivities, createActivity, getLeadShares, addLeadShare, removeLeadShare, getAllUsers } from '../actions';
 import { MessageSquare, Paperclip, Calendar, Users, Send, Download, Plus, X, Trash2, MapPin, Navigation, Mail, Phone, Map, MessageCircle } from 'lucide-react';
 import WhatsAppChat from './WhatsAppChat';
+import EmailTab from './EmailTab';
+
 
 const safeDate = (val: any, time = false) => {
   if (!val) return 'Data Inválida';
@@ -154,6 +156,9 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
         </button>
         <button onClick={() => setActiveTab('whatsapp')} className={`px-4 py-3 text-sm font-bold flex gap-2 items-center border-b-2 whitespace-nowrap transition-colors ${activeTab === 'whatsapp' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
           <MessageCircle size={16}/> WhatsApp
+        </button>
+        <button onClick={() => setActiveTab('email')} className={`px-4 py-3 text-sm font-bold flex gap-2 items-center border-b-2 whitespace-nowrap transition-colors ${activeTab === 'email' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+          <Mail size={16}/> E-mail
         </button>
         <button onClick={() => setActiveTab('infos')} className={`px-4 py-3 text-sm font-bold flex gap-2 items-center border-b-2 whitespace-nowrap transition-colors ${activeTab === 'infos' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
           <Calendar size={16}/> Histórico
@@ -345,6 +350,11 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
           </div>
         )}
 
+        {activeTab === 'email' && (
+          <div className="h-full mt-2">
+            <EmailTab lead={lead} onEmailSent={loadComments} />
+          </div>
+        )}
       </div>
     </div>
   );

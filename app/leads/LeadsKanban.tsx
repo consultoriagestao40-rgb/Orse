@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact } from './actions';
 import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
 import PipelineMetrics from './components/PipelineMetrics';
@@ -61,6 +61,7 @@ const playWhatsAppChime = () => {
 
 export default function LeadsKanban() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [stages, setStages] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
   const [segmentos, setSegmentos] = useState<any[]>([]);
@@ -121,6 +122,20 @@ export default function LeadsKanban() {
   useEffect(() => {
     selectedLeadRef.current = selectedLead;
   }, [selectedLead]);
+
+  // Auto-open lead modal by parameter
+  useEffect(() => {
+    const leadIdParam = searchParams.get('leadId');
+    if (leadIdParam && leads.length > 0) {
+      const targetLead = leads.find(l => l.id === leadIdParam);
+      if (targetLead && (!selectedLead || selectedLead.id !== leadIdParam)) {
+        setSelectedLead(targetLead);
+        // Clean URL query parameter so closing the modal works properly
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }
+    }
+  }, [searchParams, leads, selectedLead]);
 
   useEffect(() => {
     fetchData();

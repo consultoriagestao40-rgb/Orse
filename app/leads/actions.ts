@@ -595,3 +595,45 @@ export async function removeLeadContact(leadId: string, contactId: string) {
     return { success: false, error: error.message };
   }
 }
+
+export async function sendLeadEmail(leadId: string, to: string, subject: string, body: string) {
+  const currentUser = await getLoggedUser();
+  if (!currentUser) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const { sendMail } = await import('@/lib/mail');
+    const mailRes = await sendMail({
+      to,
+      subject,
+      text: body
+    });
+
+    if (!mailRes.success) {
+      return { success: false, error: mailRes.error };
+    }
+
+    // Register email as a Comment in the lead's main feed
+    await prisma.comment.create({
+      data: {
+        leadId,
+        userId: currentUser.id,
+        texto: `📧 [E-mail Enviado]\nAssunto: ${subject}\n\n${body}`
+      }
+    });
+
+    // Register in LeadHistory for auditing
+    await prisma.leadHistory.create({
+      data: {
+        leadId,
+        tipo: 'EMAIL',
+        descricao: `E-mail enviado para ${to} por ${currentUser.nome}`
+      }
+    });
+
+    revalidatePath('/leads');
+    return { success: true, simulated: mailRes.simulated };
+  } catch (error: any) {
+    return { success: false, error: error.message || String(error) };
+  }
+}
+
