@@ -620,23 +620,31 @@ export default function LeadsKanban() {
               {stages.map((stage, idx) => {
                 const currentIndex = stages.findIndex(s => s.id === selectedLead.stageId);
                 const currentStageColor = currentIndex >= 0 ? stages[currentIndex].color : 'bg-slate-300';
+                
+                // Extrai a cor base e força um tom mais escuro (ex: bg-blue-100 -> bg-blue-500)
+                const getDarker = (c: string) => {
+                  if (!c) return 'bg-slate-400';
+                  return c.replace(/50|100|200|300/g, '500');
+                };
+
+                const darkColor = getDarker(currentStageColor);
                 const isPast = idx < currentIndex;
                 const isCurrent = idx === currentIndex;
                 
                 let baseClass = "h-8 px-4 flex items-center justify-center text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-colors flex-1 min-w-[120px] relative cursor-pointer";
                 let colorClass = "bg-slate-200 text-slate-500 hover:bg-slate-300";
                 
-                if (isCurrent) colorClass = `${currentStageColor || 'bg-slate-300'} text-slate-800 shadow-md border-b-2 border-slate-800`;
-                else if (isPast) colorClass = `${currentStageColor || 'bg-slate-300'} text-slate-800`;
+                if (isCurrent) colorClass = `${darkColor} text-white shadow-md border-b-2 border-slate-800`;
+                else if (isPast) colorClass = `${darkColor} text-white`;
 
                 return (
                   <button 
                     key={stage.id}
                     onClick={() => handleStageChangeInModal(stage.id)}
                     className={`${baseClass} ${colorClass} rounded-lg`}
-                    title={`Mover para ${stage.name}`}
+                    title={`Mover para ${stage.nome}`}
                   >
-                    {stage.name}
+                    {stage.nome}
                   </button>
                 )
               })}
