@@ -90,10 +90,12 @@ export async function POST(req: Request) {
     const resultsArray = await Promise.all(searchPromises);
     const combinedResults = resultsArray.flat();
 
-    // Filtra duplicados pelo place_id
+    // Filtra duplicados pelo id (A nova API usa place.id em vez de place.place_id)
     const uniqueResultsMap = new Map();
     combinedResults.forEach(place => {
-      uniqueResultsMap.set(place.place_id, place);
+      if (place && place.id) {
+        uniqueResultsMap.set(place.id, place);
+      }
     });
     const uniqueResults = Array.from(uniqueResultsMap.values());
 
