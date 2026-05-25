@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { getWhatsAppMessages, sendWhatsAppMessage } from '../whatsapp-actions';
-import { Send, MessageSquare } from 'lucide-react';
+import { getWhatsAppMessages, sendWhatsAppMessage, sendWhatsAppMedia } from '../whatsapp-actions';
+import { Send, MessageSquare, Paperclip, Smile, X } from 'lucide-react';
 
 interface WhatsAppChatProps {
   leadId: string;
   leadPhone?: string | null;
 }
+
+const EMOJIS = ['👍', '✔️', '😊', '👏', '🤝', '😉', '🚀', '⭐', '💡', '📅', '📞', '❤️', '❌', '⚠️'];
 
 export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
   const [messages, setMessages] = useState<any[]>([]);
@@ -16,12 +18,54 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
   const [sending, setSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const isFirstLoadRef = useRef(true);
+
+  // Play digital high-quality chime notification sound client-side
+  const playNotificationSound = () => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5 note
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08); // A5 note
+      
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start();
+      osc.stop(ctx.currentTime + 0.3);
+    } catch (e) {
+      console.warn("AudioContext block", e);
+    }
+  };
 
   const fetchMessages = async () => {
     const res = await getWhatsAppMessages(leadId);
     if (res.success) {
-      setMessages(res.messages || []);
+      const newMessages = res.messages || [];
+      
+      // Play sound if a new message arrives from the client (inbound)
+      if (!isFirstLoadRef.current && newMessages.length > messages.length) {
+        const lastMsg = newMessages[newMessages.length - 1];
+        if (lastMsg.direction === 'INBOUND') {
+          playNotificationSound();
+        }
+      }
+      
+      if (newMessages.length > 0) {
+        isFirstLoadRef.current = false;
+      }
+      
+      setMessages(newMessages);
       setIsTyping(!!res.isTyping);
       setIsRecording(!!res.isRecording);
     }
@@ -46,13 +90,15 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
     setSending(true);
     const texto = newMessage.trim();
     setNewMessage(''); // optimistic clear
+    setShowEmojiPicker(false);
     
     // Optimistic UI
     const tempMsg = {
       id: 'temp-' + Date.now(),
-      texto: `*Você*:\n${texto}`, // Previa otimista
+      texto: texto,
       direction: 'OUTBOUND',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      status: 'SENT'
     };
     setMessages(prev => [...prev, tempMsg]);
 
@@ -65,6 +111,31 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
       setNewMessage(texto); // put text back
     }
     setSending(false);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !leadPhone) return;
+
+    if (file.size > 15 * 1024 * 1024) {
+      alert("O arquivo excede o limite de 15MB para envio via WhatsApp.");
+      return;
+    }
+
+    setSending(true);
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result as string;
+      const res = await sendWhatsAppMedia(leadId, base64, file.name, file.type);
+      if (res.success) {
+        fetchMessages();
+      } else {
+        alert("Erro ao enviar arquivo: " + res.error);
+      }
+      setSending(false);
+    };
+    reader.readAsDataURL(file);
   };
 
   if (loading) {
@@ -152,29 +223,83 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
       </div>
 
       {/* Input de Mensagem */}
-      <div className="bg-[#F0F2F5] p-3 flex gap-2 items-end">
-        <form onSubmit={handleSend} className="flex-1 flex gap-2">
-          <textarea
-            className="flex-1 resize-none rounded-lg p-3 outline-none text-sm text-slate-700 min-h-[44px] max-h-32 shadow-sm"
-            placeholder="Digite uma mensagem..."
-            rows={1}
-            value={newMessage}
-            onChange={e => setNewMessage(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSend(e);
-              }
-            }}
-          />
+      <div className="bg-[#F0F2F5] p-3 flex flex-col gap-2 relative">
+        {/* Emoji Selector Panel */}
+        {showEmojiPicker && (
+          <div className="bg-white p-2.5 rounded-xl shadow-lg border border-slate-200 flex flex-wrap gap-2 max-w-full z-10 animate-fade-in mb-1">
+            {EMOJIS.map(emoji => (
+              <button 
+                key={emoji}
+                type="button"
+                onClick={() => setNewMessage(prev => prev + emoji)}
+                className="text-lg p-1.5 hover:bg-slate-100 rounded transition-colors"
+              >
+                {emoji}
+              </button>
+            ))}
+            <button 
+              type="button" 
+              onClick={() => setShowEmojiPicker(false)}
+              className="text-slate-400 hover:text-slate-600 ml-auto p-1.5 rounded"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
+        <div className="flex gap-2 items-end">
+          {/* File Attach Button */}
           <button 
-            type="submit" 
-            disabled={sending || !newMessage.trim()}
-            className="w-11 h-11 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center shrink-0 shadow-sm transition-colors"
+            type="button"
+            disabled={sending}
+            onClick={() => fileInputRef.current?.click()}
+            className="w-11 h-11 bg-white hover:bg-slate-100 text-slate-500 border border-slate-200 rounded-full flex items-center justify-center shrink-0 shadow-sm transition-colors"
+            title="Anexar arquivo, foto ou vídeo"
           >
-            <Send size={18} className={sending ? 'opacity-50' : ''} />
+            <Paperclip size={18} />
           </button>
-        </form>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileUpload} 
+            className="hidden" 
+            accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          />
+
+          {/* Emoji Toggle Button */}
+          <button 
+            type="button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="w-11 h-11 bg-white hover:bg-slate-100 text-slate-500 border border-slate-200 rounded-full flex items-center justify-center shrink-0 shadow-sm transition-colors"
+            title="Emojis"
+          >
+            <Smile size={18} />
+          </button>
+
+          <form onSubmit={handleSend} className="flex-1 flex gap-2 items-end">
+            <textarea
+              className="flex-1 resize-none rounded-lg p-3 outline-none text-sm text-slate-700 min-h-[44px] max-h-32 shadow-sm bg-white"
+              placeholder={sending ? "Enviando..." : "Digite uma mensagem..."}
+              disabled={sending}
+              rows={1}
+              value={newMessage}
+              onChange={e => setNewMessage(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend(e);
+                }
+              }}
+            />
+            <button 
+              type="submit" 
+              disabled={sending || !newMessage.trim()}
+              className="w-11 h-11 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center shrink-0 shadow-sm transition-colors"
+            >
+              <Send size={18} className={sending ? 'opacity-50' : ''} />
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

@@ -107,3 +107,99 @@ export async function sendWhatsAppMessage(leadId: string, texto: string) {
     return { success: false, error: error.message };
   }
 }
+
+export async function sendWhatsAppMedia(
+  leadId: string,
+  fileBase64: string,
+  fileName: string,
+  mimeType: string,
+  caption?: string
+) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Não autorizado.' };
+
+  const instanceId = process.env.ZAPI_INSTANCE_ID;
+  const token = process.env.ZAPI_TOKEN;
+  const clientToken = process.env.ZAPI_CLIENT_TOKEN;
+
+  if (!instanceId || !token || !clientToken) {
+    return { success: false, error: 'Credenciais Z-API ou Client-Token ausentes.' };
+  }
+
+  try {
+    const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+    if (!lead || !lead.telefone) {
+      return { success: false, error: 'Lead não encontrado ou sem telefone cadastrado.' };
+    }
+
+    const cleanPhone = lead.telefone.replace(/\D/g, '');
+
+    // Determine type and endpoint
+    let endpoint = '';
+    let body: any = { phone: cleanPhone };
+
+    if (mimeType.startsWith('image/')) {
+      endpoint = 'send-image';
+      body.image = fileBase64;
+      if (caption) {
+        body.caption = `*${user.nome}*:\n${caption}`;
+      } else {
+        body.caption = `*${user.nome}*`;
+      }
+    } else if (mimeType.startsWith('video/')) {
+      endpoint = 'send-video';
+      body.video = fileBase64;
+      if (caption) {
+        body.caption = `*${user.nome}*:\n${caption}`;
+      } else {
+        body.caption = `*${user.nome}*`;
+      }
+    } else {
+      // Document
+      const ext = fileName.split('.').pop() || 'pdf';
+      endpoint = `send-document/${ext}`;
+      body.document = fileBase64;
+      body.fileName = fileName;
+    }
+
+    const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/${endpoint}`;
+    
+    console.log(`Sending media via Z-API ${endpoint} to phone ${cleanPhone}`);
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Client-Token': clientToken
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      const displayText = caption 
+        ? `*${user.nome}*: [Mídia: ${fileName}] ${caption}` 
+        : `*${user.nome}*: [Arquivo: ${fileName}]`;
+
+      const msg = await prisma.whatsAppMessage.create({
+        data: {
+          leadId,
+          texto: displayText,
+          direction: 'OUTBOUND',
+          status: 'SENT',
+          messageId: data.messageId || ('mock-media-' + Date.now()),
+          userId: user.id
+        }
+      });
+
+      revalidatePath('/leads');
+      return { success: true, message: msg };
+    } else {
+      return { success: false, error: data.error || 'Erro retornado pela Z-API ao enviar arquivo.' };
+    }
+  } catch (err: any) {
+    console.error('sendWhatsAppMedia error:', err);
+    return { success: false, error: err.message };
+  }
+}

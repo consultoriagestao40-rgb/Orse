@@ -21,6 +21,7 @@ export default function LeadsKanban() {
   const [segmentos, setSegmentos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showMetrics, setShowMetrics] = useState(true);
   
   const [showModal, setShowModal] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
@@ -465,6 +466,14 @@ export default function LeadsKanban() {
             </div>
           )}
 
+          <button 
+            type="button"
+            onClick={() => setShowMetrics(!showMetrics)}
+            className="flex items-center justify-center gap-2 border border-slate-200 bg-white text-slate-600 px-3 py-2 text-xs md:text-sm rounded-xl font-bold hover:bg-slate-50 transition-all w-full sm:w-auto shadow-sm"
+          >
+            {showMetrics ? "Ocultar Métricas" : "Mostrar Métricas"}
+          </button>
+
           <div className="hidden sm:block w-px h-8 bg-slate-200 mx-1"></div>
 
           <button 
@@ -477,10 +486,10 @@ export default function LeadsKanban() {
         </div>
       </div>
 
-      <div className="flex flex-col flex-1 overflow-y-auto p-6 bg-slate-50 scrollbar-thin">
-        <PipelineMetrics leads={filteredLeads} stages={stages} />
-        <div className="overflow-x-auto pb-4">
-          <div className="flex gap-4 h-[calc(100vh-180px)] min-h-[500px] pr-6">
+      <div className="flex flex-col flex-1 overflow-hidden p-6 bg-slate-50">
+        {showMetrics && <PipelineMetrics leads={filteredLeads} stages={stages} />}
+        <div className="flex-1 overflow-x-auto pb-4">
+          <div className="flex gap-4 h-full min-h-0 pr-6">
           {stages.map((stage, idx) => {
             const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
             const isFirst = idx === 0;
