@@ -279,6 +279,29 @@ export async function createActivity(data: { leadId?: string, titulo: string, de
   }
 }
 
+export async function deleteActivity(activityId: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+  try {
+    const activity = await prisma.activity.findUnique({ where: { id: activityId }});
+    if (!activity) return { success: false, error: 'Atividade não encontrada' };
+    
+    await prisma.activity.delete({ where: { id: activityId } });
+    
+    if (activity.leadId) {
+      await prisma.leadHistory.create({
+        data: { leadId: activity.leadId, tipo: 'ANOTACAO', descricao: `Atividade "${activity.titulo}" foi removida por ${user.nome}` }
+      });
+    }
+
+    revalidatePath('/leads');
+    revalidatePath('/calendar');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 // ================= COMPARTILHAMENTO DE LEADS (EQUIPE) =================
 export async function getLeadShares(leadId: string) {
   try {
