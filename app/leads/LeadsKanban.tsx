@@ -332,7 +332,7 @@ export default function LeadsKanban() {
                       {editingStageId === stage.id ? (
                         <input
                           autoFocus
-                          className="font-bold text-slate-800 bg-white/50 border border-slate-300 rounded px-2 py-0.5 w-[160px] outline-none focus:ring-2 focus:ring-slate-400"
+                          className="font-black text-slate-900 uppercase tracking-tight text-base bg-white/70 border border-slate-400 rounded px-2 py-0.5 w-[160px] outline-none focus:ring-2 focus:ring-slate-900"
                           value={editingStageName}
                           onChange={(e) => setEditingStageName(e.target.value)}
                           onBlur={() => handleSaveStageName(stage.id)}
@@ -343,7 +343,7 @@ export default function LeadsKanban() {
                         />
                       ) : (
                         <h3 
-                          className="font-bold text-slate-800 truncate max-w-[180px] cursor-pointer hover:underline"
+                          className="font-black text-slate-900 uppercase tracking-tight text-base truncate max-w-[180px] cursor-pointer hover:underline drop-shadow-sm"
                           title="Clique duplo para editar"
                           onDoubleClick={() => {
                             setEditingStageId(stage.id);
