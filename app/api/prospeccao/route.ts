@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     const maxPages = 3; // O Google permite até 3 páginas de 20 resultados (Total 60)
 
     while (pageCount < maxPages) {
-      const url = pageToken ? `https://maps.googleapis.com/maps/api/place/textsearch/json?pagetoken=${pageToken}&key=${API_KEY}` : baseUrl;
+      const url = pageToken ? `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&pagetoken=${pageToken}&key=${API_KEY}` : baseUrl;
       
       let response = await fetch(url);
       let data = await response.json();
