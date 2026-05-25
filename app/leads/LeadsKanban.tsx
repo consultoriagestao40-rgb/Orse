@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact } from './actions';
-import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save } from 'lucide-react';
+import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
@@ -20,6 +20,7 @@ export default function LeadsKanban() {
   const [leads, setLeads] = useState<any[]>([]);
   const [segmentos, setSegmentos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   
   const [showModal, setShowModal] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
@@ -353,6 +354,23 @@ export default function LeadsKanban() {
     }
   };
 
+  const term = searchTerm.toLowerCase().trim();
+  const filteredLeads = leads.filter(lead => {
+    if (!term) return true;
+    return (
+      lead.nomeFantasia.toLowerCase().includes(term) ||
+      (lead.segmento && lead.segmento.toLowerCase().includes(term)) ||
+      (lead.contatoNome && lead.contatoNome.toLowerCase().includes(term)) ||
+      (lead.telefone && lead.telefone.includes(term)) ||
+      (lead.email && lead.email.toLowerCase().includes(term)) ||
+      (lead.contacts && lead.contacts.some((c: any) => 
+        c.nome.toLowerCase().includes(term) || 
+        (c.telefone && c.telefone.includes(term)) || 
+        (c.email && c.email.toLowerCase().includes(term))
+      ))
+    );
+  });
+
   if (loading) return <div className="p-8 text-slate-500">Carregando funil...</div>;
 
   // Se não houver estágios, exibe aviso e botão para semear
@@ -376,16 +394,37 @@ export default function LeadsKanban() {
 
   return (
     <div className="flex flex-col h-screen bg-slate-50 overflow-hidden">
-      <div className="p-6 bg-white border-b border-slate-200 flex justify-between items-center shrink-0">
+      <div className="p-4 md:p-6 bg-white border-b border-slate-200 flex flex-col lg:flex-row justify-between lg:items-center gap-4 shrink-0">
         <div>
-          <h1 className="text-2xl font-black text-slate-800">Pipeline de Leads</h1>
-          <p className="text-sm text-slate-500">Gerencie seus leads e prospectos</p>
+          <h1 className="text-xl md:text-2xl font-black text-slate-800">Pipeline de Leads</h1>
+          <p className="text-xs md:text-sm text-slate-500">Gerencie seus leads e prospectos</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-start lg:justify-end">
+          {/* Real-time Search Input */}
+          <div className="relative flex-1 min-w-[200px] md:flex-none md:w-80">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input 
+              type="text"
+              placeholder="Buscar por nome, celular, e-mail..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-xs md:text-sm bg-slate-50 focus:bg-white focus:border-emerald-500 outline-none transition-all shadow-sm"
+            />
+            {searchTerm && (
+              <button 
+                type="button"
+                onClick={() => setSearchTerm('')} 
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                title="Limpar busca"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
           <select 
             value={userFilter}
             onChange={(e) => setUserFilter(e.target.value)}
-            className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none"
+            className="border border-slate-200 rounded-xl px-2.5 py-2 text-xs md:text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none flex-1 sm:flex-none"
           >
             <option value="all">Todos Usuários</option>
             {filterUsers.map(u => (
@@ -396,7 +435,7 @@ export default function LeadsKanban() {
           <select
             value={datePreset}
             onChange={(e) => setDatePreset(e.target.value)}
-            className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none"
+            className="border border-slate-200 rounded-xl px-2.5 py-2 text-xs md:text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none flex-1 sm:flex-none"
           >
             <option value="all">Todo Período</option>
             <option value="7d">Últimos 7 dias</option>
@@ -409,40 +448,41 @@ export default function LeadsKanban() {
           </select>
 
           {datePreset === 'custom' && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 w-full sm:w-auto">
               <input 
                 type="date" 
                 value={startDate} 
                 onChange={e => setStartDate(e.target.value)}
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none"
+                className="border border-slate-200 rounded-xl px-2.5 py-2 text-xs md:text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none flex-1 sm:flex-none"
               />
-              <span className="text-slate-400 text-sm">até</span>
+              <span className="text-slate-400 text-xs">até</span>
               <input 
                 type="date" 
                 value={endDate} 
                 onChange={e => setEndDate(e.target.value)}
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none"
+                className="border border-slate-200 rounded-xl px-2.5 py-2 text-xs md:text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none flex-1 sm:flex-none"
               />
             </div>
           )}
 
-          <div className="w-px h-8 bg-slate-200 mx-2"></div>
+          <div className="hidden sm:block w-px h-8 bg-slate-200 mx-1"></div>
 
           <button 
+            type="button"
             onClick={() => setShowNewLead(true)}
-            className="flex items-center gap-2 bg-[#1B4D3E] text-white px-4 py-2.5 rounded-xl font-bold hover:bg-[#13382d] transition-all"
+            className="flex items-center justify-center gap-2 bg-[#1B4D3E] text-white px-4 py-2 text-xs md:text-sm rounded-xl font-bold hover:bg-[#13382d] transition-all w-full sm:w-auto"
           >
-            <Plus size={18} /> Novo Lead
+            <Plus size={16} /> Novo Lead
           </button>
         </div>
       </div>
 
-      <div className="flex flex-col flex-1 overflow-hidden p-6 bg-slate-50">
-        <PipelineMetrics leads={leads} stages={stages} />
-        <div className="flex-1 overflow-x-auto pb-4">
-          <div className="flex gap-4 h-full min-h-0 pr-6">
+      <div className="flex flex-col flex-1 overflow-y-auto p-6 bg-slate-50 scrollbar-thin">
+        <PipelineMetrics leads={filteredLeads} stages={stages} />
+        <div className="overflow-x-auto pb-4">
+          <div className="flex gap-4 h-[calc(100vh-180px)] min-h-[500px] pr-6">
           {stages.map((stage, idx) => {
-            const stageLeads = leads.filter(l => l.stageId === stage.id);
+            const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
             const isFirst = idx === 0;
             const colorMap: Record<string, string> = {
               'bg-slate-100': 'text-slate-400',

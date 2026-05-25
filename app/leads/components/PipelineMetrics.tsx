@@ -37,7 +37,7 @@ export default function PipelineMetrics({ leads, stages }: { leads: any[], stage
   const percDesqualificado = totalLeads > 0 ? Math.round((countDesqualificado / totalLeads) * 100) : 0;
 
   return (
-    <div className="grid grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
         <div>
           <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Contato p/ Reunião</p>
