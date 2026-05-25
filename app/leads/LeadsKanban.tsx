@@ -489,7 +489,7 @@ export default function LeadsKanban() {
       <div className="flex flex-col flex-1 overflow-y-auto p-6 bg-slate-50 scrollbar-thin">
         {showMetrics && <PipelineMetrics leads={filteredLeads} stages={stages} />}
         <div className="overflow-x-auto pb-4">
-          <div className="flex gap-4 h-[calc(100vh-110px)] shrink-0 pr-6">
+          <div className="flex gap-4 items-start pr-6 h-auto">
           {stages.map((stage, idx) => {
             const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
             const isFirst = idx === 0;
@@ -508,7 +508,7 @@ export default function LeadsKanban() {
             return (
               <div 
                 key={stage.id} 
-                className={`w-80 shrink-0 flex flex-col h-full rounded-2xl transition-colors duration-300 relative`}
+                className={`w-80 shrink-0 flex flex-col h-[calc(100vh-130px)] sticky top-0 rounded-2xl transition-colors duration-300 relative`}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, stage.id)}
               >
