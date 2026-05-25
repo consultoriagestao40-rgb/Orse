@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor } from './actions';
-import { Plus, User, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X } from 'lucide-react';
+import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage } from './actions';
+import { Plus, User, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
@@ -59,6 +59,21 @@ export default function LeadsKanban() {
     if (Array.isArray(segmentosRes)) setSegmentos(segmentosRes);
     else if (segmentosRes && segmentosRes.success) setSegmentos(segmentosRes.segmentos);
     setLoading(false);
+  };
+
+  const handleCreateStage = async () => {
+    const nome = prompt('Nome da nova etapa (ex: Em Negociação):');
+    if (!nome) return;
+    const res = await createLeadStage(nome);
+    if (res.success) fetchData();
+    else alert(res.error);
+  };
+
+  const handleDeleteStage = async (id: string) => {
+    if (!confirm('Deseja excluir esta etapa? Atenção: ela precisa estar vazia.')) return;
+    const res = await deleteLeadStage(id);
+    if (res.success) fetchData();
+    else alert(res.error);
   };
 
   const handleDragStart = (e: React.DragEvent, leadId: string) => {
@@ -193,6 +208,13 @@ export default function LeadsKanban() {
                         ))}
                       </div>
                     </div>
+                    <button 
+                      onClick={() => handleDeleteStage(stage.id)} 
+                      title="Excluir Etapa" 
+                      className="p-1.5 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors flex items-center justify-center cursor-pointer ml-1"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                   <span className="bg-white/50 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">
                     {stageLeads.length}
@@ -228,6 +250,16 @@ export default function LeadsKanban() {
               </div>
             );
           })}
+
+          <div 
+            onClick={handleCreateStage}
+            className="w-80 shrink-0 flex items-center justify-center h-full rounded-2xl border-2 border-dashed border-slate-300 hover:border-[#1B4D3E] hover:bg-emerald-50 transition-colors cursor-pointer text-slate-500 hover:text-[#1B4D3E] min-h-[200px]"
+          >
+            <div className="flex flex-col items-center gap-2 font-bold">
+              <Plus size={24} />
+              <span>Nova Etapa</span>
+            </div>
+          </div>
         </div>
       </div>
 

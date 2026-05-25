@@ -36,6 +36,34 @@ export async function getLeadStages() {
   }
 }
 
+export async function createLeadStage(nome: string) {
+  try {
+    const lastStage = await prisma.leadStage.findFirst({ orderBy: { ordem: 'desc' } });
+    const ordem = lastStage ? lastStage.ordem + 1 : 0;
+    const stage = await prisma.leadStage.create({
+      data: { nome, ordem, color: 'bg-slate-100' }
+    });
+    revalidatePath('/leads');
+    return { success: true, stage };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteLeadStage(id: string) {
+  try {
+    const leadsCount = await prisma.lead.count({ where: { stageId: id } });
+    if (leadsCount > 0) {
+      return { success: false, error: 'Não é possível excluir uma etapa que contém Leads. Mova-os primeiro.' };
+    }
+    await prisma.leadStage.delete({ where: { id } });
+    revalidatePath('/leads');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 export async function updateLeadStage(leadId: string, stageId: string) {
   const user = await getLoggedUser();
   if (!user) return { success: false, error: 'Unauthorized' };
