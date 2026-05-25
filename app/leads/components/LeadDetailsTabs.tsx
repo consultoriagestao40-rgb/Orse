@@ -203,7 +203,7 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
         )}
 
         {activeTab === 'comentarios' && (
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col h-full relative">
             <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
               {comments.map(c => (
                 <div key={c.id} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
@@ -211,23 +211,60 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                     <span className="font-bold text-sm text-slate-800">{c.user?.nome || 'Usuário Desconhecido'}</span>
                     <span className="text-[10px] text-slate-400">{safeDate(c.createdAt, true)}</span>
                   </div>
-                  <p className="text-sm text-slate-600 whitespace-pre-wrap">{c.texto}</p>
+                  <p className="text-sm text-slate-600 whitespace-pre-wrap">
+                    {c.texto.split(/(@[\wÀ-ÿ]+)/g).map((part: string, i: number) => 
+                      part.startsWith('@') ? <span key={i} className="text-blue-600 font-bold bg-blue-50 px-1 rounded">{part}</span> : part
+                    )}
+                  </p>
                 </div>
               ))}
               {comments.length === 0 && <p className="text-slate-400 text-sm text-center mt-10">Nenhum comentário ainda. Puxe assunto!</p>}
             </div>
-            <form onSubmit={handleAddComment} className="flex gap-2 items-end">
-              <textarea 
-                value={newComment} 
-                onChange={e => setNewComment(e.target.value)}
-                placeholder="Escreva um comentário... (Ex: @joao falou com o cliente hoje)" 
-                className="flex-1 border border-slate-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:border-[#1B4D3E] shadow-sm bg-white"
-                rows={2}
-              />
-              <button type="submit" className="bg-[#1B4D3E] text-white p-3 rounded-xl hover:bg-[#13382d] transition-colors shadow-md">
-                <Send size={18} />
-              </button>
-            </form>
+            
+            <div className="relative">
+              {/* Mention Dropdown */}
+              {(() => {
+                const words = newComment.split(/[\s\n]/);
+                const lastWord = words[words.length - 1];
+                if (lastWord.startsWith('@')) {
+                  const search = lastWord.substring(1).toLowerCase();
+                  const filtered = allUsers.filter(u => u.nome.toLowerCase().includes(search));
+                  if (filtered.length > 0) {
+                    return (
+                      <div className="absolute bottom-full left-0 mb-2 w-64 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto">
+                        {filtered.map(u => (
+                          <div 
+                            key={u.id}
+                            onClick={() => {
+                              words.pop();
+                              setNewComment([...words, `@${u.nome} `].join(' '));
+                            }}
+                            className="p-2 hover:bg-blue-50 cursor-pointer border-b border-slate-100 last:border-0"
+                          >
+                            <p className="text-sm font-bold text-slate-800">{u.nome}</p>
+                            <p className="text-xs text-slate-500">{u.cargo || 'Usuário'}</p>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }
+                }
+                return null;
+              })()}
+              
+              <form onSubmit={handleAddComment} className="flex gap-2 items-end">
+                <textarea 
+                  value={newComment} 
+                  onChange={e => setNewComment(e.target.value)}
+                  placeholder="Escreva um comentário... (Ex: @joao falou com o cliente hoje)" 
+                  className="flex-1 border border-slate-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:border-[#1B4D3E] shadow-sm bg-white"
+                  rows={2}
+                />
+                <button type="submit" className="bg-[#1B4D3E] text-white p-3 rounded-xl hover:bg-[#13382d] transition-colors shadow-md">
+                  <Send size={18} />
+                </button>
+              </form>
+            </div>
           </div>
         )}
 

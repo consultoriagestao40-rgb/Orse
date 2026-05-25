@@ -174,19 +174,25 @@ export default function LeadsKanban() {
               >
                 <div className="p-4 border-b border-slate-200/50 flex justify-between items-center group/header">
                   <div className="flex items-center gap-2">
-                    <div className="relative group/picker">
-                      <div className="w-4 h-4 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-110 transition-transform" style={{backgroundColor: stage.color?.includes('blue') ? '#DBEAFE' : stage.color?.includes('emerald') ? '#D1FAE5' : stage.color?.includes('amber') ? '#FEF3C7' : stage.color?.includes('rose') ? '#FFE4E6' : stage.color?.includes('purple') ? '#F3E8FF' : '#F1F5F9'}}></div>
-                      <div className="absolute top-6 left-0 bg-white p-2 rounded-xl shadow-xl border border-slate-200 hidden group-hover/picker:flex gap-1 z-10 w-max">
+                    <h3 className="font-bold text-slate-700">{stage.nome}</h3>
+                    <div className="relative group/picker ml-2">
+                      <button 
+                        title="Mudar cor da coluna"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 transition-colors flex items-center justify-center cursor-pointer"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+                      </button>
+                      <div className="absolute top-8 left-0 bg-white p-3 rounded-xl shadow-xl border border-slate-200 hidden group-hover/picker:flex flex-wrap gap-2 z-10 w-32">
                         {['bg-slate-100', 'bg-blue-100', 'bg-emerald-100', 'bg-amber-100', 'bg-rose-100', 'bg-purple-100'].map(c => (
                           <div 
                             key={c} 
                             onClick={async () => { await updateLeadStageColor(stage.id, c); fetchData(); }} 
-                            className={`w-6 h-6 rounded-full cursor-pointer hover:ring-2 ring-offset-1 ring-slate-400 ${c}`}
+                            className={`w-8 h-8 rounded-full cursor-pointer hover:scale-110 hover:ring-2 ring-offset-2 ring-slate-400 transition-all ${c}`}
+                            title="Selecionar esta cor"
                           />
                         ))}
                       </div>
                     </div>
-                    <h3 className="font-bold text-slate-700">{stage.nome}</h3>
                   </div>
                   <span className="bg-white/50 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">
                     {stageLeads.length}
