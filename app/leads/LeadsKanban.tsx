@@ -619,15 +619,20 @@ export default function LeadsKanban() {
             <div className="w-full bg-slate-50 border-b border-slate-200 p-2 shrink-0 flex items-center overflow-x-auto gap-1 hidden md:flex">
               {stages.map((stage, idx) => {
                 const currentIndex = stages.findIndex(s => s.id === selectedLead.stageId);
-                const currentStageColor = currentIndex >= 0 ? stages[currentIndex].color : 'bg-slate-300';
+                const currentStageColor = currentIndex >= 0 ? stages[currentIndex].color : 'bg-slate-100';
                 
-                // Extrai a cor base e força um tom mais escuro (ex: bg-blue-100 -> bg-blue-500)
-                const getDarker = (c: string) => {
-                  if (!c) return 'bg-slate-400';
-                  return c.replace(/50|100|200|300/g, '500');
+                // Mapeamento estático para garantir que o Tailwind gere as classes
+                const darkerColorMap: Record<string, string> = {
+                  'bg-slate-100': 'bg-slate-500',
+                  'bg-blue-100': 'bg-blue-500',
+                  'bg-emerald-100': 'bg-emerald-500',
+                  'bg-amber-100': 'bg-amber-500',
+                  'bg-rose-100': 'bg-rose-500',
+                  'bg-purple-100': 'bg-purple-500',
+                  'bg-slate-300': 'bg-slate-500',
                 };
 
-                const darkColor = getDarker(currentStageColor);
+                const darkColor = darkerColorMap[currentStageColor] || 'bg-slate-500';
                 const isPast = idx < currentIndex;
                 const isCurrent = idx === currentIndex;
                 
