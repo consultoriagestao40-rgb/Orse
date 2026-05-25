@@ -488,8 +488,8 @@ export default function LeadsKanban() {
 
       <div className="flex flex-col flex-1 overflow-y-auto p-6 bg-slate-50 scrollbar-thin">
         {showMetrics && <PipelineMetrics leads={filteredLeads} stages={stages} />}
-        <div className="overflow-x-auto pb-4">
-          <div className="flex gap-4 items-start pr-6 h-auto">
+        <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
+          <div className="flex gap-4 h-[calc(100vh-140px)] shrink-0 pr-6">
           {stages.map((stage, idx) => {
             const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
             const isFirst = idx === 0;
@@ -508,12 +508,12 @@ export default function LeadsKanban() {
             return (
               <div 
                 key={stage.id} 
-                className={`w-80 shrink-0 flex flex-col h-auto rounded-2xl transition-colors duration-300 relative`}
+                className={`w-80 shrink-0 flex flex-col h-full rounded-2xl transition-colors duration-300 relative`}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, stage.id)}
               >
                 <div 
-                  className={`sticky top-0 h-16 shrink-0 z-30 w-[calc(100%+16px)] ml-0 group/header text-slate-800`}
+                  className={`relative h-16 shrink-0 z-10 w-[calc(100%+16px)] ml-0 group/header text-slate-800`}
                 >
                   <svg 
                     className={`absolute inset-0 w-full h-full drop-shadow-sm ${headerTextColorClass}`} 
@@ -593,7 +593,7 @@ export default function LeadsKanban() {
                   </div>
                 </div>
                 
-                <div className={`flex-1 flex flex-col p-3 space-y-3 ${stage.color || 'bg-slate-100'} border-x border-b border-slate-200 rounded-b-2xl -mt-[1px] z-0`}>
+                <div className={`flex-1 flex flex-col p-3 overflow-y-auto space-y-3 ${stage.color || 'bg-slate-100'} border-x border-b border-slate-200 rounded-b-2xl -mt-[1px] z-0`}>
                   {stageLeads.map(lead => (
                     <div
                       key={lead.id}
