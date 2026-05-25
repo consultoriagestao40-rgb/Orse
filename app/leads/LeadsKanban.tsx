@@ -15,6 +15,14 @@ const safeDate = (val: any) => {
   return isNaN(d.getTime()) ? 'Data Inválida' : d.toLocaleDateString();
 };
 
+const getInitials = (name: any) => {
+  if (!name || typeof name !== 'string') return 'LD';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'LD';
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
 const playWhatsAppChime = () => {
   try {
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
@@ -1329,13 +1337,13 @@ export default function LeadsKanban() {
                         >
                           {/* Avatar / Initials */}
                           <div className="w-10 h-10 bg-emerald-600/10 text-emerald-700 font-black text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-emerald-100">
-                            {lead.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                            {getInitials(lead.nomeFantasia)}
                           </div>
 
                           {/* Info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-baseline mb-0.5">
-                              <h4 className="text-xs md:text-sm font-black text-slate-800 truncate">{lead.nome}</h4>
+                              <h4 className="text-xs md:text-sm font-black text-slate-800 truncate">{lead.nomeFantasia}</h4>
                               {lead.latestMsg && (
                                 <span className="text-[10px] text-slate-400 shrink-0 font-medium ml-1">
                                   {new Date(lead.latestMsg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -1377,10 +1385,10 @@ export default function LeadsKanban() {
                         <div className="p-3 bg-white border-b border-slate-100 flex justify-between items-center shrink-0">
                           <div className="flex items-center gap-2 min-w-0">
                             <div className="w-8 h-8 bg-emerald-600/10 text-emerald-700 font-bold text-xs rounded-lg flex items-center justify-center shrink-0 uppercase border border-emerald-100">
-                              {activeLead.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                              {getInitials(activeLead.nomeFantasia)}
                             </div>
                             <div className="min-w-0">
-                              <h4 className="text-xs md:text-sm font-black text-slate-800 truncate leading-none mb-1">{activeLead.nome}</h4>
+                              <h4 className="text-xs md:text-sm font-black text-slate-800 truncate leading-none mb-1">{activeLead.nomeFantasia || 'Sem Nome'}</h4>
                               <p className="text-[10px] text-slate-400 font-bold">{activeLead.telefone}</p>
                             </div>
                           </div>
