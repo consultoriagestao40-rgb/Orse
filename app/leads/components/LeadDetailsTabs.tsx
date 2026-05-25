@@ -12,7 +12,7 @@ const safeDate = (val: any, time = false) => {
 };
 
 export default function LeadDetailsTabs({ lead }: { lead: any }) {
-  const [activeTab, setActiveTab] = useState('infos');
+  const [activeTab, setActiveTab] = useState('comentarios');
   
   // States
   const [comments, setComments] = useState<any[]>([]);
@@ -32,13 +32,11 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
   const [meetingForm, setMeetingForm] = useState({ titulo: '', data: '', hora: '' });
 
   useEffect(() => {
-    if (activeTab === 'comentarios') loadComments();
-    if (activeTab === 'arquivos') loadFiles();
-    if (activeTab === 'reunioes') loadActivities();
-    if (activeTab === 'equipe') {
-      loadShares();
-      loadAllUsers();
+    if (activeTab === 'comentarios') {
+      loadComments();
+      loadFiles();
     }
+    if (activeTab === 'reunioes') loadActivities();
   }, [activeTab, lead.id]);
 
   const loadComments = async () => {
@@ -148,14 +146,8 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
     <div className="flex flex-col h-full bg-white">
       {/* Tabs Header */}
       <div className="flex border-b border-slate-200 overflow-x-auto bg-slate-50">
-        <button onClick={() => setActiveTab('infos')} className={`px-4 py-3 text-sm font-bold flex gap-2 items-center border-b-2 whitespace-nowrap transition-colors ${activeTab === 'infos' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-          <Calendar size={16}/> Histórico
-        </button>
         <button onClick={() => setActiveTab('comentarios')} className={`px-4 py-3 text-sm font-bold flex gap-2 items-center border-b-2 whitespace-nowrap transition-colors ${activeTab === 'comentarios' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
           <MessageSquare size={16}/> Feed
-        </button>
-        <button onClick={() => setActiveTab('arquivos')} className={`px-4 py-3 text-sm font-bold flex gap-2 items-center border-b-2 whitespace-nowrap transition-colors ${activeTab === 'arquivos' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-          <Paperclip size={16}/> Arquivos
         </button>
         <button onClick={() => setActiveTab('reunioes')} className={`px-4 py-3 text-sm font-bold flex gap-2 items-center border-b-2 whitespace-nowrap transition-colors ${activeTab === 'reunioes' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
           <Calendar size={16}/> Agenda
@@ -163,8 +155,8 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
         <button onClick={() => setActiveTab('whatsapp')} className={`px-4 py-3 text-sm font-bold flex gap-2 items-center border-b-2 whitespace-nowrap transition-colors ${activeTab === 'whatsapp' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
           <MessageCircle size={16}/> WhatsApp
         </button>
-        <button onClick={() => setActiveTab('equipe')} className={`px-4 py-3 text-sm font-bold flex gap-2 items-center border-b-2 whitespace-nowrap transition-colors ${activeTab === 'equipe' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-          <Users size={16}/> Equipe
+        <button onClick={() => setActiveTab('infos')} className={`px-4 py-3 text-sm font-bold flex gap-2 items-center border-b-2 whitespace-nowrap transition-colors ${activeTab === 'infos' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+          <Calendar size={16}/> Histórico
         </button>
       </div>
 
@@ -202,20 +194,41 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
         {activeTab === 'comentarios' && (
           <div className="flex flex-col h-full relative">
             <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
-              {comments.map(c => (
-                <div key={c.id} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-bold text-sm text-slate-800">{c.user?.nome || 'Usuário Desconhecido'}</span>
-                    <span className="text-[10px] text-slate-400">{safeDate(c.createdAt, true)}</span>
+              {[...comments, ...files.map(f => ({ ...f, isFile: true }))]
+                .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+                .map(item => (
+                item.isFile ? (
+                  <div key={`file-${item.id}`} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="bg-emerald-100 p-2 rounded-lg text-emerald-700">
+                        <Paperclip size={16} />
+                      </div>
+                      <div className="truncate">
+                        <p className="text-sm font-bold text-slate-700 truncate">{item.nome}</p>
+                        <p className="text-[10px] text-slate-400">
+                          {(item.tamanho / 1024).toFixed(1)} KB • Por {item.user?.nome || 'Desconhecido'} • {safeDate(item.createdAt, true)}
+                        </p>
+                      </div>
+                    </div>
+                    <button onClick={() => handleDownload(item.id, item.nome)} className="text-slate-400 hover:text-[#1B4D3E] p-2 bg-slate-50 rounded-lg transition-colors">
+                      <Download size={16} />
+                    </button>
                   </div>
-                  <p className="text-sm text-slate-600 whitespace-pre-wrap">
-                    {c.texto.split(/(@[\wÀ-ÿ]+)/g).map((part: string, i: number) => 
-                      part.startsWith('@') ? <span key={i} className="text-blue-600 font-bold bg-blue-50 px-1 rounded">{part}</span> : part
-                    )}
-                  </p>
-                </div>
+                ) : (
+                  <div key={`comment-${item.id}`} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-bold text-sm text-slate-800">{item.user?.nome || 'Usuário Desconhecido'}</span>
+                      <span className="text-[10px] text-slate-400">{safeDate(item.createdAt, true)}</span>
+                    </div>
+                    <p className="text-sm text-slate-600 whitespace-pre-wrap">
+                      {item.texto.split(/(@[\wÀ-ÿ]+)/g).map((part: string, i: number) => 
+                        part.startsWith('@') ? <span key={i} className="text-blue-600 font-bold bg-blue-50 px-1 rounded">{part}</span> : part
+                      )}
+                    </p>
+                  </div>
+                )
               ))}
-              {comments.length === 0 && <p className="text-slate-400 text-sm text-center mt-10">Nenhum comentário ainda. Puxe assunto!</p>}
+              {comments.length === 0 && files.length === 0 && <p className="text-slate-400 text-sm text-center mt-10">Nenhuma atividade no feed. Puxe assunto ou anexe um arquivo!</p>}
             </div>
             
             <div className="relative">
@@ -250,6 +263,10 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
               })()}
               
               <form onSubmit={handleAddComment} className="flex gap-2 items-end">
+                <label className="bg-slate-100 text-slate-500 p-3 rounded-xl hover:bg-slate-200 transition-colors shadow-sm cursor-pointer" title="Anexar arquivo">
+                  <Paperclip size={18} />
+                  <input type="file" className="hidden" onChange={handleFileUpload} />
+                </label>
                 <textarea 
                   value={newComment} 
                   onChange={e => setNewComment(e.target.value)}
@@ -265,36 +282,7 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
           </div>
         )}
 
-        {activeTab === 'arquivos' && (
-          <div>
-            <label className="border-2 border-dashed border-slate-300 rounded-xl p-6 flex flex-col items-center justify-center text-slate-500 hover:bg-slate-50 hover:text-[#1B4D3E] hover:border-[#1B4D3E] transition-colors cursor-pointer mb-6 bg-white">
-              <Paperclip size={24} className="mb-2" />
-              <span className="font-bold text-sm">Clique para Anexar um Arquivo</span>
-              <span className="text-xs mt-1">PDF, JPG, PNG, DOCX (Máx recomendado 10MB)</span>
-              <input type="file" className="hidden" onChange={handleFileUpload} />
-            </label>
 
-            <div className="space-y-2">
-              {files.map(f => (
-                <div key={f.id} className="bg-white border border-slate-200 rounded-xl p-3 flex justify-between items-center shadow-sm">
-                  <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="bg-emerald-100 p-2 rounded-lg text-emerald-700">
-                      <Paperclip size={16} />
-                    </div>
-                    <div className="truncate">
-                      <p className="text-sm font-bold text-slate-700 truncate">{f.nome}</p>
-                      <p className="text-xs text-slate-400">{(f.tamanho / 1024).toFixed(1)} KB • Por {f.user?.nome || 'Desconhecido'}</p>
-                    </div>
-                  </div>
-                  <button onClick={() => handleDownload(f.id, f.nome)} className="text-slate-400 hover:text-[#1B4D3E] p-2 bg-slate-50 rounded-lg transition-colors">
-                    <Download size={16} />
-                  </button>
-                </div>
-              ))}
-              {files.length === 0 && <p className="text-slate-400 text-sm text-center">Nenhum arquivo anexado.</p>}
-            </div>
-          </div>
-        )}
 
         {activeTab === 'reunioes' && (
           <div>
@@ -349,43 +337,7 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
           </div>
         )}
 
-        {activeTab === 'equipe' && (
-          <div>
-            <p className="text-sm text-slate-600 mb-4">Adicione outros vendedores ou gerentes para acompanharem e editarem este Lead junto com você.</p>
-            
-            <div className="space-y-2 mb-6">
-              {shares.map(s => (
-                <div key={s.id} className="bg-white border border-slate-200 rounded-xl p-3 flex justify-between items-center shadow-sm">
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">{s.user?.nome || 'Desconhecido'}</p>
-                    <p className="text-xs text-slate-500">{s.user?.cargo || 'Colaborador'}</p>
-                  </div>
-                  {s.user && (
-                    <button onClick={async () => { await removeLeadShare(lead.id, s.user.id); loadShares(); }} className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors">
-                      <Trash2 size={16} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
 
-            <div className="border-t border-slate-200 pt-4 flex gap-2">
-              <select 
-                value={newShareUserId} 
-                onChange={(e) => setNewShareUserId(e.target.value)}
-                className="flex-1 border border-slate-200 rounded-xl p-2 text-sm bg-white"
-              >
-                <option value="">Selecione um usuário...</option>
-                {allUsers.filter(u => !shares.find(s => s.user?.id === u.id)).map(u => (
-                  <option key={u.id} value={u.id}>{u.nome} ({u.cargo || 'Usuário'})</option>
-                ))}
-              </select>
-              <button onClick={handleAddUser} className="bg-[#1B4D3E] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#13382d] transition-colors">
-                Adicionar
-              </button>
-            </div>
-          </div>
-        )}
 
         {activeTab === 'whatsapp' && (
           <div className="h-full -m-4">

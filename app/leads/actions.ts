@@ -35,6 +35,9 @@ export async function getLeads(filters?: { startDate?: string; endDate?: string;
           where: { status: 'PENDENTE' },
           orderBy: { dataInicio: 'asc' },
           take: 1
+        },
+        shares: {
+          include: { user: true }
         }
       },
       orderBy: { updatedAt: 'desc' }
@@ -154,6 +157,33 @@ export async function updateLeadData(leadId: string, data: { nomeFantasia?: stri
         leadId,
         tipo: 'ANOTACAO',
         descricao: `Dados do lead atualizados por ${user.nome}`
+      }
+    });
+
+    revalidatePath('/leads');
+    return { success: true, lead };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function changeLeadOwner(leadId: string, assignedToId: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const lead = await prisma.lead.update({
+      where: { id: leadId },
+      data: { assignedToId }
+    });
+
+    const newOwner = await prisma.user.findUnique({ where: { id: assignedToId }});
+
+    await prisma.leadHistory.create({
+      data: {
+        leadId,
+        tipo: 'MUDANCA_FASE',
+        descricao: `Responsável alterado para ${newOwner?.nome} por ${user.nome}`
       }
     });
 

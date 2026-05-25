@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData } from './actions';
+import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare } from './actions';
 import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
@@ -203,6 +203,46 @@ export default function LeadsKanban() {
       fetchData();
     } else {
       alert(res.error);
+    }
+  };
+
+  const handleOwnerChange = async (newOwnerId: string) => {
+    if (!selectedLead) return;
+    const res = await changeLeadOwner(selectedLead.id, newOwnerId);
+    if (res.success) {
+      setSelectedLead(res.lead);
+      fetchData();
+    } else {
+      alert("Erro ao alterar responsável: " + res.error);
+    }
+  };
+
+  const handleAddParticipant = async (userId: string) => {
+    if (!selectedLead || !userId) return;
+    const res = await addLeadShare(selectedLead.id, userId);
+    if (res.success) {
+      fetchData();
+      // Reload the selected lead manually since addLeadShare doesn't return the full lead include
+      const updatedLeads = await getLeads({});
+      if (updatedLeads.success) {
+        const upLead = updatedLeads.leads.find((l:any) => l.id === selectedLead.id);
+        if (upLead) setSelectedLead(upLead);
+      }
+    } else {
+      alert("Erro ao adicionar participante: " + res.error);
+    }
+  };
+
+  const handleRemoveParticipant = async (userId: string) => {
+    if (!selectedLead) return;
+    const res = await removeLeadShare(selectedLead.id, userId);
+    if (res.success) {
+      fetchData();
+      const updatedLeads = await getLeads({});
+      if (updatedLeads.success) {
+        const upLead = updatedLeads.leads.find((l:any) => l.id === selectedLead.id);
+        if (upLead) setSelectedLead(upLead);
+      }
     }
   };
 
@@ -741,6 +781,45 @@ export default function LeadsKanban() {
                           </a>
                         </div>
                       )}
+                    </div>
+                  </div>
+
+                  {/* Equipe / Responsável Block */}
+                  <div className="pt-6 border-t border-slate-50 space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Responsável</label>
+                      <select 
+                        value={selectedLead.assignedToId || ''} 
+                        onChange={(e) => handleOwnerChange(e.target.value)}
+                        className="w-full p-2 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white"
+                      >
+                        <option value="">Sem responsável</option>
+                        {filterUsers.map(u => (
+                          <option key={u.id} value={u.id}>{u.nome}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Participantes</label>
+                      <div className="space-y-2 mb-2">
+                        {selectedLead.shares?.map((s: any) => (
+                          <div key={s.id} className="flex items-center justify-between bg-slate-50 p-2 rounded-lg">
+                            <span className="text-xs font-bold text-slate-700">{s.user?.nome}</span>
+                            <button onClick={() => handleRemoveParticipant(s.user.id)} className="text-red-400 hover:text-red-600 p-1"><X size={12}/></button>
+                          </div>
+                        ))}
+                      </div>
+                      <select 
+                        value="" 
+                        onChange={(e) => handleAddParticipant(e.target.value)}
+                        className="w-full p-2 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white"
+                      >
+                        <option value="">Adicionar participante...</option>
+                        {filterUsers.filter(u => u.id !== selectedLead.assignedToId && !selectedLead.shares?.some((s:any) => s.user?.id === u.id)).map(u => (
+                          <option key={u.id} value={u.id}>{u.nome}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 </div>
