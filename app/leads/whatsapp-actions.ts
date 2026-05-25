@@ -47,7 +47,25 @@ export async function getWhatsAppMessages(leadId: string) {
       include: { user: { select: { nome: true } } },
       orderBy: { createdAt: 'asc' }
     });
-    return { success: true, messages };
+
+    const lead = await prisma.lead.findUnique({
+      where: { id: leadId },
+      select: { typingStatus: true, typingUpdatedAt: true }
+    });
+
+    let isTyping = false;
+    let isRecording = false;
+
+    if (lead?.typingStatus && lead.typingStatus !== 'paused' && lead.typingUpdatedAt) {
+      // consider typing status expired if older than 8 seconds
+      const elapsedMs = Date.now() - new Date(lead.typingUpdatedAt).getTime();
+      if (elapsedMs < 8000) {
+        isTyping = lead.typingStatus === 'composing';
+        isRecording = lead.typingStatus === 'recording';
+      }
+    }
+
+    return { success: true, messages, isTyping, isRecording };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

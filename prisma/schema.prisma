@@ -353,6 +353,8 @@ model Lead {
   assignedToId String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  typingStatus String?
+  typingUpdatedAt DateTime?
 
   stage        LeadStage     @relation(fields: [stageId], references: [id])
   assignedTo   User?         @relation(fields: [assignedToId], references: [id])

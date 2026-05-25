@@ -14,21 +14,24 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const fetchMessages = async () => {
     const res = await getWhatsAppMessages(leadId);
     if (res.success) {
       setMessages(res.messages || []);
+      setIsTyping(!!res.isTyping);
+      setIsRecording(!!res.isRecording);
     }
     setLoading(false);
   };
 
   useEffect(() => {
     fetchMessages();
-    // Um polling simples ou usar sockets seria melhor para tempo real,
-    // mas por enquanto atualizamos de 10 em 10s se estiver aberto
-    const interval = setInterval(fetchMessages, 10000);
+    // 4-second polling for highly responsive real-time chat experience
+    const interval = setInterval(fetchMessages, 4000);
     return () => clearInterval(interval);
   }, [leadId]);
 
@@ -122,6 +125,29 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
             );
           })
         )}
+        
+        {isTyping && (
+          <div className="flex justify-start">
+            <div className="bg-white text-slate-500 rounded-lg rounded-tl-none p-2.5 shadow-sm text-xs flex items-center gap-2 italic">
+              <span className="flex gap-1 items-center">
+                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+              </span>
+              <span>digitando...</span>
+            </div>
+          </div>
+        )}
+
+        {isRecording && (
+          <div className="flex justify-start">
+            <div className="bg-white text-slate-500 rounded-lg rounded-tl-none p-2.5 shadow-sm text-xs flex items-center gap-2 italic">
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+              <span>gravando áudio...</span>
+            </div>
+          </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 

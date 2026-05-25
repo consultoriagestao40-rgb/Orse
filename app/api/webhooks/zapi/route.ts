@@ -37,7 +37,60 @@ export async function POST(req: Request) {
       return NextResponse.json({ received: true });
     }
 
-    // 2. Eventos de mensagem recebida (Inbound)
+    // 2. Eventos de digitação/gravação do cliente (Chat Presence)
+    if (body.type === 'ChatPresenceCallback' && body.data) {
+      const remotePhone = body.data.remoteJid.split('@')[0];
+      const status = body.data.status; // composing, recording, paused
+
+      console.log(`Z-API Chat Presence: ${remotePhone} -> ${status}`);
+
+      const last8Digits = remotePhone.slice(-8);
+
+      // Procurar lead pelo telefone principal
+      let leads = await prisma.lead.findMany({
+        where: {
+          telefone: {
+            contains: last8Digits
+          }
+        }
+      });
+
+      // Se não encontrou pelo telefone principal, busca nos contatos adicionais!
+      if (leads.length === 0) {
+        const additionalContacts = await prisma.leadContact.findMany({
+          where: {
+            telefone: {
+              contains: last8Digits
+            }
+          },
+          include: {
+            lead: true
+          }
+        });
+
+        if (additionalContacts.length > 0) {
+          leads = additionalContacts.map(c => c.lead);
+        }
+      }
+
+      if (leads.length > 0) {
+        const lead = leads[0];
+
+        // Atualizar o status de digitação no lead
+        await prisma.lead.update({
+          where: { id: lead.id },
+          data: {
+            typingStatus: status,
+            typingUpdatedAt: new Date()
+          }
+        });
+        console.log(`Lead [${lead.nomeFantasia}] atualizou presença de chat para: ${status}`);
+      }
+
+      return NextResponse.json({ received: true });
+    }
+
+    // 3. Eventos de mensagem recebida (Inbound)
     if (body.isGroup === false && body.text && body.phone) {
       const phone = body.phone.replace(/\D/g, ''); // Telefone do cliente
       const messageId = body.messageId;
@@ -85,6 +138,15 @@ export async function POST(req: Request) {
             direction: 'INBOUND',
             status: 'RECEIVED',
             messageId: messageId
+          }
+        });
+
+        // Limpa estado de digitando ao receber a mensagem
+        await prisma.lead.update({
+          where: { id: lead.id },
+          data: {
+            typingStatus: 'paused',
+            typingUpdatedAt: new Date()
           }
         });
 
