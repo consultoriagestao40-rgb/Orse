@@ -36,10 +36,25 @@ export async function getLeadStages() {
   }
 }
 
-export async function createLeadStage(nome: string) {
+export async function createLeadStage(nome: string, insertAfterId?: string) {
   try {
-    const lastStage = await prisma.leadStage.findFirst({ orderBy: { ordem: 'desc' } });
-    const ordem = lastStage ? lastStage.ordem + 1 : 0;
+    let ordem = 0;
+    
+    if (insertAfterId) {
+      const targetStage = await prisma.leadStage.findUnique({ where: { id: insertAfterId } });
+      if (targetStage) {
+        ordem = targetStage.ordem + 1;
+        // Shift subsequent stages
+        await prisma.leadStage.updateMany({
+          where: { ordem: { gte: ordem } },
+          data: { ordem: { increment: 1 } }
+        });
+      }
+    } else {
+      const lastStage = await prisma.leadStage.findFirst({ orderBy: { ordem: 'desc' } });
+      ordem = lastStage ? lastStage.ordem + 1 : 0;
+    }
+
     const stage = await prisma.leadStage.create({
       data: { nome, ordem, color: 'bg-slate-100' }
     });

@@ -61,10 +61,10 @@ export default function LeadsKanban() {
     setLoading(false);
   };
 
-  const handleCreateStage = async () => {
+  const handleCreateStage = async (insertAfterId?: string) => {
     const nome = prompt('Nome da nova etapa (ex: Em Negociação):');
     if (!nome) return;
-    const res = await createLeadStage(nome);
+    const res = await createLeadStage(nome, insertAfterId);
     if (res.success) fetchData();
     else alert(res.error);
   };
@@ -209,6 +209,13 @@ export default function LeadsKanban() {
                       </div>
                     </div>
                     <button 
+                      onClick={() => handleCreateStage(stage.id)} 
+                      title="Adicionar Etapa à Direita" 
+                      className="p-1.5 rounded-lg text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 transition-colors flex items-center justify-center cursor-pointer ml-1"
+                    >
+                      <Plus size={16} />
+                    </button>
+                    <button 
                       onClick={() => handleDeleteStage(stage.id)} 
                       title="Excluir Etapa" 
                       className="p-1.5 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors flex items-center justify-center cursor-pointer ml-1"
@@ -250,16 +257,6 @@ export default function LeadsKanban() {
               </div>
             );
           })}
-
-          <div 
-            onClick={handleCreateStage}
-            className="w-80 shrink-0 flex items-center justify-center h-full rounded-2xl border-2 border-dashed border-slate-300 hover:border-[#1B4D3E] hover:bg-emerald-50 transition-colors cursor-pointer text-slate-500 hover:text-[#1B4D3E] min-h-[200px]"
-          >
-            <div className="flex flex-col items-center gap-2 font-bold">
-              <Plus size={24} />
-              <span>Nova Etapa</span>
-            </div>
-          </div>
         </div>
       </div>
 
