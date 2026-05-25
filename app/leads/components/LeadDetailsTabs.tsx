@@ -40,6 +40,26 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
     }
   }, [activeTab, lead.id]);
 
+  const loadComments = async () => {
+    const res = await getComments(lead.id);
+    if (res.success) setComments(res.comments || []);
+  };
+
+  const loadFiles = async () => {
+    const res = await getFiles(lead.id);
+    if (res.success) setFiles(res.files || []);
+  };
+
+  const loadActivities = async () => {
+    const res = await getActivities(lead.id);
+    if (res.success) setActivities(res.activities || []);
+  };
+
+  const loadShares = async () => {
+    const res = await getLeadShares(lead.id);
+    if (res.success) setShares(res.shares || []);
+  };
+
   const loadAllUsers = async () => {
     const res = await getAllUsers();
     if (res.success) setAllUsers(res.users);
