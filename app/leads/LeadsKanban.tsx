@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName } from './actions';
-import { Plus, User, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2 } from 'lucide-react';
+import { Plus, User, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
@@ -399,23 +399,51 @@ export default function LeadsKanban() {
                       draggable
                       onDragStart={(e) => handleDragStart(e, lead.id)}
                       onClick={() => setSelectedLead(lead)}
-                      className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-emerald-200 transition-all group"
-                    >
-                      <div className="font-bold text-slate-800 mb-1">{lead.nomeFantasia}</div>
-                      <div className="text-xs text-slate-500 flex items-center gap-1 mb-3">
-                        <Building size={12} /> {lead.segmento || 'Sem segmento'}
-                      </div>
-                      {lead.assignedTo && (
-                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-50">
-                           <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                             <User size={12} /> {lead.assignedTo.nome.split(' ')[0]}
-                           </div>
-                           <div className="text-[10px] text-slate-400">
-                             {safeDate(lead.updatedAt)}
-                           </div>
+                      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-emerald-200 transition-all group" onClick={() => setSelectedLead(lead)}>
+                        <div className="font-bold text-slate-800 mb-1">{lead.nomeFantasia}</div>
+                        <div className="text-xs text-slate-500 flex items-center gap-1 mb-2">
+                          <Building size={12} /> {lead.segmento || 'Sem segmento'}
                         </div>
-                      )}
-                    </div>
+                        
+                        {lead.telefone && (
+                          <a href={`tel:${lead.telefone.replace(/\D/g,'')}`} onClick={e => e.stopPropagation()} className="text-xs text-slate-600 flex items-center gap-1 mb-1 hover:text-emerald-600">
+                            <Phone size={12} /> {lead.telefone}
+                          </a>
+                        )}
+                        
+                        {lead.email && (
+                          <a href={`mailto:${lead.email}`} onClick={e => e.stopPropagation()} className="text-xs text-slate-600 flex items-center gap-1 mb-1 hover:text-emerald-600 truncate">
+                            <Mail size={12} /> {lead.email}
+                          </a>
+                        )}
+                        
+                        {lead.endereco && (
+                          <div className="mt-2 pt-2 border-t border-slate-100">
+                            <div className="text-[11px] text-slate-500 leading-tight mb-2 line-clamp-2">
+                              {lead.endereco}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.endereco)}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[10px] font-bold py-1 px-2 rounded flex items-center justify-center gap-1 transition-colors">
+                                <MapPin size={10} /> Google Maps
+                              </a>
+                              <a href={`https://waze.com/ul?q=${encodeURIComponent(lead.endereco)}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="flex-1 bg-cyan-50 hover:bg-cyan-100 text-cyan-600 text-[10px] font-bold py-1 px-2 rounded flex items-center justify-center gap-1 transition-colors">
+                                <Navigation size={10} /> Waze
+                              </a>
+                            </div>
+                          </div>
+                        )}
+
+                        {lead.assignedTo && (
+                          <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-50">
+                             <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                               <User size={12} /> {lead.assignedTo.nome.split(' ')[0]}
+                             </div>
+                             <div className="text-[10px] text-slate-400">
+                               {safeDate(lead.updatedAt)}
+                             </div>
+                          </div>
+                        )}
+                      </div>
                   ))}
                 </div>
               </div>

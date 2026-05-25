@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getComments, addComment, getFiles, uploadFileBase64, downloadFile, getActivities, createActivity, getLeadShares, addLeadShare, removeLeadShare, getAllUsers } from '../actions';
-import { MessageSquare, Paperclip, Calendar, Users, Send, Download, Plus, X, Trash2 } from 'lucide-react';
+import { MessageSquare, Paperclip, Calendar, Users, Send, Download, Plus, X, Trash2, MapPin, Navigation, Mail, Phone, Map } from 'lucide-react';
 
 const safeDate = (val: any, time = false) => {
   if (!val) return 'Data Inválida';
@@ -171,12 +171,38 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Telefone</div>
-                <div className="text-sm font-medium text-slate-700">{lead.telefone || '-'}</div>
+                <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><Phone size={10}/> Telefone</div>
+                <div className="text-sm font-medium text-slate-700">
+                  {lead.telefone ? (
+                    <a href={`tel:${lead.telefone.replace(/\D/g,'')}`} className="hover:text-emerald-600 transition-colors">{lead.telefone}</a>
+                  ) : '-'}
+                </div>
               </div>
               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Contato</div>
+                <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><Users size={10}/> Contato</div>
                 <div className="text-sm font-medium text-slate-700">{lead.contatoNome || '-'}</div>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 col-span-2">
+                <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><Mail size={10}/> E-mail</div>
+                <div className="text-sm font-medium text-slate-700">
+                  {lead.email ? (
+                    <a href={`mailto:${lead.email}`} className="hover:text-emerald-600 transition-colors">{lead.email}</a>
+                  ) : '-'}
+                </div>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 col-span-2">
+                <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><MapPin size={10}/> Endereço Completo</div>
+                <div className="text-sm font-medium text-slate-700 mb-3">{lead.endereco || '-'}</div>
+                {lead.endereco && (
+                  <div className="flex gap-2">
+                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.endereco)}`} target="_blank" rel="noreferrer" className="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                      <MapPin size={14} /> Abrir no Google Maps
+                    </a>
+                    <a href={`https://waze.com/ul?q=${encodeURIComponent(lead.endereco)}`} target="_blank" rel="noreferrer" className="flex-1 bg-cyan-100 hover:bg-cyan-200 text-cyan-700 text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                      <Navigation size={14} /> Abrir no Waze
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
             
