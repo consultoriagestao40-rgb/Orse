@@ -173,47 +173,7 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
         
         {activeTab === 'infos' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><Phone size={10}/> Telefone</div>
-                <div className="text-sm font-medium text-slate-700">
-                  {lead.telefone ? (
-                    <a href={`tel:${lead.telefone.replace(/\D/g,'')}`} className="hover:text-emerald-600 transition-colors">{lead.telefone}</a>
-                  ) : '-'}
-                </div>
-              </div>
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><Users size={10}/> Contato</div>
-                <div className="text-sm font-medium text-slate-700">{lead.contatoNome || '-'}</div>
-              </div>
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 col-span-2">
-                <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><Mail size={10}/> E-mail</div>
-                <div className="text-sm font-medium text-slate-700">
-                  {lead.email ? (
-                    <a href={`mailto:${lead.email}`} className="hover:text-emerald-600 transition-colors">{lead.email}</a>
-                  ) : '-'}
-                </div>
-              </div>
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 col-span-2">
-                <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><MapPin size={10}/> Endereço Completo</div>
-                <div className="text-sm font-medium text-slate-700 mb-3">{lead.endereco || '-'}</div>
-                {lead.endereco && (
-                  <div className="flex gap-2">
-                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.endereco)}`} target="_blank" rel="noreferrer" className="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
-                      <MapPin size={14} /> Abrir no Google Maps
-                    </a>
-                    <a href={`https://waze.com/ul?q=${encodeURIComponent(lead.endereco)}`} target="_blank" rel="noreferrer" className="flex-1 bg-cyan-100 hover:bg-cyan-200 text-cyan-700 text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
-                      <Navigation size={14} /> Abrir no Waze
-                    </a>
-                  </div>
-                )}
-              </div>
-            </div>
-            
             <div>
-              <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-                Histórico de Interações Automático
-              </h3>
               <div className="space-y-4 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
                 {lead.history?.map((hist: any, idx: number) => (
                   <div key={idx} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
@@ -227,6 +187,13 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                     </div>
                   </div>
                 ))}
+                {(!lead.history || lead.history.length === 0) && (
+                  <div className="text-center py-8">
+                    <span className="bg-slate-100 text-slate-500 px-4 py-2 rounded-lg text-xs font-medium">
+                      Nenhum histórico registrado ainda.
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

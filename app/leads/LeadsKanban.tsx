@@ -570,30 +570,94 @@ export default function LeadsKanban() {
         </div>
       )}
 
-      {/* Modal Lead Details */}
+      {/* Modal Lead Details (Premium 2-Columns) */}
       {selectedLead && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex justify-end z-50">
-          <div className="bg-white w-full max-w-lg h-full shadow-2xl flex flex-col animate-in slide-in-from-right">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-start">
-              <div>
-                <h2 className="text-xl font-black text-slate-800">{selectedLead.nomeFantasia}</h2>
-                <p className="text-sm text-slate-500">{selectedLead.segmento}</p>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center z-50 p-4 sm:p-6">
+          <div className="bg-white w-full max-w-6xl h-full shadow-2xl flex flex-col md:flex-row rounded-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            
+            {/* Left Column: Info */}
+            <div className="w-full md:w-[35%] lg:w-[30%] bg-slate-50 border-r border-slate-100 flex flex-col">
+              <div className="p-6 border-b border-slate-200 bg-white flex justify-between items-start">
+                <div>
+                  <div className="text-xs font-bold text-emerald-600 mb-1 uppercase tracking-wider">Etapa: {selectedLead.stage?.name || 'Desconhecida'}</div>
+                  <h2 className="text-xl font-black text-slate-800 leading-tight mb-1">{selectedLead.nomeFantasia}</h2>
+                  <p className="text-sm text-slate-500 flex items-center gap-1"><Building size={12}/> {selectedLead.segmento || 'Sem segmento'}</p>
+                </div>
+                <button onClick={() => setSelectedLead(null)} className="md:hidden text-slate-400 hover:text-slate-600 bg-slate-100 p-2 rounded-full"><X size={16}/></button>
               </div>
-              <button onClick={() => setSelectedLead(null)} className="text-slate-400 hover:text-slate-600 bg-slate-100 p-2 rounded-full"><X size={16}/></button>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                <div>
+                  <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Valor Estimado</div>
+                  <div className="text-2xl font-black text-slate-800">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedLead.valorEst || 0)}
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-slate-200">
+                  <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Contato</div>
+                  
+                  <div>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><Users size={10}/> Nome</div>
+                    <div className="text-sm font-medium text-slate-700">{selectedLead.contatoNome || '-'}</div>
+                  </div>
+
+                  <div>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><Phone size={10}/> Telefone</div>
+                    <div className="text-sm font-medium text-slate-700">
+                      {selectedLead.telefone ? (
+                        <div className="flex items-center justify-between group">
+                          <a href={`tel:${selectedLead.telefone.replace(/\D/g,'')}`} className="hover:text-emerald-600 transition-colors">{selectedLead.telefone}</a>
+                        </div>
+                      ) : '-'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><Mail size={10}/> E-mail</div>
+                    <div className="text-sm font-medium text-slate-700">
+                      {selectedLead.email ? (
+                        <div className="flex items-center justify-between group">
+                          <a href={`mailto:${selectedLead.email}`} className="hover:text-emerald-600 transition-colors truncate max-w-[200px]" title={selectedLead.email}>{selectedLead.email}</a>
+                        </div>
+                      ) : '-'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><MapPin size={10}/> Endereço</div>
+                    <div className="text-sm font-medium text-slate-700 mb-2">{selectedLead.endereco || '-'}</div>
+                    {selectedLead.endereco && (
+                      <div className="flex flex-col gap-2">
+                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedLead.endereco)}`} target="_blank" rel="noreferrer" className="w-full bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-blue-700 text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                          <MapPin size={14} /> Abrir no Maps
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 border-t border-slate-200 bg-white shrink-0 space-y-2">
+                <button 
+                  onClick={() => openConvertModal(selectedLead)}
+                  className="w-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 p-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors border border-emerald-200"
+                >
+                  <CheckCircle2 size={16} /> Converter para Cliente
+                </button>
+              </div>
             </div>
-            
-            <div className="flex-1 overflow-hidden">
-              <LeadDetailsTabs lead={selectedLead} />
+
+            {/* Right Column: Dynamic Feed & Tabs */}
+            <div className="w-full md:w-[65%] lg:w-[70%] flex flex-col bg-white">
+              <div className="hidden md:flex justify-end p-4 border-b border-slate-100 shrink-0">
+                <button onClick={() => setSelectedLead(null)} className="text-slate-400 hover:text-slate-700 p-2 rounded-full hover:bg-slate-100 transition-colors"><X size={20}/></button>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <LeadDetailsTabs lead={selectedLead} />
+              </div>
             </div>
-            
-            <div className="p-6 border-t border-slate-100 bg-slate-50 shrink-0">
-              <button 
-                onClick={() => openConvertModal(selectedLead)}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white p-4 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-200"
-              >
-                <CheckCircle2 size={18} /> Converter em Cliente e Gerar Proposta (FPV)
-              </button>
-            </div>
+
           </div>
         </div>
       )}
