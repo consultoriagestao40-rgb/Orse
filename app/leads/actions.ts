@@ -147,6 +147,19 @@ export async function updateLeadStageColor(stageId: string, color: string) {
   }
 }
 
+export async function updateLeadStageName(stageId: string, nome: string) {
+  try {
+    await prisma.leadStage.update({
+      where: { id: stageId },
+      data: { nome }
+    });
+    revalidatePath('/leads');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 export async function createLead(data: any) {
   const user = await getLoggedUser();
   if (!user) return { success: false, error: 'Unauthorized' };

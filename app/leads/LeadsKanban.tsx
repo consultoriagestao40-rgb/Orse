@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter } from './actions';
+import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName } from './actions';
 import { Plus, User, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
@@ -49,6 +49,9 @@ export default function LeadsKanban() {
   const [endDate, setEndDate] = useState('');
   const [userFilter, setUserFilter] = useState('all');
   const [filterUsers, setFilterUsers] = useState<any[]>([]);
+
+  const [editingStageId, setEditingStageId] = useState<string | null>(null);
+  const [editingStageName, setEditingStageName] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -121,6 +124,17 @@ export default function LeadsKanban() {
     const res = await deleteLeadStage(id);
     if (res.success) fetchData();
     else alert(res.error);
+  };
+
+  const handleSaveStageName = async (id: string) => {
+    if (editingStageName.trim() === '') return;
+    const res = await updateLeadStageName(id, editingStageName.trim());
+    if (res.success) {
+      fetchData();
+      setEditingStageId(null);
+    } else {
+      alert(res.error);
+    }
   };
 
   const handleDragStart = (e: React.DragEvent, leadId: string) => {
@@ -315,7 +329,30 @@ export default function LeadsKanban() {
                   </svg>
                   <div className={`relative z-10 flex justify-between items-center h-full ${isFirst ? 'pl-4' : 'pl-8'} pr-8`}>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-slate-800 truncate max-w-[180px]">{stage.nome}</h3>
+                      {editingStageId === stage.id ? (
+                        <input
+                          autoFocus
+                          className="font-bold text-slate-800 bg-white/50 border border-slate-300 rounded px-2 py-0.5 w-[160px] outline-none focus:ring-2 focus:ring-slate-400"
+                          value={editingStageName}
+                          onChange={(e) => setEditingStageName(e.target.value)}
+                          onBlur={() => handleSaveStageName(stage.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveStageName(stage.id);
+                            if (e.key === 'Escape') setEditingStageId(null);
+                          }}
+                        />
+                      ) : (
+                        <h3 
+                          className="font-bold text-slate-800 truncate max-w-[180px] cursor-pointer hover:underline"
+                          title="Clique duplo para editar"
+                          onDoubleClick={() => {
+                            setEditingStageId(stage.id);
+                            setEditingStageName(stage.nome);
+                          }}
+                        >
+                          {stage.nome}
+                        </h3>
+                      )}
                       <div className="relative group/picker ml-1">
                         <button 
                           title="Mudar cor da coluna"
