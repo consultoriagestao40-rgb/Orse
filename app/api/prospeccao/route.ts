@@ -27,40 +27,47 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, results: mocks });
     }
 
-    // Função auxiliar para buscar até 60 resultados para uma query específica
+    // Função auxiliar para buscar até 60 resultados para uma query específica usando a Nova API (que retorna telefone e site)
     const fetchPlaces = async (searchQuery: string) => {
       let allResults: any[] = [];
       let pageToken = '';
       let pageCount = 0;
       const maxPages = 3;
-      const baseUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(searchQuery)}&key=${API_KEY}`;
+      const url = 'https://places.googleapis.com/v1/places:searchText';
 
       while (pageCount < maxPages) {
-        const url = pageToken 
-          ? `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(searchQuery)}&pagetoken=${pageToken}&key=${API_KEY}` 
-          : baseUrl;
+        const body: any = {
+          textQuery: searchQuery,
+          pageSize: 20
+        };
+        if (pageToken) body.pageToken = pageToken;
         
-        let response = await fetch(url);
+        let response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': API_KEY,
+            'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,nextPageToken'
+          },
+          body: JSON.stringify(body)
+        });
+        
         let data = await response.json();
 
-        if (data.status === 'INVALID_REQUEST' && pageToken) {
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          response = await fetch(url);
-          data = await response.json();
-        }
-
-        if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+        // O Google Places (New) retorna os erros diretamente se houver falha
+        if (data.error) {
           break; 
         }
 
-        if (data.results) {
-          allResults = [...allResults, ...data.results];
+        if (data.places) {
+          allResults = [...allResults, ...data.places];
         }
 
-        if (data.next_page_token) {
-          pageToken = data.next_page_token;
+        if (data.nextPageToken) {
+          pageToken = data.nextPageToken;
           pageCount++;
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          // A nova API é mais estável, mas um pequeno delay é bom
+          await new Promise(resolve => setTimeout(resolve, 1000));
         } else {
           break;
         }
@@ -91,11 +98,12 @@ export async function POST(req: Request) {
     const uniqueResults = Array.from(uniqueResultsMap.values());
 
     const results = uniqueResults.map((place: any) => ({
-      nomeFantasia: place.name,
-      endereco: place.formatted_address,
-      telefone: place.formatted_phone_number || 'Não informado',
+      nomeFantasia: place.displayName?.text || 'Nome não informado',
+      endereco: place.formattedAddress || 'Endereço não informado',
+      telefone: place.nationalPhoneNumber || 'Não informado',
+      site: place.websiteUri || null,
       segmento: termo,
-      placeId: place.place_id
+      placeId: place.id
     }));
 
     return NextResponse.json({ success: true, results });

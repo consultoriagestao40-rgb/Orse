@@ -65,7 +65,8 @@ export default function ProspeccaoPage() {
           nomeFantasia: lead.nomeFantasia,
           endereco: lead.endereco,
           telefone: lead.telefone,
-          segmento: lead.segmento
+          segmento: lead.segmento,
+          site: lead.site // Enviando site oculto no data
         });
         if (res.success) injectedCount++;
       }
@@ -176,6 +177,11 @@ export default function ProspeccaoPage() {
                     <div>
                       <h4 className="font-bold text-slate-800">{item.nomeFantasia}</h4>
                       <p className="text-sm text-slate-500">{item.endereco}</p>
+                      {item.site && (
+                        <a href={item.site} target="_blank" rel="noreferrer" className="text-xs text-blue-500 hover:underline mt-1 inline-block" onClick={e => e.stopPropagation()}>
+                          {item.site}
+                        </a>
+                      )}
                     </div>
                     <div className="ml-auto text-right">
                       <div className="text-sm font-bold text-slate-700">{item.telefone}</div>

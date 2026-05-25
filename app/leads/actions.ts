@@ -175,19 +175,26 @@ export async function createLead(data: any) {
       return { success: false, error: 'Nenhum estágio disponível. Crie estágios primeiro.' };
     }
 
+    const { site, ...dbData } = data; // Extrai o site para não quebrar o Prisma, já que a coluna não existe nativamente
+
     const lead = await prisma.lead.create({
       data: {
-        ...data,
+        ...dbData,
         stageId,
         assignedToId: data.assignedToId || user.id
       }
     });
 
+    let historyDesc = `Lead cadastrado no sistema por ${user.nome}.`;
+    if (site) {
+      historyDesc += ` Website: ${site}`;
+    }
+
     await prisma.leadHistory.create({
       data: {
         leadId: lead.id,
         tipo: 'CRIACAO',
-        descricao: `Lead cadastrado no sistema por ${user.nome}`
+        descricao: historyDesc
       }
     });
 
