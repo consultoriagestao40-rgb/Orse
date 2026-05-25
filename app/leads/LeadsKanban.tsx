@@ -262,6 +262,7 @@ export default function LeadsKanban() {
           })}
         </div>
       </div>
+    </div>
 
       {/* Modal New Lead */}
       {showNewLead && (
