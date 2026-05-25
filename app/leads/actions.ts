@@ -4,12 +4,27 @@ import { prisma } from '@/lib/prisma';
 import { getLoggedUser } from '@/app/propostas/actions';
 import { revalidatePath } from 'next/cache';
 
-export async function getLeads() {
+export async function getLeads(filters?: { startDate?: string; endDate?: string; userId?: string }) {
   const user = await getLoggedUser();
   if (!user) return { success: false, error: 'Unauthorized' };
 
   try {
+    const where: any = {};
+    if (filters?.userId && filters.userId !== 'all') {
+      where.assignedToId = filters.userId;
+    }
+    if (filters?.startDate || filters?.endDate) {
+      where.createdAt = {};
+      if (filters.startDate) where.createdAt.gte = new Date(filters.startDate);
+      if (filters.endDate) {
+        const end = new Date(filters.endDate);
+        end.setHours(23, 59, 59, 999);
+        where.createdAt.lte = end;
+      }
+    }
+
     const leads = await prisma.lead.findMany({
+      where,
       include: {
         stage: true,
         assignedTo: true,
@@ -20,6 +35,18 @@ export async function getLeads() {
       orderBy: { updatedAt: 'desc' }
     });
     return { success: true, leads };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getUsersForFilter() {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, nome: true },
+      orderBy: { nome: 'asc' }
+    });
+    return { success: true, users };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

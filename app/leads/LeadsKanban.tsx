@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage } from './actions';
+import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter } from './actions';
 import { Plus, User, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
@@ -44,21 +44,67 @@ export default function LeadsKanban() {
     contatoNome: ''
   });
 
+  const [datePreset, setDatePreset] = useState('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [userFilter, setUserFilter] = useState('all');
+  const [filterUsers, setFilterUsers] = useState<any[]>([]);
+
   useEffect(() => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (stages.length > 0) {
+      fetchFilteredLeads();
+    }
+  }, [datePreset, startDate, endDate, userFilter]);
+
   const fetchData = async () => {
     setLoading(true);
-    const [stagesRes, leadsRes, segmentosRes] = await Promise.all([
+    const [stagesRes, segmentosRes, usersRes] = await Promise.all([
       getLeadStages(),
-      getLeads(),
-      getSegmentos()
+      getSegmentos(),
+      getUsersForFilter()
     ]);
     if (stagesRes.success) setStages(stagesRes.stages);
-    if (leadsRes.success) setLeads(leadsRes.leads);
     if (Array.isArray(segmentosRes)) setSegmentos(segmentosRes);
     else if (segmentosRes && segmentosRes.success) setSegmentos(segmentosRes.segmentos);
+    if (usersRes.success) setFilterUsers(usersRes.users);
+    
+    await fetchFilteredLeads();
+  };
+
+  const fetchFilteredLeads = async () => {
+    let sDate = startDate;
+    let eDate = endDate;
+
+    if (datePreset !== 'custom' && datePreset !== 'all') {
+      const today = new Date();
+      if (datePreset === '7d') {
+        const d = new Date(); d.setDate(today.getDate() - 7); sDate = d.toISOString();
+      } else if (datePreset === '14d') {
+        const d = new Date(); d.setDate(today.getDate() - 14); sDate = d.toISOString();
+      } else if (datePreset === '28d') {
+        const d = new Date(); d.setDate(today.getDate() - 28); sDate = d.toISOString();
+      } else if (datePreset === 'this_month') {
+        const d = new Date(today.getFullYear(), today.getMonth(), 1); sDate = d.toISOString();
+      } else if (datePreset === 'last_month') {
+        const dStart = new Date(today.getFullYear(), today.getMonth() - 1, 1); sDate = dStart.toISOString();
+        const dEnd = new Date(today.getFullYear(), today.getMonth(), 0); eDate = dEnd.toISOString();
+      } else if (datePreset === 'this_year') {
+        const d = new Date(today.getFullYear(), 0, 1); sDate = d.toISOString();
+      }
+      if (datePreset !== 'last_month' && datePreset !== 'custom') {
+        eDate = today.toISOString();
+      }
+    } else if (datePreset === 'all') {
+      sDate = '';
+      eDate = '';
+    }
+
+    const res = await getLeads({ startDate: sDate, endDate: eDate, userId: userFilter });
+    if (res.success) setLeads(res.leads);
     setLoading(false);
   };
 
@@ -169,79 +215,140 @@ export default function LeadsKanban() {
           <h1 className="text-2xl font-black text-slate-800">Pipeline de Vendas</h1>
           <p className="text-sm text-slate-500">Gerencie seus leads e prospectos</p>
         </div>
-        <button 
-          onClick={() => setShowNewLead(true)}
-          className="flex items-center gap-2 bg-[#1B4D3E] text-white px-4 py-2.5 rounded-xl font-bold hover:bg-[#13382d] transition-all"
-        >
-          <Plus size={18} /> Novo Lead
-        </button>
+        <div className="flex items-center gap-4">
+          <select 
+            value={userFilter}
+            onChange={(e) => setUserFilter(e.target.value)}
+            className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none"
+          >
+            <option value="all">Todos Usuários</option>
+            {filterUsers.map(u => (
+              <option key={u.id} value={u.id}>{u.nome}</option>
+            ))}
+          </select>
+
+          <select
+            value={datePreset}
+            onChange={(e) => setDatePreset(e.target.value)}
+            className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none"
+          >
+            <option value="all">Todo Período</option>
+            <option value="7d">Últimos 7 dias</option>
+            <option value="14d">Últimos 14 dias</option>
+            <option value="28d">Últimos 28 dias</option>
+            <option value="this_month">Este Mês</option>
+            <option value="last_month">Mês Passado</option>
+            <option value="this_year">Este Ano</option>
+            <option value="custom">Personalizado</option>
+          </select>
+
+          {datePreset === 'custom' && (
+            <div className="flex items-center gap-2">
+              <input 
+                type="date" 
+                value={startDate} 
+                onChange={e => setStartDate(e.target.value)}
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none"
+              />
+              <span className="text-slate-400 text-sm">até</span>
+              <input 
+                type="date" 
+                value={endDate} 
+                onChange={e => setEndDate(e.target.value)}
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-600 bg-slate-50 focus:bg-white outline-none"
+              />
+            </div>
+          )}
+
+          <div className="w-px h-8 bg-slate-200 mx-2"></div>
+
+          <button 
+            onClick={() => setShowNewLead(true)}
+            className="flex items-center gap-2 bg-[#1B4D3E] text-white px-4 py-2.5 rounded-xl font-bold hover:bg-[#13382d] transition-all"
+          >
+            <Plus size={18} /> Novo Lead
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col flex-1 overflow-hidden p-6 bg-slate-50">
         <PipelineMetrics leads={leads} stages={stages} />
         <div className="flex-1 overflow-x-auto pb-4">
-          <div className="flex gap-4 h-full min-h-0">
+          <div className="flex gap-4 h-full min-h-0 pr-6">
           {stages.map((stage, idx) => {
             const stageLeads = leads.filter(l => l.stageId === stage.id);
-            const isFirst = idx === 0;
-            const clipPathStyle = isFirst 
-              ? 'polygon(0% 0%, calc(100% - 16px) 0%, 100% 50%, calc(100% - 16px) 100%, 0% 100%, 0% 50%)' 
-              : 'polygon(0% 0%, calc(100% - 16px) 0%, 100% 50%, calc(100% - 16px) 100%, 0% 100%, 16px 50%)';
+            const isLast = idx === stages.length - 1;
+            const headerBg = (stage.color || 'bg-slate-100').replace('100', '200').replace('50', '200');
+            const headerTextColorClass = headerBg.replace('bg-', 'text-');
             
-            const headerBg = (stage.color || 'bg-slate-100').replace('100', '200');
+            const points = isFirst ? "0,0 320,0 336,32 320,64 0,64" : "0,0 320,0 336,32 320,64 0,64 16,32";
 
             return (
               <div 
                 key={stage.id} 
-                className={`w-80 shrink-0 flex flex-col h-full ${stage.color || 'bg-slate-100'} rounded-2xl border border-slate-200 transition-colors duration-300 overflow-hidden`}
+                className={`w-80 shrink-0 flex flex-col h-full rounded-2xl transition-colors duration-300 relative`}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, stage.id)}
               >
                 <div 
-                  className={`py-4 ${isFirst ? 'pl-4' : 'pl-6'} pr-6 flex justify-between items-center group/header ${headerBg}`}
-                  style={{ clipPath: clipPathStyle }}
+                  className={`relative h-16 shrink-0 z-10 w-[calc(100%+16px)] ml-0 group/header text-slate-800`}
                 >
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-slate-700">{stage.nome}</h3>
-                    <div className="relative group/picker ml-2">
-                      <button 
-                        title="Mudar cor da coluna"
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 transition-colors flex items-center justify-center cursor-pointer"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
-                      </button>
-                      <div className="absolute top-8 left-0 bg-white p-3 rounded-xl shadow-xl border border-slate-200 hidden group-hover/picker:flex flex-wrap gap-2 z-10 w-32">
-                        {['bg-slate-100', 'bg-blue-100', 'bg-emerald-100', 'bg-amber-100', 'bg-rose-100', 'bg-purple-100'].map(c => (
-                          <div 
-                            key={c} 
-                            onClick={async () => { await updateLeadStageColor(stage.id, c); fetchData(); }} 
-                            className={`w-8 h-8 rounded-full cursor-pointer hover:scale-110 hover:ring-2 ring-offset-2 ring-slate-400 transition-all ${c}`}
-                            title="Selecionar esta cor"
-                          />
-                        ))}
+                  <svg 
+                    className={`absolute inset-0 w-full h-full drop-shadow-sm ${headerTextColorClass}`} 
+                    preserveAspectRatio="none" 
+                    viewBox="0 0 336 64"
+                  >
+                    <polygon 
+                      points={points}
+                      fill="currentColor" 
+                      stroke="#1e293b" 
+                      strokeWidth="2"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  </svg>
+                  <div className={`relative z-10 flex justify-between items-center h-full ${isFirst ? 'pl-4' : 'pl-8'} pr-8`}>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-slate-800 truncate max-w-[180px]">{stage.nome}</h3>
+                      <div className="relative group/picker ml-1">
+                        <button 
+                          title="Mudar cor da coluna"
+                          className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-black/10 transition-colors flex items-center justify-center cursor-pointer"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+                        </button>
+                        <div className="absolute top-8 left-0 bg-white p-3 rounded-xl shadow-xl border border-slate-200 hidden group-hover/picker:flex flex-wrap gap-2 z-10 w-32">
+                          {['bg-slate-100', 'bg-blue-100', 'bg-emerald-100', 'bg-amber-100', 'bg-rose-100', 'bg-purple-100'].map(c => (
+                            <div 
+                              key={c} 
+                              onClick={async () => { await updateLeadStageColor(stage.id, c); fetchData(); }} 
+                              className={`w-8 h-8 rounded-full cursor-pointer hover:scale-110 hover:ring-2 ring-offset-2 ring-slate-400 transition-all ${c}`}
+                              title="Selecionar esta cor"
+                            />
+                          ))}
+                        </div>
                       </div>
+                      <button 
+                        onClick={() => handleCreateStage(stage.id)} 
+                        title="Adicionar Etapa à Direita" 
+                        className="p-1 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-black/10 transition-colors flex items-center justify-center cursor-pointer"
+                      >
+                        <Plus size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteStage(stage.id)} 
+                        title="Excluir Etapa" 
+                        className="p-1 rounded-lg text-slate-500 hover:text-rose-700 hover:bg-black/10 transition-colors flex items-center justify-center cursor-pointer"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
-                    <button 
-                      onClick={() => handleCreateStage(stage.id)} 
-                      title="Adicionar Etapa à Direita" 
-                      className="p-1.5 rounded-lg text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 transition-colors flex items-center justify-center cursor-pointer ml-1"
-                    >
-                      <Plus size={16} />
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteStage(stage.id)} 
-                      title="Excluir Etapa" 
-                      className="p-1.5 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors flex items-center justify-center cursor-pointer ml-1"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <span className="bg-white/70 text-slate-800 text-xs font-black px-2 py-1 rounded-full shrink-0">
+                      {stageLeads.length}
+                    </span>
                   </div>
-                  <span className="bg-white/50 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">
-                    {stageLeads.length}
-                  </span>
                 </div>
                 
-                <div className="flex-1 p-3 overflow-y-auto space-y-3">
+                <div className={`flex-1 flex flex-col p-3 overflow-y-auto space-y-3 ${stage.color || 'bg-slate-100'} border-x border-b border-slate-200 rounded-b-2xl -mt-[1px] z-0`}>
                   {stageLeads.map(lead => (
                     <div
                       key={lead.id}
