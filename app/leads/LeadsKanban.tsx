@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact } from './actions';
-import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare } from 'lucide-react';
+import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
 import PipelineMetrics from './components/PipelineMetrics';
+import WhatsAppChat from './components/WhatsAppChat';
 
 const safeDate = (val: any) => {
   if (!val) return 'Data Inválida';
@@ -57,6 +58,11 @@ export default function LeadsKanban() {
   
   const [showModal, setShowModal] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
+  
+  // Chat Center States
+  const [showChatCenter, setShowChatCenter] = useState(false);
+  const [selectedChatLeadId, setSelectedChatLeadId] = useState<string | null>(null);
+  const [chatSearchTerm, setChatSearchTerm] = useState('');
   
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [convertForm, setConvertForm] = useState({
@@ -455,6 +461,38 @@ export default function LeadsKanban() {
     );
   });
 
+  // Get all leads with WhatsApp messages, sorted by the latest message date
+  const chatLeads = leads
+    .filter(lead => lead.telefone && (lead.whatsappMessages?.length > 0))
+    .map(lead => {
+      const sortedMsgs = [...(lead.whatsappMessages || [])].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      const latestMsg = sortedMsgs[0];
+      const unreadCount = (lead.whatsappMessages || []).filter(
+        (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
+      ).length;
+      return {
+        ...lead,
+        nome: lead.nomeFantasia,
+        latestMsg,
+        unreadCount,
+        latestMsgDate: latestMsg ? new Date(latestMsg.createdAt) : new Date(0)
+      };
+    })
+    .sort((a, b) => b.latestMsgDate.getTime() - a.latestMsgDate.getTime());
+
+  const filteredChatLeads = chatLeads.filter(lead => 
+    lead.nome.toLowerCase().includes(chatSearchTerm.toLowerCase()) ||
+    lead.telefone.includes(chatSearchTerm)
+  );
+
+  const totalUnreadCount = leads.reduce((acc, lead) => {
+    return acc + (lead.whatsappMessages || []).filter(
+      (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
+    ).length;
+  }, 0);
+
   if (loading) return <div className="p-8 text-slate-500">Carregando funil...</div>;
 
   // Se não houver estágios, exibe aviso e botão para semear
@@ -555,6 +593,20 @@ export default function LeadsKanban() {
             className="flex items-center justify-center gap-2 border border-slate-200 bg-white text-slate-600 px-3 py-2 text-xs md:text-sm rounded-xl font-bold hover:bg-slate-50 transition-all w-full sm:w-auto shadow-sm"
           >
             {showMetrics ? "Ocultar Métricas" : "Mostrar Métricas"}
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => setShowChatCenter(true)}
+            className="relative flex items-center justify-center gap-2 bg-emerald-600 text-white px-4 py-2 text-xs md:text-sm rounded-xl font-bold hover:bg-emerald-700 transition-all w-full sm:w-auto shadow-sm"
+          >
+            <MessageCircle size={16} />
+            <span>Central de WhatsApp</span>
+            {totalUnreadCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white font-black text-[9px] px-2 py-0.5 rounded-full border-2 border-white animate-bounce shrink-0">
+                {totalUnreadCount}
+              </span>
+            )}
           </button>
 
           <div className="hidden sm:block w-px h-8 bg-slate-200 mx-1"></div>
@@ -1195,6 +1247,179 @@ export default function LeadsKanban() {
                 <CheckCircle2 size={18} /> Confirmar Conversão
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Central de WhatsApp / Chat Center Modal */}
+      {showChatCenter && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300 animate-fade-in">
+          <div className="bg-white w-full max-w-6xl h-[85vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-slate-100 animate-scale-up">
+            
+            {/* Modal Header */}
+            <div className="p-4 md:p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl">
+                  <MessageCircle size={22} className="fill-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                    Central de Atendimento WhatsApp
+                  </h3>
+                  <p className="text-xs text-slate-500">Acompanhe e responda todas as conversas do funil em tempo real</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  setShowChatCenter(false);
+                  setSelectedChatLeadId(null);
+                }} 
+                className="text-slate-400 hover:text-slate-700 p-2 rounded-full hover:bg-slate-200 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 flex overflow-hidden">
+              
+              {/* Left Panel: Chats List Sidebar */}
+              <div className="w-full md:w-[35%] lg:w-[30%] border-r border-slate-100 flex flex-col bg-slate-50 shrink-0">
+                {/* Search in Chats */}
+                <div className="p-3 border-b border-slate-100 bg-white">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                    <input 
+                      type="text"
+                      placeholder="Pesquisar conversas..."
+                      value={chatSearchTerm}
+                      onChange={e => setChatSearchTerm(e.target.value)}
+                      className="w-full pl-9 pr-8 py-2 border border-slate-200 rounded-xl text-xs md:text-sm bg-slate-50 focus:bg-white focus:border-emerald-500 outline-none transition-all"
+                    />
+                    {chatSearchTerm && (
+                      <button 
+                        type="button" 
+                        onClick={() => setChatSearchTerm('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Chats scrollable container */}
+                <div className="flex-1 overflow-y-auto divide-y divide-slate-100 scrollbar-thin">
+                  {filteredChatLeads.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400 text-xs font-medium">
+                      Nenhuma conversa encontrada.
+                    </div>
+                  ) : (
+                    filteredChatLeads.map(lead => {
+                      const isSelected = selectedChatLeadId === lead.id;
+                      return (
+                        <div 
+                          key={lead.id}
+                          onClick={() => setSelectedChatLeadId(lead.id)}
+                          className={`p-3.5 flex items-start gap-3 cursor-pointer transition-all duration-150 ${
+                            isSelected 
+                              ? 'bg-emerald-50/70 border-l-4 border-emerald-500 font-bold' 
+                              : 'hover:bg-white bg-slate-50/50'
+                          }`}
+                        >
+                          {/* Avatar / Initials */}
+                          <div className="w-10 h-10 bg-emerald-600/10 text-emerald-700 font-black text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-emerald-100">
+                            {lead.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                          </div>
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-baseline mb-0.5">
+                              <h4 className="text-xs md:text-sm font-black text-slate-800 truncate">{lead.nome}</h4>
+                              {lead.latestMsg && (
+                                <span className="text-[10px] text-slate-400 shrink-0 font-medium ml-1">
+                                  {new Date(lead.latestMsg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-400 font-bold truncate">{lead.telefone}</p>
+                            
+                            {lead.latestMsg && (
+                              <p className="text-xs text-slate-500 truncate mt-1">
+                                {lead.latestMsg.direction === 'OUTBOUND' ? 'Você: ' : ''}
+                                {lead.latestMsg.texto}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Unread badge */}
+                          {lead.unreadCount > 0 && (
+                            <span className="bg-emerald-500 text-white font-black text-[9px] px-1.5 py-0.5 rounded-full shrink-0 animate-pulse">
+                              {lead.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Right Panel: Selected Chat Conversation view */}
+              <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden relative">
+                {selectedChatLeadId ? (
+                  (() => {
+                    const activeLead = leads.find(l => l.id === selectedChatLeadId);
+                    if (!activeLead) return null;
+                    return (
+                      <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-100">
+                        {/* Selected Lead mini header */}
+                        <div className="p-3 bg-white border-b border-slate-100 flex justify-between items-center shrink-0">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-8 h-8 bg-emerald-600/10 text-emerald-700 font-bold text-xs rounded-lg flex items-center justify-center shrink-0 uppercase border border-emerald-100">
+                              {activeLead.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="text-xs md:text-sm font-black text-slate-800 truncate leading-none mb-1">{activeLead.nome}</h4>
+                              <p className="text-[10px] text-slate-400 font-bold">{activeLead.telefone}</p>
+                            </div>
+                          </div>
+                          
+                          {/* Button to view lead profile/funnel detail modal directly! */}
+                          <button
+                            onClick={() => {
+                              setSelectedLead(activeLead);
+                              setShowChatCenter(false);
+                            }}
+                            className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[#1B4D3E] font-bold text-[10px] px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 shrink-0 animate-pulse"
+                            title="Ver no Funil"
+                          >
+                            Ver no Funil
+                          </button>
+                        </div>
+
+                        {/* WhatsAppChat itself */}
+                        <div className="flex-1 overflow-hidden">
+                          <WhatsAppChat leadId={activeLead.id} leadPhone={activeLead.telefone} />
+                        </div>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50/50">
+                    <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-3xl flex items-center justify-center mb-4 shadow-inner border border-emerald-200/50 animate-bounce">
+                      <MessageCircle size={40} className="fill-emerald-600 animate-pulse" />
+                    </div>
+                    <h3 className="text-slate-800 font-black text-lg">Central de WhatsApp</h3>
+                    <p className="text-slate-500 text-sm max-w-sm mt-2">
+                      Selecione uma conversa na barra lateral para iniciar o atendimento integrado no WhatsApp.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+            </div>
+
           </div>
         </div>
       )}
