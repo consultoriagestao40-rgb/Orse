@@ -19,7 +19,7 @@ import {
   getSegmentos, createSegmento, deleteSegmento,
   getSellers
 } from './actions';
-import { getEmpresasEmissoras, createEmpresaEmissora, deleteEmpresaEmissora } from './empresas-actions';
+import { getEmpresasEmissoras, createEmpresaEmissora, updateEmpresaEmissora, deleteEmpresaEmissora } from './empresas-actions';
 
 type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas';
 
@@ -47,9 +47,13 @@ export default function SettingsPage() {
       return;
     }
     setLoading(true);
-    // Para simplificar, estamos usando create sempre ou a lógica de update poderia ser feita aqui.
-    // Como pedimos apenas cadastro simples, chamamos createEmpresaEmissora.
-    const res = await createEmpresaEmissora(empresaForm);
+    let res;
+    if (empresaForm.id) {
+      res = await updateEmpresaEmissora(empresaForm.id, empresaForm);
+    } else {
+      res = await createEmpresaEmissora(empresaForm);
+    }
+    
     if (res.success) {
       setShowEmpresaModal(false);
       loadData();
@@ -66,8 +70,12 @@ export default function SettingsPage() {
     else alert('Erro ao excluir: ' + res.error);
   };
 
-  const openEmpresaModal = () => {
-    setEmpresaForm({ id: '', nomeFantasia: '', razaoSocial: '', cnpj: '', endereco: '', telefone: '', email: '' });
+  const openEmpresaModal = (empresa?: any) => {
+    if (empresa && empresa.id) {
+      setEmpresaForm(empresa);
+    } else {
+      setEmpresaForm({ id: '', nomeFantasia: '', razaoSocial: '', cnpj: '', endereco: '', telefone: '', email: '' });
+    }
     setShowEmpresaModal(true);
   };
 
@@ -673,7 +681,7 @@ export default function SettingsPage() {
                     <Briefcase size={14} /> Empresas Emissoras (Propostas)
                   </h2>
                   <button 
-                    onClick={openEmpresaModal}
+                    onClick={() => openEmpresaModal()}
                     className="bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
                   >
                     <Plus size={12} /> Nova Empresa
@@ -697,7 +705,10 @@ export default function SettingsPage() {
                           <td className="px-4 py-3 text-slate-600">{e.razaoSocial}</td>
                           <td className="px-4 py-3 text-slate-600">{e.cnpj}</td>
                           <td className="px-4 py-3 text-right">
-                            <button onClick={() => handleDeleteEmpresa(e.id)} className="text-slate-400 hover:text-red-600"><Trash2 size={14} /></button>
+                            <div className="flex justify-end gap-2">
+                              <button onClick={() => openEmpresaModal(e)} className="text-amber-500 hover:text-amber-600"><Edit2 size={14} /></button>
+                              <button onClick={() => handleDeleteEmpresa(e.id)} className="text-slate-400 hover:text-red-600"><Trash2 size={14} /></button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -829,7 +840,7 @@ export default function SettingsPage() {
             <div className="bg-white rounded-md shadow-2xl w-full max-w-lg overflow-hidden">
               <div className="bg-[#1B4D3E] px-6 py-3 border-b border-[#13382D] flex justify-between items-center">
                 <h2 className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                  <Briefcase size={14} /> Nova Empresa Emissora
+                  <Briefcase size={14} /> {empresaForm.id ? 'Editar' : 'Nova'} Empresa Emissora
                 </h2>
                 <button onClick={() => setShowEmpresaModal(false)} className="text-white/60 hover:text-white transition-colors"><X size={18} /></button>
               </div>
