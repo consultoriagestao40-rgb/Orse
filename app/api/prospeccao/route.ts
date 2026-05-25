@@ -27,21 +27,61 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, results: mocks });
     }
 
-    // Chamada REAL para o Google Places API (Text Search)
+    // Chamada REAL para o Google Places API (Text Search) com Paginação (Máximo 60 resultados)
     const query = encodeURIComponent(`${termo} em ${localizacao}`);
-    const googleUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&key=${API_KEY}`;
+    const baseUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&key=${API_KEY}`;
     
-    const response = await fetch(googleUrl);
-    const data = await response.json();
+    let allResults: any[] = [];
+    let pageToken = '';
+    let pageCount = 0;
+    const maxPages = 3; // O Google permite até 3 páginas de 20 resultados (Total 60)
 
-    if (data.status !== 'OK') {
-      return NextResponse.json({ success: false, error: 'Erro na API do Google: ' + data.status });
+    while (pageCount < maxPages) {
+      const url = pageToken ? `https://maps.googleapis.com/maps/api/place/textsearch/json?pagetoken=${pageToken}&key=${API_KEY}` : baseUrl;
+      
+      let response = await fetch(url);
+      let data = await response.json();
+
+      // O Google Places frequentemente retorna INVALID_REQUEST se o token for usado rápido demais.
+      // Vamos tentar aguardar mais um pouco e tentar de novo caso isso aconteça.
+      if (data.status === 'INVALID_REQUEST' && pageToken) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        response = await fetch(url);
+        data = await response.json();
+      }
+
+      if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+        if (allResults.length === 0) {
+          return NextResponse.json({ success: false, error: 'Erro na API do Google: ' + data.status });
+        }
+        break; // Se deu erro na página 2 ou 3, vamos só retornar o que já pegamos
+      }
+
+      if (data.results) {
+        allResults = [...allResults, ...data.results];
+      }
+
+      if (data.next_page_token) {
+        pageToken = data.next_page_token;
+        pageCount++;
+        // Delay obrigatório de ~2s exigido pelo Google para maturar o next_page_token
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      } else {
+        break; // Acabaram as páginas
+      }
     }
 
-    const results = data.results.map((place: any) => ({
+    // Filtra duplicados pelo place_id caso o Google tenha retornado algum (acontece às vezes)
+    const uniqueResultsMap = new Map();
+    allResults.forEach(place => {
+      uniqueResultsMap.set(place.place_id, place);
+    });
+    const uniqueResults = Array.from(uniqueResultsMap.values());
+
+    const results = uniqueResults.map((place: any) => ({
       nomeFantasia: place.name,
       endereco: place.formatted_address,
-      telefone: place.formatted_phone_number || 'Não informado', // Pode precisar do Place Details para telefone
+      telefone: place.formatted_phone_number || 'Não informado',
       segmento: termo,
       placeId: place.place_id
     }));
