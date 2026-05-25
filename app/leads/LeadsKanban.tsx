@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare } from './actions';
+import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact } from './actions';
 import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
@@ -188,6 +188,45 @@ export default function LeadsKanban() {
 
   const [isEditingLead, setIsEditingLead] = useState(false);
   const [editLeadForm, setEditLeadForm] = useState<any>({});
+  const [showAddContactForm, setShowAddContactForm] = useState(false);
+  const [newContactForm, setNewContactForm] = useState({ nome: '', telefone: '', email: '', cargo: '' });
+
+  const handleAddContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLead || !newContactForm.nome.trim()) return;
+
+    const res = await addLeadContact(selectedLead.id, newContactForm);
+    if (res.success) {
+      setNewContactForm({ nome: '', telefone: '', email: '', cargo: '' });
+      setShowAddContactForm(false);
+      fetchData();
+      
+      const updatedLeads = await getLeads({});
+      if (updatedLeads.success) {
+        const upLead = updatedLeads.leads.find((l:any) => l.id === selectedLead.id);
+        if (upLead) setSelectedLead(upLead);
+      }
+    } else {
+      alert("Erro ao adicionar contato: " + res.error);
+    }
+  };
+
+  const handleRemoveContact = async (contactId: string) => {
+    if (!selectedLead || !confirm("Deseja realmente excluir este contato adicional?")) return;
+
+    const res = await removeLeadContact(selectedLead.id, contactId);
+    if (res.success) {
+      fetchData();
+      
+      const updatedLeads = await getLeads({});
+      if (updatedLeads.success) {
+        const upLead = updatedLeads.leads.find((l:any) => l.id === selectedLead.id);
+        if (upLead) setSelectedLead(upLead);
+      }
+    } else {
+      alert("Erro ao remover contato: " + res.error);
+    }
+  };
 
   const handleSaveLeadEdit = async () => {
     if (!selectedLead) return;
@@ -770,6 +809,121 @@ export default function LeadsKanban() {
                         </div>
                       </>
                     )}
+
+                    {/* Contatos Adicionais Section */}
+                    <div className="pt-4 mt-4 border-t border-slate-50 space-y-3">
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex justify-between items-center">
+                        <span>Contatos Adicionais</span>
+                        {!showAddContactForm && (
+                          <button 
+                            onClick={() => setShowAddContactForm(true)} 
+                            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 p-1.5 rounded-lg transition-colors flex items-center justify-center cursor-pointer"
+                            title="Adicionar Novo Contato"
+                          >
+                            <Plus size={12} />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* List of Additional Contacts */}
+                      {selectedLead.contacts && selectedLead.contacts.length > 0 && (
+                        <div className="space-y-3">
+                          {selectedLead.contacts.map((c: any) => (
+                            <div key={c.id} className="bg-slate-50/50 border border-slate-100 p-3 rounded-xl relative group/contact">
+                              <button 
+                                onClick={() => handleRemoveContact(c.id)}
+                                className="absolute top-2.5 right-2.5 text-slate-300 hover:text-red-500 p-1 rounded transition-colors"
+                                title="Remover contato"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                              <div className="font-bold text-xs text-slate-700 leading-tight pr-5">{c.nome}</div>
+                              {c.cargo && (
+                                <div className="text-[10px] text-slate-400 font-medium mb-1.5">{c.cargo}</div>
+                              )}
+                              
+                              <div className="space-y-1 mt-1.5">
+                                {c.telefone && (
+                                  <a href={`tel:${c.telefone.replace(/\D/g, '')}`} className="text-[11px] text-slate-600 hover:text-emerald-600 flex items-center gap-1.5">
+                                    <Phone size={10} /> {c.telefone}
+                                  </a>
+                                )}
+                                {c.email && (
+                                  <a href={`mailto:${c.email}`} className="text-[11px] text-slate-600 hover:text-emerald-600 flex items-center gap-1.5 truncate block" title={c.email}>
+                                    <Mail size={10} /> {c.email}
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Add Contact Inline Form */}
+                      {showAddContactForm && (
+                        <form onSubmit={handleAddContact} className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
+                          <div className="text-xs font-bold text-slate-700 border-b border-slate-200 pb-1 flex justify-between items-center">
+                            <span>Novo Contato</span>
+                            <button type="button" onClick={() => setShowAddContactForm(false)} className="text-slate-400 hover:text-slate-600"><X size={14}/></button>
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Nome *</label>
+                            <input 
+                              required 
+                              value={newContactForm.nome} 
+                              onChange={e => setNewContactForm({ ...newContactForm, nome: e.target.value })} 
+                              className="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-emerald-500" 
+                              placeholder="Ex: João da Silva"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Celular</label>
+                              <input 
+                                value={newContactForm.telefone} 
+                                onChange={e => setNewContactForm({ ...newContactForm, telefone: e.target.value })} 
+                                className="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-emerald-500" 
+                                placeholder="(41) 99999-9999"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Cargo</label>
+                              <input 
+                                value={newContactForm.cargo} 
+                                onChange={e => setNewContactForm({ ...newContactForm, cargo: e.target.value })} 
+                                className="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-emerald-500" 
+                                placeholder="Ex: Comprador"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">E-mail</label>
+                            <input 
+                              type="email" 
+                              value={newContactForm.email} 
+                              onChange={e => setNewContactForm({ ...newContactForm, email: e.target.value })} 
+                              className="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-emerald-500" 
+                              placeholder="Ex: joao@empresa.com"
+                            />
+                          </div>
+                          <div className="flex gap-2 justify-end pt-1.5">
+                            <button 
+                              type="button" 
+                              onClick={() => { setShowAddContactForm(false); setNewContactForm({ nome: '', telefone: '', email: '', cargo: '' }); }}
+                              className="px-2.5 py-1.5 text-[10px] font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                            >
+                              Cancelar
+                            </button>
+                            <button 
+                              type="submit" 
+                              className="bg-[#1B4D3E] hover:bg-[#13382d] text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all"
+                            >
+                              Adicionar
+                            </button>
+                          </div>
+                        </form>
+                      )}
+                    </div>
 
                     <div>
                       <div className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 flex items-center gap-1"><MapPin size={10}/> Endereço</div>

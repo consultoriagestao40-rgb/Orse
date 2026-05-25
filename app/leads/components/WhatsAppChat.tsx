@@ -103,8 +103,19 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
                   }`}
                 >
                   {msg.texto}
-                  <div className={`text-[10px] mt-1 text-right ${isOutbound ? 'text-emerald-700/60' : 'text-slate-400'}`}>
-                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <div className={`text-[10px] mt-1 flex items-center justify-end gap-1 ${isOutbound ? 'text-emerald-700/60' : 'text-slate-400'}`}>
+                    <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    {isOutbound && (
+                      <span className="text-[14px] leading-none select-none font-bold ml-1">
+                        {msg.status === 'READ' ? (
+                          <span className="text-[#53bdeb]">✓✓</span>
+                        ) : msg.status === 'DELIVERED' ? (
+                          <span className="text-slate-400">✓✓</span>
+                        ) : (
+                          <span className="text-slate-400">✓</span>
+                        )}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

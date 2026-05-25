@@ -362,7 +362,21 @@ model Lead {
   comments     Comment[]
   files        FileAttachment[]
   whatsappMessages WhatsAppMessage[]
+  contacts     LeadContact[]
 }
+
+model LeadContact {
+  id        String   @id @default(cuid())
+  leadId    String
+  nome      String
+  telefone  String?
+  email     String?
+  cargo     String?
+  createdAt DateTime @default(now())
+
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
 
 model LeadHistory {
   id        String   @id @default(cuid())

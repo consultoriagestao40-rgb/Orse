@@ -38,7 +38,8 @@ export async function getLeads(filters?: { startDate?: string; endDate?: string;
         },
         shares: {
           include: { user: true }
-        }
+        },
+        contacts: true
       },
       orderBy: { updatedAt: 'desc' }
     });
@@ -526,6 +527,61 @@ export async function removeLeadShare(leadId: string, userId: string) {
       data: { leadId, tipo: 'MUDANCA_FASE', descricao: `Um usuário foi removido da equipe por ${currentUser.nome}` }
     });
     
+    revalidatePath('/leads');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function addLeadContact(leadId: string, contact: { nome: string; telefone?: string; email?: string; cargo?: string }) {
+  const currentUser = await getLoggedUser();
+  if (!currentUser) return { success: false, error: 'Unauthorized' };
+  
+  try {
+    const newContact = await prisma.leadContact.create({
+      data: {
+        leadId,
+        nome: contact.nome,
+        telefone: contact.telefone || null,
+        email: contact.email || null,
+        cargo: contact.cargo || null
+      }
+    });
+
+    await prisma.leadHistory.create({
+      data: {
+        leadId,
+        tipo: 'ANOTACAO',
+        descricao: `Contato "${contact.nome}" adicionado por ${currentUser.nome}`
+      }
+    });
+
+    revalidatePath('/leads');
+    return { success: true, contact: newContact };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function removeLeadContact(leadId: string, contactId: string) {
+  const currentUser = await getLoggedUser();
+  if (!currentUser) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const contact = await prisma.leadContact.findUnique({ where: { id: contactId } });
+    if (!contact) return { success: false, error: 'Contato não encontrado' };
+
+    await prisma.leadContact.delete({ where: { id: contactId } });
+
+    await prisma.leadHistory.create({
+      data: {
+        leadId,
+        tipo: 'ANOTACAO',
+        descricao: `Contato "${contact.nome}" removido por ${currentUser.nome}`
+      }
+    });
+
     revalidatePath('/leads');
     return { success: true };
   } catch (error: any) {
