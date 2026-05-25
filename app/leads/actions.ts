@@ -30,6 +30,11 @@ export async function getLeads(filters?: { startDate?: string; endDate?: string;
         assignedTo: true,
         history: {
           orderBy: { createdAt: 'desc' }
+        },
+        activities: {
+          where: { status: 'PENDENTE' },
+          orderBy: { dataInicio: 'asc' },
+          take: 1
         }
       },
       orderBy: { updatedAt: 'desc' }
@@ -220,6 +225,22 @@ export async function addLeadHistory(leadId: string, tipo: string, descricao: st
         descricao: `${descricao} (${user.nome})`
       }
     });
+    revalidatePath('/leads');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteLead(leadId: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    await prisma.lead.delete({
+      where: { id: leadId }
+    });
+    
     revalidatePath('/leads');
     return { success: true };
   } catch (error: any) {

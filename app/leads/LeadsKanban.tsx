@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName } from './actions';
-import { Plus, User, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation } from 'lucide-react';
+import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead } from './actions';
+import { Plus, User, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
@@ -52,6 +52,7 @@ export default function LeadsKanban() {
 
   const [editingStageId, setEditingStageId] = useState<string | null>(null);
   const [editingStageName, setEditingStageName] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -139,6 +140,11 @@ export default function LeadsKanban() {
 
   const handleDragStart = (e: React.DragEvent, leadId: string) => {
     e.dataTransfer.setData('leadId', leadId);
+    setIsDragging(true);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -158,6 +164,33 @@ export default function LeadsKanban() {
 
     await updateLeadStage(leadId, stageId);
     fetchData();
+  };
+
+  const handleDropDelete = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const leadId = e.dataTransfer.getData('leadId');
+    if (!leadId) return;
+
+    if (confirm('Tem certeza que deseja excluir permanentemente este lead?')) {
+      const res = await deleteLead(leadId);
+      if (res.success) {
+        setLeads(prev => prev.filter(l => l.id !== leadId));
+        fetchData();
+      } else {
+        alert(res.error);
+      }
+    }
+  };
+
+  const handleDropConvert = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const leadId = e.dataTransfer.getData('leadId');
+    if (!leadId) return;
+
+    const lead = leads.find(l => l.id === leadId);
+    if (lead) openConvertModal(lead);
   };
 
   const handleCreateLead = async (e: React.FormEvent) => {
@@ -398,6 +431,7 @@ export default function LeadsKanban() {
                       key={lead.id}
                       draggable
                       onDragStart={(e) => handleDragStart(e, lead.id)}
+                      onDragEnd={handleDragEnd}
                       onClick={() => setSelectedLead(lead)}
                       className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-emerald-200 transition-all group"
                     >
@@ -434,6 +468,20 @@ export default function LeadsKanban() {
                           </div>
                         )}
 
+                        {lead.activities && lead.activities.length > 0 && (
+                          <div className="mt-3 bg-amber-50 border border-amber-100 p-2 rounded text-xs flex flex-col gap-1">
+                            <div className="font-bold text-amber-800 flex items-center gap-1">
+                              <CalendarDays size={12} /> Próxima Atividade
+                            </div>
+                            <div className="text-amber-700">
+                              <span className="font-semibold">{lead.activities[0].tipo}:</span> {lead.activities[0].titulo}
+                            </div>
+                            <div className="text-[10px] text-amber-600 font-medium">
+                              {safeDate(lead.activities[0].dataInicio)}
+                            </div>
+                          </div>
+                        )}
+
                         {lead.assignedTo && (
                           <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-50">
                              <div className="flex items-center gap-1.5 text-xs text-slate-400">
@@ -452,7 +500,33 @@ export default function LeadsKanban() {
           })}
         </div>
       </div>
-    </div>
+      </div>
+
+      {/* Dropzones (Aparecem apenas quando arrastando) */}
+      {isDragging && (
+        <div className="fixed bottom-0 left-0 right-0 h-32 bg-slate-900/90 backdrop-blur shadow-[0_-10px_40px_rgba(0,0,0,0.2)] z-[100] flex animate-in slide-in-from-bottom-8">
+          <div 
+            className="flex-1 flex flex-col items-center justify-center border-r border-slate-700/50 hover:bg-rose-500/20 group transition-colors cursor-pointer"
+            onDragOver={handleDragOver}
+            onDrop={handleDropDelete}
+          >
+            <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
+              <Trash2 size={24} />
+            </div>
+            <span className="text-white font-bold tracking-widest uppercase text-sm">Excluir Lead</span>
+          </div>
+          <div 
+            className="flex-1 flex flex-col items-center justify-center hover:bg-emerald-500/20 group transition-colors cursor-pointer"
+            onDragOver={handleDragOver}
+            onDrop={handleDropConvert}
+          >
+            <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
+              <CheckCircle2 size={24} />
+            </div>
+            <span className="text-white font-bold tracking-widest uppercase text-sm">Converter para FPV</span>
+          </div>
+        </div>
+      )}
 
       {/* Modal New Lead */}
       {showNewLead && (
