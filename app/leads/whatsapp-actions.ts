@@ -154,6 +154,9 @@ export async function sendWhatsAppMedia(
       } else {
         body.caption = `*${user.nome}*`;
       }
+    } else if (mimeType.startsWith('audio/')) {
+      endpoint = 'send-audio';
+      body.audio = fileBase64;
     } else {
       // Document
       const ext = fileName.split('.').pop() || 'pdf';
@@ -178,9 +181,14 @@ export async function sendWhatsAppMedia(
     const data = await response.json();
 
     if (response.ok) {
-      const displayText = caption 
-        ? `*${user.nome}*: [Mídia: ${fileName}] ${caption}` 
-        : `*${user.nome}*: [Arquivo: ${fileName}]`;
+      let displayText = '';
+      if (mimeType.startsWith('audio/')) {
+        displayText = `*${user.nome}*: 🎵 Áudio:\n${fileBase64}`;
+      } else {
+        displayText = caption 
+          ? `*${user.nome}*: [Mídia: ${fileName}] ${caption}` 
+          : `*${user.nome}*: [Arquivo: ${fileName}]`;
+      }
 
       const msg = await prisma.whatsAppMessage.create({
         data: {

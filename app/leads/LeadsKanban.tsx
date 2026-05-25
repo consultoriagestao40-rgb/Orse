@@ -29,6 +29,10 @@ const playWhatsAppChime = () => {
     if (!AudioContext) return;
     const ctx = new AudioContext();
     
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+    
     const playTone = (freq: number, startTime: number, duration: number) => {
       const osc = ctx.createOscillator();
       const gainNode = ctx.createGain();

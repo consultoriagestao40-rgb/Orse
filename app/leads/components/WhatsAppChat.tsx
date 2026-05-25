@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { getWhatsAppMessages, sendWhatsAppMessage, sendWhatsAppMedia, markWhatsAppMessagesAsRead } from '../whatsapp-actions';
-import { Send, MessageSquare, Paperclip, Smile, X, Download, FileText } from 'lucide-react';
+import { Send, MessageSquare, Paperclip, Smile, X, Download, FileText, Mic, Trash } from 'lucide-react';
 
 interface WhatsAppChatProps {
   leadId: string;
@@ -80,16 +80,16 @@ function renderMessageContent(texto: string) {
 
   // Check if it's an audio message
   if (texto.includes('🎵 Áudio:')) {
-    const urlMatch = texto.match(/https?:\/\/[^\s]+/);
-    if (urlMatch) {
-      const url = urlMatch[0];
+    const idx = texto.indexOf('🎵 Áudio:');
+    const urlOrBase64 = texto.substring(idx + '🎵 Áudio:'.length).trim();
+    if (urlOrBase64) {
       return (
         <div className="flex flex-col gap-1.5 min-w-[200px]">
           <div className="text-[11px] text-slate-400 font-bold flex items-center gap-1">🎵 Mensagem de Voz</div>
-          <audio src={url} controls className="w-full h-8" />
+          <audio src={urlOrBase64} controls className="w-full h-8" />
           <a 
-            href={url} 
-            download 
+            href={urlOrBase64} 
+            download="audio.webm"
             target="_blank" 
             rel="noreferrer"
             className="text-[10px] text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-0.5 mt-1"
@@ -197,6 +197,10 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
       if (!AudioContext) return;
       const ctx = new AudioContext();
       
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      
       const playTone = (freq: number, startTime: number, duration: number) => {
         const osc = ctx.createOscillator();
         const gainNode = ctx.createGain();
@@ -222,6 +226,111 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
       console.warn("AudioContext block", e);
     }
   };
+
+  // Audio Recording States & Functions
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingIntervalRef = useRef<any>(null);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Determine best mimeType supported
+      let options = { mimeType: 'audio/webm' };
+      if (!MediaRecorder.isTypeSupported('audio/webm')) {
+        options = { mimeType: 'audio/mp4' };
+      }
+      
+      const mediaRecorder = new MediaRecorder(stream, options);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        // Stop all audio tracks from stream to release mic indicator
+        stream.getTracks().forEach(track => track.stop());
+
+        // Check if recording was cancelled (chunks array empty)
+        if (audioChunksRef.current.length === 0) {
+          return;
+        }
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: options.mimeType });
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64 = reader.result as string;
+          setSending(true);
+          
+          // Generate a friendly name and format
+          const ext = options.mimeType.split('/')[1] || 'webm';
+          const fileName = `audio_${Date.now()}.${ext}`;
+          
+          const res = await sendWhatsAppMedia(leadId, base64, fileName, options.mimeType);
+          if (res.success) {
+            fetchMessages();
+          } else {
+            alert('Erro ao enviar mensagem de voz: ' + res.error);
+          }
+          setSending(false);
+        };
+        reader.readAsDataURL(audioBlob);
+      };
+
+      mediaRecorder.start();
+      setIsRecordingVoice(true);
+      setRecordingDuration(0);
+      
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+    } catch (err: any) {
+      alert('Erro ao acessar o microfone. Certifique-se de dar as devidas permissões no seu navegador.');
+      console.error(err);
+    }
+  };
+
+  const stopAndSendRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+    }
+    setIsRecordingVoice(false);
+  };
+
+  const cancelRecording = () => {
+    audioChunksRef.current = []; // emptying chunks cancels the sending block
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+    }
+    setIsRecordingVoice(false);
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  useEffect(() => {
+    return () => {
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+      }
+    };
+  }, []);
 
   const fetchMessages = async () => {
     const res = await getWhatsAppMessages(leadId);
@@ -440,57 +549,102 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
         )}
 
         <div className="flex gap-2 items-end">
-          {/* File Attach Button */}
-          <button 
-            type="button"
-            disabled={sending}
-            onClick={() => fileInputRef.current?.click()}
-            className="w-11 h-11 bg-white hover:bg-slate-100 text-slate-500 border border-slate-200 rounded-full flex items-center justify-center shrink-0 shadow-sm transition-colors"
-            title="Anexar arquivo, foto ou vídeo"
-          >
-            <Paperclip size={18} />
-          </button>
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileUpload} 
-            className="hidden" 
-            accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-          />
-
-          {/* Emoji Toggle Button */}
-          <button 
-            type="button"
-            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            className="w-11 h-11 bg-white hover:bg-slate-100 text-slate-500 border border-slate-200 rounded-full flex items-center justify-center shrink-0 shadow-sm transition-colors"
-            title="Emojis"
-          >
-            <Smile size={18} />
-          </button>
-
-          <form onSubmit={handleSend} className="flex-1 flex gap-2 items-end">
-            <textarea
-              className="flex-1 resize-none rounded-lg p-3 outline-none text-sm text-slate-700 min-h-[44px] max-h-32 shadow-sm bg-white"
-              placeholder={sending ? "Enviando..." : "Digite uma mensagem..."}
-              disabled={sending}
-              rows={1}
-              value={newMessage}
-              onChange={e => setNewMessage(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend(e);
-                }
-              }}
-            />
-            <button 
-              type="submit" 
-              disabled={sending || !newMessage.trim()}
-              className="w-11 h-11 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center shrink-0 shadow-sm transition-colors"
+        {isRecordingVoice ? (
+          <div className="flex-1 flex gap-2 items-center bg-white rounded-xl p-1.5 border border-emerald-100 shadow-sm animate-pulse w-full">
+            {/* Cancel Button */}
+            <button
+              type="button"
+              onClick={cancelRecording}
+              className="w-10 h-10 bg-red-50 text-red-500 hover:bg-red-100 rounded-full flex items-center justify-center shrink-0 transition-colors"
+              title="Cancelar gravação"
             >
-              <Send size={18} className={sending ? 'opacity-50' : ''} />
+              <Trash size={18} />
             </button>
-          </form>
+
+            {/* Pulsing red mic + Duration timer */}
+            <div className="flex-1 flex items-center justify-center gap-2 text-red-500 font-bold text-sm">
+              <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping shrink-0"></span>
+              <span>Gravando Áudio • {formatDuration(recordingDuration)}</span>
+            </div>
+
+            {/* Stop and Send Button */}
+            <button
+              type="button"
+              onClick={stopAndSendRecording}
+              className="w-10 h-10 bg-emerald-500 text-white hover:bg-emerald-600 rounded-full flex items-center justify-center shrink-0 transition-all scale-105 shadow-sm"
+              title="Enviar Áudio"
+            >
+              <Send size={16} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2 items-end w-full">
+            {/* File Attach Button */}
+            <button 
+              type="button"
+              disabled={sending}
+              onClick={() => fileInputRef.current?.click()}
+              className="w-11 h-11 bg-white hover:bg-slate-100 text-slate-500 border border-slate-200 rounded-full flex items-center justify-center shrink-0 shadow-sm transition-colors"
+              title="Anexar arquivo, foto ou vídeo"
+            >
+              <Paperclip size={18} />
+            </button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileUpload} 
+              className="hidden" 
+              accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            />
+
+            {/* Emoji Toggle Button */}
+            <button 
+              type="button"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="w-11 h-11 bg-white hover:bg-slate-100 text-slate-500 border border-slate-200 rounded-full flex items-center justify-center shrink-0 shadow-sm transition-colors"
+              title="Emojis"
+            >
+              <Smile size={18} />
+            </button>
+
+            <form onSubmit={handleSend} className="flex-1 flex gap-2 items-end">
+              <textarea
+                className="flex-1 resize-none rounded-lg p-3 outline-none text-sm text-slate-700 min-h-[44px] max-h-32 shadow-sm bg-white"
+                placeholder={sending ? "Enviando..." : "Digite uma mensagem..."}
+                disabled={sending}
+                rows={1}
+                value={newMessage}
+                onChange={e => setNewMessage(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend(e);
+                  }
+                }}
+              />
+              {newMessage.trim() ? (
+                <button 
+                  type="submit" 
+                  disabled={sending}
+                  className="w-11 h-11 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center shrink-0 shadow-sm transition-colors"
+                  title="Enviar mensagem"
+                >
+                  <Send size={18} className={sending ? 'opacity-50' : ''} />
+                </button>
+              ) : (
+                <button 
+                  type="button"
+                  onClick={startRecording}
+                  disabled={sending}
+                  className="w-11 h-11 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center shrink-0 shadow-sm transition-colors"
+                  title="Gravar mensagem de voz"
+                >
+                  <Mic size={18} />
+                </button>
+              )}
+            </form>
+          </div>
+        )}
         </div>
       </div>
     </div>
