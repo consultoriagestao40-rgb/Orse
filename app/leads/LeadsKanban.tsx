@@ -486,10 +486,10 @@ export default function LeadsKanban() {
         </div>
       </div>
 
-      <div className="flex flex-col flex-1 overflow-hidden p-6 bg-slate-50">
+      <div className="flex flex-col flex-1 overflow-y-auto p-6 bg-slate-50 scrollbar-thin">
         {showMetrics && <PipelineMetrics leads={filteredLeads} stages={stages} />}
-        <div className="flex-1 overflow-x-auto pb-4">
-          <div className="flex gap-4 h-full min-h-0 pr-6">
+        <div className="overflow-x-auto pb-4">
+          <div className="flex gap-4 h-[calc(100vh-110px)] shrink-0 pr-6">
           {stages.map((stage, idx) => {
             const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
             const isFirst = idx === 0;
