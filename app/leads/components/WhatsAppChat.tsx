@@ -182,6 +182,13 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isFirstLoadRef = useRef(true);
+  
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<any[]>([]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   // Play digital high-quality chime notification sound client-side
   const playNotificationSound = () => {
@@ -220,22 +227,39 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
     const res = await getWhatsAppMessages(leadId);
     if (res.success) {
       const newMessages = res.messages || [];
+      const oldMessages = messagesRef.current;
       
+      // Check if user is scrolled near the bottom (within 150px threshold)
+      let wasNearBottom = true;
+      if (chatContainerRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+        wasNearBottom = scrollHeight - scrollTop - clientHeight < 150;
+      }
+
       // Play sound if a new message arrives from the client (inbound)
-      if (!isFirstLoadRef.current && newMessages.length > messages.length) {
+      if (!isFirstLoadRef.current && newMessages.length > oldMessages.length) {
         const lastMsg = newMessages[newMessages.length - 1];
         if (lastMsg.direction === 'INBOUND') {
           playNotificationSound();
         }
       }
       
-      if (newMessages.length > 0) {
-        isFirstLoadRef.current = false;
-      }
-      
       setMessages(newMessages);
       setIsTyping(!!res.isTyping);
       setIsRecording(!!res.isRecording);
+      
+      // Auto-scroll logic:
+      // 1. If it's the first time loading messages for this lead
+      // 2. Or if the user was already scrolled near the bottom, and a new message arrived
+      if (isFirstLoadRef.current || (newMessages.length > oldMessages.length && wasNearBottom)) {
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: isFirstLoadRef.current ? 'instant' : 'smooth' });
+        }, 50);
+      }
+
+      if (newMessages.length > 0) {
+        isFirstLoadRef.current = false;
+      }
       
       // Mark as read in background
       markWhatsAppMessagesAsRead(leadId);
@@ -244,15 +268,12 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
   };
 
   useEffect(() => {
+    isFirstLoadRef.current = true;
     fetchMessages();
     // 4-second polling for highly responsive real-time chat experience
     const interval = setInterval(fetchMessages, 4000);
     return () => clearInterval(interval);
   }, [leadId]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -328,7 +349,7 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
   return (
     <div className="flex flex-col h-full bg-[#E5DDD5]">
       {/* Área de Mensagens */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")' }}>
+      <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3" style={{ backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")' }}>
         {messages.length === 0 ? (
           <div className="text-center py-8">
             <span className="bg-[#FFEECD] text-[#665544] px-4 py-2 rounded-lg text-xs font-medium inline-block shadow-sm">
