@@ -508,12 +508,12 @@ export default function LeadsKanban() {
             return (
               <div 
                 key={stage.id} 
-                className={`w-80 shrink-0 flex flex-col h-[calc(100vh-130px)] sticky top-0 rounded-2xl transition-colors duration-300 relative`}
+                className={`w-80 shrink-0 flex flex-col h-auto rounded-2xl transition-colors duration-300 relative`}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, stage.id)}
               >
                 <div 
-                  className={`relative h-16 shrink-0 z-10 w-[calc(100%+16px)] ml-0 group/header text-slate-800`}
+                  className={`sticky top-0 h-16 shrink-0 z-30 w-[calc(100%+16px)] ml-0 group/header text-slate-800`}
                 >
                   <svg 
                     className={`absolute inset-0 w-full h-full drop-shadow-sm ${headerTextColorClass}`} 
@@ -593,7 +593,7 @@ export default function LeadsKanban() {
                   </div>
                 </div>
                 
-                <div className={`flex-1 flex flex-col p-3 overflow-y-auto space-y-3 ${stage.color || 'bg-slate-100'} border-x border-b border-slate-200 rounded-b-2xl -mt-[1px] z-0`}>
+                <div className={`flex-1 flex flex-col p-3 space-y-3 ${stage.color || 'bg-slate-100'} border-x border-b border-slate-200 rounded-b-2xl -mt-[1px] z-0`}>
                   {stageLeads.map(lead => (
                     <div
                       key={lead.id}
