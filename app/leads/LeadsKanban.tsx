@@ -90,10 +90,15 @@ export default function LeadsKanban() {
 
   const knownUnreadMessageIdsRef = React.useRef<Set<string>>(new Set());
   const isFirstLoadRef = React.useRef(true);
+  const selectedLeadRef = React.useRef<any>(null);
+
+  useEffect(() => {
+    selectedLeadRef.current = selectedLead;
+  }, [selectedLead]);
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5000);
+    const interval = setInterval(() => fetchData(true), 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -103,8 +108,8 @@ export default function LeadsKanban() {
     }
   }, [datePreset, startDate, endDate, userFilter]);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (silent = false) => {
+    if (!silent) setLoading(true);
     const [stagesRes, segmentosRes, usersRes] = await Promise.all([
       getLeadStages(),
       getSegmentos(),
@@ -115,10 +120,11 @@ export default function LeadsKanban() {
     else if (segmentosRes && segmentosRes.success) setSegmentos(segmentosRes.segmentos);
     if (usersRes.success) setFilterUsers(usersRes.users);
     
-    await fetchFilteredLeads();
+    await fetchFilteredLeads(silent);
   };
 
-  const fetchFilteredLeads = async () => {
+  const fetchFilteredLeads = async (silent = false) => {
+    if (!silent) setLoading(true);
     let sDate = startDate;
     let eDate = endDate;
 
@@ -150,6 +156,14 @@ export default function LeadsKanban() {
     if (res.success) {
       setLeads(res.leads);
 
+      // Keep current open lead modal details fully in sync in real time!
+      if (selectedLeadRef.current) {
+        const updatedLead = res.leads.find((l: any) => l.id === selectedLeadRef.current.id);
+        if (updatedLead) {
+          setSelectedLead(updatedLead);
+        }
+      }
+
       // Real-time unread message checks & smartphone chime trigger
       let hasNewUnread = false;
       const currentUnreadIds = new Set<string>();
@@ -180,7 +194,7 @@ export default function LeadsKanban() {
 
       isFirstLoadRef.current = false;
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
 
   const handleCreateStage = async (insertAfterId?: string) => {
