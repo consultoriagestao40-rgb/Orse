@@ -508,12 +508,12 @@ export default function LeadsKanban() {
             return (
               <div 
                 key={stage.id} 
-                className={`w-80 shrink-0 flex flex-col h-full rounded-2xl transition-colors duration-300 relative`}
+                className={`w-[270px] shrink-0 flex flex-col h-full rounded-2xl transition-colors duration-300 relative`}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, stage.id)}
               >
                 <div 
-                  className={`relative h-16 shrink-0 z-10 w-[calc(100%+16px)] ml-0 group/header text-slate-800`}
+                  className={`relative h-13 shrink-0 z-10 w-[calc(100%+16px)] ml-0 group/header text-slate-800`}
                 >
                   <svg 
                     className={`absolute inset-0 w-full h-full drop-shadow-sm ${headerTextColorClass}`} 
@@ -533,7 +533,7 @@ export default function LeadsKanban() {
                       {editingStageId === stage.id ? (
                         <input
                           autoFocus
-                          className="font-black text-slate-900 uppercase tracking-tight text-base bg-white/70 border border-slate-400 rounded px-2 py-0.5 w-[160px] outline-none focus:ring-2 focus:ring-slate-900"
+                          className="font-black text-slate-900 uppercase tracking-tight text-xs bg-white/70 border border-slate-400 rounded px-1.5 py-0.5 w-[120px] outline-none focus:ring-2 focus:ring-slate-900"
                           value={editingStageName}
                           onChange={(e) => setEditingStageName(e.target.value)}
                           onBlur={() => handleSaveStageName(stage.id)}
@@ -544,7 +544,7 @@ export default function LeadsKanban() {
                         />
                       ) : (
                         <h3 
-                          className="font-black text-slate-900 uppercase tracking-tight text-base truncate max-w-[180px] cursor-pointer hover:underline drop-shadow-sm"
+                          className="font-black text-slate-900 uppercase tracking-tight text-xs cursor-pointer hover:underline drop-shadow-sm max-w-[140px] truncate"
                           title="Clique duplo para editar"
                           onDoubleClick={() => {
                             setEditingStageId(stage.id);
@@ -601,81 +601,66 @@ export default function LeadsKanban() {
                       onDragStart={(e) => handleDragStart(e, lead.id)}
                       onDragEnd={handleDragEnd}
                       onClick={() => setSelectedLead(lead)}
-                      className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-emerald-200 transition-all group"
+                      className="bg-white p-3 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-emerald-200 transition-all group"
                     >
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <div className="font-bold text-slate-800 truncate">{lead.nomeFantasia}</div>
-                          {(() => {
-                            const unreadCount = lead.whatsappMessages?.filter(
-                              (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
-                            ).length || 0;
-                            if (unreadCount > 0) {
-                              return (
-                                <span className="bg-emerald-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0 animate-pulse shadow-sm shadow-emerald-500/30" title={`${unreadCount} mensagens não lidas`}>
-                                  <MessageSquare size={10} fill="white" /> {unreadCount}
-                                </span>
-                              );
-                            }
-                            return null;
-                          })()}
-                        </div>
-                        <div className="text-xs text-slate-500 flex items-center gap-1 mb-2">
-                          <Building size={12} /> {lead.segmento || 'Sem segmento'}
-                        </div>
-                        
-                        {lead.telefone && (
-                          <a href={`tel:${lead.telefone.replace(/\D/g,'')}`} onClick={e => e.stopPropagation()} className="text-xs text-slate-600 flex items-center gap-1 mb-1 hover:text-emerald-600">
-                            <Phone size={12} /> {lead.telefone}
-                          </a>
-                        )}
-                        
-                        {lead.email && (
-                          <a href={`mailto:${lead.email}`} onClick={e => e.stopPropagation()} className="text-xs text-slate-600 flex items-center gap-1 mb-1 hover:text-emerald-600 truncate">
-                            <Mail size={12} /> {lead.email}
-                          </a>
-                        )}
-                        
-                        {lead.endereco && (
-                          <div className="mt-2 pt-2 border-t border-slate-100">
-                            <div className="text-[11px] text-slate-500 leading-tight mb-2 line-clamp-2">
-                              {lead.endereco}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.endereco)}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[10px] font-bold py-1 px-2 rounded flex items-center justify-center gap-1 transition-colors">
-                                <MapPin size={10} /> Google Maps
-                              </a>
-                              <a href={`https://waze.com/ul?q=${encodeURIComponent(lead.endereco)}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="flex-1 bg-cyan-50 hover:bg-cyan-100 text-cyan-600 text-[10px] font-bold py-1 px-2 rounded flex items-center justify-center gap-1 transition-colors">
-                                <Navigation size={10} /> Waze
-                              </a>
-                            </div>
-                          </div>
-                        )}
-
-                        {lead.activities && lead.activities.length > 0 && (
-                          <div className="mt-3 bg-amber-50 border border-amber-100 p-2 rounded text-xs flex flex-col gap-1">
-                            <div className="font-bold text-amber-800 flex items-center gap-1">
-                              <CalendarDays size={12} /> Próxima Atividade
-                            </div>
-                            <div className="text-amber-700">
-                              <span className="font-semibold">{lead.activities[0].tipo}:</span> {lead.activities[0].titulo}
-                            </div>
-                            <div className="text-[10px] text-amber-600 font-medium">
-                              {safeDate(lead.activities[0].dataInicio)}
-                            </div>
-                          </div>
-                        )}
-
-                        {lead.assignedTo && (
-                          <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-50">
-                             <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                               <User size={12} /> {lead.assignedTo.nome.split(' ')[0]}
-                             </div>
-                             <div className="text-[10px] text-slate-400">
-                               {safeDate(lead.updatedAt)}
-                             </div>
-                          </div>
-                        )}
+                      <div className="flex items-center justify-between gap-1.5 mb-1">
+                        <div className="font-bold text-xs text-slate-800 truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</div>
+                        {(() => {
+                          const unreadCount = lead.whatsappMessages?.filter(
+                            (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
+                          ).length || 0;
+                          if (unreadCount > 0) {
+                            return (
+                              <span className="bg-emerald-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 animate-pulse shadow-sm shadow-emerald-500/30" title={`${unreadCount} mensagens não lidas`}>
+                                <MessageSquare size={8} fill="white" /> {unreadCount}
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
+                      
+                      <div className="text-[10px] text-slate-500 flex items-center gap-1 mb-1.5">
+                        <Building size={10} className="shrink-0" /> <span className="truncate">{lead.segmento || 'Sem segmento'}</span>
+                      </div>
+                      
+                      {(lead.telefone || lead.email) && (
+                        <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
+                          {lead.telefone && (
+                            <span className="flex items-center gap-0.5 truncate max-w-[110px]" title={lead.telefone}>
+                              <Phone size={10} className="text-slate-400 shrink-0" /> {lead.telefone}
+                            </span>
+                          )}
+                          {lead.email && (
+                            <span className="flex items-center gap-0.5 truncate max-w-[120px]" title={lead.email}>
+                              <Mail size={10} className="text-slate-400 shrink-0" /> {lead.email}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {lead.activities && lead.activities.length > 0 && (
+                        <div className="mt-2 bg-amber-50/70 border border-amber-100 p-1.5 rounded-lg text-[10px] flex items-center gap-1 text-amber-700">
+                          <CalendarDays size={11} className="text-amber-500 shrink-0" />
+                          <span className="font-semibold shrink-0">{lead.activities[0].tipo}:</span>
+                          <span className="truncate flex-1">{lead.activities[0].titulo}</span>
+                          <span className="text-[9px] text-amber-600 font-medium bg-amber-100/80 px-1 py-0.5 rounded shrink-0">
+                            {safeDate(lead.activities[0].dataInicio)}
+                          </span>
+                        </div>
+                      )}
+
+                      {lead.assignedTo && (
+                        <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 text-[9px] text-slate-400">
+                           <div className="flex items-center gap-1">
+                             <User size={10} /> {lead.assignedTo.nome.split(' ')[0]}
+                           </div>
+                           <div>
+                             {safeDate(lead.updatedAt)}
+                           </div>
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
