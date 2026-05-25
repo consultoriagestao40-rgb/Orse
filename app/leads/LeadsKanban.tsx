@@ -166,6 +166,26 @@ export default function LeadsKanban() {
     fetchData();
   };
 
+  const handleStageChangeInModal = async (newStageId: string) => {
+    if (!selectedLead || selectedLead.stageId === newStageId) return;
+    
+    const newStage = stages.find(s => s.id === newStageId);
+    if (!newStage) return;
+
+    // Optimistic Update
+    const updatedLead = { ...selectedLead, stageId: newStageId, stage: newStage };
+    setSelectedLead(updatedLead);
+    setLeads(prev => prev.map(l => l.id === selectedLead.id ? updatedLead : l));
+
+    try {
+      await updateLeadStage(selectedLead.id, newStageId);
+      fetchData();
+    } catch (e) {
+      console.error(e);
+      fetchData();
+    }
+  };
+
   const handleDropDelete = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
@@ -573,80 +593,103 @@ export default function LeadsKanban() {
       {/* Modal Lead Details (Premium 2-Columns) */}
       {selectedLead && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center z-50 p-4 sm:p-6">
-          <div className="bg-white w-full max-w-6xl h-full shadow-2xl flex flex-col md:flex-row rounded-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-white w-full max-w-6xl h-full shadow-2xl flex flex-col rounded-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             
-            {/* Left Column: Info */}
-            <div className="w-full md:w-[35%] lg:w-[30%] bg-slate-50 border-r border-slate-100 flex flex-col">
-              <div className="p-6 border-b border-slate-200 bg-white flex justify-between items-start">
-                <div>
-                  <div className="text-xs font-bold text-emerald-600 mb-1 uppercase tracking-wider">Etapa: {selectedLead.stage?.name || 'Desconhecida'}</div>
-                  <h2 className="text-xl font-black text-slate-800 leading-tight mb-1">{selectedLead.nomeFantasia}</h2>
-                  <p className="text-sm text-slate-500 flex items-center gap-1"><Building size={12}/> {selectedLead.segmento || 'Sem segmento'}</p>
-                </div>
-                <button onClick={() => setSelectedLead(null)} className="md:hidden text-slate-400 hover:text-slate-600 bg-slate-100 p-2 rounded-full"><X size={16}/></button>
-              </div>
+            {/* Top Pipeline Bar */}
+            <div className="w-full bg-slate-50 border-b border-slate-200 p-4 shrink-0 flex items-center overflow-x-auto gap-1 hidden md:flex">
+              {stages.map((stage, idx) => {
+                const currentIndex = stages.findIndex(s => s.id === selectedLead.stageId);
+                const isPast = idx < currentIndex;
+                const isCurrent = idx === currentIndex;
+                
+                let baseClass = "h-8 px-4 flex items-center justify-center text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-colors flex-1 min-w-[120px] relative cursor-pointer";
+                let colorClass = "bg-slate-200 text-slate-500 hover:bg-slate-300";
+                if (isCurrent) colorClass = "bg-emerald-500 text-white shadow-inner";
+                else if (isPast) colorClass = "bg-emerald-100 text-emerald-800 hover:bg-emerald-200";
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                <div>
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Valor Estimado</div>
-                  <div className="text-2xl font-black text-slate-800">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedLead.valorEst || 0)}
-                  </div>
-                </div>
-
-                <div className="space-y-4 pt-4 border-t border-slate-200">
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Contato</div>
-                  
-                  <div>
-                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><Users size={10}/> Nome</div>
-                    <div className="text-sm font-medium text-slate-700">{selectedLead.contatoNome || '-'}</div>
-                  </div>
-
-                  <div>
-                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><Phone size={10}/> Telefone</div>
-                    <div className="text-sm font-medium text-slate-700">
-                      {selectedLead.telefone ? (
-                        <div className="flex items-center justify-between group">
-                          <a href={`tel:${selectedLead.telefone.replace(/\D/g,'')}`} className="hover:text-emerald-600 transition-colors">{selectedLead.telefone}</a>
-                        </div>
-                      ) : '-'}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><Mail size={10}/> E-mail</div>
-                    <div className="text-sm font-medium text-slate-700">
-                      {selectedLead.email ? (
-                        <div className="flex items-center justify-between group">
-                          <a href={`mailto:${selectedLead.email}`} className="hover:text-emerald-600 transition-colors truncate max-w-[200px]" title={selectedLead.email}>{selectedLead.email}</a>
-                        </div>
-                      ) : '-'}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><MapPin size={10}/> Endereço</div>
-                    <div className="text-sm font-medium text-slate-700 mb-2">{selectedLead.endereco || '-'}</div>
-                    {selectedLead.endereco && (
-                      <div className="flex flex-col gap-2">
-                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedLead.endereco)}`} target="_blank" rel="noreferrer" className="w-full bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-blue-700 text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
-                          <MapPin size={14} /> Abrir no Maps
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 border-t border-slate-200 bg-white shrink-0 space-y-2">
-                <button 
-                  onClick={() => openConvertModal(selectedLead)}
-                  className="w-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 p-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors border border-emerald-200"
-                >
-                  <CheckCircle2 size={16} /> Converter para Cliente
-                </button>
-              </div>
+                return (
+                  <button 
+                    key={stage.id}
+                    onClick={() => handleStageChangeInModal(stage.id)}
+                    className={`${baseClass} ${colorClass} ${idx === 0 ? 'rounded-l-lg' : ''} ${idx === stages.length - 1 ? 'rounded-r-lg' : ''} ${idx !== stages.length - 1 ? 'mr-1' : ''}`}
+                    title={`Mover para ${stage.name}`}
+                  >
+                    {stage.name}
+                  </button>
+                )
+              })}
             </div>
+
+            {/* Main Body */}
+            <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+              
+              {/* Left Column: Info (Flat Design) */}
+              <div className="w-full md:w-[35%] lg:w-[30%] bg-white border-r border-slate-100 flex flex-col">
+                <div className="p-6 border-b border-slate-100 flex justify-between items-start">
+                  <div>
+                    <h2 className="text-xl font-black text-slate-800 leading-tight mb-1">{selectedLead.nomeFantasia}</h2>
+                    <p className="text-sm text-slate-500 flex items-center gap-1"><Building size={12}/> {selectedLead.segmento || 'Sem segmento'}</p>
+                  </div>
+                  <button onClick={() => setSelectedLead(null)} className="md:hidden text-slate-400 hover:text-slate-600 bg-slate-100 p-2 rounded-full"><X size={16}/></button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                  <div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Valor Estimado</div>
+                    <div className="text-2xl font-black text-slate-800">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedLead.valorEst || 0)}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 pt-4">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 pb-1 border-b border-slate-50">Contato</div>
+                    
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 flex items-center gap-1"><Users size={10}/> Nome</div>
+                      <div className="text-sm font-medium text-slate-800">{selectedLead.contatoNome || '-'}</div>
+                    </div>
+
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 flex items-center gap-1"><Phone size={10}/> Telefone</div>
+                      <div className="text-sm font-medium text-slate-800">
+                        {selectedLead.telefone ? (
+                          <a href={`tel:${selectedLead.telefone.replace(/\D/g,'')}`} className="hover:text-emerald-600 transition-colors">{selectedLead.telefone}</a>
+                        ) : '-'}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 flex items-center gap-1"><Mail size={10}/> E-mail</div>
+                      <div className="text-sm font-medium text-slate-800">
+                        {selectedLead.email ? (
+                          <a href={`mailto:${selectedLead.email}`} className="hover:text-emerald-600 transition-colors truncate max-w-[200px] block" title={selectedLead.email}>{selectedLead.email}</a>
+                        ) : '-'}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 flex items-center gap-1"><MapPin size={10}/> Endereço</div>
+                      <div className="text-sm font-medium text-slate-800 mb-2">{selectedLead.endereco || '-'}</div>
+                      {selectedLead.endereco && (
+                        <div className="flex flex-col gap-2">
+                          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedLead.endereco)}`} target="_blank" rel="noreferrer" className="w-full bg-slate-50 hover:bg-blue-50 text-blue-600 text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors border border-transparent hover:border-blue-200">
+                            <MapPin size={14} /> Abrir no Maps
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 border-t border-slate-100 shrink-0 space-y-2">
+                  <button 
+                    onClick={() => openConvertModal(selectedLead)}
+                    className="w-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 p-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors border border-emerald-200"
+                  >
+                    <CheckCircle2 size={16} /> Converter para Cliente
+                  </button>
+                </div>
+              </div>
 
             {/* Right Column: Dynamic Feed & Tabs */}
             <div className="w-full md:w-[65%] lg:w-[70%] flex flex-col bg-white">
@@ -658,6 +701,7 @@ export default function LeadsKanban() {
               </div>
             </div>
 
+            </div> {/* Fim do Main Body */}
           </div>
         </div>
       )}
