@@ -60,6 +60,49 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
     if (res.success) setShares(res.shares || []);
   };
 
+  const handleAddComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    const res = await addComment(lead.id, newComment);
+    if (res.success) {
+      setNewComment('');
+      loadComments();
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Arquivo excede limite de 10MB");
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result as string;
+      const res = await uploadFileBase64(lead.id, file.name, file.size, file.type, base64);
+      if (res.success) {
+        loadFiles();
+      } else {
+        alert("Erro no upload");
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDownload = async (fileId: string, fileName: string) => {
+    const res = await downloadFile(fileId);
+    if (res.success && res.file?.base64Data) {
+      const a = document.createElement('a');
+      a.href = res.file.base64Data;
+      a.download = fileName;
+      a.click();
+    } else {
+      alert("Erro ao baixar arquivo");
+    }
+  };
+
   const loadAllUsers = async () => {
     const res = await getAllUsers();
     if (res.success) setAllUsers(res.users);
