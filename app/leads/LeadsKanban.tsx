@@ -278,9 +278,15 @@ export default function LeadsKanban() {
           {stages.map((stage, idx) => {
             const stageLeads = leads.filter(l => l.stageId === stage.id);
             const isFirst = idx === 0;
-            const isLast = idx === stages.length - 1;
-            const headerBg = (stage.color || 'bg-slate-100').replace('100', '200').replace('50', '200');
-            const headerTextColorClass = headerBg.replace('bg-', 'text-');
+            const colorMap: Record<string, string> = {
+              'bg-slate-100': 'text-slate-400',
+              'bg-blue-100': 'text-blue-400',
+              'bg-emerald-100': 'text-emerald-400',
+              'bg-amber-100': 'text-amber-400',
+              'bg-rose-100': 'text-rose-400',
+              'bg-purple-100': 'text-purple-400',
+            };
+            const headerTextColorClass = colorMap[stage.color || 'bg-slate-100'] || 'text-slate-400';
             
             const points = isFirst ? "0,0 320,0 336,32 320,64 0,64" : "0,0 320,0 336,32 320,64 0,64 16,32";
 
