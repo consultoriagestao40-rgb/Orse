@@ -175,7 +175,7 @@ export async function createLead(data: any) {
       return { success: false, error: 'Nenhum estágio disponível. Crie estágios primeiro.' };
     }
 
-    const { site, ...dbData } = data; // Extrai o site para não quebrar o Prisma, já que a coluna não existe nativamente
+    const { site, porte, avaliacoes, ...dbData } = data; // Extrai campos virtuais para não quebrar o Prisma
 
     const lead = await prisma.lead.create({
       data: {
@@ -186,6 +186,9 @@ export async function createLead(data: any) {
     });
 
     let historyDesc = `Lead cadastrado no sistema por ${user.nome}.`;
+    if (porte) {
+      historyDesc += ` Porte: ${porte} (${avaliacoes} avaliações no Google).`;
+    }
     if (site) {
       historyDesc += ` Website: ${site}`;
     }

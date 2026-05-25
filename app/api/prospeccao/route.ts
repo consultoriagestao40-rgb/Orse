@@ -47,7 +47,7 @@ export async function POST(req: Request) {
           headers: {
             'Content-Type': 'application/json',
             'X-Goog-Api-Key': API_KEY,
-            'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,nextPageToken'
+            'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.userRatingCount,nextPageToken'
           },
           body: JSON.stringify(body)
         });
@@ -99,14 +99,27 @@ export async function POST(req: Request) {
     });
     const uniqueResults = Array.from(uniqueResultsMap.values());
 
-    const results = uniqueResults.map((place: any) => ({
-      nomeFantasia: place.displayName?.text || 'Nome não informado',
-      endereco: place.formattedAddress || 'Endereço não informado',
-      telefone: place.nationalPhoneNumber || 'Não informado',
-      site: place.websiteUri || null,
-      segmento: termo,
-      placeId: place.id
-    }));
+    const results = uniqueResults.map((place: any) => {
+      // Estimar o porte da empresa baseado no número de avaliações no Google
+      const reviews = place.userRatingCount || 0;
+      let porteEstimado = 'Pequeno';
+      if (reviews > 500) {
+        porteEstimado = 'Grande';
+      } else if (reviews > 100) {
+        porteEstimado = 'Médio';
+      }
+
+      return {
+        nomeFantasia: place.displayName?.text || 'Nome não informado',
+        endereco: place.formattedAddress || 'Endereço não informado',
+        telefone: place.nationalPhoneNumber || 'Não informado',
+        site: place.websiteUri || null,
+        porte: porteEstimado,
+        avaliacoes: reviews,
+        segmento: termo,
+        placeId: place.id
+      };
+    });
 
     return NextResponse.json({ success: true, results });
   } catch (error: any) {

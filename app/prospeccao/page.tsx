@@ -60,13 +60,14 @@ export default function ProspeccaoPage() {
       
       let injectedCount = 0;
       for (const lead of selectedLeads) {
-        // Envia para o Pipeline (primeira coluna)
         const res = await createLead({
           nomeFantasia: lead.nomeFantasia,
           endereco: lead.endereco,
           telefone: lead.telefone,
           segmento: lead.segmento,
-          site: lead.site // Enviando site oculto no data
+          site: lead.site,
+          porte: lead.porte,
+          avaliacoes: lead.avaliacoes
         });
         if (res.success) injectedCount++;
       }
@@ -183,9 +184,19 @@ export default function ProspeccaoPage() {
                         </a>
                       )}
                     </div>
-                    <div className="ml-auto text-right">
+                    <div className="ml-auto text-right flex flex-col items-end gap-1">
                       <div className="text-sm font-bold text-slate-700">{item.telefone}</div>
-                      <div className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded inline-block mt-1">{item.segmento}</div>
+                      <div className="flex gap-1">
+                        <div className="text-[10px] font-bold uppercase text-white bg-slate-800 px-2 py-0.5 rounded">
+                          Porte {item.porte}
+                        </div>
+                        <div className="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-medium border border-slate-200">
+                          {item.avaliacoes} avaliações
+                        </div>
+                        <div className="text-[10px] text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                          {item.segmento}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
