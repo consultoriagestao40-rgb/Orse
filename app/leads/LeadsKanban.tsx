@@ -6,6 +6,7 @@ import { Plus, User, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X
 import { useRouter } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
+import PipelineMetrics from './components/PipelineMetrics';
 
 const safeDate = (val: any) => {
   if (!val) return 'Data Inválida';
@@ -176,8 +177,10 @@ export default function LeadsKanban() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-x-auto p-6">
-        <div className="flex gap-6 h-full items-start">
+      <div className="flex flex-col flex-1 overflow-hidden p-6 bg-slate-50">
+        <PipelineMetrics leads={leads} stages={stages} />
+        <div className="flex-1 overflow-x-auto pb-4">
+          <div className="flex gap-4 h-full min-h-0">
           {stages.map(stage => {
             const stageLeads = leads.filter(l => l.stageId === stage.id);
             return (
