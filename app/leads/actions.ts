@@ -139,6 +139,31 @@ export async function updateLeadStage(leadId: string, stageId: string) {
   }
 }
 
+export async function updateLeadData(leadId: string, data: { nomeFantasia?: string, contatoNome?: string, telefone?: string, email?: string }) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const lead = await prisma.lead.update({
+      where: { id: leadId },
+      data
+    });
+
+    await prisma.leadHistory.create({
+      data: {
+        leadId,
+        tipo: 'ANOTACAO',
+        descricao: `Dados do lead atualizados por ${user.nome}`
+      }
+    });
+
+    revalidatePath('/leads');
+    return { success: true, lead };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 export async function updateLeadStageColor(stageId: string, color: string) {
   try {
     await prisma.leadStage.update({

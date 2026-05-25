@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead } from './actions';
-import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays } from 'lucide-react';
+import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData } from './actions';
+import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
@@ -183,6 +183,26 @@ export default function LeadsKanban() {
     } catch (e) {
       console.error(e);
       fetchData();
+    }
+  };
+
+  const [isEditingLead, setIsEditingLead] = useState(false);
+  const [editLeadForm, setEditLeadForm] = useState<any>({});
+
+  const handleSaveLeadEdit = async () => {
+    if (!selectedLead) return;
+    const res = await updateLeadData(selectedLead.id, {
+      nomeFantasia: editLeadForm.nomeFantasia,
+      contatoNome: editLeadForm.contatoNome,
+      telefone: editLeadForm.telefone,
+      email: editLeadForm.email
+    });
+    if (res.success) {
+      setSelectedLead(res.lead);
+      setIsEditingLead(false);
+      fetchData();
+    } else {
+      alert(res.error);
     }
   };
 
@@ -596,22 +616,24 @@ export default function LeadsKanban() {
           <div className="bg-white w-full max-w-6xl h-full shadow-2xl flex flex-col rounded-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             
             {/* Top Pipeline Bar */}
-            <div className="w-full bg-slate-50 border-b border-slate-200 p-4 shrink-0 flex items-center overflow-x-auto gap-1 hidden md:flex">
+            <div className="w-full bg-slate-50 border-b border-slate-200 p-2 shrink-0 flex items-center overflow-x-auto gap-1 hidden md:flex">
               {stages.map((stage, idx) => {
                 const currentIndex = stages.findIndex(s => s.id === selectedLead.stageId);
+                const currentStageColor = currentIndex >= 0 ? stages[currentIndex].color : 'bg-slate-300';
                 const isPast = idx < currentIndex;
                 const isCurrent = idx === currentIndex;
                 
                 let baseClass = "h-8 px-4 flex items-center justify-center text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-colors flex-1 min-w-[120px] relative cursor-pointer";
                 let colorClass = "bg-slate-200 text-slate-500 hover:bg-slate-300";
-                if (isCurrent) colorClass = "bg-emerald-500 text-white shadow-inner";
-                else if (isPast) colorClass = "bg-emerald-100 text-emerald-800 hover:bg-emerald-200";
+                
+                if (isCurrent) colorClass = `${currentStageColor || 'bg-slate-300'} text-slate-800 shadow-md border-b-2 border-slate-800`;
+                else if (isPast) colorClass = `${currentStageColor || 'bg-slate-300'} text-slate-800`;
 
                 return (
                   <button 
                     key={stage.id}
                     onClick={() => handleStageChangeInModal(stage.id)}
-                    className={`${baseClass} ${colorClass} ${idx === 0 ? 'rounded-l-lg' : ''} ${idx === stages.length - 1 ? 'rounded-r-lg' : ''} ${idx !== stages.length - 1 ? 'mr-1' : ''}`}
+                    className={`${baseClass} ${colorClass} rounded-lg`}
                     title={`Mover para ${stage.name}`}
                   >
                     {stage.name}
@@ -625,47 +647,76 @@ export default function LeadsKanban() {
               
               {/* Left Column: Info (Flat Design) */}
               <div className="w-full md:w-[35%] lg:w-[30%] bg-white border-r border-slate-100 flex flex-col">
-                <div className="p-6 border-b border-slate-100 flex justify-between items-start">
-                  <div>
-                    <h2 className="text-xl font-black text-slate-800 leading-tight mb-1">{selectedLead.nomeFantasia}</h2>
-                    <p className="text-sm text-slate-500 flex items-center gap-1"><Building size={12}/> {selectedLead.segmento || 'Sem segmento'}</p>
-                  </div>
-                  <button onClick={() => setSelectedLead(null)} className="md:hidden text-slate-400 hover:text-slate-600 bg-slate-100 p-2 rounded-full"><X size={16}/></button>
+                <div className="p-6 border-b border-slate-100 flex justify-between items-start group relative">
+                  {isEditingLead ? (
+                    <div className="w-full">
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nome Fantasia</label>
+                      <input value={editLeadForm.nomeFantasia || ''} onChange={e => setEditLeadForm({...editLeadForm, nomeFantasia: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 mb-2" />
+                    </div>
+                  ) : (
+                    <div>
+                      <h2 className="text-xl font-black text-slate-800 leading-tight mb-1 pr-6">{selectedLead.nomeFantasia}</h2>
+                      <p className="text-sm text-slate-500 flex items-center gap-1"><Building size={12}/> {selectedLead.segmento || 'Sem segmento'}</p>
+                    </div>
+                  )}
+                  
+                  {!isEditingLead && (
+                    <button onClick={() => { setIsEditingLead(true); setEditLeadForm(selectedLead); }} className="absolute right-6 top-6 text-slate-300 hover:text-emerald-600 transition-colors hidden md:block group-hover:block"><Edit2 size={14}/></button>
+                  )}
+                  <button onClick={() => setSelectedLead(null)} className="md:hidden text-slate-400 hover:text-slate-600 bg-slate-100 p-2 rounded-full absolute right-4 top-4"><X size={16}/></button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                  <div>
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Valor Estimado</div>
-                    <div className="text-2xl font-black text-slate-800">
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedLead.valorEst || 0)}
-                    </div>
-                  </div>
 
-                  <div className="space-y-4 pt-4">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 pb-1 border-b border-slate-50">Contato</div>
+                  <div className="space-y-4">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 pb-1 border-b border-slate-50 flex justify-between items-center">
+                      Contato
+                      {isEditingLead && (
+                        <button onClick={handleSaveLeadEdit} className="text-emerald-600 hover:text-emerald-700 flex items-center gap-1"><Save size={12}/> Salvar</button>
+                      )}
+                    </div>
                     
-                    <div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 flex items-center gap-1"><Users size={10}/> Nome</div>
-                      <div className="text-sm font-medium text-slate-800">{selectedLead.contatoNome || '-'}</div>
-                    </div>
-
-                    <div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 flex items-center gap-1"><Phone size={10}/> Telefone</div>
-                      <div className="text-sm font-medium text-slate-800">
-                        {selectedLead.telefone ? (
-                          <a href={`tel:${selectedLead.telefone.replace(/\D/g,'')}`} className="hover:text-emerald-600 transition-colors">{selectedLead.telefone}</a>
-                        ) : '-'}
+                    {isEditingLead ? (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Nome do Contato</label>
+                          <input value={editLeadForm.contatoNome || ''} onChange={e => setEditLeadForm({...editLeadForm, contatoNome: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm text-slate-800" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Telefone</label>
+                          <input value={editLeadForm.telefone || ''} onChange={e => setEditLeadForm({...editLeadForm, telefone: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm text-slate-800" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">E-mail</label>
+                          <input value={editLeadForm.email || ''} onChange={e => setEditLeadForm({...editLeadForm, email: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm text-slate-800" />
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <>
+                        <div>
+                          <div className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 flex items-center gap-1"><Users size={10}/> Nome</div>
+                          <div className="text-sm font-medium text-slate-800">{selectedLead.contatoNome || '-'}</div>
+                        </div>
 
-                    <div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 flex items-center gap-1"><Mail size={10}/> E-mail</div>
-                      <div className="text-sm font-medium text-slate-800">
-                        {selectedLead.email ? (
-                          <a href={`mailto:${selectedLead.email}`} className="hover:text-emerald-600 transition-colors truncate max-w-[200px] block" title={selectedLead.email}>{selectedLead.email}</a>
-                        ) : '-'}
-                      </div>
-                    </div>
+                        <div>
+                          <div className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 flex items-center gap-1"><Phone size={10}/> Telefone</div>
+                          <div className="text-sm font-medium text-slate-800">
+                            {selectedLead.telefone ? (
+                              <a href={`tel:${selectedLead.telefone.replace(/\D/g,'')}`} className="hover:text-emerald-600 transition-colors">{selectedLead.telefone}</a>
+                            ) : '-'}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 flex items-center gap-1"><Mail size={10}/> E-mail</div>
+                          <div className="text-sm font-medium text-slate-800">
+                            {selectedLead.email ? (
+                              <a href={`mailto:${selectedLead.email}`} className="hover:text-emerald-600 transition-colors truncate max-w-[200px] block" title={selectedLead.email}>{selectedLead.email}</a>
+                            ) : '-'}
+                          </div>
+                        </div>
+                      </>
+                    )}
 
                     <div>
                       <div className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 flex items-center gap-1"><MapPin size={10}/> Endereço</div>
