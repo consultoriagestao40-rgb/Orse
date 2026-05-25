@@ -20,7 +20,7 @@ export interface ParsedEmail {
   createdAt: Date;
 }
 
-export function parseEmailComment(comment: any): ParsedEmail {
+function parseEmailComment(comment: any): ParsedEmail {
   const text = comment.texto || '';
   const isOutbound = text.startsWith('📧 [E-mail Enviado]');
   
