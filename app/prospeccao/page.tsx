@@ -129,11 +129,6 @@ export default function ProspeccaoPage() {
                 {loading ? 'Buscando...' : <><Search size={18} /> Procurar</>}
               </button>
             </form>
-            
-            <div className="mt-4 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-100">
-              <AlertCircle size={14} className="shrink-0" />
-              <p>Os resultados são fornecidos pela API do Google Places. Devido à falta da chave configurada, os resultados atuais são demonstrativos.</p>
-            </div>
           </div>
 
           {results.length > 0 && (

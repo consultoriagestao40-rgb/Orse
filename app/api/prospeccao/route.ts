@@ -8,7 +8,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Termo e localização são obrigatórios' }, { status: 400 });
     }
 
-    const API_KEY = process.env.GOOGLE_PLACES_API_KEY;
+    const API_KEY = process.env.GOOGLE_PLACES_API_KEY || "AIzaSyAC3N2c4ByVQ2EycJKbpBcZ-TARIVtHZXU";
 
     // Se não tiver chave da API, usamos mock para demonstração
     if (!API_KEY) {
