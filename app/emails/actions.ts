@@ -130,3 +130,127 @@ export async function deleteEmail(commentId: string) {
     return { success: false, error: error.message || String(error) };
   }
 }
+
+export async function getSmtpAccounts() {
+  try {
+    const accounts = await prisma.smtpAccount.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    return { success: true, accounts };
+  } catch (error: any) {
+    console.error('❌ Error getting SMTP accounts:', error);
+    return { success: false, error: error.message || String(error) };
+  }
+}
+
+export async function createSmtpAccount(data: {
+  nome: string;
+  host: string;
+  port: number;
+  user: string;
+  password?: string;
+  fromEmail: string;
+  fromName: string;
+  active?: boolean;
+}) {
+  try {
+    // Se for ativar esta, desativa as outras para garantir somente uma ativa por vez
+    if (data.active) {
+      await prisma.smtpAccount.updateMany({
+        data: { active: false }
+      });
+    }
+
+    const account = await prisma.smtpAccount.create({
+      data: {
+        nome: data.nome,
+        host: data.host,
+        port: Number(data.port),
+        user: data.user,
+        password: data.password || '',
+        fromEmail: data.fromEmail,
+        fromName: data.fromName,
+        active: data.active !== undefined ? data.active : true,
+      }
+    });
+
+    revalidatePath('/emails');
+    return { success: true, account };
+  } catch (error: any) {
+    console.error('❌ Error creating SMTP account:', error);
+    return { success: false, error: error.message || String(error) };
+  }
+}
+
+export async function updateSmtpAccount(id: string, data: {
+  nome?: string;
+  host?: string;
+  port?: number;
+  user?: string;
+  password?: string;
+  fromEmail?: string;
+  fromName?: string;
+  active?: boolean;
+}) {
+  try {
+    // Se for ativar esta, desativa as outras
+    if (data.active) {
+      await prisma.smtpAccount.updateMany({
+        where: { id: { not: id } },
+        data: { active: false }
+      });
+    }
+
+    const updateData: any = { ...data };
+    if (data.port !== undefined) {
+      updateData.port = Number(data.port);
+    }
+
+    const account = await prisma.smtpAccount.update({
+      where: { id },
+      data: updateData
+    });
+
+    revalidatePath('/emails');
+    return { success: true, account };
+  } catch (error: any) {
+    console.error('❌ Error updating SMTP account:', error);
+    return { success: false, error: error.message || String(error) };
+  }
+}
+
+export async function deleteSmtpAccount(id: string) {
+  try {
+    await prisma.smtpAccount.delete({
+      where: { id }
+    });
+    revalidatePath('/emails');
+    return { success: true };
+  } catch (error: any) {
+    console.error('❌ Error deleting SMTP account:', error);
+    return { success: false, error: error.message || String(error) };
+  }
+}
+
+export async function toggleSmtpAccountActive(id: string, active: boolean) {
+  try {
+    if (active) {
+      // Desativa todas as outras contas
+      await prisma.smtpAccount.updateMany({
+        where: { id: { not: id } },
+        data: { active: false }
+      });
+    }
+
+    const account = await prisma.smtpAccount.update({
+      where: { id },
+      data: { active }
+    });
+
+    revalidatePath('/emails');
+    return { success: true, account };
+  } catch (error: any) {
+    console.error('❌ Error toggling SMTP account active state:', error);
+    return { success: false, error: error.message || String(error) };
+  }
+}

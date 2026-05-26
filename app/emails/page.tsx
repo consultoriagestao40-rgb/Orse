@@ -2,7 +2,16 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Sidebar from '@/components/Sidebar';
-import { getEmails, deleteEmail, ParsedEmail } from './actions';
+import { 
+  getEmails, 
+  deleteEmail, 
+  ParsedEmail,
+  getSmtpAccounts,
+  createSmtpAccount,
+  updateSmtpAccount,
+  deleteSmtpAccount,
+  toggleSmtpAccountActive
+} from './actions';
 import { 
   Search, 
   Mail, 
@@ -13,12 +22,17 @@ import {
   Calendar, 
   Inbox, 
   Send, 
-  ChevronRight, 
   RefreshCw, 
   AlertCircle,
-  Clock,
   User,
-  Sparkles
+  Sparkles,
+  Settings,
+  X,
+  Plus,
+  Check,
+  ToggleLeft,
+  ToggleRight,
+  Edit2
 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -27,6 +41,7 @@ function EmailCenterContent() {
   const searchParams = useSearchParams();
   const leadIdParam = searchParams.get('leadId');
 
+  // Core Emails State
   const [emails, setEmails] = useState<ParsedEmail[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,8 +49,29 @@ function EmailCenterContent() {
   const [selectedEmail, setSelectedEmail] = useState<ParsedEmail | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
+  // SMTP Accounts State
+  const [smtpAccounts, setSmtpAccounts] = useState<any[]>([]);
+  const [showSmtpModal, setShowSmtpModal] = useState(false);
+  const [smtpLoading, setSmtpLoading] = useState(false);
+  
+  // SMTP Form State
+  const [smtpForm, setSmtpForm] = useState({
+    id: '',
+    nome: '',
+    host: '',
+    port: 587,
+    user: '',
+    password: '',
+    fromEmail: '',
+    fromName: '',
+    active: true
+  });
+  
+  const [isEditingSmtp, setIsEditingSmtp] = useState(false);
+
   useEffect(() => {
     loadEmails();
+    loadSmtpAccounts();
   }, []);
 
   const loadEmails = async () => {
@@ -62,6 +98,17 @@ function EmailCenterContent() {
     }
   };
 
+  const loadSmtpAccounts = async () => {
+    try {
+      const res = await getSmtpAccounts();
+      if (res.success) {
+        setSmtpAccounts(res.accounts || []);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar contas SMTP:', err);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Deseja realmente excluir este registro de e-mail?')) return;
     
@@ -69,11 +116,9 @@ function EmailCenterContent() {
     try {
       const res = await deleteEmail(id);
       if (res.success) {
-        // Remove from list
         const updated = emails.filter(e => e.id !== id);
         setEmails(updated);
         
-        // Update selected email
         if (selectedEmail?.id === id) {
           setSelectedEmail(updated.length > 0 ? updated[0] : null);
         }
@@ -88,16 +133,117 @@ function EmailCenterContent() {
     }
   };
 
+  // SMTP Event Handlers
+  const handleSaveSmtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!smtpForm.nome.trim() || !smtpForm.host.trim() || !smtpForm.user.trim() || !smtpForm.fromEmail.trim() || !smtpForm.fromName.trim()) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    setSmtpLoading(true);
+    try {
+      let res;
+      if (isEditingSmtp && smtpForm.id) {
+        res = await updateSmtpAccount(smtpForm.id, smtpForm);
+      } else {
+        res = await createSmtpAccount(smtpForm);
+      }
+
+      if (res.success) {
+        setSmtpForm({
+          id: '',
+          nome: '',
+          host: '',
+          port: 587,
+          user: '',
+          password: '',
+          fromEmail: '',
+          fromName: '',
+          active: true
+        });
+        setIsEditingSmtp(false);
+        await loadSmtpAccounts();
+        alert(isEditingSmtp ? 'Conta SMTP atualizada com sucesso!' : 'Nova conta SMTP cadastrada com sucesso!');
+      } else {
+        alert('Erro ao salvar conta SMTP: ' + res.error);
+      }
+    } catch (err: any) {
+      alert('Erro ao cadastrar conta SMTP: ' + (err.message || String(err)));
+    } finally {
+      setSmtpLoading(false);
+    }
+  };
+
+  const handleEditSmtpClick = (account: any) => {
+    setSmtpForm({
+      id: account.id,
+      nome: account.nome,
+      host: account.host,
+      port: account.port,
+      user: account.user,
+      password: '', // Deixar a senha em branco por segurança, preenche se quiser alterar
+      fromEmail: account.fromEmail,
+      fromName: account.fromName,
+      active: account.active
+    });
+    setIsEditingSmtp(true);
+  };
+
+  const handleDeleteSmtpClick = async (id: string) => {
+    if (!confirm('Deseja realmente excluir esta conta SMTP? Os envios dinâmicos por ela serão desativados.')) return;
+    setSmtpLoading(true);
+    try {
+      const res = await deleteSmtpAccount(id);
+      if (res.success) {
+        await loadSmtpAccounts();
+      } else {
+        alert('Erro ao excluir conta SMTP: ' + res.error);
+      }
+    } catch (err: any) {
+      alert('Erro inesperado: ' + (err.message || String(err)));
+    } finally {
+      setSmtpLoading(false);
+    }
+  };
+
+  const handleToggleSmtpActiveClick = async (id: string, currentActive: boolean) => {
+    setSmtpLoading(true);
+    try {
+      const res = await toggleSmtpAccountActive(id, !currentActive);
+      if (res.success) {
+        await loadSmtpAccounts();
+      } else {
+        alert('Erro ao alterar status de ativação: ' + res.error);
+      }
+    } catch (err: any) {
+      alert('Erro inesperado: ' + (err.message || String(err)));
+    } finally {
+      setSmtpLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setSmtpForm({
+      id: '',
+      nome: '',
+      host: '',
+      port: 587,
+      user: '',
+      password: '',
+      fromEmail: '',
+      fromName: '',
+      active: true
+    });
+    setIsEditingSmtp(false);
+  };
+
   // Filter emails based on search term and tab selection
   const filteredEmails = emails.filter(email => {
-    // Lead ID preset filter
     if (leadIdParam && email.leadId !== leadIdParam) return false;
-
-    // Tab Type Filter
     if (filterType === 'sent' && email.direction !== 'SENT') return false;
     if (filterType === 'received' && email.direction !== 'RECEIVED') return false;
 
-    // Search Term Filter
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
     return (
@@ -117,24 +263,33 @@ function EmailCenterContent() {
   const uniqueLeadsCount = new Set(emails.map(e => e.leadId)).size;
 
   return (
-    <div className="flex flex-col h-screen bg-slate-900 text-slate-100 overflow-hidden font-sans">
+    <div className="flex flex-col h-screen bg-[#F8FAFC] text-slate-700 overflow-hidden font-sans">
       {/* Upper header block with metadata cards */}
-      <div className="p-6 bg-slate-950/60 border-b border-slate-800 flex flex-col md:flex-row justify-between md:items-center gap-4 shrink-0 backdrop-blur-md">
+      <div className="p-6 bg-white border-b border-slate-200 flex flex-col md:flex-row justify-between md:items-center gap-4 shrink-0 shadow-xs">
         <div>
           <div className="flex items-center gap-2">
-            <span className="bg-[#1B4D3E]/30 text-emerald-400 text-xs px-2.5 py-1 rounded-full font-bold flex items-center gap-1 border border-emerald-500/20">
+            <span className="bg-[#1B4D3E]/10 text-[#1B4D3E] text-xs px-2.5 py-1 rounded-full font-black flex items-center gap-1 border border-[#1B4D3E]/20">
               <Sparkles size={12} /> Email Center
             </span>
           </div>
-          <h1 className="text-xl md:text-2xl font-black text-slate-100 mt-1">Gestão de E-mails</h1>
-          <p className="text-xs md:text-sm text-slate-400">Histórico unificado de correspondências de leads</p>
+          <h1 className="text-xl md:text-2xl font-black text-slate-800 mt-1 uppercase tracking-wider">Gestão de E-mails</h1>
+          <p className="text-xs md:text-sm text-slate-500 font-bold uppercase tracking-tight">Histórico unificado de correspondências de leads</p>
         </div>
         
         <div className="flex items-center gap-3">
           <button 
+            onClick={() => setShowSmtpModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 text-xs md:text-sm bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl font-bold transition-all shadow-sm flex-shrink-0"
+            title="Configurar contas SMTP de e-mail"
+          >
+            <Settings size={15} />
+            Configurar Contas
+          </button>
+
+          <button 
             onClick={loadEmails}
             disabled={loading}
-            className="flex items-center gap-2 px-3.5 py-2 text-xs md:text-sm bg-slate-800/80 hover:bg-slate-800 text-slate-200 border border-slate-700/60 rounded-xl font-bold transition-all hover:border-slate-600 disabled:opacity-50"
+            className="flex items-center gap-2 px-3.5 py-2.5 text-xs md:text-sm bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl font-bold transition-all disabled:opacity-50 flex-shrink-0"
             title="Recarregar e-mails"
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
@@ -144,40 +299,40 @@ function EmailCenterContent() {
       </div>
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-6 py-4 bg-slate-950/30 border-b border-slate-800 shrink-0">
-        <div className="bg-slate-950/40 p-3.5 rounded-2xl border border-slate-800/80 flex items-center justify-between">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-6 py-4 bg-slate-50 border-b border-slate-200 shrink-0">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between transition-all hover:shadow-sm">
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Total Processado</p>
-            <h3 className="text-lg font-black text-slate-100 mt-0.5">{totalCount}</h3>
+            <p className="text-[10px] uppercase tracking-wider text-slate-400 font-black">Total Processado</p>
+            <h3 className="text-lg font-black text-slate-800 mt-0.5">{totalCount}</h3>
           </div>
-          <div className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400">
+          <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500">
             <Mail size={16} />
           </div>
         </div>
-        <div className="bg-slate-950/40 p-3.5 rounded-2xl border border-slate-800/80 flex items-center justify-between">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between transition-all hover:shadow-sm">
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Enviados</p>
-            <h3 className="text-lg font-black text-emerald-400 mt-0.5">{sentCount}</h3>
+            <p className="text-[10px] uppercase tracking-wider text-emerald-600 font-black">Enviados</p>
+            <h3 className="text-lg font-black text-emerald-600 mt-0.5">{sentCount}</h3>
           </div>
-          <div className="w-9 h-9 rounded-xl bg-emerald-950/30 border border-emerald-800/30 flex items-center justify-center text-emerald-400">
+          <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
             <Send size={16} />
           </div>
         </div>
-        <div className="bg-slate-950/40 p-3.5 rounded-2xl border border-slate-800/80 flex items-center justify-between">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between transition-all hover:shadow-sm">
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Recebidos</p>
-            <h3 className="text-lg font-black text-blue-400 mt-0.5">{receivedCount}</h3>
+            <p className="text-[10px] uppercase tracking-wider text-blue-600 font-black">Recebidos</p>
+            <h3 className="text-lg font-black text-blue-600 mt-0.5">{receivedCount}</h3>
           </div>
-          <div className="w-9 h-9 rounded-xl bg-blue-950/30 border border-blue-800/30 flex items-center justify-center text-blue-400">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
             <Inbox size={16} />
           </div>
         </div>
-        <div className="bg-slate-950/40 p-3.5 rounded-2xl border border-slate-800/80 flex items-center justify-between">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between transition-all hover:shadow-sm">
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Leads Ativos</p>
-            <h3 className="text-lg font-black text-purple-400 mt-0.5">{uniqueLeadsCount}</h3>
+            <p className="text-[10px] uppercase tracking-wider text-purple-600 font-black">Leads Ativos</p>
+            <h3 className="text-lg font-black text-purple-600 mt-0.5">{uniqueLeadsCount}</h3>
           </div>
-          <div className="w-9 h-9 rounded-xl bg-purple-950/30 border border-purple-800/30 flex items-center justify-center text-purple-400">
+          <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
             <User size={16} />
           </div>
         </div>
@@ -186,60 +341,60 @@ function EmailCenterContent() {
       {/* Main split work-area */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Side: Email List pane */}
-        <div className="w-full lg:w-[420px] shrink-0 border-r border-slate-800 flex flex-col h-full bg-slate-950/15">
+        <div className="w-full lg:w-[420px] shrink-0 border-r border-slate-200 flex flex-col h-full bg-white">
           {/* Filtering and search inputs */}
-          <div className="p-4 border-b border-slate-800 bg-slate-950/35 space-y-3">
+          <div className="p-4 border-b border-slate-100 bg-white space-y-3">
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={15} />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
               <input 
                 type="text"
                 placeholder="Buscar e-mails ou leads..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs md:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/30 transition-all"
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs md:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/30 transition-all font-medium"
               />
             </div>
 
-            <div className="flex gap-1.5 p-1 bg-slate-900 rounded-xl border border-slate-800/60">
+            <div className="flex gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200/50">
               <button
                 onClick={() => setFilterType('all')}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${filterType === 'all' ? 'bg-slate-800 text-slate-100 shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${filterType === 'all' ? 'bg-white text-slate-800 shadow-sm border border-slate-200/40' : 'text-slate-500 hover:text-slate-800'}`}
               >
                 Todos
               </button>
               <button
                 onClick={() => setFilterType('sent')}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${filterType === 'sent' ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-900/50 shadow-sm' : 'text-slate-400 hover:text-emerald-400'}`}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${filterType === 'sent' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm' : 'text-slate-500 hover:text-emerald-700'}`}
               >
                 <Send size={11} /> Enviados
               </button>
               <button
                 onClick={() => setFilterType('received')}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${filterType === 'received' ? 'bg-blue-950/50 text-blue-400 border border-blue-900/50 shadow-sm' : 'text-slate-400 hover:text-blue-400'}`}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${filterType === 'received' ? 'bg-blue-50 text-blue-700 border border-blue-100 shadow-sm' : 'text-slate-500 hover:text-blue-700'}`}
               >
                 <Inbox size={11} /> Recebidos
               </button>
             </div>
             
             {leadIdParam && (
-              <div className="flex items-center justify-between p-2 rounded-lg bg-amber-950/20 border border-amber-900/30 text-[11px] text-amber-400">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-700 font-bold">
                 <span>Filtrando por lead específico</span>
-                <Link href="/emails" className="underline hover:text-amber-300 font-bold">Limpar filtro</Link>
+                <Link href="/emails" className="underline hover:text-amber-800 font-bold">Limpar filtro</Link>
               </div>
             )}
           </div>
 
           {/* Email Scrollable List */}
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-800/50 scrollbar-thin">
+          <div className="flex-1 overflow-y-auto divide-y divide-slate-100 scrollbar-thin">
             {loading ? (
-              <div className="p-8 text-center text-slate-500 space-y-2">
-                <RefreshCw className="animate-spin mx-auto text-emerald-500" size={24} />
-                <p className="text-xs">Carregando e-mails...</p>
+              <div className="p-8 text-center text-slate-400 space-y-2">
+                <RefreshCw className="animate-spin mx-auto text-[#1B4D3E]" size={24} />
+                <p className="text-xs font-bold uppercase tracking-wider">Carregando e-mails...</p>
               </div>
             ) : filteredEmails.length === 0 ? (
-              <div className="p-12 text-center text-slate-500 space-y-3">
-                <AlertCircle className="mx-auto text-slate-600" size={32} />
-                <p className="text-xs font-medium">Nenhum e-mail correspondente encontrado.</p>
+              <div className="p-12 text-center text-slate-400 space-y-3">
+                <AlertCircle className="mx-auto text-slate-300" size={32} />
+                <p className="text-xs font-bold uppercase tracking-wider">Nenhum e-mail encontrado.</p>
               </div>
             ) : (
               filteredEmails.map(email => {
@@ -250,31 +405,31 @@ function EmailCenterContent() {
                   <div
                     key={email.id}
                     onClick={() => setSelectedEmail(email)}
-                    className={`p-4 cursor-pointer transition-all flex gap-3 relative ${
+                    className={`p-4 cursor-pointer transition-all flex gap-3 relative border-b border-slate-100 ${
                       isSelected 
-                        ? 'bg-slate-800/60 border-l-4 border-emerald-500' 
-                        : 'hover:bg-slate-900/40 border-l-4 border-transparent'
+                        ? 'bg-slate-50/80 border-l-4 border-[#1B4D3E]' 
+                        : 'hover:bg-slate-50/40 border-l-4 border-transparent'
                     }`}
                   >
                     {/* Direction icon badge */}
-                    <div className={`w-8 h-8 rounded-xl shrink-0 flex items-center justify-center ${
+                    <div className={`w-8 h-8 rounded-xl shrink-0 flex items-center justify-center border ${
                       isSent 
-                        ? 'bg-emerald-950/40 text-emerald-400' 
-                        : 'bg-blue-950/40 text-blue-400'
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                        : 'bg-blue-50 text-blue-600 border-blue-100'
                     }`}>
-                      {isSent ? <ArrowUpRight size={14} /> : <ArrowDownLeft size={14} />}
+                    {isSent ? <ArrowUpRight size={14} /> : <ArrowDownLeft size={14} />}
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-0.5">
-                        <span className="font-bold text-xs text-slate-200 truncate">
+                        <span className="font-bold text-xs text-slate-800 truncate">
                           {email.leadName}
                         </span>
-                        <span className="text-[10px] text-slate-500 shrink-0 font-medium">
+                        <span className="text-[10px] text-slate-400 shrink-0 font-bold">
                           {new Date(email.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                      <h4 className="text-xs font-black text-slate-300 truncate mb-1">
+                      <h4 className="text-xs font-bold text-slate-700 truncate mb-1">
                         {email.subject}
                       </h4>
                       <p className="text-[11px] text-slate-400 truncate line-clamp-1">
@@ -289,19 +444,19 @@ function EmailCenterContent() {
         </div>
 
         {/* Right Side: Detailed preview window */}
-        <div className="hidden lg:flex flex-1 flex-col h-full bg-slate-900/40 overflow-hidden">
+        <div className="hidden lg:flex flex-1 flex-col h-full bg-[#F8FAFC] overflow-hidden">
           {selectedEmail ? (
             <div className="flex flex-col h-full overflow-hidden">
               {/* Header preview row */}
-              <div className="p-6 bg-slate-950/45 border-b border-slate-800 shrink-0 space-y-4">
+              <div className="p-6 bg-white border-b border-slate-200 shrink-0 space-y-4 shadow-2xs">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
-                    <h2 className="text-base font-black text-slate-100">{selectedEmail.subject}</h2>
-                    <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-400">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold text-[10px] ${
+                    <h2 className="text-base font-black text-[#1B4D3E] uppercase tracking-wide">{selectedEmail.subject}</h2>
+                    <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold text-[10px] border ${
                         selectedEmail.direction === 'SENT' 
-                          ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-900/50' 
-                          : 'bg-blue-950/50 text-blue-400 border border-blue-900/50'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+                          : 'bg-blue-50 text-blue-700 border-blue-100'
                       }`}>
                         {selectedEmail.direction === 'SENT' ? (
                           <>
@@ -313,7 +468,7 @@ function EmailCenterContent() {
                           </>
                         )}
                       </span>
-                      <span className="flex items-center gap-1.5 text-slate-500">
+                      <span className="flex items-center gap-1.5 text-slate-400 font-bold">
                         <Calendar size={12} /> {new Date(selectedEmail.createdAt).toLocaleString()}
                       </span>
                     </div>
@@ -322,7 +477,7 @@ function EmailCenterContent() {
                   <div className="flex items-center gap-2">
                     <Link
                       href={`/leads?leadId=${selectedEmail.leadId}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-slate-800 text-slate-200 hover:text-white rounded-xl border border-slate-700 hover:bg-slate-750 font-bold transition-all"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl border border-slate-350 hover:text-slate-900 font-bold transition-all shadow-xs"
                       title="Ver Lead no Pipeline CRM"
                     >
                       Ver Lead <ExternalLink size={12} />
@@ -330,7 +485,7 @@ function EmailCenterContent() {
                     <button
                       onClick={() => handleDelete(selectedEmail.commentId)}
                       disabled={actionLoading}
-                      className="p-2 bg-slate-800 text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 rounded-xl border border-slate-700/80 hover:border-rose-900/30 transition-all"
+                      className="p-2 bg-white text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl border border-slate-250 hover:border-rose-200 transition-all shadow-xs"
                       title="Excluir histórico de e-mail"
                     >
                       <Trash2 size={15} />
@@ -339,18 +494,18 @@ function EmailCenterContent() {
                 </div>
 
                 {/* Sender/Receiver Details metadata block */}
-                <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800/80 text-xs space-y-1.5">
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
                   <div className="flex justify-between">
-                    <span className="text-slate-500 font-medium">De:</span>
-                    <span className="text-slate-300 font-bold">{selectedEmail.from}</span>
+                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">De:</span>
+                    <span className="text-slate-700 font-bold">{selectedEmail.from}</span>
                   </div>
-                  <div className="flex justify-between border-t border-slate-800/60 pt-1.5">
-                    <span className="text-slate-500 font-medium">Para:</span>
-                    <span className="text-slate-300 font-bold">{selectedEmail.to}</span>
+                  <div className="flex justify-between border-t border-slate-200/60 pt-1.5">
+                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Para:</span>
+                    <span className="text-slate-700 font-bold">{selectedEmail.to}</span>
                   </div>
-                  <div className="flex justify-between border-t border-slate-800/60 pt-1.5">
-                    <span className="text-slate-500 font-medium">Lead Associado:</span>
-                    <Link href={`/leads?leadId=${selectedEmail.leadId}`} className="text-emerald-400 hover:underline font-bold flex items-center gap-1">
+                  <div className="flex justify-between border-t border-slate-200/60 pt-1.5">
+                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Lead Associado:</span>
+                    <Link href={`/leads?leadId=${selectedEmail.leadId}`} className="text-emerald-700 hover:underline font-bold flex items-center gap-1">
                       {selectedEmail.leadName} ({selectedEmail.leadEmail})
                     </Link>
                   </div>
@@ -358,33 +513,275 @@ function EmailCenterContent() {
               </div>
 
               {/* Email Content Body Preview */}
-              <div className="flex-1 p-6 overflow-y-auto bg-slate-950/20 text-sm text-slate-300 font-normal leading-relaxed whitespace-pre-wrap select-text scrollbar-thin">
-                {selectedEmail.body}
+              <div className="flex-1 p-8 overflow-y-auto bg-[#F8FAFC] scrollbar-thin">
+                <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-4xl mx-auto my-2 text-sm text-slate-700 font-normal leading-relaxed whitespace-pre-wrap select-text">
+                  {selectedEmail.body}
+                </div>
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-500 p-8 text-center space-y-3">
-              <div className="w-16 h-16 rounded-full bg-slate-800/60 flex items-center justify-center text-slate-600">
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8 text-center space-y-3">
+              <div className="w-16 h-16 rounded-full bg-white border border-slate-200 shadow-xs flex items-center justify-center text-slate-300">
                 <Mail size={28} />
               </div>
-              <h3 className="font-bold text-slate-300">Nenhum E-mail Selecionado</h3>
-              <p className="text-xs max-w-sm">Selecione um e-mail na barra lateral para ler a correspondência completa.</p>
+              <h3 className="font-bold text-slate-700 uppercase tracking-wider">Nenhum E-mail Selecionado</h3>
+              <p className="text-xs max-w-xs font-bold text-slate-400">Selecione um e-mail na barra lateral para ler a correspondência completa.</p>
             </div>
           )}
         </div>
       </div>
+
+      {/* SMTP Accounts Configuration Modal */}
+      {showSmtpModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-[2px] flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="bg-[#1B4D3E] px-6 py-4 border-b border-[#13382D] flex justify-between items-center text-white shrink-0">
+              <h2 className="text-xs font-extrabold uppercase tracking-widest flex items-center gap-2">
+                <Settings size={14} /> Contas de E-mail (SMTP)
+              </h2>
+              <button 
+                onClick={() => {
+                  setShowSmtpModal(false);
+                  handleCancelEdit();
+                }}
+                className="text-white/80 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1">
+              
+              {/* Alert fallback */}
+              {smtpAccounts.length === 0 && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl text-xs leading-relaxed space-y-1">
+                  <p className="font-bold flex items-center gap-1.5 uppercase text-[10px]">
+                    <AlertCircle size={14} /> Nenhuma conta SMTP cadastrada no banco de dados
+                  </p>
+                  <p>O sistema está utilizando as configurações SMTP padrão definidas no arquivo <code>.env</code> do servidor. Cadastre uma nova conta abaixo para personalizar e gerenciar o envio dinamicamente.</p>
+                </div>
+              )}
+
+              {/* Accounts List */}
+              {smtpAccounts.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2">Contas Cadastradas</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {smtpAccounts.map((account) => (
+                      <div 
+                        key={account.id} 
+                        className={`p-4 rounded-xl border transition-all flex flex-col justify-between gap-3 ${
+                          account.active 
+                            ? 'bg-emerald-50/30 border-emerald-200 shadow-2xs' 
+                            : 'bg-slate-50/50 border-slate-200'
+                        }`}
+                      >
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold text-xs text-slate-800 truncate uppercase">{account.nome}</span>
+                            
+                            {/* Toggle active state */}
+                            <button
+                              onClick={() => handleToggleSmtpActiveClick(account.id, account.active)}
+                              disabled={smtpLoading}
+                              className={`flex items-center gap-1 transition-all ${account.active ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'}`}
+                              title={account.active ? 'Desativar conta SMTP' : 'Ativar conta SMTP'}
+                            >
+                              {account.active ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
+                            </button>
+                          </div>
+                          
+                          <div className="text-[11px] text-slate-500 font-medium space-y-0.5">
+                            <p className="truncate"><span className="font-bold">E-mail:</span> {account.user}</p>
+                            <p className="truncate"><span className="font-bold">Servidor:</span> {account.host}:{account.port}</p>
+                            <p className="truncate"><span className="font-bold">Remetente:</span> {account.fromName} &lt;{account.fromEmail}&gt;</p>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 border-t border-slate-100 pt-2 shrink-0">
+                          <button
+                            onClick={() => handleEditSmtpClick(account)}
+                            className="p-1 px-2.5 text-[10px] font-bold text-amber-600 hover:bg-amber-50 rounded-lg border border-amber-200 flex items-center gap-1 transition-all"
+                          >
+                            <Edit2 size={11} /> Editar
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSmtpClick(account.id)}
+                            disabled={smtpLoading}
+                            className="p-1 px-2.5 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 flex items-center gap-1 transition-all"
+                          >
+                            <Trash2 size={11} /> Remover
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Form block */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
+                <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+                  <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-widest flex items-center gap-1.5">
+                    <Plus size={15} /> {isEditingSmtp ? 'Editar Configurações SMTP' : 'Cadastrar Nova Conta SMTP'}
+                  </h3>
+                  {isEditingSmtp && (
+                    <button
+                      onClick={handleCancelEdit}
+                      className="text-xs font-bold text-slate-400 hover:text-slate-600 flex items-center gap-1"
+                    >
+                      Cancelar Edição
+                    </button>
+                  )}
+                </div>
+
+                <form onSubmit={handleSaveSmtp} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Identificação */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Nome de Identificação *</label>
+                      <input 
+                        type="text"
+                        placeholder="Ex: Suporte SmartBid, Vendas"
+                        required
+                        value={smtpForm.nome}
+                        onChange={e => setSmtpForm({...smtpForm, nome: e.target.value})}
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+
+                    {/* SMTP Host */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Servidor SMTP (Host) *</label>
+                      <input 
+                        type="text"
+                        placeholder="Ex: smtp.titan.email, smtp.gmail.com"
+                        required
+                        value={smtpForm.host}
+                        onChange={e => setSmtpForm({...smtpForm, host: e.target.value})}
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+
+                    {/* SMTP Port */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Porta SMTP *</label>
+                      <input 
+                        type="number"
+                        placeholder="587 (TLS) ou 465 (SSL)"
+                        required
+                        value={smtpForm.port}
+                        onChange={e => setSmtpForm({...smtpForm, port: parseInt(e.target.value) || 587})}
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+
+                    {/* SMTP User */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Usuário/E-mail de Login *</label>
+                      <input 
+                        type="email"
+                        placeholder="Ex: suporte@smartbid.com"
+                        required
+                        value={smtpForm.user}
+                        onChange={e => setSmtpForm({...smtpForm, user: e.target.value})}
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+
+                    {/* SMTP Password */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        Senha SMTP {isEditingSmtp ? '(Deixe em branco para não alterar)' : '*'}
+                      </label>
+                      <input 
+                        type="password"
+                        placeholder="••••••••••••••"
+                        required={!isEditingSmtp}
+                        value={smtpForm.password}
+                        onChange={e => setSmtpForm({...smtpForm, password: e.target.value})}
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+
+                    {/* Sender Name */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Nome do Remetente *</label>
+                      <input 
+                        type="text"
+                        placeholder="Ex: SmartBid, Comercial"
+                        required
+                        value={smtpForm.fromName}
+                        onChange={e => setSmtpForm({...smtpForm, fromName: e.target.value})}
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+
+                    {/* Sender Email */}
+                    <div className="grid grid-cols-1 gap-1 md:col-span-2">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">E-mail do Remetente (Normalmente igual ao usuário) *</label>
+                      <input 
+                        type="email"
+                        placeholder="Ex: suporte@smartbid.com"
+                        required
+                        value={smtpForm.fromEmail}
+                        onChange={e => setSmtpForm({...smtpForm, fromEmail: e.target.value})}
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2">
+                    <input 
+                      type="checkbox" 
+                      id="smtp-active-check"
+                      checked={smtpForm.active}
+                      onChange={e => setSmtpForm({...smtpForm, active: e.target.checked})}
+                      className="w-4 h-4 text-[#1B4D3E] border-slate-350 focus:ring-[#1B4D3E]/30 rounded cursor-pointer"
+                    />
+                    <label htmlFor="smtp-active-check" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                      Definir como conta de e-mail ativa (Principal para envios)
+                    </label>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button
+                      type="submit"
+                      disabled={smtpLoading}
+                      className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-bold px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      {smtpLoading ? (
+                        <>
+                          <RefreshCw size={13} className="animate-spin" /> Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <Check size={14} /> {isEditingSmtp ? 'Atualizar Conta' : 'Adicionar Conta'}
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 export default function EmailsPage() {
   return (
-    <div className="flex h-screen bg-slate-950">
+    <div className="flex h-screen bg-[#F8FAFC]">
       <Sidebar />
       <main className="flex-1 overflow-hidden">
         <Suspense fallback={
-          <div className="flex h-full w-full items-center justify-center bg-slate-950 text-slate-400">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+          <div className="flex h-full w-full items-center justify-center bg-[#F8FAFC] text-slate-400">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1B4D3E]"></div>
           </div>
         }>
           <EmailCenterContent />

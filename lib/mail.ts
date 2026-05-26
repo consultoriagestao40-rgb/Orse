@@ -8,15 +8,33 @@ interface SendMailArgs {
 }
 
 export async function sendMail({ to, subject, html, text }: SendMailArgs) {
-  const host = process.env.SMTP_HOST;
-  const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASSWORD;
-  const fromEmail = process.env.SMTP_FROM_EMAIL || user;
-  const fromName = process.env.SMTP_FROM_NAME || "SmartBid";
+  let host = process.env.SMTP_HOST;
+  let port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
+  let user = process.env.SMTP_USER;
+  let pass = process.env.SMTP_PASSWORD;
+  let fromEmail = process.env.SMTP_FROM_EMAIL || user;
+  let fromName = process.env.SMTP_FROM_NAME || "SmartBid";
+
+  try {
+    const { prisma } = await import('./prisma');
+    const dbAccount = await prisma.smtpAccount.findFirst({
+      where: { active: true }
+    });
+
+    if (dbAccount) {
+      host = dbAccount.host;
+      port = dbAccount.port;
+      user = dbAccount.user;
+      pass = dbAccount.password;
+      fromEmail = dbAccount.fromEmail;
+      fromName = dbAccount.fromName;
+    }
+  } catch (error) {
+    console.warn("⚠️ Error fetching SMTP account from DB, falling back to env:", error);
+  }
 
   if (!host || !user || !pass || !fromEmail) {
-    console.warn("⚠️ SMTP credentials not fully configured in env variables. Simulating email send.");
+    console.warn("⚠️ SMTP credentials not fully configured in env variables or database. Simulating email send.");
     console.log(`[SIMULATED EMAIL] To: ${to} | Subject: ${subject}`);
     console.log(`[SIMULATED BODY] ${text || html}`);
     return { success: true, simulated: true };

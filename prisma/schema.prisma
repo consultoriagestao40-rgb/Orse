@@ -456,3 +456,17 @@ model WhatsAppMessage {
   lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   user        User?    @relation(fields: [userId], references: [id])
 }
+
+model SmtpAccount {
+  id        String   @id @default(cuid())
+  nome      String   // Ex: "Suporte SmartBid"
+  host      String   // smtp.titan.email
+  port      Int      @default(587)
+  user      String   @unique // suporte@smartbid.com
+  password  String   // Senha SMTP
+  fromEmail String   // suporte@smartbid.com
+  fromName  String   // SmartBid
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
