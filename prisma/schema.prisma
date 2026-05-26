@@ -467,6 +467,8 @@ model SmtpAccount {
   fromEmail String   // suporte@smartbid.com
   fromName  String   // SmartBid
   active    Boolean  @default(true)
+  imapHost  String?  // Ex: imap.umbler.com
+  imapPort  Int?     @default(993)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

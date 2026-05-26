@@ -828,6 +828,31 @@ export default function LeadsKanban() {
                         </div>
                       )}
 
+                      {lead.endereco && (
+                        <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-2">
+                          <a 
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.endereco)}`} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            onClick={e => e.stopPropagation()} 
+                            className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[9px] font-black py-1 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-blue-100"
+                            title="Abrir no Google Maps"
+                          >
+                            <MapPin size={9} /> Maps
+                          </a>
+                          <a 
+                            href={`https://waze.com/ul?q=${encodeURIComponent(lead.endereco)}`} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            onClick={e => e.stopPropagation()} 
+                            className="flex-1 bg-cyan-50 hover:bg-cyan-100 text-cyan-600 text-[9px] font-black py-1 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-cyan-100"
+                            title="Abrir no Waze"
+                          >
+                            <Navigation size={9} /> Waze
+                          </a>
+                        </div>
+                      )}
+
                       {lead.activities && lead.activities.length > 0 && (
                         <div className="mt-2 bg-amber-50/70 border border-amber-100 p-1.5 rounded-lg text-[10px] flex items-center gap-1 text-amber-700">
                           <CalendarDays size={11} className="text-amber-500 shrink-0" />

@@ -10,7 +10,8 @@ import {
   createSmtpAccount,
   updateSmtpAccount,
   deleteSmtpAccount,
-  toggleSmtpAccountActive
+  toggleSmtpAccountActive,
+  syncEmailsFromImap
 } from './actions';
 import { 
   Search, 
@@ -64,7 +65,9 @@ function EmailCenterContent() {
     password: '',
     fromEmail: '',
     fromName: '',
-    active: true
+    active: true,
+    imapHost: '',
+    imapPort: 993
   });
   
   const [isEditingSmtp, setIsEditingSmtp] = useState(false);
@@ -77,6 +80,15 @@ function EmailCenterContent() {
   const loadEmails = async () => {
     setLoading(true);
     try {
+      // 1. Sincroniza e-mails via IMAP do banco
+      const syncRes = await syncEmailsFromImap();
+      if (syncRes && !syncRes.success) {
+        console.warn('⚠️ Falha parcial na sincronização IMAP:', syncRes.error);
+      } else if (syncRes && syncRes.count && syncRes.count > 0) {
+        console.log(`📧 Importados ${syncRes.count} novos e-mails via IMAP!`);
+      }
+
+      // 2. Carrega todos os e-mails registrados
       const data = await getEmails();
       setEmails(data);
       
@@ -144,10 +156,16 @@ function EmailCenterContent() {
     setSmtpLoading(true);
     try {
       let res;
+      const payload = {
+        ...smtpForm,
+        port: Number(smtpForm.port),
+        imapPort: smtpForm.imapPort ? Number(smtpForm.imapPort) : 993
+      };
+
       if (isEditingSmtp && smtpForm.id) {
-        res = await updateSmtpAccount(smtpForm.id, smtpForm);
+        res = await updateSmtpAccount(smtpForm.id, payload);
       } else {
-        res = await createSmtpAccount(smtpForm);
+        res = await createSmtpAccount(payload);
       }
 
       if (res.success) {
@@ -160,16 +178,18 @@ function EmailCenterContent() {
           password: '',
           fromEmail: '',
           fromName: '',
-          active: true
+          active: true,
+          imapHost: '',
+          imapPort: 993
         });
         setIsEditingSmtp(false);
         await loadSmtpAccounts();
-        alert(isEditingSmtp ? 'Conta SMTP atualizada com sucesso!' : 'Nova conta SMTP cadastrada com sucesso!');
+        alert(isEditingSmtp ? 'Conta atualizada com sucesso!' : 'Nova conta cadastrada com sucesso!');
       } else {
-        alert('Erro ao salvar conta SMTP: ' + res.error);
+        alert('Erro ao salvar conta: ' + res.error);
       }
     } catch (err: any) {
-      alert('Erro ao cadastrar conta SMTP: ' + (err.message || String(err)));
+      alert('Erro ao cadastrar conta: ' + (err.message || String(err)));
     } finally {
       setSmtpLoading(false);
     }
@@ -185,7 +205,9 @@ function EmailCenterContent() {
       password: '', // Deixar a senha em branco por segurança, preenche se quiser alterar
       fromEmail: account.fromEmail,
       fromName: account.fromName,
-      active: account.active
+      active: account.active,
+      imapHost: account.imapHost || '',
+      imapPort: account.imapPort || 993
     });
     setIsEditingSmtp(true);
   };
@@ -233,7 +255,9 @@ function EmailCenterContent() {
       password: '',
       fromEmail: '',
       fromName: '',
-      active: true
+      active: true,
+      imapHost: '',
+      imapPort: 993
     });
     setIsEditingSmtp(false);
   };
@@ -728,6 +752,30 @@ function EmailCenterContent() {
                         required
                         value={smtpForm.fromEmail}
                         onChange={e => setSmtpForm({...smtpForm, fromEmail: e.target.value})}
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+
+                    {/* IMAP Host */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Servidor de Entrada (IMAP / Host)</label>
+                      <input 
+                        type="text"
+                        placeholder="Ex: imap.umbler.com, imap.titan.email"
+                        value={smtpForm.imapHost || ''}
+                        onChange={e => setSmtpForm({...smtpForm, imapHost: e.target.value})}
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+
+                    {/* IMAP Port */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Porta de Entrada (IMAP)</label>
+                      <input 
+                        type="number"
+                        placeholder="Ex: 993"
+                        value={smtpForm.imapPort || 993}
+                        onChange={e => setSmtpForm({...smtpForm, imapPort: parseInt(e.target.value) || 993})}
                         className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
                       />
                     </div>
