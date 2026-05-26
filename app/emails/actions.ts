@@ -375,3 +375,61 @@ export async function syncEmailsFromImap() {
     return { success: false, error: error.message || String(error) };
   }
 }
+
+export async function testSmtpConnection(data: {
+  host: string;
+  port: number;
+  user: string;
+  password?: string;
+}) {
+  try {
+    const nodemailer = await import('nodemailer');
+    const transporter = nodemailer.createTransport({
+      host: data.host,
+      port: Number(data.port),
+      secure: Number(data.port) === 465,
+      auth: {
+        user: data.user,
+        pass: data.password || ''
+      },
+      tls: {
+        rejectUnauthorized: false
+      },
+      connectionTimeout: 5000 // 5 seconds
+    });
+
+    await transporter.verify();
+    return { success: true, message: "Conexão de Saída (SMTP) estabelecida com sucesso!" };
+  } catch (error: any) {
+    console.error('❌ SMTP Connection test failed:', error);
+    return { success: false, error: error.message || String(error) };
+  }
+}
+
+export async function testImapConnection(data: {
+  imapHost: string;
+  imapPort: number;
+  user: string;
+  password?: string;
+}) {
+  try {
+    const client = new ImapFlow({
+      host: data.imapHost,
+      port: Number(data.imapPort),
+      secure: Number(data.imapPort) === 993,
+      auth: {
+        user: data.user,
+        pass: data.password || ''
+      },
+      logger: false,
+      connectionTimeout: 5000 // 5 seconds
+    });
+
+    await client.connect();
+    await client.logout();
+    return { success: true, message: "Conexão de Entrada (IMAP) estabelecida com sucesso!" };
+  } catch (error: any) {
+    console.error('❌ IMAP Connection test failed:', error);
+    return { success: false, error: error.message || String(error) };
+  }
+}

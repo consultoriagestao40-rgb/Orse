@@ -11,7 +11,9 @@ import {
   updateSmtpAccount,
   deleteSmtpAccount,
   toggleSmtpAccountActive,
-  syncEmailsFromImap
+  syncEmailsFromImap,
+  testSmtpConnection,
+  testImapConnection
 } from './actions';
 import { 
   Search, 
@@ -71,6 +73,51 @@ function EmailCenterContent() {
   });
   
   const [isEditingSmtp, setIsEditingSmtp] = useState(false);
+
+  // Connection Test States
+  const [smtpTestResult, setSmtpTestResult] = useState<{ success?: boolean; error?: string; message?: string } | null>(null);
+  const [imapTestResult, setImapTestResult] = useState<{ success?: boolean; error?: string; message?: string } | null>(null);
+  const [testingSmtp, setTestingSmtp] = useState(false);
+  const [testingImap, setTestingImap] = useState(false);
+
+  const handleTestSmtp = async () => {
+    if (!smtpForm.host.trim() || !smtpForm.user.trim()) {
+      alert('Preencha o servidor e usuário SMTP de saída antes de testar.');
+      return;
+    }
+    setTestingSmtp(true);
+    setSmtpTestResult(null);
+    try {
+      const res = await testSmtpConnection(smtpForm);
+      setSmtpTestResult(res);
+    } catch (err: any) {
+      setSmtpTestResult({ success: false, error: err.message || String(err) });
+    } finally {
+      setTestingSmtp(false);
+    }
+  };
+
+  const handleTestImap = async () => {
+    if (!smtpForm.imapHost?.trim() || !smtpForm.user.trim()) {
+      alert('Preencha o servidor IMAP de entrada e usuário antes de testar.');
+      return;
+    }
+    setTestingImap(true);
+    setImapTestResult(null);
+    try {
+      const res = await testImapConnection({
+        imapHost: smtpForm.imapHost,
+        imapPort: Number(smtpForm.imapPort),
+        user: smtpForm.user,
+        password: smtpForm.password
+      });
+      setImapTestResult(res);
+    } catch (err: any) {
+      setImapTestResult({ success: false, error: err.message || String(err) });
+    } finally {
+      setTestingImap(false);
+    }
+  };
 
   useEffect(() => {
     loadEmails();
@@ -260,6 +307,8 @@ function EmailCenterContent() {
       imapPort: 993
     });
     setIsEditingSmtp(false);
+    setSmtpTestResult(null);
+    setImapTestResult(null);
   };
 
   // Filter emails based on search term and tab selection
@@ -619,7 +668,8 @@ function EmailCenterContent() {
                           
                           <div className="text-[11px] text-slate-500 font-medium space-y-0.5">
                             <p className="truncate"><span className="font-bold">E-mail:</span> {account.user}</p>
-                            <p className="truncate"><span className="font-bold">Servidor:</span> {account.host}:{account.port}</p>
+                            <p className="truncate"><span className="font-bold">SMTP (Saída):</span> {account.host}:{account.port}</p>
+                            <p className="truncate"><span className="font-bold">IMAP (Entrada):</span> {account.imapHost ? `${account.imapHost}:${account.imapPort || 993}` : 'Não configurado'}</p>
                             <p className="truncate"><span className="font-bold">Remetente:</span> {account.fromName} &lt;{account.fromEmail}&gt;</p>
                           </div>
                         </div>
@@ -756,6 +806,24 @@ function EmailCenterContent() {
                       />
                     </div>
 
+                    {/* SMTP Test Connection Button */}
+                    <div className="md:col-span-2 flex flex-wrap items-center gap-3 bg-white p-3.5 rounded-xl border border-slate-200">
+                      <button
+                        type="button"
+                        onClick={handleTestSmtp}
+                        disabled={testingSmtp}
+                        className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-300 transition-all flex items-center gap-1.5 shadow-2xs"
+                      >
+                        {testingSmtp ? <RefreshCw size={12} className="animate-spin" /> : <Settings size={12} />}
+                        Testar Conexão SMTP (Saída)
+                      </button>
+                      {smtpTestResult && (
+                        <span className={`text-xs font-bold ${smtpTestResult.success ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          {smtpTestResult.success ? '✓ Conexão SMTP de Saída estabelecida com sucesso!' : `✗ ${smtpTestResult.error}`}
+                        </span>
+                      )}
+                    </div>
+
                     {/* IMAP Host */}
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Servidor de Entrada (IMAP / Host)</label>
@@ -778,6 +846,24 @@ function EmailCenterContent() {
                         onChange={e => setSmtpForm({...smtpForm, imapPort: parseInt(e.target.value) || 993})}
                         className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
                       />
+                    </div>
+
+                    {/* IMAP Test Connection Button */}
+                    <div className="md:col-span-2 flex flex-wrap items-center gap-3 bg-white p-3.5 rounded-xl border border-slate-200">
+                      <button
+                        type="button"
+                        onClick={handleTestImap}
+                        disabled={testingImap}
+                        className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-300 transition-all flex items-center gap-1.5 shadow-2xs"
+                      >
+                        {testingImap ? <RefreshCw size={12} className="animate-spin" /> : <Settings size={12} />}
+                        Testar Conexão IMAP (Entrada)
+                      </button>
+                      {imapTestResult && (
+                        <span className={`text-xs font-bold ${imapTestResult.success ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          {imapTestResult.success ? '✓ Conexão IMAP de Entrada estabelecida com sucesso!' : `✗ ${imapTestResult.error}`}
+                        </span>
+                      )}
                     </div>
                   </div>
 
