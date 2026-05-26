@@ -15,6 +15,7 @@ import { createCliente, getClientes } from '@/app/clientes/actions';
 import { createProduto } from '@/app/produtos/actions';
 import { saveProposta, getPropostaCompleta, getLoggedUser } from '@/app/propostas/actions';
 import { getTiposServico, getSegmentos, createTipoServico, createSegmento } from '@/app/admin/settings/actions';
+import { getEquipesTecnicas } from '@/app/admin/equipes-tecnicas/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, ChevronLeft, Factory, Store, Bus, Building, Hospital, ShoppingBag, GraduationCap, Share2, Clock, Smartphone, Cpu, CreditCard } from 'lucide-react';
 import BrazilMap from '@/components/BrazilMap';
@@ -97,6 +98,7 @@ function PropostaEditor() {
             numeroProposta: (fullData as any).numero || '',
             revisao: `R${String(fullData.versao).padStart(2, '0')}`,
             tipoServicos: fullData.cliente.tipoServicos || '',
+            tipoProposta: fullData.cliente.tipoProposta || 'RECORRENTE',
             vendedorNome: (!fullData.cliente.vendedorNome || fullData.cliente.vendedorNome === 'Ádamo Quadros') ? (currentUser?.nome || 'Ádamo Quadros') : fullData.cliente.vendedorNome,
             vendedorCargo: (!fullData.cliente.vendedorCargo || fullData.cliente.vendedorCargo === 'Novos Negócios') ? (currentUser?.cargo || (currentUser?.role === 'ADMIN' ? 'Diretor Comercial' : currentUser?.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios')) : fullData.cliente.vendedorCargo,
             vendedorTelefone: (!fullData.cliente.vendedorTelefone || fullData.cliente.vendedorTelefone === '(41) 9 9737-0880') ? (currentUser?.celular || '(41) 9 9737-0880') : fullData.cliente.vendedorTelefone,
@@ -138,6 +140,7 @@ function PropostaEditor() {
     }
   };
   const [ccts, setCcts] = useState<any[]>([]);
+  const [equipesTecnicasDb, setEquipesTecnicasDb] = useState<any[]>([]);
   const [escalasDb, setEscalasDb] = useState<any[]>([]);
   const [produtosDb, setProdutosDb] = useState<any[]>([]);
   const [segmentos, setSegmentos] = useState<any[]>([]);
@@ -353,16 +356,18 @@ function PropostaEditor() {
       try {
         console.log('Iniciando carregamento do Editor FPV...');
         setLoading(true);
-        const [dataCcts, dataEscalas, dataProdutos, dataTipos, dataSegmentos, loggedUser, dataEmpresas] = await Promise.all([
+        const [dataCcts, dataEscalas, dataProdutos, dataTipos, dataSegmentos, loggedUser, dataEmpresas, eqRes] = await Promise.all([
           getCCTs(), 
           getEscalas(), 
           getProdutos(), 
           getTiposServico(),
           getSegmentos(),
           getLoggedUser(),
-          getEmpresasEmissoras()
+          getEmpresasEmissoras(),
+          getEquipesTecnicas()
         ]);
         setCcts(dataCcts || []);
+        setEquipesTecnicasDb(eqRes?.success ? eqRes.list : []);
         setEscalasDb(dataEscalas || []);
         setProdutosDb(dataProdutos || []);
         setTiposServico(dataTipos || []);
@@ -410,6 +415,7 @@ function PropostaEditor() {
                  numeroProposta: (fullData as any).numero || '',
                  revisao: `R${String(fullData.versao).padStart(2, '0')}`,
                  tipoServicos: fullData.cliente.tipoServicos || '',
+                 tipoProposta: fullData.cliente.tipoProposta || 'RECORRENTE',
                  vendedorNome: (!fullData.cliente.vendedorNome || fullData.cliente.vendedorNome === 'Ádamo Quadros') ? (loggedUser?.nome || 'Ádamo Quadros') : fullData.cliente.vendedorNome,
                  vendedorCargo: (!fullData.cliente.vendedorCargo || fullData.cliente.vendedorCargo === 'Novos Negócios') ? (loggedUser?.cargo || (loggedUser?.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser?.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios')) : fullData.cliente.vendedorCargo,
                  vendedorTelefone: (!fullData.cliente.vendedorTelefone || fullData.cliente.vendedorTelefone === '(41) 9 9737-0880' || fullData.cliente.vendedorTelefone === '(41) 99737-0880') ? (loggedUser?.celular || '(41) 9 9737-0880') : fullData.cliente.vendedorTelefone,
@@ -1141,21 +1147,32 @@ function PropostaEditor() {
         {activeTab !== 'comercial' && (
            <div className="w-full max-w-7xl mb-8 border-b border-slate-200 pb-2">
               <nav className="flex flex-wrap gap-x-6 gap-y-2">
-                 {TABS.map((tab) => (
-                    <button 
-                       key={tab.id} 
-                       onClick={() => setActiveTab(tab.id)} 
-                       className={`
-                          whitespace-nowrap py-3 px-1 border-b-2 font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all duration-200
-                          ${activeTab === tab.id 
-                             ? 'border-[#1B4D3E] text-[#1B4D3E] scale-105 opacity-100' 
-                             : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 opacity-80'}
-                       `}
-                    >
-                       <tab.icon size={14} className={activeTab === tab.id ? 'text-[#10B981]' : 'text-slate-400'} /> 
-                       {tab.label}
-                    </button>
-                 ))}
+                 {TABS.filter(tab => {
+                    if (proposta.cliente.tipoProposta === 'SPOT' && tab.id === 'dre') {
+                       return false;
+                    }
+                    return true;
+                 }).map((tab) => {
+                    let label = tab.label;
+                    if (proposta.cliente.tipoProposta === 'SPOT' && tab.id === 'quadro') {
+                       label = '4. Serviços';
+                    }
+                    return (
+                       <button 
+                          key={tab.id} 
+                          onClick={() => setActiveTab(tab.id)} 
+                          className={`
+                             whitespace-nowrap py-3 px-1 border-b-2 font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all duration-200
+                             ${activeTab === tab.id 
+                                ? 'border-[#1B4D3E] text-[#1B4D3E] scale-105 opacity-100' 
+                                : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 opacity-80'}
+                          `}
+                       >
+                          <tab.icon size={14} className={activeTab === tab.id ? 'text-[#10B981]' : 'text-slate-400'} /> 
+                          {label}
+                       </button>
+                    );
+                 })}
               </nav>
            </div>
         )}
@@ -1172,6 +1189,42 @@ function PropostaEditor() {
                     </h2>
                  </div>
                  <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                     <div className="space-y-2 md:col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">Modalidade da Proposta</label>
+                        <div className="flex gap-4 p-1 bg-slate-200/60 rounded-xl max-w-lg">
+                           <button
+                              type="button"
+                              onClick={() => {
+                                 setProposta({
+                                    ...proposta,
+                                    cliente: { ...proposta.cliente, tipoProposta: 'RECORRENTE' }
+                                 });
+                              }}
+                              className={`flex-1 text-center py-2.5 text-xs font-black rounded-lg uppercase tracking-wide transition-all ${proposta.cliente.tipoProposta !== 'SPOT' ? 'bg-[#1B4D3E] text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
+                           >
+                              💼 CLT Recorrente
+                           </button>
+                           <button
+                              type="button"
+                              onClick={() => {
+                                 setProposta({
+                                    ...proposta,
+                                    cliente: { ...proposta.cliente, tipoProposta: 'SPOT' }
+                                 });
+                              }}
+                              className={`flex-1 text-center py-2.5 text-xs font-black rounded-lg uppercase tracking-wide transition-all ${proposta.cliente.tipoProposta === 'SPOT' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}`}
+                           >
+                              ⚡ Serviços SPOT
+                           </button>
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-semibold uppercase">
+                           {proposta.cliente.tipoProposta === 'SPOT' 
+                              ? '⚡ Módulo Spot ativo: serviços por diária/hora, sem jornadas CLT complexas, DRE desativado.' 
+                              : '💼 Módulo Recorrente ativo: escalas CLT, encargos completos de convenção coletiva (CCT) e DRE do projeto.'
+                           }
+                        </p>
+                     </div>
+
                     <div className="space-y-1 relative">
                        
                        <div className="flex justify-between items-center">
@@ -1521,143 +1574,323 @@ function PropostaEditor() {
 
            {/* ABA 4: QUADRO EQUIPE */}
            {activeTab === 'quadro' && (
-              <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden">
-                 <div className="bg-slate-50 border-b border-slate-300 px-6 py-4 flex justify-between items-center">
-                    <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2"><UserCheck size={16}/> Quadro de Colaboradores</h2>
-                    <button onClick={() => {
-                        const newId = Math.random().toString();
-                        setProposta({ 
-                           ...proposta, 
-                           equipe: [...proposta.equipe, { 
-                              id: newId, 
-                              nomeCargo: 'Selecione a Função', 
-                              quantidade: 1, 
-                              escala: '', 
-                              cargo: {}, 
-                              cctBase: {},
-                              parametrosPosto: {
-                                 diasTrabalhadosMes: 22,
-                                 periculosidade: false,
-                                 insalubridadePercent: 0,
-                                 adicionalNoturnoHoras: 0,
-                                 intrajornadaHoras: 0,
-                                 dsrPercent: 0,
-                                 horarioInicio: '08:00',
-                                 horarioFim: '17:00'
-                              },
-                              ativosConfig: {} 
-                           }] 
-                        });
-                    }} className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-semibold px-4 py-2 rounded transition-colors flex items-center gap-1">
-                       <Plus size={14}/> Inserir Posto
-                    </button>
-                 </div>
-                 <div className="p-0">
-                    <table className="w-full text-left text-sm border-collapse">
-                       <thead>
-                          <tr className="bg-slate-100 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
-                             <th className="px-6 py-3 w-16 text-center">Qtd.</th>
-                             <th className="px-6 py-3">Função Vinculada à CCT</th>
-                             <th className="px-6 py-3">Escala</th>
-                             <th className="px-6 py-3 text-right">Ação</th>
-                          </tr>
-                       </thead>
-                       <tbody>
-                          {proposta.equipe.map((p: any) => (
-                             <React.Fragment key={p.id}>
-                                <tr className="border-b border-slate-200 hover:bg-slate-50">
-                                   <td className="px-6 py-4">
-                                      <input type="number" className="w-16 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.quantidade} onChange={(e) => updatePosto(p.id, 'quantidade', (e.target.value === '' ? '' : Number(e.target.value)))} />
-                                   </td>
-                                   <td className="px-6 py-4">
-                                      <select className="w-full bg-white border border-slate-300 rounded px-3 py-1.5 text-sm font-medium text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.cargo?.id ? `${p.cctBase?.id}|${p.cargo?.id}` : ''} onChange={(e) => {
-                                         if (!e.target.value) return;
-                                         const [cctId, cargoId] = e.target.value.split('|');
-                                         const c = ccts.find(x => x.id === cctId);
-                                         if(c) {
-                                            const cargo = c.cargos?.find((x: any) => x.id === cargoId);
-                                            if (cargo) {
-                                               const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, nomeCargo: cargo.nome, cargo: cargo, cctBase: c} : x);
-                                               setProposta({...proposta, equipe: newE});
-                                            }
-                                         }
-                                      }}>
-                                         <option value="">Selecione a Função...</option>
-                                         {!proposta.cliente.sindicatoId && (
-                                             <option value="" disabled className="text-red-500 font-bold italic">⚠️ Selecione o Sindicato na Aba 1 primeiro</option>
-                                          )}
-                                          {ccts.filter((c: any) => !proposta.cliente.sindicatoId || c.id === proposta.cliente.sindicatoId).map((c: any) => (
-                                            <optgroup key={c.id} label={`${c.nome} (${c.uf})`}>
-                                               {c.cargos?.map((cg: any) => (
-                                                  <option key={cg.id} value={`${c.id}|${cg.id}`}>{cg.nome} - R$ {cg.pisoSalarial}</option>
-                                               ))}
-                                            </optgroup>
+               proposta.cliente.tipoProposta === 'SPOT' ? (
+                  <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden animate-fade-in">
+                     <div className="bg-slate-50 border-b border-slate-300 px-6 py-4 flex justify-between items-center">
+                        <div>
+                           <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                              ⚡ Serviços Técnicos Sob Demanda (SPOT)
+                           </h2>
+                           <p className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">
+                              Aloque as equipes de serviços técnicos com seus custos logísticos e defina a comissão comercial.
+                           </p>
+                        </div>
+                        <button onClick={() => {
+                            const newId = Math.random().toString();
+                            setProposta({ 
+                               ...proposta, 
+                               equipe: [...proposta.equipe, { 
+                                  id: newId, 
+                                  tipoItem: 'SPOT',
+                                  nomeCargo: 'Selecione a Equipe', 
+                                  unidadeMedida: 'DIA',
+                                  quantidadeDemanda: 1,
+                                  precoUnitarioDemanda: 0,
+                                  comissaoVendedorPct: 0,
+                                  equipeTecnicaId: '',
+                                  quantidade: 1, 
+                                  escala: 'SPOT', 
+                                  cargo: {}, 
+                                  cctBase: {},
+                                  parametrosPosto: {
+                                     diasTrabalhadosMes: 22,
+                                     periculosidade: false,
+                                     insalubridadePercent: 0,
+                                     adicionalNoturnoHoras: 0,
+                                     intrajornadaHoras: 0,
+                                     dsrPercent: 0,
+                                     horarioInicio: '08:00',
+                                     horarioFim: '17:00'
+                                  },
+                                  ativosConfig: {} 
+                               }] 
+                            });
+                        }} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded transition-colors flex items-center gap-1 shadow-sm">
+                           <Plus size={14}/> Inserir Serviço
+                        </button>
+                     </div>
+                     <div className="p-0">
+                        <table className="w-full text-left text-sm border-collapse">
+                           <thead>
+                              <tr className="bg-slate-100 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
+                                 <th className="px-6 py-3 w-28 text-center">Qtd.</th>
+                                 <th className="px-6 py-3">Serviço / Equipe Técnica</th>
+                                 <th className="px-6 py-3">Unidade</th>
+                                 <th className="px-6 py-3 text-right">Preço Unit. (Venda)</th>
+                                 <th className="px-6 py-3 text-center">Comissão do Vendedor</th>
+                                 <th className="px-6 py-3 text-right">Total Cobrado</th>
+                                 <th className="px-6 py-3 text-right">Ação</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              {proposta.equipe.map((p: any) => (
+                                 <tr key={p.id} className="border-b border-slate-200 hover:bg-slate-50">
+                                    <td className="px-6 py-4">
+                                       <input 
+                                          type="number" 
+                                          className="w-20 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 outline-none focus:border-blue-500" 
+                                          value={p.quantidadeDemanda ?? 1} 
+                                          onChange={(e) => {
+                                             const val = e.target.value === '' ? '' : Number(e.target.value);
+                                             const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, quantidadeDemanda: val} : x);
+                                             setProposta({...proposta, equipe: newE});
+                                          }} 
+                                       />
+                                    </td>
+                                    <td className="px-6 py-4">
+                                       <select 
+                                          className="w-full bg-white border border-slate-300 rounded px-3 py-1.5 text-sm font-medium text-slate-800 outline-none focus:border-blue-500" 
+                                          value={p.equipeTecnicaId || ''} 
+                                          onChange={(e) => {
+                                             const eqId = e.target.value;
+                                             const eq = equipesTecnicasDb.find(x => x.id === eqId);
+                                             if (eq) {
+                                                const preco = p.unidadeMedida === 'HORA' ? eq.valorHoraSugerido : eq.valorDiariaSugerido;
+                                                const newE = proposta.equipe.map((x: any) => x.id === p.id ? {
+                                                   ...x, 
+                                                   nomeCargo: eq.nome, 
+                                                   equipeTecnicaId: eq.id, 
+                                                   precoUnitarioDemanda: preco,
+                                                   quantidade: 1
+                                                } : x);
+                                                setProposta({...proposta, equipe: newE});
+                                             }
+                                          }}
+                                       >
+                                          <option value="">Selecione o Serviço/Equipe...</option>
+                                          {equipesTecnicasDb.map((eq: any) => (
+                                             <option key={eq.id} value={eq.id}>{eq.nome}</option>
                                           ))}
-                                      </select>
-                                   </td>
-                                   <td className="px-6 py-4">
-                                      <select className="bg-white border border-slate-300 rounded px-3 py-1.5 text-sm font-medium text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.escala} onChange={(e) => {
-                                         const chosenEscala = escalasDb.find(esc => esc.nome === e.target.value);
-                                         if (chosenEscala) {
-                                            const param = {...p.parametrosPosto, diasTrabalhadosMes: chosenEscala.diasTrabalhadosMes};
-                                            const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, escala: chosenEscala.nome, parametrosPosto: param} : x);
-                                            setProposta({...proposta, equipe: newE});
-                                         } else {
-                                            updatePosto(p.id, 'escala', e.target.value);
-                                         }
-                                      }}>
-                                         <option value="">Selecione a Escala...</option>
-                                         {escalasDb.map(esc => (
-                                            <option key={esc.id} value={esc.nome}>{esc.nome}</option>
-                                         ))}
-                                      </select>
-                                   </td>
-                                    <td className="px-6 py-4 text-right">
-                                       <div className="flex justify-end items-center gap-2.5">
-                                          <button 
-                                             onClick={() => setActiveAdicionaisPostoId(p.id)}
-                                             className="px-3.5 py-2 rounded-xl border border-slate-200/80 bg-white hover:border-[#1B4D3E] hover:bg-emerald-50/30 text-slate-700 hover:text-[#1B4D3E] font-extrabold text-xs flex items-center gap-2 transition-all shadow-xs active:scale-[0.97]"
-                                             title="Configurar Adicionais e Jornada"
-                                          >
-                                             <span>⚙️</span> Adicionais
-                                          </button>
-                                          
-                                          <button 
-                                             onClick={() => setActiveEpisPostoId(p.id)}
-                                             className="px-3.5 py-2 rounded-xl border border-slate-200/80 bg-white hover:border-[#1B4D3E] hover:bg-emerald-50/30 text-slate-700 hover:text-[#1B4D3E] font-extrabold text-xs flex items-center gap-2 transition-all shadow-xs active:scale-[0.97]"
-                                             title="Configurar EPIs Especiais do Posto"
-                                          >
-                                             <span>🛡️</span> EPIs Especiais
-                                             {((p.parametrosPosto?.episAdicionais || []).length > 0) && (
-                                                <span className="bg-[#1B4D3E] text-white text-[9px] px-2 py-0.5 rounded-full font-black shadow-xs">
-                                                   {(p.parametrosPosto?.episAdicionais || []).length}
-                                                </span>
-                                             )}
-                                          </button>
-
-                                          <button 
-                                             onClick={() => setProposta({...proposta, equipe: proposta.equipe.filter((x: any) => x.id !== p.id)})} 
-                                             className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-2.5 rounded-xl transition-all active:scale-95" 
-                                             title="Remover Posto"
-                                          >
-                                             <Trash2 size={15}/>
-                                          </button>
+                                       </select>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                       <select 
+                                          className="bg-white border border-slate-300 rounded px-3 py-1.5 text-sm font-medium text-slate-800 outline-none focus:border-blue-500" 
+                                          value={p.unidadeMedida || 'DIA'} 
+                                          onChange={(e) => {
+                                             const unit = e.target.value;
+                                             const eq = equipesTecnicasDb.find(x => x.id === p.equipeTecnicaId);
+                                             const preco = eq ? (unit === 'HORA' ? eq.valorHoraSugerido : eq.valorDiariaSugerido) : 0;
+                                             const newE = proposta.equipe.map((x: any) => x.id === p.id ? {
+                                                ...x, 
+                                                unidadeMedida: unit, 
+                                                precoUnitarioDemanda: preco
+                                             } : x);
+                                             setProposta({...proposta, equipe: newE});
+                                          }}
+                                       >
+                                          <option value="DIA">DIA (Diária)</option>
+                                          <option value="HORA">HORA (Hora Técnica)</option>
+                                       </select>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                       <div className="relative flex justify-end items-center">
+                                          <span className="absolute left-2 text-xs font-semibold text-slate-400">R$</span>
+                                          <input 
+                                             type="number" 
+                                             step="0.01"
+                                             className="w-32 bg-white border border-slate-300 rounded pl-7 pr-2 py-1 text-right font-bold text-slate-800 outline-none focus:border-blue-500" 
+                                             value={p.precoUnitarioDemanda ?? 0} 
+                                             onChange={(e) => {
+                                                const val = e.target.value === '' ? '' : Number(e.target.value);
+                                                const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, precoUnitarioDemanda: val} : x);
+                                                setProposta({...proposta, equipe: newE});
+                                             }} 
+                                          />
                                        </div>
                                     </td>
-                                </tr>
-                             </React.Fragment>
-                          ))}
-                          {proposta.equipe.length === 0 && (
-                             <tr>
-                                <td colSpan={4} className="px-6 py-12 text-center text-slate-400 text-sm">
-                                   Nenhum posto adicionado. Clique em "Inserir Posto" para começar.
-                                </td>
-                             </tr>
-                          )}
-                       </tbody>
-                    </table>
-                 </div>
-              </div>
+                                    <td className="px-6 py-4">
+                                       <div className="flex items-center gap-1 justify-center">
+                                          <input 
+                                             type="number" 
+                                             step="0.1"
+                                             className="w-16 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 outline-none focus:border-blue-500" 
+                                             value={p.comissaoVendedorPct ?? 0} 
+                                             onChange={(e) => {
+                                                const val = e.target.value === '' ? 0 : Number(e.target.value);
+                                                const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, comissaoVendedorPct: val} : x);
+                                                setProposta({...proposta, equipe: newE});
+                                             }} 
+                                          />
+                                          <span className="text-xs font-bold text-slate-400">%</span>
+                                       </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-right font-bold text-slate-900">
+                                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((p.quantidadeDemanda || 0) * (p.precoUnitarioDemanda || 0))}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                       <button 
+                                          onClick={() => setProposta({...proposta, equipe: proposta.equipe.filter((x: any) => x.id !== p.id)})} 
+                                          className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors" 
+                                       >
+                                          <Trash2 size={16}/>
+                                       </button>
+                                    </td>
+                                 </tr>
+                              ))}
+                              {proposta.equipe.length === 0 && (
+                                 <tr>
+                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400 italic text-sm">
+                                       Nenhum serviço adicionado. Clique em "Inserir Serviço" para começar.
+                                    </td>
+                                 </tr>
+                              )}
+                           </tbody>
+                        </table>
+                     </div>
+                  </div>
+               ) : (
+                  <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden">
+                     <div className="bg-slate-50 border-b border-slate-300 px-6 py-4 flex justify-between items-center">
+                        <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2"><UserCheck size={16}/> Quadro de Colaboradores</h2>
+                        <button onClick={() => {
+                            const newId = Math.random().toString();
+                            setProposta({ 
+                               ...proposta, 
+                               equipe: [...proposta.equipe, { 
+                                  id: newId, 
+                                  nomeCargo: 'Selecione a Função', 
+                                  quantidade: 1, 
+                                  escala: '', 
+                                  cargo: {}, 
+                                  cctBase: {},
+                                  parametrosPosto: {
+                                     diasTrabalhadosMes: 22,
+                                     periculosidade: false,
+                                     insalubridadePercent: 0,
+                                     adicionalNoturnoHoras: 0,
+                                     intrajornadaHoras: 0,
+                                     dsrPercent: 0,
+                                     horarioInicio: '08:00',
+                                     horarioFim: '17:00'
+                                  },
+                                  ativosConfig: {} 
+                               }] 
+                            });
+                        }} className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-semibold px-4 py-2 rounded transition-colors flex items-center gap-1">
+                           <Plus size={14}/> Inserir Posto
+                        </button>
+                     </div>
+                     <div className="p-0">
+                        <table className="w-full text-left text-sm border-collapse">
+                           <thead>
+                              <tr className="bg-slate-100 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
+                                 <th className="px-6 py-3 w-16 text-center">Qtd.</th>
+                                 <th className="px-6 py-3">Função Vinculada à CCT</th>
+                                 <th className="px-6 py-3">Escala</th>
+                                 <th className="px-6 py-3 text-right">Ação</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              {proposta.equipe.map((p: any) => (
+                                 <React.Fragment key={p.id}>
+                                    <tr className="border-b border-slate-200 hover:bg-slate-50">
+                                       <td className="px-6 py-4">
+                                          <input type="number" className="w-16 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.quantidade} onChange={(e) => updatePosto(p.id, 'quantidade', (e.target.value === '' ? '' : Number(e.target.value)))} />
+                                       </td>
+                                       <td className="px-6 py-4">
+                                          <select className="w-full bg-white border border-slate-300 rounded px-3 py-1.5 text-sm font-medium text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.cargo?.id ? `${p.cctBase?.id}|${p.cargo?.id}` : ''} onChange={(e) => {
+                                             if (!e.target.value) return;
+                                             const [cctId, cargoId] = e.target.value.split('|');
+                                             const c = ccts.find(x => x.id === cctId);
+                                             if(c) {
+                                                const cargo = c.cargos?.find((x: any) => x.id === cargoId);
+                                                if (cargo) {
+                                                   const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, nomeCargo: cargo.nome, cargo: cargo, cctBase: c} : x);
+                                                   setProposta({...proposta, equipe: newE});
+                                                }
+                                             }
+                                          }}>
+                                             <option value="">Selecione a Função...</option>
+                                             {!proposta.cliente.sindicatoId && (
+                                                 <option value="" disabled className="text-red-500 font-bold italic">⚠️ Selecione o Sindicato na Aba 1 primeiro</option>
+                                              )}
+                                              {ccts.filter((c: any) => !proposta.cliente.sindicatoId || c.id === proposta.cliente.sindicatoId).map((c: any) => (
+                                                <optgroup key={c.id} label={`${c.nome} (${c.uf})`}>
+                                                   {c.cargos?.map((cg: any) => (
+                                                      <option key={cg.id} value={`${c.id}|${cg.id}`}>{cg.nome} - R$ {cg.pisoSalarial}</option>
+                                                   ))}
+                                                </optgroup>
+                                             ))}
+                                          </select>
+                                       </td>
+                                       <td className="px-6 py-4">
+                                          <select className="bg-white border border-slate-300 rounded px-3 py-1.5 text-sm font-medium text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.escala} onChange={(e) => {
+                                             const chosenEscala = escalasDb.find(esc => esc.nome === e.target.value);
+                                             if (chosenEscala) {
+                                                const param = {...p.parametrosPosto, diasTrabalhadosMes: chosenEscala.diasTrabalhadosMes};
+                                                const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, escala: chosenEscala.nome, parametrosPosto: param} : x);
+                                                setProposta({...proposta, equipe: newE});
+                                             } else {
+                                                updatePosto(p.id, 'escala', e.target.value);
+                                             }
+                                          }}>
+                                             <option value="">Selecione a Escala...</option>
+                                             {escalasDb.map(esc => (
+                                                <option key={esc.id} value={esc.nome}>{esc.nome}</option>
+                                             ))}
+                                          </select>
+                                       </td>
+                                       <td className="px-6 py-4 text-right">
+                                          <div className="flex items-center justify-end gap-2.5">
+                                             <button 
+                                                type="button"
+                                                onClick={() => setActiveAdicionaisPostoId(p.id)}
+                                                className="px-3.5 py-2 rounded-xl border border-slate-200/80 bg-white hover:border-[#1B4D3E] hover:bg-emerald-50/30 text-slate-700 hover:text-[#1B4D3E] font-extrabold text-xs flex items-center gap-2 transition-all shadow-xs active:scale-[0.97]"
+                                                title="Configurar Adicionais e Jornada"
+                                             >
+                                                <span>⚙️</span> Adicionais
+                                             </button>
+                                             
+                                             <button 
+                                                type="button"
+                                                onClick={() => setActiveEpisPostoId(p.id)}
+                                                className="px-3.5 py-2 rounded-xl border border-slate-200/80 bg-white hover:border-[#1B4D3E] hover:bg-emerald-50/30 text-slate-700 hover:text-[#1B4D3E] font-extrabold text-xs flex items-center gap-2 transition-all shadow-xs active:scale-[0.97]"
+                                                title="Configurar EPIs Especiais do Posto"
+                                             >
+                                                <span>🛡️</span> EPIs Especiais
+                                                {((p.parametrosPosto?.episAdicionais || []).length > 0) && (
+                                                   <span className="bg-[#1B4D3E] text-white text-[9px] px-2 py-0.5 rounded-full font-black shadow-xs">
+                                                      {(p.parametrosPosto?.episAdicionais || []).length}
+                                                   </span>
+                                                )}
+                                             </button>
+ 
+                                             <button 
+                                                type="button"
+                                                onClick={() => setProposta({...proposta, equipe: proposta.equipe.filter((x: any) => x.id !== p.id)})} 
+                                                className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-2.5 rounded-xl transition-all active:scale-95" 
+                                                title="Remover Posto"
+                                             >
+                                                <Trash2 size={15}/>
+                                             </button>
+                                          </div>
+                                       </td>
+                                    </tr>
+                                 </React.Fragment>
+                              ))}
+                              {proposta.equipe.length === 0 && (
+                                 <tr>
+                                    <td colSpan={4} className="px-6 py-12 text-center text-slate-400 text-sm">
+                                       Nenhum posto adicionado. Clique em "Inserir Posto" para começar.
+                                    </td>
+                                 </tr>
+                              )}
+                           </tbody>
+                        </table>
+                     </div>
+                  </div>
+               )
            )}
             {activeTab === 'materiais' && renderInsumosTab('detalheMateriais', ['MATERIAIS E INSUMO', 'PRODUTOS E INSUMOS', 'MATERIAIS', 'INSUMOS', 'PRODUTOS DE LIMPEZA'], 'Materiais e Produtos de Limpeza')}
             {activeTab === 'maquinas' && renderInsumosTab('detalheMaquinas', ['EQUIPAMENTOS LOCADO', 'EQUIPAMENTOS DEPRECIADOS', 'MAQUINAS', 'EQUIPAMENTOS'], 'Máquinas e Equipamentos')}
@@ -1812,7 +2045,12 @@ function PropostaEditor() {
                                { label: '8) Exames Médicos', val: b.exames },
                                { label: '9) Reservas Técnicas', val: b.reservaTecnica, pct: b.reservaTecnicaPct, field: 'reservaTecnicaPct' },
                                { label: '10) Manutenção Equipamentos', val: b.manutencao, pct: b.manutencaoPct, field: 'manutencaoPct' },
-                               { label: '11) Outros (especificar)', val: b.outros },
+                               { 
+                                 label: proposta.cliente.tipoProposta === 'SPOT' && proposta.insumos?.servicosDescricao
+                                    ? `11) Outros (${proposta.insumos.servicosDescricao})` 
+                                    : '11) Outros (especificar)', 
+                                 val: b.outros 
+                               },
                              ];
 
                            return (

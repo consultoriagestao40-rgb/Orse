@@ -1,6 +1,59 @@
 import { EnterpriseCalculationResult } from '@/types/enterprise';
 
 export function calculateLaborCost(colab: any, premissas: any): any {
+  if (colab.tipoItem === 'SPOT') {
+    const qtyDemanda = Number(colab.quantidadeDemanda || 0);
+    const unit = colab.unidadeMedida || 'DIA';
+    const configAtivos = colab.ativosConfig || {};
+    
+    const totalMensalMaoObra = Number(configAtivos.custoMensalMaoObra || 0);
+    const totalMensalVeiculo = Number(configAtivos.custoMensalVeiculo || 0);
+    const totalMensalCombustivel = Number(configAtivos.custoMensalCombustivel || 0);
+    
+    const divisor = unit === 'HORA' ? 176 : 22;
+    
+    const custoMaoObra = (totalMensalMaoObra / divisor) * qtyDemanda;
+    const custoVeiculo = (totalMensalVeiculo / divisor) * qtyDemanda;
+    const custoCombustivel = (totalMensalCombustivel / divisor) * qtyDemanda;
+    
+    const comissao = (Number(colab.precoUnitarioDemanda || 0) * qtyDemanda) * (Number(colab.comissaoVendedorPct || 0) / 100);
+    const outrosCustos = custoCombustivel + comissao;
+    const custoTotalDireto = custoMaoObra + custoVeiculo + outrosCustos;
+    
+    return {
+      remuneracao: custoMaoObra,
+      encargos: 0,
+      blocoA: custoMaoObra,
+      beneficios: outrosCustos,
+      ativos: custoVeiculo,
+      custoTotal: custoTotalDireto,
+      detalheBlocoB: {
+        uniformes: 0,
+        epis: 0,
+        materiais: 0,
+        maquinas: custoVeiculo,
+        descartaveis: 0,
+        servicos: 0
+      },
+      detalheBlocoC: {
+        va: 0,
+        vt: 0,
+        custosSindicato: 0,
+        vaFerias: 0,
+        cestaBasica: 0,
+        descontoVA: 0,
+        descontoVT: 0,
+        exames: 0,
+        reservaTecnica: 0,
+        reservaTecnicaPct: 0,
+        manutencao: 0,
+        manutencaoPct: 0,
+        outros: outrosCustos
+      },
+      custoTotalDireto: custoTotalDireto
+    };
+  }
+
   // Busca resiliente da CCT e do Cargo
   // Prioridade de CCT: 1. Do colaborador, 2. Global da proposta (selecionada na Aba 1), 3. Config Financeira (backup)
   const cctGlobal = premissas.cctGlobal || {};
@@ -200,14 +253,18 @@ export function calculateLaborCost(colab: any, premissas: any): any {
 export function calculateEnterprisePrice(proposal: any): any {
   const { items, impostos, margens, reservaTecnicaPct, manutencaoPct, encargos, insumosGlobais } = proposal;
 
+  const isSpot = items.some((i: any) => i.tipoItem === 'SPOT');
+
   let custoDiretoTotal = 0;
   
   // Soma custos globais de insumos (Materiais, Máquinas, Descartáveis) que não estão vinculados a um cargo específico
   // 1. Custo dos Insumos Globais (se houver)
-  custoDiretoTotal += (Number(insumosGlobais?.materiais) || 0) + 
-                     (Number(insumosGlobais?.maquinas) || 0) + 
-                     (Number(insumosGlobais?.descartaveis) || 0) +
-                     (Number(insumosGlobais?.servicos) || 0);
+  const custoInsumosGlobais = (Number(insumosGlobais?.materiais) || 0) + 
+                             (Number(insumosGlobais?.maquinas) || 0) + 
+                             (Number(insumosGlobais?.descartaveis) || 0) +
+                             (Number(insumosGlobais?.servicos) || 0);
+
+  custoDiretoTotal += custoInsumosGlobais;
 
   // 2. Parâmetros de Margens e Impostos
   const txAdm = (Number(margens?.adm) || 0) / 100;
@@ -220,6 +277,8 @@ export function calculateEnterprisePrice(proposal: any): any {
   const divisorTributos = 1 - (totalTributosPct / 100);
 
   const totalEquipeQtd = items.reduce((acc: number, x: any) => acc + (Number(x.quantidade) || 0), 0);
+
+  let faturamentoServicosSpot = 0;
 
   const itemResults = items.map((item: any) => {
     const res = calculateLaborCost(item, {
@@ -234,12 +293,19 @@ export function calculateEnterprisePrice(proposal: any): any {
     // CÁLCULO EM CASCATA SOLICITADO:
     // 1. Custo Direto
     const custoD = res.custoTotalDireto;
-    // 2. Adiciona Taxa Adm sobre o Custo
-    const comAdm = custoD * (1 + txAdm);
-    // 3. Adiciona Lucro sobre (Custo + Adm)
-    const comLucro = comAdm * (1 + txLucro);
-    // 4. Aplica Tributos (Gross-up sobre o montante com margens)
-    const precoVendaItem = divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
+    let precoVendaItem = 0;
+
+    if (item.tipoItem === 'SPOT') {
+      precoVendaItem = (Number(item.quantidadeDemanda) || 0) * (Number(item.precoUnitarioDemanda) || 0);
+      faturamentoServicosSpot += precoVendaItem;
+    } else {
+      // 2. Adiciona Taxa Adm sobre o Custo
+      const comAdm = custoD * (1 + txAdm);
+      // 3. Adiciona Lucro sobre (Custo + Adm)
+      const comLucro = comAdm * (1 + txLucro);
+      // 4. Aplica Tributos (Gross-up sobre o montante com margens)
+      precoVendaItem = divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
+    }
 
     custoDiretoTotal += custoD;
     
@@ -251,14 +317,38 @@ export function calculateEnterprisePrice(proposal: any): any {
     };
   });
 
-  // Cálculo do Faturamento Bruto Total seguindo a mesma lógica
-  const totalComAdm = custoDiretoTotal * (1 + txAdm);
-  const totalComLucro = totalComAdm * (1 + txLucro);
-  const faturamentoBruto = divisorTributos > 0 ? (totalComLucro / divisorTributos) : totalComLucro;
+  let faturamentoBruto = 0;
+  let valorImpostos = 0;
+  let valorAdm = 0;
+  let valorMargemLucro = 0;
 
-  const valorImpostos = faturamentoBruto * (totalTributosPct / 100);
-  const valorMargemLucro = faturamentoBruto - valorImpostos - totalComAdm;
-  const valorAdm = totalComAdm - custoDiretoTotal;
+  if (isSpot) {
+    // Para Spot, os insumos operacionais globais (plataformas, químicos, etc) são precificados em cascata
+    let faturamentoInsumos = 0;
+    if (custoInsumosGlobais > 0) {
+      const comAdmInsumos = custoInsumosGlobais * (1 + txAdm);
+      const comLucroInsumos = comAdmInsumos * (1 + txLucro);
+      faturamentoInsumos = divisorTributos > 0 ? (comLucroInsumos / divisorTributos) : comLucroInsumos;
+    }
+
+    faturamentoBruto = faturamentoServicosSpot + faturamentoInsumos;
+    valorImpostos = faturamentoBruto * (totalTributosPct / 100);
+    
+    // Taxa administrativa sobre o custo direto total do projeto
+    valorAdm = custoDiretoTotal * txAdm;
+    
+    // Margem real de lucro calculada por diferença
+    valorMargemLucro = faturamentoBruto - custoDiretoTotal - valorImpostos - valorAdm;
+  } else {
+    // Cálculo do Faturamento Bruto Total seguindo a mesma lógica
+    const totalComAdm = custoDiretoTotal * (1 + txAdm);
+    const totalComLucro = totalComAdm * (1 + txLucro);
+    faturamentoBruto = divisorTributos > 0 ? (totalComLucro / divisorTributos) : totalComLucro;
+
+    valorImpostos = faturamentoBruto * (totalTributosPct / 100);
+    valorMargemLucro = faturamentoBruto - valorImpostos - totalComAdm;
+    valorAdm = totalComAdm - custoDiretoTotal;
+  }
 
   return {
     items: itemResults,
@@ -267,6 +357,6 @@ export function calculateEnterprisePrice(proposal: any): any {
     impostosTotais: valorImpostos,
     margemLucro: valorMargemLucro,
     taxaAdm: valorAdm,
-    divisor: divisorTributos // Agora o divisor é apenas dos tributos
+    divisor: divisorTributos
   };
 }

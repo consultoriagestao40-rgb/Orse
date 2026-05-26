@@ -159,6 +159,15 @@ model PropostaItem {
   custoDireto      Float
   custoTotalItem   Float
   versao           PropostaVersao @relation(fields: [versaoId], references: [id], onDelete: Cascade)
+
+  // Novos campos para a modalidade Spot
+  tipoItem             String         @default("POSTO_FIXO") // "POSTO_FIXO" ou "SPOT"
+  unidadeMedida        String?        // "HORA" ou "DIA"
+  quantidadeDemanda    Float?         // Ex: 5 (dias) ou 40 (horas)
+  precoUnitarioDemanda Float?         // Preço cobrado do cliente por diária/hora
+  comissaoVendedorPct  Float          @default(0)
+  equipeTecnicaId      String?
+  equipeTecnica        EquipeTecnicaComposicao? @relation(fields: [equipeTecnicaId], references: [id])
 }
 
 model Escala {
@@ -487,4 +496,21 @@ model Notification {
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+model EquipeTecnicaComposicao {
+  id                     String         @id @default(cuid())
+  nome                   String         @unique
+  custoMensalMaoObra     Float          @default(0)
+  custoMensalVeiculo     Float          @default(0)
+  custoMensalCombustivel Float          @default(0)
+  custoMensalTotal       Float          @default(0)
+  valorDiariaSugerido    Float          @default(0)
+  valorHoraSugerido      Float          @default(0)
+  itensMaoObra           Json           // [{ cargoId: "...", quantidade: 1 }]
+  itensCustosAdicionais  Json?          // [{ descricao: "...", valor: 0 }]
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  propostaItems          PropostaItem[]
+}
+
 

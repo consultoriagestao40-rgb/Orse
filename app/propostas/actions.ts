@@ -200,6 +200,7 @@ export async function saveProposta(data: any) {
       numeroProposta: cliente.numeroProposta,
       revisao: cliente.revisao,
       tipoServicos: cliente.tipoServicos,
+      tipoProposta: cliente.tipoProposta || 'RECORRENTE',
       vendedorNome: cliente.vendedorNome || 'Ádamo Quadros',
       vendedorCargo: cliente.vendedorCargo || 'Novos Negócios',
       vendedorTelefone: cliente.vendedorTelefone || '(41) 9 9737-0880',
@@ -235,20 +236,28 @@ export async function saveProposta(data: any) {
     };
 
     const itemsData = equipe.map((item: any) => {
-      const itemRes = resultado.items.find((r: any) => r.id === item.id);
+      const itemRes = resultado?.items?.find((r: any) => r.id === item.id);
       return {
         nomeCargo: item.nomeCargo,
-        quantidade: item.quantidade,
-        escala: item.escala,
+        quantidade: item.quantidade || 1,
+        escala: item.escala || '5x2',
         entrada: item.parametrosPosto?.horarioInicio || '08:00',
         saida: item.parametrosPosto?.horarioFim || '17:00',
-        configFinanceira: item.cargo as any,
+        configFinanceira: (item.cargo || item.configFinanceira || {}) as any,
         ativosConfig: {
           ...(item.ativosConfig || {}),
           parametrosPosto: item.parametrosPosto
         } as any,
-        custoDireto: itemRes?.detalhes?.remuneracao || 0,
-        custoTotalItem: itemRes?.custoTotal || 0
+        custoDireto: itemRes?.detalhes?.remuneracao || item.custoDireto || 0,
+        custoTotalItem: itemRes?.custoTotal || item.custoTotalItem || 0,
+        
+        // Novos campos para a modalidade Spot
+        tipoItem: item.tipoItem || 'POSTO_FIXO',
+        unidadeMedida: item.unidadeMedida || null,
+        quantidadeDemanda: item.quantidadeDemanda !== undefined && item.quantidadeDemanda !== null ? Number(item.quantidadeDemanda) : null,
+        precoUnitarioDemanda: item.precoUnitarioDemanda !== undefined && item.precoUnitarioDemanda !== null ? Number(item.precoUnitarioDemanda) : null,
+        comissaoVendedorPct: item.comissaoVendedorPct !== undefined && item.comissaoVendedorPct !== null ? Number(item.comissaoVendedorPct) : 0,
+        equipeTecnicaId: item.equipeTecnicaId || null
       };
     });
 
@@ -495,6 +504,7 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
         numeroProposta: meta.numeroProposta || '',
         revisao: meta.revisao || '',
         tipoServicos: meta.tipoServicos || '',
+        tipoProposta: meta.tipoProposta || 'RECORRENTE',
         vendedorNome: meta.vendedorNome || 'Ádamo Quadros',
         vendedorCargo: meta.vendedorCargo || 'Novos Negócios',
         vendedorTelefone: meta.vendedorTelefone || '(41) 9 9737-0880',
@@ -567,7 +577,13 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
             intrajornadaHoras: 0,
             dsrPercent: 0,
             episAdicionais: []
-          }
+          },
+          tipoItem: i.tipoItem || 'POSTO_FIXO',
+          unidadeMedida: i.unidadeMedida || null,
+          quantidadeDemanda: i.quantidadeDemanda !== null && i.quantidadeDemanda !== undefined ? Number(i.quantidadeDemanda) : null,
+          precoUnitarioDemanda: i.precoUnitarioDemanda !== null && i.precoUnitarioDemanda !== undefined ? Number(i.precoUnitarioDemanda) : null,
+          comissaoVendedorPct: i.comissaoVendedorPct !== null && i.comissaoVendedorPct !== undefined ? Number(i.comissaoVendedorPct) : 0,
+          equipeTecnicaId: i.equipeTecnicaId || null
         };
       }),
       versao: v.versao,
