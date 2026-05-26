@@ -654,10 +654,10 @@ function EmailCenterContent() {
 
                     {/* SMTP Host */}
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Servidor SMTP (Host) *</label>
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Servidor de Saída (SMTP / Host) *</label>
                       <input 
                         type="text"
-                        placeholder="Ex: smtp.titan.email, smtp.gmail.com"
+                        placeholder="Ex: smtp.titan.email, smtp.umbler.com"
                         required
                         value={smtpForm.host}
                         onChange={e => setSmtpForm({...smtpForm, host: e.target.value})}
@@ -667,7 +667,7 @@ function EmailCenterContent() {
 
                     {/* SMTP Port */}
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Porta SMTP *</label>
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Porta de Saída (SMTP) *</label>
                       <input 
                         type="number"
                         placeholder="587 (TLS) ou 465 (SSL)"
