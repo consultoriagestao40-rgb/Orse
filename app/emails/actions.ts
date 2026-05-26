@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { ImapFlow } from 'imapflow';
 import { simpleParser } from 'mailparser';
+import { getLoggedUser } from '@/app/propostas/actions';
+
 
 export interface ParsedEmail {
   id: string;
@@ -86,8 +88,12 @@ function parseEmailComment(comment: any): ParsedEmail {
 
 export async function getEmails() {
   try {
+    const user = await getLoggedUser();
+    if (!user) return [];
+
     const comments = await prisma.comment.findMany({
       where: {
+        userId: user.id,
         texto: {
           startsWith: '📧 [E-mail'
         }
@@ -135,7 +141,11 @@ export async function deleteEmail(commentId: string) {
 
 export async function getSmtpAccounts() {
   try {
+    const user = await getLoggedUser();
+    if (!user) return { success: false, error: 'Não autorizado', accounts: [] };
+
     const accounts = await prisma.smtpAccount.findMany({
+      where: { userId: user.id },
       orderBy: { createdAt: 'desc' }
     });
     return { success: true, accounts };
@@ -156,9 +166,13 @@ export async function createSmtpAccount(data: {
   active?: boolean;
 }) {
   try {
-    // Se for ativar esta, desativa as outras para garantir somente uma ativa por vez
+    const user = await getLoggedUser();
+    if (!user) return { success: false, error: 'Não autorizado' };
+
+    // Se for ativar esta, desativa as outras para garantir somente uma ativa por vez para este usuário
     if (data.active) {
       await prisma.smtpAccount.updateMany({
+        where: { userId: user.id },
         data: { active: false }
       });
     }
@@ -173,6 +187,7 @@ export async function createSmtpAccount(data: {
         fromEmail: data.fromEmail,
         fromName: data.fromName,
         active: data.active !== undefined ? data.active : true,
+        userId: user.id
       }
     });
 
@@ -195,10 +210,13 @@ export async function updateSmtpAccount(id: string, data: {
   active?: boolean;
 }) {
   try {
-    // Se for ativar esta, desativa as outras
+    const user = await getLoggedUser();
+    if (!user) return { success: false, error: 'Não autorizado' };
+
+    // Se for ativar esta, desativa as outras deste usuário
     if (data.active) {
       await prisma.smtpAccount.updateMany({
-        where: { id: { not: id } },
+        where: { userId: user.id, id: { not: id } },
         data: { active: false }
       });
     }
@@ -206,6 +224,11 @@ export async function updateSmtpAccount(id: string, data: {
     const updateData: any = { ...data };
     if (data.port !== undefined) {
       updateData.port = Number(data.port);
+    }
+
+    // Se a senha estiver vazia (em branco), removemos do objeto de atualização para não sobrescrever a senha existente
+    if (updateData.password === undefined || updateData.password === null || updateData.password.trim() === '') {
+      delete updateData.password;
     }
 
     const account = await prisma.smtpAccount.update({
@@ -236,10 +259,13 @@ export async function deleteSmtpAccount(id: string) {
 
 export async function toggleSmtpAccountActive(id: string, active: boolean) {
   try {
+    const user = await getLoggedUser();
+    if (!user) return { success: false, error: 'Não autorizado' };
+
     if (active) {
-      // Desativa todas as outras contas
+      // Desativa todas as outras contas deste usuário
       await prisma.smtpAccount.updateMany({
-        where: { id: { not: id } },
+        where: { userId: user.id, id: { not: id } },
         data: { active: false }
       });
     }
@@ -259,8 +285,11 @@ export async function toggleSmtpAccountActive(id: string, active: boolean) {
 
 export async function syncEmailsFromImap() {
   try {
+    const user = await getLoggedUser();
+    if (!user) return { success: false, error: 'Não autorizado' };
+
     const activeAccount = await prisma.smtpAccount.findFirst({
-      where: { active: true }
+      where: { userId: user.id, active: true }
     });
 
     if (!activeAccount || !activeAccount.imapHost) {
@@ -268,7 +297,7 @@ export async function syncEmailsFromImap() {
       return { success: true, count: 0, message: "Nenhuma conta IMAP ativa configurada no banco de dados." };
     }
 
-    const { imapHost, imapPort, user, password } = activeAccount;
+    const { imapHost, imapPort, user: imapUser, password } = activeAccount;
     const port = imapPort || 993;
 
     // Connect to IMAP
@@ -277,7 +306,7 @@ export async function syncEmailsFromImap() {
       port,
       secure: port === 993,
       auth: {
-        user,
+        user: imapUser,
         pass: password
       },
       logger: false
@@ -381,8 +410,21 @@ export async function testSmtpConnection(data: {
   port: number;
   user: string;
   password?: string;
+  id?: string;
 }) {
   try {
+    let pass = data.password || '';
+
+    // Se estiver editando e a senha estiver em branco, busca a senha salva no banco
+    if (!pass.trim() && data.id) {
+      const savedAccount = await prisma.smtpAccount.findUnique({
+        where: { id: data.id }
+      });
+      if (savedAccount) {
+        pass = savedAccount.password;
+      }
+    }
+
     const nodemailer = await import('nodemailer');
     const transporter = nodemailer.createTransport({
       host: data.host,
@@ -390,7 +432,7 @@ export async function testSmtpConnection(data: {
       secure: Number(data.port) === 465,
       auth: {
         user: data.user,
-        pass: data.password || ''
+        pass: pass
       },
       tls: {
         rejectUnauthorized: false
@@ -411,15 +453,28 @@ export async function testImapConnection(data: {
   imapPort: number;
   user: string;
   password?: string;
+  id?: string;
 }) {
   try {
+    let pass = data.password || '';
+
+    // Se estiver editando e a senha estiver em branco, busca a senha salva no banco
+    if (!pass.trim() && data.id) {
+      const savedAccount = await prisma.smtpAccount.findUnique({
+        where: { id: data.id }
+      });
+      if (savedAccount) {
+        pass = savedAccount.password;
+      }
+    }
+
     const client = new ImapFlow({
       host: data.imapHost,
       port: Number(data.imapPort),
       secure: Number(data.imapPort) === 993,
       auth: {
         user: data.user,
-        pass: data.password || ''
+        pass: pass
       },
       logger: false,
       connectionTimeout: 5000 // 5 seconds

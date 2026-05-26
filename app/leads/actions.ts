@@ -369,6 +369,39 @@ export async function addComment(leadId: string, texto: string) {
     await prisma.leadHistory.create({
       data: { leadId, tipo: 'ANOTACAO', descricao: `Novo comentário adicionado por ${user.nome}` }
     });
+
+    // --- LOGICA DE MENÇÕES E NOTIFICAÇÃO ---
+    // Buscar todos os usuários do sistema
+    const allUsers = await prisma.user.findMany({
+      select: { id: true, nome: true }
+    });
+
+    // Obter o nome do Lead para colocar na notificação
+    const lead = await prisma.lead.findUnique({
+      where: { id: leadId },
+      select: { nomeFantasia: true }
+    });
+    const leadName = lead?.nomeFantasia || 'um Lead';
+
+    for (const u of allUsers) {
+      const mentionToken = `@${u.nome}`;
+      // Verifica se o texto do comentário contém a menção do usuário
+      if (texto.includes(mentionToken)) {
+        // Não notifica a si mesmo
+        if (u.id !== user.id) {
+          const excerpt = texto.replace(mentionToken, u.nome);
+          await prisma.notification.create({
+            data: {
+              userId: u.id,
+              texto: `${user.nome} mencionou você em um comentário no lead "${leadName}": "${excerpt.substring(0, 65)}${excerpt.length > 65 ? '...' : ''}"`,
+              link: `/leads?id=${leadId}`
+            }
+          });
+        }
+      }
+    }
+    // ----------------------------------------
+
     revalidatePath('/leads');
     return { success: true, comment };
   } catch (error: any) {
@@ -596,28 +629,60 @@ export async function removeLeadContact(leadId: string, contactId: string) {
   }
 }
 
-export async function sendLeadEmail(leadId: string, to: string, subject: string, body: string) {
+export async function sendLeadEmail(
+  leadId: string, 
+  to: string, 
+  subject: string, 
+  body: string, 
+  smtpAccountId?: string,
+  attachments?: { filename: string; content: string }[]
+) {
   const currentUser = await getLoggedUser();
   if (!currentUser) return { success: false, error: 'Unauthorized' };
 
+  // Se passou uma conta SMTP específica, valida se ela pertence ao usuário logado!
+  if (smtpAccountId) {
+    const account = await prisma.smtpAccount.findFirst({
+      where: { id: smtpAccountId, userId: currentUser.id }
+    });
+    if (!account) {
+      return { success: false, error: 'Conta de e-mail não encontrada ou não pertencente ao seu usuário.' };
+    }
+  }
+
   try {
+    // Se o lead não tem e-mail cadastrado ou se o e-mail do lead foi alterado no momento de enviar, atualiza o perfil do lead no banco!
+    const lead = await prisma.lead.findUnique({
+      where: { id: leadId },
+      select: { email: true }
+    });
+    
+    if (lead && lead.email !== to) {
+      await prisma.lead.update({
+        where: { id: leadId },
+        data: { email: to }
+      });
+    }
+
     const { sendMail } = await import('@/lib/mail');
     const mailRes = await sendMail({
       to,
       subject,
-      text: body
+      text: body,
+      smtpAccountId,
+      attachments
     });
 
     if (!mailRes.success) {
       return { success: false, error: mailRes.error };
     }
 
-    // Register email as a Comment in the lead's main feed
+    // Register email as a Comment in the lead's main feed with Para: header
     await prisma.comment.create({
       data: {
         leadId,
         userId: currentUser.id,
-        texto: `📧 [E-mail Enviado]\nAssunto: ${subject}\n\n${body}`
+        texto: `📧 [E-mail Enviado]\nPara: ${to}\nAssunto: ${subject}\n\n${body}`
       }
     });
 
@@ -631,6 +696,7 @@ export async function sendLeadEmail(leadId: string, to: string, subject: string,
     });
 
     revalidatePath('/leads');
+    revalidatePath('/emails');
     return { success: true, simulated: mailRes.simulated };
   } catch (error: any) {
     return { success: false, error: error.message || String(error) };

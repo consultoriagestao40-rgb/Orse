@@ -35,7 +35,9 @@ import {
   Check,
   ToggleLeft,
   ToggleRight,
-  Edit2
+  Edit2,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -49,7 +51,7 @@ function EmailCenterContent() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'sent' | 'received'>('all');
-  const [selectedEmail, setSelectedEmail] = useState<ParsedEmail | null>(null);
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
   // SMTP Accounts State
@@ -73,6 +75,7 @@ function EmailCenterContent() {
   });
   
   const [isEditingSmtp, setIsEditingSmtp] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Connection Test States
   const [smtpTestResult, setSmtpTestResult] = useState<{ success?: boolean; error?: string; message?: string } | null>(null);
@@ -109,7 +112,8 @@ function EmailCenterContent() {
         imapHost: smtpForm.imapHost,
         imapPort: Number(smtpForm.imapPort),
         user: smtpForm.user,
-        password: smtpForm.password
+        password: smtpForm.password,
+        id: smtpForm.id
       });
       setImapTestResult(res);
     } catch (err: any) {
@@ -139,16 +143,15 @@ function EmailCenterContent() {
       const data = await getEmails();
       setEmails(data);
       
-      // Auto-select email or pre-filter if leadIdParam is present
+      // Auto-select lead or pre-filter if leadIdParam is present
       if (data.length > 0) {
         if (leadIdParam) {
-          const firstForLead = data.find(e => e.leadId === leadIdParam);
-          setSelectedEmail(firstForLead || data[0]);
+          setSelectedLeadId(leadIdParam);
         } else {
-          setSelectedEmail(data[0]);
+          setSelectedLeadId(data[0].leadId);
         }
       } else {
-        setSelectedEmail(null);
+        setSelectedLeadId(null);
       }
     } catch (err) {
       console.error(err);
@@ -178,8 +181,14 @@ function EmailCenterContent() {
         const updated = emails.filter(e => e.id !== id);
         setEmails(updated);
         
-        if (selectedEmail?.id === id) {
-          setSelectedEmail(updated.length > 0 ? updated[0] : null);
+        // Se deletamos o último e-mail do lead selecionado, selecionamos outro
+        const remainingForSelectedLead = updated.filter(e => e.leadId === selectedLeadId);
+        if (remainingForSelectedLead.length === 0) {
+          if (updated.length > 0) {
+            setSelectedLeadId(updated[0].leadId);
+          } else {
+            setSelectedLeadId(null);
+          }
         }
       } else {
         alert('Erro ao excluir e-mail: ' + res.error);
@@ -309,6 +318,7 @@ function EmailCenterContent() {
     setIsEditingSmtp(false);
     setSmtpTestResult(null);
     setImapTestResult(null);
+    setShowPassword(false);
   };
 
   // Filter emails based on search term and tab selection
@@ -334,6 +344,64 @@ function EmailCenterContent() {
   const sentCount = emails.filter(e => e.direction === 'SENT').length;
   const receivedCount = emails.filter(e => e.direction === 'RECEIVED').length;
   const uniqueLeadsCount = new Set(emails.map(e => e.leadId)).size;
+
+  // Interface para agrupamento de e-mails por Lead (Threads)
+  interface EmailThread {
+    leadId: string;
+    leadName: string;
+    leadEmail: string;
+    emails: ParsedEmail[];
+    lastActivity: Date;
+    latestSubject: string;
+    latestBodyPreview: string;
+    latestDirection: 'SENT' | 'RECEIVED';
+  }
+
+  const threadsMap: { [key: string]: EmailThread } = {};
+
+  filteredEmails.forEach(email => {
+    if (!threadsMap[email.leadId]) {
+      threadsMap[email.leadId] = {
+        leadId: email.leadId,
+        leadName: email.leadName,
+        leadEmail: email.leadEmail || '',
+        emails: [],
+        lastActivity: new Date(email.createdAt),
+        latestSubject: email.subject,
+        latestBodyPreview: email.body,
+        latestDirection: email.direction
+      };
+    }
+    
+    threadsMap[email.leadId].emails.push(email);
+    
+    const emailDate = new Date(email.createdAt);
+    if (emailDate > threadsMap[email.leadId].lastActivity) {
+      threadsMap[email.leadId].lastActivity = emailDate;
+      threadsMap[email.leadId].latestSubject = email.subject;
+      threadsMap[email.leadId].latestBodyPreview = email.body;
+      threadsMap[email.leadId].latestDirection = email.direction;
+    }
+  });
+
+  const threads = Object.values(threadsMap).sort((a, b) => b.lastActivity.getTime() - a.lastActivity.getTime());
+
+  // Encontra a thread atualmente selecionada
+  const selectedThread = threads.find(t => t.leadId === selectedLeadId) || (selectedLeadId ? {
+    leadId: selectedLeadId,
+    leadName: emails.find(e => e.leadId === selectedLeadId)?.leadName || 'Sem Nome',
+    leadEmail: emails.find(e => e.leadId === selectedLeadId)?.leadEmail || '',
+    emails: emails.filter(e => e.leadId === selectedLeadId),
+    lastActivity: new Date(),
+    latestSubject: '',
+    latestBodyPreview: '',
+    latestDirection: 'SENT' as const
+  } : null);
+
+  // Ordena os e-mails da thread selecionada (mais recentes no topo)
+  const threadEmailsSorted = selectedThread 
+    ? [...selectedThread.emails].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    : [];
 
   return (
     <div className="flex flex-col h-screen bg-[#F8FAFC] text-slate-700 overflow-hidden font-sans">
@@ -464,49 +532,61 @@ function EmailCenterContent() {
                 <RefreshCw className="animate-spin mx-auto text-[#1B4D3E]" size={24} />
                 <p className="text-xs font-bold uppercase tracking-wider">Carregando e-mails...</p>
               </div>
-            ) : filteredEmails.length === 0 ? (
+            ) : threads.length === 0 ? (
               <div className="p-12 text-center text-slate-400 space-y-3">
                 <AlertCircle className="mx-auto text-slate-300" size={32} />
                 <p className="text-xs font-bold uppercase tracking-wider">Nenhum e-mail encontrado.</p>
               </div>
             ) : (
-              filteredEmails.map(email => {
-                const isSelected = selectedEmail?.id === email.id;
-                const isSent = email.direction === 'SENT';
+              threads.map(thread => {
+                const isSelected = selectedLeadId === thread.leadId;
+                const isSent = thread.latestDirection === 'SENT';
                 
                 return (
                   <div
-                    key={email.id}
-                    onClick={() => setSelectedEmail(email)}
+                    key={thread.leadId}
+                    onClick={() => setSelectedLeadId(thread.leadId)}
                     className={`p-4 cursor-pointer transition-all flex gap-3 relative border-b border-slate-100 ${
                       isSelected 
                         ? 'bg-slate-50/80 border-l-4 border-[#1B4D3E]' 
                         : 'hover:bg-slate-50/40 border-l-4 border-transparent'
                     }`}
                   >
-                    {/* Direction icon badge */}
-                    <div className={`w-8 h-8 rounded-xl shrink-0 flex items-center justify-center border ${
-                      isSent 
-                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                        : 'bg-blue-50 text-blue-600 border-blue-100'
-                    }`}>
-                    {isSent ? <ArrowUpRight size={14} /> : <ArrowDownLeft size={14} />}
+                    {/* Icon indicating lead thread */}
+                    <div className="relative shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[#1B4D3E] font-black text-sm uppercase">
+                        {thread.leadName.charAt(0)}
+                      </div>
+                      {/* Sub-badge indicating latest activity direction */}
+                      <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center shadow-2xs ${
+                        isSent ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white'
+                      }`}>
+                        {isSent ? <Send size={9} /> : <Inbox size={9} />}
+                      </div>
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-0.5">
-                        <span className="font-bold text-xs text-slate-800 truncate">
-                          {email.leadName}
+                        <span className="font-bold text-xs text-slate-800 truncate" title={thread.leadName}>
+                          {thread.leadName}
                         </span>
                         <span className="text-[10px] text-slate-400 shrink-0 font-bold">
-                          {new Date(email.createdAt).toLocaleDateString()}
+                          {thread.lastActivity.toLocaleDateString()}
                         </span>
                       </div>
-                      <h4 className="text-xs font-bold text-slate-700 truncate mb-1">
-                        {email.subject}
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <span className="text-[10px] text-slate-400 font-bold truncate max-w-[150px]" title={thread.leadEmail}>
+                          {thread.leadEmail || 'Sem e-mail cadastrado'}
+                        </span>
+                        <span className="bg-[#1B4D3E]/10 text-[#1B4D3E] text-[9px] px-1.5 py-0.2 rounded-full font-extrabold border border-[#1B4D3E]/15 shrink-0">
+                          {thread.emails.length} {thread.emails.length === 1 ? 'e-mail' : 'e-mails'}
+                        </span>
+                      </div>
+                      <h4 className="text-[11px] font-extrabold text-slate-600 truncate">
+                        {thread.latestSubject || 'Sem Assunto'}
                       </h4>
-                      <p className="text-[11px] text-slate-400 truncate line-clamp-1">
-                        {email.body.replace(/<[^>]*>/g, '')}
+                      <p className="text-[10px] text-slate-400 truncate line-clamp-1">
+                        {thread.latestBodyPreview.replace(/<[^>]*>/g, '')}
                       </p>
                     </div>
                   </div>
@@ -518,77 +598,92 @@ function EmailCenterContent() {
 
         {/* Right Side: Detailed preview window */}
         <div className="hidden lg:flex flex-1 flex-col h-full bg-[#F8FAFC] overflow-hidden">
-          {selectedEmail ? (
+          {selectedThread ? (
             <div className="flex flex-col h-full overflow-hidden">
               {/* Header preview row */}
               <div className="p-6 bg-white border-b border-slate-200 shrink-0 space-y-4 shadow-2xs">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
-                    <h2 className="text-base font-black text-[#1B4D3E] uppercase tracking-wide">{selectedEmail.subject}</h2>
+                    <h2 className="text-base font-black text-[#1B4D3E] uppercase tracking-wide flex items-center gap-2">
+                      Histórico com: {selectedThread.leadName}
+                    </h2>
                     <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold text-[10px] border ${
-                        selectedEmail.direction === 'SENT' 
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
-                          : 'bg-blue-50 text-blue-700 border-blue-100'
-                      }`}>
-                        {selectedEmail.direction === 'SENT' ? (
-                          <>
-                            <Send size={10} /> Enviado
-                          </>
-                        ) : (
-                          <>
-                            <Inbox size={10} /> Recebido
-                          </>
-                        )}
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold text-[10px] border bg-[#1B4D3E]/5 text-[#1B4D3E] border-[#1B4D3E]/15">
+                        <Mail size={10} /> {selectedThread.emails.length} {selectedThread.emails.length === 1 ? 'E-mail trocado' : 'E-mails trocados'}
                       </span>
-                      <span className="flex items-center gap-1.5 text-slate-400 font-bold">
-                        <Calendar size={12} /> {new Date(selectedEmail.createdAt).toLocaleString()}
-                      </span>
+                      {selectedThread.leadEmail && (
+                        <span className="flex items-center gap-1.5 text-slate-400 font-bold">
+                          {selectedThread.leadEmail}
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <Link
-                      href={`/leads?leadId=${selectedEmail.leadId}`}
+                      href={`/leads?leadId=${selectedThread.leadId}`}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl border border-slate-350 hover:text-slate-900 font-bold transition-all shadow-xs"
                       title="Ver Lead no Pipeline CRM"
                     >
                       Ver Lead <ExternalLink size={12} />
                     </Link>
-                    <button
-                      onClick={() => handleDelete(selectedEmail.commentId)}
-                      disabled={actionLoading}
-                      className="p-2 bg-white text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl border border-slate-250 hover:border-rose-200 transition-all shadow-xs"
-                      title="Excluir histórico de e-mail"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Sender/Receiver Details metadata block */}
-                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">De:</span>
-                    <span className="text-slate-700 font-bold">{selectedEmail.from}</span>
-                  </div>
-                  <div className="flex justify-between border-t border-slate-200/60 pt-1.5">
-                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Para:</span>
-                    <span className="text-slate-700 font-bold">{selectedEmail.to}</span>
-                  </div>
-                  <div className="flex justify-between border-t border-slate-200/60 pt-1.5">
-                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Lead Associado:</span>
-                    <Link href={`/leads?leadId=${selectedEmail.leadId}`} className="text-emerald-700 hover:underline font-bold flex items-center gap-1">
-                      {selectedEmail.leadName} ({selectedEmail.leadEmail})
-                    </Link>
                   </div>
                 </div>
               </div>
 
-              {/* Email Content Body Preview */}
-              <div className="flex-1 p-8 overflow-y-auto bg-[#F8FAFC] scrollbar-thin">
-                <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-4xl mx-auto my-2 text-sm text-slate-700 font-normal leading-relaxed whitespace-pre-wrap select-text">
-                  {selectedEmail.body}
+              {/* Emails Chronological Timeline List */}
+              <div className="flex-1 p-6 overflow-y-auto bg-[#F8FAFC] scrollbar-thin space-y-6">
+                <div className="max-w-4xl mx-auto space-y-4">
+                  {threadEmailsSorted.map((email) => {
+                    const isSent = email.direction === 'SENT';
+                    return (
+                      <div 
+                        key={email.id} 
+                        className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden transition-all hover:shadow-xs"
+                      >
+                        {/* Card Header */}
+                        <div className={`px-5 py-3.5 border-b flex justify-between items-center ${
+                          isSent ? 'bg-emerald-50/20 border-emerald-100/50' : 'bg-blue-50/20 border-blue-100/50'
+                        }`}>
+                          <div className="flex flex-wrap items-center gap-2.5">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold text-[10px] border ${
+                              isSent 
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+                                : 'bg-blue-50 text-blue-700 border-blue-100'
+                            }`}>
+                              {isSent ? <Send size={10} /> : <Inbox size={10} />}
+                              {isSent ? 'E-mail Enviado' : 'E-mail Recebido'}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+                              <Calendar size={11} /> {new Date(email.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => handleDelete(email.commentId)}
+                            disabled={actionLoading}
+                            className="p-1.5 text-slate-450 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-200 hover:border-rose-100 transition-all shadow-3xs"
+                            title="Excluir este e-mail do histórico"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+
+                        {/* Card Metadata info */}
+                        <div className="px-6 py-3 bg-slate-50/50 border-b border-slate-100 text-xs space-y-1 font-semibold text-slate-500">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+                            <div><span className="text-slate-400 uppercase text-[9px] tracking-wider font-bold">De:</span> <span className="text-slate-600 font-bold">{email.from}</span></div>
+                            <div><span className="text-slate-400 uppercase text-[9px] tracking-wider font-bold">Para:</span> <span className="text-slate-600 font-bold">{email.to}</span></div>
+                          </div>
+                          <div className="pt-0.5"><span className="text-slate-400 uppercase text-[9px] tracking-wider font-bold">Assunto:</span> <span className="text-slate-700 font-extrabold">{email.subject}</span></div>
+                        </div>
+
+                        {/* Card Body */}
+                        <div className="p-6 text-xs md:text-sm text-slate-700 font-normal leading-relaxed whitespace-pre-wrap select-text bg-white">
+                          {email.body}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -597,8 +692,8 @@ function EmailCenterContent() {
               <div className="w-16 h-16 rounded-full bg-white border border-slate-200 shadow-xs flex items-center justify-center text-slate-300">
                 <Mail size={28} />
               </div>
-              <h3 className="font-bold text-slate-700 uppercase tracking-wider">Nenhum E-mail Selecionado</h3>
-              <p className="text-xs max-w-xs font-bold text-slate-400">Selecione um e-mail na barra lateral para ler a correspondência completa.</p>
+              <h3 className="font-bold text-slate-700 uppercase tracking-wider">Nenhum Lead Selecionado</h3>
+              <p className="text-xs max-w-xs font-bold text-slate-400">Selecione um lead na barra lateral para ver o histórico completo de correspondências.</p>
             </div>
           )}
         </div>
@@ -770,14 +865,24 @@ function EmailCenterContent() {
                       <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                         Senha SMTP {isEditingSmtp ? '(Deixe em branco para não alterar)' : '*'}
                       </label>
-                      <input 
-                        type="password"
-                        placeholder="••••••••••••••"
-                        required={!isEditingSmtp}
-                        value={smtpForm.password}
-                        onChange={e => setSmtpForm({...smtpForm, password: e.target.value})}
-                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
-                      />
+                      <div className="relative">
+                        <input 
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••••••••"
+                          required={!isEditingSmtp}
+                          value={smtpForm.password}
+                          onChange={e => setSmtpForm({...smtpForm, password: e.target.value})}
+                          className="w-full pl-3 pr-10 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#1B4D3E]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                          title={showPassword ? "Ocultar senha" : "Ver senha"}
+                        >
+                          {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
+                      </div>
                     </div>
 
                     {/* Sender Name */}

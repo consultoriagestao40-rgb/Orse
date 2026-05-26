@@ -5,9 +5,14 @@ interface SendMailArgs {
   subject: string;
   html?: string;
   text?: string;
+  smtpAccountId?: string;
+  attachments?: {
+    filename: string;
+    content: string; // Base64
+  }[];
 }
 
-export async function sendMail({ to, subject, html, text }: SendMailArgs) {
+export async function sendMail({ to, subject, html, text, smtpAccountId, attachments }: SendMailArgs) {
   let host = process.env.SMTP_HOST;
   let port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
   let user = process.env.SMTP_USER;
@@ -17,9 +22,17 @@ export async function sendMail({ to, subject, html, text }: SendMailArgs) {
 
   try {
     const { prisma } = await import('./prisma');
-    const dbAccount = await prisma.smtpAccount.findFirst({
-      where: { active: true }
-    });
+    let dbAccount = null;
+    
+    if (smtpAccountId) {
+      dbAccount = await prisma.smtpAccount.findUnique({
+        where: { id: smtpAccountId }
+      });
+    } else {
+      dbAccount = await prisma.smtpAccount.findFirst({
+        where: { active: true }
+      });
+    }
 
     if (dbAccount) {
       host = dbAccount.host;
@@ -61,6 +74,10 @@ export async function sendMail({ to, subject, html, text }: SendMailArgs) {
       subject,
       text,
       html,
+      attachments: attachments ? attachments.map(att => ({
+        filename: att.filename,
+        content: Buffer.from(att.content, 'base64')
+      })) : undefined
     });
 
     console.log("📧 Email sent successfully:", info.messageId);

@@ -45,6 +45,8 @@ model User {
   comments       Comment[]
   files          FileAttachment[]
   whatsappMessages WhatsAppMessage[]
+  notifications  Notification[]
+  smtpAccounts   SmtpAccount[]
 }
 
 model Client {
@@ -462,7 +464,7 @@ model SmtpAccount {
   nome      String   // Ex: "Suporte SmartBid"
   host      String   // smtp.titan.email
   port      Int      @default(587)
-  user      String   @unique // suporte@smartbid.com
+  user      String   // suporte@smartbid.com
   password  String   // Senha SMTP
   fromEmail String   // suporte@smartbid.com
   fromName  String   // SmartBid
@@ -471,4 +473,18 @@ model SmtpAccount {
   imapPort  Int?     @default(993)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  userId    String?
+  userRel   User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  texto     String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
