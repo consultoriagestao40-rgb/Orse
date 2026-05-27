@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { getComments, addComment, getFiles, uploadFileBase64, downloadFile, getActivities, createActivity, getLeadShares, addLeadShare, removeLeadShare, getAllUsers, sendLeadEmail } from '../actions';
 import { getWhatsAppMessages } from '../whatsapp-actions';
 import { getSmtpAccounts } from '@/app/emails/actions';
-import { MessageSquare, Paperclip, Calendar, Users, Send, Download, Plus, X, Trash2, MapPin, Navigation, Mail, Phone, Map, MessageCircle, CheckCircle2, AlertCircle, Info, RefreshCw, FileText, Mic, Trash, Clock, Sparkles, Search, Linkedin, Instagram, ExternalLink } from 'lucide-react';
+import { MessageSquare, Paperclip, Calendar, Users, Send, Download, Plus, X, Trash2, MapPin, Navigation, Mail, Phone, Map, MessageCircle, CheckCircle2, AlertCircle, Info, RefreshCw, FileText, Mic, Trash, Clock, Sparkles, Search, ExternalLink } from 'lucide-react';
 import WhatsAppChat from './WhatsAppChat';
 import EmailTab from './EmailTab';
 
@@ -1242,7 +1242,8 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                               rel="noreferrer"
                               className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-black px-2.5 py-1.5 rounded-lg transition-colors border border-blue-100"
                             >
-                              <Linkedin size={11} /> LinkedIn
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+                              LinkedIn
                               <ExternalLink size={9} className="opacity-60" />
                             </a>
                           )}
@@ -1253,7 +1254,8 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                               rel="noreferrer"
                               className="flex items-center gap-1.5 bg-pink-50 hover:bg-pink-100 text-pink-700 text-[10px] font-black px-2.5 py-1.5 rounded-lg transition-colors border border-pink-100"
                             >
-                              <Instagram size={11} /> Instagram
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                              Instagram
                               <ExternalLink size={9} className="opacity-60" />
                             </a>
                           )}
