@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
   Plus, Trash2, Edit2, ShieldCheck, UserCheck, Calendar, Filter, 
-  FileText, Search, Loader2, Save, X, Truck, Fuel, DollarSign, Clock, Users
+  FileText, Search, Loader2, Save, X, Truck, Fuel, DollarSign, Clock, Users,
+  ChevronDown, ChevronUp
 } from 'lucide-react';
 import { 
   getEquipesTecnicas, 
@@ -13,6 +14,77 @@ import {
   deleteEquipeTecnica 
 } from './actions';
 import { getCCTs } from '@/app/ccts/actions';
+
+const ENCARGOS_PADRAO = {
+  grupoA: {
+    titulo: "Encargos Sociais - Grupo A",
+    descricao: "Obrigações que incidem diretamente sobre a folha de pagamento",
+    total: 28.00,
+    itens: [
+      { nome: "INSS - PREVIDENCIA SOCIAL", valor: 20.00 },
+      { nome: "FGTS", valor: 8.00 },
+      { nome: "SESC", valor: 0.00 },
+      { nome: "SENAC", valor: 0.00 },
+      { nome: "SEBRAE", valor: 0.00 },
+      { nome: "INCRA", valor: 0.00 },
+      { nome: "SALARIO EDUCACAO", valor: 0.00 },
+      { nome: "SEGURO ACIDENTE FAP", valor: 0.00 }
+    ]
+  },
+  grupoB: {
+    titulo: "Encargos Sociais - Grupo B",
+    descricao: "Ocorrências de faltas / ausências justificadas. Incide o Grupo A",
+    total: 12.64,
+    itens: [
+      { nome: "FERIAS", valor: 9.35 },
+      { nome: "AUXILIO ENFERMIDADE", valor: 1.03 },
+      { nome: "FALTAS LEGAIS", valor: 1.89 },
+      { nome: "LICENCA PATERNIDADE", valor: 0.00 },
+      { nome: "AUXILIO ACIDENTE", valor: 0.22 },
+      { nome: "AVISO PREVIO TRABALHADO", valor: 0.15 }
+    ]
+  },
+  grupoC: {
+    titulo: "Encargos Sociais - Grupo C",
+    descricao: "Provisionamento de 13º e férias. Incide o Grupo A",
+    total: 12.51,
+    itens: [
+      { nome: "ABONO FERIAS", valor: 3.12 },
+      { nome: "DECIMO TERCEIRO", valor: 9.39 }
+    ]
+  },
+  grupoD: {
+    titulo: "Encargos Sociais - Grupo D",
+    descricao: "Demissão sem justa causa e indenizações",
+    total: 4.76,
+    itens: [
+      { nome: "INDENIZACAO SEM JUSTA CAUSA", valor: 0.99 },
+      { nome: "CONTRIBUICAO SOCIAL", valor: 0.27 },
+      { nome: "AVISO PREVIO INDENIZADO", valor: 2.71 },
+      { nome: "REFLEXO AVISO PREVIO", valor: 0.79 },
+      { nome: "INDENIZACAO ADICIONAL", valor: 0.00 }
+    ]
+  },
+  grupoE: {
+    titulo: "Encargos Sociais - Grupo E",
+    descricao: "Provisionamento de casos especiais (maternidade, etc)",
+    total: 2.18,
+    itens: [
+      { nome: "LICENCA MATERNIDADE", valor: 0.99 },
+      { nome: "AUXILIO ACIDENTE MAIS15", valor: 0.00 },
+      { nome: "INCIDENCIA FGTS AVISO", valor: 1.19 },
+      { nome: "ABONO PECUNIARIO", valor: 0.00 }
+    ]
+  },
+  grupoF: {
+    titulo: "Encargos Sociais - Grupo F",
+    descricao: "Incidências cumulativas do Grupo A sobre B e C",
+    total: 0.00,
+    itens: [
+      { nome: "INCIDENCIA CUMULATIVA", valor: 0.00 }
+    ]
+  }
+};
 
 interface ItemMaoObra {
   cargoId: string;
@@ -42,8 +114,24 @@ export default function AdminEquipesTecnicasPage() {
   
   // Mão de Obra Composta
   const [itensMaoObra, setItensMaoObra] = useState<ItemMaoObra[]>([]);
-  const [encargoEstimadoPct, setEncargoEstimadoPct] = useState(80);
+  const [encargoEstimadoPct, setEncargoEstimadoPct] = useState(60.09);
   const [manualMaoObra, setManualMaoObra] = useState(false);
+
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    grupoA: false,
+    grupoB: false,
+    grupoC: false,
+    grupoD: false,
+    grupoE: false,
+    grupoF: false
+  });
+
+  const toggleGroup = (grupoKey: string) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [grupoKey]: !prev[grupoKey]
+    }));
+  };
 
   useEffect(() => {
     fetchData();
@@ -139,7 +227,6 @@ export default function AdminEquipesTecnicasPage() {
       item.cargoId === cargoId ? { ...item, quantidade: qty } : item
     ));
   };
-
   const handleOpenCreate = () => {
     setEditingId(null);
     setNome('');
@@ -147,11 +234,18 @@ export default function AdminEquipesTecnicasPage() {
     setCustoVeiculo(0);
     setCustoCombustivel(0);
     setItensMaoObra([]);
-    setEncargoEstimadoPct(80);
+    setEncargoEstimadoPct(60.09);
+    setExpandedGroups({
+      grupoA: false,
+      grupoB: false,
+      grupoC: false,
+      grupoD: false,
+      grupoE: false,
+      grupoF: false
+    });
     setManualMaoObra(false);
     setModalOpen(true);
   };
-
   const handleOpenEdit = (equipe: any) => {
     setEditingId(equipe.id);
     setNome(equipe.nome);
@@ -493,22 +587,97 @@ export default function AdminEquipesTecnicasPage() {
                       </div>
                     )}
 
-                    {/* Fator de Encargos */}
-                    <div className="flex justify-between items-center bg-blue-50/50 border border-blue-100 p-4 rounded-xl mt-2">
-                      <div className="max-w-[65%]">
-                        <p className="text-xs font-black text-blue-900 uppercase">Fator de Encargos CLT Estimado (%)</p>
-                        <p className="text-[10px] text-blue-700 font-medium">
-                          Multiplicador estatístico (benefícios, rescisão, uniformes, EPI, INSS, FGTS, etc.). Padrão: 80%
-                        </p>
+                    {/* Detalhamento de Encargos Sociais */}
+                    <div className="flex flex-col gap-3 mt-4">
+                      <div className="flex justify-between items-center px-1">
+                        <div>
+                          <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">Encargos Sociais CLT da Equipe</h4>
+                          <p className="text-[10px] text-slate-400 font-medium">Detalhamento estruturado dos encargos padrão.</p>
+                        </div>
+                        <div className="bg-slate-100 border border-slate-200 px-3 py-1 rounded-lg text-xs font-black text-slate-700">
+                          {expandedGroups.grupoA && expandedGroups.grupoB && expandedGroups.grupoC && expandedGroups.grupoD && expandedGroups.grupoE && expandedGroups.grupoF ? (
+                            <button
+                              type="button"
+                              onClick={() => setExpandedGroups({ grupoA: false, grupoB: false, grupoC: false, grupoD: false, grupoE: false, grupoF: false })}
+                              className="hover:text-blue-600 transition-colors uppercase text-[9px] tracking-wider outline-none"
+                            >
+                              Recolher Todos
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setExpandedGroups({ grupoA: true, grupoB: true, grupoC: true, grupoD: true, grupoE: true, grupoF: true })}
+                              className="hover:text-blue-600 transition-colors uppercase text-[9px] tracking-wider outline-none"
+                            >
+                              Expandir Todos
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <input 
-                          type="number" 
-                          value={encargoEstimadoPct}
-                          onChange={(e) => setEncargoEstimadoPct(Number(e.target.value))}
-                          className="w-20 bg-white border border-blue-200 rounded-lg px-3 py-1.5 text-center font-black text-blue-900 focus:ring-2 focus:ring-blue-500/20 outline-none"
-                        />
-                        <span className="text-sm font-bold text-blue-900">%</span>
+
+                      <div className="flex flex-col gap-2 max-h-[350px] overflow-y-auto pr-1 border border-slate-200 rounded-xl p-2 bg-slate-50/50">
+                        {Object.entries(ENCARGOS_PADRAO).map(([key, grupo]) => {
+                          const isExpanded = expandedGroups[key];
+                          const totalGrupo = grupo.total;
+                          
+                          return (
+                            <div key={key} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs transition-all">
+                              {/* Header da Seção (Sempre Visível) */}
+                              <button
+                                type="button"
+                                onClick={() => toggleGroup(key)}
+                                className={`w-full flex justify-between items-center px-4 py-3 text-left transition-colors outline-none ${isExpanded ? 'bg-[#1E293B] text-white' : 'hover:bg-slate-50 text-slate-700'}`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  {isExpanded ? <ChevronUp size={16} strokeWidth={2.5} /> : <ChevronDown size={16} strokeWidth={2.5} />}
+                                  <span className="text-xs font-black uppercase tracking-wider">{grupo.titulo}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-xs font-black px-2.5 py-0.5 rounded-full ${isExpanded ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'}`}>
+                                    {totalGrupo.toFixed(2)}%
+                                  </span>
+                                </div>
+                              </button>
+
+                              {/* Conteúdo Expansível */}
+                              {isExpanded && (
+                                <div className="border-t border-slate-150 animate-slide-down">
+                                  {/* Descrição do Grupo */}
+                                  <div className="bg-slate-50 px-4 py-2 border-b border-slate-150 text-[10px] text-slate-500 font-semibold uppercase italic">
+                                    {grupo.descricao}
+                                  </div>
+
+                                  {/* Tabela de Itens */}
+                                  <div className="divide-y divide-slate-100">
+                                    {grupo.itens.map((item, idx) => (
+                                      <div key={idx} className="flex justify-between items-center px-4 py-2 text-xs hover:bg-slate-50/50">
+                                        <span className="text-slate-600 font-medium">{item.nome}</span>
+                                        <span className="font-bold text-slate-800">{item.valor.toFixed(2)}%</span>
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  {/* Totalizador do Bloco Interno */}
+                                  <div className="bg-emerald-50 border-t border-slate-200 px-4 py-2.5 flex justify-between items-center text-xs font-black text-emerald-800">
+                                    <span>Total {grupo.titulo.split(' - ')[1]}</span>
+                                    <span>{totalGrupo.toFixed(2)}%</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Totalizador Geral */}
+                      <div className="flex justify-between items-center bg-[#0F172A] border border-[#1e293b] p-4 rounded-xl shadow-sm">
+                        <div>
+                          <p className="text-xs font-black text-slate-200 uppercase tracking-wider">Total Geral de Encargos da Equipe</p>
+                          <p className="text-[10px] text-slate-400 font-medium">Soma de todos os grupos de encargos acima.</p>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-lg font-black text-emerald-400">{encargoEstimadoPct.toFixed(2)}%</span>
+                        </div>
                       </div>
                     </div>
                   </div>
