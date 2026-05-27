@@ -14,6 +14,7 @@ import {
   deleteEquipeTecnica 
 } from './actions';
 import { getCCTs } from '@/app/ccts/actions';
+import { getEscalas } from '@/app/escalas/actions';
 
 const ENCARGOS_PADRAO = {
   grupoA: {
@@ -91,12 +92,17 @@ interface ItemMaoObra {
   nomeCargo: string;
   pisoSalarial: number;
   quantidade: number;
+  escala: string;
+  cargoOriginal?: any;
+  cctOriginal?: any;
 }
 
 export default function AdminEquipesTecnicasPage() {
   const [equipes, setEquipes] = useState<any[]>([]);
   const [ccts, setCcts] = useState<any[]>([]);
   const [cargosDisponiveis, setCargosDisponiveis] = useState<any[]>([]);
+  const [escalasDisponiveis, setEscalasDisponiveis] = useState<any[]>([]);
+  const [selectedCctId, setSelectedCctId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -148,6 +154,9 @@ export default function AdminEquipesTecnicasPage() {
       const cctList = await getCCTs();
       setCcts(cctList);
       
+      const escList = await getEscalas();
+      setEscalasDisponiveis(escList);
+      
       // Aplanar todos os cargos das CCTs
       const listCargos: any[] = [];
       cctList.forEach((cct: any) => {
@@ -158,7 +167,9 @@ export default function AdminEquipesTecnicasPage() {
               nome: `${c.nome} (${cct.nome} - ${cct.uf})`,
               nomeLimpo: c.nome,
               pisoSalarial: c.pisoSalarial || 0,
-              cctNome: cct.nome
+              cctNome: cct.nome,
+              cargoOriginal: c,
+              cctOriginal: cct
             });
           });
         }
@@ -175,10 +186,72 @@ export default function AdminEquipesTecnicasPage() {
   useEffect(() => {
     let subtotalMaoObra = 0;
     if (!manualMaoObra) {
-      // Calcular com base nas funções adicionadas
-      const somaSalarios = itensMaoObra.reduce((acc, curr) => acc + (curr.pisoSalarial * curr.quantidade), 0);
-      // Aplicar multiplicador de encargos e benefícios estimados
-      subtotalMaoObra = Math.round(somaSalarios * (1 + encargoEstimadoPct / 100));
+      subtotalMaoObra = itensMaoObra.reduce((acc, item) => {
+        // Obter a escala correspondente a partir de escalasDisponiveis
+        const escalaObj = escalasDisponiveis.find(esc => esc.nome === item.escala);
+        const diasEscala = escalaObj ? escalaObj.diasTrabalhadosMes : (item.escala === '6x1' ? 26 : (item.escala === '12x36' ? 15.21 : 22));
+        const salarioBase = Number(item.pisoSalarial) || 0;
+
+        if (item.cargoOriginal && item.cctOriginal) {
+          const cargo = item.cargoOriginal;
+          const cct = item.cctOriginal;
+
+          // 1. Remuneração e adicionais da CCT
+          const adicionais = (Number(cargo.adicionalCopa) || 0) + 
+                             (Number(cargo.gratificacoes) || 0) + 
+                             (Number(cargo.assiduidade) || 0);
+
+          const baseInsalubridade = cct.insalubridadeBase === 'SALARIO' 
+            ? salarioBase 
+            : (Number(cct.salarioMinimo) || 1412);
+          const insalubridade = baseInsalubridade * ((Number(cargo.insalubridadePercent) || 0) / 100);
+
+          const remuneracaoTotal = salarioBase + adicionais + insalubridade;
+
+          // 2. Encargos CLT (60.09% acumulado)
+          const encargos = remuneracaoTotal * (encargoEstimadoPct / 100);
+          const custoFolha = remuneracaoTotal + encargos;
+
+          // 3. Benefícios: Vale Alimentação (VA) Líquido
+          const vaBruto = cct.vaTipo === 'DIARIO' 
+            ? (Number(cct.vaValor) || 0) * diasEscala 
+            : (Number(cct.vaValor) || 0);
+          const vaSobreFerias = cct.vaProvisFerias ? (vaBruto / 12) : 0;
+          const descontoVA = ((vaBruto + vaSobreFerias) * (Number(cct.vaDescPercent) || 0)) / 100;
+          const vaLiquido = vaBruto + vaSobreFerias - descontoVA;
+
+          // 4. Benefícios: Vale Transporte (VT) Líquido
+          const vtBruto = (Number(cct.vtValor) || 0) * diasEscala;
+          const descontoVT = (salarioBase * (Number(cct.vtDescPercent) || 6)) / 100;
+          const vtLiquido = Math.max(0, vtBruto - descontoVT);
+
+          // 5. Benefícios: Outros (Cesta, Seguro, Exames, Sindicato...)
+          const outrosBeneficios = (Number(cct.cestaBasica) || 0) + 
+                                   (Number(cct.seguroVida) || 0) + 
+                                   (Number(cct.examesMedicos) || 0) + 
+                                   (Number(cct.custosSindicato) || 0) + 
+                                   (Number(cct.outrosBeneficios) || 0);
+
+          // 6. EPI / Uniformes (cálculo real por itens ou flat de CCT)
+          let custoEpi = Number(cct.uniformeEpi || 0);
+          if (cargo.episConfig && Array.isArray(cargo.episConfig) && cargo.episConfig.length > 0) {
+            custoEpi = cargo.episConfig.reduce((sumEpi: number, epi: any) => {
+              const custoMensal = (Number(epi.precoUnitario || 0) * Number(epi.quantidade || 0)) / (Number(epi.vidaUtil) || 1);
+              return sumEpi + custoMensal;
+            }, 0);
+          }
+
+          const custoUnitario = custoFolha + vaLiquido + vtLiquido + outrosBeneficios + custoEpi;
+          return acc + (custoUnitario * item.quantidade);
+        }
+
+        // Fallback de segurança se não houver dados originais
+        const custoUnitarioFallback = salarioBase * (1 + encargoEstimadoPct / 100);
+        return acc + (custoUnitarioFallback * item.quantidade);
+      }, 0);
+
+      // Arredondar valor final
+      subtotalMaoObra = Math.round(subtotalMaoObra);
       setCustoMaoObra(subtotalMaoObra);
     } else {
       subtotalMaoObra = custoMaoObra;
@@ -194,7 +267,7 @@ export default function AdminEquipesTecnicasPage() {
 
     setValorDiaria(diariaSug);
     setValorHora(horaSug);
-  }, [itensMaoObra, encargoEstimadoPct, custoVeiculo, custoCombustivel, manualMaoObra, custoMaoObra]);
+  }, [itensMaoObra, encargoEstimadoPct, custoVeiculo, custoCombustivel, manualMaoObra, custoMaoObra, escalasDisponiveis]);
 
   const handleAddCargo = (cargoId: string) => {
     if (!cargoId) return;
@@ -212,7 +285,10 @@ export default function AdminEquipesTecnicasPage() {
         cargoId: selected.id,
         nomeCargo: selected.nomeLimpo,
         pisoSalarial: selected.pisoSalarial,
-        quantidade: 1
+        quantidade: 1,
+        escala: '5x2',
+        cargoOriginal: selected.cargoOriginal,
+        cctOriginal: selected.cctOriginal
       }]);
     }
   };
@@ -227,6 +303,15 @@ export default function AdminEquipesTecnicasPage() {
       item.cargoId === cargoId ? { ...item, quantidade: qty } : item
     ));
   };
+
+  const handleUpdateEscala = (cargoId: string, escalaNome: string) => {
+    setItensMaoObra(itensMaoObra.map(item => 
+      item.cargoId === cargoId ? { 
+        ...item, 
+        escala: escalaNome 
+      } : item
+    ));
+  };
   const handleOpenCreate = () => {
     setEditingId(null);
     setNome('');
@@ -234,6 +319,7 @@ export default function AdminEquipesTecnicasPage() {
     setCustoVeiculo(0);
     setCustoCombustivel(0);
     setItensMaoObra([]);
+    setSelectedCctId('');
     setEncargoEstimadoPct(60.09);
     setExpandedGroups({
       grupoA: false,
@@ -252,7 +338,29 @@ export default function AdminEquipesTecnicasPage() {
     setCustoMaoObra(equipe.custoMensalMaoObra);
     setCustoVeiculo(equipe.custoMensalVeiculo);
     setCustoCombustivel(equipe.custoMensalCombustivel);
-    setItensMaoObra(Array.isArray(equipe.itensMaoObra) ? equipe.itensMaoObra : []);
+    
+    // Reconstruir o objeto de itensMaoObra recuperando CCT e Cargo originais
+    const loadedItens = (Array.isArray(equipe.itensMaoObra) ? equipe.itensMaoObra : []).map((item: any) => {
+      const selected = cargosDisponiveis.find(c => c.id === item.cargoId);
+      return {
+        cargoId: item.cargoId,
+        nomeCargo: item.nomeCargo || (selected ? selected.nomeLimpo : ''),
+        pisoSalarial: item.pisoSalarial || (selected ? selected.pisoSalarial : 0),
+        quantidade: item.quantidade || 1,
+        escala: item.escala || '5x2',
+        cargoOriginal: selected ? selected.cargoOriginal : null,
+        cctOriginal: selected ? selected.cctOriginal : null
+      };
+    });
+    
+    setItensMaoObra(loadedItens);
+    
+    if (loadedItens.length > 0 && loadedItens[0].cctOriginal) {
+      setSelectedCctId(loadedItens[0].cctOriginal.id);
+    } else {
+      setSelectedCctId('');
+    }
+    
     setManualMaoObra(false); // Sempre usar composição CCT
     setModalOpen(true);
   };
@@ -270,7 +378,13 @@ export default function AdminEquipesTecnicasPage() {
       custoMensalTotal: Number(custoTotal),
       valorDiariaSugerido: Number(valorDiaria),
       valorHoraSugerido: Number(valorHora),
-      itensMaoObra: itensMaoObra
+      itensMaoObra: itensMaoObra.map(item => ({
+        cargoId: item.cargoId,
+        nomeCargo: item.nomeCargo,
+        pisoSalarial: Number(item.pisoSalarial) || 0,
+        quantidade: Number(item.quantidade) || 1,
+        escala: item.escala || '5x2'
+      }))
     };
 
     try {
@@ -462,7 +576,7 @@ export default function AdminEquipesTecnicasPage() {
               <form onSubmit={handleSave} className="flex-1 overflow-auto p-8 flex flex-col gap-6">
                 
                 {/* Informações Básicas */}
-                <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Nome da Composição / Equipe *</label>
                     <input 
@@ -473,6 +587,26 @@ export default function AdminEquipesTecnicasPage() {
                       placeholder="Ex: Equipe de Altura Completa (Supervisor + 2 Lavadores)"
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-bold focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Convenção Coletiva (CCT) de Referência *</label>
+                    <select
+                      required
+                      value={selectedCctId}
+                      onChange={(e) => {
+                        setSelectedCctId(e.target.value);
+                        // Limpar os cargos se mudar a CCT para evitar misturar na mesma equipe
+                        setItensMaoObra([]);
+                      }}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-850 font-bold focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer"
+                    >
+                      <option value="">-- Selecione uma CCT --</option>
+                      {ccts.map((cct: any) => (
+                        <option key={cct.id} value={cct.id}>
+                          {cct.nome} ({cct.uf})
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
@@ -486,20 +620,25 @@ export default function AdminEquipesTecnicasPage() {
                         <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider">Composição por Cargos da CCT</h4>
                         <p className="text-slate-400 text-xs mt-0.5">Selecione os cargos para estimar a folha base de salários.</p>
                       </div>
-                      <div className="w-72">
+                      <div className="w-80">
                         <select 
+                          disabled={!selectedCctId}
                           onChange={(e) => {
                             handleAddCargo(e.target.value);
                             e.target.value = '';
                           }}
-                          className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 font-bold focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer"
+                          className={`w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none ${!selectedCctId ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white text-slate-700 cursor-pointer'}`}
                         >
-                          <option value="">+ Adicionar Função/Cargo...</option>
-                          {cargosDisponiveis.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.nome} - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(c.pisoSalarial)}
-                            </option>
-                          ))}
+                          <option value="">
+                            {!selectedCctId ? 'Selecione uma CCT primeiro' : '+ Adicionar Função/Cargo...'}
+                          </option>
+                          {cargosDisponiveis
+                            .filter((c) => c.cctOriginal?.id === selectedCctId)
+                            .map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.nomeLimpo} - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(c.pisoSalarial)}
+                              </option>
+                            ))}
                         </select>
                       </div>
                     </div>
@@ -526,6 +665,22 @@ export default function AdminEquipesTecnicasPage() {
                             </div>
 
                             <div className="flex items-center gap-6">
+                              {/* Escala de Trabalho */}
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-slate-400 font-bold uppercase">Escala:</span>
+                                <select 
+                                  value={item.escala || '5x2'}
+                                  onChange={(e) => handleUpdateEscala(item.cargoId, e.target.value)}
+                                  className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 font-bold text-xs text-slate-700 outline-none cursor-pointer"
+                                >
+                                  {escalasDisponiveis.map((esc) => (
+                                    <option key={esc.id} value={esc.nome}>
+                                      {esc.nome} ({esc.diasTrabalhadosMes}d)
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
                               <div className="flex items-center gap-2">
                                 <span className="text-xs text-slate-400 font-bold uppercase">Qtd:</span>
                                 <input 
