@@ -216,6 +216,7 @@ function PropostaEditor() {
     premissas: { 
       taxaAdm: 5, 
       margemLucro: 10,
+      comissaoVendedor: 0,
       tributos: [
         { id: '1', nome: 'ISS', percent: 5 },
         { id: '2', nome: 'CSLL', percent: 1 },
@@ -533,7 +534,7 @@ function PropostaEditor() {
       const calcInput = {
         items: sanitizedItems,
         impostos: { total: totalTributos },
-        margens: { adm: proposta.premissas.taxaAdm, lucro: proposta.premissas.margemLucro },
+        margens: { adm: proposta.premissas.taxaAdm, lucro: proposta.premissas.margemLucro, comissaoVendedor: proposta.premissas.comissaoVendedor },
         reservaTecnicaPct: proposta.premissas.reservaTecnicaPct || 0,
         manutencaoPct: proposta.premissas.manutencaoPct || 0,
         encargos: proposta.encargos,
@@ -999,14 +1000,14 @@ function PropostaEditor() {
             </div>
 
             <select 
-              className="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2 text-sm outline-none focus:border-[#1B4D3E]"
+              className="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
               value=""
               onChange={(e) => {
                 const prod = produtosDb.find(p => p.id === e.target.value);
                 if (prod) addInsumoItem(tipo, prod);
               }}
             >
-              <option value="">Selecione um produto para adicionar...</option>
+              <option value="" className="text-slate-800 bg-white">Selecione um produto para adicionar...</option>
               {produtosFiltrados.map(p => (
                 <option key={p.id} value={p.id}>[{p.codigo}] {p.descricao} - {formatCurrency(p.precoUnitario)}</option>
               ))}
@@ -1365,9 +1366,9 @@ function PropostaEditor() {
                            value={proposta.cliente.sindicatoId}
                            onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, sindicatoId: e.target.value}})}
                         >
-                           <option value="">Selecione o Sindicato...</option>
+                           <option value="" className="text-slate-800 bg-white">Selecione o Sindicato...</option>
                            {ccts.map((c: any) => (
-                              <option key={c.id} value={c.id}>{c.nome} ({c.uf})</option>
+                              <option key={c.id} value={c.id} className="text-slate-800 bg-white">{c.nome} ({c.uf})</option>
                            ))}
                         </select>
                      </div>
@@ -1382,9 +1383,9 @@ function PropostaEditor() {
                           value={proposta.cliente.tipoServicos}
                           onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, tipoServicos: e.target.value}})}
                        >
-                          <option value="">Selecione o Tipo...</option>
+                          <option value="" className="text-slate-800 bg-white">Selecione o Tipo...</option>
                           {tiposServico.map((t: any) => (
-                             <option key={t.id} value={t.nome}>{t.nome}</option>
+                             <option key={t.id} value={t.nome} className="text-slate-800 bg-white">{t.nome}</option>
                           ))}
                        </select>
                     </div>
@@ -1409,9 +1410,9 @@ function PropostaEditor() {
                           value={proposta.cliente.segmento || ''}
                           onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, segmento: e.target.value}})}
                        >
-                          <option value="">Selecione...</option>
+                          <option value="" className="text-slate-800 bg-white">Selecione...</option>
                           {segmentos.map((s: any) => (
-                             <option key={s.id} value={s.nome}>{s.nome}</option>
+                             <option key={s.id} value={s.nome} className="text-slate-800 bg-white">{s.nome}</option>
                           ))}
                        </select>
                     </div>
@@ -1539,7 +1540,7 @@ function PropostaEditor() {
            {/* ABA 2: TAXAS E TRIBUTOS */}
            {activeTab === 'premissas' && (
               <div className="space-y-6">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-white p-6 rounded-md border border-slate-300 shadow-sm flex flex-col gap-2">
                        <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Taxa Administrativa (%)</label>
                        <input type="number" className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded text-lg font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={proposta.premissas.taxaAdm} onChange={(e) => setProposta({...proposta, premissas: {...proposta.premissas, taxaAdm: (e.target.value === '' ? '' : Number(e.target.value))}})} />
@@ -1548,6 +1549,10 @@ function PropostaEditor() {
                        <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Margem de Lucro (%)</label>
                        <input type="number" className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded text-lg font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={proposta.premissas.margemLucro} onChange={(e) => setProposta({...proposta, premissas: {...proposta.premissas, margemLucro: (e.target.value === '' ? '' : Number(e.target.value))}})} />
                     </div>
+                    <div className="bg-white p-6 rounded-md border border-slate-300 shadow-sm flex flex-col gap-2">
+                        <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Comissão do Vendedor (%)</label>
+                        <input type="number" className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded text-lg font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={proposta.premissas.comissaoVendedor ?? 0} onChange={(e) => setProposta({...proposta, premissas: {...proposta.premissas, comissaoVendedor: (e.target.value === '' ? '' : Number(e.target.value))}})} />
+                     </div>
                  </div>
 
                  <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden">
@@ -1664,7 +1669,6 @@ function PropostaEditor() {
                                  <th className="px-6 py-3">Serviço / Equipe Técnica</th>
                                  <th className="px-6 py-3">Unidade</th>
                                  <th className="px-6 py-3 text-right">Preço Unit. (Venda)</th>
-                                 <th className="px-6 py-3 text-center">Comissão do Vendedor</th>
                                  <th className="px-6 py-3 text-right">Total Cobrado</th>
                                  <th className="px-6 py-3 text-right">Ação</th>
                               </tr>
@@ -1710,9 +1714,9 @@ function PropostaEditor() {
                                              }
                                           }}
                                        >
-                                          <option value="">Selecione o Serviço/Equipe...</option>
+                                          <option value="" className="text-slate-800 bg-white">Selecione o Serviço/Equipe...</option>
                                           {equipesTecnicasDb.map((eq: any) => (
-                                             <option key={eq.id} value={eq.id}>{eq.nome}</option>
+                                             <option key={eq.id} value={eq.id} className="text-slate-800 bg-white">{eq.nome}</option>
                                           ))}
                                        </select>
                                     </td>
@@ -1732,8 +1736,8 @@ function PropostaEditor() {
                                              setProposta({...proposta, equipe: newE});
                                           }}
                                        >
-                                          <option value="DIA">DIA (Diária)</option>
-                                          <option value="HORA">HORA (Hora Técnica)</option>
+                                          <option value="DIA" className="text-slate-800 bg-white">DIA (Diária)</option>
+                                          <option value="HORA" className="text-slate-800 bg-white">HORA (Hora Técnica)</option>
                                        </select>
                                     </td>
                                     <td className="px-6 py-4">
@@ -1750,22 +1754,6 @@ function PropostaEditor() {
                                                 setProposta({...proposta, equipe: newE});
                                              }} 
                                           />
-                                       </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                       <div className="flex items-center gap-1 justify-center">
-                                          <input 
-                                             type="number" 
-                                             step="0.1"
-                                             className="w-16 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 outline-none focus:border-blue-500" 
-                                             value={p.comissaoVendedorPct ?? 0} 
-                                             onChange={(e) => {
-                                                const val = e.target.value === '' ? 0 : Number(e.target.value);
-                                                const newE = proposta.equipe.map((x: any) => x.id === p.id ? {...x, comissaoVendedorPct: val} : x);
-                                                setProposta({...proposta, equipe: newE});
-                                             }} 
-                                          />
-                                          <span className="text-xs font-bold text-slate-400">%</span>
                                        </div>
                                     </td>
                                     <td className="px-6 py-4 text-right font-bold text-slate-900">
@@ -1787,7 +1775,7 @@ function PropostaEditor() {
                               ))}
                               {proposta.equipe.length === 0 && (
                                  <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400 italic text-sm">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400 italic text-sm">
                                        Nenhum serviço adicionado. Clique em "Inserir Serviço" para começar.
                                     </td>
                                  </tr>
@@ -1858,7 +1846,7 @@ function PropostaEditor() {
                                                 }
                                              }
                                           }}>
-                                             <option value="">Selecione a Função...</option>
+                                             <option value="" className="text-slate-800 bg-white">Selecione a Função...</option>
                                              {!proposta.cliente.sindicatoId && (
                                                  <option value="" disabled className="text-red-500 font-bold italic">⚠️ Selecione o Sindicato na Aba 1 primeiro</option>
                                               )}
@@ -1882,7 +1870,7 @@ function PropostaEditor() {
                                                 updatePosto(p.id, 'escala', e.target.value);
                                              }
                                           }}>
-                                             <option value="">Selecione a Escala...</option>
+                                             <option value="" className="text-slate-800 bg-white">Selecione a Escala...</option>
                                              {escalasDb.map(esc => (
                                                 <option key={esc.id} value={esc.nome}>{esc.nome}</option>
                                              ))}
@@ -2160,16 +2148,23 @@ function PropostaEditor() {
                            </td>
                         </tr>
                         <tr className="border-b border-slate-200 border-dotted">
-                           <td className="py-1.5 px-6 font-bold">Lucro</td>
-                           <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{proposta.premissas.margemLucro.toFixed(2)}%</td>
-                           <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
-                              {formatCurrency(resultado?.margemLucro || 0)}
-                           </td>
-                        </tr>
+                            <td className="py-1.5 px-6 font-bold">Lucro</td>
+                            <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{proposta.premissas.margemLucro.toFixed(2)}%</td>
+                            <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
+                               {formatCurrency(resultado?.margemLucro || 0)}
+                            </td>
+                         </tr>
+                         <tr className="border-b border-slate-200 border-dotted">
+                            <td className="py-1.5 px-6 font-bold">Comissão do Vendedor</td>
+                            <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{(proposta.premissas.comissaoVendedor ?? 0).toFixed(2)}%</td>
+                            <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
+                               {formatCurrency(resultado?.comissaoVendedor || 0)}
+                            </td>
+                         </tr>
                         <tr className="bg-[#599e41] text-white font-bold border-y border-[#488234]">
                            <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total dos Montantes "A+B+C+D"</td>
                            <td className="py-2.5 px-6 text-right">
-                              {formatCurrency((resultado?.custoDiretoTotal || 0) + (resultado?.taxaAdm || 0) + (resultado?.margemLucro || 0))}
+                              {formatCurrency((resultado?.custoDiretoTotal || 0) + (resultado?.taxaAdm || 0) + (resultado?.margemLucro || 0) + (resultado?.comissaoVendedor || 0))}
                            </td>
                         </tr>
 
@@ -5632,8 +5627,8 @@ function PropostaEditor() {
                      <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase">Segmento</label>
                         <select className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newClientForm.segmento} onChange={e => setNewClientForm({...newClientForm, segmento: e.target.value})}>
-                           <option value="">Selecione...</option>
-                           {segmentos.map((s) => <option key={s.id} value={s.nome}>{s.nome}</option>)}
+                           <option value="" className="text-slate-800 bg-white">Selecione...</option>
+                           {segmentos.map((s) => <option key={s.id} value={s.nome} className="text-slate-800 bg-white">{s.nome}</option>)}
                         </select>
                      </div>
                   </div>
@@ -5673,11 +5668,11 @@ function PropostaEditor() {
                      <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase">Categoria</label>
                         <select className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newProductForm.categoria} onChange={e => setNewProductForm({...newProductForm, categoria: e.target.value})}>
-                           <option value="Geral">Geral</option>
-                           <option value="MATERIAL DE LIMPEZA">Material de Limpeza</option>
-                           <option value="DESCARTAVEIS">Descartáveis</option>
-                           <option value="MAQUINAS E EQUIPAMENTOS">Máquinas e Equipamentos</option>
-                           <option value="EPI">EPI</option>
+                           <option value="Geral" className="text-slate-800 bg-white">Geral</option>
+                           <option value="MATERIAL DE LIMPEZA" className="text-slate-800 bg-white">Material de Limpeza</option>
+                           <option value="DESCARTAVEIS" className="text-slate-800 bg-white">Descartáveis</option>
+                           <option value="MAQUINAS E EQUIPAMENTOS" className="text-slate-800 bg-white">Máquinas e Equipamentos</option>
+                           <option value="EPI" className="text-slate-800 bg-white">EPI</option>
                            <option value="UNIFORME">Uniforme</option>
                         </select>
                      </div>

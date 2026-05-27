@@ -16,8 +16,7 @@ export function calculateLaborCost(colab: any, premissas: any): any {
     const custoVeiculo = (totalMensalVeiculo / divisor) * qtyDemanda;
     const custoCombustivel = (totalMensalCombustivel / divisor) * qtyDemanda;
     
-    const comissao = (Number(colab.precoUnitarioDemanda || 0) * qtyDemanda) * (Number(colab.comissaoVendedorPct || 0) / 100);
-    const outrosCustos = custoCombustivel + comissao;
+    const outrosCustos = custoCombustivel;
     const custoTotalDireto = custoMaoObra + custoVeiculo + outrosCustos;
     
     return {
@@ -269,12 +268,13 @@ export function calculateEnterprisePrice(proposal: any): any {
   // 2. Parâmetros de Margens e Impostos
   const txAdm = (Number(margens?.adm) || 0) / 100;
   const txLucro = (Number(margens?.lucro) || 0) / 100;
+  const txComissao = (Number(margens?.comissaoVendedor) || 0) / 100;
   const totalTributosPct = Array.isArray(impostos?.list) 
     ? impostos.list.reduce((acc: number, t: any) => acc + (Number(t.percent) || 0), 0)
     : (Number(impostos?.total) || 0);
   
-  // Divisor para tributos (por dentro)
-  const divisorTributos = 1 - (totalTributosPct / 100);
+  // Divisor para tributos e comissão (por dentro)
+  const divisorTributos = 1 - (totalTributosPct / 100) - txComissao;
 
   const totalEquipeQtd = items.reduce((acc: number, x: any) => acc + (Number(x.quantidade) || 0), 0);
 
@@ -355,6 +355,8 @@ export function calculateEnterprisePrice(proposal: any): any {
     valorAdm = totalComAdm - custoDiretoTotal;
   }
 
+  const valorComissao = faturamentoBruto * txComissao;
+
   return {
     items: itemResults,
     custoDiretoTotal,
@@ -362,6 +364,7 @@ export function calculateEnterprisePrice(proposal: any): any {
     impostosTotais: valorImpostos,
     margemLucro: valorMargemLucro,
     taxaAdm: valorAdm,
-    divisor: divisorTributos
+    divisor: divisorTributos,
+    comissaoVendedor: valorComissao
   };
 }

@@ -660,8 +660,8 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                       e.target.value = "";
                     }}
                   >
-                    <option value="">-- Selecione para substituir --</option>
-                    {templates.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
+                    <option value="" className="text-slate-800 bg-white">-- Selecione para substituir --</option>
+                    {templates.map(t => <option key={t.id} value={t.id} className="text-slate-800 bg-white">{t.nome}</option>)}
                   </select>
                 </div>
               )}
