@@ -905,6 +905,20 @@ function PropostaEditor() {
     return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   };
 
+  const isLocado = (desc: string) => {
+    if (!desc) return false;
+    const normalized = normalizeText(desc);
+    return normalized.includes('locado') || normalized.includes('locada') || normalized.includes('locacao') || normalized.includes('locaco') || normalized.includes('locação');
+  };
+
+  const detalheMaquinas = proposta.insumos?.detalheMaquinas || [];
+  const totalMaquinasLocadas = detalheMaquinas
+    .filter((item: any) => isLocado(item.descricao))
+    .reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
+  const totalMaquinasNaoLocadas = detalheMaquinas
+    .filter((item: any) => !isLocado(item.descricao))
+    .reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
+
   const addInsumoItem = (tipo: 'detalheMateriais' | 'detalheMaquinas' | 'detalheDescartaveis', produto: any) => {
     const current = proposta.insumos[tipo] || [];
     if (current.find((x: any) => x.id === produto.id)) return;
@@ -2034,9 +2048,15 @@ function PropostaEditor() {
                                                        const rawRows = [
                                ...(!isSpot ? [{ label: "Uniformes e EPI's", val: b.ativos }] : []),
                                { label: 'Materiais e produtos de limpeza', val: proposta.insumos.materiais },
-                               { label: 'Máquinas e equipamentos', val: proposta.insumos.maquinas },
+                               { 
+                                 label: 'Máquinas e equipamentos', 
+                                 val: isSpot ? totalMaquinasNaoLocadas : proposta.insumos.maquinas 
+                               },
                                { label: 'Descartáveis', val: proposta.insumos.descartaveis },
-                               { label: 'Serviços (Descriminar)', val: proposta.insumos.servicos },
+                               { 
+                                 label: isSpot ? 'Equipamentos Locados' : 'Serviços (Descriminar)', 
+                                 val: isSpot ? totalMaquinasLocadas : proposta.insumos.servicos 
+                               },
                             ];
                             const rows = rawRows.map((r, idx) => ({
                                label: `${idx + 1}) ${r.label}`,
@@ -2057,9 +2077,9 @@ function PropostaEditor() {
                               {formatCurrency(
                                  resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.ativos || 0) * i.quantidade), 0) + 
                                  proposta.insumos.materiais + 
-                                 proposta.insumos.maquinas + 
+                                 (isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : proposta.insumos.maquinas) + 
                                  proposta.insumos.descartaveis + 
-                                 proposta.insumos.servicos
+                                 (isSpot ? 0 : proposta.insumos.servicos)
                               )}
                            </td>
                         </tr>
@@ -2230,15 +2250,7 @@ function PropostaEditor() {
                 return divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
               };
 
-              const detalheMaquinas = proposta.insumos.detalheMaquinas || [];
-              const totalMaquinasLocadas = detalheMaquinas
-                .filter((item: any) => isLocado(item.descricao))
-                .reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
-              const totalMaquinasNaoLocadas = detalheMaquinas
-                .filter((item: any) => !isLocado(item.descricao))
-                .reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
-
-              return (
+               return (
                 <div className="space-y-6">
 
                   {/* BLOCO 1: MÃO DE OBRA */}
