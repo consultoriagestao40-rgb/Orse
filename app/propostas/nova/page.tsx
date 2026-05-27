@@ -897,6 +897,7 @@ function PropostaEditor() {
 
   const sumGroup = (g: any) => Object.values(g).reduce((a: any, b: any) => a + Number(b), 0) as number;
   const totalGeralEncargos = proposta.encargos.grupoA ? (sumGroup(proposta.encargos.grupoA) + sumGroup(proposta.encargos.grupoB) + sumGroup(proposta.encargos.grupoC) + sumGroup(proposta.encargos.grupoD) + sumGroup(proposta.encargos.grupoE) + sumGroup(proposta.encargos.grupoF)) : 0;
+  const isSpot = proposta.equipe.some((e: any) => e.tipoItem === 'SPOT');
  
   const normalizeText = (text: string) => {
     if (!text) return "";
@@ -1984,20 +1985,24 @@ function PropostaEditor() {
                        </tr>
 
                        {/* Encargos e Outros */}
-                       <tr className="border-b border-slate-200 border-dotted">
-                          <td className="py-1.5 px-6 font-bold">2) Encargos Sociais</td>
-                          <td className="py-1.5 px-6 text-center font-bold">{totalGeralEncargos.toFixed(2)}%</td>
-                          <td className="py-1.5 px-6 text-right">-</td>
-                          <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
-                             {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.encargos || 0) * i.quantidade), 0) || 0)}
-                          </td>
-                       </tr>
-                       <tr className="border-b border-slate-200 border-dotted">
-                          <td className="py-1.5 px-6 font-bold">3) Outros (Especificar)</td>
-                          <td className="py-1.5 px-6 text-center">-</td>
-                          <td className="py-1.5 px-6 text-right">-</td>
-                          <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">{formatCurrency(0)}</td>
-                       </tr>
+                        {!isSpot && (
+                           <>
+                              <tr className="border-b border-slate-200 border-dotted">
+                                 <td className="py-1.5 px-6 font-bold">2) Encargos Sociais</td>
+                                 <td className="py-1.5 px-6 text-center font-bold">{totalGeralEncargos.toFixed(2)}%</td>
+                                 <td className="py-1.5 px-6 text-right">-</td>
+                                 <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
+                                    {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.encargos || 0) * i.quantidade), 0) || 0)}
+                                 </td>
+                              </tr>
+                              <tr className="border-b border-slate-200 border-dotted">
+                                 <td className="py-1.5 px-6 font-bold">3) Outros (Especificar)</td>
+                                 <td className="py-1.5 px-6 text-center">-</td>
+                                 <td className="py-1.5 px-6 text-right">-</td>
+                                 <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">{formatCurrency(0)}</td>
+                              </tr>
+                           </>
+                        )}
                        
                        {/* Total Montante A */}
                        <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
