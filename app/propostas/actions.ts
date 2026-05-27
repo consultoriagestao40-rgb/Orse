@@ -198,7 +198,7 @@ export async function saveProposta(data: any) {
       cidade: cliente.cidade,
       dataElaboracao: cliente.dataElaboracao,
       numeroProposta: cliente.numeroProposta,
-      revisao: cliente.revisao,
+      revisao: 'R' + String(nextVersion).padStart(2, '0'),
       tipoServicos: cliente.tipoServicos,
       tipoProposta: cliente.tipoProposta || 'RECORRENTE',
       vendedorNome: cliente.vendedorNome || 'Ádamo Quadros',
@@ -317,6 +317,8 @@ export async function saveProposta(data: any) {
     });
 
     revalidatePath('/');
+    revalidatePath('/propostas-comerciais');
+    revalidatePath('/propostas-comerciais/templates');
     const propostaCompleta = await prisma.proposta.findUnique({ where: { id: propostaId }, select: { numero: true } });
     const numeroProposta = propostaCompleta ? `FPV-${propostaCompleta.numero.toString().padStart(3, '0')}` : '';
     return { success: true, propostaId, versaoId: newVersao.id, versao: nextVersion, numeroProposta };

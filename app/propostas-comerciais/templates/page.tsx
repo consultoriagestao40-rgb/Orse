@@ -227,6 +227,9 @@ export default function TemplatesPropostaPage() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {[
+                    ['[CLIENTE_NOME]', 'Nome Fantasia do Cliente'],
+                    ['[NUMERO_PROPOSTA]', 'Número da Proposta (ex: FPV-010)'],
+                    ['[REVISAO]', 'Número da Revisão Atual (ex: R03)'],
                     ['[OBJETO_PROPOSTA]', 'Objeto da Proposta (Aba 1 FPV)'],
                     ['[ESCOPO_TECNICO]', 'Escopo Técnico (Aba 1 FPV)'],
                     ['[CONDICOES_COMERCIAIS]', 'Condições do Cliente (Aba 1 FPV)'],

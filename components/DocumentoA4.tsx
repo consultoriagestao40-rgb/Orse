@@ -450,6 +450,8 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                   
                   const textoLimpo = txt
                     .replace(/\[CLIENTE_NOME\]/g, nomeCliente)
+                    .replace(/\[NUMERO_PROPOSTA\]/g, proposta.numero || '')
+                    .replace(/\[REVISAO\]/g, proposta.cliente?.revisao || `R${String(proposta.versao || 1).padStart(2, '0')}`)
                     .replace(/\[TABELA\]/g, '')
                     .replace(/\[ITENS\]/g, '')
                     .replace(/\[TERMO_ACEITE\]/g, '')

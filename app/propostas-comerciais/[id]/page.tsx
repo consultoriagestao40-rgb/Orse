@@ -378,8 +378,8 @@ export default function DocumentoPropostaDetail() {
                         <Plus size={13} /> Adicionar Cláusula
                       </button>
                     </h2>
-                    <div className="text-[10px] font-bold text-slate-400 max-w-sm text-right leading-tight">
-                      Variáveis: <strong className="text-[#1e4480]">[OBJETO_PROPOSTA]</strong>, <strong className="text-[#1e4480]">[ESCOPO_TECNICO]</strong>, <strong className="text-[#1e4480]">[CONDICOES_COMERCIAIS]</strong><br/>
+                    <div className="text-[10px] font-bold text-slate-400 max-w-lg text-right leading-tight">
+                      Variáveis: <strong className="text-[#1e4480]">[CLIENTE_NOME]</strong>, <strong className="text-[#1e4480]">[NUMERO_PROPOSTA]</strong>, <strong className="text-[#1e4480]">[REVISAO]</strong>, <strong className="text-[#1e4480]">[OBJETO_PROPOSTA]</strong>, <strong className="text-[#1e4480]">[ESCOPO_TECNICO]</strong>, <strong className="text-[#1e4480]">[CONDICOES_COMERCIAIS]</strong><br/>
                       Tags de Tabelas: <strong className="text-emerald-600">[TABELA]</strong>, <strong className="text-emerald-600">[ITENS]</strong>, <strong className="text-emerald-600">[TERMO_ACEITE]</strong>
                     </div>
                   </div>
