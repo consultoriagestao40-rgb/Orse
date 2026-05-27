@@ -78,13 +78,15 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
           <tbody>
             {equipe.map((item: any, idx: number) => {
               const precoVendaTotal = resultado?.items?.[idx]?.precoVenda || 0;
-              const precoUnitario = item.quantidade > 0 ? precoVendaTotal / item.quantidade : 0;
+              const isSpotItem = item.tipoItem === 'SPOT';
+              const qty = isSpotItem ? (item.quantidadeDemanda || 1) : (item.quantidade || 1);
+              const precoUnitario = isSpotItem ? (precoVendaTotal / qty) : (item.quantidade > 0 ? precoVendaTotal / item.quantidade : 0);
               
               return (
                 <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}>
                   <td className="p-2 border border-slate-300 font-bold text-slate-800">{item.nomeCargo}</td>
                   <td className="p-2 border border-slate-300 text-center text-slate-600">{item.escala}</td>
-                  <td className="p-2 border border-slate-300 text-center text-slate-600">{item.quantidade}</td>
+                  <td className="p-2 border border-slate-300 text-center text-slate-600">{qty}</td>
                   <td className="p-2 border border-slate-300 text-right text-slate-600">{fmt(precoUnitario)}</td>
                   <td className="p-2 border border-slate-300 text-right font-bold text-slate-800">{fmt(precoVendaTotal)}</td>
                 </tr>

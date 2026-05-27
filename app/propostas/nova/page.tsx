@@ -1982,12 +1982,15 @@ function PropostaEditor() {
                     <tbody>
                        {proposta.equipe.map((p: any, idx: number) => {
                           const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
-                          const custoUnitario = itemRes?.detalhes?.remuneracao || 0;
-                          const totalLinha = custoUnitario * p.quantidade;
+                          const custoTotal = itemRes?.detalhes?.remuneracao || 0;
+                          const isSpotItem = p.tipoItem === 'SPOT';
+                          const qty = isSpotItem ? (p.quantidadeDemanda || 1) : (p.quantidade || 1);
+                          const custoUnitario = isSpotItem ? (custoTotal / qty) : custoTotal;
+                          const totalLinha = isSpotItem ? custoTotal : (custoTotal * p.quantidade);
                           return (
                              <tr key={idx} className="border-b border-slate-200 border-dotted hover:bg-slate-50">
                                 <td className="py-1.5 px-6 font-semibold text-slate-800">{p.nomeCargo}</td>
-                                <td className="py-1.5 px-6 text-center font-bold">{p.quantidade}</td>
+                                <td className="py-1.5 px-6 text-center font-bold">{qty}</td>
                                 <td className="py-1.5 px-6 text-right">{formatCurrency(custoUnitario)}</td>
                                 <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">{formatCurrency(totalLinha)}</td>
                              </tr>
@@ -2278,12 +2281,14 @@ function PropostaEditor() {
                             proposta.equipe.map((p: any, idx: number) => {
                               const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
                               const precoVendaItem = itemRes?.precoVenda || 0;
-                              const precoUnitario = p.quantidade > 0 ? precoVendaItem / p.quantidade : 0;
+                              const isSpotItem = p.tipoItem === 'SPOT';
+                              const qty = isSpotItem ? (p.quantidadeDemanda || 1) : (p.quantidade || 1);
+                              const precoUnitario = isSpotItem ? (precoVendaItem / qty) : (p.quantidade > 0 ? precoVendaItem / p.quantidade : 0);
                               return (
                                 <tr key={p.id} className={`border-b border-slate-200 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
                                   <td className="px-4 py-2 text-center font-bold text-slate-500">{idx + 1}</td>
                                   <td className="px-4 py-2 font-semibold text-slate-800">{p.nomeCargo}</td>
-                                  <td className="px-4 py-2 text-center font-bold text-slate-800">{p.quantidade}</td>
+                                  <td className="px-4 py-2 text-center font-bold text-slate-800">{qty}</td>
                                   <td className="px-4 py-2 text-right text-slate-700">{fc(precoUnitario)}</td>
                                   <td className="px-4 py-2 text-right font-semibold bg-emerald-50 text-emerald-800">{fc(precoVendaItem)}</td>
                                 </tr>
@@ -4079,7 +4084,7 @@ function PropostaEditor() {
                                                     proposta.equipe.map((p: any, idx: number) => (
                                                        <tr key={p.id || idx} className={`border-b border-slate-100 text-[10px] font-bold text-slate-700 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}`}>
                                                           <td className="px-5 py-3.5 font-black text-slate-800">{p.nomeCargo || "Selecione a Função"}</td>
-                                                          <td className="px-5 py-3.5 text-center font-black text-[#1e4480]">{(p.quantidade || 0).toFixed(2).replace('.', ',')}</td>
+                                                          <td className="px-5 py-3.5 text-center font-black text-[#1e4480]">{(p.tipoItem === 'SPOT' ? p.quantidadeDemanda || 0 : p.quantidade || 0).toFixed(2).replace('.', ',')}</td>
                                                           <td className="px-5 py-3.5 text-center">{p.escala || "A definir"}</td>
                                                           <td className="px-5 py-3.5 text-center font-semibold text-slate-500">
                                                              {p.parametrosPosto?.horarioInicio && p.parametrosPosto?.horarioFim 
@@ -4671,7 +4676,7 @@ function PropostaEditor() {
                                      {(proposta.equipe || []).map((p: any, idx: number) => (
                                         <tr key={p.id || idx} className="border-b border-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-50/30">
                                            <td className="px-4 py-2.5 font-black text-slate-800">{p.nomeCargo || "Nova Função"}</td>
-                                           <td className="px-4 py-2.5 text-center">{p.quantidade || 0}</td>
+                                           <td className="px-4 py-2.5 text-center">{p.tipoItem === 'SPOT' ? p.quantidadeDemanda || 0 : p.quantidade || 0}</td>
                                            <td className="px-4 py-2.5 text-center">{p.escala || "Á definir"}</td>
                                            <td className="px-4 py-2.5 text-center">
                                               {p.parametrosPosto?.horarioInicio && p.parametrosPosto?.horarioFim 
@@ -6592,7 +6597,7 @@ function PropostaEditor() {
                                               proposta.equipe.map((p: any, idx: number) => (
                                                  <tr key={p.id || idx} className={`border-b border-slate-100 text-[10px] font-bold text-slate-700 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}`}>
                                                     <td className="px-5 py-3.5 font-black text-slate-800">{p.nomeCargo || "Selecione a Função"}</td>
-                                                    <td className="px-5 py-3.5 text-center font-black text-[#1e4480]">{(p.quantidade || 0).toFixed(2).replace('.', ',')}</td>
+                                                    <td className="px-5 py-3.5 text-center font-black text-[#1e4480]">{(p.tipoItem === 'SPOT' ? p.quantidadeDemanda || 0 : p.quantidade || 0).toFixed(2).replace('.', ',')}</td>
                                                     <td className="px-5 py-3.5 text-center">{p.escala || "A definir"}</td>
                                                     <td className="px-5 py-3.5 text-center font-semibold text-slate-500">
                                                        {p.parametrosPosto?.horarioInicio && p.parametrosPosto?.horarioFim 

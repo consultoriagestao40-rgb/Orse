@@ -888,7 +888,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                               proposta.equipe.map((p: any, idx: number) => (
                                                  <tr key={p.id || idx} className={`border-b border-slate-100 text-[10px] font-bold text-slate-700 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}`}>
                                                     <td className="px-5 py-3.5 font-black text-slate-800">{p.nomeCargo || "Selecione a Função"}</td>
-                                                    <td className="px-5 py-3.5 text-center font-black text-[#1e4480]">{(p.quantidade || 0).toFixed(2).replace('.', ',')}</td>
+                                                    <td className="px-5 py-3.5 text-center font-black text-[#1e4480]">{(p.tipoItem === 'SPOT' ? p.quantidadeDemanda || 0 : p.quantidade || 0).toFixed(2).replace('.', ',')}</td>
                                                     <td className="px-5 py-3.5 text-center">{p.escala || "A definir"}</td>
                                                     <td className="px-5 py-3.5 text-center font-semibold text-slate-500">
                                                        {p.parametrosPosto?.horarioInicio && p.parametrosPosto?.horarioFim 
