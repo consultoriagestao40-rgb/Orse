@@ -124,6 +124,7 @@ export default function AdminEquipesTecnicasPage() {
   const [manualMaoObra, setManualMaoObra] = useState(false);
   const [encargosBreakdown, setEncargosBreakdown] = useState<any>(JSON.parse(JSON.stringify(ENCARGOS_PADRAO)));
   const [extratoItem, setExtratoItem] = useState<ItemMaoObra | null>(null);
+  const [itensCustosAdicionais, setItensCustosAdicionais] = useState<{ id: string; descricao: string; valor: number }[]>([]);
 
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     grupoA: false,
@@ -408,7 +409,22 @@ export default function AdminEquipesTecnicasPage() {
       subtotalMaoObra = custoMaoObra;
     }
 
-    const total = subtotalMaoObra + Number(custoVeiculo) + Number(custoCombustivel);
+    // Calculo do total de itens adicionais com mapeamento retrocompatível
+    const vehicleKeywords = ['veiculo', 'veículo', 'carro', 'moto', 'van', 'caminh'];
+    const isVehicle = (desc: string) => vehicleKeywords.some(keyword => desc.toLowerCase().includes(keyword));
+
+    const totalVeiculo = itensCustosAdicionais
+      .filter(item => isVehicle(item.descricao))
+      .reduce((sum, item) => sum + Number(item.valor || 0), 0);
+
+    const totalOutros = itensCustosAdicionais
+      .filter(item => !isVehicle(item.descricao))
+      .reduce((sum, item) => sum + Number(item.valor || 0), 0);
+
+    setCustoVeiculo(totalVeiculo);
+    setCustoCombustivel(totalOutros);
+
+    const total = subtotalMaoObra + totalVeiculo + totalOutros;
     setCustoTotal(total);
 
     // Diária Sugerida = Total / 22 dias uteis de trabalho
@@ -418,7 +434,7 @@ export default function AdminEquipesTecnicasPage() {
 
     setValorDiaria(diariaSug);
     setValorHora(horaSug);
-  }, [itensMaoObra, encargoEstimadoPct, custoVeiculo, custoCombustivel, manualMaoObra, custoMaoObra, escalasDisponiveis]);
+  }, [itensMaoObra, encargoEstimadoPct, manualMaoObra, custoMaoObra, escalasDisponiveis, itensCustosAdicionais]);
 
   const handleAddCargo = (cargoId: string) => {
     if (!cargoId) return;
@@ -470,6 +486,10 @@ export default function AdminEquipesTecnicasPage() {
     setCustoVeiculo(0);
     setCustoCombustivel(0);
     setItensMaoObra([]);
+    setItensCustosAdicionais([
+      { id: 'veiculo', descricao: 'CUSTO VEÍCULO (MENSAL)', valor: 0 },
+      { id: 'combustivel', descricao: 'COMBUSTÍVEL & MANUTENÇÃO', valor: 0 }
+    ]);
     setSelectedCctId('');
     setEncargosBreakdown(JSON.parse(JSON.stringify(ENCARGOS_PADRAO)));
     setEncargoEstimadoPct(60.09);
@@ -500,6 +520,38 @@ export default function AdminEquipesTecnicasPage() {
       grupoE: false,
       grupoF: false
     });
+
+    let loadedCustos: any[] = [];
+    if (Array.isArray(equipe.itensCustosAdicionais) && equipe.itensCustosAdicionais.length > 0) {
+      loadedCustos = equipe.itensCustosAdicionais.map((c: any, index: number) => ({
+        id: c.id || String(index) || Math.random().toString(),
+        descricao: c.descricao || '',
+        valor: Number(c.valor) || 0
+      }));
+    } else {
+      // Se não tiver a tabela dinâmica gravada, mas tiver dados legados, converte os legados
+      if (Number(equipe.custoMensalVeiculo) > 0) {
+        loadedCustos.push({
+          id: 'veiculo',
+          descricao: 'CUSTO VEÍCULO (MENSAL)',
+          valor: Number(equipe.custoMensalVeiculo)
+        });
+      }
+      if (Number(equipe.custoMensalCombustivel) > 0) {
+        loadedCustos.push({
+          id: 'combustivel',
+          descricao: 'COMBUSTÍVEL & MANUTENÇÃO',
+          valor: Number(equipe.custoMensalCombustivel)
+        });
+      }
+      if (loadedCustos.length === 0) {
+        loadedCustos = [
+          { id: 'veiculo', descricao: 'CUSTO VEÍCULO (MENSAL)', valor: 0 },
+          { id: 'combustivel', descricao: 'COMBUSTÍVEL & MANUTENÇÃO', valor: 0 }
+        ];
+      }
+    }
+    setItensCustosAdicionais(loadedCustos);
     
     // Reconstruir o objeto de itensMaoObra recuperando CCT e Cargo originais
     const loadedItens = (Array.isArray(equipe.itensMaoObra) ? equipe.itensMaoObra : []).map((item: any) => {
@@ -555,6 +607,10 @@ export default function AdminEquipesTecnicasPage() {
         pisoSalarial: Number(item.pisoSalarial) || 0,
         quantidade: Number(item.quantidade) || 1,
         escala: item.escala || '5x2'
+      })),
+      itensCustosAdicionais: itensCustosAdicionais.map(item => ({
+        descricao: item.descricao,
+        valor: Number(item.valor) || 0
       }))
     };
 
@@ -1000,9 +1056,9 @@ export default function AdminEquipesTecnicasPage() {
                 ) : null}
 
                 {/* Custos Operacionais */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Custo de Mão de Obra */}
-                  <div>
+                  <div className="lg:col-span-1 flex flex-col gap-1">
                     <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">
                       Custo Mão de Obra (Mensal)
                     </label>
@@ -1024,40 +1080,97 @@ export default function AdminEquipesTecnicasPage() {
                     )}
                   </div>
 
-                  {/* Custo de Veículo */}
-                  <div>
-                    <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1">
-                      <Truck size={14} className="text-slate-400" /> Custo Veículo (Mensal)
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">R$</span>
-                      <input 
-                        type="number"
-                        step="0.01"
-                        value={custoVeiculo}
-                        onChange={(e) => setCustoVeiculo(Number(e.target.value))}
-                        placeholder="0,00"
-                        className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-3 text-slate-800 font-black focus:ring-2 focus:ring-blue-500/20 outline-none"
-                      />
+                  {/* Tabela de Custos Adicionais e Logística */}
+                  <div className="lg:col-span-2 flex flex-col gap-3">
+                    <div className="flex justify-between items-center">
+                      <label className="block text-xs font-black text-slate-500 uppercase tracking-wider">
+                        Custos Operacionais e Logísticos Adicionais
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setItensCustosAdicionais([
+                            ...itensCustosAdicionais,
+                            { id: Math.random().toString(), descricao: '', valor: 0 }
+                          ]);
+                        }}
+                        className="text-[10px] text-blue-600 hover:text-blue-750 font-black uppercase tracking-wider flex items-center gap-1 border border-blue-200 rounded px-2.5 py-1 hover:bg-blue-50 transition-colors cursor-pointer"
+                      >
+                        <Plus size={12} strokeWidth={3} /> Adicionar Linha
+                      </button>
                     </div>
-                  </div>
 
-                  {/* Custo de Combustível */}
-                  <div>
-                    <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1">
-                      <Fuel size={14} className="text-slate-400" /> Combustível & Manutenção
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">R$</span>
-                      <input 
-                        type="number"
-                        step="0.01"
-                        value={custoCombustivel}
-                        onChange={(e) => setCustoCombustivel(Number(e.target.value))}
-                        placeholder="0,00"
-                        className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-3 text-slate-800 font-black focus:ring-2 focus:ring-blue-500/20 outline-none"
-                      />
-                    </div>
+                    {itensCustosAdicionais.length === 0 ? (
+                      <div className="py-6 text-center text-slate-400 italic text-xs bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                        Nenhum custo adicional. Clique em "Adicionar Linha" para inserir.
+                      </div>
+                    ) : (
+                      <div className="border border-slate-150 rounded-xl overflow-hidden bg-white max-h-[175px] overflow-y-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-slate-50 text-slate-400 uppercase text-[9px] tracking-wider border-b border-slate-200 font-black">
+                              <th className="px-3 py-2">Descrição do Custo</th>
+                              <th className="px-3 py-2 w-36 text-right">Valor Mensal</th>
+                              <th className="px-3 py-2 w-10 text-center">Ação</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {itensCustosAdicionais.map((c, index) => (
+                              <tr key={c.id} className="border-b border-slate-100 hover:bg-slate-50/50">
+                                <td className="p-1">
+                                  <input
+                                    type="text"
+                                    required
+                                    placeholder="Ex: Custo Veículo, Combustível, Pedágio..."
+                                    value={c.descricao}
+                                    onChange={(e) => {
+                                      const updated = itensCustosAdicionais.map(item => 
+                                        item.id === c.id ? { ...item, descricao: e.target.value } : item
+                                      );
+                                      setItensCustosAdicionais(updated);
+                                    }}
+                                    className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-800 text-xs font-bold focus:border-blue-500 outline-none transition-all"
+                                  />
+                                </td>
+                                <td className="p-1">
+                                  <div className="relative">
+                                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-[10px]">R$</span>
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      min="0"
+                                      required
+                                      placeholder="0,00"
+                                      value={c.valor === 0 ? '' : c.valor}
+                                      onChange={(e) => {
+                                        const val = e.target.value === '' ? 0 : Number(e.target.value);
+                                        const updated = itensCustosAdicionais.map(item => 
+                                          item.id === c.id ? { ...item, valor: val } : item
+                                        );
+                                        setItensCustosAdicionais(updated);
+                                      }}
+                                      className="w-full bg-slate-50/50 border border-slate-200 rounded-lg pl-7 pr-2.5 py-1 text-right text-slate-800 text-xs font-black focus:border-blue-500 outline-none transition-all"
+                                    />
+                                  </div>
+                                </td>
+                                <td className="p-1 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setItensCustosAdicionais(itensCustosAdicionais.filter(item => item.id !== c.id));
+                                    }}
+                                    className="text-slate-400 hover:text-red-650 transition-colors p-1 hover:bg-red-50 rounded-lg cursor-pointer"
+                                    title="Remover Custo"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1075,7 +1188,7 @@ export default function AdminEquipesTecnicasPage() {
                     <h4 className="text-2xl font-black text-white">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(custoTotal)}
                     </h4>
-                    <p className="text-[9px] text-slate-500 font-medium mt-1">Mão de obra + veículo + combustível/manut.</p>
+                    <p className="text-[9px] text-slate-500 font-medium mt-1">Mão de obra + custos operacionais adicionais.</p>
                   </div>
 
                   {/* Diária Sugerida */}
