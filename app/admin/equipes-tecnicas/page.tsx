@@ -253,7 +253,7 @@ export default function AdminEquipesTecnicasPage() {
     setCustoVeiculo(equipe.custoMensalVeiculo);
     setCustoCombustivel(equipe.custoMensalCombustivel);
     setItensMaoObra(Array.isArray(equipe.itensMaoObra) ? equipe.itensMaoObra : []);
-    setManualMaoObra(true); // Manter os valores atuais como manuais para evitar distorção
+    setManualMaoObra(false); // Sempre usar composição CCT
     setModalOpen(true);
   };
 
@@ -368,7 +368,6 @@ export default function AdminEquipesTecnicasPage() {
               <thead>
                 <tr className="bg-[#1E293B] text-white uppercase text-[10px] font-black tracking-widest">
                   <th className="px-6 py-4">Nome da Equipe</th>
-                  <th className="px-6 py-4">Mão de Obra</th>
                   <th className="px-6 py-4 text-right">Mão de Obra (Mês)</th>
                   <th className="px-6 py-4 text-right">Logística (Veíc + Comb)</th>
                   <th className="px-6 py-4 text-right bg-slate-800">Custo Total</th>
@@ -380,7 +379,7 @@ export default function AdminEquipesTecnicasPage() {
               <tbody className="divide-y divide-slate-100">
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-20 text-center">
+                    <td colSpan={7} className="px-6 py-20 text-center">
                       <div className="flex flex-col items-center gap-3">
                         <Loader2 className="animate-spin text-blue-600" size={32} />
                         <span className="text-slate-400 font-medium italic">Carregando equipes técnicas...</span>
@@ -389,7 +388,7 @@ export default function AdminEquipesTecnicasPage() {
                   </tr>
                 ) : filteredEquipes.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-20 text-center text-slate-400 font-medium italic">
+                    <td colSpan={7} className="px-6 py-20 text-center text-slate-400 font-medium italic">
                       Nenhuma equipe cadastrada para serviços spot.
                     </td>
                   </tr>
@@ -398,19 +397,6 @@ export default function AdminEquipesTecnicasPage() {
                     <tr key={eq.id} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-6 py-4 font-bold text-slate-800 text-sm max-w-[200px] truncate">
                         {eq.nome}
-                      </td>
-                      <td className="px-6 py-4">
-                        {Array.isArray(eq.itensMaoObra) && eq.itensMaoObra.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {eq.itensMaoObra.map((item: any, idx: number) => (
-                              <span key={idx} className="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded border border-slate-200 uppercase">
-                                {item.quantidade}x {item.nomeCargo}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-slate-400 text-xs italic">Custo digitado manual</span>
-                        )}
                       </td>
                       <td className="px-6 py-4 text-right text-sm font-semibold text-slate-700">
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(eq.custoMensalMaoObra)}
@@ -476,8 +462,8 @@ export default function AdminEquipesTecnicasPage() {
               <form onSubmit={handleSave} className="flex-1 overflow-auto p-8 flex flex-col gap-6">
                 
                 {/* Informações Básicas */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="md:col-span-2">
+                <div className="grid grid-cols-1 gap-6">
+                  <div>
                     <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Nome da Composição / Equipe *</label>
                     <input 
                       type="text" 
@@ -487,25 +473,6 @@ export default function AdminEquipesTecnicasPage() {
                       placeholder="Ex: Equipe de Altura Completa (Supervisor + 2 Lavadores)"
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-bold focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                     />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">Modo Mão de Obra</label>
-                    <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
-                      <button
-                        type="button"
-                        onClick={() => setManualMaoObra(false)}
-                        className={`flex-1 text-center py-2 text-xs font-black rounded-lg transition-all ${!manualMaoObra ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-                      >
-                        Compor CCT
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setManualMaoObra(true)}
-                        className={`flex-1 text-center py-2 text-xs font-black rounded-lg transition-all ${manualMaoObra ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-                      >
-                        Manual
-                      </button>
-                    </div>
                   </div>
                 </div>
 
