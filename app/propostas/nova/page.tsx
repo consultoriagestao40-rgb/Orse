@@ -481,6 +481,8 @@ function PropostaEditor() {
             console.log('Estado da proposta atualizado.');
           } else {
              console.warn('Proposta não encontrada no banco.');
+             alert('Você não tem permissão para visualizar esta proposta ou ela não existe.');
+             router.push('/');
           }
         } else if (loggedUser) {
            console.log('Nova proposta: inicializando com o perfil do vendedor logado...');

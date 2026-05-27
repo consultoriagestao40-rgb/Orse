@@ -437,6 +437,7 @@ export async function updatePropostaStatus(id: string, status: string) {
 }
 
 export async function getPropostaCompleta(id: string, versionId?: string) {
+  noStore();
   try {
     const loggedUser = await getLoggedUser();
     if (!loggedUser) return null;
@@ -447,7 +448,8 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
         versoes: {
           orderBy: { versao: 'desc' },
           include: { items: true }
-        }
+        },
+        shares: true
       }
     });
 
@@ -455,15 +457,16 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
 
     // Validação de segurança por perfil
     if (loggedUser.role !== 'ADMIN') {
+      const isShared = (proposta as any).shares?.some((s: any) => s.userId === loggedUser.id) || false;
       if (loggedUser.role === 'MANAGER') {
         const subordinateIds = await getSubordinateIds(loggedUser.id);
         const allowedIds = [loggedUser.id, ...subordinateIds];
-        if (!allowedIds.includes(proposta.userId)) {
+        if (!allowedIds.includes(proposta.userId) && !isShared) {
           return null;
         }
       } else {
         // USER
-        if (proposta.userId !== loggedUser.id) {
+        if (proposta.userId !== loggedUser.id && !isShared) {
           return null;
         }
       }
