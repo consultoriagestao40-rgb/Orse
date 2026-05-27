@@ -377,9 +377,18 @@ export default function AdminEquipesTecnicasPage() {
     
     // Reconstruir o objeto de itensMaoObra recuperando CCT e Cargo originais
     const loadedItens = (Array.isArray(equipe.itensMaoObra) ? equipe.itensMaoObra : []).map((item: any) => {
-      const selected = cargosDisponiveis.find(c => c.id === item.cargoId);
+      // 1. Tentar encontrar por ID exato
+      let selected = cargosDisponiveis.find(c => c.id === item.cargoId);
+      
+      // 2. Se não encontrar (devido a cargos deletados e recriados), tentar encontrar por nome do cargo
+      if (!selected && item.nomeCargo) {
+        selected = cargosDisponiveis.find(c => 
+          c.nomeLimpo.trim().toLowerCase() === item.nomeCargo.trim().toLowerCase()
+        );
+      }
+      
       return {
-        cargoId: item.cargoId,
+        cargoId: selected ? selected.id : item.cargoId,
         nomeCargo: item.nomeCargo || (selected ? selected.nomeLimpo : ''),
         pisoSalarial: item.pisoSalarial || (selected ? selected.pisoSalarial : 0),
         quantidade: item.quantidade || 1,
