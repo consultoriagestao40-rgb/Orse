@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { getComments, addComment, getFiles, uploadFileBase64, downloadFile, getActivities, createActivity, getLeadShares, addLeadShare, removeLeadShare, getAllUsers, sendLeadEmail } from '../actions';
 import { getWhatsAppMessages } from '../whatsapp-actions';
 import { getSmtpAccounts } from '@/app/emails/actions';
-import { MessageSquare, Paperclip, Calendar, Users, Send, Download, Plus, X, Trash2, MapPin, Navigation, Mail, Phone, Map, MessageCircle, CheckCircle2, AlertCircle, Info, RefreshCw, FileText, Mic, Trash, Clock } from 'lucide-react';
+import { MessageSquare, Paperclip, Calendar, Users, Send, Download, Plus, X, Trash2, MapPin, Navigation, Mail, Phone, Map, MessageCircle, CheckCircle2, AlertCircle, Info, RefreshCw, FileText, Mic, Trash, Clock, Sparkles, Search, Linkedin, Instagram, ExternalLink } from 'lucide-react';
 import WhatsAppChat from './WhatsAppChat';
 import EmailTab from './EmailTab';
 
@@ -26,6 +26,77 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
   const [activities, setActivities] = useState<any[]>([]);
   const [whatsappMessages, setWhatsappMessages] = useState<any[]>([]);
   const [timelineFilter, setTimelineFilter] = useState('todos');
+
+  // IA Contact Search States
+  const [aiCargos, setAiCargos] = useState<string[]>([]);
+  const [aiCargoInput, setAiCargoInput] = useState('');
+  const [aiSearching, setAiSearching] = useState(false);
+  const [aiResults, setAiResults] = useState<any[]>([]);
+  const [aiError, setAiError] = useState('');
+  const [aiSearched, setAiSearched] = useState(false);
+  const [aiSaving, setAiSaving] = useState<string | null>(null);
+  const [aiSaved, setAiSaved] = useState<Set<string>>(new Set());
+
+  const AI_CARGO_SUGGESTIONS = [
+    'CEO', 'Diretor', 'Gerente de Compras', 'Gerente de RH', 'Gerente Financeiro',
+    'Gerente de Operações', 'Coordenador', 'Facilities', 'Segurança do Trabalho',
+    'Facilities Manager', 'Head de Compras', 'CFO', 'COO'
+  ];
+
+  const handleAiAddCargo = (cargo: string) => {
+    const trimmed = cargo.trim();
+    if (trimmed && !aiCargos.includes(trimmed)) {
+      setAiCargos(prev => [...prev, trimmed]);
+    }
+    setAiCargoInput('');
+  };
+
+  const handleAiRemoveCargo = (cargo: string) => {
+    setAiCargos(prev => prev.filter(c => c !== cargo));
+  };
+
+  const handleAiSearch = async () => {
+    if (aiCargos.length === 0) return;
+    setAiSearching(true);
+    setAiError('');
+    setAiResults([]);
+    setAiSearched(false);
+    try {
+      const res = await fetch('/api/leads/ai-contact-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ empresa: lead.nomeFantasia, cargos: aiCargos }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAiResults(data.results || []);
+      } else {
+        setAiError(data.error || 'Erro na busca.');
+      }
+    } catch (err: any) {
+      setAiError('Falha na conexão com o servidor de busca.');
+    } finally {
+      setAiSearching(false);
+      setAiSearched(true);
+    }
+  };
+
+  const handleAiSaveContact = async (result: any, idx: number) => {
+    const key = `${idx}`;
+    setAiSaving(key);
+    try {
+      const { addLeadContact } = await import('../actions');
+      const res = await addLeadContact(lead.id, {
+        nome: result.nome,
+        cargo: result.cargo,
+        telefone: result.whatsappUrl ? result.whatsappUrl.replace('https://wa.me/', '') : undefined,
+      });
+      if (res.success) {
+        setAiSaved(prev => new Set([...prev, key]));
+      }
+    } catch { /* ignore */ }
+    setAiSaving(null);
+  };
 
   // Quick Composer States
   const [activeComposerTab, setActiveComposerTab] = useState<'comment' | 'meeting' | 'email'>('comment');
@@ -523,6 +594,9 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
         </button>
         <button onClick={() => setActiveTab('infos')} className={`px-4 py-3 text-sm font-bold flex gap-2 items-center border-b-2 whitespace-nowrap transition-colors ${activeTab === 'infos' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
           <Calendar size={16}/> Histórico
+        </button>
+        <button onClick={() => setActiveTab('ia')} className={`px-4 py-3 text-sm font-bold flex gap-2 items-center border-b-2 whitespace-nowrap transition-colors ${activeTab === 'ia' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+          <Sparkles size={16}/> Contatos IA
         </button>
       </div>
 
@@ -1037,6 +1111,183 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
         {activeTab === 'email' && (
           <div className="h-full mt-2">
             <EmailTab lead={lead} onEmailSent={loadComments} />
+          </div>
+        )}
+
+        {activeTab === 'ia' && (
+          <div className="space-y-5">
+            {/* Header */}
+            <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-2xl p-5 text-white shadow-lg">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="bg-white/20 p-2 rounded-xl">
+                  <Sparkles size={20} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base">Busca Inteligente de Contatos</h3>
+                  <p className="text-violet-200 text-xs">Pesquisa LinkedIn, Instagram e WhatsApp automaticamente</p>
+                </div>
+              </div>
+              <p className="text-xs text-violet-100 bg-white/10 rounded-xl px-3 py-2 mt-3">
+                🏢 Buscando por: <strong className="text-white">{lead.nomeFantasia}</strong>
+              </p>
+            </div>
+
+            {/* Cargo input */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
+              <label className="block text-xs font-black text-slate-700 uppercase tracking-wide">Cargos para Buscar</label>
+              
+              {/* Tags de cargos adicionados */}
+              {aiCargos.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {aiCargos.map(c => (
+                    <span key={c} className="flex items-center gap-1.5 bg-violet-100 text-violet-800 text-xs font-bold px-3 py-1.5 rounded-full">
+                      {c}
+                      <button onClick={() => handleAiRemoveCargo(c)} className="text-violet-400 hover:text-violet-700 transition-colors">
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Input para novo cargo */}
+              <div className="flex gap-2">
+                <input
+                  value={aiCargoInput}
+                  onChange={e => setAiCargoInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAiAddCargo(aiCargoInput); } }}
+                  placeholder="Digite um cargo e pressione Enter..."
+                  className="flex-1 p-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-400 bg-slate-50"
+                />
+                <button
+                  onClick={() => handleAiAddCargo(aiCargoInput)}
+                  disabled={!aiCargoInput.trim()}
+                  className="bg-violet-100 hover:bg-violet-200 text-violet-700 px-4 py-2 rounded-xl font-bold text-sm transition-colors disabled:opacity-40"
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+
+              {/* Sugestões rápidas */}
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Sugestões rápidas:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {AI_CARGO_SUGGESTIONS.filter(s => !aiCargos.includes(s)).map(s => (
+                    <button
+                      key={s}
+                      onClick={() => handleAiAddCargo(s)}
+                      className="text-[10px] font-bold bg-slate-100 hover:bg-violet-50 hover:text-violet-700 text-slate-600 px-2.5 py-1 rounded-full transition-colors border border-transparent hover:border-violet-200"
+                    >
+                      + {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Botão de busca */}
+              <button
+                onClick={handleAiSearch}
+                disabled={aiCargos.length === 0 || aiSearching}
+                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-black py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {aiSearching ? (
+                  <><RefreshCw size={16} className="animate-spin" /> Buscando no LinkedIn, Instagram e WhatsApp...</>
+                ) : (
+                  <><Search size={16} /> Buscar Contatos ({aiCargos.length} cargo{aiCargos.length !== 1 ? 's' : ''})</>
+                )}
+              </button>
+            </div>
+
+            {/* Resultados */}
+            {aiSearching && (
+              <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm flex flex-col items-center gap-3">
+                <div className="w-12 h-12 bg-violet-100 rounded-full flex items-center justify-center animate-pulse">
+                  <Sparkles size={24} className="text-violet-600" />
+                </div>
+                <p className="text-sm font-bold text-slate-600">Pesquisando na internet...</p>
+                <p className="text-xs text-slate-400">Isso pode levar até 30 segundos</p>
+              </div>
+            )}
+
+            {aiError && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-700 font-medium">
+                ⚠️ {aiError}
+              </div>
+            )}
+
+            {aiSearched && !aiSearching && aiResults.length === 0 && !aiError && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
+                <p className="text-sm font-bold text-amber-700">Nenhum contato encontrado</p>
+                <p className="text-xs text-amber-600 mt-1">Tente outros cargos ou variações do nome da empresa</p>
+              </div>
+            )}
+
+            {aiResults.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-xs font-black text-slate-500 uppercase tracking-wide">{aiResults.length} contato{aiResults.length !== 1 ? 's' : ''} encontrado{aiResults.length !== 1 ? 's' : ''}</p>
+                {aiResults.map((result, idx) => (
+                  <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-black text-slate-800 text-sm truncate">{result.nome}</p>
+                        <p className="text-xs font-bold text-violet-600 mb-2">{result.cargo}</p>
+                        {result.snippet && (
+                          <p className="text-[10px] text-slate-400 line-clamp-2 mb-3">{result.snippet}</p>
+                        )}
+                        <div className="flex flex-wrap gap-2">
+                          {result.linkedinUrl && (
+                            <a
+                              href={result.linkedinUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-black px-2.5 py-1.5 rounded-lg transition-colors border border-blue-100"
+                            >
+                              <Linkedin size={11} /> LinkedIn
+                              <ExternalLink size={9} className="opacity-60" />
+                            </a>
+                          )}
+                          {result.instagramUrl && (
+                            <a
+                              href={result.instagramUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-1.5 bg-pink-50 hover:bg-pink-100 text-pink-700 text-[10px] font-black px-2.5 py-1.5 rounded-lg transition-colors border border-pink-100"
+                            >
+                              <Instagram size={11} /> Instagram
+                              <ExternalLink size={9} className="opacity-60" />
+                            </a>
+                          )}
+                          {result.whatsappUrl && (
+                            <a
+                              href={result.whatsappUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[10px] font-black px-2.5 py-1.5 rounded-lg transition-colors border border-emerald-100"
+                            >
+                              📱 WhatsApp
+                              <ExternalLink size={9} className="opacity-60" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleAiSaveContact(result, idx)}
+                        disabled={aiSaving === `${idx}` || aiSaved.has(`${idx}`)}
+                        className={`shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all ${
+                          aiSaved.has(`${idx}`)
+                            ? 'bg-emerald-100 text-emerald-700 cursor-default'
+                            : aiSaving === `${idx}`
+                            ? 'bg-slate-100 text-slate-400 cursor-wait'
+                            : 'bg-violet-600 hover:bg-violet-700 text-white shadow-sm'
+                        }`}
+                      >
+                        {aiSaved.has(`${idx}`) ? '✓ Salvo' : aiSaving === `${idx}` ? '...' : '+ Salvar'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
