@@ -1060,7 +1060,7 @@ export default function AdminEquipesTecnicasPage() {
                 <hr className="border-slate-100" />
 
                 {/* Dashboard de Preço Final da Composição */}
-                <div className="bg-[#0F172A] text-white rounded-3xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-center shadow-lg relative overflow-hidden">
+                <div className="bg-[#0F172A] text-white rounded-3xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-center shadow-lg relative overflow-hidden flex-shrink-0">
                   <div className="absolute right-0 top-0 opacity-5 pointer-events-none transform translate-x-12 translate-y-6">
                     <DollarSign size={200} />
                   </div>
@@ -1108,7 +1108,7 @@ export default function AdminEquipesTecnicasPage() {
                 </div>
 
                 {/* Footer Modal */}
-                <div className="flex justify-end gap-3 mt-4">
+                <div className="flex justify-end gap-3 mt-4 flex-shrink-0">
                   <button 
                     type="button"
                     onClick={() => setModalOpen(false)}
