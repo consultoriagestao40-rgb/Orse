@@ -2028,13 +2028,17 @@ function PropostaEditor() {
                                };
                            }, { ativos: 0, materiais:0, maquinas:0, descartaveis:0, servicos:0 }) || { ativos: 0, materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0 };
 
-                           const rows = [
-                              { label: '1) Uniformes e EPI\'s', val: b.ativos },
-                              { label: '2) Materiais e produtos de limpeza', val: proposta.insumos.materiais },
-                              { label: '3) Máquinas e equipamentos', val: proposta.insumos.maquinas },
-                              { label: '4) Descartáveis', val: proposta.insumos.descartaveis },
-                              { label: '5) Serviços (Descriminar)', val: proposta.insumos.servicos },
-                           ];
+                                                       const rawRows = [
+                               ...(!isSpot ? [{ label: "Uniformes e EPI's", val: b.ativos }] : []),
+                               { label: 'Materiais e produtos de limpeza', val: proposta.insumos.materiais },
+                               { label: 'Máquinas e equipamentos', val: proposta.insumos.maquinas },
+                               { label: 'Descartáveis', val: proposta.insumos.descartaveis },
+                               { label: 'Serviços (Descriminar)', val: proposta.insumos.servicos },
+                            ];
+                            const rows = rawRows.map((r, idx) => ({
+                               label: `${idx + 1}) ${r.label}`,
+                               val: r.val
+                            }));
 
                            return rows.map((row, i) => (
                               <tr key={i} className="border-b border-slate-200 border-dotted">
@@ -2058,7 +2062,9 @@ function PropostaEditor() {
                         </tr>
 
                         {/* MONTANTE C */}
-                        <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
+                        {!isSpot && (
+                           <>
+                              <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
                            <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "C" - Benefícios Detalhados (13 Itens)</th>
                         </tr>
                         {(() => {
@@ -2136,8 +2142,9 @@ function PropostaEditor() {
                               </>
                            );
                         })()}
-
-                        {/* MONTANTE D - BDI */}
+                           </>
+                        )}
+                                                {/* MONTANTE D - BDI */}
                         <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
                            <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "D" - BDI</th>
                         </tr>
