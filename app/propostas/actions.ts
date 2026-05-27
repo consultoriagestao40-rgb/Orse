@@ -274,7 +274,8 @@ export async function saveProposta(data: any) {
             adm: premissas.taxaAdm,
             lucro: premissas.margemLucro,
             reservaTecnicaPct: premissas.reservaTecnicaPct,
-            manutencaoPct: premissas.manutencaoPct
+            manutencaoPct: premissas.manutencaoPct,
+            comissaoVendedor: premissas.comissaoVendedor
           } as any,
           metadados: metadados as any,
           custoTotal: resultado.custoDiretoTotal || 0,
@@ -295,7 +296,8 @@ export async function saveProposta(data: any) {
             adm: premissas.taxaAdm,
             lucro: premissas.margemLucro,
             reservaTecnicaPct: premissas.reservaTecnicaPct,
-            manutencaoPct: premissas.manutencaoPct
+            manutencaoPct: premissas.manutencaoPct,
+            comissaoVendedor: premissas.comissaoVendedor
           } as any,
           metadados: metadados as any,
           custoTotal: resultado.custoDiretoTotal || 0,
@@ -545,6 +547,7 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
       premissas: {
         taxaAdm: margens?.adm || 5,
         margemLucro: margens?.lucro || 10,
+        comissaoVendedor: margens?.comissaoVendedor || 0,
         reservaTecnicaPct: margens?.reservaTecnicaPct || 0,
         manutencaoPct: margens?.manutencaoPct || 0,
         tributos: (() => {
@@ -615,7 +618,11 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
     const calcInput = {
       items: returnObj.equipe,
       impostos: { total: Number(totalTributos) },
-      margens: { adm: margens?.adm || 5, lucro: margens?.lucro || 10 },
+      margens: { 
+        adm: margens?.adm || 5, 
+        lucro: margens?.lucro || 10,
+        comissaoVendedor: margens?.comissaoVendedor || 0
+      },
       reservaTecnicaPct: margens?.reservaTecnicaPct || 0,
       manutencaoPct: margens?.manutencaoPct || 0,
       encargos: meta.encargos,
