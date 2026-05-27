@@ -2232,7 +2232,7 @@ function PropostaEditor() {
                       <h2 className="text-xs font-black text-white uppercase tracking-widest">1) Mão de Obra — Quadro de Colaboradores</h2>
                     </div>
                     <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse text-xs">
+                      <table className="w-full text-left border-collapse text-xs text-slate-800">
                         <thead>
                           <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
                             <th className="px-4 py-2 w-10 text-center">Item</th>
@@ -2254,9 +2254,9 @@ function PropostaEditor() {
                                 <tr key={p.id} className={`border-b border-slate-200 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
                                   <td className="px-4 py-2 text-center font-bold text-slate-500">{idx + 1}</td>
                                   <td className="px-4 py-2 font-semibold text-slate-800">{p.nomeCargo}</td>
-                                  <td className="px-4 py-2 text-center font-bold">{p.quantidade}</td>
+                                  <td className="px-4 py-2 text-center font-bold text-slate-800">{p.quantidade}</td>
                                   <td className="px-4 py-2 text-right text-slate-700">{fc(precoUnitario)}</td>
-                                  <td className="px-4 py-2 text-right font-semibold bg-emerald-50">{fc(precoVendaItem)}</td>
+                                  <td className="px-4 py-2 text-right font-semibold bg-emerald-50 text-emerald-800">{fc(precoVendaItem)}</td>
                                 </tr>
                               );
                             })
@@ -2281,7 +2281,7 @@ function PropostaEditor() {
                       <h2 className="text-xs font-black text-white uppercase tracking-widest">2) Materiais, Equipamentos e Insumos</h2>
                     </div>
                     <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse text-xs">
+                      <table className="w-full text-left border-collapse text-xs text-slate-800">
                         <thead>
                           <tr className="bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200">
                             <th className="px-6 py-2 w-10 text-center">Item</th>
@@ -5565,7 +5565,7 @@ function PropostaEditor() {
                   <div className="p-4 space-y-4">
                      <div className="space-y-1">
                         <label className="text-xs font-bold text-slate-600 uppercase">Nome do Tipo</label>
-                        <input type="text" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm outline-none focus:border-[#1B4D3E]" value={newTipoName} onChange={e => setNewTipoName(e.target.value)} placeholder="Ex: Limpeza Comercial" autoFocus />
+                        <input type="text" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm outline-none focus:border-[#1B4D3E] text-slate-800" value={newTipoName} onChange={e => setNewTipoName(e.target.value)} placeholder="Ex: Limpeza Comercial" autoFocus />
                      </div>
                      <button disabled={isSavingTipo} onClick={handleSaveTipoServico} className="w-full bg-[#1B4D3E] hover:bg-[#13382D] text-white font-bold py-2 rounded text-sm transition-colors shadow-sm disabled:opacity-50">
                         {isSavingTipo ? 'Salvando...' : 'Salvar Tipo'}
@@ -5586,7 +5586,7 @@ function PropostaEditor() {
                   <div className="p-4 space-y-4">
                      <div className="space-y-1">
                         <label className="text-xs font-bold text-slate-600 uppercase">Nome do Segmento</label>
-                        <input type="text" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm outline-none focus:border-[#1B4D3E]" value={newSegmentoName} onChange={e => setNewSegmentoName(e.target.value)} placeholder="Ex: Condomínios" autoFocus />
+                        <input type="text" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm outline-none focus:border-[#1B4D3E] text-slate-800" value={newSegmentoName} onChange={e => setNewSegmentoName(e.target.value)} placeholder="Ex: Condomínios" autoFocus />
                      </div>
                      <button disabled={isSavingSegmento} onClick={handleSaveSegmento} className="w-full bg-[#1B4D3E] hover:bg-[#13382D] text-white font-bold py-2 rounded text-sm transition-colors shadow-sm disabled:opacity-50">
                         {isSavingSegmento ? 'Salvando...' : 'Salvar Segmento'}
@@ -5607,31 +5607,31 @@ function PropostaEditor() {
                   <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto max-h-[70vh]">
                      <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase">Nome Fantasia *</label>
-                        <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newClientForm.nomeFantasia} onChange={e => setNewClientForm({...newClientForm, nomeFantasia: e.target.value})} />
+                        <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newClientForm.nomeFantasia} onChange={e => setNewClientForm({...newClientForm, nomeFantasia: e.target.value})} />
                      </div>
                      <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase">Razão Social</label>
-                        <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newClientForm.razaoSocial} onChange={e => setNewClientForm({...newClientForm, razaoSocial: e.target.value})} />
+                        <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newClientForm.razaoSocial} onChange={e => setNewClientForm({...newClientForm, razaoSocial: e.target.value})} />
                      </div>
                      <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase">CNPJ</label>
-                        <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newClientForm.cnpj} onChange={e => setNewClientForm({...newClientForm, cnpj: e.target.value})} />
+                        <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newClientForm.cnpj} onChange={e => setNewClientForm({...newClientForm, cnpj: e.target.value})} />
                      </div>
                      <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase">E-mail Comercial</label>
-                        <input type="email" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newClientForm.email} onChange={e => setNewClientForm({...newClientForm, email: e.target.value})} />
+                        <input type="email" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newClientForm.email} onChange={e => setNewClientForm({...newClientForm, email: e.target.value})} />
                      </div>
                      <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase">Celular / WhatsApp</label>
-                        <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newClientForm.whatsapp} onChange={e => setNewClientForm({...newClientForm, whatsapp: e.target.value})} />
+                        <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newClientForm.whatsapp} onChange={e => setNewClientForm({...newClientForm, whatsapp: e.target.value})} />
                      </div>
                      <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase">Contato (Responsável)</label>
-                        <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newClientForm.contato} onChange={e => setNewClientForm({...newClientForm, contato: e.target.value})} />
+                        <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newClientForm.contato} onChange={e => setNewClientForm({...newClientForm, contato: e.target.value})} />
                      </div>
                      <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase">Segmento</label>
-                        <select className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newClientForm.segmento} onChange={e => setNewClientForm({...newClientForm, segmento: e.target.value})}>
+                        <select className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newClientForm.segmento} onChange={e => setNewClientForm({...newClientForm, segmento: e.target.value})}>
                            <option value="">Selecione...</option>
                            {segmentos.map((s) => <option key={s.id} value={s.nome}>{s.nome}</option>)}
                         </select>
@@ -5658,21 +5658,21 @@ function PropostaEditor() {
                   <div className="p-6 space-y-4">
                      <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase">Descrição *</label>
-                        <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newProductForm.descricao} onChange={e => setNewProductForm({...newProductForm, descricao: e.target.value})} />
+                        <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newProductForm.descricao} onChange={e => setNewProductForm({...newProductForm, descricao: e.target.value})} />
                      </div>
                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
                            <label className="text-[10px] font-bold text-slate-500 uppercase">Preço Unitário (R$)</label>
-                           <input type="number" step="0.01" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newProductForm.precoUnitario} onChange={e => setNewProductForm({...newProductForm, precoUnitario: Number(e.target.value)})} />
+                           <input type="number" step="0.01" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newProductForm.precoUnitario} onChange={e => setNewProductForm({...newProductForm, precoUnitario: Number(e.target.value)})} />
                         </div>
                         <div className="space-y-1">
                            <label className="text-[10px] font-bold text-slate-500 uppercase">Unidade</label>
-                           <input type="text" placeholder="Ex: UN, KG, M" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newProductForm.unidade} onChange={e => setNewProductForm({...newProductForm, unidade: e.target.value})} />
+                           <input type="text" placeholder="Ex: UN, KG, M" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newProductForm.unidade} onChange={e => setNewProductForm({...newProductForm, unidade: e.target.value})} />
                         </div>
                      </div>
                      <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase">Categoria</label>
-                        <select className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none" value={newProductForm.categoria} onChange={e => setNewProductForm({...newProductForm, categoria: e.target.value})}>
+                        <select className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newProductForm.categoria} onChange={e => setNewProductForm({...newProductForm, categoria: e.target.value})}>
                            <option value="Geral">Geral</option>
                            <option value="MATERIAL DE LIMPEZA">Material de Limpeza</option>
                            <option value="DESCARTAVEIS">Descartáveis</option>
