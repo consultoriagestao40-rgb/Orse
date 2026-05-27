@@ -634,7 +634,7 @@ export default function AdminEquipesTecnicasPage() {
                         // Limpar os cargos se mudar a CCT para evitar misturar na mesma equipe
                         setItensMaoObra([]);
                       }}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-850 font-bold focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-bold focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer"
                     >
                       <option value="">-- Selecione uma CCT --</option>
                       {ccts.map((cct: any) => (
