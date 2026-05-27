@@ -68,7 +68,13 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
         body: JSON.stringify({ empresa: lead.nomeFantasia, cargos: aiCargos }),
       });
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.mode === 'search_links') {
+        // Nova API: retorna cards de links de busca por cargo
+        const cards = (data.searchCards || []).map((card: any, i: number) =>
+          i === 0 ? { ...card, _combinados: data.combinados } : card
+        );
+        setAiResults(cards);
+      } else if (data.success) {
         setAiResults(data.results || []);
       } else {
         setAiError(data.error || 'Erro na busca.');
@@ -1115,7 +1121,7 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
         )}
 
         {activeTab === 'ia' && (
-          <div className="space-y-5">
+          <div className="space-y-4">
             {/* Header */}
             <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-2xl p-5 text-white shadow-lg">
               <div className="flex items-center gap-3 mb-2">
@@ -1124,19 +1130,18 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                 </div>
                 <div>
                   <h3 className="font-black text-base">Busca Inteligente de Contatos</h3>
-                  <p className="text-violet-200 text-xs">Pesquisa LinkedIn, Instagram e WhatsApp automaticamente</p>
+                  <p className="text-violet-200 text-xs">Gera links de busca para LinkedIn, Instagram e WhatsApp com 1 clique</p>
                 </div>
               </div>
               <p className="text-xs text-violet-100 bg-white/10 rounded-xl px-3 py-2 mt-3">
-                🏢 Buscando por: <strong className="text-white">{lead.nomeFantasia}</strong>
+                🏢 Lead: <strong className="text-white">{lead.nomeFantasia}</strong>
               </p>
             </div>
 
             {/* Cargo input */}
             <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
               <label className="block text-xs font-black text-slate-700 uppercase tracking-wide">Cargos para Buscar</label>
-              
-              {/* Tags de cargos adicionados */}
+
               {aiCargos.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {aiCargos.map(c => (
@@ -1150,7 +1155,6 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                 </div>
               )}
 
-              {/* Input para novo cargo */}
               <div className="flex gap-2">
                 <input
                   value={aiCargoInput}
@@ -1168,7 +1172,6 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                 </button>
               </div>
 
-              {/* Sugestões rápidas */}
               <div>
                 <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Sugestões rápidas:</p>
                 <div className="flex flex-wrap gap-1.5">
@@ -1184,30 +1187,18 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                 </div>
               </div>
 
-              {/* Botão de busca */}
               <button
                 onClick={handleAiSearch}
                 disabled={aiCargos.length === 0 || aiSearching}
                 className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-black py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {aiSearching ? (
-                  <><RefreshCw size={16} className="animate-spin" /> Buscando no LinkedIn, Instagram e WhatsApp...</>
+                  <><RefreshCw size={16} className="animate-spin" /> Gerando links...</>
                 ) : (
-                  <><Search size={16} /> Buscar Contatos ({aiCargos.length} cargo{aiCargos.length !== 1 ? 's' : ''})</>
+                  <><Search size={16} /> Gerar Links de Busca ({aiCargos.length} cargo{aiCargos.length !== 1 ? 's' : ''})</>
                 )}
               </button>
             </div>
-
-            {/* Resultados */}
-            {aiSearching && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm flex flex-col items-center gap-3">
-                <div className="w-12 h-12 bg-violet-100 rounded-full flex items-center justify-center animate-pulse">
-                  <Sparkles size={24} className="text-violet-600" />
-                </div>
-                <p className="text-sm font-bold text-slate-600">Pesquisando na internet...</p>
-                <p className="text-xs text-slate-400">Isso pode levar até 30 segundos</p>
-              </div>
-            )}
 
             {aiError && (
               <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-700 font-medium">
@@ -1215,79 +1206,72 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
               </div>
             )}
 
-            {aiSearched && !aiSearching && aiResults.length === 0 && !aiError && (
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
-                <p className="text-sm font-bold text-amber-700">Nenhum contato encontrado</p>
-                <p className="text-xs text-amber-600 mt-1">Tente outros cargos ou variações do nome da empresa</p>
-              </div>
-            )}
-
+            {/* Cards de busca por cargo */}
             {aiResults.length > 0 && (
               <div className="space-y-3">
-                <p className="text-xs font-black text-slate-500 uppercase tracking-wide">{aiResults.length} contato{aiResults.length !== 1 ? 's' : ''} encontrado{aiResults.length !== 1 ? 's' : ''}</p>
-                {aiResults.map((result, idx) => (
+                {/* Link combinado para todos os cargos */}
+                {(aiResults[0] as any)?._combinados && (
+                  <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4">
+                    <p className="text-xs font-black text-indigo-700 uppercase mb-2">🔍 Buscar todos os cargos de uma vez</p>
+                    <div className="flex gap-2 flex-wrap">
+                      <a href={(aiResults[0] as any)._combinados.linkedinAll} target="_blank" rel="noreferrer"
+                        className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black px-3 py-2 rounded-lg transition-colors">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+                        LinkedIn (Busca Geral)
+                        <ExternalLink size={10} />
+                      </a>
+                      <a href={(aiResults[0] as any)._combinados.googleAll} target="_blank" rel="noreferrer"
+                        className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-800 text-white text-xs font-black px-3 py-2 rounded-lg transition-colors">
+                        🌐 Google (Todos)
+                        <ExternalLink size={10} />
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Links por cargo — clique para abrir no seu navegador:</p>
+
+                {aiResults.filter((r: any) => r.cargo).map((card: any, idx: number) => (
                   <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-black text-slate-800 text-sm truncate">{result.nome}</p>
-                        <p className="text-xs font-bold text-violet-600 mb-2">{result.cargo}</p>
-                        {result.snippet && (
-                          <p className="text-[10px] text-slate-400 line-clamp-2 mb-3">{result.snippet}</p>
-                        )}
-                        <div className="flex flex-wrap gap-2">
-                          {result.linkedinUrl && (
-                            <a
-                              href={result.linkedinUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-black px-2.5 py-1.5 rounded-lg transition-colors border border-blue-100"
-                            >
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-                              LinkedIn
-                              <ExternalLink size={9} className="opacity-60" />
-                            </a>
-                          )}
-                          {result.instagramUrl && (
-                            <a
-                              href={result.instagramUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex items-center gap-1.5 bg-pink-50 hover:bg-pink-100 text-pink-700 text-[10px] font-black px-2.5 py-1.5 rounded-lg transition-colors border border-pink-100"
-                            >
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-                              Instagram
-                              <ExternalLink size={9} className="opacity-60" />
-                            </a>
-                          )}
-                          {result.whatsappUrl && (
-                            <a
-                              href={result.whatsappUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[10px] font-black px-2.5 py-1.5 rounded-lg transition-colors border border-emerald-100"
-                            >
-                              📱 WhatsApp
-                              <ExternalLink size={9} className="opacity-60" />
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleAiSaveContact(result, idx)}
-                        disabled={aiSaving === `${idx}` || aiSaved.has(`${idx}`)}
-                        className={`shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all ${
-                          aiSaved.has(`${idx}`)
-                            ? 'bg-emerald-100 text-emerald-700 cursor-default'
-                            : aiSaving === `${idx}`
-                            ? 'bg-slate-100 text-slate-400 cursor-wait'
-                            : 'bg-violet-600 hover:bg-violet-700 text-white shadow-sm'
-                        }`}
-                      >
-                        {aiSaved.has(`${idx}`) ? '✓ Salvo' : aiSaving === `${idx}` ? '...' : '+ Salvar'}
-                      </button>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="bg-violet-100 text-violet-800 text-xs font-black px-3 py-1 rounded-full">{card.cargo}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <a href={card.linkedinSearch} target="_blank" rel="noreferrer"
+                        className="flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black px-2.5 py-2 rounded-xl transition-colors text-center">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+                        LinkedIn Direto
+                        <ExternalLink size={8} className="opacity-70" />
+                      </a>
+                      <a href={card.googleLinkedin} target="_blank" rel="noreferrer"
+                        className="flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-[10px] font-black px-2.5 py-2 rounded-xl transition-colors border border-slate-200 hover:border-blue-200 text-center">
+                        🌐 Google → LinkedIn
+                        <ExternalLink size={8} className="opacity-70" />
+                      </a>
+                      <a href={card.googleInstagram} target="_blank" rel="noreferrer"
+                        className="flex items-center justify-center gap-1.5 bg-pink-50 hover:bg-pink-100 text-pink-700 text-[10px] font-black px-2.5 py-2 rounded-xl transition-colors border border-pink-100 text-center">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                        Instagram
+                        <ExternalLink size={8} className="opacity-70" />
+                      </a>
+                      <a href={card.googleWhatsapp} target="_blank" rel="noreferrer"
+                        className="flex items-center justify-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[10px] font-black px-2.5 py-2 rounded-xl transition-colors border border-emerald-100 text-center">
+                        📱 WhatsApp
+                        <ExternalLink size={8} className="opacity-70" />
+                      </a>
                     </div>
                   </div>
                 ))}
+
+                {/* Dica de uso */}
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-xs text-amber-700">
+                  <p className="font-black mb-1">💡 Como usar:</p>
+                  <ol className="space-y-1 list-decimal list-inside text-amber-600">
+                    <li>Clique em <strong>"LinkedIn Direto"</strong> — você já está logado, vai ver o perfil real</li>
+                    <li>Encontrou? Volte aqui e clique em <strong>"Histórico"</strong> → anote o contato no feed</li>
+                    <li>Use <strong>"Google → LinkedIn"</strong> se o direto não trouxer resultados</li>
+                  </ol>
+                </div>
               </div>
             )}
           </div>
