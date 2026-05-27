@@ -109,6 +109,40 @@ function extractCargoFromTitle(title: string, defaultCargo: string): string {
   return defaultCargo;
 }
 
+// Limpa o nome da empresa para extrair apenas o nome principal e evitar queries muito longas
+function cleanCompanyName(name: string): string {
+  if (!name) return '';
+  
+  // 1. Pega a parte antes de traços, barras ou parênteses (comum em cadastros)
+  let clean = name.split(/[-–/(]/)[0].trim();
+  
+  // 2. Remove sufixos empresariais comuns no Brasil (case-insensitive)
+  const suffixes = [
+    /\s+ltda\b/i,
+    /\s+s\.a\b/i,
+    /\s+s\/a\b/i,
+    /\s+eireli\b/i,
+    /\s+me\b/i,
+    /\s+epp\b/i,
+    /\s+limitada\b/i,
+    /\s+s\/s\b/i,
+    /\s+grupo\b/i,
+    /\s+facilities\b/i, // Remove "facilities" se for apenas descrição
+    /\bcnpj\b.*/i
+  ];
+  
+  for (const suffix of suffixes) {
+    clean = clean.replace(suffix, '');
+  }
+  
+  // Se após a limpeza sobrar algo muito curto ou vazio, retorna o original limpo de traços
+  if (clean.trim().length < 2) {
+    return name.split(/[-–/(]/)[0].trim();
+  }
+  
+  return clean.trim();
+}
+
 // Gera links de busca inteligente (caso precise de fallback completo)
 function buildSearchLinks(empresa: string, cargo: string) {
   const empresaEnc = encodeURIComponent(empresa);
@@ -136,6 +170,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'empresa e cargos são obrigatórios' }, { status: 400 });
     }
 
+    // Limpa o nome da empresa para buscar somente o nome essencial (ex: "Terceirizemais" em vez de "Terceirizemais - Soluções em...")
+    const empresaLimpa = cleanCompanyName(empresa);
+    console.log(`[IA Search] Empresa original: "${empresa}" | Limpa para busca: "${empresaLimpa}"`);
+
     const apiKey = process.env.GOOGLE_CSE_KEY || "AIzaSyAvjvknXwYdmFFXMSADD1fsfmVmmhK0KkA";
     const cx = process.env.GOOGLE_CSE_CX || "955534659ddf64afd";
     
@@ -147,7 +185,7 @@ export async function POST(req: NextRequest) {
       console.log('Utilizando Google CSE para busca de contatos IA...');
       for (const cargo of cargos.slice(0, 3)) { // Busca os 3 principais cargos
         try {
-          const query = `site:linkedin.com/in "${empresa}" "${cargo}"`;
+          const query = `site:linkedin.com/in "${empresaLimpa}" "${cargo}"`;
           const items = await searchGoogleCSE(query, apiKey, cx);
           
           for (const item of items.slice(0, 3)) {
@@ -160,7 +198,7 @@ export async function POST(req: NextRequest) {
             
             // Cria links de busca inteligente personalizados específicos para essa pessoa
             const nomeEnc = encodeURIComponent(nome);
-            const empEnc = encodeURIComponent(empresa);
+            const empEnc = encodeURIComponent(empresaLimpa);
             
             results.push({
               nome,
@@ -183,7 +221,7 @@ export async function POST(req: NextRequest) {
       for (const cargo of cargos.slice(0, 3)) {
         try {
           // Usamos a técnica de busca loose que NÃO é bloqueada pelo Bing
-          const query = `linkedin "${empresa}" "${cargo}"`;
+          const query = `linkedin "${empresaLimpa}" "${cargo}"`;
           const html = await searchBing(query);
           const rawResults = parseBingResults(html);
           
@@ -205,7 +243,7 @@ export async function POST(req: NextRequest) {
             const cargoExtraido = extractCargoFromTitle(res.title, cargo);
             
             const nomeEnc = encodeURIComponent(nome);
-            const empEnc = encodeURIComponent(empresa);
+            const empEnc = encodeURIComponent(empresaLimpa);
             
             results.push({
               nome,
@@ -228,11 +266,11 @@ export async function POST(req: NextRequest) {
     // 3. SE AMBOS FALHAREM EM ENCONTRAR PERFIS REAIS, RETORNA APENAS OS BOTÕES DE BUSCA INTELIGENTES
     if (results.length === 0) {
       console.log('Nenhum perfil real encontrado automaticamente. Retornando painel de links inteligentes.');
-      const searchCards = cargos.slice(0, 15).map(cargo => buildSearchLinks(empresa, cargo));
+      const searchCards = cargos.slice(0, 15).map(cargo => buildSearchLinks(empresaLimpa, cargo));
       
       const allCargosQuery = cargos.slice(0, 5).join(' OR ');
-      const linkedinAllUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(empresa + ' ' + allCargosQuery)}&origin=GLOBAL_SEARCH_HEADER`;
-      const googleAllUrl = `https://www.google.com/search?q=${encodeURIComponent(`site:linkedin.com/in "${empresa}" (${allCargosQuery})`)}`;
+      const linkedinAllUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(empresaLimpa + ' ' + allCargosQuery)}&origin=GLOBAL_SEARCH_HEADER`;
+      const googleAllUrl = `https://www.google.com/search?q=${encodeURIComponent(`site:linkedin.com/in "${empresaLimpa}" (${allCargosQuery})`)}`;
 
       return NextResponse.json({
         success: true,
