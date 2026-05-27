@@ -1898,20 +1898,20 @@ function PropostaEditor() {
 
             {/* ABA 5: EXTRATO (100% IGUAL AO PRINT - PLANILHA DE CUSTOS) */}
            {activeTab === 'extrato' && (
-              <div className="w-full bg-white border border-[#1B4D3E] shadow-xl text-xs rounded overflow-hidden print:border-none print:shadow-none">
+              <div className="w-full bg-white border border-[#1B4D3E] shadow-xl text-xs text-slate-800 rounded overflow-hidden print:border-none print:shadow-none">
                  
                  {/* CABEÇALHO PLANILHA */}
                  <div className="bg-[#1B4D3E] text-white flex justify-center items-center px-6 py-4 border-b border-white">
                     <h2 className="font-bold uppercase text-xl tracking-widest">Planilha de Custos</h2>
                  </div>
 
-                 <table className="w-full text-left border-collapse">
+                 <table className="w-full text-left border-collapse text-slate-800">
                     <thead>
                        {/* MONTANTE A */}
                        <tr className="bg-[#1B4D3E] text-white border-b border-white/20">
                           <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "A" - Mão-de-obra</th>
                        </tr>
-                       <tr className="bg-slate-100 font-bold border-b border-slate-300 text-[10px] uppercase tracking-wider">
+                       <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-300 text-[10px] uppercase tracking-wider">
                           <th className="py-2 px-6 w-[50%]">1) Função</th>
                           <th className="py-2 px-6 text-center">Qtd.</th>
                           <th className="py-2 px-6 text-right">Custo Unit</th>
@@ -2064,7 +2064,7 @@ function PropostaEditor() {
                                                  <input 
                                                     type="number" 
                                                     step="0.01"
-                                                    className="w-14 bg-white border border-slate-300 text-right px-1 py-0.5 rounded outline-none focus:border-[#1B4D3E]"
+                                                    className="w-14 bg-white border border-slate-300 text-slate-800 text-right px-1 py-0.5 rounded outline-none focus:border-[#1B4D3E]"
                                                     value={(proposta.premissas as any)[row.field]}
                                                     onChange={(e) => {
                                                        const val = (e.target.value === '' ? '' : Number(e.target.value));
