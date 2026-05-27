@@ -1031,7 +1031,18 @@ function PropostaEditor() {
                 <tr key={item.id} className="border-b border-slate-200 hover:bg-slate-50">
                   <td className="px-4 py-2 font-mono text-xs text-slate-500">{item.codigo}</td>
                   <td className="px-4 py-2 font-medium text-slate-800">{item.descricao}</td>
-                  <td className="px-4 py-2 text-right text-slate-600">{formatCurrency(item.precoUnitario)}</td>
+                  <td className="px-4 py-2 text-right">
+                    {tipo === 'detalheMaquinas' && isLocado(item.descricao) ? (
+                      <input 
+                        type="number" 
+                        className="w-28 bg-white text-slate-800 border border-slate-300 rounded px-2 py-1 text-right font-bold outline-none focus:border-[#1B4D3E]"
+                        value={item.precoUnitario}
+                        onChange={(e) => updateInsumoItem(tipo, item.id, 'precoUnitario', (e.target.value === '' ? '' : Number(e.target.value)))}
+                      />
+                    ) : (
+                      <span className="text-slate-600">{formatCurrency(item.precoUnitario)}</span>
+                    )}
+                  </td>
                   <td className="px-4 py-2">
                     <input 
                       type="number" 
@@ -2191,13 +2202,15 @@ function PropostaEditor() {
                               {formatCurrency(resultado?.faturamentoBruto || 0)}
                            </td>
                         </tr>
-                        <tr className="bg-black text-white font-black border-t border-slate-800 text-xs tracking-widest uppercase">
-                           <td colSpan={3} className="py-4 px-6 text-right">Valor Total Anual do Contrato</td>
-                           <td className="py-4 px-6 text-right text-emerald-500">
-                              {formatCurrency((resultado?.faturamentoBruto || 0) * 12)}
-                           </td>
-                        </tr>
-                    </tbody>
+                        {!isSpot && (
+                           <tr className="bg-black text-white font-black border-t border-slate-800 text-xs tracking-widest uppercase">
+                              <td colSpan={3} className="py-4 px-6 text-right">Valor Total Anual do Contrato</td>
+                              <td className="py-4 px-6 text-right text-emerald-500">
+                                 {formatCurrency((resultado?.faturamentoBruto || 0) * 12)}
+                              </td>
+                           </tr>
+                        )}
+                     </tbody>
                  </table>
               </div>
            )}
@@ -2216,6 +2229,14 @@ function PropostaEditor() {
                 const comLucro = comAdm * (1 + txLucro);
                 return divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
               };
+
+              const detalheMaquinas = proposta.insumos.detalheMaquinas || [];
+              const totalMaquinasLocadas = detalheMaquinas
+                .filter((item: any) => isLocado(item.descricao))
+                .reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
+              const totalMaquinasNaoLocadas = detalheMaquinas
+                .filter((item: any) => !isLocado(item.descricao))
+                .reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
 
               return (
                 <div className="space-y-6">
@@ -2296,7 +2317,7 @@ function PropostaEditor() {
                             <td className="px-6 py-2.5 text-center font-bold text-slate-500">3</td>
                             <td className="px-6 py-2.5 font-semibold text-slate-700">Máquinas e equipamentos</td>
                             <td className="px-6 py-2.5 text-right font-bold text-slate-800">
-                              {fc(applyCascata(proposta.insumos.maquinas))}
+                              {fc(applyCascata(isSpot ? totalMaquinasNaoLocadas : proposta.insumos.maquinas))}
                             </td>
                           </tr>
                           <tr className="border-b border-slate-200 hover:bg-slate-50">
@@ -2309,10 +2330,10 @@ function PropostaEditor() {
                           <tr className="border-b border-slate-200 hover:bg-slate-50">
                             <td className="px-6 py-2.5 text-center font-bold text-slate-500">5</td>
                             <td className="px-6 py-2.5 font-semibold text-slate-700">
-                              Serviços {proposta.insumos.servicosDescricao ? `(${proposta.insumos.servicosDescricao})` : ''}
+                              {isSpot ? 'Equipamentos Locados' : `Serviços ${proposta.insumos.servicosDescricao ? `(${proposta.insumos.servicosDescricao})` : ''}`}
                             </td>
                             <td className="px-6 py-2.5 text-right font-bold text-slate-800">
-                              {fc(applyCascata(proposta.insumos.servicos))}
+                              {fc(applyCascata(isSpot ? totalMaquinasLocadas : proposta.insumos.servicos))}
                             </td>
                           </tr>
                         </tbody>
@@ -2322,9 +2343,9 @@ function PropostaEditor() {
                             <td className="px-6 py-2.5 text-right text-emerald-300">
                               {fc(applyCascata(
                                 Number(proposta.insumos.materiais || 0) + 
-                                Number(proposta.insumos.maquinas || 0) + 
+                                Number(isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : proposta.insumos.maquinas || 0) + 
                                 Number(proposta.insumos.descartaveis || 0) + 
-                                Number(proposta.insumos.servicos || 0)
+                                Number(isSpot ? 0 : proposta.insumos.servicos || 0)
                               ))}
                             </td>
                           </tr>

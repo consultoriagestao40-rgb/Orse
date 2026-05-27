@@ -1057,7 +1057,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                            <thead>
                                               <tr className="bg-[#1e4480] text-white text-[10px] font-black uppercase tracking-wider border-b border-slate-200">
                                                  <th className="py-3.5 px-4">Grupo de Custo</th>
-                                                 <th className="py-3.5 px-4 text-right">Valor Mensal</th>
+                                                 <th className="py-3.5 px-4 text-right">{isSpot ? 'Valor' : 'Valor Mensal'}</th>
                                               </tr>
                                            </thead>
                                            <tbody>
@@ -1065,14 +1065,14 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                                  <td className="py-3.5 px-4 font-black">Mão de Obra Efetiva (Postos)</td>
                                                  <td className="py-3.5 px-4 text-right font-black text-[#1e4480]">{fc(maoDeObraSubtotal)}</td>
                                               </tr>
-                                              {renderInsumoRow('Materiais e Equipamentos', applyCascata(Number(proposta.insumos.materiais || 0) + Number(proposta.insumos.maquinas || 0)))}
+                                              {renderInsumoRow('Materiais e Equipamentos', applyCascata(Number(proposta.insumos.materiais || 0) + Number(isSpot ? totalMaquinasNaoLocadas : proposta.insumos.maquinas || 0)))}
                                               {renderInsumoRow('Descartáveis e Higiene', applyCascata(Number(proposta.insumos.descartaveis || 0)))}
-                                              {renderInsumoRow('Outros Serviços / Operações', applyCascata(Number(proposta.insumos.servicos || 0)))}
+                                              {renderInsumoRow(isSpot ? 'Equipamentos Locados' : 'Outros Serviços / Operações', applyCascata(Number(isSpot ? totalMaquinasLocadas : proposta.insumos.servicos || 0)))}
                                            </tbody>
                                         </table>
                                         
                                         <div className="bg-slate-50 border-t border-slate-150 p-4 flex justify-between items-center mt-auto">
-                                           <span className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">Valor Total Mensal Proposto</span>
+                                           <span className="text-[10px] font-black text-[#1e4480] uppercase tracking-wider">{isSpot ? 'Valor Total Proposto' : 'Valor Total Mensal Proposto'}</span>
                                            <span className="text-lg font-black text-[#1b4d3e] bg-emerald-50 border border-emerald-250 px-4 py-1.5 rounded-xl shadow-xs">
                                               {fc(maoDeObraSubtotal + insumosSubtotal)}
                                            </span>

@@ -28,12 +28,33 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
     return divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
   };
 
+   const isSpot = equipe.some((e: any) => e.tipoItem === 'SPOT');
+
+  const normalizeText = (text: string) => {
+    if (!text) return "";
+    return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  };
+
+  const isLocado = (desc: string) => {
+    if (!desc) return false;
+    const normalized = normalizeText(desc);
+    return normalized.includes('locado') || normalized.includes('locada') || normalized.includes('locacao') || normalized.includes('locaco') || normalized.includes('locação');
+  };
+
+  const detalheMaquinas = proposta.insumos?.detalheMaquinas || [];
+  const totalMaquinasLocadas = detalheMaquinas
+    .filter((item: any) => isLocado(item.descricao))
+    .reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
+  const totalMaquinasNaoLocadas = detalheMaquinas
+    .filter((item: any) => !isLocado(item.descricao))
+    .reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
+
   const totalEquipe = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
   
   const vMateriais = applyCascata(proposta.insumos?.materiais || 0);
-  const vMaquinas = applyCascata(proposta.insumos?.maquinas || 0);
+  const vMaquinas = applyCascata(isSpot ? totalMaquinasNaoLocadas : (proposta.insumos?.maquinas || 0));
   const vDescartaveis = applyCascata(proposta.insumos?.descartaveis || 0);
-  const vServicos = applyCascata(proposta.insumos?.servicos || 0);
+  const vServicos = applyCascata(isSpot ? totalMaquinasLocadas : (proposta.insumos?.servicos || 0));
   
   const totalInsumos = vMateriais + vMaquinas + vDescartaveis + vServicos;
   
@@ -51,7 +72,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
               <th className="p-2 border border-slate-300 text-center">Escala</th>
               <th className="p-2 border border-slate-300 text-center">Qtd</th>
               <th className="p-2 border border-slate-300 text-right">Valor Unit.</th>
-              <th className="p-2 border border-slate-300 text-right">Valor Mensal</th>
+              <th className="p-2 border border-slate-300 text-right">{isSpot ? 'Valor' : 'Valor Mensal'}</th>
             </tr>
           </thead>
           <tbody>
@@ -89,7 +110,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
           <thead>
             <tr className="bg-slate-900 text-white font-bold uppercase text-[10px]">
               <th className="p-2 border border-slate-300">Descrição</th>
-              <th className="p-2 border border-slate-300 text-right">Valor Mensal</th>
+              <th className="p-2 border border-slate-300 text-right">{isSpot ? 'Valor' : 'Valor Mensal'}</th>
             </tr>
           </thead>
           <tbody>
@@ -107,7 +128,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
             </tr>
             {vServicos > 0 && (
               <tr className="bg-slate-50 border-b border-slate-300">
-                <td className="p-2 border-r border-slate-300 font-bold text-slate-800">{proposta.insumos?.servicosDescricao || "Serviços Terceirizados"}</td>
+                <td className="p-2 border-r border-slate-300 font-bold text-slate-800">{isSpot ? "Equipamentos Locados" : (proposta.insumos?.servicosDescricao || "Serviços Terceirizados")}</td>
                 <td className="p-2 text-right text-slate-700">{fmt(vServicos)}</td>
               </tr>
             )}
@@ -123,7 +144,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
 
         {/* VALOR TOTAL */}
         <div className="w-full mt-8 p-4 bg-green-50 border-2 border-green-600 flex justify-center items-center text-center text-green-900 font-black text-lg mb-2 uppercase tracking-wide">
-          Valor Total da Proposta: {fmt(totalGeral)} Mensal
+          Valor Total da Proposta: {fmt(totalGeral)} {isSpot ? '' : 'Mensal'}
         </div>
         {totalGeral > 0 && (
           <div className="text-center text-green-800 font-bold text-[10px] uppercase mb-12 tracking-wider">
