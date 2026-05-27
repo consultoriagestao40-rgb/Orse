@@ -21,17 +21,17 @@ export function calculateLaborCost(colab: any, premissas: any): any {
     const custoTotalDireto = custoMaoObra + custoVeiculo + outrosCustos;
     
     return {
-      remuneracao: custoMaoObra,
+      remuneracao: custoTotalDireto,
       encargos: 0,
-      blocoA: custoMaoObra,
-      beneficios: outrosCustos,
-      ativos: custoVeiculo,
+      blocoA: custoTotalDireto,
+      beneficios: 0,
+      ativos: 0,
       custoTotal: custoTotalDireto,
       detalheBlocoB: {
         uniformes: 0,
         epis: 0,
         materiais: 0,
-        maquinas: custoVeiculo,
+        maquinas: 0,
         descartaveis: 0,
         servicos: 0
       },
@@ -48,7 +48,7 @@ export function calculateLaborCost(colab: any, premissas: any): any {
         reservaTecnicaPct: 0,
         manutencao: 0,
         manutencaoPct: 0,
-        outros: outrosCustos
+        outros: 0
       },
       custoTotalDireto: custoTotalDireto
     };
