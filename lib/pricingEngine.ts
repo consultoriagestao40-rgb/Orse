@@ -337,8 +337,8 @@ export function calculateEnterprisePrice(proposal: any): any {
     // Taxa administrativa sobre o custo direto total do projeto
     valorAdm = custoDiretoTotal * txAdm;
     
-    // Margem real de lucro calculada por diferença
-    valorMargemLucro = faturamentoBruto - custoDiretoTotal - valorImpostos - valorAdm;
+    // Margem real de lucro calculada de forma padrão e positiva baseada no custo
+    valorMargemLucro = (custoDiretoTotal + valorAdm) * txLucro;
   } else {
     // Cálculo do Faturamento Bruto Total seguindo a mesma lógica
     const totalComAdm = custoDiretoTotal * (1 + txAdm);
@@ -350,6 +350,8 @@ export function calculateEnterprisePrice(proposal: any): any {
     valorAdm = totalComAdm - custoDiretoTotal;
   }
 
+  const descontoComercial = isSpot ? (faturamentoBruto - (custoDiretoTotal + valorAdm + valorMargemLucro + valorImpostos)) : 0;
+
   return {
     items: itemResults,
     custoDiretoTotal,
@@ -357,6 +359,7 @@ export function calculateEnterprisePrice(proposal: any): any {
     impostosTotais: valorImpostos,
     margemLucro: valorMargemLucro,
     taxaAdm: valorAdm,
-    divisor: divisorTributos
+    divisor: divisorTributos,
+    descontoComercial
   };
 }
