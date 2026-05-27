@@ -442,11 +442,27 @@ function PropostaEditor() {
                  ...fullData.premissas,
                  tributos: Array.isArray(fullData.premissas.tributos) ? fullData.premissas.tributos : []
                },
-               equipe: (fullData.equipe || []).map((e: any) => ({
-                  ...e,
-                  showConfig: false,
-                  cctBase: (dataCcts || []).find((c: any) => c.id === savedSindicatoId) || {}
-               })),
+               equipe: (fullData.equipe || []).map((e: any) => {
+                   let healedAtivosConfig = e.ativosConfig || {};
+                   if (e.tipoItem === 'SPOT' && e.equipeTecnicaId) {
+                      const eq = (eqRes?.success ? eqRes.list : []).find((x: any) => x.id === e.equipeTecnicaId);
+                      if (eq) {
+                         healedAtivosConfig = {
+                            ...healedAtivosConfig,
+                            custoMensalMaoObra: eq.custoMensalMaoObra,
+                            custoMensalVeiculo: eq.custoMensalVeiculo,
+                            custoMensalCombustivel: eq.custoMensalCombustivel,
+                            custoMensalTotal: eq.custoMensalTotal
+                         };
+                      }
+                   }
+                   return {
+                      ...e,
+                      showConfig: false,
+                      cctBase: (dataCcts || []).find((c: any) => c.id === savedSindicatoId) || {},
+                      ativosConfig: healedAtivosConfig
+                   };
+                }),
                versao: fullData.versao,
                insumos: (fullData as any).insumos || { materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0, servicosDescricao: '' },
                dreEncargos: (fullData as any).dreEncargos,
@@ -494,8 +510,28 @@ function PropostaEditor() {
     if (proposta.equipe.length > 0) {
       const selectedCct = ccts.find(c => c.id === proposta.cliente.sindicatoId);
 
+      // Sanitize and heal ativosConfig for SPOT services dynamically on calculation
+      const sanitizedItems = proposta.equipe.map((item: any) => {
+        if (item.tipoItem === 'SPOT' && item.equipeTecnicaId) {
+          const eq = equipesTecnicasDb.find(x => x.id === item.equipeTecnicaId);
+          if (eq) {
+            return {
+              ...item,
+              ativosConfig: {
+                ...item.ativosConfig,
+                custoMensalMaoObra: eq.custoMensalMaoObra,
+                custoMensalVeiculo: eq.custoMensalVeiculo,
+                custoMensalCombustivel: eq.custoMensalCombustivel,
+                custoMensalTotal: eq.custoMensalTotal
+              }
+            };
+          }
+        }
+        return item;
+      });
+
       const calcInput = {
-        items: proposta.equipe,
+        items: sanitizedItems,
         impostos: { total: totalTributos },
         margens: { adm: proposta.premissas.taxaAdm, lucro: proposta.premissas.margemLucro },
         reservaTecnicaPct: proposta.premissas.reservaTecnicaPct || 0,
@@ -511,7 +547,7 @@ function PropostaEditor() {
       };
       setResultado(calculateEnterprisePrice(calcInput));
     }
-  }, [proposta, totalTributos, ccts]);
+  }, [proposta, totalTributos, ccts, equipesTecnicasDb]);
 
   // Sincroniza a CCTBase de toda a equipe quando o sindicato principal muda
   useEffect(() => {
@@ -1661,7 +1697,13 @@ function PropostaEditor() {
                                                    nomeCargo: eq.nome, 
                                                    equipeTecnicaId: eq.id, 
                                                    precoUnitarioDemanda: preco,
-                                                   quantidade: 1
+                                                   quantidade: 1,
+                                                   ativosConfig: {
+                                                      custoMensalMaoObra: eq.custoMensalMaoObra,
+                                                      custoMensalVeiculo: eq.custoMensalVeiculo,
+                                                      custoMensalCombustivel: eq.custoMensalCombustivel,
+                                                      custoMensalTotal: eq.custoMensalTotal
+                                                   }
                                                 } : x);
                                                 setProposta({...proposta, equipe: newE});
                                              }
