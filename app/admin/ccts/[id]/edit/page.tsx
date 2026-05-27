@@ -699,7 +699,7 @@ export default function CCTEditorPage() {
                     <input 
                       type="text" 
                       placeholder="Pesquisar item no catálogo..." 
-                      className="w-full bg-white border border-slate-300 rounded pl-10 pr-4 py-2 text-xs font-bold uppercase focus:border-[#1B4D3E] outline-none shadow-sm"
+                      className="w-full bg-white border border-slate-300 rounded pl-10 pr-4 py-2 text-xs font-bold uppercase text-slate-800 focus:border-[#1B4D3E] outline-none shadow-sm"
                       value={epiSearch}
                       onChange={(e) => setEpiSearch(e.target.value)}
                     />
@@ -751,7 +751,7 @@ export default function CCTEditorPage() {
                               <div className="flex items-center gap-2">
                                 <input 
                                   type="number" 
-                                  className="w-full border border-slate-200 rounded px-2 py-1 text-xs font-bold text-center outline-none focus:border-[#1B4D3E]"
+                                  className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs font-bold text-slate-800 text-center outline-none focus:border-[#1B4D3E]"
                                   value={item.quantidade}
                                   onChange={(e) => updateEpiItem(epiIdx, 'quantidade', Number(e.target.value))}
                                 />
@@ -762,7 +762,7 @@ export default function CCTEditorPage() {
                               <label className="text-[9px] font-black text-slate-400 uppercase">Vida Útil (Meses)</label>
                               <input 
                                 type="number" 
-                                className="w-full border border-slate-200 rounded px-2 py-1 text-xs font-bold text-center outline-none focus:border-[#1B4D3E]"
+                                className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs font-bold text-slate-800 text-center outline-none focus:border-[#1B4D3E]"
                                 value={item.vidaUtil}
                                 onChange={(e) => updateEpiItem(epiIdx, 'vidaUtil', Number(e.target.value))}
                               />
