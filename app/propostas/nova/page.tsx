@@ -1769,7 +1769,11 @@ function PropostaEditor() {
                                        </div>
                                     </td>
                                     <td className="px-6 py-4 text-right font-bold text-slate-900">
-                                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((p.quantidadeDemanda || 0) * (p.precoUnitarioDemanda || 0))}
+                                       {(() => {
+                                          const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
+                                          const totalCobrado = itemRes?.precoVenda ?? ((p.quantidadeDemanda || 0) * (p.precoUnitarioDemanda || 0));
+                                          return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalCobrado);
+                                       })()}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                        <button 
@@ -2162,19 +2166,10 @@ function PropostaEditor() {
                               {formatCurrency(resultado?.margemLucro || 0)}
                            </td>
                         </tr>
-                         {isSpot && resultado?.descontoComercial !== 0 && (
-                            <tr className="border-b border-slate-200 border-dotted text-red-700 font-semibold bg-red-50/50">
-                               <td className="py-1.5 px-6 font-bold">Ajuste Comercial (Margem Negociada)</td>
-                               <td colSpan={2} className="py-1.5 px-6 text-center bg-red-100/10">-</td>
-                               <td className="py-1.5 px-6 text-right font-bold">
-                                  {formatCurrency(resultado?.descontoComercial || 0)}
-                               </td>
-                            </tr>
-                         )}
                         <tr className="bg-[#599e41] text-white font-bold border-y border-[#488234]">
                            <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total dos Montantes "A+B+C+D"</td>
                            <td className="py-2.5 px-6 text-right">
-                              {formatCurrency((resultado?.custoDiretoTotal || 0) + (resultado?.taxaAdm || 0) + (resultado?.margemLucro || 0) + (resultado?.descontoComercial || 0))}
+                              {formatCurrency((resultado?.custoDiretoTotal || 0) + (resultado?.taxaAdm || 0) + (resultado?.margemLucro || 0))}
                            </td>
                         </tr>
 

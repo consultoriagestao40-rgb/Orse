@@ -296,7 +296,12 @@ export function calculateEnterprisePrice(proposal: any): any {
     let precoVendaItem = 0;
 
     if (item.tipoItem === 'SPOT') {
-      precoVendaItem = (Number(item.quantidadeDemanda) || 0) * (Number(item.precoUnitarioDemanda) || 0);
+      // 2. Adiciona Taxa Adm sobre o Custo
+      const comAdm = custoD * (1 + txAdm);
+      // 3. Adiciona Lucro sobre (Custo + Adm)
+      const comLucro = comAdm * (1 + txLucro);
+      // 4. Aplica Tributos (Gross-up sobre o montante com margens)
+      precoVendaItem = divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
       faturamentoServicosSpot += precoVendaItem;
     } else {
       // 2. Adiciona Taxa Adm sobre o Custo
@@ -350,8 +355,6 @@ export function calculateEnterprisePrice(proposal: any): any {
     valorAdm = totalComAdm - custoDiretoTotal;
   }
 
-  const descontoComercial = isSpot ? (faturamentoBruto - (custoDiretoTotal + valorAdm + valorMargemLucro + valorImpostos)) : 0;
-
   return {
     items: itemResults,
     custoDiretoTotal,
@@ -359,7 +362,6 @@ export function calculateEnterprisePrice(proposal: any): any {
     impostosTotais: valorImpostos,
     margemLucro: valorMargemLucro,
     taxaAdm: valorAdm,
-    divisor: divisorTributos,
-    descontoComercial
+    divisor: divisorTributos
   };
 }
