@@ -1034,7 +1034,7 @@ function PropostaEditor() {
                   <td className="px-4 py-2">
                     <input 
                       type="number" 
-                      className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold outline-none focus:border-[#1B4D3E]"
+                      className="w-full bg-white text-slate-800 border border-slate-300 rounded px-2 py-1 text-center font-bold outline-none focus:border-[#1B4D3E]"
                       value={item.quantidade}
                       onChange={(e) => updateInsumoItem(tipo, item.id, 'quantidade', (e.target.value === '' ? '' : Number(e.target.value)))}
                     />
@@ -1042,7 +1042,7 @@ function PropostaEditor() {
                   <td className="px-4 py-2">
                     <input 
                       type="number" 
-                      className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold outline-none focus:border-[#1B4D3E]"
+                      className="w-full bg-white text-slate-800 border border-slate-300 rounded px-2 py-1 text-center font-bold outline-none focus:border-[#1B4D3E]"
                       value={item.vidaUtil}
                       onChange={(e) => updateInsumoItem(tipo, item.id, 'vidaUtil', (e.target.value === '' ? '' : Number(e.target.value)))}
                     />
