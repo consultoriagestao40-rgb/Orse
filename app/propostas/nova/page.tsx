@@ -1705,7 +1705,7 @@ function PropostaEditor() {
                                     <td className="px-6 py-4">
                                        <input 
                                           type="number" 
-                                          className="w-20 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 outline-none focus:border-blue-500" 
+                                          className="w-24 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 outline-none focus:border-blue-500" 
                                           value={p.quantidadeDemanda ?? 1} 
                                           onChange={(e) => {
                                              const val = e.target.value === '' ? '' : Number(e.target.value);
@@ -1845,7 +1845,7 @@ function PropostaEditor() {
                         <table className="w-full text-left text-sm border-collapse">
                            <thead>
                               <tr className="bg-slate-100 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
-                                 <th className="px-6 py-3 w-16 text-center">Qtd.</th>
+                                 <th className="px-6 py-3 w-28 text-center">Qtd.</th>
                                  <th className="px-6 py-3">Função Vinculada à CCT</th>
                                  <th className="px-6 py-3">Escala</th>
                                  <th className="px-6 py-3 text-right">Ação</th>
@@ -1856,7 +1856,7 @@ function PropostaEditor() {
                                  <React.Fragment key={p.id}>
                                     <tr className="border-b border-slate-200 hover:bg-slate-50">
                                        <td className="px-6 py-4">
-                                          <input type="number" className="w-16 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.quantidade} onChange={(e) => updatePosto(p.id, 'quantidade', (e.target.value === '' ? '' : Number(e.target.value)))} />
+                                          <input type="number" className="w-24 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.quantidade} onChange={(e) => updatePosto(p.id, 'quantidade', (e.target.value === '' ? '' : Number(e.target.value)))} />
                                        </td>
                                        <td className="px-6 py-4">
                                           <select className="w-full bg-white border border-slate-300 rounded px-3 py-1.5 text-sm font-medium text-slate-800 outline-none focus:border-[#1B4D3E]" value={p.cargo?.id ? `${p.cctBase?.id}|${p.cargo?.id}` : ''} onChange={(e) => {
