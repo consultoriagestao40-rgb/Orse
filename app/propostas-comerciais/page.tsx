@@ -309,7 +309,9 @@ export default function PropostasComerciaisDashboard() {
                 >
                   <option value="">-- Selecione uma FPV --</option>
                   {fpvs.map(f => (
-                    <option key={f.id} value={f.id}>#{f.numero} - {f.cliente} ({fmt(f.valor)})</option>
+                    <option key={f.id} value={f.id}>
+                      #{f.numero} - {f.cliente} ({fmt(f.valor)} - R{String(f.versao || 1).padStart(2, '0')})
+                    </option>
                   ))}
                 </select>
               </div>

@@ -358,8 +358,6 @@ export async function getPropostas() {
         client: true,
         user: true,
         versoes: {
-          orderBy: { versao: 'desc' },
-          take: 1,
           include: { items: true }
         }
       },
@@ -367,7 +365,8 @@ export async function getPropostas() {
     });
 
     return propostas.map(p => {
-      const lastVersao = p.versoes[0];
+      const sortedVersoes = [...p.versoes].sort((a, b) => b.versao - a.versao);
+      const lastVersao = sortedVersoes[0];
       const meta = (lastVersao?.metadados as any) || {};
       // Prioriza nome fantasia do cadastro, depois metadados salvos
       const clienteNome = p.client?.nomeFantasia || meta.clienteNome || 'Cliente não identificado';
@@ -674,15 +673,14 @@ export async function getKPIs() {
         client: true,
         user: true,
         versoes: {
-          orderBy: { versao: 'desc' },
-          take: 1,
           include: { items: true }
         }
       }
     });
 
     const mappedPropostas = propostas.map(p => {
-      const lastVersao = p.versoes[0];
+      const sortedVersoes = [...p.versoes].sort((a, b) => b.versao - a.versao);
+      const lastVersao = sortedVersoes[0];
       const meta = (lastVersao?.metadados as any) || {};
       const statusUpper = p.status.toUpperCase();
       const isAceito = statusUpper.startsWith('ACEIT') || statusUpper.startsWith('APROV');

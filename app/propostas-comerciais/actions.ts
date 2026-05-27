@@ -11,22 +11,26 @@ export async function getDocumentosProposta() {
         empresaEmissora: true,
         proposta: {
           include: {
-            versoes: { orderBy: { versao: 'desc' }, take: 1 }
+            versoes: {}
           }
         },
       },
       orderBy: { createdAt: 'desc' }
     });
-    return docs.map((d: any) => ({
-      id: d.id,
-      numeroFPV: d.proposta?.numero,
-      cliente: d.client?.nomeFantasia || 'Sem Cliente',
-      empresa: d.empresaEmissora?.nomeFantasia,
-      valor: d.valorTotal,
-      status: d.status,
-      data: d.createdAt.toLocaleDateString('pt-BR'),
-      versaoFPV: d.proposta?.versoes?.[0]?.versao || 1
-    }));
+    return docs.map((d: any) => {
+      const sortedVersoes = [...(d.proposta?.versoes || [])].sort((a: any, b: any) => b.versao - a.versao);
+      const lastVersao = sortedVersoes[0];
+      return {
+        id: d.id,
+        numeroFPV: d.proposta?.numero,
+        cliente: d.client?.nomeFantasia || 'Sem Cliente',
+        empresa: d.empresaEmissora?.nomeFantasia,
+        valor: d.valorTotal,
+        status: d.status,
+        data: d.createdAt.toLocaleDateString('pt-BR'),
+        versaoFPV: lastVersao?.versao || 1
+      };
+    });
   } catch (error) {
     console.error('Erro ao buscar documentos de proposta:', error);
     return [];
@@ -43,8 +47,6 @@ export async function getDocumentoPropostaById(id: string) {
         proposta: {
           include: {
             versoes: {
-              orderBy: { versao: 'desc' },
-              take: 1,
               include: {
                 items: true
               }
@@ -56,6 +58,10 @@ export async function getDocumentoPropostaById(id: string) {
         }
       }
     });
+    if (doc && doc.proposta && doc.proposta.versoes) {
+      const sortedVersoes = [...doc.proposta.versoes].sort((a: any, b: any) => b.versao - a.versao);
+      doc.proposta.versoes = sortedVersoes;
+    }
     return doc;
   } catch (error) {
     console.error('Erro ao buscar documento por ID:', error);
@@ -69,7 +75,7 @@ export async function createDocumentoProposta(propostaId: string, templateId: st
     const fpv = await prisma.proposta.findUnique({
       where: { id: propostaId },
       include: { 
-        versoes: { orderBy: { versao: 'desc' }, take: 1 },
+        versoes: {},
         client: true 
       }
     });
@@ -77,7 +83,8 @@ export async function createDocumentoProposta(propostaId: string, templateId: st
     if (!fpv) throw new Error('FPV não encontrada');
     if (!fpv.clientId) throw new Error('FPV sem cliente vinculado');
 
-    const valorTotal = fpv.versoes[0]?.precoVenda || 0;
+    const sortedVersoes = [...fpv.versoes].sort((a: any, b: any) => b.versao - a.versao);
+    const valorTotal = sortedVersoes[0]?.precoVenda || 0;
 
     // Busca o template e suas seções
     const template = await prisma.templatePropostaComercial.findUnique({
