@@ -835,53 +835,55 @@ export default function AdminEquipesTecnicasPage() {
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-3 flex-shrink-0">
                               {/* Escala de Trabalho */}
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-slate-400 font-bold uppercase">Escala:</span>
+                              <div className="flex items-center gap-1.5">
+                                <Calendar size={14} className="text-slate-400 flex-shrink-0" title="Escala" />
                                 <select 
                                   value={item.escala || '5x2'}
                                   onChange={(e) => handleUpdateEscala(item.cargoId, e.target.value)}
-                                  className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 font-bold text-xs text-slate-700 outline-none cursor-pointer"
+                                  className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 font-bold text-xs text-slate-700 outline-none cursor-pointer"
                                 >
                                   {escalasDisponiveis.map((esc) => (
                                     <option key={esc.id} value={esc.nome}>
-                                      {esc.nome} ({esc.diasTrabalhadosMes}d)
+                                      {esc.nome}
                                     </option>
                                   ))}
                                 </select>
                               </div>
 
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-slate-400 font-bold uppercase">Qtd:</span>
+                              {/* Quantidade */}
+                              <div className="flex items-center gap-1.5">
+                                <Users size={14} className="text-slate-400 flex-shrink-0" title="Quantidade" />
                                 <input 
                                   type="number"
                                   min="1"
                                   value={item.quantidade}
                                   onChange={(e) => handleUpdateQuantidade(item.cargoId, Number(e.target.value))}
-                                  className="w-16 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-center font-bold text-slate-800"
+                                  className="w-12 bg-slate-50 border border-slate-200 rounded-lg px-1.5 py-1 text-center font-bold text-slate-800 text-xs"
                                 />
                               </div>
 
-                              <p className="text-sm font-black text-slate-700 w-28 text-right">
+                              <p className="text-xs font-black text-slate-700 w-24 text-right">
                                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.pisoSalarial * item.quantidade)}
                               </p>
 
                               <button 
                                 type="button"
                                 onClick={() => setExtratoItem(item)}
-                                className="text-blue-600 hover:text-blue-750 hover:bg-blue-50 transition-colors p-1 border border-blue-200 rounded px-2.5 py-1 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer"
+                                className="text-blue-600 hover:text-blue-750 hover:bg-blue-50 transition-colors p-1 border border-blue-200 rounded px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer flex-shrink-0"
                                 title="Ver Extrato Detalhado de Custos"
                               >
-                                <FileText size={12} strokeWidth={2.5} /> Extrato
+                                <FileText size={11} strokeWidth={2.5} /> Extrato
                               </button>
 
                               <button 
                                 type="button"
                                 onClick={() => handleRemoveCargo(item.cargoId)}
-                                className="text-red-400 hover:text-red-650 transition-colors p-1 hover:bg-red-50 rounded"
+                                className="text-red-500 hover:text-red-700 transition-colors p-1.5 hover:bg-red-50 rounded-lg flex-shrink-0"
+                                title="Remover"
                               >
-                                <Trash2 size={16} />
+                                <Trash2 size={14} />
                               </button>
                             </div>
                           </div>
