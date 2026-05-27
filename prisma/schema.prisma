@@ -278,7 +278,7 @@ model Contrato {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
-  proposta        Proposta         @relation(fields: [propostaId], references: [id])
+  proposta        Proposta         @relation(fields: [propostaId], references: [id], onDelete: Cascade)
   client          Client           @relation(fields: [clientId], references: [id])
   empresaEmissora EmpresaEmissora  @relation(fields: [empresaEmissoraId], references: [id])
   clausulas       ClausulaContrato[]
@@ -323,7 +323,7 @@ model DocumentoProposta {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
-  proposta        Proposta         @relation("FpvToDocumento", fields: [propostaId], references: [id])
+  proposta        Proposta         @relation("FpvToDocumento", fields: [propostaId], references: [id], onDelete: Cascade)
   client          Client           @relation("ClientToDocumento", fields: [clientId], references: [id])
   empresaEmissora EmpresaEmissora  @relation("EmpresaToDocumento", fields: [empresaEmissoraId], references: [id])
   secoes          SecaoDocumentoProposta[]
