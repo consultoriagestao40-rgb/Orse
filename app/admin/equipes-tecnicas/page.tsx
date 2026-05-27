@@ -123,6 +123,7 @@ export default function AdminEquipesTecnicasPage() {
   const [encargoEstimadoPct, setEncargoEstimadoPct] = useState(60.09);
   const [manualMaoObra, setManualMaoObra] = useState(false);
   const [encargosBreakdown, setEncargosBreakdown] = useState<any>(JSON.parse(JSON.stringify(ENCARGOS_PADRAO)));
+  const [extratoItem, setExtratoItem] = useState<ItemMaoObra | null>(null);
 
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     grupoA: false,
@@ -162,6 +163,131 @@ export default function AdminEquipesTecnicasPage() {
       const totalGeral = Object.values(novoBreakdown).reduce((sum: number, g: any) => sum + (Number(g.total) || 0), 0);
       setEncargoEstimadoPct(Math.round(totalGeral * 100) / 100);
     }
+  };
+
+  const calculateDetailedItemCosts = (item: ItemMaoObra) => {
+    if (!item.cargoOriginal || !item.cctOriginal) {
+      const salarioBase = Number(item.pisoSalarial) || 0;
+      const encargos = salarioBase * (encargoEstimadoPct / 100);
+      const totalUnitario = salarioBase + encargos;
+      return {
+        isFallback: true,
+        salarioBase,
+        adicionais: 0,
+        insalubridade: 0,
+        insalubridadePercent: 0,
+        insalubrabilidade: 0,
+        remuneracaoTotal: salarioBase,
+        encargos,
+        custoFolha: totalUnitario,
+        vaLiquido: 0,
+        vtLiquido: 0,
+        outrosBeneficios: 0,
+        custoEpi: 0,
+        custoUnitario: totalUnitario,
+        custoMensalTotal: totalUnitario * item.quantidade,
+        episDetalhados: []
+      };
+    }
+
+    const cargo = item.cargoOriginal;
+    const cct = item.cctOriginal;
+    const escalaObj = escalasDisponiveis.find(esc => esc.nome === item.escala);
+    const diasEscala = escalaObj ? escalaObj.diasTrabalhadosMes : (item.escala === '6x1' ? 26 : (item.escala === '12x36' ? 15.21 : 22));
+    const salarioBase = Number(item.pisoSalarial) || 0;
+
+    // 1. Remuneração e adicionais da CCT
+    const adicionais = (Number(cargo.adicionalCopa) || 0) + 
+                       (Number(cargo.gratificacoes) || 0) + 
+                       (Number(cargo.assiduidade) || 0);
+
+    const baseInsalubridade = cct.insalubridadeBase === 'SALARIO' 
+      ? salarioBase 
+      : (Number(cct.salarioMinimo) || 1412);
+    const insalubridadePercent = Number(cargo.insalubridadePercent) || 0;
+    const insalubridade = baseInsalubridade * (insalubridadePercent / 100);
+
+    const remuneracaoTotal = salarioBase + adicionais + insalubridade;
+
+    // 2. Encargos CLT
+    const encargos = remuneracaoTotal * (encargoEstimadoPct / 100);
+    const custoFolha = remuneracaoTotal + encargos;
+
+    // 3. Benefícios: Vale Alimentação (VA) Líquido
+    const vaBruto = cct.vaTipo === 'DIARIO' 
+      ? (Number(cct.vaValor) || 0) * diasEscala 
+      : (Number(cct.vaValor) || 0);
+    const vaSobreFerias = cct.vaProvisFerias ? (vaBruto / 12) : 0;
+    const descontoVA = ((vaBruto + vaSobreFerias) * (Number(cct.vaDescPercent) || 0)) / 100;
+    const vaLiquido = vaBruto + vaSobreFerias - descontoVA;
+
+    // 4. Vale Transporte (VT) Líquido
+    const vtBruto = (Number(cct.vtValor) || 0) * diasEscala;
+    const descontoVT = (salarioBase * (Number(cct.vtDescPercent) || 6)) / 100;
+    const vtLiquido = Math.max(0, vtBruto - descontoVT);
+
+    // 5. Outros Benefícios (Cesta, Seguro, Exames, Sindicato...)
+    const cesta = Number(cct.cestaBasica) || 0;
+    const seguro = Number(cct.seguroVida) || 0;
+    const exames = Number(cct.examesMedicos) || 0;
+    const sindicato = Number(cct.custosSindicato) || 0;
+    const outros = Number(cct.outrosBeneficios) || 0;
+    const outrosBeneficios = cesta + seguro + exames + sindicato + outros;
+
+    // 6. EPI / Uniformes
+    let custoEpi = Number(cct.uniformeEpi || 0);
+    let episDetalhados: any[] = [];
+    if (cargo.episConfig && Array.isArray(cargo.episConfig) && cargo.episConfig.length > 0) {
+      custoEpi = cargo.episConfig.reduce((sumEpi: number, epi: any) => {
+        const custoMensal = (Number(epi.precoUnitario || 0) * Number(epi.quantidade || 0)) / (Number(epi.vidaUtil) || 1);
+        episDetalhados.push({
+          descricao: epi.descricao,
+          precoUnitario: Number(epi.precoUnitario) || 0,
+          quantidade: Number(epi.quantidade) || 0,
+          vidaUtil: Number(epi.vidaUtil) || 1,
+          custoMensal
+        });
+        return sumEpi + custoMensal;
+      }, 0);
+    }
+
+    const custoUnitario = custoFolha + vaLiquido + vtLiquido + outrosBeneficios + custoEpi;
+
+    return {
+      isFallback: false,
+      salarioBase,
+      adicionais,
+      adicionalCopa: Number(cargo.adicionalCopa) || 0,
+      gratificacoes: Number(cargo.gratificacoes) || 0,
+      assiduidade: Number(cargo.assiduidade) || 0,
+      insalubrabilidade: insalubridade,
+      insalubridade,
+      insalubridadePercent,
+      remuneracaoTotal,
+      encargos,
+      custoFolha,
+      vaBruto,
+      vaSobreFerias,
+      descontoVA,
+      vaLiquido,
+      vtBruto,
+      descontoVT,
+      vtLiquido,
+      cesta,
+      seguro,
+      exames,
+      sindicato,
+      outros,
+      outrosBeneficios,
+      custoEpi,
+      episDetalhados,
+      custoUnitario,
+      custoMensalTotal: custoUnitario * item.quantidade,
+      diasEscala,
+      escala: item.escala,
+      cctNome: cct.nome,
+      cctUf: cct.uf
+    };
   };
 
   useEffect(() => {
@@ -743,8 +869,17 @@ export default function AdminEquipesTecnicasPage() {
 
                               <button 
                                 type="button"
+                                onClick={() => setExtratoItem(item)}
+                                className="text-blue-600 hover:text-blue-750 hover:bg-blue-50 transition-colors p-1 border border-blue-200 rounded px-2.5 py-1 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer"
+                                title="Ver Extrato Detalhado de Custos"
+                              >
+                                <FileText size={12} strokeWidth={2.5} /> Extrato
+                              </button>
+
+                              <button 
+                                type="button"
                                 onClick={() => handleRemoveCargo(item.cargoId)}
-                                className="text-red-400 hover:text-red-600 transition-colors p-1"
+                                className="text-red-400 hover:text-red-650 transition-colors p-1 hover:bg-red-50 rounded"
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -1003,6 +1138,251 @@ export default function AdminEquipesTecnicasPage() {
             </div>
           </div>
         )}
+
+        {extratoItem && (() => {
+          const detail = calculateDetailedItemCosts(extratoItem);
+          return (
+            <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-60 p-4 animate-fade-in">
+              <div className="bg-white rounded-3xl w-full max-w-3xl max-h-[85vh] shadow-2xl flex flex-col overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-200">
+                
+                {/* Header Modal */}
+                <div className="bg-[#0F172A] text-white p-6 flex justify-between items-center border-b border-slate-800">
+                  <div>
+                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-0.5">Módulo de Engenharia e Controladoria</span>
+                    <h3 className="text-lg font-black uppercase tracking-wide flex items-center gap-2 text-slate-100">
+                      <FileText className="text-emerald-400" size={20} />
+                      Extrato Detalhado de Custos
+                    </h3>
+                    <p className="text-slate-400 text-xs mt-1 uppercase font-semibold">
+                      Função: <span className="text-white font-bold">{extratoItem.nomeCargo}</span> | Escala: <span className="text-white font-bold">{extratoItem.escala}</span>
+                    </p>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setExtratoItem(null)}
+                    className="p-2 text-slate-400 hover:text-white rounded-full hover:bg-slate-800 transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Corpo Modal */}
+                <div className="flex-1 overflow-auto p-6 flex flex-col gap-6">
+                  
+                  {detail.isFallback ? (
+                    <div className="p-8 text-center text-slate-500 italic bg-slate-50 rounded-2xl border border-slate-150">
+                      Não há dados dinâmicos da CCT disponíveis para este cargo. Exibindo estimativa base com base na remuneração.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      
+                      {/* Lado Esquerdo: Payroll & Taxes */}
+                      <div className="space-y-4">
+                        <h4 className="text-xs font-black text-slate-850 uppercase tracking-wider border-b border-slate-200 pb-2 flex items-center gap-1.5">
+                          <span className="w-1.5 h-3 bg-emerald-500 rounded-full"></span>
+                          1. Composição de Folha & Encargos
+                        </h4>
+
+                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-slate-500 font-medium">Piso Salarial CCT:</span>
+                            <span className="font-bold text-slate-800">
+                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.salarioBase)}
+                            </span>
+                          </div>
+
+                          {(detail.adicionalCopa > 0 || detail.gratificacoes > 0 || detail.assiduidade > 0) && (
+                            <div className="border-t border-dashed border-slate-200 pt-2 space-y-1 text-[11px]">
+                              <span className="text-slate-400 font-bold uppercase tracking-wider block">Adicionais CCT:</span>
+                              {detail.adicionalCopa > 0 && (
+                                <div className="flex justify-between items-center text-slate-650 ml-2">
+                                  <span>• Adicional Copa:</span>
+                                  <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.adicionalCopa)}</span>
+                                </div>
+                              )}
+                              {detail.gratificacoes > 0 && (
+                                <div className="flex justify-between items-center text-slate-650 ml-2">
+                                  <span>• Gratificações:</span>
+                                  <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.gratificacoes)}</span>
+                                </div>
+                              )}
+                              {detail.assiduidade > 0 && (
+                                <div className="flex justify-between items-center text-slate-650 ml-2">
+                                  <span>• Prêmio Assiduidade:</span>
+                                  <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.assiduidade)}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {detail.insalubridade > 0 && (
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-slate-500 font-medium">Insalubridade ({detail.insalubridadePercent}%):</span>
+                              <span className="font-semibold text-slate-700">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.insalubrabilidade || detail.insalubridade)}
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="flex justify-between items-center text-xs border-t border-slate-200 pt-2 font-bold text-slate-900">
+                            <span>Remuneração Total (CLT):</span>
+                            <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.remuneracaoTotal)}</span>
+                          </div>
+
+                          <div className="flex justify-between items-center text-xs text-blue-600">
+                            <span>Encargos CLT ({encargoEstimadoPct}%):</span>
+                            <span>+{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.encargos)}</span>
+                          </div>
+
+                          <div className="flex justify-between items-center text-xs border-t border-slate-200 pt-2 font-black text-slate-900 bg-slate-100/50 -mx-4 -mb-4 p-4 rounded-b-2xl">
+                            <span>Custo de Folha Mensal:</span>
+                            <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.custoFolha)}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Lado Direito: Benefícios & Equipamento */}
+                      <div className="space-y-4">
+                        <h4 className="text-xs font-black text-slate-855 uppercase tracking-wider border-b border-slate-200 pb-2 flex items-center gap-1.5">
+                          <span className="w-1.5 h-3 bg-[#00A36C] rounded-full"></span>
+                          2. Benefícios CCT & Custos Operacionais
+                        </h4>
+
+                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                          
+                          {/* Vale Refeição */}
+                          <div className="text-xs space-y-1">
+                            <div className="flex justify-between items-center font-bold text-slate-800">
+                              <span>Vale Refeição (VA/VR) Líquido:</span>
+                              <span className="text-[#00A36C] font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.vaLiquido)}</span>
+                            </div>
+                            <div className="text-[10px] text-slate-400 ml-2 space-y-0.5">
+                              <div className="flex justify-between">
+                                <span>• Bruto Mensal ({detail.diasEscala}d):</span>
+                                <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.vaBruto)}</span>
+                              </div>
+                              {detail.vaSobreFerias > 0 && (
+                                <div className="flex justify-between">
+                                  <span>• Provisão sobre Férias (1/12):</span>
+                                  <span>+{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.vaSobreFerias)}</span>
+                                </div>
+                              )}
+                              {detail.descontoVA > 0 && (
+                                <div className="flex justify-between text-red-500">
+                                  <span>• Coparticipação CLT:</span>
+                                  <span>-{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.descontoVA)}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Vale Transporte */}
+                          <div className="text-xs space-y-1 border-t border-dashed border-slate-200 pt-2">
+                            <div className="flex justify-between items-center font-bold text-slate-800">
+                              <span>Vale Transporte (VT) Líquido:</span>
+                              <span className="text-[#00A36C] font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.vtLiquido)}</span>
+                            </div>
+                            <div className="text-[10px] text-slate-400 ml-2 space-y-0.5">
+                              <div className="flex justify-between">
+                                <span>• Custo Transporte Bruto ({detail.diasEscala}d):</span>
+                                <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.vtBruto)}</span>
+                              </div>
+                              {detail.descontoVT > 0 && (
+                                <div className="flex justify-between text-red-500">
+                                  <span>• Desconto Legal CLT:</span>
+                                  <span>-{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.descontoVT)}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Outros Benefícios */}
+                          {detail.outrosBeneficios > 0 && (
+                            <div className="text-xs space-y-1 border-t border-dashed border-slate-200 pt-2">
+                              <div className="flex justify-between items-center font-bold text-slate-800">
+                                <span>Benefícios Coletivos CCT:</span>
+                                <span className="text-[#00A36C] font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.outrosBeneficios)}</span>
+                              </div>
+                              <div className="text-[10px] text-slate-400 ml-2 space-y-0.5">
+                                {detail.cesta > 0 && <div className="flex justify-between"><span>• Cesta Básica:</span><span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.cesta)}</span></div>}
+                                {detail.seguro > 0 && <div className="flex justify-between"><span>• Seguro de Vida:</span><span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.seguro)}</span></div>}
+                                {detail.exames > 0 && <div className="flex justify-between"><span>• Medicina Ocupacional (Exames):</span><span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.exames)}</span></div>}
+                                {detail.sindicato > 0 && <div className="flex justify-between"><span>• Contribuições Assistenciais Sindicato:</span><span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.sindicato)}</span></div>}
+                                {detail.outros > 0 && <div className="flex justify-between"><span>• Outros Benefícios Adicionais:</span><span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.outros)}</span></div>}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* EPI & Uniforme */}
+                          <div className="text-xs space-y-1 border-t border-dashed border-slate-200 pt-2">
+                            <div className="flex justify-between items-center font-bold text-slate-800">
+                              <span>Composição de EPI & Uniformes:</span>
+                              <span className="text-[#00A36C] font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.custoEpi)}</span>
+                            </div>
+                            {detail.episDetalhados && detail.episDetalhados.length > 0 ? (
+                              <div className="text-[10px] text-slate-400 ml-2 space-y-0.5 max-h-[100px] overflow-y-auto pr-1">
+                                {detail.episDetalhados.map((epi: any, eidx: number) => (
+                                  <div key={eidx} className="flex justify-between">
+                                    <span>• {epi.descricao} ({epi.quantidade}x / {epi.vidaUtil}m):</span>
+                                    <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(epi.custoMensal)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-[10px] text-slate-400 ml-2 italic">Valor flat ou sem insumos detalhados.</p>
+                            )}
+                          </div>
+
+                        </div>
+                      </div>
+
+                    </div>
+                  )}
+
+                </div>
+
+                {/* Footer do Modal com Resumo Total */}
+                <div className="bg-[#0F172A] text-white p-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-center shadow-lg relative overflow-hidden border-t border-slate-800">
+                  <div>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Custo Unitário Mensal</span>
+                    <h4 className="text-xl font-black text-white">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.custoUnitario)}
+                    </h4>
+                    <p className="text-[9px] text-slate-500 font-medium mt-1">Custo total para 1 profissional.</p>
+                  </div>
+
+                  <div>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Profissionais Alocados</span>
+                    <h4 className="text-xl font-black text-slate-300">
+                      {extratoItem.quantidade} {extratoItem.quantidade === 1 ? 'Profissional' : 'Profissionais'}
+                    </h4>
+                    <p className="text-[9px] text-slate-500 font-medium mt-1">Multiplicador da linha de equipe.</p>
+                  </div>
+
+                  <div className="text-right border-l border-slate-800 pl-6">
+                    <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest block mb-1">Custo Mensal Total da Linha</span>
+                    <h3 className="text-2xl font-black text-emerald-400">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.custoMensalTotal)}
+                    </h3>
+                    <p className="text-[9px] text-slate-500 font-medium mt-1">Multiplicado pela quantidade alocada.</p>
+                  </div>
+                </div>
+
+                {/* Botão de Fechar */}
+                <div className="bg-slate-50 px-6 py-4 flex justify-end border-t border-slate-200">
+                  <button 
+                    type="button"
+                    onClick={() => setExtratoItem(null)}
+                    className="px-6 py-2.5 bg-[#0F172A] hover:bg-[#1E293B] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                  >
+                    Fechar Extrato
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          );
+        })()}
       </main>
     </div>
   );
