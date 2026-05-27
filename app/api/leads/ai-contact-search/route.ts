@@ -136,8 +136,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'empresa e cargos são obrigatórios' }, { status: 400 });
     }
 
-    const apiKey = process.env.GOOGLE_CSE_KEY;
-    const cx = process.env.GOOGLE_CSE_CX;
+    const apiKey = process.env.GOOGLE_CSE_KEY || "AIzaSyAvjvknXwYdmFFXMSADD1fsfmVmmhK0KkA";
+    const cx = process.env.GOOGLE_CSE_CX || "955534659ddf64afd";
     
     const results: SearchResult[] = [];
     const foundLinkedIns = new Set<string>();
