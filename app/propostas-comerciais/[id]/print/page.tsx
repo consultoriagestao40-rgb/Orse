@@ -10,9 +10,12 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
   if (!res) return { title: 'Proposta Comercial não encontrada' };
   
   const cliente = res.client?.nomeFantasia || res.client?.razaoSocial || '';
+  const numeroPadded = String(res.proposta?.numero || '').padStart(3, '0');
+  const versaoNum = res.proposta?.versoes?.[0]?.versao || 1;
+  const revisaoPart = `R${String(versaoNum).padStart(2, '0')}`;
   
   return {
-    title: `PROPOSTA COMERCIAL - ${res.proposta?.numero} - ${cliente}`.toUpperCase()
+    title: `PROPOSTA COMERCIAL - FPV-${numeroPadded}-${revisaoPart} - ${cliente}`.toUpperCase()
   };
 }
 

@@ -586,10 +586,11 @@ function PropostaEditor() {
   // Atualiza o title do documento constantemente para que impressoes via Ctrl+P ou menu do navegador
   // sugiram o nome correto de arquivo do PDF
   useEffect(() => {
-    const num = proposta.cliente?.numeroProposta || "S-N";
+    const numRaw = proposta.cliente?.numeroProposta;
+    const num = numRaw ? `FPV-${String(numRaw).padStart(3, '0')}` : "FPV-XXX";
     const rev = proposta.cliente?.revisao || "R01";
     const clientName = proposta.cliente?.cliente || proposta.cliente?.razaoSocial || "Cliente";
-    document.title = `Proposta comercial ${num}-${rev} ${clientName}`;
+    document.title = `PROPOSTA COMERCIAL - ${num}-${rev} - ${clientName}`.toUpperCase();
   }, [proposta.cliente?.numeroProposta, proposta.cliente?.revisao, proposta.cliente?.cliente, proposta.cliente?.razaoSocial]);
 
   const handleCalcularProposta = async () => {
@@ -3215,10 +3216,11 @@ function PropostaEditor() {
                                  type="button"
                                  onClick={() => {
                                     const oldTitle = document.title;
-                                    const num = proposta.cliente.numeroProposta || "S-N";
+                                    const numRaw = proposta.cliente.numeroProposta;
+                                    const num = numRaw ? `FPV-${String(numRaw).padStart(3, '0')}` : "FPV-XXX";
                                     const rev = proposta.cliente.revisao || "R01";
                                     const clientName = proposta.cliente.cliente || proposta.cliente.razaoSocial || "Cliente";
-                                    document.title = `Proposta comercial ${num}-${rev} ${clientName}`;
+                                    document.title = `PROPOSTA COMERCIAL - ${num}-${rev} - ${clientName}`.toUpperCase();
                                     window.print();
                                     setTimeout(() => { document.title = oldTitle; }, 100);
                                  }}
