@@ -292,16 +292,25 @@ export function calculateEnterprisePrice(proposal: any): any {
     
     // CÁLCULO EM CASCATA SOLICITADO:
     // 1. Custo Direto
-    const custoD = res.custoTotalDireto;
+    let custoD = res.custoTotalDireto;
     let precoVendaItem = 0;
 
     if (item.tipoItem === 'SPOT') {
-      // 2. Adiciona Taxa Adm sobre o Custo
-      const comAdm = custoD * (1 + txAdm);
-      // 3. Adiciona Lucro sobre (Custo + Adm)
-      const comLucro = comAdm * (1 + txLucro);
-      // 4. Aplica Tributos (Gross-up sobre o montante com margens)
-      precoVendaItem = divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
+      const qtyDemanda = Number(item.quantidadeDemanda || 0);
+      const precoUnitDemanda = Number(item.precoUnitarioDemanda || 0);
+      precoVendaItem = qtyDemanda * precoUnitDemanda;
+      
+      // Realizar o cálculo reverso (gross-down) para descobrir o Custo Direto condizente
+      const derivedCustoDireto = divisorTributos > 0 
+        ? (precoVendaItem * divisorTributos) / ((1 + txAdm) * (1 + txLucro)) 
+        : precoVendaItem / ((1 + txAdm) * (1 + txLucro));
+        
+      custoD = derivedCustoDireto;
+      res.remuneracao = derivedCustoDireto;
+      res.blocoA = derivedCustoDireto;
+      res.custoTotal = derivedCustoDireto;
+      res.custoTotalDireto = derivedCustoDireto;
+      
       faturamentoServicosSpot += precoVendaItem;
     } else {
       // 2. Adiciona Taxa Adm sobre o Custo
