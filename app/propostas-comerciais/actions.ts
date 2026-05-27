@@ -180,7 +180,8 @@ export async function deleteDocumentoProposta(id: string) {
 export async function getTemplatesProposta() {
   try {
     let templates = await prisma.templatePropostaComercial.findMany({
-      orderBy: { nome: 'asc' }
+      orderBy: { nome: 'asc' },
+      include: { secoes: { orderBy: { ordem: 'asc' } } }
     });
 
     // Seeding automático
@@ -218,7 +219,10 @@ export async function getTemplatesProposta() {
           }
         }
       });
-      templates = await prisma.templatePropostaComercial.findMany({ orderBy: { nome: 'asc' } });
+      templates = await prisma.templatePropostaComercial.findMany({
+        orderBy: { nome: 'asc' },
+        include: { secoes: { orderBy: { ordem: 'asc' } } }
+      });
     }
 
     return templates;
