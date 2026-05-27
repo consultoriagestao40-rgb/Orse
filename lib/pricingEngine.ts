@@ -4,6 +4,7 @@ export function calculateLaborCost(colab: any, premissas: any): any {
   if (colab.tipoItem === 'SPOT') {
     const qtyDemanda = Number(colab.quantidadeDemanda || 0);
     const unit = colab.unidadeMedida || 'DIA';
+    const precoUnitDemanda = Number(colab.precoUnitarioDemanda || 0);
     const configAtivos = colab.ativosConfig || {};
     
     const totalMensalMaoObra = Number(configAtivos.custoMensalMaoObra || 0);
@@ -17,7 +18,8 @@ export function calculateLaborCost(colab: any, premissas: any): any {
     const custoCombustivel = (totalMensalCombustivel / divisor) * qtyDemanda;
     
     const outrosCustos = custoCombustivel;
-    const custoTotalDireto = custoMaoObra + custoVeiculo + outrosCustos;
+    const fallbackCustoTotalDireto = custoMaoObra + custoVeiculo + outrosCustos;
+    const custoTotalDireto = precoUnitDemanda > 0 ? (qtyDemanda * precoUnitDemanda) : fallbackCustoTotalDireto;
     
     return {
       remuneracao: custoTotalDireto,
@@ -292,25 +294,16 @@ export function calculateEnterprisePrice(proposal: any): any {
     
     // CÁLCULO EM CASCATA SOLICITADO:
     // 1. Custo Direto
-    let custoD = res.custoTotalDireto;
+    const custoD = res.custoTotalDireto;
     let precoVendaItem = 0;
 
     if (item.tipoItem === 'SPOT') {
-      const qtyDemanda = Number(item.quantidadeDemanda || 0);
-      const precoUnitDemanda = Number(item.precoUnitarioDemanda || 0);
-      precoVendaItem = qtyDemanda * precoUnitDemanda;
-      
-      // Realizar o cálculo reverso (gross-down) para descobrir o Custo Direto condizente
-      const derivedCustoDireto = divisorTributos > 0 
-        ? (precoVendaItem * divisorTributos) / ((1 + txAdm) * (1 + txLucro)) 
-        : precoVendaItem / ((1 + txAdm) * (1 + txLucro));
-        
-      custoD = derivedCustoDireto;
-      res.remuneracao = derivedCustoDireto;
-      res.blocoA = derivedCustoDireto;
-      res.custoTotal = derivedCustoDireto;
-      res.custoTotalDireto = derivedCustoDireto;
-      
+      // 2. Adiciona Taxa Adm sobre o Custo
+      const comAdm = custoD * (1 + txAdm);
+      // 3. Adiciona Lucro sobre (Custo + Adm)
+      const comLucro = comAdm * (1 + txLucro);
+      // 4. Aplica Tributos (Gross-up sobre o montante com margens)
+      precoVendaItem = divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
       faturamentoServicosSpot += precoVendaItem;
     } else {
       // 2. Adiciona Taxa Adm sobre o Custo
