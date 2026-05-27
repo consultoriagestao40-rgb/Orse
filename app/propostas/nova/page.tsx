@@ -1694,6 +1694,7 @@ function PropostaEditor() {
                                  <th className="px-6 py-3 w-28 text-center">Qtd.</th>
                                  <th className="px-6 py-3">Serviço / Equipe Técnica</th>
                                  <th className="px-6 py-3">Unidade</th>
+                                 <th className="px-6 py-3 text-right">Custo Unit. (Direto)</th>
                                  <th className="px-6 py-3 text-right">Preço Unit. (Venda)</th>
                                  <th className="px-6 py-3 text-right">Total Cobrado</th>
                                  <th className="px-6 py-3 text-right">Ação</th>
@@ -1782,6 +1783,15 @@ function PropostaEditor() {
                                           />
                                        </div>
                                     </td>
+                                    <td className="px-6 py-4 text-right font-semibold text-slate-600">
+                                       {(() => {
+                                          const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
+                                          const totalVenda = itemRes?.precoVenda || 0;
+                                          const qty = p.quantidadeDemanda || 1;
+                                          const unitVenda = totalVenda > 0 ? (totalVenda / qty) : 0;
+                                          return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(unitVenda);
+                                       })()}
+                                    </td>
                                     <td className="px-6 py-4 text-right font-bold text-slate-900">
                                        {(() => {
                                           const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
@@ -1790,7 +1800,7 @@ function PropostaEditor() {
                                        })()}
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                       <button 
+                       <button 
                                           onClick={() => setProposta({...proposta, equipe: proposta.equipe.filter((x: any) => x.id !== p.id)})} 
                                           className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors" 
                                        >
@@ -1801,7 +1811,7 @@ function PropostaEditor() {
                               ))}
                               {proposta.equipe.length === 0 && (
                                  <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400 italic text-sm">
+                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400 italic text-sm">
                                        Nenhum serviço adicionado. Clique em "Inserir Serviço" para começar.
                                     </td>
                                  </tr>
