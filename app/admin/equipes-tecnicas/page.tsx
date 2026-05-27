@@ -122,6 +122,7 @@ export default function AdminEquipesTecnicasPage() {
   const [itensMaoObra, setItensMaoObra] = useState<ItemMaoObra[]>([]);
   const [encargoEstimadoPct, setEncargoEstimadoPct] = useState(60.09);
   const [manualMaoObra, setManualMaoObra] = useState(false);
+  const [encargosBreakdown, setEncargosBreakdown] = useState<any>(JSON.parse(JSON.stringify(ENCARGOS_PADRAO)));
 
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     grupoA: false,
@@ -137,6 +138,30 @@ export default function AdminEquipesTecnicasPage() {
       ...prev,
       [grupoKey]: !prev[grupoKey]
     }));
+  };
+
+  const handleUpdateEncargoValue = (grupoKey: string, itemNome: string, novoValor: number) => {
+    const valorNum = isNaN(novoValor) ? 0 : novoValor;
+    
+    // Fazer uma cópia profunda para atualizar o estado com imutabilidade
+    const novoBreakdown = JSON.parse(JSON.stringify(encargosBreakdown));
+    const grupo = novoBreakdown[grupoKey];
+    
+    if (grupo && grupo.itens) {
+      grupo.itens = grupo.itens.map((item: any) => 
+        item.nome === itemNome ? { ...item, valor: valorNum } : item
+      );
+      
+      // Recalcular total do grupo
+      const totalGrupo = grupo.itens.reduce((sum: number, item: any) => sum + (Number(item.valor) || 0), 0);
+      grupo.total = Math.round(totalGrupo * 100) / 100;
+      
+      setEncargosBreakdown(novoBreakdown);
+      
+      // Recalcular total geral
+      const totalGeral = Object.values(novoBreakdown).reduce((sum: number, g: any) => sum + (Number(g.total) || 0), 0);
+      setEncargoEstimadoPct(Math.round(totalGeral * 100) / 100);
+    }
   };
 
   useEffect(() => {
@@ -320,6 +345,7 @@ export default function AdminEquipesTecnicasPage() {
     setCustoCombustivel(0);
     setItensMaoObra([]);
     setSelectedCctId('');
+    setEncargosBreakdown(JSON.parse(JSON.stringify(ENCARGOS_PADRAO)));
     setEncargoEstimadoPct(60.09);
     setExpandedGroups({
       grupoA: false,
@@ -338,6 +364,16 @@ export default function AdminEquipesTecnicasPage() {
     setCustoMaoObra(equipe.custoMensalMaoObra);
     setCustoVeiculo(equipe.custoMensalVeiculo);
     setCustoCombustivel(equipe.custoMensalCombustivel);
+    setEncargosBreakdown(JSON.parse(JSON.stringify(ENCARGOS_PADRAO)));
+    setEncargoEstimadoPct(60.09);
+    setExpandedGroups({
+      grupoA: false,
+      grupoB: false,
+      grupoC: false,
+      grupoD: false,
+      grupoE: false,
+      grupoF: false
+    });
     
     // Reconstruir o objeto de itensMaoObra recuperando CCT e Cargo originais
     const loadedItens = (Array.isArray(equipe.itensMaoObra) ? equipe.itensMaoObra : []).map((item: any) => {
@@ -737,8 +773,8 @@ export default function AdminEquipesTecnicasPage() {
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-2 max-h-[350px] overflow-y-auto pr-1 border border-slate-200 rounded-xl p-2 bg-slate-50/50">
-                        {Object.entries(ENCARGOS_PADRAO).map(([key, grupo]) => {
+                      <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto pr-1.5 border border-slate-200 rounded-xl p-3 bg-slate-50/50">
+                        {Object.entries(encargosBreakdown).map(([key, grupo]: [string, any]) => {
                           const isExpanded = expandedGroups[key];
                           const totalGrupo = grupo.total;
                           
@@ -763,7 +799,7 @@ export default function AdminEquipesTecnicasPage() {
 
                               {/* Conteúdo Expansível */}
                               {isExpanded && (
-                                <div className="border-t border-slate-150 animate-slide-down">
+                                <div className="border-t border-slate-200 bg-white">
                                   {/* Descrição do Grupo */}
                                   <div className="bg-slate-50 px-4 py-2 border-b border-slate-150 text-[10px] text-slate-500 font-semibold uppercase italic">
                                     {grupo.descricao}
@@ -771,10 +807,20 @@ export default function AdminEquipesTecnicasPage() {
 
                                   {/* Tabela de Itens */}
                                   <div className="divide-y divide-slate-100">
-                                    {grupo.itens.map((item, idx) => (
+                                    {grupo.itens.map((item: any, idx: number) => (
                                       <div key={idx} className="flex justify-between items-center px-4 py-2 text-xs hover:bg-slate-50/50">
-                                        <span className="text-slate-600 font-medium">{item.nome}</span>
-                                        <span className="font-bold text-slate-800">{item.valor.toFixed(2)}%</span>
+                                        <span className="text-slate-600 font-medium uppercase">{item.nome}</span>
+                                        <div className="flex items-center gap-1">
+                                          <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={item.valor}
+                                            onChange={(e) => handleUpdateEncargoValue(key, item.nome, Number(e.target.value))}
+                                            className="w-20 bg-slate-50 border border-slate-200 rounded px-2 py-0.5 text-right font-bold text-slate-800 focus:ring-1 focus:ring-blue-500 outline-none"
+                                          />
+                                          <span className="text-[10px] font-bold text-slate-400">%</span>
+                                        </div>
                                       </div>
                                     ))}
                                   </div>
