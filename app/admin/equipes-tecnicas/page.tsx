@@ -822,27 +822,29 @@ export default function AdminEquipesTecnicasPage() {
                     ) : (
                       <div className="flex flex-col gap-2">
                         {itensMaoObra.map((item) => (
-                          <div key={item.cargoId} className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
-                            <div className="flex items-center gap-3">
-                              <span className="p-2 bg-slate-50 rounded-lg text-slate-400">
+                          <div key={item.cargoId} className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-200 shadow-xs gap-3">
+                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                              <span className="p-2 bg-slate-50 rounded-lg text-slate-400 flex-shrink-0">
                                 <UserCheck size={16} />
                               </span>
-                              <div>
-                                <p className="font-bold text-slate-800 text-sm uppercase">{item.nomeCargo}</p>
-                                <p className="text-[10px] text-slate-400 font-semibold uppercase">
+                              <div className="min-w-0 flex-1">
+                                <p className="font-bold text-slate-800 text-xs sm:text-sm uppercase truncate" title={item.nomeCargo}>
+                                  {item.nomeCargo}
+                                </p>
+                                <p className="text-[10px] text-slate-400 font-semibold uppercase truncate">
                                   Piso: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.pisoSalarial)}
                                 </p>
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-3 flex-shrink-0">
+                            <div className="flex items-center gap-2 flex-shrink-0">
                               {/* Escala de Trabalho */}
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1">
                                 <Calendar size={14} className="text-slate-400 flex-shrink-0" title="Escala" />
                                 <select 
                                   value={item.escala || '5x2'}
                                   onChange={(e) => handleUpdateEscala(item.cargoId, e.target.value)}
-                                  className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 font-bold text-xs text-slate-700 outline-none cursor-pointer"
+                                  className="w-28 bg-slate-50 border border-slate-200 rounded-lg px-1.5 py-1 font-bold text-xs text-slate-700 outline-none cursor-pointer"
                                 >
                                   {escalasDisponiveis.map((esc) => (
                                     <option key={esc.id} value={esc.nome}>
@@ -853,25 +855,25 @@ export default function AdminEquipesTecnicasPage() {
                               </div>
 
                               {/* Quantidade */}
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1">
                                 <Users size={14} className="text-slate-400 flex-shrink-0" title="Quantidade" />
                                 <input 
                                   type="number"
                                   min="1"
                                   value={item.quantidade}
                                   onChange={(e) => handleUpdateQuantidade(item.cargoId, Number(e.target.value))}
-                                  className="w-12 bg-slate-50 border border-slate-200 rounded-lg px-1.5 py-1 text-center font-bold text-slate-800 text-xs"
+                                  className="w-10 bg-slate-50 border border-slate-200 rounded-lg px-1 py-1 text-center font-bold text-slate-800 text-xs"
                                 />
                               </div>
 
-                              <p className="text-xs font-black text-slate-700 w-24 text-right">
+                              <p className="text-xs font-black text-slate-700 w-20 text-right flex-shrink-0">
                                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.pisoSalarial * item.quantidade)}
                               </p>
 
                               <button 
                                 type="button"
                                 onClick={() => setExtratoItem(item)}
-                                className="text-blue-600 hover:text-blue-750 hover:bg-blue-50 transition-colors p-1 border border-blue-200 rounded px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer flex-shrink-0"
+                                className="text-blue-600 hover:text-blue-750 hover:bg-blue-50 transition-colors p-1 border border-blue-200 rounded px-2 py-0.5 text-[9px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer flex-shrink-0"
                                 title="Ver Extrato Detalhado de Custos"
                               >
                                 <FileText size={11} strokeWidth={2.5} /> Extrato
@@ -880,7 +882,7 @@ export default function AdminEquipesTecnicasPage() {
                               <button 
                                 type="button"
                                 onClick={() => handleRemoveCargo(item.cargoId)}
-                                className="text-red-500 hover:text-red-700 transition-colors p-1.5 hover:bg-red-50 rounded-lg flex-shrink-0"
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors p-1.5 rounded-lg flex-shrink-0 cursor-pointer"
                                 title="Remover"
                               >
                                 <Trash2 size={14} />
