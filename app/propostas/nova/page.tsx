@@ -1185,7 +1185,7 @@ function PropostaEditor() {
            <div className="w-full max-w-7xl mb-8 border-b border-slate-200 pb-2">
               <nav className="flex flex-wrap gap-x-6 gap-y-2">
                  {TABS.filter(tab => {
-                    if (proposta.cliente.tipoProposta === 'SPOT' && tab.id === 'dre') {
+                    if (proposta.cliente.tipoProposta === 'SPOT' && (tab.id === 'dre' || tab.id === 'encargos')) {
                        return false;
                     }
                     return true;
