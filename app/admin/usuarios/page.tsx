@@ -17,7 +17,7 @@ import {
   Phone, 
   Briefcase 
 } from 'lucide-react';
-import { getUsuarios, createUsuario, deleteUsuario, updateUsuario } from './actions';
+import { getUsuarios, createUsuario, deleteUsuario, updateUsuario, getTenantLimit } from './actions';
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<any[]>([]);
@@ -25,6 +25,8 @@ export default function UsuariosPage() {
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [tenantLimit, setTenantLimit] = useState<number | null>(null);
+  const [plano, setPlano] = useState<string>('STARTER');
   
   const [formData, setFormData] = useState({
     nome: '',
@@ -44,10 +46,26 @@ export default function UsuariosPage() {
     setLoading(true);
     const data = await getUsuarios();
     setUsuarios(data);
+    
+    try {
+      const limitData = await getTenantLimit();
+      if (limitData) {
+        setTenantLimit(limitData.limiteUsuarios);
+        setPlano(limitData.plano);
+      }
+    } catch (err) {
+      console.error('Erro ao obter limite de tenant:', err);
+    }
+    
     setLoading(false);
   }
 
   function handleAddNewClick() {
+    if (tenantLimit !== null && usuarios.length >= tenantLimit) {
+      const planoNome = plano.charAt(0).toUpperCase() + plano.slice(1).toLowerCase();
+      alert(`Limite de usuários atingido!\n\nSeu plano atual (${planoNome}) permite no máximo ${tenantLimit} usuários ativos. Por favor, solicite um upgrade de plano com o administrador do sistema para cadastrar mais colaboradores.`);
+      return;
+    }
     setEditingUserId(null);
     setFormData({
       nome: '',

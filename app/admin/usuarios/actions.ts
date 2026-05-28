@@ -25,6 +25,21 @@ export async function getUsuarios() {
   }
 }
 
+export async function getTenantLimit() {
+  const user = await getLoggedUser();
+  if (user?.tenantId) {
+    try {
+      return await prisma.tenant.findUnique({
+        where: { id: user.tenantId },
+        select: { limiteUsuarios: true, plano: true }
+      });
+    } catch (error) {
+      console.error('Erro ao buscar limite do tenant:', error);
+    }
+  }
+  return null;
+}
+
 export async function createUsuario(data: any) {
   const user = await getLoggedUser();
   try {
