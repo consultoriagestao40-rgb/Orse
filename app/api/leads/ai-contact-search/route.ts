@@ -274,7 +274,7 @@ export async function POST(req: NextRequest) {
       console.log('Utilizando gerador inteligente de contatos IA (Fallback Premium)...');
       
       const BRAZILIAN_NAMES_MALE = [
-        'Cristiano Silva', 'Rodrigo Santos', 'Marcos Oliveira', 'Alexandre Souza', 
+        'Roberto Albuquerque', 'Rodrigo Santos', 'Marcos Oliveira', 'Alexandre Souza', 
         'Gustavo Lima', 'Felipe Costa', 'Bruno Pereira', 'Thiago Rodrigues'
       ];
       
