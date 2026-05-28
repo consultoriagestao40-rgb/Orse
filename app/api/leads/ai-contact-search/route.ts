@@ -339,7 +339,7 @@ export async function POST(req: NextRequest) {
     }
 
     // B. SE HOUVER CHAVE SERPER.DEV - USA ELA (GOOGLE SEARCH API OFICIAL - SEM BLOQUEIOS)
-    const serperApiKey = process.env.SERPER_API_KEY;
+    const serperApiKey = process.env.SERPER_API_KEY || "55cc5118e3d7697957c0d889f05e67adfef34ea2";
     if (results.length === 0 && serperApiKey) {
       console.log('Utilizando Serper.dev API para busca oficial do Google...');
       for (const cargo of cargos.slice(0, 3)) {
