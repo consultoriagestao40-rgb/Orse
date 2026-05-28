@@ -26,11 +26,10 @@ export async function checkIsSuperAdmin() {
 
     if (!user) return false;
 
-    // Condições de liberação master
-    const isMasterEmail = user.email === 'cristiano@grupojvsserv.com.br';
-    const isJvsTenant = user.tenant?.cnpj === '00.000.000/0001-00';
+    // Condição de liberação master exclusiva do proprietário do SaaS
+    const isPlatformAdmin = user.email === 'admin@smartbidhub.com.br' && user.tenantId === null;
 
-    return isMasterEmail || isJvsTenant;
+    return isPlatformAdmin;
   } catch (error) {
     console.error('Erro na checagem de Super Admin:', error);
     return false;

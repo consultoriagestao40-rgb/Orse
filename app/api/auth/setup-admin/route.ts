@@ -34,6 +34,24 @@ export async function GET() {
       }
     })
 
+    // 2.5 Criar ou obter o usuário Super Administrador da Plataforma (SaaS Admin)
+    const superAdminEmail = 'admin@smartbidhub.com.br'
+    const superAdminUser = await prisma.user.upsert({
+      where: { email: superAdminEmail },
+      update: {
+        nome: 'SmartBidHub Admin',
+        role: 'ADMIN',
+        tenantId: null // Sem vínculo com empresas clientes
+      },
+      create: {
+        email: superAdminEmail,
+        nome: 'SmartBidHub Admin',
+        password: '123456',
+        role: 'ADMIN',
+        tenantId: null
+      }
+    })
+
     // 3. Migrar todas as tabelas órfãs (que possuem tenantId = null) para o Tenant do Grupo JVS
     const updates = await Promise.all([
       prisma.user.updateMany({ where: { tenantId: null }, data: { tenantId: tenant.id } }),
@@ -70,17 +88,21 @@ export async function GET() {
     }
     
     return new NextResponse(`
+      <!DOCTYPE html>
       <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>SaaS Inicializado</title>
+        </head>
         <body style="font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #0F172A; color: white; margin: 0; padding: 20px; box-sizing: border-box;">
           <div style="max-width: 500px; width: 100%; background: #1E293B; border-radius: 16px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; border: 1px border-slate-700;">
             <h1 style="color: #10B981; margin-top: 0;">SaaS Inicializado! 🎉</h1>
             <p style="font-size: 14px; color: #94A3B8;">O ERP SmartBid foi convertido com sucesso para Multi-Tenant.</p>
             
             <div style="background: #0F172A; border-radius: 12px; padding: 20px; text-align: left; margin: 20px 0; font-family: monospace; font-size: 12px; color: #10B981;">
-              <div style="font-weight: bold; border-bottom: 1px solid #1E293B; padding-bottom: 8px; margin-bottom: 8px; color: #94A3B8;">DADOS DO GRUPO JVS:</div>
-              • Empresa: <b>Grupo JVS</b><br/>
-              • Usuário: <b>${user.email}</b><br/>
-              • Status: <b>Admin Ativo</b><br/>
+              <div style="font-weight: bold; border-bottom: 1px solid #1E293B; padding-bottom: 8px; margin-bottom: 8px; color: #94A3B8;">CONTAS CONFIGURADAS:</div>
+              • 💻 Dono do SaaS: <b>admin@smartbidhub.com.br</b> (Senha: 123456)<br/>
+              • 🏢 CEO Grupo JVS: <b>${user.email}</b> (Senha: 123456)<br/>
               
               <div style="font-weight: bold; border-bottom: 1px solid #1E293B; padding-bottom: 8px; margin-bottom: 8px; margin-top: 16px; color: #94A3B8;">MIGRAÇÃO DE REGISTROS (ÓRFÃOS -> JVS):</div>
               • Usuários Vinculados: ${counts.users}<br/>

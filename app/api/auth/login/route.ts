@@ -39,6 +39,8 @@ export async function POST(request: Request) {
     response.cookies.set('sb_user', JSON.stringify({
       nome: user.nome,
       role: user.role,
+      email: user.email,
+      tenantId: user.tenantId,
       iniciais: user.nome.split(' ').map(n => n[0]).join('').toUpperCase()
     }), {
       maxAge: 60 * 60 * 24 * 7

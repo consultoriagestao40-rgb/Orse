@@ -10,7 +10,7 @@ const Sidebar = () => {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   
-  const [user, setUser] = useState<{ nome: string; role: string; iniciais: string } | null>(null);
+  const [user, setUser] = useState<{ nome: string; role: string; email?: string; tenantId?: string | null; iniciais: string } | null>(null);
   
   // Carrega as informações do usuário e o estado recolhido do localStorage
   useEffect(() => {
@@ -263,10 +263,18 @@ const Sidebar = () => {
       {/* Menu de Navegação */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {menuItems.filter(item => {
-          if (item.roles.includes('SUPER_ADMIN')) {
-            return user?.role === 'ADMIN' && user?.nome === 'Cristiano Silva';
+          const isPlatformAccount = user?.email === 'admin@smartbidhub.com.br';
+          
+          if (isPlatformAccount) {
+            // Conta de Operador do SaaS: vê apenas gestão de empresas e configurações
+            return item.href === '/admin/empresas' || item.href === '/admin/settings';
+          } else {
+            // Contas de Clientes (Grupo JVS, etc): não veem o painel de gestão de SaaS
+            if (item.roles.includes('SUPER_ADMIN') || item.href === '/admin/empresas') {
+              return false;
+            }
+            return item.roles.includes(user?.role || 'USER');
           }
-          return item.roles.includes(user?.role || 'USER');
         }).map((item) => {
           const isActive = pathname === item.href;
           return (
