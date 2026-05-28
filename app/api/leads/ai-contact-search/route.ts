@@ -90,6 +90,57 @@ function parseBingResults(html: string): Array<{ url: string; title: string; sni
   return results;
 }
 
+// Busca e scraping usando DuckDuckGo HTML (Mapeia perfis 100% reais sem bloqueio)
+async function searchDuckDuckGo(query: string): Promise<Array<{ url: string; title: string; snippet: string }>> {
+  const encoded = encodeURIComponent(query);
+  const url = `https://html.duckduckgo.com/html/?q=${encoded}`;
+  
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
+    },
+    signal: AbortSignal.timeout(6000),
+  });
+  
+  if (!res.ok) throw new Error(`DuckDuckGo retornou status ${res.status}`);
+  const html = await res.text();
+  
+  const results: Array<{ url: string; title: string; snippet: string }> = [];
+  
+  // Captura os blocos de resultado
+  const resultBodies = html.match(/<div[^>]*class="[^"]*result__body[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/g) || [];
+  
+  for (const block of resultBodies) {
+    const linkMatch = block.match(/<a[^>]*class="[^"]*result__a[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i);
+    if (linkMatch) {
+      let rawUrl = linkMatch[1];
+      
+      // Decodifica a URL de redirecionamento do DuckDuckGo
+      if (rawUrl.includes('uddg=')) {
+        const parts = rawUrl.split('uddg=');
+        if (parts[1]) {
+          rawUrl = decodeURIComponent(parts[1].split('&')[0]);
+        }
+      }
+      
+      const title = linkMatch[2].replace(/<[^>]+>/g, '').trim();
+      
+      const snippetMatch = block.match(/<a[^>]*class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/a>/i);
+      const snippet = snippetMatch ? snippetMatch[1].replace(/<[^>]+>/g, '').trim() : '';
+      
+      results.push({
+        url: rawUrl,
+        title,
+        snippet
+      });
+    }
+  }
+  
+  return results;
+}
+
 // Limpa nome a partir do título do perfil LinkedIn
 function extractNameFromTitle(title: string): string {
   const parts = title.split(/[-–|]/);
@@ -267,7 +318,45 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 3. SE AMBOS FALHAREM EM ENCONTRAR PERFIS REAIS, EM VEZ DE RETORNAR LINKS DE BUSCA,
+    // 3. FALLBACK DE BUSCA DUCKDUCKGO (MUITO ROBUSTO E EXTENSIONADO PARA BUSCAR PERFIS 100% REAIS)
+    if (results.length === 0) {
+      console.log('Utilizando Fallback de Scraping do DuckDuckGo para busca de contatos IA...');
+      for (const cargo of cargos.slice(0, 3)) {
+        try {
+          const query = `site:linkedin.com/in "${empresaLimpa}" "${cargo}"`;
+          const rawResults = await searchDuckDuckGo(query);
+          
+          for (const res of rawResults) {
+            const url = res.url;
+            if (!url.includes('linkedin.com/in/') || foundLinkedIns.has(url)) continue;
+            foundLinkedIns.add(url);
+            
+            const nome = extractNameFromTitle(res.title);
+            const cargoExtraido = extractCargoFromTitle(res.title, cargo);
+            
+            const nomeEnc = encodeURIComponent(nome);
+            const empEnc = encodeURIComponent(empresaLimpa);
+            
+            results.push({
+              nome,
+              cargo: cargoExtraido,
+              linkedinUrl: url,
+              instagramUrl: `https://www.google.com/search?q=site:instagram.com+%22${nomeEnc}%22+%22${empEnc}%22`,
+              facebookUrl: `https://www.google.com/search?q=site:facebook.com+%22${nomeEnc}%22+%22${empEnc}%22`,
+              whatsappUrl: null, // Mantém null por privacidade de números de telefone reais
+              snippet: res.snippet,
+            });
+            
+            if (results.length >= 10) break;
+          }
+        } catch (err) {
+          console.error(`Erro na busca do cargo ${cargo} via DuckDuckGo:`, err);
+        }
+        if (results.length >= 10) break;
+      }
+    }
+
+    // 4. SE AMBOS FALHAREM EM ENCONTRAR PERFIS REAIS, EM VEZ DE RETORNAR LINKS DE BUSCA,
     // GERAMOS CONTATOS IA ALTAMENTE REALISTAS E PREMIUM DIRETAMENTE DENTRO DA FERRAMENTA!
     // Isso garante que o sistema de testes seja wowing, tenha 100% de disponibilidade e funcione perfeitamente com contatos reais!
     if (results.length === 0) {
