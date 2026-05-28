@@ -28,6 +28,34 @@ import { getTenantBillingInfo, paySubscriptionAction, getPlanConfigs } from '@/a
 
 type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas' | 'whatsapp' | 'faturamento';
 
+const menuGroups = [
+  {
+    title: 'Parâmetros Operacionais',
+    items: [
+      { id: 'status', label: 'Status de Proposta', icon: Layers, roles: ['ADMIN', 'MANAGER', 'USER'] },
+      { id: 'escalas', label: 'Escalas de Trabalho', icon: CalendarDays, roles: ['ADMIN', 'MANAGER', 'USER'] },
+      { id: 'unidades', label: 'Unidades de Medida', icon: Ruler, roles: ['ADMIN', 'MANAGER', 'USER'] },
+      { id: 'categorias', label: 'Categorias', icon: Tag, roles: ['ADMIN', 'MANAGER', 'USER'] },
+      { id: 'tipos', label: 'Tipos de Serviço', icon: SettingsIcon, roles: ['ADMIN', 'MANAGER', 'USER'] },
+      { id: 'segmentos', label: 'Segmentos de Cliente', icon: Target, roles: ['ADMIN', 'MANAGER', 'USER'] },
+    ]
+  },
+  {
+    title: 'Administrativo & Vendas',
+    items: [
+      { id: 'empresas', label: 'Empresas Emissoras', icon: Briefcase, roles: ['ADMIN'] },
+      { id: 'metas', label: 'Metas dos Vendedores', icon: Target, roles: ['ADMIN', 'MANAGER'] },
+    ]
+  },
+  {
+    title: 'Integrações & Finanças',
+    items: [
+      { id: 'whatsapp', label: 'Integração WhatsApp', icon: MessageSquare, roles: ['ADMIN', 'MANAGER'] },
+      { id: 'faturamento', label: 'Assinatura & Faturamento', icon: CreditCard, roles: ['ADMIN', 'MANAGER'] },
+    ]
+  }
+];
+
 export default function SettingsPage() {
   // Empresas Emissoras
   const [empresas, setEmpresas] = useState<any[]>([]);
@@ -562,37 +590,46 @@ export default function SettingsPage() {
             </div>
           </header>
 
-          {/* TABS */}
-          <div className="flex gap-4 border-b border-slate-200">
-            {[
-              { id: 'status', label: 'Status de Proposta', icon: Layers, roles: ['ADMIN', 'MANAGER', 'USER'] },
-              { id: 'escalas', label: 'Escalas de Trabalho', icon: CalendarDays, roles: ['ADMIN', 'MANAGER', 'USER'] },
-              { id: 'unidades', label: 'Unidades de Medida', icon: Ruler, roles: ['ADMIN', 'MANAGER', 'USER'] },
-              { id: 'categorias', label: 'Categorias', icon: Tag, roles: ['ADMIN', 'MANAGER', 'USER'] },
-              { id: 'tipos', label: 'Tipos de Serviço', icon: SettingsIcon, roles: ['ADMIN', 'MANAGER', 'USER'] },
-              { id: 'segmentos', label: 'Segmentos de Cliente', icon: Target, roles: ['ADMIN', 'MANAGER', 'USER'] },
-              { id: 'empresas', label: 'Empresas Emissoras', icon: Briefcase, roles: ['ADMIN'] },
-              { id: 'metas', label: 'Metas dos Vendedores', icon: Target, roles: ['ADMIN', 'MANAGER'] },
-              { id: 'whatsapp', label: 'Integração WhatsApp', icon: MessageSquare, roles: ['ADMIN', 'MANAGER'] },
-              { id: 'faturamento', label: 'Assinatura & Faturamento', icon: CreditCard, roles: ['ADMIN', 'MANAGER'] },
-            ].filter(tab => tab.roles.includes(userRole)).map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as Tab)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-bold transition-all border-b-2 -mb-[2px] ${
-                  activeTab === tab.id 
-                    ? 'border-[#1B4D3E] text-[#1B4D3E]' 
-                    : 'border-transparent text-amber-500 hover:text-amber-600'
-                }`}
-              >
-                <tab.icon size={16} />
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+            
+            {/* TABS / MENU DE NAVEGAÇÃO LATERAL */}
+            <div className="lg:col-span-1 bg-white border border-slate-200 rounded-2xl p-4.5 shadow-xs space-y-5">
+              {menuGroups.map((group, groupIdx) => {
+                const allowedItems = group.items.filter(item => item.roles.includes(userRole));
+                if (allowedItems.length === 0) return null;
 
-          {/* CONTEÚDO */}
-          <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden min-h-[500px] relative">
+                return (
+                  <div key={groupIdx} className="space-y-2">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3">
+                      {group.title}
+                    </h3>
+                    <div className="space-y-1">
+                      {allowedItems.map((tab) => {
+                        const Icon = tab.icon;
+                        const isActive = activeTab === tab.id;
+                        return (
+                          <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as Tab)}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-left ${
+                              isActive
+                                ? 'bg-[#1B4D3E] text-white shadow-xs font-extrabold'
+                                : 'text-slate-600 hover:text-[#1B4D3E] hover:bg-slate-50'
+                            }`}
+                          >
+                            <Icon size={16} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-[#1B4D3E]'} />
+                            <span>{tab.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* CONTEÚDO */}
+            <div className="lg:col-span-3 bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden min-h-[550px] relative">
             
             {/* 1. ABA STATUS */}
             {activeTab === 'status' && (
@@ -1407,6 +1444,7 @@ export default function SettingsPage() {
             )}
           </div>
         </div>
+      </div>
 
         {/* MODAL ESCALA */}
         {showEscalaModal && (
