@@ -27,6 +27,7 @@ model Tenant {
   limiteUsuarios      Int                       @default(3)
   trialStartedAt      DateTime?
   taxaWhatsapp        Float                     @default(130.0)
+  asaasCustomerId     String?                   @unique
   users               User[]
   clients             Client[]
   leads               Lead[]
@@ -601,6 +602,7 @@ model Cobranca {
   metodo         String    // PIX, CARTAO, MANUAL
   dataVencimento DateTime
   dataPagamento  DateTime?
+  asaasPaymentId String?   @unique
   createdAt      DateTime  @default(now())
 }
 

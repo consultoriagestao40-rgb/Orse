@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
+import { getOrCreateAsaasCustomer, createAsaasPixCharge, createAsaasCardPayment } from './asaas';
 
 /**
  * Auxiliar de Segurança:
@@ -872,6 +873,256 @@ export async function updatePlanConfigAction(
     return { success: true, config: updated };
   } catch (error: any) {
     console.error('Erro ao atualizar plano:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Server Action para gerar uma cobrança PIX real integrada à Asaas.
+ */
+export async function generatePixChargeAction(plano: string, valor: number) {
+  try {
+    const cookieStore = await cookies();
+    const sbUser = cookieStore.get('sb_user')?.value;
+    if (!sbUser) return { success: false, error: 'Usuário não autenticado.' };
+
+    let data;
+    try {
+      data = JSON.parse(decodeURIComponent(sbUser));
+    } catch {
+      try {
+        data = JSON.parse(sbUser);
+      } catch {
+        return { success: false, error: 'Sessão inválida.' };
+      }
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { nome: data.nome || '' },
+      include: { tenant: true }
+    });
+
+    if (!user || !user.tenantId || !user.tenant) {
+      return { success: false, error: 'Usuário ou empresa não vinculada.' };
+    }
+
+    // 1. Obter ou criar Cliente no Asaas
+    const customerRes = await getOrCreateAsaasCustomer({
+      nome: user.tenant.nomeFantasia,
+      cnpj: user.tenant.cnpj,
+      email: user.email,
+      telefone: user.celular || undefined
+    });
+
+    if (!customerRes.success || !customerRes.customerId) {
+      return { success: false, error: customerRes.error || 'Erro ao sincronizar cliente com gateway.' };
+    }
+
+    // Se o asaasCustomerId for novo, gravar no Tenant
+    if (user.tenant.asaasCustomerId !== customerRes.customerId) {
+      await prisma.tenant.update({
+        where: { id: user.tenantId },
+        data: { asaasCustomerId: customerRes.customerId }
+      });
+    }
+
+    // 2. Criar a Cobrança PENDENTE no nosso banco de dados primeiro
+    const cobranca = await prisma.cobranca.create({
+      data: {
+        tenantId: user.tenantId,
+        plano,
+        valor: Number(valor),
+        status: 'PENDENTE',
+        metodo: 'PIX',
+        dataVencimento: new Date(Date.now() + 24 * 60 * 60 * 1000) // Vence em 24h
+      }
+    });
+
+    // 3. Gerar a cobrança e o QR Code no Asaas
+    const chargeRes = await createAsaasPixCharge({
+      customerId: customerRes.customerId,
+      valor: Number(valor),
+      descricao: `Mensalidade SmartBidHub - Plano ${plano}`,
+      externalReference: cobranca.id
+    });
+
+    if (!chargeRes.success || !chargeRes.paymentId) {
+      // Deletar a cobrança local se falhar a criação no gateway para evitar lixo no histórico
+      await prisma.cobranca.delete({ where: { id: cobranca.id } }).catch(() => {});
+      return { success: false, error: chargeRes.error || 'Erro ao gerar cobrança no gateway.' };
+    }
+
+    // 4. Salvar o asaasPaymentId na Cobrança no nosso DB
+    const updatedCobranca = await prisma.cobranca.update({
+      where: { id: cobranca.id },
+      data: { asaasPaymentId: chargeRes.paymentId }
+    });
+
+    return {
+      success: true,
+      cobrancaId: updatedCobranca.id,
+      pixCode: chargeRes.pixCode,
+      pixImage: chargeRes.pixImage
+    };
+  } catch (error: any) {
+    console.error('Erro ao gerar cobrança PIX no server:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Server Action para processar pagamento por Cartão de Crédito integrado à Asaas.
+ */
+export async function payWithCardAction(
+  plano: string,
+  valor: number,
+  card: {
+    holderName: string;
+    number: string;
+    expiryMonth: string;
+    expiryYear: string;
+    ccv: string;
+  }
+) {
+  try {
+    const cookieStore = await cookies();
+    const sbUser = cookieStore.get('sb_user')?.value;
+    if (!sbUser) return { success: false, error: 'Usuário não autenticado.' };
+
+    let data;
+    try {
+      data = JSON.parse(decodeURIComponent(sbUser));
+    } catch {
+      try {
+        data = JSON.parse(sbUser);
+      } catch {
+        return { success: false, error: 'Sessão inválida.' };
+      }
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { nome: data.nome || '' },
+      include: { tenant: true }
+    });
+
+    if (!user || !user.tenantId || !user.tenant) {
+      return { success: false, error: 'Usuário ou empresa não vinculada.' };
+    }
+
+    // 1. Obter ou criar Cliente no Asaas
+    const customerRes = await getOrCreateAsaasCustomer({
+      nome: user.tenant.nomeFantasia,
+      cnpj: user.tenant.cnpj,
+      email: user.email,
+      telefone: user.celular || undefined
+    });
+
+    if (!customerRes.success || !customerRes.customerId) {
+      return { success: false, error: customerRes.error || 'Erro ao sincronizar cliente com gateway.' };
+    }
+
+    // Se o asaasCustomerId for novo, gravar no Tenant
+    if (user.tenant.asaasCustomerId !== customerRes.customerId) {
+      await prisma.tenant.update({
+        where: { id: user.tenantId },
+        data: { asaasCustomerId: customerRes.customerId }
+      });
+    }
+
+    // 2. Criar Cobrança PENDENTE localmente
+    const cobranca = await prisma.cobranca.create({
+      data: {
+        tenantId: user.tenantId,
+        plano,
+        valor: Number(valor),
+        status: 'PENDENTE',
+        metodo: 'CARTAO',
+        dataVencimento: new Date()
+      }
+    });
+
+    // 3. Enviar processamento para o Asaas
+    const paymentRes = await createAsaasCardPayment({
+      customerId: customerRes.customerId,
+      valor: Number(valor),
+      descricao: `Mensalidade SmartBidHub - Plano ${plano}`,
+      externalReference: cobranca.id,
+      card,
+      holderInfo: {
+        name: card.holderName,
+        email: user.email,
+        cpfCnpj: user.tenant.cnpj,
+        phone: user.celular || undefined
+      }
+    });
+
+    if (!paymentRes.success || !paymentRes.paymentId) {
+      // Limpar cobrança em caso de falha de processamento (recusa)
+      await prisma.cobranca.delete({ where: { id: cobranca.id } }).catch(() => {});
+      return { success: false, error: paymentRes.error || 'Transação recusada pelo cartão.' };
+    }
+
+    // 4. Se a transação foi aprovada imediatamente
+    const isApproved = paymentRes.status === 'CONFIRMED' || paymentRes.status === 'RECEIVED';
+    
+    if (isApproved) {
+      let limite = 3;
+      if (plano === 'PRO') limite = 10;
+      else if (plano === 'ENTERPRISE') limite = 100;
+
+      // Executa o upgrade e ativação imediata do Tenant
+      await prisma.tenant.update({
+        where: { id: user.tenantId },
+        data: {
+          plano,
+          limiteUsuarios: limite,
+          ativo: true,
+          trialStartedAt: null
+        }
+      });
+
+      // Atualiza a cobrança para PAGO
+      await prisma.cobranca.update({
+        where: { id: cobranca.id },
+        data: {
+          status: 'PAGO',
+          dataPagamento: new Date(),
+          asaasPaymentId: paymentRes.paymentId
+        }
+      });
+
+      return { success: true };
+    } else {
+      // Caso fique pendente ou em análise (raro para cartão direto)
+      await prisma.cobranca.update({
+        where: { id: cobranca.id },
+        data: { asaasPaymentId: paymentRes.paymentId }
+      });
+      return { success: true, pendingApproval: true };
+    }
+  } catch (error: any) {
+    console.error('Erro ao processar pagamento com cartão no server:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Server Action para consultar o status de um pagamento PIX pendente
+ */
+export async function checkPixPaymentStatusAction(cobrancaId: string) {
+  try {
+    const cobranca = await prisma.cobranca.findUnique({
+      where: { id: cobrancaId }
+    });
+
+    if (!cobranca) return { success: false, error: 'Cobrança não localizada.' };
+
+    if (cobranca.status === 'PAGO') {
+      return { success: true, paid: true };
+    }
+
+    return { success: true, paid: false };
+  } catch (error: any) {
     return { success: false, error: error.message };
   }
 }

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
   Settings as SettingsIcon, Layers, CalendarDays, Ruler, Plus, Trash2, 
-  Save, X, Tag, Edit2, Target, Briefcase, MessageSquare, CreditCard, CheckCircle2, Lock, Smartphone
+  Save, X, Tag, Edit2, Target, Briefcase, MessageSquare, CreditCard, CheckCircle2, Lock, Smartphone, RefreshCw
 } from 'lucide-react';
 import { 
   getPropostaStatuses, createPropostaStatus, deletePropostaStatus 
@@ -24,7 +24,10 @@ import {
   getWhatsAppConnectionStatus, connectWhatsAppInstance, 
   getWhatsAppQrCode, disconnectWhatsAppInstance 
 } from './zapi-actions';
-import { getTenantBillingInfo, paySubscriptionAction, getPlanConfigs } from '@/app/admin/empresas/actions';
+import { 
+  getTenantBillingInfo, paySubscriptionAction, getPlanConfigs,
+  generatePixChargeAction, payWithCardAction, checkPixPaymentStatusAction
+} from '@/app/admin/empresas/actions';
 
 type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas' | 'whatsapp' | 'faturamento';
 
@@ -88,6 +91,11 @@ export default function SettingsPage() {
   const [pixProgress, setPixProgress] = useState(0);
   const [pixTicking, setPixTicking] = useState(false);
 
+  // Dynamic Asaas Payment States
+  const [activePixCode, setActivePixCode] = useState<string>('');
+  const [activePixImage, setActivePixImage] = useState<string>('');
+  const [activeCobrancaId, setActiveCobrancaId] = useState<string>('');
+
   const formatCardNumber = (value: string) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
     const matches = v.match(/\d{4,16}/g);
@@ -133,7 +141,23 @@ export default function SettingsPage() {
     setCheckoutLoading(true);
     try {
       const valorTotal = selectedPlan.price + (billingInfo?.whatsappConnected ? billingInfo.taxaWhatsapp : 0);
-      const res = await paySubscriptionAction(selectedPlan.name, metodo, valorTotal);
+      
+      let res;
+      if (metodo === 'CARTÃO') {
+        const [month, year] = cardExpiry.split('/');
+        const cardPayload = {
+          holderName: cardName,
+          number: cardNumber.replace(/\s+/g, ''),
+          expiryMonth: month ? month.trim() : '',
+          expiryYear: year ? `20${year.trim()}` : '',
+          ccv: cardCvc
+        };
+        res = await payWithCardAction(selectedPlan.name, valorTotal, cardPayload);
+      } else {
+        // Fallback simulação / manual / PIX manual
+        res = await paySubscriptionAction(selectedPlan.name, metodo, valorTotal);
+      }
+
       if (res.success) {
         setCheckoutSuccess(true);
         await loadBillingData();
@@ -147,6 +171,28 @@ export default function SettingsPage() {
       }
     } catch (err: any) {
       alert('Erro inesperado: ' + err.message);
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
+  const loadPixDetails = async (planoName: string, price: number) => {
+    setCheckoutLoading(true);
+    setActivePixCode('');
+    setActivePixImage('');
+    setActiveCobrancaId('');
+    try {
+      const valorTotal = price + (billingInfo?.whatsappConnected ? billingInfo.taxaWhatsapp : 0);
+      const res = await generatePixChargeAction(planoName, valorTotal);
+      if (res.success && res.pixCode && res.pixImage && res.cobrancaId) {
+        setActivePixCode(res.pixCode);
+        setActivePixImage(res.pixImage);
+        setActiveCobrancaId(res.cobrancaId);
+      } else {
+        alert('Erro ao gerar cobrança PIX no gateway: ' + (res.error || 'Erro desconhecido.'));
+      }
+    } catch (err: any) {
+      console.error('Falha de rede ao buscar Pix:', err);
     } finally {
       setCheckoutLoading(false);
     }
@@ -170,6 +216,28 @@ export default function SettingsPage() {
     }
     return () => clearInterval(interval);
   }, [pixTicking]);
+
+  // Polling para checar baixa real de PIX (via webhook ou API)
+  useEffect(() => {
+    let interval: any;
+    if (activeCobrancaId && checkoutModal && activeTab === 'faturamento') {
+      interval = setInterval(async () => {
+        try {
+          const res = await checkPixPaymentStatusAction(activeCobrancaId);
+          if (res.success && res.paid) {
+            setPixTicking(false);
+            setPixProgress(100);
+            setCheckoutSuccess(true);
+            await loadBillingData();
+            clearInterval(interval);
+          }
+        } catch (err) {
+          console.error('[Polling Asaas] Erro ao verificar PIX:', err);
+        }
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [activeCobrancaId, checkoutModal, activeTab]);
 
   const checkWhatsAppStatus = async () => {
     setWaLoading(true);
@@ -1350,6 +1418,7 @@ export default function SettingsPage() {
                                 disabled={isActive}
                                 onClick={() => {
                                   setSelectedPlan({ name: p.nome, price: p.preco });
+                                  loadPixDetails(p.nome, p.preco);
                                   setCheckoutModal(true);
                                 }}
                                 className={`w-full py-3.5 mt-6 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all cursor-pointer ${
@@ -1644,40 +1713,49 @@ export default function SettingsPage() {
                   {checkoutTab === 'pix' ? (
                     /* PIX TAB */
                     <div className="space-y-6 flex flex-col items-center">
-                      {/* Simulated QR Code SVG */}
+                      {/* Dynamic QR Code */}
                       <div className="w-48 h-48 bg-slate-50 border border-slate-200 rounded-3xl flex items-center justify-center p-4 relative group overflow-hidden shadow-2xs">
-                        <svg className="w-full h-full text-slate-800" viewBox="0 0 100 100">
-                          {/* Outer frame */}
-                          <rect x="5" y="5" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="4" />
-                          <rect x="10" y="10" width="10" height="10" fill="currentColor" />
-                          
-                          <rect x="75" y="5" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="4" />
-                          <rect x="80" y="10" width="10" height="10" fill="currentColor" />
+                        {checkoutLoading ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <RefreshCw className="animate-spin text-[#1B4D3E]" size={24} />
+                            <span className="text-[9px] font-black text-[#1B4D3E] uppercase tracking-widest">Gerando PIX...</span>
+                          </div>
+                        ) : activePixImage ? (
+                          <img src={activePixImage} alt="QR Code PIX Asaas" className="w-full h-full object-contain rounded-2xl animate-in fade-in duration-200" />
+                        ) : (
+                          <svg className="w-full h-full text-slate-800" viewBox="0 0 100 100">
+                            {/* Outer frame */}
+                            <rect x="5" y="5" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="4" />
+                            <rect x="10" y="10" width="10" height="10" fill="currentColor" />
+                            
+                            <rect x="75" y="5" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="4" />
+                            <rect x="80" y="10" width="10" height="10" fill="currentColor" />
 
-                          <rect x="5" y="75" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="4" />
-                          <rect x="10" y="80" width="10" height="10" fill="currentColor" />
-                          
-                          {/* Inner pixels */}
-                          <rect x="35" y="10" width="5" height="15" fill="currentColor" />
-                          <rect x="45" y="5" width="10" height="5" fill="currentColor" />
-                          <rect x="60" y="15" width="10" height="10" fill="currentColor" />
-                          
-                          <rect x="30" y="30" width="15" height="5" fill="currentColor" />
-                          <rect x="55" y="35" width="20" height="5" fill="currentColor" />
-                          <rect x="80" y="30" width="10" height="15" fill="currentColor" />
+                            <rect x="5" y="75" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="4" />
+                            <rect x="10" y="80" width="10" height="10" fill="currentColor" />
+                            
+                            {/* Inner pixels */}
+                            <rect x="35" y="10" width="5" height="15" fill="currentColor" />
+                            <rect x="45" y="5" width="10" height="5" fill="currentColor" />
+                            <rect x="60" y="15" width="10" height="10" fill="currentColor" />
+                            
+                            <rect x="30" y="30" width="15" height="5" fill="currentColor" />
+                            <rect x="55" y="35" width="20" height="5" fill="currentColor" />
+                            <rect x="80" y="30" width="10" height="15" fill="currentColor" />
 
-                          <rect x="10" y="35" width="10" height="5" fill="currentColor" />
-                          <rect x="5" y="50" width="15" height="10" fill="currentColor" />
-                          <rect x="35" y="45" width="10" height="20" fill="currentColor" />
+                            <rect x="10" y="35" width="10" height="5" fill="currentColor" />
+                            <rect x="5" y="50" width="15" height="10" fill="currentColor" />
+                            <rect x="35" y="45" width="10" height="20" fill="currentColor" />
 
-                          <rect x="50" y="55" width="25" height="5" fill="currentColor" />
-                          <rect x="55" y="65" width="10" height="15" fill="currentColor" />
-                          <rect x="75" y="60" width="15" height="10" fill="currentColor" />
+                            <rect x="50" y="55" width="25" height="5" fill="currentColor" />
+                            <rect x="55" y="65" width="10" height="15" fill="currentColor" />
+                            <rect x="75" y="60" width="15" height="10" fill="currentColor" />
 
-                          <rect x="30" y="75" width="10" height="10" fill="currentColor" />
-                          <rect x="35" y="90" width="20" height="5" fill="currentColor" />
-                          <rect x="75" y="80" width="15" height="15" fill="currentColor" />
-                        </svg>
+                            <rect x="30" y="75" width="10" height="10" fill="currentColor" />
+                            <rect x="35" y="90" width="20" height="5" fill="currentColor" />
+                            <rect x="75" y="80" width="15" height="15" fill="currentColor" />
+                          </svg>
+                        )}
                         <div className="absolute inset-0 bg-[#1B4D3E]/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"></div>
                       </div>
 
@@ -1688,15 +1766,15 @@ export default function SettingsPage() {
                           <textarea
                             readOnly
                             rows={2}
-                            value={`00020101021226870014br.gov.bcb.pix2580024smartbidhubcrmpayments.com6009SAOPAULO62070503***6304E3FD`}
+                            value={activePixCode || `00020101021226870014br.gov.bcb.pix2580024smartbidhubcrmpayments.com6009SAOPAULO62070503***6304E3FD`}
                             className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-[10px] font-mono text-slate-500 outline-none select-all"
                           />
                           <button
                             onClick={() => {
-                              navigator.clipboard.writeText(`00020101021226870014br.gov.bcb.pix2580024smartbidhubcrmpayments.com6009SAOPAULO62070503***6304E3FD`);
+                              navigator.clipboard.writeText(activePixCode || `00020101021226870014br.gov.bcb.pix2580024smartbidhubcrmpayments.com6009SAOPAULO62070503***6304E3FD`);
                               alert('Código Copiado! Efetue o pagamento em seu banco de preferência.');
                             }}
-                            className="bg-slate-100 hover:bg-slate-200 border border-slate-200 p-3 rounded-2xl text-slate-700 font-bold text-xs uppercase flex flex-col items-center justify-center shrink-0"
+                            className="bg-slate-100 hover:bg-slate-200 border border-slate-200 p-3 rounded-2xl text-slate-700 font-bold text-xs uppercase flex flex-col items-center justify-center shrink-0 cursor-pointer"
                           >
                             📋 Copiar
                           </button>
