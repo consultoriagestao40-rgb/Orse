@@ -18,9 +18,9 @@ export async function checkIsSuperAdmin() {
 
     const data = JSON.parse(decodeURIComponent(sbUser));
     
-    // Busca o usuário no banco incluindo a relação com o Tenant
+    // Busca o usuário no banco incluindo a relação com o Tenant pelo nome do cookie
     const user = await prisma.user.findFirst({
-      where: { email: data.email || '' },
+      where: { nome: data.nome || '' },
       include: { tenant: true }
     });
 
