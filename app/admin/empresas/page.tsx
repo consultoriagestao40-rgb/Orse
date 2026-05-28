@@ -20,6 +20,8 @@ interface TenantItem {
   cnpj: string;
   ativo: boolean;
   createdAt: string;
+  plano: string;
+  limiteUsuarios: number;
   stats: {
     users: number;
     propostas: number;
@@ -46,6 +48,8 @@ export default function TenantManagerDashboard() {
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
   const [nomeFantasia, setNomeFantasia] = useState('');
   const [cnpj, setCnpj] = useState('');
+  const [plano, setPlano] = useState('STARTER');
+  const [limiteUsuarios, setLimiteUsuarios] = useState(3);
   const [modalError, setModalError] = useState('');
   const [modalSuccess, setModalSuccess] = useState('');
 
@@ -78,6 +82,8 @@ export default function TenantManagerDashboard() {
     setSelectedTenantId(null);
     setNomeFantasia('');
     setCnpj('');
+    setPlano('STARTER');
+    setLimiteUsuarios(3);
     setModalError('');
     setModalSuccess('');
     setModalOpen(true);
@@ -88,6 +94,8 @@ export default function TenantManagerDashboard() {
     setSelectedTenantId(t.id);
     setNomeFantasia(t.nomeFantasia);
     setCnpj(t.cnpj);
+    setPlano(t.plano || 'STARTER');
+    setLimiteUsuarios(t.limiteUsuarios || 3);
     setModalError('');
     setModalSuccess('');
     setModalOpen(true);
@@ -101,7 +109,7 @@ export default function TenantManagerDashboard() {
 
     try {
       if (modalMode === 'create') {
-        const res = await createTenantAction(nomeFantasia, cnpj);
+        const res = await createTenantAction(nomeFantasia, cnpj, plano, limiteUsuarios);
         if (res.success) {
           setModalSuccess('Empresa cadastrada com sucesso!');
           setTimeout(() => {
@@ -113,7 +121,7 @@ export default function TenantManagerDashboard() {
         }
       } else {
         if (!selectedTenantId) return;
-        const res = await updateTenantAction(selectedTenantId, nomeFantasia, cnpj);
+        const res = await updateTenantAction(selectedTenantId, nomeFantasia, cnpj, plano, limiteUsuarios);
         if (res.success) {
           setModalSuccess('Cadastro atualizado com sucesso!');
           setTimeout(() => {
@@ -314,6 +322,7 @@ export default function TenantManagerDashboard() {
                   <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
                     <th className="px-6 py-3.5">Nome Fantasia</th>
                     <th className="px-6 py-3.5">CNPJ</th>
+                    <th className="px-6 py-3.5">Plano / Limite</th>
                     <th className="px-6 py-3.5">Status</th>
                     <th className="px-6 py-3.5 text-center">Colaboradores</th>
                     <th className="px-6 py-3.5 text-center">Leads CRM</th>
@@ -326,7 +335,7 @@ export default function TenantManagerDashboard() {
                 <tbody className="text-sm">
                   {loading ? (
                     <tr>
-                      <td colSpan={8} className="px-6 py-12 text-center text-slate-400">
+                      <td colSpan={10} className="px-6 py-12 text-center text-slate-400">
                         <div className="flex flex-col items-center gap-2 justify-center">
                           <RefreshCw size={20} className="animate-spin text-[#1B4D3E]" />
                           <span>Carregando dados das empresas...</span>
@@ -335,7 +344,7 @@ export default function TenantManagerDashboard() {
                     </tr>
                   ) : filteredTenants.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-6 py-12 text-center text-slate-400">
+                      <td colSpan={10} className="px-6 py-12 text-center text-slate-400">
                         Nenhuma empresa encontrada cadastrada na plataforma.
                       </td>
                     </tr>
@@ -364,6 +373,28 @@ export default function TenantManagerDashboard() {
                           </div>
                         </td>
                         <td className="px-6 py-4 font-semibold text-slate-600">{t.cnpj}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col gap-1">
+                            <div>
+                              {t.plano === 'PRO' ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wide">
+                                  Pro
+                                </span>
+                              ) : t.plano === 'ENTERPRISE' ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wide">
+                                  Enterprise
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-sky-50 text-sky-700 border border-sky-200 uppercase tracking-wide">
+                                  Starter
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-slate-500 font-bold">
+                              {t.stats.users} / {t.limiteUsuarios} users
+                            </span>
+                          </div>
+                        </td>
                         <td className="px-6 py-4">
                           {t.ativo !== false ? (
                             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-200">
@@ -470,6 +501,44 @@ export default function TenantManagerDashboard() {
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 outline-none transition-all font-semibold text-slate-700"
                   value={cnpj}
                   onChange={e => setCnpj(e.target.value)}
+                  disabled={actionLoading}
+                />
+              </div>
+
+              {/* Plano */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Plano Assinado</label>
+                <select 
+                  required
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 outline-none transition-all font-semibold text-slate-700 cursor-pointer"
+                  value={plano}
+                  onChange={e => {
+                    const newPlano = e.target.value;
+                    setPlano(newPlano);
+                    if (newPlano === 'STARTER') setLimiteUsuarios(3);
+                    else if (newPlano === 'PRO') setLimiteUsuarios(10);
+                    else if (newPlano === 'ENTERPRISE') setLimiteUsuarios(100);
+                  }}
+                  disabled={actionLoading}
+                >
+                  <option value="STARTER">Starter (3 users)</option>
+                  <option value="PRO">Pro (10 users)</option>
+                  <option value="ENTERPRISE">Enterprise (100 users)</option>
+                </select>
+              </div>
+
+              {/* Limite de Usuários */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Limite de Usuários</label>
+                <input 
+                  type="number"
+                  required
+                  min={1}
+                  max={9999}
+                  placeholder="Ex: 3"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 outline-none transition-all font-semibold text-slate-700"
+                  value={limiteUsuarios}
+                  onChange={e => setLimiteUsuarios(Number(e.target.value))}
                   disabled={actionLoading}
                 />
               </div>

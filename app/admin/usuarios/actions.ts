@@ -28,6 +28,25 @@ export async function getUsuarios() {
 export async function createUsuario(data: any) {
   const user = await getLoggedUser();
   try {
+    if (user?.tenantId) {
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: user.tenantId },
+        select: { limiteUsuarios: true, plano: true }
+      });
+      if (tenant) {
+        const count = await prisma.user.count({
+          where: { tenantId: user.tenantId }
+        });
+        if (count >= tenant.limiteUsuarios) {
+          const planoNome = tenant.plano.charAt(0).toUpperCase() + tenant.plano.slice(1).toLowerCase();
+          return {
+            success: false,
+            error: `Limite de usuários excedido! Seu plano atual (${planoNome}) permite no máximo ${tenant.limiteUsuarios} usuários ativos.`
+          };
+        }
+      }
+    }
+
     const newUser = await prisma.user.create({
       data: {
         email: data.email,
@@ -41,7 +60,7 @@ export async function createUsuario(data: any) {
       },
     });
     revalidatePath('/admin/usuarios');
-    return { success: true, data: user };
+    return { success: true, data: newUser };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

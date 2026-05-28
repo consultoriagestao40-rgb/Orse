@@ -83,6 +83,8 @@ export async function getTenantsWithStats() {
       cnpj: t.cnpj,
       ativo: t.ativo,
       createdAt: t.createdAt.toISOString(),
+      plano: t.plano,
+      limiteUsuarios: t.limiteUsuarios,
       stats: {
         users: t._count.users,
         propostas: t._count.propostas,
@@ -99,7 +101,12 @@ export async function getTenantsWithStats() {
 /**
  * Cria uma nova empresa (Tenant) na plataforma SaaS.
  */
-export async function createTenantAction(nomeFantasia: string, cnpj: string) {
+export async function createTenantAction(
+  nomeFantasia: string, 
+  cnpj: string,
+  plano?: string,
+  limiteUsuarios?: number
+) {
   const isSuper = await checkIsSuperAdmin();
   if (!isSuper) {
     throw new Error('Acesso negado: Você não possui privilégios de Super Administrador.');
@@ -124,7 +131,9 @@ export async function createTenantAction(nomeFantasia: string, cnpj: string) {
     const newTenant = await prisma.tenant.create({
       data: {
         nomeFantasia: nomeFantasia.trim(),
-        cnpj: formattedCnpj
+        cnpj: formattedCnpj,
+        plano: plano || 'STARTER',
+        limiteUsuarios: limiteUsuarios !== undefined ? Number(limiteUsuarios) : 3,
       }
     });
 
@@ -138,7 +147,13 @@ export async function createTenantAction(nomeFantasia: string, cnpj: string) {
 /**
  * Atualiza metadados cadastrais da empresa cliente.
  */
-export async function updateTenantAction(id: string, nomeFantasia: string, cnpj: string) {
+export async function updateTenantAction(
+  id: string, 
+  nomeFantasia: string, 
+  cnpj: string,
+  plano?: string,
+  limiteUsuarios?: number
+) {
   const isSuper = await checkIsSuperAdmin();
   if (!isSuper) {
     throw new Error('Acesso negado: Você não possui privilégios de Super Administrador.');
@@ -167,7 +182,9 @@ export async function updateTenantAction(id: string, nomeFantasia: string, cnpj:
       where: { id },
       data: {
         nomeFantasia: nomeFantasia.trim(),
-        cnpj: formattedCnpj
+        cnpj: formattedCnpj,
+        plano: plano || undefined,
+        limiteUsuarios: limiteUsuarios !== undefined ? Number(limiteUsuarios) : undefined,
       }
     });
 
