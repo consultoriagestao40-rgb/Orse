@@ -731,8 +731,8 @@ export default function Page() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const hasSession = document.cookie.split('; ').find(row => row.startsWith('sb_session='));
-    setIsLoggedIn(!!hasSession);
+    const hasUser = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
+    setIsLoggedIn(!!hasUser);
   }, []);
 
   if (isLoggedIn === null) {
