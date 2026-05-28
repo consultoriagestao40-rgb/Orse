@@ -28,7 +28,7 @@ export async function getDocumentosProposta() {
         empresa: d.empresaEmissora?.nomeFantasia,
         valor: d.valorTotal,
         status: d.status,
-        data: d.createdAt.toLocaleDateString('pt-BR'),
+        data: d.createdAt.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
         versaoFPV: lastVersao?.versao || 1,
         usuario: d.proposta?.user?.nome || 'Sistema'
       };

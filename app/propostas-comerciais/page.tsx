@@ -190,6 +190,7 @@ export default function PropostasComerciaisDashboard() {
                     <th className="px-6 py-3">Cliente</th>
                     <th className="px-6 py-3">Empresa Emissora</th>
                     <th className="px-6 py-3">Criado Por</th>
+                    <th className="px-6 py-3">Data/Hora</th>
                     <th className="px-6 py-3 text-right">Valor Total</th>
                     <th className="px-6 py-3 text-center">Status</th>
                     <th className="px-6 py-3 text-center">Ações</th>
@@ -197,9 +198,9 @@ export default function PropostasComerciaisDashboard() {
                 </thead>
                 <tbody className="text-sm">
                   {loading ? (
-                    <tr><td colSpan={7} className="px-6 py-12 text-center text-slate-400">Carregando...</td></tr>
+                    <tr><td colSpan={8} className="px-6 py-12 text-center text-slate-400">Carregando...</td></tr>
                   ) : filteredDocs.length === 0 ? (
-                    <tr><td colSpan={7} className="px-6 py-12 text-center text-slate-400">Nenhuma proposta encontrada.</td></tr>
+                    <tr><td colSpan={8} className="px-6 py-12 text-center text-slate-400">Nenhuma proposta encontrada.</td></tr>
                   ) : filteredDocs.map((doc) => (
                     <tr key={doc.id} className="border-b border-slate-200 hover:bg-slate-50">
                       <td className="px-6 py-3">
@@ -211,6 +212,7 @@ export default function PropostasComerciaisDashboard() {
                       <td className="px-6 py-3 font-semibold text-slate-700">{doc.cliente}</td>
                       <td className="px-6 py-3 text-slate-500">{doc.empresa}</td>
                       <td className="px-6 py-3 text-slate-600 font-medium">{doc.usuario || 'Sistema'}</td>
+                      <td className="px-6 py-3 text-slate-500 font-mono text-xs">{doc.data}</td>
                       <td className="px-6 py-3 font-bold text-[#1B4D3E] text-right">{fmt(doc.valor)}</td>
                       <td className="px-6 py-3 text-center">
                         <select
@@ -279,6 +281,10 @@ export default function PropostasComerciaisDashboard() {
                             <span className="font-medium text-slate-400">{doc.usuario || 'Sistema'}</span>
                           </div>
                           <p className="font-black text-[#1B4D3E]">{fmt(doc.valor)}</p>
+                          <div className="mt-2 text-[10px] text-slate-400 font-medium flex justify-between items-center border-t border-slate-50 pt-2">
+                            <span>Gerado em:</span>
+                            <span>{doc.data}</span>
+                          </div>
                         </div>
                       ))}
                     </div>
