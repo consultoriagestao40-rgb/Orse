@@ -13,7 +13,7 @@ import {
   updateTenantAction, deleteTenantAction, checkIsSuperAdmin,
   toggleTenantActiveAction, getSaaSFinancialMetrics,
   getAllCobrancasAction, manuallyConfirmPaymentAction,
-  manuallyCreateInvoiceAction
+  manuallyCreateInvoiceAction, getPlanConfigs, updatePlanConfigAction
 } from './actions';
 
 interface TenantItem {
@@ -104,6 +104,16 @@ export default function TenantManagerDashboard() {
   const [newInvoiceValor, setNewInvoiceValor] = useState(299.0);
   const [newInvoiceVencimento, setNewInvoiceVencimento] = useState('');
 
+  // Configurações de Planos States
+  const [plans, setPlans] = useState<any[]>([]);
+  const [editPlanModal, setEditPlanModal] = useState(false);
+  const [selectedPlanConfig, setSelectedPlanConfig] = useState<any>(null);
+  const [planPreco, setPlanPreco] = useState(0);
+  const [planLimite, setPlanLimite] = useState(0);
+  const [planLabel, setPlanLabel] = useState('');
+  const [planDescricao, setPlanDescricao] = useState('');
+  const [planFeatures, setPlanFeatures] = useState('');
+
   // 1. Validar autorização e carregar dados
   const loadData = async () => {
     setLoading(true);
@@ -124,6 +134,11 @@ export default function TenantManagerDashboard() {
         const cobrancasRes = await getAllCobrancasAction();
         if (cobrancasRes.success) {
           setAllCobrancas(cobrancasRes.cobrancas || []);
+        }
+
+        const plansRes = await getPlanConfigs();
+        if (plansRes.success) {
+          setPlans(plansRes.configs || []);
         }
       }
     } catch (err) {
@@ -253,6 +268,47 @@ export default function TenantManagerDashboard() {
         }
       }
     );
+  };
+
+  const handleOpenEditPlanModal = (plan: any) => {
+    setSelectedPlanConfig(plan);
+    setPlanPreco(plan.preco);
+    setPlanLimite(plan.limiteUsuarios);
+    setPlanLabel(plan.label);
+    setPlanDescricao(plan.descricao || '');
+    setPlanFeatures(plan.features || '');
+    setEditPlanModal(true);
+  };
+
+  const handleSavePlanConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPlanConfig) return;
+    setActionLoading(true);
+    try {
+      const res = await updatePlanConfigAction(
+        selectedPlanConfig.id,
+        planPreco,
+        planLimite,
+        planLabel,
+        planDescricao,
+        planFeatures
+      );
+      if (res.success) {
+        showAlert('Sucesso', 'Plano atualizado com sucesso!', 'success');
+        setEditPlanModal(false);
+        // Recarrega planos
+        const plansRes = await getPlanConfigs();
+        if (plansRes.success) {
+          setPlans(plansRes.configs || []);
+        }
+      } else {
+        showAlert('Erro', 'Erro ao atualizar plano: ' + res.error, 'error');
+      }
+    } catch (err: any) {
+      showAlert('Erro Inesperado', err.message, 'error');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   // 3. Filtros
@@ -601,6 +657,57 @@ export default function TenantManagerDashboard() {
                       </p>
                       <p className="text-[9px] text-slate-400 mt-1 uppercase font-bold">Faturas Aguardando Ação</p>
                     </div>
+                  </div>
+                </div>
+
+                {/* CONFIGURAÇÃO DE PLANOS DE ASSINATURA */}
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    ⚙️ Configurações Gerais dos Planos de Assinatura (LP e Clientes)
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {plans.map((p) => {
+                      const featuresCount = typeof p.features === 'string' ? p.features.split(',').length : 0;
+                      return (
+                        <div 
+                          key={p.id}
+                          className="bg-white border border-slate-300 rounded-2xl p-5 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between"
+                        >
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-start">
+                              <span className="text-[8px] font-black uppercase text-slate-400 bg-slate-100 px-2.5 py-1 rounded">
+                                PLANO {p.nome}
+                              </span>
+                              <span className="text-xs font-extrabold text-[#1B4D3E] bg-[#1B4D3E]/10 px-3 py-1 rounded-full">
+                                {p.limiteUsuarios} Usuários
+                              </span>
+                            </div>
+                            
+                            <div>
+                              <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">{p.label}</h4>
+                              <p className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">{p.descricao || 'Sem descrição cadastrada.'}</p>
+                            </div>
+
+                            <div className="py-2 border-y border-slate-100">
+                              <span className="text-lg font-black text-slate-800">R$ {p.preco.toFixed(2)}</span>
+                              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">/ mês</span>
+                            </div>
+
+                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide">
+                              📋 {featuresCount} Benefícios listados
+                            </p>
+                          </div>
+
+                          <button
+                            onClick={() => handleOpenEditPlanModal(p)}
+                            className="w-full py-2.5 mt-5 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-xs hover:shadow-sm active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5"
+                          >
+                            <Edit2 size={12} /> Editar Configurações
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1081,6 +1188,127 @@ export default function TenantManagerDashboard() {
                     <RefreshCw className="animate-spin" size={14} />
                   ) : (
                     'Confirmar Lançamento'
+                  )}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE EDIÇÃO DE CONFIGURAÇÃO DE PLANO */}
+      {editPlanModal && selectedPlanConfig && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                <Building2 size={20} className="text-[#10B981]" /> 
+                Editar Configuração: Plano {selectedPlanConfig.nome}
+              </h2>
+              <button 
+                onClick={() => setEditPlanModal(false)} 
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1"
+                disabled={actionLoading}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSavePlanConfig} className="p-5 space-y-4">
+              
+              {/* Nome Visível (Label) */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Título do Plano (Label)</label>
+                <input 
+                  type="text"
+                  required
+                  placeholder="Ex: Profissional (PRO)"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 outline-none transition-all font-semibold text-slate-700"
+                  value={planLabel}
+                  onChange={e => setPlanLabel(e.target.value)}
+                  disabled={actionLoading}
+                />
+              </div>
+
+              {/* Preço Base Mensal */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Preço Base Mensal (R$)</label>
+                <input 
+                  type="number"
+                  required
+                  min={0}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 outline-none transition-all font-semibold text-slate-700"
+                  value={planPreco}
+                  onChange={e => setPlanPreco(Number(e.target.value))}
+                  disabled={actionLoading}
+                />
+              </div>
+
+              {/* Limite de Usuários */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Limite Máximo de Usuários</label>
+                <input 
+                  type="number"
+                  required
+                  min={1}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 outline-none transition-all font-semibold text-slate-700"
+                  value={planLimite}
+                  onChange={e => setPlanLimite(Number(e.target.value))}
+                  disabled={actionLoading}
+                />
+              </div>
+
+              {/* Descrição do Plano */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Descrição</label>
+                <textarea 
+                  required
+                  rows={2}
+                  placeholder="Descrição simples para a LP e Checkout..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 outline-none transition-all font-semibold text-slate-700"
+                  value={planDescricao}
+                  onChange={e => setPlanDescricao(e.target.value)}
+                  disabled={actionLoading}
+                />
+              </div>
+
+              {/* Recursos / Benefícios (features) */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center ml-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Lista de Recursos / Benefícios</label>
+                  <span className="text-[8px] font-bold text-slate-400 uppercase">Separados por vírgula</span>
+                </div>
+                <textarea 
+                  required
+                  rows={3}
+                  placeholder="Recurso 1, Recurso 2, Recurso 3..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[11px] focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 outline-none transition-all font-semibold text-slate-700"
+                  value={planFeatures}
+                  onChange={e => setPlanFeatures(e.target.value)}
+                  disabled={actionLoading}
+                />
+              </div>
+
+              {/* Recursos Controles */}
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100 mt-6">
+                <button 
+                  type="button" 
+                  onClick={() => setEditPlanModal(false)} 
+                  className="px-4 py-2.5 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-slate-50 rounded-xl border border-slate-200 cursor-pointer"
+                  disabled={actionLoading}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  className="px-5 py-2.5 text-xs font-black uppercase tracking-wider bg-amber-500 hover:bg-amber-600 text-white rounded-xl cursor-pointer flex items-center gap-1.5 shadow-sm font-bold"
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? (
+                    <RefreshCw className="animate-spin" size={14} />
+                  ) : (
+                    'Salvar Configurações'
                   )}
                 </button>
               </div>

@@ -7,8 +7,10 @@ import {
   BarChart3, Database, Sparkles, ArrowUpRight, Lock, 
   Fingerprint, FileText, Check, ChevronRight, Menu, X 
 } from 'lucide-react';
+import { getPlanConfigs } from '@/app/admin/empresas/actions';
 
 export default function LandingPage() {
+  const [plans, setPlans] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'facilities' | 'varejo' | 'controladoria'>('facilities');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -17,6 +19,18 @@ export default function LandingPage() {
   const [simulatedStep, setSimulatedStep] = useState(0);
 
   useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const res = await getPlanConfigs();
+        if (res.success && res.configs) {
+          setPlans(res.configs);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar planos na LP:', err);
+      }
+    };
+    fetchPlans();
+
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
@@ -577,121 +591,96 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch max-w-6xl mx-auto">
-            
-            {/* Plano 1: Starter */}
-            <div className="p-8 rounded-3xl bg-slate-900/40 border border-white/5 backdrop-blur-md flex flex-col justify-between hover:border-white/10 transition-all duration-300">
-              <div className="space-y-6">
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#10B981] block mb-2">Smart Starter</span>
-                  <h4 className="text-2xl font-black text-white uppercase tracking-tight">Para Iniciar</h4>
-                </div>
-                
-                <div className="py-4 border-y border-white/5">
-                  <span className="text-3xl font-black text-white">R$ 249</span>
-                  <span className="text-xs text-slate-500 font-bold uppercase tracking-wider"> / mês</span>
-                  <p className="text-[10px] text-slate-400 mt-2 font-semibold">Ideal para consultores individuais ou novos times de vendas.</p>
-                </div>
+            {(() => {
+              const defaultPlans = [
+                {
+                  nome: "BASICO",
+                  label: "Básico",
+                  preco: 149.00,
+                  limiteUsuarios: 3,
+                  descricao: "Ideal para pequenas imobiliárias e corretores autônomos.",
+                  features: "Até 3 Usuários ativos,Acesso ao Pipeline de Leads CRM,Prospecção básica de empresas,1.000 buscas em cache local,Suporte via e-mail"
+                },
+                {
+                  nome: "PRO",
+                  label: "Profissional (PRO)",
+                  preco: 299.00,
+                  limiteUsuarios: 10,
+                  descricao: "Perfeito para construtoras e equipes comerciais em expansão.",
+                  features: "Até 10 Usuários ativos,Acesso ilimitado a FPVs e CCTs,Prospecção Inteligente Ativa via IA,Calendário Global de prazos e escalas,Auditoria completa (Audit Trail) de logs,Suporte premium prioritário 24/7"
+                },
+                {
+                  nome: "ENTERPRISE",
+                  label: "Enterprise",
+                  preco: 599.00,
+                  limiteUsuarios: 100,
+                  descricao: "Customização e poder ilimitado para grandes corporações.",
+                  features: "Até 100 Usuários ativos,Suporte 24/7 com Executivo de Conta,Integração e APIs Liberadas,SLA de Disponibilidade Avançado,Treinamento de equipe em vídeo"
+                }
+              ];
 
-                <ul className="space-y-3.5 text-xs text-slate-300 font-semibold">
-                  {['Até 3 Usuários ativos', 'Acesso ao Pipeline de Leads CRM', 'Prospecção básica de empresas', '1.000 buscas em cache local', 'Suporte via e-mail'].map((feat, i) => (
-                    <li key={i} className="flex items-center gap-2.5">
-                      <Check size={12} className="text-[#10B981] shrink-0" />
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              const plansToShow = plans.length > 0 ? plans : defaultPlans;
 
-              <div className="pt-8">
-                <a 
-                  href="/api/auth/google"
-                  className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-black uppercase tracking-widest text-slate-300 hover:text-white rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  Começar com Starter
-                </a>
-              </div>
-            </div>
+              return plansToShow.map((p: any, idx: number) => {
+                const isPopular = p.nome === 'PRO';
+                const featuresList = typeof p.features === 'string' ? p.features.split(',') : [];
 
-            {/* Plano 2: Enterprise Pro (O mais vendido, glow verde) */}
-            <div className="p-8 rounded-3xl bg-gradient-to-b from-[#1B4D3E]/40 to-slate-950/80 border border-[#10B981]/40 shadow-2xl shadow-emerald-950/30 flex flex-col justify-between relative scale-[1.03] z-10">
-              {/* Badge Mais Vendido */}
-              <div className="absolute top-0 right-8 -translate-y-1/2 px-3 py-1 bg-[#10B981] text-[#0F172A] text-[9px] font-black uppercase tracking-widest rounded-full border border-emerald-400">
-                Mais Vendido
-              </div>
-              
-              <div className="space-y-6">
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#10B981] block mb-2">Enterprise Pro</span>
-                  <h4 className="text-2xl font-black text-white uppercase tracking-tight">Escala & Performance</h4>
-                </div>
-                
-                <div className="py-4 border-y border-white/10">
-                  <span className="text-4xl font-black text-white">R$ 699</span>
-                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider"> / mês</span>
-                  <p className="text-[10px] text-emerald-300 mt-2 font-semibold">Aceleração completa comercial com inteligência integrada.</p>
-                </div>
+                return (
+                  <div 
+                    key={p.nome || idx}
+                    className={`p-8 rounded-3xl backdrop-blur-md flex flex-col justify-between transition-all duration-300 relative ${
+                      isPopular 
+                        ? 'bg-gradient-to-b from-[#1B4D3E]/40 to-slate-950/80 border border-[#10B981]/40 shadow-2xl shadow-emerald-950/30 scale-[1.03] z-10'
+                        : 'bg-slate-900/40 border border-white/5 hover:border-white/10'
+                    }`}
+                  >
+                    {isPopular && (
+                      <div className="absolute top-0 right-8 -translate-y-1/2 px-3 py-1 bg-[#10B981] text-[#0F172A] text-[9px] font-black uppercase tracking-widest rounded-full border border-emerald-400">
+                        Mais Vendido
+                      </div>
+                    )}
 
-                <ul className="space-y-3.5 text-xs text-slate-200 font-semibold">
-                  {[
-                    'Usuários ilimitados em sua Tenant',
-                    'Acesso ilimitado a FPVs e CCTs',
-                    'Prospecção Inteligente Ativa via IA',
-                    'Calendário Global de prazos e escalas',
-                    'Auditoria completa (Audit Trail) de logs',
-                    'Suporte premium prioritário 24/7'
-                  ].map((feat, i) => (
-                    <li key={i} className="flex items-center gap-2.5">
-                      <Check size={12} className="text-[#10B981] shrink-0" />
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                    <div className="space-y-6">
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-[#10B981] block mb-2">
+                          {p.nome === 'BASICO' ? 'Smart Starter' : p.nome === 'PRO' ? 'Enterprise Pro' : 'Custom Scale'}
+                        </span>
+                        <h4 className="text-2xl font-black text-white uppercase tracking-tight">{p.label}</h4>
+                      </div>
+                      
+                      <div className="py-4 border-y border-white/5">
+                        <span className="text-3xl font-black text-white">R$ {p.preco.toFixed(0)}</span>
+                        <span className="text-xs text-slate-500 font-bold uppercase tracking-wider"> / mês</span>
+                        <p className="text-[10px] text-slate-400 mt-2 font-semibold">{p.descricao}</p>
+                      </div>
 
-              <div className="pt-8">
-                <a 
-                  href="/api/auth/google"
-                  className="w-full py-4 bg-[#1B4D3E] hover:bg-[#13382D] border border-[#10B981]/50 text-xs font-black uppercase tracking-widest text-white rounded-xl transition-all shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  Assinar Plano Pro
-                  <ArrowRight size={14} />
-                </a>
-              </div>
-            </div>
+                      <ul className="space-y-3.5 text-xs text-slate-300 font-semibold">
+                        {featuresList.map((feat: string, fIdx: number) => (
+                          <li key={fIdx} className="flex items-center gap-2.5">
+                            <Check size={12} className="text-[#10B981] shrink-0" />
+                            <span>{feat}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
 
-            {/* Plano 3: Custom Scale */}
-            <div className="p-8 rounded-3xl bg-slate-900/40 border border-white/5 backdrop-blur-md flex flex-col justify-between hover:border-white/10 transition-all duration-300">
-              <div className="space-y-6">
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#10B981] block mb-2">Custom Scale</span>
-                  <h4 className="text-2xl font-black text-white uppercase tracking-tight">Corporativo</h4>
-                </div>
-                
-                <div className="py-4 border-y border-white/5">
-                  <span className="text-3xl font-black text-white">Sob Consulta</span>
-                  <p className="text-[10px] text-slate-400 mt-2 font-semibold">Para grandes corporações que exigem integrações customizadas.</p>
-                </div>
-
-                <ul className="space-y-3.5 text-xs text-slate-300 font-semibold">
-                  {['Integração API dedicada bidirecional', 'SLA de disponibilidade 99.9%', 'Customizações e novos campos Prisma', 'Manager de conta exclusivo', 'Treinamento de equipe em vídeo'].map((feat, i) => (
-                    <li key={i} className="flex items-center gap-2.5">
-                      <Check size={12} className="text-[#10B981] shrink-0" />
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="pt-8">
-                <a 
-                  href="mailto:suporte@smartbidhub.com.br"
-                  className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-black uppercase tracking-widest text-slate-300 hover:text-white rounded-xl transition-all flex items-center justify-center gap-2"
-                >
-                  Falar com Consultor
-                </a>
-              </div>
-            </div>
-
+                    <div className="pt-8">
+                      <a 
+                        href="/api/auth/google"
+                        className={`w-full py-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                          isPopular
+                            ? 'bg-[#1B4D3E] hover:bg-[#13382D] border border-[#10B981]/50 text-white shadow-lg shadow-emerald-950/40'
+                            : 'bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white'
+                        }`}
+                      >
+                        {p.nome === 'BASICO' ? 'Começar com Starter' : p.nome === 'PRO' ? 'Assinar Plano Pro' : 'Assinar Enterprise'}
+                        {isPopular && <ArrowRight size={14} />}
+                      </a>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
           </div>
         </div>
       </section>

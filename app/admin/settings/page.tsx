@@ -24,7 +24,7 @@ import {
   getWhatsAppConnectionStatus, connectWhatsAppInstance, 
   getWhatsAppQrCode, disconnectWhatsAppInstance 
 } from './zapi-actions';
-import { getTenantBillingInfo, paySubscriptionAction } from '@/app/admin/empresas/actions';
+import { getTenantBillingInfo, paySubscriptionAction, getPlanConfigs } from '@/app/admin/empresas/actions';
 
 type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas' | 'whatsapp' | 'faturamento';
 
@@ -43,6 +43,7 @@ export default function SettingsPage() {
 
   // Billing & SaaS Monets States
   const [billingInfo, setBillingInfo] = useState<any>(null);
+  const [plans, setPlans] = useState<any[]>([]);
   const [checkoutModal, setCheckoutModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<{ name: string; price: number } | null>(null);
   const [checkoutTab, setCheckoutTab] = useState<'pix' | 'card'>('pix');
@@ -89,6 +90,10 @@ export default function SettingsPage() {
       const res = await getTenantBillingInfo();
       if (res.success) {
         setBillingInfo(res);
+      }
+      const plansRes = await getPlanConfigs();
+      if (plansRes.success) {
+        setPlans(plansRes.configs || []);
       }
     } catch (err) {
       console.error('Erro ao buscar dados de faturamento:', err);
@@ -1133,6 +1138,265 @@ export default function SettingsPage() {
                             >
                               🚀 Inicializar e Gerar QR Code
                             </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 8. ABA ASSINATURA & FATURAMENTO */}
+            {activeTab === 'faturamento' && (
+              <div>
+                {/* Header */}
+                <div className="bg-[#1B4D3E] px-6 py-4 border-b border-[#13382D] flex justify-between items-center">
+                  <h2 className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                    <CreditCard size={14} className="text-emerald-400" /> Assinatura & Faturamento da Empresa
+                  </h2>
+                </div>
+
+                <div className="p-8 space-y-8">
+                  {/* Seu Plano Atual - Premium Card */}
+                  {billingInfo ? (
+                    <div className="bg-gradient-to-br from-slate-50 to-slate-100/50 border border-slate-200 rounded-3xl p-6 shadow-2xs space-y-6">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-[#1B4D3E] bg-[#1B4D3E]/10 px-3 py-1 rounded-full">
+                            Plano Atual
+                          </span>
+                          <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight mt-1">
+                            {billingInfo.plano === 'TESTE' ? 'Teste Grátis 7 Dias' : `Plano ${billingInfo.plano}`}
+                          </h3>
+                          <p className="text-xs text-slate-400 font-medium">
+                            {billingInfo.plano === 'TESTE' 
+                              ? 'Experimente os recursos PRO gratuitamente.' 
+                              : `Assinatura corporativa ativa no SmartBidHub.`}
+                          </p>
+                        </div>
+
+                        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-3xs text-right min-w-[200px]">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Custo Mensal</p>
+                          <p className="text-2xl font-black text-[#1B4D3E] mt-1">
+                            R$ {billingInfo.totalCost.toFixed(2)}
+                            <span className="text-xs text-slate-400 font-bold">/mês</span>
+                          </p>
+                          {billingInfo.whatsappConnected && (
+                            <p className="text-[9px] text-slate-400 mt-1 font-semibold uppercase tracking-wide">
+                              Inclui WhatsApp: R$ {billingInfo.taxaWhatsapp.toFixed(2)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Quotas & Expiry grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-200/80">
+                        {/* Users Quota Progress */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="font-bold text-slate-500 uppercase tracking-wider">Colaboradores Ativos</span>
+                            <span className="font-extrabold text-slate-800 bg-slate-200/60 px-2 py-0.5 rounded">
+                              {billingInfo.activeUsersCount} de {billingInfo.limiteUsuarios} contratados
+                            </span>
+                          </div>
+                          <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden border border-slate-300/30">
+                            <div 
+                              className="bg-[#1B4D3E] h-full rounded-full transition-all duration-500" 
+                              style={{ width: `${Math.min(100, (billingInfo.activeUsersCount / billingInfo.limiteUsuarios) * 100)}%` }}
+                            ></div>
+                          </div>
+                        </div>
+
+                        {/* Next Billing Date */}
+                        <div className="flex items-center justify-between bg-white border border-slate-200/80 rounded-2xl p-4 shadow-3xs">
+                          <div className="space-y-0.5">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Próximo Vencimento</p>
+                            <p className="text-xs font-black text-slate-800">
+                              {new Date(billingInfo.nextBillingDate).toLocaleDateString('pt-BR')}
+                            </p>
+                          </div>
+                          <span className="text-[9px] font-black uppercase text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+                            Renovação Automática
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex justify-center py-6">
+                      <div className="w-6 h-6 border-2 border-[#1B4D3E] border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
+
+                  {/* Plan Upgrade Options */}
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider">
+                      🔥 Opções de Upgrade & Planos Disponíveis
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {(() => {
+                        const defaultPlans = [
+                          {
+                            nome: "BASICO",
+                            label: "Básico",
+                            preco: 149.00,
+                            limiteUsuarios: 3,
+                            descricao: "Ideal para pequenas imobiliárias e corretores autônomos.",
+                            features: "Até 3 Usuários ativos,Acesso ao Pipeline de CRM,Prospecção de empresas,Suporte via e-mail"
+                          },
+                          {
+                            nome: "PRO",
+                            label: "Profissional (PRO)",
+                            preco: 299.00,
+                            limiteUsuarios: 10,
+                            descricao: "Perfeito para construtoras e equipes comerciais em expansão.",
+                            features: "Até 10 Usuários ativos,Acesso ilimitado a FPVs,Prospecção Inteligente IA,Calendário Global,Auditoria e logs"
+                          },
+                          {
+                            nome: "ENTERPRISE",
+                            label: "Enterprise",
+                            preco: 599.00,
+                            limiteUsuarios: 100,
+                            descricao: "Customização e poder ilimitado para grandes corporações.",
+                            features: "Até 100 Usuários ativos,Suporte 24/7 com Executivo,Integração e APIs Liberadas,SLA Avançado,Treinamento de equipe"
+                          }
+                        ];
+
+                        const plansList = plans.length > 0 ? plans : defaultPlans;
+
+                        return plansList.map((p) => {
+                          const isActive = billingInfo?.plano === p.nome;
+                          const featuresArray = typeof p.features === 'string' ? p.features.split(',') : [];
+
+                          return (
+                            <div 
+                              key={p.nome}
+                              className={`bg-white border rounded-3xl p-6 flex flex-col justify-between transition-all duration-300 relative shadow-2xs hover:shadow-xs ${
+                                isActive 
+                                  ? 'border-[#1B4D3E] ring-2 ring-[#1B4D3E]/10 bg-slate-50/50' 
+                                  : 'border-slate-200/80'
+                              }`}
+                            >
+                              {isActive && (
+                                <span className="absolute top-0 right-6 -translate-y-1/2 bg-[#1B4D3E] text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">
+                                  Plano Ativo
+                                </span>
+                              )}
+
+                              <div className="space-y-4">
+                                <div>
+                                  <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 block mb-1">
+                                    {p.nome === 'BASICO' ? 'Starter Plan' : p.nome === 'PRO' ? 'Professional Scale' : 'Enterprise Level'}
+                                  </span>
+                                  <h4 className="text-base font-black text-slate-800 uppercase tracking-tight">{p.label}</h4>
+                                </div>
+
+                                <div className="py-2.5 border-y border-slate-100 flex items-baseline gap-1">
+                                  <span className="text-2xl font-black text-slate-800">R$ {p.preco.toFixed(0)}</span>
+                                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">/ mês</span>
+                                </div>
+
+                                <p className="text-[10px] text-slate-400 leading-relaxed font-semibold uppercase">{p.descricao}</p>
+
+                                <ul className="space-y-2 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                                  {featuresArray.map((feat: string, fIdx: number) => (
+                                    <li key={fIdx} className="flex items-center gap-2">
+                                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full shrink-0"></span>
+                                      <span>{feat}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+
+                              <button
+                                disabled={isActive}
+                                onClick={() => {
+                                  setSelectedPlan({ name: p.nome, price: p.preco });
+                                  setCheckoutModal(true);
+                                }}
+                                className={`w-full py-3.5 mt-6 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all cursor-pointer ${
+                                  isActive
+                                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                                    : 'bg-[#1B4D3E] hover:bg-emerald-950 text-white shadow-xs active:scale-[0.98]'
+                                }`}
+                              >
+                                {isActive ? 'Plano Atual' : `Selecionar ${p.label}`}
+                              </button>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Histórico de Faturas - Elegante Tabela */}
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                      📜 Histórico de Faturamento & Faturas Passadas
+                    </h3>
+
+                    <div className="border border-slate-200/80 rounded-2xl overflow-hidden shadow-3xs">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-200/80">
+                            <th className="px-5 py-4">Fatura ID</th>
+                            <th className="px-5 py-4">Referência / Plano</th>
+                            <th className="px-5 py-4">Valor Faturado</th>
+                            <th className="px-5 py-4 text-center">Status</th>
+                            <th className="px-5 py-4 text-center">Forma de Pagamento</th>
+                            <th className="px-5 py-4 text-right">Data de Vencimento</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                          {billingInfo?.cobrancas && billingInfo.cobrancas.length > 0 ? (
+                            billingInfo.cobrancas.map((cob: any) => {
+                              const isPaid = cob.status === 'PAGO';
+                              return (
+                                <tr key={cob.id} className="hover:bg-slate-50/50 transition-colors">
+                                  <td className="px-5 py-4 font-mono font-bold text-slate-400 text-[10px]">
+                                    #{cob.id.substring(0, 8).toUpperCase()}
+                                  </td>
+                                  <td className="px-5 py-4 font-extrabold text-slate-700 uppercase">
+                                    Plano {cob.plano}
+                                  </td>
+                                  <td className="px-5 py-4 font-black text-slate-800">
+                                    R$ {cob.valor.toFixed(2)}
+                                  </td>
+                                  <td className="px-5 py-4 text-center">
+                                    <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                                      isPaid 
+                                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' 
+                                        : 'bg-amber-50 border border-amber-200 text-amber-700'
+                                    }`}>
+                                      {cob.status}
+                                    </span>
+                                  </td>
+                                  <td className="px-5 py-4 text-center text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                                    {cob.metodo}
+                                  </td>
+                                  <td className="px-5 py-4 text-right font-bold text-slate-600">
+                                    {new Date(cob.dataPagamento || cob.dataVencimento).toLocaleDateString('pt-BR')}
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          ) : (
+                            <tr>
+                              <td colSpan={6} className="px-5 py-8 text-center text-slate-400 font-medium uppercase tracking-wide text-[10px]">
+                                Nenhuma fatura encontrada no histórico.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            )}
+
             {loading && (
               <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-2">

@@ -502,10 +502,10 @@ export async function getTenantBillingInfo() {
       where: { tenantId: tenant.id }
     });
 
-    let basePrice = 149.0;
+    const planConfigs = await getOrCreatePlanConfigs();
+    const currentPlanConfig = planConfigs.find(p => p.nome === tenant.plano);
+    let basePrice = currentPlanConfig ? currentPlanConfig.preco : 149.0;
     if (tenant.plano === 'TESTE') basePrice = 0.0;
-    else if (tenant.plano === 'PRO') basePrice = 299.0;
-    else if (tenant.plano === 'ENTERPRISE') basePrice = 599.0;
 
     const whatsappConnected = !!tenant.whatsappConnected;
     const whatsappCost = whatsappConnected ? tenant.taxaWhatsapp : 0.0;
@@ -768,6 +768,110 @@ export async function manuallyCreateInvoiceAction(tenantId: string, plano: strin
     return { success: true };
   } catch (error: any) {
     console.error('Erro ao criar cobrança manual:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Helper interno para inicializar os planos se o banco estiver vazio.
+ */
+async function getOrCreatePlanConfigs() {
+  let configs = await prisma.planoConfig.findMany({
+    orderBy: { preco: 'asc' }
+  });
+
+  if (configs.length === 0) {
+    const defaults = [
+      {
+        nome: "BASICO",
+        label: "Básico",
+        preco: 149.00,
+        limiteUsuarios: 3,
+        descricao: "Ideal para pequenas imobiliárias e corretores autônomos.",
+        features: "Até 3 Usuários ativos,Acesso ao Pipeline de Leads CRM,Prospecção básica de empresas,1.000 buscas em cache local,Suporte via e-mail"
+      },
+      {
+        nome: "PRO",
+        label: "Profissional (PRO)",
+        preco: 299.00,
+        limiteUsuarios: 10,
+        descricao: "Perfeito para construtoras e equipes comerciais em expansão.",
+        features: "Até 10 Usuários ativos,Acesso ilimitado a FPVs e CCTs,Prospecção Inteligente Ativa via IA,Calendário Global de prazos e escalas,Auditoria completa (Audit Trail) de logs,Suporte premium prioritário 24/7"
+      },
+      {
+        nome: "ENTERPRISE",
+        label: "Enterprise",
+        preco: 599.00,
+        limiteUsuarios: 100,
+        descricao: "Customização e poder ilimitado para grandes corporações.",
+        features: "Até 100 Usuários ativos,Suporte 24/7 com Executivo de Conta,Integração e APIs Liberadas,SLA de Disponibilidade Avançado,Treinamento de equipe em vídeo"
+      }
+    ];
+
+    for (const d of defaults) {
+      await prisma.planoConfig.upsert({
+        where: { nome: d.nome },
+        update: {},
+        create: d
+      });
+    }
+
+    configs = await prisma.planoConfig.findMany({
+      orderBy: { preco: 'asc' }
+    });
+  }
+
+  return configs;
+}
+
+/**
+ * Server Action para obter todos os planos cadastrados (aberto a clientes e LP).
+ */
+export async function getPlanConfigs() {
+  try {
+    const configs = await getOrCreatePlanConfigs();
+    return { success: true, configs };
+  } catch (error: any) {
+    console.error('Erro ao buscar configurações de planos:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Server Action para atualizar a configuração de um plano (Super Admin).
+ */
+export async function updatePlanConfigAction(
+  id: string,
+  preco: number,
+  limiteUsuarios: number,
+  label: string,
+  descricao: string,
+  features: string
+) {
+  try {
+    const isSuper = await checkIsSuperAdmin();
+    if (!isSuper) {
+      throw new Error('Acesso negado: Você não possui privilégios de Super Administrador.');
+    }
+
+    if (!id || preco === undefined || limiteUsuarios === undefined || !label) {
+      return { success: false, error: 'Campos obrigatórios ausentes.' };
+    }
+
+    const updated = await prisma.planoConfig.update({
+      where: { id },
+      data: {
+        preco: Number(preco),
+        limiteUsuarios: Number(limiteUsuarios),
+        label,
+        descricao,
+        features
+      }
+    });
+
+    return { success: true, config: updated };
+  } catch (error: any) {
+    console.error('Erro ao atualizar plano:', error);
     return { success: false, error: error.message };
   }
 }

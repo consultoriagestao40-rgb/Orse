@@ -604,4 +604,16 @@ model Cobranca {
   createdAt      DateTime  @default(now())
 }
 
+model PlanoConfig {
+  id             String   @id @default(cuid())
+  nome           String   @unique // e.g. "BASICO", "PRO", "ENTERPRISE"
+  label          String   // e.g. "Básico", "Profissional (PRO)", "Enterprise"
+  preco          Float    // e.g. 149.00, 299.00, 599.00
+  limiteUsuarios Int      // e.g. 3, 10, 100
+  descricao      String
+  features       String   // Comma-separated features or lines
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
 
