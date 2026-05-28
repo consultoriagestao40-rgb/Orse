@@ -43,8 +43,8 @@ export async function checkIsSuperAdmin() {
 
     if (!user) return false;
 
-    // Condição de liberação master exclusiva do proprietário do SaaS
-    const isPlatformAdmin = user.email === 'admin@smartbidhub.com.br' && user.tenantId === null;
+    // Condição de liberação master exclusiva do proprietário do SaaS pelo email verificado
+    const isPlatformAdmin = user.email === 'admin@smartbidhub.com.br';
 
     return isPlatformAdmin;
   } catch (error) {
