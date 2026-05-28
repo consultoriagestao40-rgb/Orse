@@ -22,6 +22,7 @@ interface TenantItem {
   createdAt: string;
   plano: string;
   limiteUsuarios: number;
+  trialStartedAt?: string | null;
   stats: {
     users: number;
     propostas: number;
@@ -82,6 +83,7 @@ export default function TenantManagerDashboard() {
   const [cnpj, setCnpj] = useState('');
   const [plano, setPlano] = useState('STARTER');
   const [limiteUsuarios, setLimiteUsuarios] = useState(3);
+  const [trialStartedAt, setTrialStartedAt] = useState('');
   const [modalError, setModalError] = useState('');
   const [modalSuccess, setModalSuccess] = useState('');
 
@@ -116,6 +118,7 @@ export default function TenantManagerDashboard() {
     setCnpj('');
     setPlano('STARTER');
     setLimiteUsuarios(3);
+    setTrialStartedAt('');
     setModalError('');
     setModalSuccess('');
     setModalOpen(true);
@@ -128,6 +131,7 @@ export default function TenantManagerDashboard() {
     setCnpj(t.cnpj);
     setPlano(t.plano || 'STARTER');
     setLimiteUsuarios(t.limiteUsuarios || 3);
+    setTrialStartedAt(t.trialStartedAt ? t.trialStartedAt.substring(0, 16) : '');
     setModalError('');
     setModalSuccess('');
     setModalOpen(true);
@@ -141,7 +145,7 @@ export default function TenantManagerDashboard() {
 
     try {
       if (modalMode === 'create') {
-        const res = await createTenantAction(nomeFantasia, cnpj, plano, limiteUsuarios);
+        const res = await createTenantAction(nomeFantasia, cnpj, plano, limiteUsuarios, trialStartedAt || null);
         if (res.success) {
           setModalSuccess('Empresa cadastrada com sucesso!');
           setTimeout(() => {
@@ -153,7 +157,7 @@ export default function TenantManagerDashboard() {
         }
       } else {
         if (!selectedTenantId) return;
-        const res = await updateTenantAction(selectedTenantId, nomeFantasia, cnpj, plano, limiteUsuarios);
+        const res = await updateTenantAction(selectedTenantId, nomeFantasia, cnpj, plano, limiteUsuarios, trialStartedAt || null);
         if (res.success) {
           setModalSuccess('Cadastro atualizado com sucesso!');
           setTimeout(() => {
@@ -572,6 +576,21 @@ export default function TenantManagerDashboard() {
                   <option value="ENTERPRISE">Enterprise (100 users)</option>
                 </select>
               </div>
+
+              {/* Data de Início do Teste (Apenas se o plano for TESTE) */}
+              {plano === 'TESTE' && (
+                <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Data de Início do Teste</label>
+                  <input 
+                    type="datetime-local"
+                    required
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 outline-none transition-all font-semibold text-slate-700 cursor-pointer"
+                    value={trialStartedAt}
+                    onChange={e => setTrialStartedAt(e.target.value)}
+                    disabled={actionLoading}
+                  />
+                </div>
+              )}
 
               {/* Limite de Usuários */}
               <div className="space-y-1.5">

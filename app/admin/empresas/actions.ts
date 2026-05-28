@@ -85,6 +85,7 @@ export async function getTenantsWithStats() {
       createdAt: t.createdAt.toISOString(),
       plano: t.plano,
       limiteUsuarios: t.limiteUsuarios,
+      trialStartedAt: t.trialStartedAt ? t.trialStartedAt.toISOString() : null,
       stats: {
         users: t._count.users,
         propostas: t._count.propostas,
@@ -105,7 +106,8 @@ export async function createTenantAction(
   nomeFantasia: string, 
   cnpj: string,
   plano?: string,
-  limiteUsuarios?: number
+  limiteUsuarios?: number,
+  trialStartedAt?: string | null
 ) {
   const isSuper = await checkIsSuperAdmin();
   if (!isSuper) {
@@ -128,13 +130,17 @@ export async function createTenantAction(
       return { success: false, error: 'Este CNPJ já está cadastrado em outra empresa.' };
     }
 
+    const trialDate = plano === 'TESTE' 
+      ? (trialStartedAt ? new Date(trialStartedAt) : new Date()) 
+      : null;
+
     const newTenant = await prisma.tenant.create({
       data: {
         nomeFantasia: nomeFantasia.trim(),
         cnpj: formattedCnpj,
         plano: plano || 'STARTER',
         limiteUsuarios: limiteUsuarios !== undefined ? Number(limiteUsuarios) : 3,
-        trialStartedAt: plano === 'TESTE' ? new Date() : null,
+        trialStartedAt: trialDate,
       }
     });
 
@@ -153,7 +159,8 @@ export async function updateTenantAction(
   nomeFantasia: string, 
   cnpj: string,
   plano?: string,
-  limiteUsuarios?: number
+  limiteUsuarios?: number,
+  trialStartedAt?: string | null
 ) {
   const isSuper = await checkIsSuperAdmin();
   if (!isSuper) {
@@ -180,6 +187,14 @@ export async function updateTenantAction(
     }
 
     const current = await prisma.tenant.findUnique({ where: { id } });
+    
+    let trialDate = undefined;
+    if (plano === 'TESTE') {
+      trialDate = trialStartedAt ? new Date(trialStartedAt) : (current?.trialStartedAt || new Date());
+    } else if (plano && plano !== 'TESTE') {
+      trialDate = null;
+    }
+
     const updated = await prisma.tenant.update({
       where: { id },
       data: {
@@ -187,7 +202,7 @@ export async function updateTenantAction(
         cnpj: formattedCnpj,
         plano: plano || undefined,
         limiteUsuarios: limiteUsuarios !== undefined ? Number(limiteUsuarios) : undefined,
-        trialStartedAt: plano === 'TESTE' ? (current?.trialStartedAt || new Date()) : (plano && plano !== 'TESTE' ? null : undefined),
+        trialStartedAt: trialDate,
       }
     });
 
