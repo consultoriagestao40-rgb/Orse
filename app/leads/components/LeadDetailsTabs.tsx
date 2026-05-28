@@ -66,7 +66,11 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
       const res = await fetch('/api/leads/ai-contact-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ empresa: lead.nomeFantasia, cargos: aiCargos }),
+        body: JSON.stringify({ 
+          empresa: lead.nomeFantasia, 
+          cargos: aiCargos,
+          endereco: lead.endereco 
+        }),
       });
       const data = await res.json();
       if (data.success && data.mode === 'search_links') {

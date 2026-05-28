@@ -199,7 +199,7 @@ function cleanCompanyName(name: string): string {
   // 1. Pega a parte antes de traços, barras ou parênteses (comum em cadastros)
   let clean = name.split(/[-–/(]/)[0].trim();
   
-  // 2. Remove sufixos empresariais comuns no Brasil (case-insensitive)
+  // 2. Remove sufixos empresariais comuns e descrições comerciais que poluem o nome da marca
   const suffixes = [
     /\s+ltda\b/i,
     /\s+s\.a\b/i,
@@ -211,7 +211,26 @@ function cleanCompanyName(name: string): string {
     /\s+s\/s\b/i,
     /\s+grupo\b/i,
     /\s+facilities\b/i, // Remove "facilities" se for apenas descrição
-    /\bcnpj\b.*/i
+    /\bcnpj\b.*/i,
+    // Palavras de descrição de produto/indústria comuns que poluem o nome da marca
+    /\bplates\b.*/i,
+    /\bchapas\b.*/i,
+    /\bpolypropylene\b.*/i,
+    /\bpolipropileno\b.*/i,
+    /\bpolyethylene\b.*/i,
+    /\bpolietileno\b.*/i,
+    /\bindústria\b.*/i,
+    /\bindustria\b.*/i,
+    /\bcomércio\b.*/i,
+    /\bcomercio\b.*/i,
+    /\bserviços\b.*/i,
+    /\bservices\b.*/i,
+    /\bsoluções\b.*/i,
+    /\bsolutions\b.*/i,
+    /\bprodutos\b.*/i,
+    /\bproducts\b.*/i,
+    /\bfabricação\b.*/i,
+    /\bmanufacturing\b.*/i
   ];
   
   for (const suffix of suffixes) {
@@ -224,6 +243,27 @@ function cleanCompanyName(name: string): string {
   }
   
   return clean.trim();
+}
+
+// Extrai cidade e estado para otimizar buscas sem aspas
+function extractRegionFromAddress(address: string | null | undefined): string {
+  if (!address) return '';
+  // Exemplo de endereço: "Av. Agostinho Leão Junior, 336 - Alto da Glória, Curitiba - PR, 80030-110, Brazil"
+  const match = address.match(/,\s*([^,-]+)\s*-\s*([A-Z]{2})\b/);
+  if (match) {
+    const cidade = match[1].trim();
+    const uf = match[2].trim();
+    return `"${cidade}" "${uf}"`;
+  }
+  
+  const commonCities = ["Curitiba", "Pinhais", "São Paulo", "Rio de Janeiro", "Belo Horizonte", "Porto Alegre", "Salvador", "Recife", "Fortaleza", "Brasília"];
+  for (const city of commonCities) {
+    if (address.toLowerCase().includes(city.toLowerCase())) {
+      return `"${city}"`;
+    }
+  }
+  
+  return 'Brasil';
 }
 
 // Gera links de busca inteligente (caso precise de fallback completo)
@@ -247,7 +287,7 @@ function buildSearchLinks(empresa: string, cargo: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { empresa, cargos } = await req.json() as { empresa: string; cargos: string[] };
+    const { empresa, cargos, endereco } = await req.json() as { empresa: string; cargos: string[]; endereco?: string };
 
     if (!empresa || !Array.isArray(cargos) || cargos.length === 0) {
       return NextResponse.json({ error: 'empresa e cargos são obrigatórios' }, { status: 400 });
@@ -304,9 +344,51 @@ export async function POST(req: NextRequest) {
       console.log('Utilizando Serper.dev API para busca oficial do Google...');
       for (const cargo of cargos.slice(0, 3)) {
         try {
-          const query = `site:linkedin.com/in "${empresaLimpa}" "${cargo}"`;
-          const items = await searchSerper(query, serperApiKey);
-          
+          let items: any[] = [];
+
+          // 1. Busca Exata com Aspas (Foco em precisão cirúrgica)
+          const query1 = `site:linkedin.com/in "${empresaLimpa}" "${cargo}"`;
+          console.log(`[IA Search] Serper - Query 1: ${query1}`);
+          const res1 = await searchSerper(query1, serperApiKey);
+          if (res1 && res1.length > 0) {
+            items = res1;
+          }
+
+          // 2. Se falhar, busca usando o Nome Core / Marca (ex: "Lamiex" e "Diretor")
+          if (items.length === 0) {
+            let firstWord = empresaLimpa.split(/\s+/)[0];
+            const genericPrefixes = ['associação', 'associacao', 'grupo', 'coop', 'cooperativa', 'fundação', 'fundacao', 'instituto', 'empresa', 'companhia', 'cia', 'colégio', 'colegio', 'hospital', 'clínica', 'clinica'];
+            if (firstWord && (genericPrefixes.includes(firstWord.toLowerCase()) || firstWord.length <= 2)) {
+              const words = empresaLimpa.split(/\s+/);
+              if (words.length > 1) {
+                firstWord = `${words[0]} ${words[1]}`;
+                if (words[1].length <= 2 && words.length > 2) {
+                  firstWord = `${words[0]} ${words[1]} ${words[2]}`;
+                }
+              }
+            }
+            
+            if (firstWord && firstWord.length > 2) {
+              const query2 = `site:linkedin.com/in "${firstWord}" "${cargo}"`;
+              console.log(`[IA Search] Serper - Query 2 (Core): ${query2}`);
+              const res2 = await searchSerper(query2, serperApiKey);
+              if (res2 && res2.length > 0) {
+                items = res2;
+              }
+            }
+          }
+
+          // 3. Se falhar, busca relaxada sem aspas na empresa + restrição de localização
+          if (items.length === 0) {
+            const region = extractRegionFromAddress(endereco);
+            const query3 = `site:linkedin.com/in "${cargo}" ${empresaLimpa} ${region}`;
+            console.log(`[IA Search] Serper - Query 3 (Relaxed): ${query3}`);
+            const res3 = await searchSerper(query3, serperApiKey);
+            if (res3 && res3.length > 0) {
+              items = res3;
+            }
+          }
+
           for (const item of items.slice(0, 3)) {
             const url = item.link;
             if (!url.includes('linkedin.com/in/') || foundLinkedIns.has(url)) continue;
