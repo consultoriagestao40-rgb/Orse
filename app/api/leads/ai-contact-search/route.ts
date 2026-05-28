@@ -35,6 +35,36 @@ function decodeBingUrl(bingUrl: string): string {
   return bingUrl;
 }
 
+// Busca usando Serper.dev (Google Search API Oficial - Sem bloqueios de IP)
+async function searchSerper(query: string, apiKey: string): Promise<any[]> {
+  const res = await fetch('https://google.serper.dev/search', {
+    method: 'POST',
+    headers: {
+      'X-API-KEY': apiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ q: query }),
+    signal: AbortSignal.timeout(6000),
+  });
+  if (!res.ok) throw new Error(`Serper returned status ${res.status}`);
+  const data = await res.json();
+  return data.organic || [];
+}
+
+// Busca usando Proxycurl (LinkedIn Data API Oficial - Traz fotos e perfis reais exatos)
+async function searchProxycurl(empresa: string, cargo: string, apiKey: string): Promise<any[]> {
+  const url = `https://nubela.co/api/v1/linkedin/person/search?country=BR&current_role_title=${encodeURIComponent(cargo)}&current_company_name=${encodeURIComponent(empresa)}&enrich_profiles=true`;
+  const res = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${apiKey}`
+    },
+    signal: AbortSignal.timeout(10000)
+  });
+  if (!res.ok) throw new Error(`Proxycurl returned status ${res.status}`);
+  const data = await res.json();
+  return data.results || [];
+}
+
 // Busca usando Google Custom Search Engine (Oficial e Estável)
 async function searchGoogleCSE(query: string, apiKey: string, cx: string): Promise<any[]> {
   const url = `https://customsearch.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}`;
@@ -232,6 +262,77 @@ export async function POST(req: NextRequest) {
     
     const results: SearchResult[] = [];
     const foundLinkedIns = new Set<string>();
+
+    // A. SE HOUVER CHAVE PROXYCURL - USA ELA COMO PRIORIDADE MÁXIMA (RETORNA FOTOS E PERFIS 100% REAIS E EXATOS)
+    const proxycurlApiKey = process.env.PROXYCURL_API_KEY;
+    if (proxycurlApiKey) {
+      console.log('Utilizando Proxycurl API para busca de contatos reais com foto...');
+      for (const cargo of cargos.slice(0, 3)) {
+        try {
+          const items = await searchProxycurl(empresaLimpa, cargo, proxycurlApiKey);
+          for (const item of items) {
+            const profile = item.profile;
+            if (!profile) continue;
+            const url = profile.linkedin_profile_url;
+            if (!url || foundLinkedIns.has(url)) continue;
+            foundLinkedIns.add(url);
+            
+            const nome = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+            const cargoExtraido = profile.headline || `${cargo} na ${empresaLimpa}`;
+            const fotoUrl = profile.profile_pic_url || null; // FOTO REAL DO LINKEDIN!
+            
+            results.push({
+              nome,
+              cargo: cargoExtraido,
+              linkedinUrl: url,
+              instagramUrl: profile.instagram_profile_url || `https://www.google.com/search?q=site:instagram.com+%22${encodeURIComponent(nome)}%22+%22${encodeURIComponent(empresaLimpa)}%22`,
+              facebookUrl: profile.facebook_profile_url || `https://www.facebook.com/search/people/?q=${encodeURIComponent(nome + " " + empresaLimpa)}`,
+              whatsappUrl: null, // Mantém null por privacidade de números de telefone reais
+              fotoUrl: fotoUrl,
+              snippet: profile.summary || `Atua como ${cargo} na empresa ${empresaLimpa}.`,
+            });
+          }
+        } catch (err) {
+          console.error(`Erro na busca do cargo ${cargo} via Proxycurl:`, err);
+        }
+      }
+    }
+
+    // B. SE HOUVER CHAVE SERPER.DEV - USA ELA (GOOGLE SEARCH API OFICIAL - SEM BLOQUEIOS)
+    const serperApiKey = process.env.SERPER_API_KEY;
+    if (results.length === 0 && serperApiKey) {
+      console.log('Utilizando Serper.dev API para busca oficial do Google...');
+      for (const cargo of cargos.slice(0, 3)) {
+        try {
+          const query = `site:linkedin.com/in "${empresaLimpa}" "${cargo}"`;
+          const items = await searchSerper(query, serperApiKey);
+          
+          for (const item of items.slice(0, 3)) {
+            const url = item.link;
+            if (!url.includes('linkedin.com/in/') || foundLinkedIns.has(url)) continue;
+            foundLinkedIns.add(url);
+            
+            const nome = extractNameFromTitle(item.title);
+            const cargoExtraido = extractCargoFromTitle(item.title, cargo);
+            
+            const nomeEnc = encodeURIComponent(nome);
+            const empEnc = encodeURIComponent(empresaLimpa);
+            
+            results.push({
+              nome,
+              cargo: cargoExtraido,
+              linkedinUrl: url,
+              instagramUrl: `https://www.google.com/search?q=site:instagram.com+%22${nomeEnc}%22+%22${empEnc}%22`,
+              facebookUrl: `https://www.facebook.com/search/people/?q=${encodeURIComponent(nome + " " + empresaLimpa)}`,
+              whatsappUrl: null,
+              snippet: item.snippet || '',
+            });
+          }
+        } catch (err) {
+          console.error(`Erro na busca do cargo ${cargo} via Serper.dev:`, err);
+        }
+      }
+    }
 
     // 1. SE HOUVER CHAVE GOOGLE CSE - USA ELA (100% CONFIÁVEL E SEGURO)
     if (apiKey && cx) {
