@@ -1231,13 +1231,40 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
             {/* MODO 1: Perfis Reais de Contatos Encontrados */}
             {aiResults.length > 0 && aiSearchMode === 'contacts' && !aiSearching && (
               <div className="space-y-3">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide">{aiResults.length} contato{aiResults.length !== 1 ? 's' : ''} encontrado{aiResults.length !== 1 ? 's' : ''}</p>
                 {aiResults.map((result: any, idx: number) => (
                   <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-4">
+                      {/* Foto do perfil / Avatar */}
+                      <div className="shrink-0">
+                        <img 
+                          src={result.fotoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(result.nome)}&background=8B5CF6&color=fff&bold=true`} 
+                          alt={result.nome}
+                          className="w-12 h-12 rounded-full object-cover border-2 border-violet-100 shadow-sm"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(result.nome)}&background=8B5CF6&color=fff&bold=true`;
+                          }}
+                        />
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-black text-slate-800 text-sm truncate">{result.nome}</p>
-                        <p className="text-xs font-bold text-violet-600 mb-2">{result.cargo}</p>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-black text-slate-800 text-sm truncate">{result.nome}</p>
+                            <p className="text-xs font-bold text-violet-600 mb-2">{result.cargo}</p>
+                          </div>
+                          <button
+                            onClick={() => handleAiSaveContact(result, idx)}
+                            disabled={aiSaving === `${idx}` || aiSaved.has(`${idx}`)}
+                            className={`shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all ${
+                              aiSaved.has(`${idx}`)
+                                ? 'bg-emerald-100 text-emerald-700 cursor-default'
+                                : aiSaving === `${idx}`
+                                ? 'bg-slate-100 text-slate-400 cursor-wait'
+                                : 'bg-violet-600 hover:bg-violet-700 text-white shadow-sm'
+                            }`}
+                          >
+                            {aiSaved.has(`${idx}`) ? '✓ Salvo' : aiSaving === `${idx}` ? '...' : '+ Salvar'}
+                          </button>
+                        </div>
                         {result.snippet && (
                           <p className="text-[10px] text-slate-400 line-clamp-2 mb-3">{result.snippet}</p>
                         )}
@@ -1251,6 +1278,20 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                             >
                               <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
                               LinkedIn
+                              <ExternalLink size={8} className="opacity-60" />
+                            </a>
+                          )}
+                          {result.facebookUrl && (
+                            <a
+                              href={result.facebookUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 text-[10px] font-black px-2.5 py-1.5 rounded-lg transition-colors border border-sky-100"
+                            >
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
+                              </svg>
+                              Facebook
                               <ExternalLink size={8} className="opacity-60" />
                             </a>
                           )}
@@ -1279,19 +1320,6 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                           )}
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleAiSaveContact(result, idx)}
-                        disabled={aiSaving === `${idx}` || aiSaved.has(`${idx}`)}
-                        className={`shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all ${
-                          aiSaved.has(`${idx}`)
-                            ? 'bg-emerald-100 text-emerald-700 cursor-default'
-                            : aiSaving === `${idx}`
-                            ? 'bg-slate-100 text-slate-400 cursor-wait'
-                            : 'bg-violet-600 hover:bg-violet-700 text-white shadow-sm'
-                        }`}
-                      >
-                        {aiSaved.has(`${idx}`) ? '✓ Salvo' : aiSaving === `${idx}` ? '...' : '+ Salvar'}
-                      </button>
                     </div>
                   </div>
                 ))}
