@@ -11,6 +11,7 @@ export async function getDocumentosProposta() {
         empresaEmissora: true,
         proposta: {
           include: {
+            user: true,
             versoes: {}
           }
         },
@@ -28,7 +29,8 @@ export async function getDocumentosProposta() {
         valor: d.valorTotal,
         status: d.status,
         data: d.createdAt.toLocaleDateString('pt-BR'),
-        versaoFPV: lastVersao?.versao || 1
+        versaoFPV: lastVersao?.versao || 1,
+        usuario: d.proposta?.user?.nome || 'Sistema'
       };
     });
   } catch (error) {

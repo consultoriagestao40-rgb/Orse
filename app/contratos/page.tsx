@@ -192,6 +192,11 @@ export default function ContratosDashboard() {
                     <span className="text-[11px] font-bold text-slate-600">{c.vigenciaMeses} meses</span>
                   </div>
                 </div>
+
+                <div className="mt-2 text-[10px] text-slate-400 font-medium border-t border-slate-50 pt-2 flex justify-between items-center">
+                  <span>Criado por:</span>
+                  <span className="font-bold text-slate-600">{c.proposta?.user?.nome || 'Sistema'}</span>
+                </div>
               </div>
             ))
           )}
@@ -319,6 +324,7 @@ export default function ContratosDashboard() {
                       <th className="px-6 py-3">Contrato</th>
                       <th className="px-6 py-3">Cliente</th>
                       <th className="px-6 py-3">Empresa Grupo</th>
+                      <th className="px-6 py-3">Criado Por</th>
                       <th className="px-6 py-3 text-center">Início</th>
                       <th className="px-6 py-3 text-center">Vigência</th>
                       <th className="px-6 py-3 text-center">Vencimento</th>
@@ -330,14 +336,15 @@ export default function ContratosDashboard() {
                   </thead>
                   <tbody className="text-sm">
                     {loading ? (
-                      <tr><td colSpan={9} className="px-6 py-12 text-center text-slate-400">Carregando contratos...</td></tr>
+                      <tr><td colSpan={11} className="px-6 py-12 text-center text-slate-400">Carregando contratos...</td></tr>
                     ) : filteredContratos.length === 0 ? (
-                      <tr><td colSpan={9} className="px-6 py-12 text-center text-slate-400">Nenhum contrato encontrado.</td></tr>
+                      <tr><td colSpan={11} className="px-6 py-12 text-center text-slate-400">Nenhum contrato encontrado.</td></tr>
                     ) : filteredContratos.map((c) => (
                       <tr key={c.id} className="border-b border-slate-200 hover:bg-slate-50 transition-colors">
                         <td className="px-6 py-3 font-bold text-slate-700">{gerarNumeroContrato(c)}</td>
                         <td className="px-6 py-3 font-semibold text-slate-800">{c.client?.razaoSocial || c.client?.nomeFantasia}</td>
                         <td className="px-6 py-3 text-slate-600">{c.empresaEmissora?.nomeFantasia}</td>
+                        <td className="px-6 py-3 text-slate-600 font-medium">{c.proposta?.user?.nome || 'Sistema'}</td>
                         <td className="px-6 py-3 text-center text-slate-600 font-medium">
                           {c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : '-'}
                         </td>
