@@ -335,9 +335,9 @@ export async function POST(req: NextRequest) {
         results.push({
           nome,
           cargo: `${cargo} na ${empresaLimpa}`,
-          linkedinUrl: `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(nome + " " + empresaLimpa)}`,
-          instagramUrl: `https://www.google.com/search?q=site:instagram.com+%22${encodeURIComponent(nome)}%22+%22${encodeURIComponent(empresaLimpa)}%22`,
-          facebookUrl: `https://www.facebook.com/search/people/?q=${encodeURIComponent(nome + " " + empresaLimpa)}`,
+          linkedinUrl: `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(cargo + " " + empresaLimpa)}`,
+          instagramUrl: `https://www.google.com/search?q=site:instagram.com+%22${encodeURIComponent(cargo)}%22+%22${encodeURIComponent(empresaLimpa)}%22`,
+          facebookUrl: `https://www.facebook.com/search/people/?q=${encodeURIComponent(cargo + " " + empresaLimpa)}`,
           whatsappUrl: `https://wa.me/${waNumber}`,
           fotoUrl: fotoUrl,
           snippet: `Profissional atuando como ${cargo} na empresa ${empresaLimpa}. Especialista em gestão integrada e desenvolvimento de negócios.`,
