@@ -837,3 +837,43 @@ export async function getAuditLogs(propostaId: string) {
   }
 }
 
+export async function changeMyPassword(currentPassword: string, newPassword: string) {
+  try {
+    const user = await getLoggedUser();
+    if (!user) {
+      return { success: false, error: 'Usuário não autenticado.' };
+    }
+    if (user.password !== currentPassword) {
+      return { success: false, error: 'A senha atual informada está incorreta.' };
+    }
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: newPassword }
+    });
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao trocar a senha:', error);
+    return { success: false, error: error.message || 'Erro desconhecido.' };
+  }
+}
+
+export async function requestPasswordReset(email: string) {
+  try {
+    const user = await prisma.user.findFirst({
+      where: { email: email.trim().toLowerCase() }
+    });
+    if (!user) {
+      return { success: false, error: 'Este e-mail corporativo não está cadastrado na plataforma.' };
+    }
+    const tempPass = 'SBH-' + Math.floor(1000 + Math.random() * 9000);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: tempPass }
+    });
+    return { success: true, tempPassword: tempPass };
+  } catch (error: any) {
+    console.error('Erro ao resetar senha:', error);
+    return { success: false, error: error.message || 'Erro interno no servidor.' };
+  }
+}
+

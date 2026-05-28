@@ -2,10 +2,11 @@
  
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive } from '@/app/admin/empresas/actions';
+import { changeMyPassword } from '@/app/propostas/actions';
  
 const Sidebar = () => {
   const pathname = usePathname();
@@ -13,6 +14,54 @@ const Sidebar = () => {
   const [isTenantBlocked, setIsTenantBlocked] = useState(false);
   
   const [user, setUser] = useState<{ nome: string; role: string; email?: string; tenantId?: string | null; iniciais: string } | null>(null);
+
+  // Estados do modal de Alterar Senha Premium
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordLoading(true);
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('A confirmação da nova senha não confere.');
+      setPasswordLoading(false);
+      return;
+    }
+
+    if (newPassword.length < 4) {
+      setPasswordError('A nova senha deve possuir pelo menos 4 caracteres.');
+      setPasswordLoading(false);
+      return;
+    }
+
+    try {
+      const res = await changeMyPassword(currentPassword, newPassword);
+      if (res.success) {
+        setPasswordSuccess('Senha atualizada com sucesso!');
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setTimeout(() => {
+          setShowPasswordModal(false);
+          setPasswordSuccess('');
+        }, 1500);
+      } else {
+        setPasswordError(res.error || 'Erro ao atualizar senha.');
+      }
+    } catch (err: any) {
+      setPasswordError(err.message || 'Erro de comunicação.');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
   
   // Carrega as informações do usuário e o estado recolhido do localStorage
   useEffect(() => {
@@ -316,17 +365,31 @@ const Sidebar = () => {
       
       {/* Footer do Usuário */}
       <div className="p-4 border-t border-slate-50 space-y-4">
-        <div className={`flex items-center gap-3 p-3 bg-slate-50 rounded-[1.5rem] border border-slate-100 group relative ${isCollapsed ? 'justify-center' : ''}`}>
+        <div 
+          onClick={() => {
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+            setPasswordError('');
+            setPasswordSuccess('');
+            setShowPasswordModal(true);
+          }}
+          title="Alterar minha senha"
+          className={`flex items-center gap-3 p-3 bg-slate-50 rounded-[1.5rem] border border-slate-100 group relative cursor-pointer hover:bg-slate-100 hover:border-slate-200 transition-all ${isCollapsed ? 'justify-center' : ''}`}
+        >
           <div className="w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white font-black text-xs shadow-md shrink-0">
             {user?.iniciais || 'US'}
           </div>
           {!isCollapsed && (
-            <div className="overflow-hidden">
+            <div className="overflow-hidden flex-1">
               <p className="text-xs font-black text-slate-800 truncate">{user?.nome || 'Carregando...'}</p>
               <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">
                 {user?.role === 'ADMIN' ? 'Administrador' : user?.role === 'MANAGER' ? 'Gestor Comercial' : 'Vendedor'}
               </p>
             </div>
+          )}
+          {!isCollapsed && (
+            <KeyRound size={14} className="text-slate-400 group-hover:text-[#1B4D3E] opacity-0 group-hover:opacity-100 transition-all shrink-0 ml-1" />
           )}
         </div>
 
@@ -408,6 +471,122 @@ const Sidebar = () => {
         </div>
       </div>
     )}
+
+      {/* MODAL ALTERAR SENHA PREMIUM */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-[#1B4D3E] p-8 text-white relative">
+              <h3 className="text-xl font-black tracking-tighter uppercase flex items-center gap-2">
+                <KeyRound size={20} className="text-[#10B981]" />
+                Segurança <span className="text-[#10B981]">de Acesso</span>
+              </h3>
+              <p className="text-emerald-100/60 text-xs mt-1">
+                Altere a sua senha de acesso corporativa para garantir a proteção dos dados.
+              </p>
+              <button 
+                onClick={() => setShowPasswordModal(false)} 
+                className="absolute top-8 right-8 text-white/50 hover:text-white cursor-pointer"
+                disabled={passwordLoading}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleChangePassword} className="p-8 space-y-5">
+              {/* Senha Atual */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha Atual</label>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4D3E] transition-colors" size={16} />
+                  <input 
+                    type="password" 
+                    required
+                    placeholder="Sua senha atual"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-11 pr-4 outline-none focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 transition-all font-medium text-slate-700 text-sm"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    disabled={passwordLoading}
+                  />
+                </div>
+              </div>
+
+              {/* Nova Senha */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nova Senha</label>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4D3E] transition-colors" size={16} />
+                  <input 
+                    type="password" 
+                    required
+                    placeholder="Mínimo 4 caracteres"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-11 pr-4 outline-none focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 transition-all font-medium text-slate-700 text-sm"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    disabled={passwordLoading}
+                  />
+                </div>
+              </div>
+
+              {/* Confirmar Nova Senha */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirmar Nova Senha</label>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4D3E] transition-colors" size={16} />
+                  <input 
+                    type="password" 
+                    required
+                    placeholder="Repita a nova senha"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-11 pr-4 outline-none focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 transition-all font-medium text-slate-700 text-sm"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    disabled={passwordLoading}
+                  />
+                </div>
+              </div>
+
+              {/* Banner de Sucesso */}
+              {passwordSuccess && (
+                <div className="bg-emerald-50 text-emerald-600 border border-emerald-100 p-4 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in duration-200">
+                  <CheckCircle2 size={16} />
+                  {passwordSuccess}
+                </div>
+              )}
+
+              {/* Banner de Erro */}
+              {passwordError && (
+                <div className="bg-red-50 text-red-600 border border-red-100 p-4 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in duration-200">
+                  <X size={16} className="border border-red-200 rounded-full" />
+                  {passwordError}
+                </div>
+              )}
+
+              {/* Controles do Formulário */}
+              <div className="pt-2 flex gap-4">
+                <button 
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-500 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer"
+                  disabled={passwordLoading}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  disabled={passwordLoading}
+                  className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-[#1B4D3E]/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {passwordLoading ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    'Salvar Senha'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 };

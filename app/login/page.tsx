@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { LogIn, Shield, TrendingUp, Briefcase, Mail, Lock, ArrowRight } from 'lucide-react';
+import { LogIn, Shield, TrendingUp, Briefcase, Mail, Lock, ArrowRight, X, KeyRound, Copy, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { requestPasswordReset } from '@/app/propostas/actions';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,6 +11,35 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Estados do modal de Esqueci minha Senha Premium
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+  const [tempPassword, setTempPassword] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const handleRequestReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setForgotError('');
+    setTempPassword('');
+    setCopied(false);
+
+    try {
+      const res = await requestPasswordReset(forgotEmail);
+      if (res.success && res.tempPassword) {
+        setTempPassword(res.tempPassword);
+      } else {
+        setForgotError(res.error || 'Erro ao processar solicitação.');
+      }
+    } catch (err: any) {
+      setForgotError(err.message || 'Erro de comunicação com o servidor.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,7 +163,18 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex justify-between items-center ml-1">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Senha de Acesso</label>
-                <a href="#" className="text-[10px] font-bold text-[#1B4D3E] uppercase hover:underline">Esqueci a senha</a>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setForgotEmail('');
+                    setForgotError('');
+                    setTempPassword('');
+                    setShowForgotModal(true);
+                  }}
+                  className="text-[10px] font-bold text-[#1B4D3E] uppercase hover:underline cursor-pointer"
+                >
+                  Esqueci a senha
+                </button>
               </div>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4D3E] transition-colors" size={18} />
@@ -197,6 +238,131 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {/* MODAL ESQUECI MINHA SENHA PREMIUM */}
+      {showForgotModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-[#1B4D3E] p-8 text-white relative">
+              <h3 className="text-xl font-black tracking-tighter uppercase">
+                Recuperação de <span className="text-[#10B981]">Acesso</span>
+              </h3>
+              <p className="text-emerald-100/60 text-xs mt-1">
+                Gere uma senha temporária imediata para acessar o seu painel CRM.
+              </p>
+              <button 
+                onClick={() => setShowForgotModal(false)} 
+                className="absolute top-8 right-8 text-white/50 hover:text-white cursor-pointer"
+                disabled={forgotLoading}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-6">
+              {tempPassword ? (
+                // Exibe a senha temporária criada com sucesso
+                <div className="space-y-6 text-center animate-in fade-in duration-300">
+                  <div className="mx-auto w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center border border-emerald-100 shadow-md">
+                    <CheckCircle2 size={28} />
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="text-base font-black text-slate-800 uppercase tracking-tight">Senha Temporária Gerada!</h4>
+                    <p className="text-xs text-slate-500 font-medium">Use a credencial de segurança abaixo para fazer login no sistema:</p>
+                  </div>
+
+                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 flex items-center justify-between gap-4 max-w-xs mx-auto">
+                    <span className="font-mono text-lg font-black text-slate-800 tracking-wider ml-2">{tempPassword}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(tempPassword);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                      className={`p-3 rounded-xl border transition-all ${
+                        copied 
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
+                          : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                      }`}
+                      title="Copiar Senha"
+                    >
+                      {copied ? <CheckCircle2 size={16} /> : <Copy size={16} />}
+                    </button>
+                  </div>
+
+                  <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider bg-amber-50 py-2 px-4 rounded-xl max-w-xs mx-auto">
+                    ⚠️ Altere esta senha nas configurações assim que acessar o sistema!
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPassword(tempPassword);
+                      setEmail(forgotEmail);
+                      setShowForgotModal(false);
+                    }}
+                    className="w-full py-4 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all shadow-md shadow-[#1B4D3E]/10"
+                  >
+                    Preencher e Ir para o Login
+                  </button>
+                </div>
+              ) : (
+                // Formulário para requisitar o reset
+                <form onSubmit={handleRequestReset} className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">E-mail Corporativo</label>
+                    <div className="relative group">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4D3E] transition-colors" size={18} />
+                      <input 
+                        type="email" 
+                        required
+                        placeholder="seu-email@grupojvsserv.com.br"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 transition-all font-medium text-slate-700 text-sm"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        disabled={forgotLoading}
+                      />
+                    </div>
+                  </div>
+
+                  {forgotError && (
+                    <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in duration-200">
+                      <Shield size={16} />
+                      {forgotError}
+                    </div>
+                  )}
+
+                  <div className="pt-2 flex gap-4">
+                    <button 
+                      type="button"
+                      onClick={() => setShowForgotModal(false)}
+                      className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-500 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer"
+                      disabled={forgotLoading}
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      type="submit"
+                      disabled={forgotLoading}
+                      className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-[#1B4D3E]/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {forgotLoading ? (
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      ) : (
+                        <>
+                          Gerar Senha
+                          <KeyRound size={14} />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         @keyframes shake {
