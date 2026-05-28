@@ -27,6 +27,9 @@ model Tenant {
   composicoes       EquipeTecnicaComposicao[]
   templatesProposta TemplatePropostaComercial[]
   templatesContrato TemplateContrato[]
+  escalas           Escala[]
+  activities        Activity[]
+  comments          Comment[]
 }
 
 model EmpresaEmissora {
