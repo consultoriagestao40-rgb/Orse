@@ -560,4 +560,20 @@ model EquipeTecnicaComposicao {
   tenant                 Tenant?        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
+model ProspectCache {
+  id           String   @id @default(cuid())
+  termo        String
+  localizacao  String
+  nomeFantasia String
+  endereco     String?
+  telefone     String?
+  site         String?
+  porte        String?
+  avaliacoes   Int      @default(0)
+  segmento     String?
+  createdAt    DateTime @default(now())
+
+  @@unique([termo, localizacao, nomeFantasia])
+}
+
 

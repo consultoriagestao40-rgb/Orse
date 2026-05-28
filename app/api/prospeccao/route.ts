@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
   try {
@@ -8,31 +9,53 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Termo e localização são obrigatórios' }, { status: 400 });
     }
 
+    const normalizedTermo = termo.trim().toLowerCase();
+    const normalizedLocalizacao = localizacao.trim().toLowerCase();
+
+    // 1. Verificar se já temos esse termo e localização cacheados no banco de dados local
+    const cachedProspects = await prisma.prospectCache.findMany({
+      where: {
+        termo: normalizedTermo,
+        localizacao: normalizedLocalizacao
+      },
+      orderBy: { avaliacoes: 'desc' }
+    });
+
+    if (cachedProspects.length > 0) {
+      console.log(`[Cache Hit] Retornando ${cachedProspects.length} resultados reais do banco local para: "${termo} em ${localizacao}"`);
+      const results = cachedProspects.map(p => ({
+        nomeFantasia: p.nomeFantasia,
+        endereco: p.endereco || 'Endereço não informado',
+        telefone: p.telefone || 'Não informado',
+        site: p.site || null,
+        porte: p.porte || 'Pequeno',
+        avaliacoes: p.avaliacoes,
+        segmento: p.segmento || termo
+      }));
+      return NextResponse.json({ success: true, results });
+    }
+
+    // 2. Se não estiver cacheado, buscamos na API real do Google
     const API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 
-    // Se não tiver chave da API, usamos mock para demonstração
+    // Fallback de contingência caso a chave não esteja configurada no servidor
     if (!API_KEY) {
-      console.log('Usando MOCK de Prospecção (Google Places API Key não configurada)');
-      // Simular delay de requisição real
-      await new Promise(r => setTimeout(r, 1500));
-      
+      console.log('Chave GOOGLE_PLACES_API_KEY não configurada. Usando MOCK para testes.');
+      await new Promise(r => setTimeout(r, 1000));
       const mocks = [
-        { nomeFantasia: `Empresa de ${termo} 1`, endereco: `Av. Central, 1000 - ${localizacao}`, telefone: '(11) 99999-1111', segmento: termo },
-        { nomeFantasia: `Grupo ${termo} Brasil`, endereco: `Rua das Flores, 250 - ${localizacao}`, telefone: '(11) 98888-2222', segmento: termo },
-        { nomeFantasia: `${termo} e Cia Ltda`, endereco: `Av. Paulista, 1500 - ${localizacao}`, telefone: '(11) 97777-3333', segmento: termo },
-        { nomeFantasia: `Clinica ${termo} Sul`, endereco: `Rua do Ouro, 45 - ${localizacao}`, telefone: '(11) 96666-4444', segmento: termo },
-        { nomeFantasia: `Consultório ${termo}`, endereco: `Praça XV, 10 - ${localizacao}`, telefone: '(11) 95555-5555', segmento: termo },
+        { nomeFantasia: `${termo} Central`, endereco: `Av. Paraná, 100 - Centro, ${localizacao}`, telefone: '(41) 99999-1234', site: 'http://empresa1.com.br', porte: 'Grande', avaliacoes: 520, segmento: termo },
+        { nomeFantasia: `Grupo ${termo} ${localizacao}`, endereco: `Rua Chile, 2450 - Rebouças, ${localizacao}`, telefone: '(41) 3333-8888', site: null, porte: 'Médio', avaliacoes: 150, segmento: termo },
+        { nomeFantasia: `${termo} & Associados`, endereco: `Av. do Batel, 1200 - Batel, ${localizacao}`, telefone: '(41) 3222-1111', site: 'http://empresa2.com.br', porte: 'Pequeno', avaliacoes: 15, segmento: termo },
       ];
-      
       return NextResponse.json({ success: true, results: mocks });
     }
 
-    // Função auxiliar para buscar até 60 resultados para uma query específica usando a Nova API (que retorna telefone e site)
+    // Função de busca paginada da Nova Google Places API
     const fetchPlaces = async (searchQuery: string) => {
       let allResults: any[] = [];
       let pageToken = '';
       let pageCount = 0;
-      const maxPages = 3;
+      const maxPages = 2; // Máximo de 2 páginas (até 40 resultados altamente relevantes) para economizar custos
       const url = 'https://places.googleapis.com/v1/places:searchText';
 
       while (pageCount < maxPages) {
@@ -54,8 +77,8 @@ export async function POST(req: Request) {
         
         let data = await response.json();
 
-        // O Google Places (New) retorna os erros diretamente se houver falha
         if (data.error) {
+          console.error('Erro na API do Google Places:', data.error);
           break; 
         }
 
@@ -66,8 +89,7 @@ export async function POST(req: Request) {
         if (data.nextPageToken) {
           pageToken = data.nextPageToken;
           pageCount++;
-          // A nova API é mais estável, mas um pequeno delay é bom
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 800));
         } else {
           break;
         }
@@ -75,22 +97,12 @@ export async function POST(req: Request) {
       return allResults;
     };
 
-    // Estratégia de "Expansão de Busca" (Search Expansion)
-    // O Google limita estritamente a 60 resultados por busca. 
-    // Para contornar, fazemos buscas fatiadas por zonas paralelamente.
-    const modifiers = ['', 'Centro', 'Zona Norte', 'Zona Sul', 'Zona Leste', 'Zona Oeste'];
-    
-    // Dispara todas as 6 buscas em paralelo
-    const searchPromises = modifiers.map(modifier => {
-      const expandedLocation = modifier ? `${localizacao} ${modifier}` : localizacao;
-      const searchQuery = `${termo} em ${expandedLocation}`;
-      return fetchPlaces(searchQuery);
-    });
+    // Otimização: Fazemos apenas 1 busca focada (em vez de 6 buscas paralelas que multiplicavam o custo por 6!)
+    console.log(`[Cache Miss] Buscando dados reais no Google Places API para: "${termo} em ${localizacao}"`);
+    const searchQuery = `${termo} em ${localizacao}`;
+    const combinedResults = await fetchPlaces(searchQuery);
 
-    const resultsArray = await Promise.all(searchPromises);
-    const combinedResults = resultsArray.flat();
-
-    // Filtra duplicados pelo id (A nova API usa place.id em vez de place.place_id)
+    // Filtra duplicados
     const uniqueResultsMap = new Map();
     combinedResults.forEach(place => {
       if (place && place.id) {
@@ -100,7 +112,6 @@ export async function POST(req: Request) {
     const uniqueResults = Array.from(uniqueResultsMap.values());
 
     const results = uniqueResults.map((place: any) => {
-      // Estimar o porte da empresa baseado no número de avaliações no Google
       const reviews = place.userRatingCount || 0;
       let porteEstimado = 'Pequeno';
       if (reviews > 500) {
@@ -116,13 +127,36 @@ export async function POST(req: Request) {
         site: place.websiteUri || null,
         porte: porteEstimado,
         avaliacoes: reviews,
-        segmento: termo,
-        placeId: place.id
+        segmento: termo
       };
     });
 
+    // 3. Salvar os resultados no banco de dados local de cache para consultas futuras
+    if (results.length > 0) {
+      try {
+        await prisma.prospectCache.createMany({
+          data: results.map(r => ({
+            termo: normalizedTermo,
+            localizacao: normalizedLocalizacao,
+            nomeFantasia: r.nomeFantasia,
+            endereco: r.endereco,
+            telefone: r.telefone,
+            site: r.site,
+            porte: r.porte,
+            avaliacoes: r.avaliacoes,
+            segmento: r.segmento
+          })),
+          skipDuplicates: true
+        });
+        console.log(`[Cache Write] Salvos ${results.length} novos prospectos no banco local para pesquisas futuras.`);
+      } catch (dbErr) {
+        console.error('Erro ao salvar cache de prospectos no banco:', dbErr);
+      }
+    }
+
     return NextResponse.json({ success: true, results });
   } catch (error: any) {
+    console.error('Erro interno na API de Prospecção:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
