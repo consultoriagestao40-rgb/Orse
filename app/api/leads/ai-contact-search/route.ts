@@ -283,7 +283,28 @@ function isProfileCurrentEmployee(title: string, snippet: string, targetCompany:
     return false;
   }
 
-  // 2. Se o snippet tiver forte indício de que a relação é passada (ex: "ex-funcionário", "trabalhou na", "2012 - 2012 menos de um ano")
+  // 2. Se a única menção à empresa no snippet for como "Formação acadêmica", "Ensino", "Educação" ou "Estudou", rejeita!
+  // Ex: "Formação acadêmica: Colégio Positivo"
+  const targetWordsPattern = targetWords.join('|');
+  const educationPattern = new RegExp(`(formação acadêmica|educação|ensino|estudou|alumni|aluno|escola|faculdade|universidade):?\\s*([^·|-]+)?(${targetWordsPattern})`, 'i');
+  
+  if (educationPattern.test(snippetLower)) {
+    console.log(`[Validation] Marca encontrada sob a seção de educação no perfil: "${title}"`);
+    // A empresa foi mencionada sob a seção de educação!
+    // Vamos ver se ela também é mencionada como Experiência atual
+    const experiencePattern = new RegExp(`(experiência|trabalha|atuação|cargo):?\\s*([^·|-]+)?(${targetWordsPattern})`, 'i');
+    const currentRelationPattern = new RegExp(`\\b(na|no|at|em|da|do|de)\\s+(${targetWordsPattern})`, 'i');
+    
+    const hasExp = experiencePattern.test(snippetLower) || experiencePattern.test(titleLower);
+    const hasCurrentRel = currentRelationPattern.test(titleLower) || (currentRelationPattern.test(snippetLower) && !snippetLower.includes(`formação acadêmica: ${targetLower}`));
+    
+    if (!hasExp && !hasCurrentRel) {
+      console.log(`[Validation] Rejeitado por ser apenas Formação Acadêmica/Alumni: "${title}"`);
+      return false;
+    }
+  }
+
+  // 3. Se o snippet tiver forte indício de que a relação é passada (ex: "ex-funcionário", "trabalhou na", "2012 - 2012 menos de um ano")
   // e o título atual listar OUTRA empresa, rejeita!
   const pastTerms = [
     /\bex-funcionário\b/i,
@@ -297,13 +318,10 @@ function isProfileCurrentEmployee(title: string, snippet: string, targetCompany:
   ];
   const hasPastIndicators = pastTerms.some(regex => regex.test(snippetLower) || regex.test(titleLower));
 
-  // 3. Procura se o título possui outra empresa listada como atual
-  // Padrões como: "Diretor na Cybernet", "Gerente de RH no Itaú"
+  // 4a. Procura se o título possui outra empresa listada como atual ("Diretor na Cybernet")
   const otherCompanyMatch = title.match(/(ceo|diretor|gerente|coordenador|supervisor|analista|gestor|head|lead|lider|líder|engenheiro)\s+(na|no|at|em|da|do|de)\s+([^|-–]+)/i);
   if (otherCompanyMatch) {
     const extractedCompany = otherCompanyMatch[3].trim().toLowerCase();
-    
-    // Se a empresa listada no título for diferente do nosso alvo e de seus termos significativos
     const isTargetCompanyInExtracted = targetWords.some(tw => extractedCompany.includes(tw) || targetLower.includes(tw));
     
     if (!isTargetCompanyInExtracted && extractedCompany.length > 2) {
@@ -312,7 +330,23 @@ function isProfileCurrentEmployee(title: string, snippet: string, targetCompany:
     }
   }
 
-  // 4. Se tiver indicadores de passado e não tiver indicação explícita de relação atual, rejeita!
+  // 4b. Procura por formato geral do título "Nome - Empresa" (se não for a empresa alvo)
+  const titleParts = title.split(/\s*[-–|]\s*/);
+  if (titleParts.length > 1) {
+    let extractedCompany = titleParts[titleParts.length - 1].toLowerCase();
+    // Remove preposição se houver
+    extractedCompany = extractedCompany.replace(/^(na|no|at|em|da|do|de)\s+/, '');
+    
+    const isTargetCompanyInExtracted = targetWords.some(tw => extractedCompany.includes(tw) || targetLower.includes(tw));
+    const isGenericOrLocal = ['curitiba', 'brasil', 'pr', 'sp', 'linkedin', 'conexoes', 'conexões'].some(g => extractedCompany.includes(g));
+    
+    if (!isTargetCompanyInExtracted && extractedCompany.length > 3 && !isGenericOrLocal) {
+      console.log(`[Validation] Rejeitado por empresa diferente no fim do título: "${extractedCompany}" vs alvo "${targetLower}"`);
+      return false;
+    }
+  }
+
+  // 5. Se tiver indicadores de passado e não tiver indicação explícita de relação atual, rejeita!
   if (hasPastIndicators) {
     // Procura indicador de atualidade, ex: "atualmente na", "atualmente no", "atual gestor", "at lamiex"
     const currentIndicators = [
