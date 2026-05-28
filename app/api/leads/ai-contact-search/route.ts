@@ -266,6 +266,71 @@ function extractRegionFromAddress(address: string | null | undefined): string {
   return 'Brasil';
 }
 
+// Validador estrito para garantir que o perfil encontrado realmente trabalha ATUALMENTE na empresa alvo
+function isProfileCurrentEmployee(title: string, snippet: string, targetCompany: string): boolean {
+  const titleLower = title.toLowerCase();
+  const snippetLower = snippet.toLowerCase();
+  const targetLower = targetCompany.toLowerCase();
+  
+  // Lista de palavras-chave da empresa alvo
+  const targetWords = targetLower.split(/\s+/).filter(w => w.length > 2 && w !== 'dos' && w !== 'das' && w !== 'comercio' && w !== 'industria');
+  
+  // 1. A empresa alvo ou pelo menos um de seus termos significativos DEVE estar no título ou snippet
+  const hasTargetInTitle = targetWords.some(w => titleLower.includes(w));
+  const hasTargetInSnippet = targetWords.some(w => snippetLower.includes(w));
+  if (!hasTargetInTitle && !hasTargetInSnippet) {
+    console.log(`[Validation] Rejeitado por falta de termos da empresa no perfil: "${title}"`);
+    return false;
+  }
+
+  // 2. Se o snippet tiver forte indício de que a relação é passada (ex: "ex-funcionário", "trabalhou na", "2012 - 2012 menos de um ano")
+  // e o título atual listar OUTRA empresa, rejeita!
+  const pastTerms = [
+    /\bex-funcionário\b/i,
+    /\bex-funcionaria\b/i,
+    /\bex-colaborador\b/i,
+    /\btrabalhou na\b/i,
+    /\btrabalhou no\b/i,
+    /\bformer\b.*\bat\b/i,
+    /\bworked\b.*\bat\b/i,
+    /\bde\s+\d{4}\s+a\s+\d{4}\b/i // "de 2012 a 2013" indica período passado
+  ];
+  const hasPastIndicators = pastTerms.some(regex => regex.test(snippetLower) || regex.test(titleLower));
+
+  // 3. Procura se o título possui outra empresa listada como atual
+  // Padrões como: "Diretor na Cybernet", "Gerente de RH no Itaú"
+  const otherCompanyMatch = title.match(/(ceo|diretor|gerente|coordenador|supervisor|analista|gestor|head|lead|lider|líder|engenheiro)\s+(na|no|at|em|da|do|de)\s+([^|-–]+)/i);
+  if (otherCompanyMatch) {
+    const extractedCompany = otherCompanyMatch[3].trim().toLowerCase();
+    
+    // Se a empresa listada no título for diferente do nosso alvo e de seus termos significativos
+    const isTargetCompanyInExtracted = targetWords.some(tw => extractedCompany.includes(tw) || targetLower.includes(tw));
+    
+    if (!isTargetCompanyInExtracted && extractedCompany.length > 2) {
+      console.log(`[Validation] Rejeitado por empresa diferente no título: "${otherCompanyMatch[0]}" (alvo: "${targetLower}")`);
+      return false;
+    }
+  }
+
+  // 4. Se tiver indicadores de passado e não tiver indicação explícita de relação atual, rejeita!
+  if (hasPastIndicators) {
+    // Procura indicador de atualidade, ex: "atualmente na", "atualmente no", "atual gestor", "at lamiex"
+    const currentIndicators = [
+      new RegExp(`\\b(na|no|at|em|da|do|de|experiência:?)\\s+${targetWords.join('|')}`, 'i'),
+      /\batualmente\b/i,
+      /\batual\b/i,
+      /\bpresente\b/i
+    ];
+    const hasCurrentIndicator = currentIndicators.some(regex => regex.test(snippetLower) || regex.test(titleLower));
+    if (!hasCurrentIndicator) {
+      console.log(`[Validation] Rejeitado por indicadores de relação passada: "${title}"`);
+      return false;
+    }
+  }
+
+  return true;
+}
+
 // Gera links de busca inteligente (caso precise de fallback completo)
 function buildSearchLinks(empresa: string, cargo: string) {
   const empresaEnc = encodeURIComponent(empresa);
@@ -345,16 +410,18 @@ export async function POST(req: NextRequest) {
       for (const cargo of cargos.slice(0, 3)) {
         try {
           let items: any[] = [];
+          const prepositions = ['na', 'no', 'at', 'em', 'da', 'do', 'de', 'nos', 'nas', 'dos', 'das'];
 
-          // 1. Busca Exata com Aspas (Foco em precisão cirúrgica)
-          const query1 = `site:linkedin.com/in "${empresaLimpa}" "${cargo}"`;
-          console.log(`[IA Search] Serper - Query 1: ${query1}`);
+          // 1. Busca Direta com Preposições Relacionais (Altamente preciso para empresa atual: ex: "Diretor" ("na Lamiex" OR "at Lamiex"))
+          const prepPhrases = prepositions.map(p => `"${p} ${empresaLimpa}"`).join(' OR ');
+          const query1 = `site:linkedin.com/in "${cargo}" (${prepPhrases})`;
+          console.log(`[IA Search] Serper - Query 1 (Relational): ${query1}`);
           const res1 = await searchSerper(query1, serperApiKey);
           if (res1 && res1.length > 0) {
             items = res1;
           }
 
-          // 2. Se falhar, busca usando o Nome Core / Marca (ex: "Lamiex" e "Diretor")
+          // 2. Se falhar, busca usando o Nome Core / Marca com preposições
           if (items.length === 0) {
             let firstWord = empresaLimpa.split(/\s+/)[0];
             const genericPrefixes = ['associação', 'associacao', 'grupo', 'coop', 'cooperativa', 'fundação', 'fundacao', 'instituto', 'empresa', 'companhia', 'cia', 'colégio', 'colegio', 'hospital', 'clínica', 'clinica'];
@@ -369,8 +436,9 @@ export async function POST(req: NextRequest) {
             }
             
             if (firstWord && firstWord.length > 2) {
-              const query2 = `site:linkedin.com/in "${firstWord}" "${cargo}"`;
-              console.log(`[IA Search] Serper - Query 2 (Core): ${query2}`);
+              const prepPhrasesCore = prepositions.map(p => `"${p} ${firstWord}"`).join(' OR ');
+              const query2 = `site:linkedin.com/in "${cargo}" (${prepPhrasesCore})`;
+              console.log(`[IA Search] Serper - Query 2 (Core Relational): ${query2}`);
               const res2 = await searchSerper(query2, serperApiKey);
               if (res2 && res2.length > 0) {
                 items = res2;
@@ -378,20 +446,36 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          // 3. Se falhar, busca relaxada sem aspas na empresa + restrição de localização
+          // 3. Se falhar, tenta a busca exata cotada simples
           if (items.length === 0) {
-            const region = extractRegionFromAddress(endereco);
-            const query3 = `site:linkedin.com/in "${cargo}" ${empresaLimpa} ${region}`;
-            console.log(`[IA Search] Serper - Query 3 (Relaxed): ${query3}`);
+            const query3 = `site:linkedin.com/in "${empresaLimpa}" "${cargo}"`;
+            console.log(`[IA Search] Serper - Query 3 (Exact): ${query3}`);
             const res3 = await searchSerper(query3, serperApiKey);
             if (res3 && res3.length > 0) {
               items = res3;
             }
           }
 
-          for (const item of items.slice(0, 3)) {
+          // 4. Se falhar, busca relaxada sem aspas na empresa + restrição de localização
+          if (items.length === 0) {
+            const region = extractRegionFromAddress(endereco);
+            const query4 = `site:linkedin.com/in "${cargo}" ${empresaLimpa} ${region}`;
+            console.log(`[IA Search] Serper - Query 4 (Relaxed): ${query4}`);
+            const res4 = await searchSerper(query4, serperApiKey);
+            if (res4 && res4.length > 0) {
+              items = res4;
+            }
+          }
+
+          for (const item of items) {
             const url = item.link;
             if (!url.includes('linkedin.com/in/') || foundLinkedIns.has(url)) continue;
+            
+            // VALIDADOR ESTRITO: Descarta quem não trabalha atualmente na empresa!
+            if (!isProfileCurrentEmployee(item.title, item.snippet || '', empresaLimpa)) {
+              continue;
+            }
+            
             foundLinkedIns.add(url);
             
             const nome = extractNameFromTitle(item.title);
@@ -409,6 +493,8 @@ export async function POST(req: NextRequest) {
               whatsappUrl: null,
               snippet: item.snippet || '',
             });
+            
+            if (results.length >= 10) break;
           }
         } catch (err) {
           console.error(`Erro na busca do cargo ${cargo} via Serper.dev:`, err);
