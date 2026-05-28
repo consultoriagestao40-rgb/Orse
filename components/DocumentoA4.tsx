@@ -327,8 +327,13 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
 
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
-          /* Zera a margem nativa para sumir com cabeçalhos/rodapés do Chrome automaticamente */
+          /* Zera a margem nativa e remove cabeçalho/rodapé do navegador */
           @page { margin: 0 !important; size: auto; }
+          
+          /* Oculta completamente a barra de controle superior */
+          .no-print, [class*="no-print"] {
+            display: none !important;
+          }
           
           * {
              -webkit-print-color-adjust: exact !important;
@@ -336,35 +341,39 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
              color-adjust: exact !important;
           }
 
-          body {
+          /* Força todas as tags ancestrais a permitirem altura dinâmica e overflow visível na impressão */
+          html, body, #__next, 
+          [class*="min-h-screen"], 
+          [class*="overflow-auto"], 
+          [class*="bg-slate-200"] {
+            background: white !important;
             background-color: white !important;
-            margin: 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
+            display: block !important;
+            position: static !important;
             padding: 0 !important;
-          }
-          
-          /* Esconde tudo na tela mantendo a árvore do DOM */
-          body * {
-            visibility: hidden !important;
-          }
-
-          /* Traz de volta o A4 e seus filhos */
-          .print-a4-page, .print-a4-page * {
-            visibility: visible !important;
+            margin: 0 !important;
           }
 
           .print-a4-page {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            margin: 0 !important;
+            display: block !important;
+            position: relative !important; /* Importante para quebra de página fluida em multiplas folhas! */
+            width: 210mm !important;
+            margin: 0 auto !important;
             padding: 0 !important;
             box-sizing: border-box !important;
             box-shadow: none !important;
             border: none !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
           }
 
-          /* Ocultar o thead e tfoot na tela, só mostrar na impressão */
+          /* Margens e preenchimentos da célula de conteúdo */
           .print-margin-header, .print-margin-footer {
              height: 20mm;
           }
