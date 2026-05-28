@@ -264,7 +264,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
     
     const renumbered = list.map((c, newIdx) => {
        const clauseNum = newIdx + 1;
-       const rawTitulo = c.titulo.replace(/^(?:CL[ÁA]US[U]?L[A]?|CL[ÁA]US[U]?|CL[ÁA]US)?\s*\d*\s*[-–]?\s*/i, '').trim();
+       const rawTitulo = c.titulo.replace(/^(?:CL[ÁA]US[U]?L[A]?|CL[ÁA]US[U]?|CL[ÁA]US)?\s*\d*\s*[\.\-–]?\s*/i, '').trim();
        const novoTitulo = `CLÁUSULA ${String(clauseNum).padStart(2,'0')} - ${rawTitulo}`;
        
        const novoTexto = c.texto.split('\n').map((linha: string) => {
@@ -446,7 +446,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                {proposta.cliente.clausulasA4.map((clausula: any, idx: number) => {
                   const clauseNum = idx + 1;
                   // Limpa prefixos como "CLÁUSULA 1 -", "1.", "1 -", etc.
-                  let rawTitulo = clausula.titulo.replace(/^(?:CL[ÁA]US[U]?L[A]?|CL[ÁA]US[U]?|CL[ÁA]US)?\s*\d*\s*[.-–]?\s*/i, '').trim();
+                  let rawTitulo = clausula.titulo.replace(/^(?:CL[ÁA]US[U]?L[A]?|CL[ÁA]US[U]?|CL[ÁA]US)?\s*\d*\s*[\.\-–]?\s*/i, '').trim();
                   rawTitulo = rawTitulo.replace(/^[\d.\s-]*\s*/, '').trim();
                   
                   const tituloFinal = `${String(clauseNum).padStart(2,'0')} - ${rawTitulo}`;
