@@ -728,11 +728,25 @@ function ProposalsDashboard() {
 }
 
 export default function Page() {
+  const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const hasUser = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
-    setIsLoggedIn(!!hasUser);
+    const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
+    if (cookie) {
+      try {
+        const userData = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+        setIsLoggedIn(true);
+        if (userData.email === 'admin@smartbidhub.com.br') {
+          router.push('/admin/empresas');
+        }
+      } catch (err) {
+        console.error('Erro ao ler cookie do usuario:', err);
+        setIsLoggedIn(false);
+      }
+    } else {
+      setIsLoggedIn(false);
+    }
   }, []);
 
   if (isLoggedIn === null) {

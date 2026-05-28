@@ -16,11 +16,28 @@ export async function checkIsSuperAdmin() {
     const sbUser = cookieStore.get('sb_user')?.value;
     if (!sbUser) return false;
 
-    const data = JSON.parse(decodeURIComponent(sbUser));
+    let data;
+    try {
+      // Tenta decodificar caso esteja URL-encoded
+      data = JSON.parse(decodeURIComponent(sbUser));
+    } catch {
+      try {
+        // Tenta fazer o parse direto caso o Next.js já tenha decodificado
+        data = JSON.parse(sbUser);
+      } catch (err) {
+        console.error('Erro crítico ao fazer parse do cookie sb_user:', err);
+        return false;
+      }
+    }
     
-    // Busca o usuário no banco incluindo a relação com o Tenant pelo nome do cookie
+    // Busca o usuário no banco por e-mail ou nome para máxima precisão e segurança
     const user = await prisma.user.findFirst({
-      where: { nome: data.nome || '' },
+      where: {
+        OR: [
+          { email: data.email || '___invalid___' },
+          { nome: data.nome || '___invalid___' }
+        ]
+      },
       include: { tenant: true }
     });
 
