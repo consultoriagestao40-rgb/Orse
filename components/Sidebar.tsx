@@ -2,10 +2,10 @@
  
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
-import { checkCurrentTenantActive } from '@/app/admin/empresas/actions';
+import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
 import { changeMyPassword } from '@/app/propostas/actions';
  
 const Sidebar = () => {
@@ -23,6 +23,15 @@ const Sidebar = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
+
+  // Estados e lógicas do Período de Testes Grátis de 7 Dias
+  const [trialStatus, setTrialStatus] = useState<any>(null);
+  const [phoneInput, setPhoneInput] = useState('');
+  const [phoneLoading, setPhoneLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
+  const [phoneSuccess, setPhoneSuccess] = useState('');
+  const [countdownTime, setCountdownTime] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
+  const [trialAlert, setTrialAlert] = useState<{ open: boolean; title: string; message: string } | null>(null);
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +71,96 @@ const Sidebar = () => {
       setPasswordLoading(false);
     }
   };
+
+  // Formata o input do celular para o padrão brasileiro (99) 99999-9999
+  const formatPhone = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+  };
+
+  const handleSaveContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPhoneLoading(true);
+    setPhoneError('');
+    setPhoneSuccess('');
+
+    const cleaned = phoneInput.replace(/\D/g, '');
+    if (cleaned.length < 10) {
+      setPhoneError('Por favor, informe o DDD e o número completo (mínimo 10 dígitos).');
+      setPhoneLoading(false);
+      return;
+    }
+
+    try {
+      const res = await updateTenantContactAction(phoneInput);
+      if (res.success) {
+        setPhoneSuccess('WhatsApp salvo com sucesso!');
+        setTimeout(async () => {
+          const trialRes = await getTenantTrialStatus();
+          if (trialRes && trialRes.success) {
+            setTrialStatus(trialRes);
+            if (trialRes.isTrialActive && !trialRes.trialExpired) {
+              document.body.classList.add('has-trial-banner');
+            } else {
+              document.body.classList.remove('has-trial-banner');
+            }
+          }
+        }, 1000);
+      } else {
+        setPhoneError(res.error || 'Erro ao salvar WhatsApp.');
+      }
+    } catch (err: any) {
+      setPhoneError(err.message || 'Erro de comunicação com o servidor.');
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  // Efeito global de limpeza do padding do banner
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined') {
+        document.body.classList.remove('has-trial-banner');
+      }
+    };
+  }, []);
+
+  // Efeito do timer do contador regressivo
+  useEffect(() => {
+    if (!trialStatus || !trialStatus.isTrialActive || trialStatus.trialExpired || trialStatus.remainingTimeMs <= 0) {
+      setCountdownTime(null);
+      return;
+    }
+
+    let remaining = trialStatus.remainingTimeMs;
+
+    const updateTimer = () => {
+      if (remaining <= 0) {
+        setTrialStatus((prev: any) => prev ? { ...prev, trialExpired: true } : null);
+        if (typeof window !== 'undefined') {
+          document.body.classList.remove('has-trial-banner');
+        }
+        clearInterval(timer);
+        return;
+      }
+
+      const days = Math.floor(remaining / (24 * 60 * 60 * 1000));
+      const hours = Math.floor((remaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+      const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+      const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
+
+      setCountdownTime({ days, hours, minutes, seconds });
+      remaining -= 1000;
+    };
+
+    updateTimer();
+    const timer = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(timer);
+  }, [trialStatus?.remainingTimeMs, trialStatus?.isTrialActive, trialStatus?.trialExpired]);
   
   // Carrega as informações do usuário e o estado recolhido do localStorage
   useEffect(() => {
@@ -82,15 +181,27 @@ const Sidebar = () => {
         setIsCollapsed(true);
       }
 
-      // Checa se o tenant do inquilino está ativo
+      // Checa se o tenant do inquilino está ativo e verifica o status do teste de 7 dias
       const verifyActiveStatus = async () => {
         try {
           const res = await checkCurrentTenantActive();
           if (res && res.success && res.active === false) {
             setIsTenantBlocked(true);
           }
+
+          const trialRes = await getTenantTrialStatus();
+          if (trialRes && trialRes.success) {
+            setTrialStatus(trialRes);
+            if (trialRes.isTrialActive) {
+              if (!trialRes.trialExpired && trialRes.hasContact) {
+                document.body.classList.add('has-trial-banner');
+              } else {
+                document.body.classList.remove('has-trial-banner');
+              }
+            }
+          }
         } catch (error) {
-          console.error('Erro ao verificar suspensão da empresa:', error);
+          console.error('Erro ao verificar suspensão e teste da empresa:', error);
         }
       };
       
@@ -584,6 +695,201 @@ const Sidebar = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* FIXED COUNTER BANNER AT THE TOP OF THE SCREEN */}
+      {trialStatus?.isTrialActive && !trialStatus?.trialExpired && trialStatus?.hasContact && countdownTime && (
+        <div className={`fixed top-0 right-0 z-[48] bg-gradient-to-r from-[#1B4D3E] via-[#2A6D5A] to-[#1B4D3E] border-b border-emerald-500/20 text-white flex items-center justify-between px-6 py-2 h-14 shadow-lg transition-all duration-300 ${isCollapsed ? 'left-20' : 'left-64'}`}>
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+              <Clock size={12} className="animate-pulse" />
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400">Modo de Teste:</span>
+              <p className="text-xs font-bold flex items-center">
+                Seu período de teste grátis expira em: 
+                <span className="ml-2 font-mono text-emerald-300 font-extrabold bg-[#0B2E24] px-2 py-1 rounded tracking-wider whitespace-nowrap">
+                  {countdownTime.days}d {countdownTime.hours}h {countdownTime.minutes}m {countdownTime.seconds}s
+                </span>
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-emerald-200/70 font-semibold hidden md:inline">Gostando da experiência?</span>
+            <button 
+              onClick={() => {
+                setTrialAlert({
+                  title: 'Assinar SmartBidHub Premium',
+                  message: 'Ficamos muito felizes com o seu interesse! Para assinar o SmartBidHub Premium e liberar acessos ilimitados, entre em contato direto com o nosso financeiro pelo e-mail: cristiano@grupojvsserv.com.br ou pelo WhatsApp corporativo da holding.'
+                });
+              }}
+              className="bg-[#D4AF37] hover:bg-[#C5A028] text-slate-900 font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-xl transition-all hover:scale-105 active:scale-95 shadow-lg shadow-amber-500/10 cursor-pointer"
+            >
+              Assinar Agora
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 1. MANDATORY CONTACT CAPTURE OVERLAY */}
+      {trialStatus?.isTrialActive && !trialStatus?.hasContact && (
+        <div className="fixed inset-0 z-[9998] bg-[#0F172A]/95 flex items-center justify-center p-6 text-center backdrop-blur-xl animate-in fade-in duration-300 font-sans">
+          <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 space-y-6 flex flex-col items-center">
+            
+            {/* Pulsing Emerald Contact Icon */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-[#10B981]/20 blur-2xl rounded-full animate-pulse"></div>
+              <div className="relative w-20 h-20 bg-[#1B4D3E]/10 border border-[#10B981]/30 text-[#10B981] rounded-3xl flex items-center justify-center shadow-lg">
+                <Smartphone size={38} className="stroke-[1.5] animate-bounce" />
+              </div>
+            </div>
+
+            {/* Title Block */}
+            <div className="space-y-1">
+              <h2 className="text-[10px] font-black tracking-[0.3em] text-[#10B981] uppercase">Cadastro Obrigatório</h2>
+              <h1 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Celular / WhatsApp</h1>
+              <p className="text-xs text-slate-400 font-bold max-w-xs mt-2">
+                Para prosseguir com seu período de testes grátis de 7 dias, informe seu WhatsApp para contato comercial e suporte técnico.
+              </p>
+            </div>
+
+            {/* Form Block */}
+            <form onSubmit={handleSaveContact} className="w-full space-y-4 pt-2">
+              <div className="space-y-2 text-left">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">WhatsApp / Celular</label>
+                <div className="relative group">
+                  <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4D3E] transition-colors" size={16} />
+                  <input 
+                    type="tel" 
+                    required
+                    placeholder="(99) 99999-9999"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-11 pr-4 outline-none focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 transition-all font-semibold text-slate-700 text-sm"
+                    value={phoneInput}
+                    onChange={(e) => setPhoneInput(formatPhone(e.target.value))}
+                    disabled={phoneLoading}
+                  />
+                </div>
+              </div>
+
+              {/* Success / Error Messages */}
+              {phoneSuccess && (
+                <div className="bg-emerald-50 text-emerald-600 border border-emerald-100 p-4 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in duration-200">
+                  <CheckCircle2 size={16} />
+                  {phoneSuccess}
+                </div>
+              )}
+
+              {phoneError && (
+                <div className="bg-red-50 text-red-600 border border-red-100 p-4 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in duration-200">
+                  <X size={16} className="border border-red-200 rounded-full" />
+                  {phoneError}
+                </div>
+              )}
+
+              <button 
+                type="submit"
+                disabled={phoneLoading}
+                className="w-full py-4 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-[#1B4D3E]/20 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {phoneLoading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  'Salvar e Acessar o Sistema'
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 2. TRIAL EXPIRED LOCK OUT SCREEN */}
+      {trialStatus?.isTrialActive && trialStatus?.trialExpired && (
+        <div className="fixed inset-0 z-[9999] bg-[#0F172A]/98 flex items-center justify-center p-6 text-center backdrop-blur-xl animate-in fade-in duration-300 font-sans">
+          <div className="w-full max-w-lg bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-10 shadow-2xl space-y-8 flex flex-col items-center">
+            
+            {/* Golden Lock Icon */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-[#D4AF37]/20 blur-2xl rounded-full animate-pulse"></div>
+              <div className="relative w-24 h-24 bg-[#D4AF37]/10 border border-[#D4AF37]/35 text-[#D4AF37] rounded-3xl flex items-center justify-center shadow-lg">
+                <Lock size={44} className="stroke-[1.5]" />
+              </div>
+            </div>
+
+            {/* SmartBidHub Branding */}
+            <div className="space-y-1">
+              <h2 className="text-[10px] font-black tracking-[0.3em] text-[#D4AF37] uppercase">Período de Testes Expirado</h2>
+              <h1 className="text-3xl font-black text-white tracking-tight uppercase">SmartBidHub</h1>
+            </div>
+
+            {/* Message Block */}
+            <div className="space-y-4 max-w-sm">
+              <p className="text-sm font-semibold text-slate-300 leading-relaxed">
+                Seu período de teste grátis de 7 dias chegou ao fim.
+              </p>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Esperamos que tenha gostado das ferramentas de automação de propostas, controladoria SPOT, CCTs e prospecção inteligente!
+                <br /><br />
+                Para continuar utilizando toda a potência do SmartBidHub sem interrupções e com dados ilimitados, regularize sua assinatura.
+              </p>
+            </div>
+
+            {/* Divider */}
+            <div className="w-full h-px bg-white/10"></div>
+
+            {/* Support info & Action Controls */}
+            <div className="flex flex-col items-center gap-4 w-full">
+              <button 
+                onClick={() => {
+                  setTrialAlert({
+                    title: 'Contratar Plano SmartBidHub',
+                    message: 'Para contratar e liberar seu acesso corporativo agora mesmo, fale diretamente com nosso canal de atendimento pelo e-mail: cristiano@grupojvsserv.com.br ou suporte@smartbidhub.com.br'
+                  });
+                }}
+                className="w-full py-4.5 bg-[#D4AF37] hover:bg-[#C5A028] text-slate-900 text-xs font-black uppercase tracking-widest rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10 animate-pulse"
+              >
+                Falar com Consultor Comercial
+              </button>
+
+              <button 
+                onClick={async () => {
+                  try {
+                    await fetch('/api/auth/logout', { method: 'POST' });
+                  } catch (err) {
+                    console.error('Logout failed:', err);
+                  }
+                  window.location.href = '/login';
+                }}
+                className="px-8 py-3 bg-[#1B4D3E]/30 hover:bg-[#1B4D3E]/50 text-slate-300 border border-white/5 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all cursor-pointer"
+              >
+                Sair do Sistema
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* TRIAL ALERT MODAL */}
+      {trialAlert && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-8 text-center space-y-6">
+              <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center border border-emerald-100 bg-emerald-50/50 text-[#1B4D3E] shadow-lg shadow-emerald-50 animate-bounce">
+                <CheckCircle2 size={32} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{trialAlert.title}</h3>
+                <p className="text-sm text-slate-500 font-bold leading-relaxed whitespace-pre-line">{trialAlert.message}</p>
+              </div>
+              <button 
+                onClick={() => setTrialAlert(null)}
+                className="w-full py-4 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-[#1B4D3E]/10"
+              >
+                Entendido
+              </button>
+            </div>
           </div>
         </div>
       )}

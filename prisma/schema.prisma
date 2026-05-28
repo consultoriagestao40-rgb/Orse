@@ -25,6 +25,7 @@ model Tenant {
   whatsappPhone       String?
   plano               String                    @default("STARTER") // STARTER, PRO, ENTERPRISE
   limiteUsuarios      Int                       @default(3)
+  trialStartedAt      DateTime?
   users               User[]
   clients             Client[]
   leads               Lead[]

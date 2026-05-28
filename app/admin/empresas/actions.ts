@@ -134,6 +134,7 @@ export async function createTenantAction(
         cnpj: formattedCnpj,
         plano: plano || 'STARTER',
         limiteUsuarios: limiteUsuarios !== undefined ? Number(limiteUsuarios) : 3,
+        trialStartedAt: plano === 'TESTE' ? new Date() : null,
       }
     });
 
@@ -178,6 +179,7 @@ export async function updateTenantAction(
       return { success: false, error: 'Outra empresa já está cadastrada com este CNPJ.' };
     }
 
+    const current = await prisma.tenant.findUnique({ where: { id } });
     const updated = await prisma.tenant.update({
       where: { id },
       data: {
@@ -185,6 +187,7 @@ export async function updateTenantAction(
         cnpj: formattedCnpj,
         plano: plano || undefined,
         limiteUsuarios: limiteUsuarios !== undefined ? Number(limiteUsuarios) : undefined,
+        trialStartedAt: plano === 'TESTE' ? (current?.trialStartedAt || new Date()) : (plano && plano !== 'TESTE' ? null : undefined),
       }
     });
 
@@ -302,5 +305,143 @@ export async function checkCurrentTenantActive() {
   } catch (error) {
     console.error('Erro ao checar status ativo do Tenant:', error);
     return { success: true, active: true }; // Fail-safe: não bloqueia em caso de erro interno
+  }
+}
+
+/**
+ * Server Action para consultar os detalhes e tempo restante do período de teste grátis.
+ */
+export async function getTenantTrialStatus() {
+  try {
+    const cookieStore = await cookies();
+    const sbUser = cookieStore.get('sb_user')?.value;
+    if (!sbUser) return { success: false, error: 'Usuário não autenticado.' };
+
+    let data;
+    try {
+      data = JSON.parse(decodeURIComponent(sbUser));
+    } catch {
+      try {
+        data = JSON.parse(sbUser);
+      } catch {
+        return { success: false, error: 'Formato de sessão inválido.' };
+      }
+    }
+
+    // O Super Admin da plataforma é imune a bloqueios e testes
+    if (data.email === 'admin@smartbidhub.com.br') {
+      return { 
+        success: true, 
+        isSuperAdmin: true, 
+        isTrialActive: false, 
+        trialExpired: false, 
+        hasContact: true,
+        active: true
+      };
+    }
+
+    // Busca o usuário no banco incluindo a relação com o Tenant
+    const user = await prisma.user.findFirst({
+      where: { nome: data.nome || '' },
+      include: { tenant: true }
+    });
+
+    if (!user || !user.tenant) {
+      return { success: false, error: 'Usuário ou empresa não encontrada.' };
+    }
+
+    const tenant = user.tenant;
+    const isTrialActive = tenant.plano === 'TESTE';
+    
+    let trialExpired = false;
+    let remainingTimeMs = 0;
+    const trialStart = tenant.trialStartedAt || tenant.createdAt;
+    const durationMs = 7 * 24 * 60 * 60 * 1000; // 7 dias
+    const trialEnd = new Date(trialStart.getTime() + durationMs);
+    const now = new Date();
+
+    if (isTrialActive) {
+      remainingTimeMs = trialEnd.getTime() - now.getTime();
+      if (remainingTimeMs <= 0) {
+        trialExpired = true;
+        remainingTimeMs = 0;
+      }
+    }
+
+    // OBRIGATORIEDADE DO WHATSAPP: Celular ou WhatsApp cadastrado com pelo menos 10 dígitos (DDD + número)
+    const hasContact = !!(
+      (tenant.whatsappPhone && tenant.whatsappPhone.replace(/\D/g, '').length >= 10) ||
+      (user.celular && user.celular.replace(/\D/g, '').length >= 10)
+    );
+
+    return {
+      success: true,
+      isSuperAdmin: false,
+      isTrialActive,
+      trialExpired,
+      hasContact,
+      whatsappPhone: tenant.whatsappPhone || user.celular || '',
+      createdAt: tenant.createdAt.toISOString(),
+      trialStartedAt: trialStart.toISOString(),
+      remainingTimeMs,
+      active: tenant.ativo
+    };
+  } catch (error: any) {
+    console.error('Erro ao verificar status de teste do tenant:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Server Action para gravar obrigatoriamente o WhatsApp/celular de contato e desbloquear o sistema.
+ */
+export async function updateTenantContactAction(phone: string) {
+  try {
+    const cookieStore = await cookies();
+    const sbUser = cookieStore.get('sb_user')?.value;
+    if (!sbUser) return { success: false, error: 'Usuário não autenticado.' };
+
+    let data;
+    try {
+      data = JSON.parse(decodeURIComponent(sbUser));
+    } catch {
+      try {
+        data = JSON.parse(sbUser);
+      } catch {
+        return { success: false, error: 'Sessão inválida.' };
+      }
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { nome: data.nome || '' }
+    });
+
+    if (!user) {
+      return { success: false, error: 'Usuário não encontrado.' };
+    }
+
+    const cleanedPhone = phone.replace(/\D/g, '');
+    if (cleanedPhone.length < 10) {
+      return { success: false, error: 'Número de WhatsApp inválido. Informe o DDD e o número completo.' };
+    }
+
+    // Atualiza o whatsappPhone no Tenant
+    if (user.tenantId) {
+      await prisma.tenant.update({
+        where: { id: user.tenantId },
+        data: { whatsappPhone: phone }
+      });
+    }
+
+    // Atualiza o celular no próprio Usuário logado
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { celular: phone }
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao atualizar contato de teste:', error);
+    return { success: false, error: error.message };
   }
 }

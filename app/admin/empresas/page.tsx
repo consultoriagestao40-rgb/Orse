@@ -416,7 +416,11 @@ export default function TenantManagerDashboard() {
                         <td className="px-6 py-4">
                           <div className="flex flex-col gap-1">
                             <div>
-                              {t.plano === 'PRO' ? (
+                              {t.plano === 'TESTE' ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wide animate-pulse">
+                                  Teste 7 Dias
+                                </span>
+                              ) : t.plano === 'PRO' ? (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wide">
                                   Pro
                                 </span>
@@ -555,12 +559,14 @@ export default function TenantManagerDashboard() {
                   onChange={e => {
                     const newPlano = e.target.value;
                     setPlano(newPlano);
-                    if (newPlano === 'STARTER') setLimiteUsuarios(3);
+                    if (newPlano === 'TESTE') setLimiteUsuarios(3);
+                    else if (newPlano === 'STARTER') setLimiteUsuarios(3);
                     else if (newPlano === 'PRO') setLimiteUsuarios(10);
                     else if (newPlano === 'ENTERPRISE') setLimiteUsuarios(100);
                   }}
                   disabled={actionLoading}
                 >
+                  <option value="TESTE">Teste Grátis (7 dias - 3 users)</option>
                   <option value="STARTER">Starter (3 users)</option>
                   <option value="PRO">Pro (10 users)</option>
                   <option value="ENTERPRISE">Enterprise (100 users)</option>

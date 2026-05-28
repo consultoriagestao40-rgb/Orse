@@ -42,3 +42,7 @@ body {
   }
 }
 
+body.has-trial-banner main {
+  padding-top: 3.5rem !important;
+}
+
