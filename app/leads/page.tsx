@@ -3,7 +3,7 @@ import Sidebar from '@/components/Sidebar';
 import LeadsKanban from './LeadsKanban';
 
 export const metadata = {
-  title: 'Pipeline de Leads | SmartBid',
+  title: 'Pipeline de Leads | SmartBidHub',
 };
 
 export default function LeadsPage() {

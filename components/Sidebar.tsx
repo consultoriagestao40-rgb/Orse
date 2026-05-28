@@ -113,7 +113,7 @@ const Sidebar = () => {
             <div>
               <h1 className="text-xl font-black text-slate-900 flex items-center gap-2">
                 <div className="w-8 h-8 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-sm font-black shadow-lg shadow-emerald-200 shrink-0">S</div>
-                SmartBid
+                SmartBidHub
               </h1>
               <p className="text-[9px] text-slate-400 mt-2 font-black uppercase tracking-[0.2em] whitespace-nowrap">Enterprise FM System</p>
             </div>
