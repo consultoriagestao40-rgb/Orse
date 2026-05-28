@@ -26,7 +26,11 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (res.ok) {
-        window.location.href = '/propostas/nova'; // Redireciona via window para recarregar o estado
+        if (data.user?.email === 'admin@smartbidhub.com.br') {
+          window.location.href = '/admin/empresas';
+        } else {
+          window.location.href = '/propostas/nova'; // Redireciona via window para recarregar o estado
+        }
       } else {
         setError(data.error || 'Credenciais inválidas.');
       }

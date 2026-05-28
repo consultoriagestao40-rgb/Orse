@@ -376,6 +376,10 @@ function PropostaEditor() {
         setEmpresasEmissoras(dataEmpresas || []);
         if (dataEmpresas && dataEmpresas.length > 0) setSelectedEmpresaId(dataEmpresas[0].id);
         setCurrentUser(loggedUser || null);
+        if (loggedUser && loggedUser.email === 'admin@smartbidhub.com.br') {
+          router.push('/admin/empresas');
+          return;
+        }
         console.log('CCTs, Escalas, Produtos, Tipos de Serviço e Segmentos carregados.');
         
         const { getClientes } = await import('@/app/clientes/actions');
