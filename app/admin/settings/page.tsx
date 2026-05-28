@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
   Settings as SettingsIcon, Layers, CalendarDays, Ruler, Plus, Trash2, 
-  Save, X, Tag, Edit2, Target, Briefcase
+  Save, X, Tag, Edit2, Target, Briefcase, MessageSquare
 } from 'lucide-react';
 import { 
   getPropostaStatuses, createPropostaStatus, deletePropostaStatus 
@@ -20,14 +20,97 @@ import {
   getSellers
 } from './actions';
 import { getEmpresasEmissoras, createEmpresaEmissora, updateEmpresaEmissora, deleteEmpresaEmissora } from './empresas-actions';
+import { 
+  getWhatsAppConnectionStatus, connectWhatsAppInstance, 
+  getWhatsAppQrCode, disconnectWhatsAppInstance 
+} from './zapi-actions';
 
-type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas';
+type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas' | 'whatsapp';
 
 export default function SettingsPage() {
   // Empresas Emissoras
   const [empresas, setEmpresas] = useState<any[]>([]);
   const [showEmpresaModal, setShowEmpresaModal] = useState(false);
   const [empresaForm, setEmpresaForm] = useState({ id: '', nomeFantasia: '', razaoSocial: '', cnpj: '', endereco: '', telefone: '', email: '' });
+
+  // WhatsApp Integration State
+  const [waConnected, setWaConnected] = useState(false);
+  const [waPhone, setWaPhone] = useState<string | null>(null);
+  const [waQrCode, setWaQrCode] = useState<string | null>(null);
+  const [waLoading, setWaLoading] = useState(false);
+  const [waStatusMsg, setWaStatusMsg] = useState('Verificando status...');
+
+  const checkWhatsAppStatus = async () => {
+    setWaLoading(true);
+    setWaStatusMsg('Consultando conexão Z-API...');
+    try {
+      const res = await getWhatsAppConnectionStatus();
+      if (res.success) {
+        setWaConnected(!!res.connected);
+        setWaPhone(res.phone || null);
+        if (res.connected) {
+          setWaQrCode(null);
+          setWaStatusMsg('WhatsApp Conectado com sucesso!');
+        } else {
+          setWaStatusMsg('WhatsApp Desconectado. Pronto para escanear.');
+        }
+      } else {
+        setWaStatusMsg('Erro ao obter status: ' + res.error);
+      }
+    } catch (err: any) {
+      setWaStatusMsg('Falha de rede ao consultar status.');
+    } finally {
+      setWaLoading(false);
+    }
+  };
+
+  const handleConnectWhatsApp = async () => {
+    setWaLoading(true);
+    setWaStatusMsg('Criando instância na Z-API...');
+    try {
+      const res = await connectWhatsAppInstance();
+      if (res.success) {
+        setWaStatusMsg('Instância pronta! Carregando QR Code...');
+        // Busca o QR Code
+        const qrRes = await getWhatsAppQrCode();
+        if (qrRes.success && qrRes.qrCode) {
+          setWaQrCode(qrRes.qrCode);
+          setWaStatusMsg('Aguardando leitura do QR Code...');
+        } else {
+          setWaStatusMsg(qrRes.error || 'Erro ao carregar o QR Code.');
+        }
+      } else {
+        alert('Erro ao conectar: ' + res.error);
+        setWaStatusMsg('Erro na conexão.');
+      }
+    } catch (err: any) {
+      alert('Erro inesperado: ' + err.message);
+    } finally {
+      setWaLoading(false);
+    }
+  };
+
+  const handleDisconnectWhatsApp = async () => {
+    if (!confirm('Deseja realmente desconectar o WhatsApp desta empresa? Isso interromperá todos os envios e recebimentos no CRM.')) return;
+    setWaLoading(true);
+    setWaStatusMsg('Desconectando dispositivo na Z-API...');
+    try {
+      const res = await disconnectWhatsAppInstance();
+      if (res.success) {
+        setWaConnected(false);
+        setWaPhone(null);
+        setWaQrCode(null);
+        setWaStatusMsg('WhatsApp desconectado.');
+        alert('WhatsApp desconectado com sucesso!');
+      } else {
+        alert('Erro ao desconectar: ' + res.error);
+      }
+    } catch (err: any) {
+      alert('Erro inesperado: ' + err.message);
+    } finally {
+      setWaLoading(false);
+    }
+  };
 
   // ── Estado principal ─────────────────────────────────────────────────────────
   const [userRole, setUserRole] = useState<string>('USER');
@@ -192,6 +275,8 @@ export default function SettingsPage() {
         const sellersList = await getSellers();
         setSellers(sellersList || []);
         loadMetas();
+      } else if (activeTab === 'whatsapp') {
+        await checkWhatsAppStatus();
       }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -382,6 +467,7 @@ export default function SettingsPage() {
               { id: 'segmentos', label: 'Segmentos de Cliente', icon: Target, roles: ['ADMIN', 'MANAGER', 'USER'] },
               { id: 'empresas', label: 'Empresas Emissoras', icon: Briefcase, roles: ['ADMIN'] },
               { id: 'metas', label: 'Metas dos Vendedores', icon: Target, roles: ['ADMIN', 'MANAGER'] },
+              { id: 'whatsapp', label: 'Integração WhatsApp', icon: MessageSquare, roles: ['ADMIN', 'MANAGER'] },
             ].filter(tab => tab.roles.includes(userRole)).map((tab) => (
               <button
                 key={tab.id}
@@ -785,6 +871,153 @@ export default function SettingsPage() {
                       })
                     )}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* 7. ABA WHATSAPP INTEGRATION */}
+            {activeTab === 'whatsapp' && (
+              <div>
+                <div className="bg-[#1B4D3E] px-6 py-4 border-b border-[#13382D] flex justify-between items-center">
+                  <h2 className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                    <MessageSquare size={14} className="text-emerald-400" /> Integração de WhatsApp do CRM
+                  </h2>
+                  <button 
+                    onClick={checkWhatsAppStatus}
+                    className="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95"
+                    disabled={waLoading}
+                  >
+                    🔄 Atualizar Status
+                  </button>
+                </div>
+
+                <div className="p-8 max-w-3xl mx-auto">
+                  {waConnected ? (
+                    /* ESTADO: CONECTADO (PREMIUM CARD) */
+                    <div className="bg-gradient-to-br from-emerald-50/40 to-teal-50/20 border border-emerald-200 rounded-3xl p-8 space-y-6 text-center flex flex-col items-center shadow-xs animate-in zoom-in-95 duration-300 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                      
+                      {/* Premium Success Circle with floating waves */}
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-emerald-500/10 rounded-full blur-xl animate-pulse"></div>
+                        <div className="relative w-20 h-20 bg-emerald-500 text-white rounded-3xl flex items-center justify-center shadow-lg shadow-emerald-200">
+                          <MessageSquare size={36} className="stroke-[2] animate-bounce" style={{ animationDuration: '3s' }} />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <span className="text-[10px] font-black tracking-widest text-emerald-600 bg-emerald-100/60 px-4 py-1.5 rounded-full uppercase">Conexão Ativa</span>
+                        <h3 className="text-2xl font-black text-slate-800 tracking-tight">WhatsApp Vinculado com Sucesso</h3>
+                        <p className="text-xs text-slate-500 max-w-md leading-relaxed">
+                          O número da sua empresa está totalmente integrado ao SmartBidHub CRM. Você já pode enviar e receber mensagens diretamente da tela de leads.
+                        </p>
+                      </div>
+
+                      {/* Device Metadata Box */}
+                      <div className="w-full max-w-sm bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs divide-y divide-slate-100 space-y-3">
+                        <div className="flex justify-between items-center text-xs pb-3">
+                          <span className="font-bold text-slate-400 uppercase tracking-wider">Número Vinculado</span>
+                          <span className="font-extrabold text-slate-800 tracking-tight text-sm">{waPhone ? `+${waPhone}` : 'Telefone Identificado'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs pt-3">
+                          <span className="font-bold text-slate-400 uppercase tracking-wider">Serviço de Envio</span>
+                          <span className="font-extrabold text-emerald-600 uppercase tracking-wider bg-emerald-50 px-2.5 py-1 rounded-md text-[10px]">Z-API Ativo</span>
+                        </div>
+                      </div>
+
+                      <div className="w-full max-w-sm pt-4">
+                        <button
+                          onClick={handleDisconnectWhatsApp}
+                          className="w-full py-4 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 hover:border-rose-200 text-xs font-black uppercase tracking-widest rounded-2xl transition-all hover:shadow-xs active:scale-[0.98] cursor-pointer"
+                        >
+                          🔴 Desconectar WhatsApp
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* ESTADO: DESCONECTADO (CONNECTION PANEL) */
+                    <div className="space-y-8 animate-in fade-in duration-300">
+                      
+                      {/* Intro Banner */}
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-3xl p-6 flex flex-col md:flex-row items-center gap-6">
+                        <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-2xl flex items-center justify-center shrink-0">
+                          <MessageSquare size={28} className="stroke-[2]" />
+                        </div>
+                        <div className="space-y-1">
+                          <h4 className="text-sm font-black text-slate-800 uppercase tracking-wide">Integre o WhatsApp da sua Empresa</h4>
+                          <p className="text-xs text-slate-500 leading-relaxed max-w-xl">
+                            Conecte o seu número corporativo em segundos. O processo gera um QR Code exclusivo diretamente no nosso painel. Basta escanear como se estivesse abrindo o WhatsApp Web.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-center justify-center space-y-6">
+                        
+                        {waQrCode ? (
+                          /* SE QR CODE ESTIVER DISPONÍVEL */
+                          <div className="flex flex-col items-center space-y-6 p-8 bg-white border border-slate-200 rounded-3xl shadow-sm w-full max-w-md animate-in zoom-in-95 duration-200">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 border border-amber-200/50 px-3.5 py-1.5 rounded-full animate-pulse">
+                              Aguardando Leitura
+                            </span>
+                            
+                            {/* QR Code Container with nice visual borders */}
+                            <div className="w-56 h-56 bg-slate-50 border-4 border-slate-100 rounded-2xl flex items-center justify-center p-4 shadow-2xs relative overflow-hidden group">
+                              <img src={waQrCode} alt="WhatsApp QR Code" className="w-full h-full object-contain select-none" />
+                              <div className="absolute inset-0 bg-slate-900/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"></div>
+                            </div>
+
+                            <div className="text-center space-y-2 max-w-xs">
+                              <p className="text-xs font-bold text-slate-700 leading-normal">
+                                Abra o WhatsApp no seu celular, vá em <strong className="text-slate-900">Aparelhos Conectados</strong> e selecione <strong className="text-slate-900">Conectar Aparelho</strong>.
+                              </p>
+                              <p className="text-[10px] text-slate-400 leading-relaxed italic">
+                                O QR Code expira a cada 30 segundos. Ele se atualizará automaticamente na tela.
+                              </p>
+                            </div>
+
+                            {/* Actions inside QR mode */}
+                            <div className="w-full pt-4 flex gap-3">
+                              <button
+                                onClick={checkWhatsAppStatus}
+                                className="flex-1 py-3.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer text-center"
+                              >
+                                Verifiquei Conexão
+                              </button>
+                              <button
+                                onClick={handleDisconnectWhatsApp}
+                                className="flex-1 py-3.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer text-center"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          /* SE AINDA NÃO GEROU O QR CODE */
+                          <div className="w-full max-w-md bg-white border border-slate-200/80 rounded-3xl p-8 text-center flex flex-col items-center space-y-6 shadow-2xs">
+                            <div className="w-14 h-14 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400">
+                              <MessageSquare size={24} />
+                            </div>
+                            
+                            <div className="space-y-2 max-w-xs">
+                              <h4 className="text-base font-black text-slate-800 tracking-tight">Sem Instância Inicializada</h4>
+                              <p className="text-xs text-slate-400 leading-relaxed">
+                                Você precisa inicializar as credenciais de envio e receber as informações do canal antes de gerar o QR Code de autenticação.
+                              </p>
+                            </div>
+
+                            <button
+                              onClick={handleConnectWhatsApp}
+                              className="w-full py-4.5 bg-gradient-to-r from-[#1B4D3E] to-emerald-800 hover:from-emerald-800 hover:to-emerald-900 text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all shadow-md shadow-emerald-100 hover:shadow-lg hover:shadow-emerald-200 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+                              disabled={waLoading}
+                            >
+                              🚀 Inicializar e Gerar QR Code
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                    </div>
+                  )}
                 </div>
               </div>
             )}

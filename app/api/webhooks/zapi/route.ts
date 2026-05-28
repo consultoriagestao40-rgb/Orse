@@ -1,81 +1,100 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-
+ 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    console.log('Z-API Webhook payload:', JSON.stringify(body));
-
-    // 1. Eventos de mudança de status de mensagens enviadas (Read Receipts)
+    console.log('Z-API Webhook payload received:', JSON.stringify(body));
+ 
+    // 1. EXTRAÇÃO E ISOLAMENTO DO TENANT
+    // Captura o tenantId dos Query Params (URL configurada no webhook da Z-API)
+    const { searchParams } = new URL(req.url);
+    let tenantId = searchParams.get('tenantId');
+ 
+    // Fallback: Se não encontrar na URL, busca no banco pelo instanceId
+    if (!tenantId && body.instanceId) {
+      const tenant = await prisma.tenant.findFirst({
+        where: { whatsappInstanceId: body.instanceId },
+        select: { id: true }
+      });
+      if (tenant) {
+        tenantId = tenant.id;
+      }
+    }
+ 
+    // Se ainda assim não identificarmos o tenantId, não prosseguimos para evitar mistura de dados
+    if (!tenantId) {
+      console.warn('Webhook Z-API ignorado: Não foi possível determinar a empresa (tenantId) dona da mensagem.');
+      return NextResponse.json({ received: true, status: 'ignored_no_tenant' });
+    }
+ 
+    console.log(`Webhook Z-API roteado para o Tenant ID: ${tenantId}`);
+ 
+    // 2. EVENTOS DE MUDANÇA DE STATUS DE MENSAGENS ENVIADAS (Read Receipts)
     if (body.status && Array.isArray(body.ids)) {
       const status = body.status;
       const ids = body.ids;
-
-      console.log(`Z-API Status Update: [${ids.join(', ')}] -> ${status}`);
-
-      // Map Z-API status to our db status
-      // Z-API: SENT, RECEIVED, READ, PLAYED, FAILED
-      // DB: SENT, DELIVERED, READ
+ 
+      console.log(`Z-API Status Update for Tenant [${tenantId}]: [${ids.join(', ')}] -> ${status}`);
+ 
+      // Mapeamento de status
       let dbStatus = 'SENT';
       if (status === 'RECEIVED') {
         dbStatus = 'DELIVERED';
       } else if (status === 'READ' || status === 'READ_BY_ME' || status === 'PLAYED') {
         dbStatus = 'READ';
       }
-
+ 
       await prisma.whatsAppMessage.updateMany({
         where: {
-          messageId: {
-            in: ids
-          }
+          messageId: { in: ids },
+          lead: { tenantId: tenantId } // Segurança extra: garante isolamento na atualização
         },
         data: {
           status: dbStatus
         }
       });
-
+ 
       return NextResponse.json({ received: true });
     }
-
-    // 2. Eventos de digitação/gravação do cliente (Chat Presence)
+ 
+    // 3. EVENTOS DE DIGITAÇÃO/GRAVAÇÃO DO CLIENTE (Chat Presence)
     if (body.type === 'ChatPresenceCallback' && body.data) {
       const remotePhone = body.data.remoteJid.split('@')[0];
       const status = body.data.status; // composing, recording, paused
-
-      console.log(`Z-API Chat Presence: ${remotePhone} -> ${status}`);
-
+ 
+      console.log(`Z-API Chat Presence for Tenant [${tenantId}]: ${remotePhone} -> ${status}`);
+ 
       const last8Digits = remotePhone.slice(-8);
-
-      // Procurar lead pelo telefone principal
+ 
+      // Procurar lead pelo telefone principal garantindo o isolamento da empresa
       let leads = await prisma.lead.findMany({
         where: {
-          telefone: {
-            contains: last8Digits
-          }
+          telefone: { contains: last8Digits },
+          tenantId: tenantId
         }
       });
-
-      // Se não encontrou pelo telefone principal, busca nos contatos adicionais!
+ 
+      // Se não encontrou pelo principal, busca nos contatos adicionais da empresa
       if (leads.length === 0) {
         const additionalContacts = await prisma.leadContact.findMany({
           where: {
-            telefone: {
-              contains: last8Digits
-            }
+            telefone: { contains: last8Digits },
+            lead: { tenantId: tenantId }
           },
           include: {
             lead: true
           }
         });
-
+ 
         if (additionalContacts.length > 0) {
           leads = additionalContacts.map(c => c.lead);
         }
       }
-
+ 
       if (leads.length > 0) {
         const lead = leads[0];
-
+ 
         // Atualizar o status de digitação no lead
         await prisma.lead.update({
           where: { id: lead.id },
@@ -84,13 +103,13 @@ export async function POST(req: Request) {
             typingUpdatedAt: new Date()
           }
         });
-        console.log(`Lead [${lead.nomeFantasia}] atualizou presença de chat para: ${status}`);
+        console.log(`Lead [${lead.nomeFantasia}] (Tenant ${tenantId}) atualizou presença de chat para: ${status}`);
       }
-
+ 
       return NextResponse.json({ received: true });
     }
-
-    // 3. Eventos de mensagem recebida (Inbound)
+ 
+    // 4. EVENTOS DE MENSAGEM RECEBIDA (Inbound)
     if (body.isGroup === false && body.phone && (body.text || body.image || body.video || body.audio || body.document)) {
       const phone = body.phone.replace(/\D/g, ''); // Telefone do cliente
       const messageId = body.messageId;
@@ -112,41 +131,37 @@ export async function POST(req: Request) {
       } else {
         text = '[Mensagem de mídia recebida]';
       }
-
-      // Procurar lead que tenha esse número no campo telefone (ou contatos adicionais!)
-      // Busca os últimos 8 dígitos para ser flexível com DDI/DDD
+ 
+      // Busca flexível considerando DDI/DDD (últimos 8 dígitos)
       const last8Digits = phone.slice(-8);
-
-      // Busca na tabela de Leads principal pelo telefone
+ 
+      // Busca na tabela de Leads principal pelo telefone e empresa
       let leads = await prisma.lead.findMany({
         where: {
-          telefone: {
-            contains: last8Digits
-          }
+          telefone: { contains: last8Digits },
+          tenantId: tenantId
         }
       });
-
-      // Se não encontrou pelo telefone principal, busca nos contatos adicionais!
+ 
+      // Se não encontrou pelo telefone principal, busca nos contatos adicionais da empresa
       if (leads.length === 0) {
         const additionalContacts = await prisma.leadContact.findMany({
           where: {
-            telefone: {
-              contains: last8Digits
-            }
+            telefone: { contains: last8Digits },
+            lead: { tenantId: tenantId }
           },
           include: {
             lead: true
           }
         });
-
+ 
         if (additionalContacts.length > 0) {
           leads = additionalContacts.map(c => c.lead);
         }
       }
-
-      // Se AINDA não encontrou nenhum Lead, cria um automaticamente para não perder a mensagem nem o contato!
+ 
+      // Se AINDA não encontrou nenhum Lead, cria um automaticamente para aquela empresa
       if (leads.length === 0) {
-        // Formatar telefone de forma elegante: +55 (DD) XXXXX-XXXX
         let formattedPhone = phone;
         if (phone.length === 13 && phone.startsWith('55')) {
           formattedPhone = `+55 (${phone.slice(2, 4)}) ${phone.slice(4, 9)}-${phone.slice(9)}`;
@@ -155,12 +170,12 @@ export async function POST(req: Request) {
         } else {
           formattedPhone = `+${phone}`;
         }
-
+ 
         // Buscar a primeira etapa do funil (com menor ordem)
         let firstStage = await prisma.leadStage.findFirst({
           orderBy: { ordem: 'asc' }
         });
-
+ 
         if (!firstStage) {
           firstStage = await prisma.leadStage.create({
             data: {
@@ -170,24 +185,25 @@ export async function POST(req: Request) {
             }
           });
         }
-
-        // Criar o Lead automaticamente no funil
+ 
+        // Criar o Lead automaticamente no funil vinculado ao tenantId correto!
         const newLead = await prisma.lead.create({
           data: {
             nomeFantasia: `WhatsApp: ${formattedPhone}`,
             telefone: formattedPhone,
-            stageId: firstStage.id
+            stageId: firstStage.id,
+            tenantId: tenantId
           }
         });
-
+ 
         leads = [newLead];
-        console.log(`Novo Lead criado automaticamente via WhatsApp: ${newLead.nomeFantasia}`);
+        console.log(`Novo Lead criado automaticamente via WhatsApp para a empresa ${tenantId}: ${newLead.nomeFantasia}`);
       }
-
+ 
       if (leads.length > 0) {
         const lead = leads[0];
-
-        // Salvar mensagem recebida no banco
+ 
+        // Salvar mensagem recebida no banco vinculada ao lead correto
         await prisma.whatsAppMessage.create({
           data: {
             leadId: lead.id,
@@ -197,8 +213,8 @@ export async function POST(req: Request) {
             messageId: messageId
           }
         });
-
-        // Limpa estado de digitando ao receber a mensagem
+ 
+        // Limpa estado de "digitando" ao receber a mensagem
         await prisma.lead.update({
           where: { id: lead.id },
           data: {
@@ -206,11 +222,11 @@ export async function POST(req: Request) {
             typingUpdatedAt: new Date()
           }
         });
-
-        console.log(`Mensagem recebida vinculada ao Lead [${lead.nomeFantasia}]: ${text}`);
+ 
+        console.log(`Mensagem recebida vinculada ao Lead [${lead.nomeFantasia}] (Tenant ${tenantId}): ${text}`);
       }
     }
-
+ 
     return NextResponse.json({ received: true });
   } catch (err: any) {
     console.error('Z-API Webhook Error:', err);

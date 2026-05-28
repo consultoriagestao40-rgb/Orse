@@ -5,10 +5,26 @@ import { getLoggedUser } from '@/app/propostas/actions';
 import { revalidatePath } from 'next/cache';
 
 // Mock function until Z-API keys are provided
-async function dispatchZApiMessage(phone: string, text: string) {
-  const instanceId = process.env.ZAPI_INSTANCE_ID;
-  const token = process.env.ZAPI_TOKEN;
-  const clientToken = process.env.ZAPI_CLIENT_TOKEN;
+async function dispatchZApiMessage(phone: string, text: string, tenantId?: string | null) {
+  let instanceId = process.env.ZAPI_INSTANCE_ID;
+  let token = process.env.ZAPI_TOKEN;
+  let clientToken = process.env.ZAPI_CLIENT_TOKEN;
+
+  if (tenantId) {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: {
+        whatsappInstanceId: true,
+        whatsappToken: true,
+        whatsappClientToken: true
+      }
+    });
+    if (tenant && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
+      instanceId = tenant.whatsappInstanceId;
+      token = tenant.whatsappToken;
+      clientToken = tenant.whatsappClientToken;
+    }
+  }
 
   if (!instanceId || !token || !clientToken) {
     console.warn('Z-API credentials or client-token missing. Mocking success.');
@@ -84,7 +100,7 @@ export async function sendWhatsAppMessage(leadId: string, texto: string) {
     // Carimbo do remetente
     const formattedTexto = `*${user.nome}*:\n${texto}`;
 
-    const zapiRes = await dispatchZApiMessage(lead.telefone, formattedTexto);
+    const zapiRes = await dispatchZApiMessage(lead.telefone, formattedTexto, user.tenantId);
 
     if (!zapiRes.success) {
       return { success: false, error: zapiRes.error };
@@ -118,9 +134,25 @@ export async function sendWhatsAppMedia(
   const user = await getLoggedUser();
   if (!user) return { success: false, error: 'Não autorizado.' };
 
-  const instanceId = process.env.ZAPI_INSTANCE_ID;
-  const token = process.env.ZAPI_TOKEN;
-  const clientToken = process.env.ZAPI_CLIENT_TOKEN;
+  let instanceId = process.env.ZAPI_INSTANCE_ID;
+  let token = process.env.ZAPI_TOKEN;
+  let clientToken = process.env.ZAPI_CLIENT_TOKEN;
+
+  if (user.tenantId) {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: user.tenantId },
+      select: {
+        whatsappInstanceId: true,
+        whatsappToken: true,
+        whatsappClientToken: true
+      }
+    });
+    if (tenant && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
+      instanceId = tenant.whatsappInstanceId;
+      token = tenant.whatsappToken;
+      clientToken = tenant.whatsappClientToken;
+    }
+  }
 
   if (!instanceId || !token || !clientToken) {
     return { success: false, error: 'Credenciais Z-API ou Client-Token ausentes.' };
