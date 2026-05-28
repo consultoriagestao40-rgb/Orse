@@ -197,11 +197,6 @@ export async function deleteTenantAction(id: string) {
       return { success: false, error: 'Empresa não encontrada.' };
     }
 
-    // Proibir a exclusão do Grupo JVS
-    if (tenant.cnpj === '00.000.000/0001-00' || tenant.nomeFantasia === 'Grupo JVS') {
-      return { success: false, error: 'A empresa do Grupo JVS é a holding administradora da plataforma e não pode ser removida.' };
-    }
-
     await prisma.tenant.delete({
       where: { id }
     });

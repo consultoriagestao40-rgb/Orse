@@ -132,11 +132,6 @@ export default function TenantManagerDashboard() {
   };
 
   const handleDeleteTenant = async (t: TenantItem) => {
-    if (t.cnpj === '00.000.000/0001-00' || t.nomeFantasia === 'Grupo JVS') {
-      alert('A empresa mãe do Grupo JVS não pode ser removida da plataforma por motivos de segurança.');
-      return;
-    }
-
     const confirmMessage = `Tem certeza absoluta de que deseja EXCLUIR a empresa "${t.nomeFantasia}" (CNPJ: ${t.cnpj})?\n\nATENÇÃO: Isso apagará permanentemente todos os usuários, propostas, contratos, leads e insumos vinculados a esta empresa de forma irreversível!`;
     if (!confirm(confirmMessage)) return;
 
@@ -413,13 +408,8 @@ export default function TenantManagerDashboard() {
                             </button>
                             <button
                               onClick={() => handleDeleteTenant(t)}
-                              disabled={isMainOperator}
-                              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                                isMainOperator 
-                                  ? 'text-slate-300 cursor-not-allowed' 
-                                  : 'text-red-500 hover:text-red-600 hover:bg-red-50'
-                              }`}
-                              title={isMainOperator ? "Empresa master protegida" : "Excluir Empresa"}
+                              className="p-1.5 rounded-lg transition-colors cursor-pointer text-[#EF4444] hover:text-[#DC2626] hover:bg-red-50"
+                              title="Excluir Empresa"
                             >
                               <Trash2 size={15} />
                             </button>
