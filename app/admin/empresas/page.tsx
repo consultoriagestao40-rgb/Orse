@@ -5,18 +5,20 @@ import Sidebar from '@/components/Sidebar';
 import { 
   Building2, Users, FileText, ClipboardList, Plus, 
   Search, ShieldAlert, Edit2, Trash2, X, RefreshCw, 
-  ArrowLeft, CheckCircle2 
+  ArrowLeft, CheckCircle2, Lock, Unlock 
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { 
   getTenantsWithStats, createTenantAction, 
-  updateTenantAction, deleteTenantAction, checkIsSuperAdmin 
+  updateTenantAction, deleteTenantAction, checkIsSuperAdmin,
+  toggleTenantActiveAction
 } from './actions';
 
 interface TenantItem {
   id: string;
   nomeFantasia: string;
   cnpj: string;
+  ativo: boolean;
   createdAt: string;
   stats: {
     users: number;
@@ -154,6 +156,33 @@ export default function TenantManagerDashboard() {
     }
   };
 
+  const handleToggleActive = async (t: TenantItem) => {
+    if (t.cnpj === '00.000.000/0001-00' || t.nomeFantasia === 'Grupo JVS') {
+      alert('A empresa do Grupo JVS é a holding do sistema e não pode ser suspensa ou bloqueada por motivos de segurança.');
+      return;
+    }
+
+    const newActiveState = !t.ativo;
+    const confirmMessage = `Tem certeza que deseja ${newActiveState ? 'ATIVAR' : 'SUSPENDER / BLOQUEAR'} o acesso da empresa "${t.nomeFantasia}"?`;
+    if (!confirm(confirmMessage)) return;
+
+    setActionLoading(true);
+    try {
+      const res = await toggleTenantActiveAction(t.id, newActiveState);
+      if (res.success) {
+        alert(`Empresa ${newActiveState ? 'ativada' : 'suspensa'} com sucesso!`);
+        // Atualiza localmente
+        setTenants(prev => prev.map(item => item.id === t.id ? { ...item, ativo: newActiveState } : item));
+      } else {
+        alert('Erro ao alterar status: ' + res.error);
+      }
+    } catch (err: any) {
+      alert('Falha crítica de comunicação: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // 3. Filtros
   const filteredTenants = tenants.filter(t =>
     t.nomeFantasia.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -163,6 +192,8 @@ export default function TenantManagerDashboard() {
   // Cálculos de KPI Global
   const kpis = {
     totalTenants: tenants.length,
+    totalAtivos: tenants.filter(t => t.ativo !== false).length,
+    totalSuspensos: tenants.filter(t => t.ativo === false).length,
     totalUsers: tenants.reduce((acc, t) => acc + t.stats.users, 0),
     totalPropostas: tenants.reduce((acc, t) => acc + t.stats.propostas, 0),
     totalContratos: tenants.reduce((acc, t) => acc + t.stats.contratos, 0)
@@ -238,10 +269,10 @@ export default function TenantManagerDashboard() {
           {/* CARDS DE KPIS */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[
-              { label: 'Empresas Ativas', value: kpis.totalTenants.toString(), icon: Building2, color: 'text-indigo-600', bg: 'bg-indigo-50 border-indigo-100' },
-              { label: 'Colaboradores Ativos', value: kpis.totalUsers.toString(), icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100' },
-              { label: 'Propostas Totais', value: kpis.totalPropostas.toString(), icon: ClipboardList, color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100' },
-              { label: 'Contratos Vigentes', value: kpis.totalContratos.toString(), icon: FileText, color: 'text-orange-600', bg: 'bg-orange-50 border-orange-100' },
+              { label: 'Empresas Ativas', value: kpis.totalAtivos.toString(), icon: Building2, color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100' },
+              { label: 'Contas Suspensas', value: kpis.totalSuspensos.toString(), icon: ShieldAlert, color: 'text-rose-600', bg: 'bg-rose-50 border-rose-100' },
+              { label: 'Colaboradores Totais', value: kpis.totalUsers.toString(), icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50 border-indigo-100' },
+              { label: 'Propostas Emitidas', value: kpis.totalPropostas.toString(), icon: ClipboardList, color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100' },
             ].map((stat, i) => (
               <div key={i} className={`p-5 bg-white border border-slate-300 rounded-xl shadow-xs flex items-center gap-4 hover:shadow-md transition-shadow`}>
                 <div className={`p-3 bg-slate-50 rounded-xl border border-slate-200`}>
@@ -293,6 +324,7 @@ export default function TenantManagerDashboard() {
                   <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
                     <th className="px-6 py-3.5">Nome Fantasia</th>
                     <th className="px-6 py-3.5">CNPJ</th>
+                    <th className="px-6 py-3.5">Status</th>
                     <th className="px-6 py-3.5 text-center">Colaboradores</th>
                     <th className="px-6 py-3.5 text-center">Leads CRM</th>
                     <th className="px-6 py-3.5 text-center">Propostas</th>
@@ -342,6 +374,19 @@ export default function TenantManagerDashboard() {
                           </div>
                         </td>
                         <td className="px-6 py-4 font-semibold text-slate-600">{t.cnpj}</td>
+                        <td className="px-6 py-4">
+                          {t.ativo !== false ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                              Ativo
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-rose-50 text-rose-600 border border-rose-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                              Suspenso
+                            </span>
+                          )}
+                        </td>
                         <td className="px-6 py-4 text-center font-bold text-slate-700">{t.stats.users}</td>
                         <td className="px-6 py-4 text-center font-bold text-slate-700">{t.stats.leads}</td>
                         <td className="px-6 py-4 text-center font-bold text-[#1B4D3E]">{t.stats.propostas}</td>
@@ -349,6 +394,26 @@ export default function TenantManagerDashboard() {
                         <td className="px-6 py-4 text-xs font-medium text-slate-500">{new Date(t.createdAt).toLocaleDateString('pt-BR')}</td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex items-center justify-center gap-2.5">
+                            <button
+                              onClick={() => handleToggleActive(t)}
+                              disabled={isMainOperator}
+                              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                                isMainOperator 
+                                  ? 'text-slate-300 cursor-not-allowed' 
+                                  : t.ativo !== false
+                                    ? 'text-rose-500 hover:text-rose-600 hover:bg-rose-50'
+                                    : 'text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50'
+                              }`}
+                              title={
+                                isMainOperator 
+                                  ? "Empresa master protegida" 
+                                  : t.ativo !== false 
+                                    ? "Suspender / Bloquear Acesso" 
+                                    : "Reativar / Liberar Acesso"
+                              }
+                            >
+                              {t.ativo !== false ? <Lock size={15} /> : <Unlock size={15} />}
+                            </button>
                             <button
                               onClick={() => handleOpenEditModal(t)}
                               className="text-amber-500 hover:text-amber-600 p-1.5 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"

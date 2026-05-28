@@ -81,6 +81,7 @@ export async function getTenantsWithStats() {
       id: t.id,
       nomeFantasia: t.nomeFantasia,
       cnpj: t.cnpj,
+      ativo: t.ativo,
       createdAt: t.createdAt.toISOString(),
       stats: {
         users: t._count.users,
@@ -209,5 +210,90 @@ export async function deleteTenantAction(id: string) {
   } catch (error: any) {
     console.error('Erro ao excluir empresa:', error);
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Alterna o status ativo/bloqueado de uma empresa cliente (Tenant).
+ * Protege a holding Grupo JVS contra suspensões acidentais.
+ */
+export async function toggleTenantActiveAction(id: string, active: boolean) {
+  const isSuper = await checkIsSuperAdmin();
+  if (!isSuper) {
+    throw new Error('Acesso negado: Você não possui privilégios de Super Administrador.');
+  }
+
+  if (!id) {
+    return { success: false, error: 'ID da empresa é obrigatório.' };
+  }
+
+  try {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id }
+    });
+
+    if (!tenant) {
+      return { success: false, error: 'Empresa não encontrada.' };
+    }
+
+    // Proibir a suspensão do Grupo JVS
+    if (tenant.cnpj === '00.000.000/0001-00' || tenant.nomeFantasia === 'Grupo JVS') {
+      return { success: false, error: 'A empresa do Grupo JVS é a holding do sistema e não pode ser suspensa ou bloqueada.' };
+    }
+
+    const updated = await prisma.tenant.update({
+      where: { id },
+      data: { ativo: active }
+    });
+
+    return { success: true, tenant: updated };
+  } catch (error: any) {
+    console.error('Erro ao alterar status da empresa:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Server Action leve para verificar se o inquilino (Tenant) do usuário logado está ativo.
+ * Chamada na inicialização do Sidebar para renderizar a tela de suspensão global.
+ */
+export async function checkCurrentTenantActive() {
+  try {
+    const cookieStore = await cookies();
+    const sbUser = cookieStore.get('sb_user')?.value;
+    if (!sbUser) return { success: true, active: true };
+
+    let data;
+    try {
+      data = JSON.parse(decodeURIComponent(sbUser));
+    } catch {
+      try {
+        data = JSON.parse(sbUser);
+      } catch {
+        return { success: true, active: true };
+      }
+    }
+
+    // O Super Admin da plataforma é imune a bloqueios
+    if (data.email === 'admin@smartbidhub.com.br') {
+      return { success: true, active: true };
+    }
+
+    // Busca o usuário no banco incluindo a relação com o Tenant
+    const user = await prisma.user.findFirst({
+      where: { nome: data.nome || '' },
+      include: { tenant: true }
+    });
+
+    if (!user) return { success: true, active: true };
+
+    // Se o usuário não tiver inquilino vinculado (raro), está liberado.
+    // Se tiver, retorna o status ativo do inquilino.
+    if (!user.tenant) return { success: true, active: true };
+
+    return { success: true, active: user.tenant.ativo };
+  } catch (error) {
+    console.error('Erro ao checar status ativo do Tenant:', error);
+    return { success: true, active: true }; // Fail-safe: não bloqueia em caso de erro interno
   }
 }

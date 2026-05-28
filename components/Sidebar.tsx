@@ -2,13 +2,15 @@
  
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
+import { checkCurrentTenantActive } from '@/app/admin/empresas/actions';
  
 const Sidebar = () => {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isTenantBlocked, setIsTenantBlocked] = useState(false);
   
   const [user, setUser] = useState<{ nome: string; role: string; email?: string; tenantId?: string | null; iniciais: string } | null>(null);
   
@@ -30,6 +32,20 @@ const Sidebar = () => {
       if (saved === 'true') {
         setIsCollapsed(true);
       }
+
+      // Checa se o tenant do inquilino está ativo
+      const verifyActiveStatus = async () => {
+        try {
+          const res = await checkCurrentTenantActive();
+          if (res && res.success && res.active === false) {
+            setIsTenantBlocked(true);
+          }
+        } catch (error) {
+          console.error('Erro ao verificar suspensão da empresa:', error);
+        }
+      };
+      
+      verifyActiveStatus();
     }
   }, []);
 
@@ -331,6 +347,66 @@ const Sidebar = () => {
         </button>
       </div>
     </aside>
+    
+    {/* LOCK SCREEN OVERLAY FOR SUSPENDED TENANTS */}
+    {isTenantBlocked && (
+      <div className="fixed inset-0 z-[9999] bg-[#0F172A]/98 flex items-center justify-center p-6 text-center backdrop-blur-xl animate-in fade-in duration-300 font-sans">
+        <div className="w-full max-w-lg bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-10 shadow-2xl space-y-8 flex flex-col items-center">
+          
+          {/* Logo/Icon Container with Golden Glow */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-amber-500/20 blur-2xl rounded-full animate-pulse"></div>
+            <div className="relative w-24 h-24 bg-amber-500/10 border border-amber-500/35 text-amber-400 rounded-3xl flex items-center justify-center shadow-lg">
+              <Lock size={44} className="stroke-[1.5]" />
+            </div>
+          </div>
+
+          {/* SmartBidHub Branding */}
+          <div className="space-y-1">
+            <h2 className="text-[10px] font-black tracking-[0.3em] text-amber-400 uppercase">Assinatura Suspensa</h2>
+            <h1 className="text-3xl font-black text-white tracking-tight uppercase">SmartBidHub</h1>
+          </div>
+
+          {/* Message Block */}
+          <div className="space-y-4 max-w-sm">
+            <p className="text-sm font-semibold text-slate-300 leading-relaxed">
+              O acesso à sua conta está temporariamente suspenso devido a pendências financeiras em aberto.
+            </p>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Por favor, entre em contato com o administrador financeiro de sua empresa ou fale com o nosso suporte para regularizar a assinatura e reestabelecer o acesso imediato.
+            </p>
+          </div>
+
+          {/* Divider */}
+          <div className="w-full h-px bg-white/10"></div>
+
+          {/* Support info & Action Controls */}
+          <div className="flex flex-col items-center gap-4 w-full">
+            <a 
+              href="mailto:suporte@smartbidhub.com.br"
+              className="text-xs font-black uppercase tracking-wider text-[#10B981] hover:text-[#059669] transition-colors"
+            >
+              suporte@smartbidhub.com.br
+            </a>
+
+            <button 
+              onClick={async () => {
+                try {
+                  await fetch('/api/auth/logout', { method: 'POST' });
+                } catch (err) {
+                  console.error('Logout failed:', err);
+                }
+                window.location.href = '/login';
+              }}
+              className="px-8 py-4 bg-[#1B4D3E] hover:bg-[#13382D] text-white border border-[#1B4D3E]/30 text-xs font-black uppercase tracking-widest rounded-2xl transition-all cursor-pointer flex items-center gap-2"
+            >
+              Sair do Sistema
+            </button>
+          </div>
+
+        </div>
+      </div>
+    )}
   );
 };
  
