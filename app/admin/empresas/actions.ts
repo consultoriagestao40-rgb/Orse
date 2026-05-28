@@ -236,11 +236,6 @@ export async function toggleTenantActiveAction(id: string, active: boolean) {
       return { success: false, error: 'Empresa não encontrada.' };
     }
 
-    // Proibir a suspensão do Grupo JVS
-    if (tenant.cnpj === '00.000.000/0001-00' || tenant.nomeFantasia === 'Grupo JVS') {
-      return { success: false, error: 'A empresa do Grupo JVS é a holding do sistema e não pode ser suspensa ou bloqueada.' };
-    }
-
     const updated = await prisma.tenant.update({
       where: { id },
       data: { ativo: active }

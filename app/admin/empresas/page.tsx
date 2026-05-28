@@ -157,11 +157,6 @@ export default function TenantManagerDashboard() {
   };
 
   const handleToggleActive = async (t: TenantItem) => {
-    if (t.cnpj === '00.000.000/0001-00' || t.nomeFantasia === 'Grupo JVS') {
-      alert('A empresa do Grupo JVS é a holding do sistema e não pode ser suspensa ou bloqueada por motivos de segurança.');
-      return;
-    }
-
     const newActiveState = !t.ativo;
     const confirmMessage = `Tem certeza que deseja ${newActiveState ? 'ATIVAR' : 'SUSPENDER / BLOQUEAR'} o acesso da empresa "${t.nomeFantasia}"?`;
     if (!confirm(confirmMessage)) return;
@@ -396,20 +391,15 @@ export default function TenantManagerDashboard() {
                           <div className="flex items-center justify-center gap-2.5">
                             <button
                               onClick={() => handleToggleActive(t)}
-                              disabled={isMainOperator}
                               className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                                isMainOperator 
-                                  ? 'text-slate-300 cursor-not-allowed' 
-                                  : t.ativo !== false
-                                    ? 'text-rose-500 hover:text-rose-600 hover:bg-rose-50'
-                                    : 'text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50'
+                                t.ativo !== false
+                                  ? 'text-[#EF4444] hover:text-[#DC2626] hover:bg-rose-50'
+                                  : 'text-[#10B981] hover:text-[#059669] hover:bg-emerald-50'
                               }`}
                               title={
-                                isMainOperator 
-                                  ? "Empresa master protegida" 
-                                  : t.ativo !== false 
-                                    ? "Suspender / Bloquear Acesso" 
-                                    : "Reativar / Liberar Acesso"
+                                t.ativo !== false 
+                                  ? "Suspender / Bloquear Acesso" 
+                                  : "Reativar / Liberar Acesso"
                               }
                             >
                               {t.ativo !== false ? <Lock size={15} /> : <Unlock size={15} />}
