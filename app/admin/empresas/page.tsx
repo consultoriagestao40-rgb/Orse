@@ -611,9 +611,10 @@ export default function TenantManagerDashboard() {
                   })}
                 </tbody>
               </table>
-              </div>
             </div>
-            )}
+          </div>
+        </div>
+      )}
 
             {/* CONTEÚDO DA ABA FATURAMENTO */}
             {adminTab === 'faturamento' && (
