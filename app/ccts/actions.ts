@@ -3,11 +3,18 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { unstable_noStore as noStore } from 'next/cache';
+import { getLoggedUser } from '@/app/propostas/actions';
 
 export async function getCCTs() {
   noStore();
+  const user = await getLoggedUser();
   try {
+    const whereClause: any = {};
+    if (user?.tenantId) {
+      whereClause.tenantId = user.tenantId;
+    }
     const data = await prisma.cCT.findMany({
+      where: whereClause,
       orderBy: { createdAt: 'desc' },
       include: {
         cargos: true
@@ -22,6 +29,7 @@ export async function getCCTs() {
 }
 
 export async function createCCT(data: any) {
+  const user = await getLoggedUser();
   try {
     const { cargos, ...cctData } = data;
     
@@ -38,6 +46,7 @@ export async function createCCT(data: any) {
         cidade: cctData.cidade || '',
         vigenciaInicio: vigInicio,
         vigenciaFim: vigFim,
+        tenantId: user?.tenantId || null,
         
         vaValor: Number(cctData.vaValor) || 0,
         vaTipo: cctData.vaTipo || 'DIARIO',

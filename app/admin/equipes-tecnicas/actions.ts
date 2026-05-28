@@ -2,10 +2,17 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { getLoggedUser } from '@/app/propostas/actions';
 
 export async function getEquipesTecnicas() {
+  const user = await getLoggedUser();
   try {
+    const whereClause: any = {};
+    if (user?.tenantId) {
+      whereClause.tenantId = user.tenantId;
+    }
     const list = await prisma.equipeTecnicaComposicao.findMany({
+      where: whereClause,
       orderBy: { createdAt: 'desc' }
     });
     return { success: true, list };
@@ -26,6 +33,7 @@ export async function createEquipeTecnica(data: {
   itensMaoObra: any;
   itensCustosAdicionais?: any;
 }) {
+  const user = await getLoggedUser();
   try {
     const equipe = await prisma.equipeTecnicaComposicao.create({
       data: {
@@ -37,7 +45,8 @@ export async function createEquipeTecnica(data: {
         valorDiariaSugerido: Number(data.valorDiariaSugerido) || 0,
         valorHoraSugerido: Number(data.valorHoraSugerido) || 0,
         itensMaoObra: data.itensMaoObra || [],
-        itensCustosAdicionais: data.itensCustosAdicionais || []
+        itensCustosAdicionais: data.itensCustosAdicionais || [],
+        tenantId: user?.tenantId || null
       }
     });
     revalidatePath('/');

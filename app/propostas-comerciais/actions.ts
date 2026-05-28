@@ -2,10 +2,17 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { getLoggedUser } from '@/app/propostas/actions';
 
 export async function getDocumentosProposta() {
+  const user = await getLoggedUser();
   try {
+    const whereClause: any = {};
+    if (user?.tenantId) {
+      whereClause.tenantId = user.tenantId;
+    }
     const docs = await prisma.documentoProposta.findMany({
+      where: whereClause,
       include: {
         client: true,
         empresaEmissora: true,
@@ -96,6 +103,7 @@ export async function createDocumentoProposta(propostaId: string, templateId: st
 
     if (!template) throw new Error('Template não encontrado');
 
+    const user = await getLoggedUser();
     // Cria o documento e clona as seções do template
     const doc = await prisma.documentoProposta.create({
       data: {
@@ -105,6 +113,7 @@ export async function createDocumentoProposta(propostaId: string, templateId: st
         templateOrigemId: template.id,
         tipo: template.tipo || 'A4',
         valorTotal,
+        tenantId: user?.tenantId || null,
         secoes: {
           create: template.secoes.map((secao: any) => ({
             titulo: secao.titulo,
@@ -187,17 +196,24 @@ export async function deleteDocumentoProposta(id: string) {
 }
 
 export async function getTemplatesProposta() {
+  const user = await getLoggedUser();
   try {
+    const whereClause: any = {};
+    if (user?.tenantId) {
+      whereClause.tenantId = user.tenantId;
+    }
     let templates = await prisma.templatePropostaComercial.findMany({
+      where: whereClause,
       orderBy: { nome: 'asc' },
       include: { secoes: { orderBy: { ordem: 'asc' } } }
     });
 
     // Seeding automático
-    if (templates.length === 0) {
+    if (templates.length === 0 && user?.tenantId) {
       await prisma.templatePropostaComercial.create({
         data: {
           nome: 'Proposta Simples (Terceirização)',
+          tenantId: user.tenantId,
           secoes: {
             create: [
               { ordem: 1, titulo: '1. APRESENTAÇÃO', texto: 'Apresentamos nossa proposta para prestação de serviços terceirizados...\n\n[ITENS]' },
@@ -210,6 +226,7 @@ export async function getTemplatesProposta() {
       await prisma.templatePropostaComercial.create({
         data: {
           nome: 'Proposta Completa (Condomínios/Indústria)',
+          tenantId: user.tenantId,
           secoes: {
             create: [
               { ordem: 1, titulo: '1. CARTA DE APRESENTAÇÃO', texto: 'Prezado(a) Síndico(a)/Gestor(a) do [CLIENTE_NOME]...' },
@@ -221,6 +238,7 @@ export async function getTemplatesProposta() {
       await prisma.templatePropostaComercial.create({
         data: {
           nome: 'Apresentação (Slide Deck)',
+          tenantId: user.tenantId,
           secoes: {
             create: [
               { ordem: 1, titulo: 'Instruções', texto: 'Este template não usa estas seções de texto. Ele renderiza os slides fixos da FPV com as imagens e valores em tela cheia.' }
@@ -229,6 +247,7 @@ export async function getTemplatesProposta() {
         }
       });
       templates = await prisma.templatePropostaComercial.findMany({
+        where: whereClause,
         orderBy: { nome: 'asc' },
         include: { secoes: { orderBy: { ordem: 'asc' } } }
       });
@@ -255,10 +274,12 @@ export async function getTemplatePropostaById(id: string) {
 }
 
 export async function createTemplateProposta(nome: string, secoes: { titulo: string; texto: string; ordem: number }[]) {
+  const user = await getLoggedUser();
   try {
     const t = await prisma.templatePropostaComercial.create({
       data: {
         nome,
+        tenantId: user?.tenantId || null,
         secoes: {
           create: secoes.map(s => ({ titulo: s.titulo, texto: s.texto, ordem: s.ordem }))
         }

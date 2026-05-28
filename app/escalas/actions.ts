@@ -3,11 +3,18 @@ import { unstable_noStore as noStore } from 'next/cache';
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { getLoggedUser } from '@/app/propostas/actions';
 
 export async function getEscalas() {
   noStore();
+  const user = await getLoggedUser();
   try {
+    const whereClause: any = {};
+    if (user?.tenantId) {
+      whereClause.tenantId = user.tenantId;
+    }
     const escalas = await prisma.escala.findMany({
+      where: whereClause,
       orderBy: { nome: 'asc' },
     });
     // Serialize to plain objects
@@ -23,9 +30,13 @@ export async function createEscala(data: {
   diasTrabalhadosMes: number;
   horasMensais: number;
 }) {
+  const user = await getLoggedUser();
   try {
     const novaEscala = await prisma.escala.create({
-      data,
+      data: {
+        ...data,
+        tenantId: user?.tenantId || null
+      },
     });
     revalidatePath('/admin/escalas');
     revalidatePath('/propostas/nova');

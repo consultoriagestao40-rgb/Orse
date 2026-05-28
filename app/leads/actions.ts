@@ -10,6 +10,9 @@ export async function getLeads(filters?: { startDate?: string; endDate?: string;
 
   try {
     const where: any = {};
+    if (user.tenantId) {
+      where.tenantId = user.tenantId;
+    }
     if (filters?.userId && filters.userId !== 'all') {
       where.assignedToId = filters.userId;
     }
@@ -57,8 +60,14 @@ export async function getLeads(filters?: { startDate?: string; endDate?: string;
 }
 
 export async function getUsersForFilter() {
+  const user = await getLoggedUser();
   try {
+    const where: any = {};
+    if (user?.tenantId) {
+      where.tenantId = user.tenantId;
+    }
     const users = await prisma.user.findMany({
+      where,
       select: { id: true, nome: true },
       orderBy: { nome: 'asc' }
     });
@@ -249,7 +258,8 @@ export async function createLead(data: any) {
       data: {
         ...dbData,
         stageId,
-        assignedToId: data.assignedToId || user.id
+        assignedToId: data.assignedToId || user.id,
+        tenantId: user.tenantId
       }
     });
 
@@ -328,6 +338,7 @@ export async function convertLeadToClient(leadId: string, clientData: any) {
         whatsapp: clientData.whatsapp || lead.telefone,
         endereco: clientData.endereco || lead.endereco,
         contato: clientData.contato || lead.contatoNome,
+        tenantId: user.tenantId,
       }
     });
 
@@ -364,7 +375,7 @@ export async function addComment(leadId: string, texto: string) {
   if (!user) return { success: false, error: 'Unauthorized' };
   try {
     const comment = await prisma.comment.create({
-      data: { leadId, userId: user.id, texto }
+      data: { leadId, userId: user.id, texto, tenantId: user.tenantId }
     });
     await prisma.leadHistory.create({
       data: { leadId, tipo: 'ANOTACAO', descricao: `Novo comentário adicionado por ${user.nome}` }
@@ -453,8 +464,13 @@ export async function downloadFile(fileId: string) {
 
 // ================= ATIVIDADES (CALENDÁRIO) =================
 export async function getActivities(leadId?: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
   try {
-    const whereClause = leadId ? { leadId } : {};
+    const whereClause: any = leadId ? { leadId } : {};
+    if (user.tenantId) {
+      whereClause.tenantId = user.tenantId;
+    }
     const activities = await prisma.activity.findMany({
       where: whereClause,
       include: { user: { select: { nome: true } }, lead: { select: { nomeFantasia: true } } },
@@ -473,7 +489,8 @@ export async function createActivity(data: { leadId?: string, titulo: string, de
     const activity = await prisma.activity.create({
       data: {
         ...data,
-        userId: user.id
+        userId: user.id,
+        tenantId: user.tenantId
       }
     });
     if (data.leadId) {

@@ -2,10 +2,17 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { getLoggedUser } from '@/app/propostas/actions';
 
 export async function getClientes() {
+  const user = await getLoggedUser();
   try {
+    const whereClause: any = {};
+    if (user?.tenantId) {
+      whereClause.tenantId = user.tenantId;
+    }
     const data = await prisma.client.findMany({
+      where: whereClause,
       orderBy: { nomeFantasia: 'asc' }
     });
     // Serialize to standard JSON to avoid Next.js Date serialization issues
@@ -17,6 +24,7 @@ export async function getClientes() {
 }
 
 export async function createCliente(data: any) {
+  const user = await getLoggedUser();
   try {
     const novoCliente = await prisma.client.create({
       data: {
@@ -27,6 +35,7 @@ export async function createCliente(data: any) {
         whatsapp: data.whatsapp || '',
         endereco: data.endereco || '',
         contato: data.contato || '',
+        tenantId: user?.tenantId || null,
       }
     });
     

@@ -2,10 +2,17 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { getLoggedUser } from '@/app/propostas/actions';
 
 export async function getUsuarios() {
+  const user = await getLoggedUser();
   try {
+    const whereClause: any = {};
+    if (user?.tenantId) {
+      whereClause.tenantId = user.tenantId;
+    }
     return await prisma.user.findMany({
+      where: whereClause,
       include: {
         manager: true,
         subordinates: true,
@@ -19,8 +26,9 @@ export async function getUsuarios() {
 }
 
 export async function createUsuario(data: any) {
+  const user = await getLoggedUser();
   try {
-    const user = await prisma.user.create({
+    const newUser = await prisma.user.create({
       data: {
         email: data.email,
         nome: data.nome,
@@ -29,6 +37,7 @@ export async function createUsuario(data: any) {
         cargo: data.cargo || null,
         celular: data.celular || null,
         managerId: data.managerId || null,
+        tenantId: user?.tenantId || null,
       },
     });
     revalidatePath('/admin/usuarios');

@@ -10,6 +10,25 @@ datasource db {
   provider = "postgresql"
 }
 
+model Tenant {
+  id                String                    @id @default(cuid())
+  nomeFantasia      String
+  cnpj              String                    @unique
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  users             User[]
+  clients           Client[]
+  leads             Lead[]
+  propostas         Proposta[]
+  contratos         Contrato[]
+  produtos          Produto[]
+  documentos        DocumentoProposta[]
+  ccts              CCT[]
+  composicoes       EquipeTecnicaComposicao[]
+  templatesProposta TemplatePropostaComercial[]
+  templatesContrato TemplateContrato[]
+}
+
 model EmpresaEmissora {
   id           String   @id @default(uuid())
   nomeFantasia String
@@ -47,6 +66,8 @@ model User {
   whatsappMessages WhatsAppMessage[]
   notifications  Notification[]
   smtpAccounts   SmtpAccount[]
+  tenantId       String?
+  tenant         Tenant?         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model Client {
@@ -63,6 +84,8 @@ model Client {
   propostas    Proposta[]
   contratos    Contrato[]
   documentosProposta DocumentoProposta[] @relation("ClientToDocumento")
+  tenantId     String?
+  tenant       Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model CCT {
@@ -101,6 +124,8 @@ model CCT {
   insalubridadeBase      String   @default("MINIMO") // "SALARIO" ou "MINIMO"
   salarioMinimo          Float    @default(1412)
   cargos                 Cargo[]
+  tenantId               String?
+  tenant                 Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model Cargo {
@@ -130,6 +155,8 @@ model Proposta {
   auditLogs AuditLog[]
   contrato  Contrato?
   documentosComerciais DocumentoProposta[] @relation("FpvToDocumento")
+  tenantId  String?
+  tenant    Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model PropostaVersao {
@@ -176,6 +203,8 @@ model Escala {
   diasTrabalhadosMes Int      @default(22)
   horasMensais       Int      @default(220)
   createdAt          DateTime @default(now())
+  tenantId           String?
+  tenant             Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model PropostaStatus {
@@ -194,6 +223,8 @@ model Produto {
   ativo         Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  tenantId      String?
+  tenant        Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model Categoria {
@@ -251,6 +282,8 @@ model TemplateContrato {
   nome      String             @unique
   clausulas ClausulaTemplate[]
   createdAt DateTime           @default(now())
+  tenantId  String?
+  tenant    Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model ClausulaTemplate {
@@ -282,6 +315,8 @@ model Contrato {
   client          Client           @relation(fields: [clientId], references: [id])
   empresaEmissora EmpresaEmissora  @relation(fields: [empresaEmissoraId], references: [id])
   clausulas       ClausulaContrato[]
+  tenantId        String?
+  tenant          Tenant?          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model ClausulaContrato {
@@ -299,6 +334,8 @@ model TemplatePropostaComercial {
   tipo      String             @default("A4") // "A4" ou "SLIDE_DECK"
   secoes    SecaoTemplateProposta[]
   createdAt DateTime           @default(now())
+  tenantId  String?
+  tenant    Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model SecaoTemplateProposta {
@@ -327,6 +364,8 @@ model DocumentoProposta {
   client          Client           @relation("ClientToDocumento", fields: [clientId], references: [id])
   empresaEmissora EmpresaEmissora  @relation("EmpresaToDocumento", fields: [empresaEmissoraId], references: [id])
   secoes          SecaoDocumentoProposta[]
+  tenantId        String?
+  tenant          Tenant?          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model SecaoDocumentoProposta {
@@ -376,6 +415,8 @@ model Lead {
   files        FileAttachment[]
   whatsappMessages WhatsAppMessage[]
   contacts     LeadContact[]
+  tenantId     String?
+  tenant       Tenant?         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model LeadContact {
@@ -427,6 +468,8 @@ model Activity {
 
   lead        Lead?    @relation(fields: [leadId], references: [id], onDelete: Cascade)
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId    String?
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model Comment {
@@ -438,6 +481,8 @@ model Comment {
 
   lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId    String?
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model FileAttachment {
@@ -511,6 +556,8 @@ model EquipeTecnicaComposicao {
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
   propostaItems          PropostaItem[]
+  tenantId               String?
+  tenant                 Tenant?        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 

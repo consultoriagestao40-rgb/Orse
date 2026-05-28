@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { getLoggedUser } from '@/app/propostas/actions';
 export async function getEmpresasEmissoras() {
   try {
     const data = await prisma.empresaEmissora.findMany();
@@ -12,9 +13,14 @@ export async function getEmpresasEmissoras() {
 }
 
 export async function getPropostasDisponiveis() {
+  const user = await getLoggedUser();
   try {
+    const whereClause: any = { contrato: null };
+    if (user?.tenantId) {
+      whereClause.tenantId = user.tenantId;
+    }
     const data = await prisma.proposta.findMany({
-      where: { contrato: null },
+      where: whereClause,
       include: { client: true, versoes: { orderBy: { versao: 'desc' }, take: 1 } },
       orderBy: { createdAt: 'desc' }
     });
@@ -27,8 +33,14 @@ export async function getPropostasDisponiveis() {
 // TEMPLATES DE CONTRATO
 // ---------------------------------------------------------
 export async function getTemplates() {
+  const user = await getLoggedUser();
   try {
+    const whereClause: any = {};
+    if (user?.tenantId) {
+      whereClause.tenantId = user.tenantId;
+    }
     const templates = await prisma.templateContrato.findMany({
+      where: whereClause,
       include: { clausulas: { orderBy: { ordem: 'asc' } } },
       orderBy: { createdAt: 'desc' }
     });
@@ -39,10 +51,12 @@ export async function getTemplates() {
 }
 
 export async function createTemplate(nome: string, clausulas: { titulo: string; texto: string; ordem: number }[]) {
+  const user = await getLoggedUser();
   try {
     const res = await prisma.templateContrato.create({
       data: {
         nome,
+        tenantId: user?.tenantId || null,
         clausulas: {
           create: clausulas.map(c => ({
             titulo: c.titulo,
@@ -96,8 +110,14 @@ export async function deleteTemplate(id: string) {
 // CONTRATOS
 // ---------------------------------------------------------
 export async function getContratos() {
+  const user = await getLoggedUser();
   try {
+    const whereClause: any = {};
+    if (user?.tenantId) {
+      whereClause.tenantId = user.tenantId;
+    }
     const contratos = await prisma.contrato.findMany({
+      where: whereClause,
       include: {
         client: true,
         empresaEmissora: true,
@@ -205,6 +225,7 @@ export async function createContratoFromFPV(propostaId: string, empresaEmissoraI
       return t;
     };
 
+    const user = await getLoggedUser();
     const contrato = await prisma.contrato.create({
       data: {
         propostaId,
@@ -215,6 +236,7 @@ export async function createContratoFromFPV(propostaId: string, empresaEmissoraI
         vigenciaMeses,
         valorMensal,
         valorTotal,
+        tenantId: user?.tenantId || null,
         clausulas: {
           create: template.clausulas.map(c => ({
             titulo: c.titulo,

@@ -169,7 +169,8 @@ export async function saveProposta(data: any) {
         data: {
           userId: user.id,
           clientId: dbClient?.id,
-          status: 'ATIVO'
+          status: 'ATIVO',
+          tenantId: user.tenantId
         }
       });
       propostaId = newProposta.id;
@@ -337,21 +338,21 @@ export async function getPropostas() {
     if (!loggedUser) return [];
 
     let whereClause: any = {};
+    if (loggedUser.tenantId) {
+      whereClause.tenantId = loggedUser.tenantId;
+    }
+    
     if (loggedUser.role === 'MANAGER') {
       const subordinateIds = await getSubordinateIds(loggedUser.id);
-      whereClause = {
-        OR: [
-          { userId: { in: [loggedUser.id, ...subordinateIds] } },
-          { shares: { some: { userId: loggedUser.id } } }
-        ]
-      };
+      whereClause.OR = [
+        { userId: { in: [loggedUser.id, ...subordinateIds] } },
+        { shares: { some: { userId: loggedUser.id } } }
+      ];
     } else if (loggedUser.role === 'USER') {
-      whereClause = {
-        OR: [
-          { userId: loggedUser.id },
-          { shares: { some: { userId: loggedUser.id } } }
-        ]
-      };
+      whereClause.OR = [
+        { userId: loggedUser.id },
+        { shares: { some: { userId: loggedUser.id } } }
+      ];
     }
 
     const propostas = await prisma.proposta.findMany({
