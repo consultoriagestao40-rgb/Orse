@@ -11,7 +11,9 @@ import { useRouter } from 'next/navigation';
 import { 
   getTenantsWithStats, createTenantAction, 
   updateTenantAction, deleteTenantAction, checkIsSuperAdmin,
-  toggleTenantActiveAction
+  toggleTenantActiveAction, getSaaSFinancialMetrics,
+  getAllCobrancasAction, manuallyConfirmPaymentAction,
+  manuallyCreateInvoiceAction
 } from './actions';
 
 interface TenantItem {
@@ -23,6 +25,7 @@ interface TenantItem {
   plano: string;
   limiteUsuarios: number;
   trialStartedAt?: string | null;
+  taxaWhatsapp: number;
   stats: {
     users: number;
     propostas: number;
@@ -87,6 +90,20 @@ export default function TenantManagerDashboard() {
   const [modalError, setModalError] = useState('');
   const [modalSuccess, setModalSuccess] = useState('');
 
+  const [taxaWhatsapp, setTaxaWhatsapp] = useState<number>(130.0);
+  
+  // Faturamento SaaS Admin States
+  const [adminTab, setAdminTab] = useState<'empresas' | 'faturamento'>('empresas');
+  const [financialMetrics, setFinancialMetrics] = useState<any>(null);
+  const [allCobrancas, setAllCobrancas] = useState<any[]>([]);
+
+  // Novo Lançamento de Fatura
+  const [newInvoiceModal, setNewInvoiceModal] = useState(false);
+  const [newInvoiceTenantId, setNewInvoiceTenantId] = useState('');
+  const [newInvoicePlano, setNewInvoicePlano] = useState('PRO');
+  const [newInvoiceValor, setNewInvoiceValor] = useState(299.0);
+  const [newInvoiceVencimento, setNewInvoiceVencimento] = useState('');
+
   // 1. Validar autorização e carregar dados
   const loadData = async () => {
     setLoading(true);
@@ -97,6 +114,17 @@ export default function TenantManagerDashboard() {
       if (authorized) {
         const data = await getTenantsWithStats();
         setTenants(data);
+
+        // Carrega faturamento geral do SaaS
+        const metricsRes = await getSaaSFinancialMetrics();
+        if (metricsRes.success) {
+          setFinancialMetrics(metricsRes.metrics);
+        }
+        
+        const cobrancasRes = await getAllCobrancasAction();
+        if (cobrancasRes.success) {
+          setAllCobrancas(cobrancasRes.cobrancas || []);
+        }
       }
     } catch (err) {
       console.error('Erro ao inicializar página:', err);
@@ -119,6 +147,7 @@ export default function TenantManagerDashboard() {
     setPlano('STARTER');
     setLimiteUsuarios(3);
     setTrialStartedAt('');
+    setTaxaWhatsapp(130.0);
     setModalError('');
     setModalSuccess('');
     setModalOpen(true);
@@ -132,6 +161,7 @@ export default function TenantManagerDashboard() {
     setPlano(t.plano || 'STARTER');
     setLimiteUsuarios(t.limiteUsuarios || 3);
     setTrialStartedAt(t.trialStartedAt ? t.trialStartedAt.substring(0, 16) : '');
+    setTaxaWhatsapp(t.taxaWhatsapp !== undefined ? t.taxaWhatsapp : 130.0);
     setModalError('');
     setModalSuccess('');
     setModalOpen(true);
@@ -145,7 +175,7 @@ export default function TenantManagerDashboard() {
 
     try {
       if (modalMode === 'create') {
-        const res = await createTenantAction(nomeFantasia, cnpj, plano, limiteUsuarios, trialStartedAt || null);
+        const res = await createTenantAction(nomeFantasia, cnpj, plano, limiteUsuarios, trialStartedAt || null, taxaWhatsapp);
         if (res.success) {
           setModalSuccess('Empresa cadastrada com sucesso!');
           setTimeout(() => {
@@ -157,7 +187,7 @@ export default function TenantManagerDashboard() {
         }
       } else {
         if (!selectedTenantId) return;
-        const res = await updateTenantAction(selectedTenantId, nomeFantasia, cnpj, plano, limiteUsuarios, trialStartedAt || null);
+        const res = await updateTenantAction(selectedTenantId, nomeFantasia, cnpj, plano, limiteUsuarios, trialStartedAt || null, taxaWhatsapp);
         if (res.success) {
           setModalSuccess('Cadastro atualizado com sucesso!');
           setTimeout(() => {
@@ -308,8 +338,34 @@ export default function TenantManagerDashboard() {
             </div>
           </header>
 
-          {/* CARDS DE KPIS */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* SWITCHER DE ABA SUPER ADMIN */}
+            <div className="flex bg-slate-200/60 p-1 rounded-2xl border border-slate-300/80 max-w-md">
+              <button
+                onClick={() => setAdminTab('empresas')}
+                className={`flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 ${
+                  adminTab === 'empresas'
+                    ? 'bg-[#1B4D3E] text-white shadow-2xs font-extrabold'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                🏢 Inquilinos SaaS ({tenants.length})
+              </button>
+              <button
+                onClick={() => setAdminTab('faturamento')}
+                className={`flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 ${
+                  adminTab === 'faturamento'
+                    ? 'bg-[#1B4D3E] text-white shadow-2xs font-extrabold'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                💰 Faturamento & Cobranças
+              </button>
+            </div>
+
+            {adminTab === 'empresas' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                {/* CARDS DE KPIS */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[
               { label: 'Empresas Ativas', value: kpis.totalAtivos.toString(), icon: Building2, color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100' },
               { label: 'Contas Suspensas', value: kpis.totalSuspensos.toString(), icon: ShieldAlert, color: 'text-rose-600', bg: 'bg-rose-50 border-rose-100' },
@@ -499,11 +555,181 @@ export default function TenantManagerDashboard() {
                   })}
                 </tbody>
               </table>
+              </div>
             </div>
-          </div>
+            )}
 
-        </div>
-      </main>
+            {/* CONTEÚDO DA ABA FATURAMENTO */}
+            {adminTab === 'faturamento' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                {/* CARDS DE KPIS FINANCEIROS GLOBAIS */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-5 bg-white border border-slate-300 rounded-xl shadow-xs flex items-center gap-4 hover:shadow-md transition-shadow">
+                    <div className="p-3 bg-[#1B4D3E]/10 rounded-xl border border-[#1B4D3E]/20">
+                      <Building2 size={20} className="text-[#1B4D3E]" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">MRR Consolidado (Recorrência Mensal)</p>
+                      <p className="text-xl font-black text-slate-800 leading-none mt-1">
+                        R$ {financialMetrics?.mrr ? financialMetrics.mrr.toFixed(2) : '0.00'}
+                      </p>
+                      <p className="text-[9px] text-slate-400 mt-1 uppercase font-bold">Base + Add-ons Ativos</p>
+                    </div>
+                  </div>
+
+                  <div className="p-5 bg-white border border-slate-300 rounded-xl shadow-xs flex items-center gap-4 hover:shadow-md transition-shadow">
+                    <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                      <CheckCircle2 size={20} className="text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Receita SaaS Realizada (Pago)</p>
+                      <p className="text-xl font-black text-slate-800 leading-none mt-1">
+                        R$ {financialMetrics?.totalPago ? financialMetrics.totalPago.toFixed(2) : '0.00'}
+                      </p>
+                      <p className="text-[9px] text-slate-400 mt-1 uppercase font-bold">Acumulado Histórico</p>
+                    </div>
+                  </div>
+
+                  <div className="p-5 bg-white border border-slate-300 rounded-xl shadow-xs flex items-center gap-4 hover:shadow-md transition-shadow">
+                    <div className="p-3 bg-rose-50 rounded-xl border border-rose-100">
+                      <ShieldAlert size={20} className="text-rose-600" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cobranças Pendentes / Em Aberto</p>
+                      <p className="text-xl font-black text-slate-800 leading-none mt-1">
+                        R$ {financialMetrics?.totalPendente ? financialMetrics.totalPendente.toFixed(2) : '0.00'}
+                      </p>
+                      <p className="text-[9px] text-slate-400 mt-1 uppercase font-bold">Faturas Aguardando Ação</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* BARRA DE AÇÕES FINANCEIRAS */}
+                <div className="flex justify-between items-center gap-4">
+                  <div className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                    Controle e Auditoria Geral de Cobranças SaaS
+                  </div>
+                  <button
+                    onClick={() => {
+                      setNewInvoiceTenantId(tenants[0]?.id || '');
+                      setNewInvoicePlano('PRO');
+                      setNewInvoiceValor(299.0);
+                      setNewInvoiceVencimento('');
+                      setNewInvoiceModal(true);
+                    }}
+                    className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
+                  >
+                    <Plus size={16} /> Lançar Cobrança Avulsa
+                  </button>
+                </div>
+
+                {/* TABELA GERAL DE COBRANÇAS GLOBAIS */}
+                <div className="bg-white rounded-xl shadow-xs border border-slate-300 overflow-hidden">
+                  <div className="p-4 border-b border-slate-300 flex items-center justify-between bg-slate-50">
+                    <h2 className="text-xs font-bold text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                      <Building2 size={16} /> Faturamento e Faturas dos Inquilinos
+                    </h2>
+                    <button 
+                      onClick={loadData} 
+                      title="Recarregar faturamento"
+                      className="p-1.5 text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                    </button>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
+                          <th className="px-6 py-3.5">Cód Fatura</th>
+                          <th className="px-6 py-3.5">Empresa / Tenant</th>
+                          <th className="px-6 py-3.5">Plano</th>
+                          <th className="px-6 py-3.5">Valor</th>
+                          <th className="px-6 py-3.5">Vencimento</th>
+                          <th className="px-6 py-3.5">Pagamento</th>
+                          <th className="px-6 py-3.5">Forma</th>
+                          <th className="px-6 py-3.5 text-center">Status</th>
+                          <th className="px-6 py-3.5 text-center">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-sm">
+                        {allCobrancas.length === 0 ? (
+                          <tr>
+                            <td colSpan={9} className="px-6 py-12 text-center text-slate-400 font-medium">
+                              Nenhuma cobrança registrada no histórico do SaaS.
+                            </td>
+                          </tr>
+                        ) : (
+                          allCobrancas.map((cob) => (
+                            <tr key={cob.id} className="border-b border-slate-200 hover:bg-slate-50 transition-colors text-xs">
+                              <td className="px-6 py-4 font-bold text-slate-400">#{cob.id.substring(0, 8)}</td>
+                              <td className="px-6 py-4">
+                                <p className="font-bold text-slate-800">{cob.tenant?.nomeFantasia || 'N/A'}</p>
+                                <p className="text-[10px] text-slate-400">CNPJ: {cob.tenant?.cnpj || 'N/A'}</p>
+                              </td>
+                              <td className="px-6 py-4 font-extrabold text-[#1B4D3E]">{cob.plano}</td>
+                              <td className="px-6 py-4 font-black text-slate-700">R$ {cob.valor.toFixed(2)}</td>
+                              <td className="px-6 py-4 text-slate-500 font-medium">
+                                {new Date(cob.dataVencimento).toLocaleDateString('pt-BR')}
+                              </td>
+                              <td className="px-6 py-4 text-slate-500 font-medium">
+                                {cob.dataPagamento ? new Date(cob.dataPagamento).toLocaleDateString('pt-BR') : '-'}
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className="font-extrabold text-slate-500 bg-slate-100 px-2 py-0.5 rounded text-[10px] uppercase">
+                                  {cob.metodo || 'PIX'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                {cob.status === 'PAGO' ? (
+                                  <span className="inline-block bg-emerald-50 text-emerald-700 border border-emerald-200/50 text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider">
+                                    Pago
+                                  </span>
+                                ) : (
+                                  <span className="inline-block bg-amber-50 text-amber-700 border border-amber-200/50 text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider animate-pulse">
+                                    Pendente
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                {cob.status !== 'PAGO' && (
+                                  <button
+                                    onClick={() => {
+                                      showConfirm(
+                                        'Baixa Manual de Fatura',
+                                        `Deseja registrar manualmente a baixa da fatura #${cob.id.substring(0, 8)} de R$ ${cob.valor.toFixed(2)} para a empresa ${cob.tenant?.nomeFantasia}? Isso ativará e removerá suspensões do tenant se houver.`,
+                                        async () => {
+                                          setLoading(true);
+                                          const res = await manuallyConfirmPaymentAction(cob.id);
+                                          if (res.success) {
+                                            showAlert('Sucesso', 'Fatura baixada com sucesso!', 'success');
+                                            loadData();
+                                          } else {
+                                            showAlert('Erro ao Baixar', 'Erro: ' + res.error, 'error');
+                                            setLoading(false);
+                                          }
+                                        }
+                                      );
+                                    }}
+                                    className="text-xs font-black uppercase bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer shadow-xs active:scale-[0.98]"
+                                  >
+                                    💸 Confirmar Pago
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </div>
+        </main>
 
       {/* MODAL DE CADASTRO / EDIÇÃO */}
       {modalOpen && (
@@ -608,6 +834,23 @@ export default function TenantManagerDashboard() {
                 />
               </div>
 
+              {/* Taxa do WhatsApp */}
+              <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Taxa Mensal WhatsApp (R$)</label>
+                <input 
+                  type="number"
+                  required
+                  min={0}
+                  max={9999}
+                  step="0.01"
+                  placeholder="Ex: 130.00"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 outline-none transition-all font-semibold text-slate-700"
+                  value={taxaWhatsapp}
+                  onChange={e => setTaxaWhatsapp(Number(e.target.value))}
+                  disabled={actionLoading}
+                />
+              </div>
+
               {/* Alert de Sucesso */}
               {modalSuccess && (
                 <div className="bg-emerald-50 text-emerald-600 border border-emerald-100 p-4 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in duration-200">
@@ -708,6 +951,141 @@ export default function TenantManagerDashboard() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL LANÇAR COBRANÇA AVULSA */}
+      {newInvoiceModal && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                <Building2 size={20} className="text-[#1B4D3E]" /> 
+                Lançar Nova Fatura SaaS
+              </h2>
+              <button 
+                onClick={() => setNewInvoiceModal(false)} 
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1"
+                disabled={actionLoading}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              if (!newInvoiceTenantId) return alert('Selecione uma empresa.');
+              if (!newInvoiceVencimento) return alert('Selecione o vencimento.');
+              setActionLoading(true);
+              try {
+                const res = await manuallyCreateInvoiceAction(newInvoiceTenantId, newInvoicePlano, Number(newInvoiceValor), newInvoiceVencimento);
+                if (res.success) {
+                  showAlert('Sucesso', 'Fatura lançada com sucesso!', 'success');
+                  setNewInvoiceModal(false);
+                  loadData();
+                } else {
+                  alert('Erro ao lançar fatura: ' + res.error);
+                }
+              } catch (err: any) {
+                alert('Erro: ' + err.message);
+              } finally {
+                setActionLoading(false);
+              }
+            }} className="p-5 space-y-4">
+              
+              {/* Selecionar Tenant */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Empresa Cliente</label>
+                <select
+                  required
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 outline-none transition-all font-semibold text-slate-700 cursor-pointer"
+                  value={newInvoiceTenantId}
+                  onChange={e => setNewInvoiceTenantId(e.target.value)}
+                  disabled={actionLoading}
+                >
+                  <option value="" disabled>Selecione uma empresa...</option>
+                  {tenants.map(t => (
+                    <option key={t.id} value={t.id}>{t.nomeFantasia} ({t.cnpj})</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Plano / Referência */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Referência / Plano</label>
+                <select
+                  required
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 outline-none transition-all font-semibold text-slate-700 cursor-pointer"
+                  value={newInvoicePlano}
+                  onChange={e => {
+                    const pl = e.target.value;
+                    setNewInvoicePlano(pl);
+                    if (pl === 'BASICO') setNewInvoiceValor(149.0);
+                    else if (pl === 'PRO') setNewInvoiceValor(299.0);
+                    else if (pl === 'ENTERPRISE') setNewInvoiceValor(599.0);
+                  }}
+                  disabled={actionLoading}
+                >
+                  <option value="BASICO">Plano Básico (R$ 149.00)</option>
+                  <option value="PRO">Plano Pro (R$ 299.00)</option>
+                  <option value="ENTERPRISE">Plano Enterprise (R$ 599.00)</option>
+                  <option value="AVULSO">Lançamento Avulso (Customizado)</option>
+                </select>
+              </div>
+
+              {/* Valor cobrado */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Valor da Cobrança (R$)</label>
+                <input 
+                  type="number"
+                  required
+                  min={0.01}
+                  step="0.01"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 outline-none transition-all font-semibold text-slate-700"
+                  value={newInvoiceValor}
+                  onChange={e => setNewInvoiceValor(Number(e.target.value))}
+                  disabled={actionLoading}
+                />
+              </div>
+
+              {/* Data de Vencimento */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Data de Vencimento</label>
+                <input 
+                  type="date"
+                  required
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 outline-none transition-all font-semibold text-slate-700 cursor-pointer font-mono"
+                  value={newInvoiceVencimento}
+                  onChange={e => setNewInvoiceVencimento(e.target.value)}
+                  disabled={actionLoading}
+                />
+              </div>
+
+              {/* Controles */}
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100 mt-6">
+                <button 
+                  type="button" 
+                  onClick={() => setNewInvoiceModal(false)} 
+                  className="px-4 py-2.5 text-xs font-black uppercase tracking-wider text-slate-600 hover:bg-slate-50 rounded-xl border border-slate-200 cursor-pointer"
+                  disabled={actionLoading}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  className="px-5 py-2.5 text-xs font-black uppercase tracking-wider bg-[#1B4D3E] text-white rounded-xl hover:bg-[#13382d] cursor-pointer flex items-center gap-1.5 shadow-sm"
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? (
+                    <RefreshCw className="animate-spin" size={14} />
+                  ) : (
+                    'Confirmar Lançamento'
+                  )}
+                </button>
+              </div>
+
+            </form>
           </div>
         </div>
       )}

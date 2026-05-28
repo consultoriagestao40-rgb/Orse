@@ -26,6 +26,7 @@ model Tenant {
   plano               String                    @default("STARTER") // STARTER, PRO, ENTERPRISE
   limiteUsuarios      Int                       @default(3)
   trialStartedAt      DateTime?
+  taxaWhatsapp        Float                     @default(130.0)
   users               User[]
   clients             Client[]
   leads               Lead[]
@@ -40,6 +41,7 @@ model Tenant {
   escalas             Escala[]
   activities          Activity[]
   comments            Comment[]
+  cobrancas           Cobranca[]
 }
 
 model EmpresaEmissora {
@@ -587,6 +589,19 @@ model ProspectCache {
   createdAt    DateTime @default(now())
 
   @@unique([termo, localizacao, nomeFantasia])
+}
+
+model Cobranca {
+  id             String    @id @default(cuid())
+  tenantId       String
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plano          String    // TESTE, STARTER, PRO, ENTERPRISE
+  valor          Float
+  status         String    // PAGO, PENDENTE, ATRASADO
+  metodo         String    // PIX, CARTAO, MANUAL
+  dataVencimento DateTime
+  dataPagamento  DateTime?
+  createdAt      DateTime  @default(now())
 }
 
 

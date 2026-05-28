@@ -86,6 +86,7 @@ export async function getTenantsWithStats() {
       plano: t.plano,
       limiteUsuarios: t.limiteUsuarios,
       trialStartedAt: t.trialStartedAt ? t.trialStartedAt.toISOString() : null,
+      taxaWhatsapp: t.taxaWhatsapp,
       stats: {
         users: t._count.users,
         propostas: t._count.propostas,
@@ -107,7 +108,8 @@ export async function createTenantAction(
   cnpj: string,
   plano?: string,
   limiteUsuarios?: number,
-  trialStartedAt?: string | null
+  trialStartedAt?: string | null,
+  taxaWhatsapp?: number
 ) {
   const isSuper = await checkIsSuperAdmin();
   if (!isSuper) {
@@ -141,6 +143,7 @@ export async function createTenantAction(
         plano: plano || 'STARTER',
         limiteUsuarios: limiteUsuarios !== undefined ? Number(limiteUsuarios) : 3,
         trialStartedAt: trialDate,
+        taxaWhatsapp: taxaWhatsapp !== undefined ? Number(taxaWhatsapp) : 130.0,
       }
     });
 
@@ -160,7 +163,8 @@ export async function updateTenantAction(
   cnpj: string,
   plano?: string,
   limiteUsuarios?: number,
-  trialStartedAt?: string | null
+  trialStartedAt?: string | null,
+  taxaWhatsapp?: number
 ) {
   const isSuper = await checkIsSuperAdmin();
   if (!isSuper) {
@@ -203,6 +207,7 @@ export async function updateTenantAction(
         plano: plano || undefined,
         limiteUsuarios: limiteUsuarios !== undefined ? Number(limiteUsuarios) : undefined,
         trialStartedAt: trialDate,
+        taxaWhatsapp: taxaWhatsapp !== undefined ? Number(taxaWhatsapp) : undefined,
       }
     });
 
@@ -457,6 +462,312 @@ export async function updateTenantContactAction(phone: string) {
     return { success: true };
   } catch (error: any) {
     console.error('Erro ao atualizar contato de teste:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Server Action para carregar as informações e histórico financeiro do Tenant do usuário logado.
+ */
+export async function getTenantBillingInfo() {
+  try {
+    const cookieStore = await cookies();
+    const sbUser = cookieStore.get('sb_user')?.value;
+    if (!sbUser) return { success: false, error: 'Usuário não autenticado.' };
+
+    let data;
+    try {
+      data = JSON.parse(decodeURIComponent(sbUser));
+    } catch {
+      try {
+        data = JSON.parse(sbUser);
+      } catch {
+        return { success: false, error: 'Sessão inválida.' };
+      }
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { nome: data.nome || '' },
+      include: { tenant: { include: { cobrancas: { orderBy: { createdAt: 'desc' } } } } }
+    });
+
+    if (!user || !user.tenant) {
+      return { success: false, error: 'Usuário ou empresa não encontrada.' };
+    }
+
+    const tenant = user.tenant;
+    
+    // Contagem de usuários ativos
+    const activeUsersCount = await prisma.user.count({
+      where: { tenantId: tenant.id }
+    });
+
+    let basePrice = 149.0;
+    if (tenant.plano === 'TESTE') basePrice = 0.0;
+    else if (tenant.plano === 'PRO') basePrice = 299.0;
+    else if (tenant.plano === 'ENTERPRISE') basePrice = 599.0;
+
+    const whatsappConnected = !!tenant.whatsappConnected;
+    const whatsappCost = whatsappConnected ? tenant.taxaWhatsapp : 0.0;
+    const totalCost = basePrice + whatsappCost;
+
+    // Próximo vencimento: calcula 30 dias a partir da criação ou do último pagamento
+    const lastPaidInvoice = tenant.cobrancas.find(c => c.status === 'PAGO');
+    const baseDate = lastPaidInvoice ? lastPaidInvoice.createdAt : tenant.createdAt;
+    const nextBillingDate = new Date(baseDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    return {
+      success: true,
+      plano: tenant.plano,
+      limiteUsuarios: tenant.limiteUsuarios,
+      activeUsersCount,
+      basePrice,
+      whatsappConnected,
+      whatsappCost,
+      taxaWhatsapp: tenant.taxaWhatsapp,
+      totalCost,
+      nextBillingDate: nextBillingDate.toISOString(),
+      ativo: tenant.ativo,
+      cobrancas: tenant.cobrancas.map(c => ({
+        id: c.id,
+        plano: c.plano,
+        valor: c.valor,
+        status: c.status,
+        metodo: c.metodo,
+        dataVencimento: c.dataVencimento.toISOString(),
+        dataPagamento: c.dataPagamento ? c.dataPagamento.toISOString() : null,
+        createdAt: c.createdAt.toISOString()
+      }))
+    };
+  } catch (error: any) {
+    console.error('Erro ao buscar dados de faturamento do inquilino:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Server Action para processar um upgrade/pagamento síncrono e gravar no histórico.
+ */
+export async function paySubscriptionAction(plano: string, metodo: string, valor: number) {
+  try {
+    const cookieStore = await cookies();
+    const sbUser = cookieStore.get('sb_user')?.value;
+    if (!sbUser) return { success: false, error: 'Usuário não autenticado.' };
+
+    let data;
+    try {
+      data = JSON.parse(decodeURIComponent(sbUser));
+    } catch {
+      try {
+        data = JSON.parse(sbUser);
+      } catch {
+        return { success: false, error: 'Sessão inválida.' };
+      }
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { nome: data.nome || '' }
+    });
+
+    if (!user || !user.tenantId) {
+      return { success: false, error: 'Usuário ou empresa não vinculada.' };
+    }
+
+    let limite = 3;
+    if (plano === 'PRO') limite = 10;
+    else if (plano === 'ENTERPRISE') limite = 100;
+
+    // Atualiza o Tenant
+    await prisma.tenant.update({
+      where: { id: user.tenantId },
+      data: {
+        plano,
+        limiteUsuarios: limite,
+        ativo: true,
+        trialStartedAt: null // encerra o trial quando assina
+      }
+    });
+
+    // Cria a Cobrança como PAGO
+    await prisma.cobranca.create({
+      data: {
+        tenantId: user.tenantId,
+        plano,
+        valor: Number(valor),
+        status: 'PAGO',
+        metodo,
+        dataVencimento: new Date(),
+        dataPagamento: new Date()
+      }
+    });
+
+    // Cria notificação na central do usuário
+    await prisma.notification.create({
+      data: {
+        userId: user.id,
+        texto: `Sua assinatura do plano ${plano} foi ativada com sucesso via ${metodo}!`,
+        link: '/admin/settings'
+      }
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao processar assinatura:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Server Action para calcular métricas financeiras globais consolidando add-ons do WhatsApp.
+ */
+export async function getSaaSFinancialMetrics() {
+  try {
+    const isSuper = await checkIsSuperAdmin();
+    if (!isSuper) {
+      throw new Error('Acesso negado: Você não possui privilégios de Super Administrador.');
+    }
+
+    const tenants = await prisma.tenant.findMany();
+    
+    // Cálculo do MRR (Base + taxaWhatsapp individual dos Tenants ativos)
+    let mrr = 0;
+    for (const t of tenants) {
+      if (t.ativo !== false) {
+        let base = 149.0;
+        if (t.plano === 'TESTE') base = 0.0;
+        else if (t.plano === 'PRO') base = 299.0;
+        else if (t.plano === 'ENTERPRISE') base = 599.0;
+
+        const addOn = t.whatsappConnected ? t.taxaWhatsapp : 0.0;
+        mrr += (base + addOn);
+      }
+    }
+
+    // Receita Total (Soma de faturas pagas)
+    const paidInvoices = await prisma.cobranca.aggregate({
+      where: { status: 'PAGO' },
+      _sum: { valor: true }
+    });
+    const totalRevenue = paidInvoices._sum.valor || 0;
+
+    // Cobranças Atrasadas/Pendentes
+    const pendingBillsCount = await prisma.cobranca.count({
+      where: { status: { in: ['PENDENTE', 'ATRASADO'] } }
+    });
+
+    return {
+      success: true,
+      mrr,
+      totalRevenue,
+      pendingBills: pendingBillsCount
+    };
+  } catch (error: any) {
+    console.error('Erro ao carregar métricas financeiras SaaS:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Server Action para listar faturas de todas as empresas (Uso do Super Admin).
+ */
+export async function getAllCobrancasAction() {
+  try {
+    const isSuper = await checkIsSuperAdmin();
+    if (!isSuper) {
+      throw new Error('Acesso negado: Você não possui privilégios de Super Administrador.');
+    }
+
+    const cobrancas = await prisma.cobranca.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { tenant: true }
+    });
+
+    return cobrancas.map(c => ({
+      id: c.id,
+      tenantId: c.tenantId,
+      tenantNome: c.tenant.nomeFantasia,
+      plano: c.plano,
+      valor: c.valor,
+      status: c.status,
+      metodo: c.metodo,
+      dataVencimento: c.dataVencimento.toISOString(),
+      dataPagamento: c.dataPagamento ? c.dataPagamento.toISOString() : null,
+      createdAt: c.createdAt.toISOString()
+    }));
+  } catch (error: any) {
+    console.error('Erro ao listar todas as cobranças SaaS:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Server Action para dar baixa manual em cobrança (Super Admin).
+ */
+export async function manuallyConfirmPaymentAction(cobrancaId: string) {
+  try {
+    const isSuper = await checkIsSuperAdmin();
+    if (!isSuper) {
+      throw new Error('Acesso negado: Você não possui privilégios de Super Administrador.');
+    }
+
+    const cobranca = await prisma.cobranca.findUnique({
+      where: { id: cobrancaId }
+    });
+
+    if (!cobranca) {
+      return { success: false, error: 'Cobrança não encontrada.' };
+    }
+
+    // Baixa a Cobrança como PAGO
+    await prisma.cobranca.update({
+      where: { id: cobrancaId },
+      data: {
+        status: 'PAGO',
+        dataPagamento: new Date()
+      }
+    });
+
+    // Desbloqueia/Reativa a empresa no mesmo instante
+    await prisma.tenant.update({
+      where: { id: cobranca.tenantId },
+      data: { ativo: true }
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao dar baixa manual em cobrança:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Server Action para lançar cobrança avulsa manual (Super Admin).
+ */
+export async function manuallyCreateInvoiceAction(tenantId: string, plano: string, valor: number, vencimento: string) {
+  try {
+    const isSuper = await checkIsSuperAdmin();
+    if (!isSuper) {
+      throw new Error('Acesso negado: Você não possui privilégios de Super Administrador.');
+    }
+
+    if (!tenantId || !plano || !valor || !vencimento) {
+      return { success: false, error: 'Todos os campos são obrigatórios.' };
+    }
+
+    await prisma.cobranca.create({
+      data: {
+        tenantId,
+        plano,
+        valor: Number(valor),
+        status: 'PENDENTE',
+        metodo: 'MANUAL',
+        dataVencimento: new Date(vencimento)
+      }
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao criar cobrança manual:', error);
     return { success: false, error: error.message };
   }
 }
