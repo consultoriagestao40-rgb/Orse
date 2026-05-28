@@ -122,7 +122,8 @@ const Sidebar = () => {
   ];
  
   return (
-    <aside className={`bg-white border-r border-slate-200 h-screen sticky top-0 flex flex-col shadow-sm transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+    <>
+      <aside className={`bg-white border-r border-slate-200 h-screen sticky top-0 flex flex-col shadow-sm transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
       {/* Header */}
       <div className="p-6 border-b border-slate-50 relative flex items-center justify-between min-h-[96px] gap-2">
         {!isCollapsed ? (
@@ -407,6 +408,7 @@ const Sidebar = () => {
         </div>
       </div>
     )}
+    </>
   );
 };
  
