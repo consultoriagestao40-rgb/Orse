@@ -102,6 +102,7 @@ const Sidebar = () => {
     { icon: ShieldCheck, label: 'EPIs e Uniformes', href: '/epis', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: BarChart2, label: 'Controladoria', href: '/admin/controladoria', roles: ['ADMIN'] },
     { icon: Settings, label: 'Configurações', href: '/admin/settings', roles: ['ADMIN', 'MANAGER', 'USER'] },
+    { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas', roles: ['SUPER_ADMIN'] },
   ];
  
   return (
@@ -261,7 +262,12 @@ const Sidebar = () => {
       
       {/* Menu de Navegação */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        {menuItems.filter(item => item.roles.includes(user?.role || 'USER')).map((item) => {
+        {menuItems.filter(item => {
+          if (item.roles.includes('SUPER_ADMIN')) {
+            return user?.role === 'ADMIN' && user?.nome === 'Cristiano Silva';
+          }
+          return item.roles.includes(user?.role || 'USER');
+        }).map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
