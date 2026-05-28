@@ -266,8 +266,8 @@ const Sidebar = () => {
           const isPlatformAccount = user?.email === 'admin@smartbidhub.com.br';
           
           if (isPlatformAccount) {
-            // Conta de Operador do SaaS: vê apenas gestão de empresas e configurações
-            return item.href === '/admin/empresas' || item.href === '/admin/settings';
+            // Conta de Operador do SaaS: vê apenas gestão de empresas
+            return item.href === '/admin/empresas';
           } else {
             // Contas de Clientes (Grupo JVS, etc): não veem o painel de gestão de SaaS
             if (item.roles.includes('SUPER_ADMIN') || item.href === '/admin/empresas') {
