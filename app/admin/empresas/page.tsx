@@ -32,7 +32,6 @@ interface TenantItem {
 
 export default function TenantManagerDashboard() {
   const router = useRouter();
-  
   // Estados de Segurança e Carga
   const [loading, setLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -41,6 +40,39 @@ export default function TenantManagerDashboard() {
   const [tenants, setTenants] = useState<TenantItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Estados e helpers para Alertas e Confirmações Premium
+  const [customAlert, setCustomAlert] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    type: 'info'
+  });
+
+  const [customConfirm, setCustomConfirm] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
+
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    setCustomAlert({ open: true, title, message, type });
+  };
+
+  const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setCustomConfirm({ open: true, title, message, onConfirm });
+  };
 
   // Estados dos Modais
   const [modalOpen, setModalOpen] = useState(false);
@@ -140,45 +172,53 @@ export default function TenantManagerDashboard() {
   };
 
   const handleDeleteTenant = async (t: TenantItem) => {
-    const confirmMessage = `Tem certeza absoluta de que deseja EXCLUIR a empresa "${t.nomeFantasia}" (CNPJ: ${t.cnpj})?\n\nATENÇÃO: Isso apagará permanentemente todos os usuários, propostas, contratos, leads e insumos vinculados a esta empresa de forma irreversível!`;
-    if (!confirm(confirmMessage)) return;
-
-    setLoading(true);
-    try {
-      const res = await deleteTenantAction(t.id);
-      if (res.success) {
-        alert('Empresa removida com sucesso!');
-        loadData();
-      } else {
-        alert('Erro ao excluir: ' + res.error);
-        setLoading(false);
+    const confirmMessage = `Tem certeza absoluta de que deseja EXCLUIR a empresa "${t.nomeFantasia}" (CNPJ: ${t.cnpj})?\n\nATENÇÃO: Isso apagará permanentemente todos os usuários, propostas, contratos, leads e insumos vinculados a ela!`;
+    showConfirm(
+      'Excluir Empresa SaaS',
+      confirmMessage,
+      async () => {
+        setLoading(true);
+        try {
+          const res = await deleteTenantAction(t.id);
+          if (res.success) {
+            showAlert('Sucesso', 'Empresa removida com sucesso!', 'success');
+            loadData();
+          } else {
+            showAlert('Erro ao Excluir', 'Erro ao excluir: ' + res.error, 'error');
+            setLoading(false);
+          }
+        } catch (err: any) {
+          showAlert('Falha Crítica', 'Falha crítica de comunicação: ' + err.message, 'error');
+          setLoading(false);
+        }
       }
-    } catch (err: any) {
-      alert('Falha crítica de comunicação: ' + err.message);
-      setLoading(false);
-    }
+    );
   };
 
   const handleToggleActive = async (t: TenantItem) => {
     const newActiveState = !t.ativo;
-    const confirmMessage = `Tem certeza que deseja ${newActiveState ? 'ATIVAR' : 'SUSPENDER / BLOQUEAR'} o acesso da empresa "${t.nomeFantasia}"?`;
-    if (!confirm(confirmMessage)) return;
-
-    setActionLoading(true);
-    try {
-      const res = await toggleTenantActiveAction(t.id, newActiveState);
-      if (res.success) {
-        alert(`Empresa ${newActiveState ? 'ativada' : 'suspensa'} com sucesso!`);
-        // Atualiza localmente
-        setTenants(prev => prev.map(item => item.id === t.id ? { ...item, ativo: newActiveState } : item));
-      } else {
-        alert('Erro ao alterar status: ' + res.error);
+    const confirmMessage = `Deseja realmente ${newActiveState ? 'ATIVAR' : 'SUSPENDER / BLOQUEAR'} o acesso de "${t.nomeFantasia}"?`;
+    
+    showConfirm(
+      newActiveState ? 'Ativar Empresa' : 'Suspender Empresa',
+      confirmMessage,
+      async () => {
+        setActionLoading(true);
+        try {
+          const res = await toggleTenantActiveAction(t.id, newActiveState);
+          if (res.success) {
+            showAlert('Status Atualizado', `Empresa ${newActiveState ? 'ativada' : 'suspensa'} com sucesso!`, 'success');
+            setTenants(prev => prev.map(item => item.id === t.id ? { ...item, ativo: newActiveState } : item));
+          } else {
+            showAlert('Erro', 'Erro ao alterar status: ' + res.error, 'error');
+          }
+        } catch (err: any) {
+          showAlert('Falha Crítica', 'Falha crítica de comunicação: ' + err.message, 'error');
+        } finally {
+          setActionLoading(false);
+        }
       }
-    } catch (err: any) {
-      alert('Falha crítica de comunicação: ' + err.message);
-    } finally {
-      setActionLoading(false);
-    }
+    );
   };
 
   // 3. Filtros
@@ -583,6 +623,66 @@ export default function TenantManagerDashboard() {
               </div>
 
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE ALERTA PREMIUM */}
+      {customAlert.open && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-8 text-center space-y-6">
+              <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center border shadow-lg shadow-slate-100 animate-bounce">
+                {customAlert.type === 'error' && <ShieldAlert className="text-red-500" size={32} />}
+                {customAlert.type === 'warning' && <ShieldAlert className="text-amber-500" size={32} />}
+                {customAlert.type === 'success' && <CheckCircle2 className="text-emerald-500" size={32} />}
+                {customAlert.type === 'info' && <Building2 className="text-blue-500" size={32} />}
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{customAlert.title}</h3>
+                <p className="text-sm text-slate-500 font-bold leading-relaxed whitespace-pre-line">{customAlert.message}</p>
+              </div>
+              <button 
+                onClick={() => setCustomAlert(prev => ({ ...prev, open: false }))}
+                className="w-full py-4 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-[#1B4D3E]/10 animate-pulse"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMAÇÃO PREMIUM */}
+      {customConfirm.open && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-8 text-center space-y-6">
+              <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center border border-amber-100 bg-amber-50/50 text-amber-600 shadow-lg shadow-amber-50 animate-pulse">
+                <ShieldAlert size={32} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{customConfirm.title}</h3>
+                <p className="text-sm text-slate-500 font-bold leading-relaxed whitespace-pre-line">{customConfirm.message}</p>
+              </div>
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setCustomConfirm(prev => ({ ...prev, open: false }))}
+                  className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest rounded-2xl transition-all"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={() => {
+                    customConfirm.onConfirm();
+                    setCustomConfirm(prev => ({ ...prev, open: false }));
+                  }}
+                  className="flex-1 py-4 bg-[#1B4D3E] hover:bg-[#13382d] text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-[#1B4D3E]/10"
+                >
+                  Confirmar Ação
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

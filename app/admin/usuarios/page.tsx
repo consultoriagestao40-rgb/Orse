@@ -27,6 +27,39 @@ export default function UsuariosPage() {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [tenantLimit, setTenantLimit] = useState<number | null>(null);
   const [plano, setPlano] = useState<string>('STARTER');
+
+  // Estados e helpers para Alertas e Confirmações Premium
+  const [customAlert, setCustomAlert] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    type: 'info'
+  });
+
+  const [customConfirm, setCustomConfirm] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
+
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    setCustomAlert({ open: true, title, message, type });
+  };
+
+  const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setCustomConfirm({ open: true, title, message, onConfirm });
+  };
   
   const [formData, setFormData] = useState({
     nome: '',
@@ -63,7 +96,11 @@ export default function UsuariosPage() {
   function handleAddNewClick() {
     if (tenantLimit !== null && usuarios.length >= tenantLimit) {
       const planoNome = plano.charAt(0).toUpperCase() + plano.slice(1).toLowerCase();
-      alert(`Limite de usuários atingido!\n\nSeu plano atual (${planoNome}) permite no máximo ${tenantLimit} usuários ativos. Por favor, solicite um upgrade de plano com o administrador do sistema para cadastrar mais colaboradores.`);
+      showAlert(
+        'Limite de Usuários Atingido',
+        `Seu plano atual (${planoNome}) permite no máximo ${tenantLimit} usuários ativos.\n\nPor favor, solicite um upgrade de plano com o administrador do sistema para cadastrar mais colaboradores.`,
+        'warning'
+      );
       return;
     }
     setEditingUserId(null);
@@ -123,15 +160,25 @@ export default function UsuariosPage() {
       });
       loadUsuarios();
     } else {
-      alert('Erro: ' + res.error);
+      showAlert('Erro de Cadastro', res.error, 'error');
     }
   }
 
   async function handleDelete(id: string) {
-    if (confirm('Deseja realmente excluir este usuário?')) {
-      await deleteUsuario(id);
-      loadUsuarios();
-    }
+    showConfirm(
+      'Excluir Colaborador',
+      'Deseja realmente remover permanentemente este colaborador do sistema? Esta ação é irreversível.',
+      async () => {
+        setLoading(true);
+        const res = await deleteUsuario(id);
+        if (res.success) {
+          loadUsuarios();
+        } else {
+          setLoading(false);
+          showAlert('Erro ao Excluir', res.error, 'error');
+        }
+      }
+    );
   }
 
   const filteredUsers = usuarios.filter(u => 
@@ -422,6 +469,66 @@ export default function UsuariosPage() {
           </div>
         )}
       </main>
+
+      {/* MODAL DE ALERTA PREMIUM */}
+      {customAlert.open && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-8 text-center space-y-6">
+              <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center border shadow-lg shadow-slate-100 animate-bounce">
+                {customAlert.type === 'error' && <Shield className="text-red-500" size={32} />}
+                {customAlert.type === 'warning' && <Shield className="text-amber-500" size={32} />}
+                {customAlert.type === 'success' && <UserCheck className="text-emerald-500" size={32} />}
+                {customAlert.type === 'info' && <Users className="text-blue-500" size={32} />}
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{customAlert.title}</h3>
+                <p className="text-sm text-slate-500 font-bold leading-relaxed whitespace-pre-line">{customAlert.message}</p>
+              </div>
+              <button 
+                onClick={() => setCustomAlert(prev => ({ ...prev, open: false }))}
+                className="w-full py-4 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-[#1B4D3E]/10"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMAÇÃO PREMIUM */}
+      {customConfirm.open && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-8 text-center space-y-6">
+              <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center border border-amber-100 bg-amber-50/50 text-amber-600 shadow-lg shadow-amber-50 animate-pulse">
+                <Trash2 size={32} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{customConfirm.title}</h3>
+                <p className="text-sm text-slate-500 font-bold leading-relaxed">{customConfirm.message}</p>
+              </div>
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setCustomConfirm(prev => ({ ...prev, open: false }))}
+                  className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest rounded-2xl transition-all"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={() => {
+                    customConfirm.onConfirm();
+                    setCustomConfirm(prev => ({ ...prev, open: false }));
+                  }}
+                  className="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-red-600/10"
+                >
+                  Confirmar Exclusão
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
