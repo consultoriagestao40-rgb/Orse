@@ -9,7 +9,8 @@ import {
   getTemplatesProposta,
   createTemplateProposta,
   updateTemplateProposta,
-  deleteTemplateProposta
+  deleteTemplateProposta,
+  uploadSlideImageAction
 } from '../actions';
 
 export default function TemplatesPropostaPage() {
@@ -114,7 +115,6 @@ export default function TemplatesPropostaPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const { uploadSlideImageAction } = require('../actions');
     const reader = new FileReader();
     reader.onload = async (event: any) => {
       const base64Data = event.target.result;
