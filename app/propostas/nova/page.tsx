@@ -44,6 +44,27 @@ function PropostaEditor() {
   const id = searchParams.get('id');
 
   const [activeTab, setActiveTab] = useState('dados');
+  const [companyLogo, setCompanyLogo] = useState<string>('https://via.placeholder.com/300x80?text=Silva+Consultoria');
+  const [companyName, setCompanyName] = useState<string>('Silva Consultoria');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
+      if (cookie) {
+        try {
+          const parsed = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+          if (parsed.tenantLogoUrl) {
+            setCompanyLogo(parsed.tenantLogoUrl);
+          }
+          if (parsed.tenantNome) {
+            setCompanyName(parsed.tenantNome);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
   const [viewMode, setViewMode] = useState<'slide' | 'document'>('document');
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [templates, setTemplates] = useState<any[]>([]);
@@ -3333,7 +3354,7 @@ function PropostaEditor() {
                                  {/* Logo JVS no Slide 1 */}
                                  <div className="col-span-4 flex flex-col justify-center items-center pl-8 border-l border-slate-100 h-full">
                                     <img 
-                                       src="https://via.placeholder.com/300x80?text=Silva+Consultoria" 
+                                       src={companyLogo} 
                                        alt="Silva Consultoria" 
                                        className="max-h-24 w-auto object-contain mb-4"
                                     />
@@ -3367,7 +3388,7 @@ function PropostaEditor() {
                                  {/* Logo Silva Consultoria em Branco Puro */}
                                  <div className="flex flex-col items-center space-y-4 animate-fadeIn">
                                     <img 
-                                       src="https://via.placeholder.com/300x80?text=Silva+Consultoria" 
+                                       src={companyLogo} 
                                        alt="Silva Consultoria Logo" 
                                        className="max-h-32 w-auto object-contain"
                                     />
@@ -4003,7 +4024,7 @@ function PropostaEditor() {
                                         OBJETO & ESCOPO TÉCNICO
                                      </h2>
                                      <img 
-                                        src="https://via.placeholder.com/300x80?text=Silva+Consultoria" 
+                                        src={companyLogo} 
                                         alt="Silva Consultoria Logo" 
                                         className="max-h-10 w-auto object-contain"
                                      />
@@ -4066,7 +4087,7 @@ function PropostaEditor() {
                                         <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                         <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">QUADRO DE EQUIPE EFETIVO</h2>
                                      </div>
-                                     <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
+                                     <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
 
                                   <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-stretch">
@@ -4156,7 +4177,7 @@ function PropostaEditor() {
                                         <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                         <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUSÍDOS</h2>
                                      </div>
-                                     <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
+                                     <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
 
                                   <div className="my-auto w-full max-w-4xl mx-auto">
@@ -4250,7 +4271,7 @@ function PropostaEditor() {
                                            <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                            <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">RESUMO DA PROPOSTA COMERCIAL</h2>
                                         </div>
-                                        <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
+                                        <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                                      </div>
 
                                      <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-stretch">
@@ -4327,7 +4348,7 @@ function PropostaEditor() {
                                         <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                         <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">CONDIÇÕES GERAIS DA PROPOSTA</h2>
                                      </div>
-                                     <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
+                                     <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
                              {(() => {
                                 const condsColab = [
@@ -4437,7 +4458,7 @@ function PropostaEditor() {
                                         <span className="text-white/70 text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                         <h2 className="text-xl font-black text-white uppercase tracking-tight">TERMO DE ACEITE E CONTRATAÇÃO</h2>
                                      </div>
-                                     <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
+                                     <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
 
                                   <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-center text-white">
@@ -5856,7 +5877,7 @@ function PropostaEditor() {
                         <div className="relative z-20 flex flex-col justify-center items-center h-full w-full space-y-12">
                            <div className="flex flex-col items-center space-y-4">
                               <img 
-                                 src="https://via.placeholder.com/300x80?text=Silva+Consultoria" 
+                                 src={companyLogo} 
                                  alt="Silva Consultoria Logo" 
                                  className="max-h-32 w-auto object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
                               />
@@ -5924,7 +5945,7 @@ function PropostaEditor() {
                            </div>
                            <div className="col-span-4 flex flex-col justify-center items-center pl-8 border-l border-slate-100 h-full">
                               <img 
-                                 src="https://via.placeholder.com/300x80?text=Silva+Consultoria" 
+                                 src={companyLogo} 
                                  alt="Silva Consultoria" 
                                  className="max-h-24 w-auto object-contain mb-4"
                               />
@@ -6518,7 +6539,7 @@ function PropostaEditor() {
                                    OBJETO & ESCOPO TÉCNICO
                                 </h2>
                                 <img 
-                                   src="https://via.placeholder.com/300x80?text=Silva+Consultoria" 
+                                   src={companyLogo} 
                                    alt="Silva Consultoria Logo" 
                                    className="max-h-10 w-auto object-contain"
                                 />
@@ -6579,7 +6600,7 @@ function PropostaEditor() {
                                   <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                   <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">QUADRO DE EQUIPE EFETIVO</h2>
                                </div>
-                               <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
+                               <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                             </div>
 
                             <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-stretch">
@@ -6668,7 +6689,7 @@ function PropostaEditor() {
                                   <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                   <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUSÍDOS</h2>
                                </div>
-                               <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
+                               <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                             </div>
 
                             <div className="my-auto w-full max-w-4xl mx-auto">
@@ -6762,7 +6783,7 @@ function PropostaEditor() {
                                         <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                         <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">RESUMO DA PROPOSTA COMERCIAL</h2>
                                      </div>
-                                     <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
+                                     <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
 
                                   <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-stretch">
@@ -6839,7 +6860,7 @@ function PropostaEditor() {
                                   <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                   <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">CONDIÇÕES GERAIS DA PROPOSTA</h2>
                                </div>
-                               <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
+                               <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                             </div>
 
                             
@@ -6950,7 +6971,7 @@ function PropostaEditor() {
                                   <span className="text-white/70 text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                   <h2 className="text-xl font-black text-white uppercase tracking-tight">TERMO DE ACEITE E CONTRATAÇÃO</h2>
                                </div>
-                               <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
+                               <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                             </div>
 
                             <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-center text-white">

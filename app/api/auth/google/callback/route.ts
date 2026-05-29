@@ -92,6 +92,10 @@ export async function GET(request: Request) {
     const redirectTarget = new URL('/propostas/nova', request.url)
     const response = NextResponse.redirect(redirectTarget)
 
+    const userTenant = user.tenantId ? await prisma.tenant.findUnique({
+      where: { id: user.tenantId }
+    }) : null
+
     response.cookies.set('sb_session', 'active', {
       httpOnly: true,
       secure: isProduction,
@@ -105,6 +109,8 @@ export async function GET(request: Request) {
       email: user.email,
       tenantId: user.tenantId,
       avatarUrl: user.avatarUrl || undefined,
+      tenantLogoUrl: userTenant?.logoUrl || undefined,
+      tenantNome: userTenant?.nomeFantasia || undefined,
       iniciais: user.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase()
     }), {
       maxAge: 60 * 60 * 24 * 7

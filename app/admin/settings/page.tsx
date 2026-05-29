@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
   Settings as SettingsIcon, Layers, CalendarDays, Ruler, Plus, Trash2, 
-  Save, X, Tag, Edit2, Target, Briefcase, MessageSquare, CreditCard, CheckCircle2, Lock, Smartphone, RefreshCw
+  Save, X, Tag, Edit2, Target, Briefcase, MessageSquare, CreditCard, CheckCircle2, Lock, Smartphone, RefreshCw, Palette, Image
 } from 'lucide-react';
 import { 
   getPropostaStatuses, createPropostaStatus, deletePropostaStatus 
@@ -26,10 +26,11 @@ import {
 } from './zapi-actions';
 import { 
   getTenantBillingInfo, paySubscriptionAction, getPlanConfigs,
-  generatePixChargeAction, payWithCardAction, checkPixPaymentStatusAction
+  generatePixChargeAction, payWithCardAction, checkPixPaymentStatusAction,
+  changeTenantLogo
 } from '@/app/admin/empresas/actions';
 
-type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas' | 'whatsapp' | 'faturamento';
+type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas' | 'whatsapp' | 'faturamento' | 'marca';
 
 const menuGroups = [
   {
@@ -48,6 +49,7 @@ const menuGroups = [
     items: [
       { id: 'empresas', label: 'Empresas Emissoras', icon: Briefcase, roles: ['ADMIN'] },
       { id: 'metas', label: 'Metas dos Vendedores', icon: Target, roles: ['ADMIN', 'MANAGER'] },
+      { id: 'marca', label: 'Identidade Visual (Logo)', icon: Palette, roles: ['ADMIN', 'MANAGER'] },
     ]
   },
   {
@@ -105,6 +107,112 @@ export default function SettingsPage() {
   const [activePixCode, setActivePixCode] = useState<string>('');
   const [activePixImage, setActivePixImage] = useState<string>('');
   const [activeCobrancaId, setActiveCobrancaId] = useState<string>('');
+
+  // Tenant Brand Logo states
+  const [logoCropOpen, setLogoCropOpen] = useState(false);
+  const [rawLogoSrc, setRawLogoSrc] = useState<string | null>(null);
+  const [pendingLogoImage, setPendingLogoImage] = useState<HTMLImageElement | null>(null);
+  const [logoZoom, setLogoZoom] = useState(1);
+  const [logoPanX, setLogoPanX] = useState(0);
+  const [logoPanY, setLogoPanY] = useState(0);
+  const [logoPanning, setLogoPanning] = useState(false);
+  const [logoPanStart, setLogoPanStart] = useState({ x: 0, y: 0 });
+
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.onload = () => {
+        setPendingLogoImage(img);
+        setRawLogoSrc(event.target?.result as string);
+        setLogoZoom(1);
+        setLogoPanX(0);
+        setLogoPanY(0);
+        setLogoCropOpen(true);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleLogoPanStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    setLogoPanning(true);
+    const clientX = 'touches' in e ? (e as React.TouchEvent).touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? (e as React.TouchEvent).touches[0].clientY : (e as React.MouseEvent).clientY;
+    setLogoPanStart({ x: clientX - logoPanX, y: clientY - logoPanY });
+  };
+
+  const handleLogoPanMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!logoPanning) return;
+    const clientX = 'touches' in e ? (e as React.TouchEvent).touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? (e as React.TouchEvent).touches[0].clientY : (e as React.MouseEvent).clientY;
+    setLogoPanX(clientX - logoPanStart.x);
+    setLogoPanY(clientY - logoPanStart.y);
+  };
+
+  const handleLogoPanEnd = () => {
+    setLogoPanning(false);
+  };
+
+  const handleConfirmLogoCrop = async () => {
+    if (!pendingLogoImage) return;
+    setLoading(true);
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 600;
+      canvas.height = 200; // 3:1 ratio
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 600, 200);
+
+        const scaleMultiplier = 600 / 300; // Viewport is 300px wide
+        
+        ctx.translate(300, 100);
+        ctx.translate(logoPanX * scaleMultiplier, logoPanY * scaleMultiplier);
+        ctx.scale(logoZoom, logoZoom);
+
+        const viewW = 300;
+        const viewH = 100;
+        let drawW = pendingLogoImage.width;
+        let drawH = pendingLogoImage.height;
+        const ratio = drawW / drawH;
+
+        if (ratio > 3) {
+          drawH = viewH;
+          drawW = viewH * ratio;
+        } else {
+          drawW = viewW;
+          drawH = viewW / ratio;
+        }
+
+        drawW *= scaleMultiplier;
+        drawH *= scaleMultiplier;
+
+        ctx.drawImage(pendingLogoImage, -drawW / 2, -drawH / 2, drawW, drawH);
+      }
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.90);
+      
+      const res = await changeTenantLogo(dataUrl);
+      if (res.success) {
+        await loadBillingData();
+        setLogoCropOpen(false);
+        setRawLogoSrc(null);
+        alert('Logotipo da empresa atualizado com sucesso!');
+      } else {
+        alert('Erro ao salvar logotipo: ' + res.error);
+      }
+    } catch (err: any) {
+      alert('Erro inesperado ao salvar: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatCardNumber = (value: string) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
@@ -478,6 +586,8 @@ export default function SettingsPage() {
         await checkWhatsAppStatus();
         await loadBillingData();
       } else if (activeTab === 'faturamento') {
+        await loadBillingData();
+      } else if (activeTab === 'marca') {
         await loadBillingData();
       }
     } catch (error) {
@@ -1503,6 +1613,72 @@ export default function SettingsPage() {
               </div>
             )}
 
+            {activeTab === 'marca' && (
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs space-y-8 relative overflow-hidden">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-[#1B4D3E] bg-[#1B4D3E]/8 px-3 py-1 rounded-full">
+                      Identidade Visual
+                    </span>
+                    <h2 className="text-xl font-black text-slate-800 tracking-tight mt-2 font-display">Logotipo da Empresa</h2>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                      Personalize o logotipo exibido nos cabeçalhos das propostas comerciais e relatórios impressos
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-100">
+                  {/* Visualização Atual */}
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider">Logotipo Atual</h3>
+                    <div className="h-44 border border-slate-200/80 bg-slate-50/50 rounded-2xl flex items-center justify-center p-6 relative overflow-hidden group">
+                      {billingInfo?.logoUrl ? (
+                        <img 
+                          src={billingInfo.logoUrl} 
+                          alt="Logo da Empresa" 
+                          className="max-w-full max-h-full object-contain"
+                        />
+                      ) : (
+                        <div className="text-center space-y-2">
+                          <Palette size={32} className="mx-auto text-slate-300" />
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nenhum logotipo cadastrado</p>
+                          <p className="text-[8px] font-bold text-slate-400/80 uppercase">
+                            Nome Fantasia: {billingInfo?.nomeFantasia || 'Sua Empresa'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Upload e Ações */}
+                  <div className="flex flex-col justify-center space-y-6">
+                    <div className="space-y-2">
+                      <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Enviar Novo Logotipo</h3>
+                      <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                        Selecione um arquivo de imagem (PNG, JPG ou SVG). Para obter a melhor apresentação em documentos e relatórios impressos, recomendamos um formato widescreen de proporção 3:1 (ex: 300x100 pixels).
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <label 
+                        htmlFor="logo-file-upload" 
+                        className="bg-[#1B4D3E] hover:bg-emerald-950 text-white font-black text-xs uppercase tracking-widest px-6 py-4 rounded-2xl shadow-md shadow-[#1B4D3E]/20 transition-all cursor-pointer inline-flex items-center gap-2 active:scale-[0.98]"
+                      >
+                        <Plus size={16} /> Selecionar Imagem
+                      </label>
+                      <input 
+                        type="file" 
+                        id="logo-file-upload" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={handleLogoFileChange}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {loading && (
               <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-2">
@@ -1925,6 +2101,93 @@ export default function SettingsPage() {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* MODAL CROP LOGOTIPO (3:1 RATIO) */}
+        {logoCropOpen && rawLogoSrc && (
+          <div className="fixed inset-0 bg-black/50 z-[110] flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200">
+              <div className="bg-[#1B4D3E] px-6 py-4 border-b border-[#13382D] flex justify-between items-center">
+                <h2 className="text-white text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                  <Palette size={14} /> Ajustar Logotipo
+                </h2>
+                <button 
+                  onClick={() => { setLogoCropOpen(false); setRawLogoSrc(null); }} 
+                  className="text-white/60 hover:text-white transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="p-8 flex flex-col items-center space-y-6">
+                <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider">Ajustar Enquadramento</h4>
+                <p className="text-[11px] text-slate-500 text-center max-w-xs leading-relaxed">
+                  Arraste o logotipo para ajustar a posição e use a barra para controlar o zoom.
+                </p>
+                
+                {/* Viewport 3:1 Rectangular */}
+                <div 
+                  className="w-[300px] h-[100px] overflow-hidden relative border-2 border-[#1B4D3E] shadow-xl bg-slate-950 select-none touch-none cursor-grab active:cursor-grabbing rounded-xl"
+                  onMouseDown={handleLogoPanStart}
+                  onMouseMove={handleLogoPanMove}
+                  onMouseUp={handleLogoPanEnd}
+                  onMouseLeave={handleLogoPanEnd}
+                  onTouchStart={handleLogoPanStart}
+                  onTouchMove={handleLogoPanMove}
+                  onTouchEnd={handleLogoPanEnd}
+                >
+                  <img 
+                    src={rawLogoSrc} 
+                    alt="Logo Crop Preview" 
+                    draggable={false}
+                    className="absolute pointer-events-none select-none max-w-none origin-center"
+                    style={{
+                      width: pendingLogoImage && pendingLogoImage.width / pendingLogoImage.height >= 3 ? 'auto' : '300px',
+                      height: pendingLogoImage && pendingLogoImage.width / pendingLogoImage.height < 3 ? 'auto' : '100px',
+                      transform: `translate(-50%, -50%) translate(${logoPanX}px, ${logoPanY}px) scale(${logoZoom})`,
+                      left: '50%',
+                      top: '50%',
+                    }}
+                  />
+                </div>
+
+                {/* Zoom Slider */}
+                <div className="w-full max-w-xs space-y-2">
+                  <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                     <span>Zoom</span>
+                     <span className="text-[#1B4D3E]">{Math.round(logoZoom * 100)}%</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="1" 
+                    max="4" 
+                    step="0.01" 
+                    value={logoZoom} 
+                    onChange={(e) => setLogoZoom(parseFloat(e.target.value))} 
+                    className="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#1B4D3E]"
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="w-full max-w-xs flex gap-3 pt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => { setLogoCropOpen(false); setRawLogoSrc(null); }}
+                    className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-500 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-colors cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={handleConfirmLogoCrop}
+                    className="flex-1 bg-[#1B4D3E] hover:bg-[#13382D] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#1B4D3E]/20 transition-all cursor-pointer"
+                  >
+                    Salvar Logo
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

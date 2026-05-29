@@ -45,7 +45,8 @@ export async function getLoggedUser() {
     if (sbUser) {
       const data = JSON.parse(sbUser);
       const user = await prisma.user.findFirst({
-        where: { nome: data.nome }
+        where: { nome: data.nome },
+        include: { tenant: true }
       });
       return user;
     }

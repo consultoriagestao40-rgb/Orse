@@ -10,7 +10,8 @@ export async function POST(request: Request) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
+      include: { tenant: true }
     })
 
     if (!user || user.password !== password) {
@@ -42,6 +43,8 @@ export async function POST(request: Request) {
       email: user.email,
       tenantId: user.tenantId,
       avatarUrl: user.avatarUrl || undefined,
+      tenantLogoUrl: user.tenant?.logoUrl || undefined,
+      tenantNome: user.tenant?.nomeFantasia || undefined,
       iniciais: user.nome.split(' ').map(n => n[0]).join('').toUpperCase()
     }), {
       maxAge: 60 * 60 * 24 * 7

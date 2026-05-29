@@ -1,8 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, User, Cpu, Smartphone, Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, Factory, Store, Bus, Building, Hospital, ShoppingBag, GraduationCap, Share2, Clock, CreditCard, ShieldCheck, MapPin, Calendar, UserCheck, Briefcase } from 'lucide-react';
 import BrazilMap from '@/components/BrazilMap';
 
 export default function PropostaApresentacao({ proposta, resultado, empresaEmissora, presentationMode, setPresentationMode }: any) {
+  const [companyLogo, setCompanyLogo] = useState<string>('https://via.placeholder.com/300x80?text=Silva+Consultoria');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
+      if (cookie) {
+        try {
+          const parsed = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+          if (parsed.tenantLogoUrl) {
+            setCompanyLogo(parsed.tenantLogoUrl);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
   const [currentSlide, setCurrentSlide] = useState(1);
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
   
@@ -96,7 +113,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                  {/* Logo JVS no Slide 1 */}
                                  <div className="col-span-4 flex flex-col justify-center items-center pl-8 border-l border-slate-100 h-full">
                                     <img 
-                                       src="https://via.placeholder.com/300x80?text=Silva+Consultoria" 
+                                       src={companyLogo} 
                                        alt="Silva Consultoria" 
                                        className="max-h-24 w-auto object-contain mb-4"
                                     />
@@ -130,7 +147,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                  {/* Logo Silva Consultoria em Branco Puro */}
                                  <div className="flex flex-col items-center space-y-4 animate-fadeIn">
                                     <img 
-                                       src="https://via.placeholder.com/300x80?text=Silva+Consultoria" 
+                                       src={companyLogo} 
                                        alt="Silva Consultoria Logo" 
                                        className="max-h-32 w-auto object-contain"
                                     />
@@ -766,7 +783,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                         OBJETO & ESCOPO TÉCNICO
                                      </h2>
                                      <img 
-                                        src="https://via.placeholder.com/300x80?text=Silva+Consultoria" 
+                                        src={companyLogo} 
                                         alt="Silva Consultoria Logo" 
                                         className="max-h-10 w-auto object-contain"
                                      />
@@ -829,7 +846,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                         <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                         <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">QUADRO DE EQUIPE EFETIVO</h2>
                                      </div>
-                                     <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
+                                     <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
 
                                   <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-stretch">
@@ -919,7 +936,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                         <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                         <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUSÍDOS</h2>
                                      </div>
-                                     <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
+                                     <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
 
                                   <div className="my-auto w-full max-w-4xl mx-auto">
@@ -1034,7 +1051,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                            <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                            <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">RESUMO DA PROPOSTA COMERCIAL</h2>
                                         </div>
-                                        <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
+                                        <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                                      </div>
 
                                      <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-stretch">
@@ -1111,7 +1128,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                         <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                         <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">CONDIÇÕES GERAIS DA PROPOSTA</h2>
                                      </div>
-                                     <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
+                                     <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
                              {(() => {
                                 const condsColab = [
@@ -1221,7 +1238,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                         <span className="text-white/70 text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                         <h2 className="text-xl font-black text-white uppercase tracking-tight">TERMO DE ACEITE E CONTRATAÇÃO</h2>
                                      </div>
-                                     <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
+                                     <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
 
                                   <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-center text-white">

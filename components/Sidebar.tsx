@@ -337,6 +337,8 @@ const Sidebar = () => {
               email: freshUser.email,
               tenantId: freshUser.tenantId,
               avatarUrl: freshUser.avatarUrl || undefined,
+              tenantLogoUrl: (freshUser as any).tenant?.logoUrl || undefined,
+              tenantNome: (freshUser as any).tenant?.nomeFantasia || undefined,
               iniciais: freshUser.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase()
             };
             setUser(userObj);
