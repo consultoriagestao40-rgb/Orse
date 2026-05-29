@@ -3,6 +3,8 @@
 import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import { getOrCreateAsaasCustomer, createAsaasPixCharge, createAsaasCardPayment } from './asaas';
+import { getLoggedUser } from '@/app/propostas/actions';
+import { revalidatePath } from 'next/cache';
 
 /**
  * Auxiliar de Segurança:
@@ -529,6 +531,8 @@ export async function getTenantBillingInfo() {
       totalCost,
       nextBillingDate: nextBillingDate.toISOString(),
       ativo: tenant.ativo,
+      logoUrl: tenant.logoUrl,
+      nomeFantasia: tenant.nomeFantasia,
       cobrancas: tenant.cobrancas.map(c => ({
         id: c.id,
         plano: c.plano,
@@ -1123,6 +1127,34 @@ export async function checkPixPaymentStatusAction(cobrancaId: string) {
 
     return { success: true, paid: false };
   } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Server Action para atualizar o logotipo da empresa (Tenant)
+ */
+export async function changeTenantLogo(base64Logo: string) {
+  try {
+    const loggedUser = await getLoggedUser();
+    if (!loggedUser || !loggedUser.tenantId) {
+      return { success: false, error: 'Usuário ou empresa não autenticado.' };
+    }
+
+    if (loggedUser.role !== 'ADMIN' && loggedUser.role !== 'MANAGER') {
+      return { success: false, error: 'Apenas administradores e gestores podem atualizar o logotipo da empresa.' };
+    }
+
+    await prisma.tenant.update({
+      where: { id: loggedUser.tenantId },
+      data: { logoUrl: base64Logo }
+    });
+
+    revalidatePath('/admin/settings');
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao atualizar logotipo da empresa:', error);
     return { success: false, error: error.message };
   }
 }

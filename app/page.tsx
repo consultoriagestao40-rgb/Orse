@@ -404,6 +404,7 @@ function ProposalsDashboard() {
                     <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
                       <th className="px-6 py-3 w-1/5">ID / Proposta</th>
                       <th className="px-6 py-3 w-1/4">Cliente</th>
+                      <th className="px-6 py-3">Responsável</th>
                       <th className="px-6 py-3 text-right">Valor Total</th>
                       <th className="px-6 py-3 text-center">Status</th>
                       <th className="px-6 py-3 text-center">Versão</th>
@@ -412,9 +413,9 @@ function ProposalsDashboard() {
                   </thead>
                   <tbody className="text-sm">
                     {loading ? (
-                      <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-400">Carregando pipeline...</td></tr>
+                      <tr><td colSpan={7} className="px-6 py-12 text-center text-slate-400">Carregando pipeline...</td></tr>
                     ) : filteredProposals.length === 0 ? (
-                      <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-400">Nenhuma proposta encontrada.</td></tr>
+                      <tr><td colSpan={7} className="px-6 py-12 text-center text-slate-400">Nenhuma proposta encontrada.</td></tr>
                     ) : filteredProposals.map((prop) => (
                       <tr key={prop.id} className="border-b border-slate-200 hover:bg-slate-50 transition-colors">
                         <td className="px-6 py-3">
@@ -428,19 +429,21 @@ function ProposalsDashboard() {
                         </td>
                         <td className="px-6 py-3">
                           <p className="font-semibold text-slate-700">{prop.cliente}</p>
-                          <div className="flex items-center gap-1.5 mt-1">
+                        </td>
+                        <td className="px-6 py-3">
+                          <div className="flex items-center gap-1.5">
                             {prop.avatarUrl ? (
                               <img 
                                 src={prop.avatarUrl} 
                                 alt={prop.usuario} 
-                                className="w-4.5 h-4.5 rounded-full object-cover border border-slate-200"
+                                className="w-5 h-5 rounded-full object-cover border border-slate-200"
                               />
                             ) : (
-                              <div className="w-4.5 h-4.5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[7px] font-black text-[#1B4D3E] uppercase border border-slate-200">
+                              <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
                                 {(prop.usuario || '?').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                               </div>
                             )}
-                            <span className="text-[10px] text-slate-500 font-medium">Resp: {prop.usuario}</span>
+                            <span className="text-slate-600 font-medium">{prop.usuario}</span>
                           </div>
                         </td>
                         <td className="px-6 py-3 font-bold text-slate-800 text-right">
