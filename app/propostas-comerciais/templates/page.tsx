@@ -23,6 +23,23 @@ export default function TemplatesPropostaPage() {
   const [tipo, setTipo] = useState('A4');
   const [activeSlideIdx, setActiveSlideIdx] = useState(0);
   const [secoes, setSecoes] = useState<{ titulo: string; texto: string }[]>([]);
+  const [companyLogo, setCompanyLogo] = useState<string>('https://via.placeholder.com/300x80?text=Silva+Consultoria');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
+      if (cookie) {
+        try {
+          const parsed = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+          if (parsed.tenantLogoUrl) {
+            setCompanyLogo(parsed.tenantLogoUrl);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
 
   const loadData = async () => {
     setLoading(true);
