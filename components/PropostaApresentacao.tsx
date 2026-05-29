@@ -201,6 +201,88 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                  color: textColor || undefined
                               };
 
+                              if (layout === 'canvas_custom') {
+                                 const elements = slideData.elements || [];
+                                 return (
+                                    <div 
+                                       className={`absolute inset-0 w-full h-full select-none overflow-hidden animate-fadeIn ${fontClass}`}
+                                       style={{
+                                          ...baseStyle,
+                                          backgroundColor: bgColor || '#ffffff',
+                                          color: textColor || '#334155'
+                                       }}
+                                    >
+                                       <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none opacity-40"></div>
+
+                                       {elements.map((el: any) => {
+                                          const clipPathVal = el.mask === 'circle' ? 'ellipse(50% 50% at 50% 50%)' :
+                                                              el.mask === 'shield' ? 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' :
+                                                              el.mask === 'hexagon' ? 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)' :
+                                                              el.mask === 'provelo_mask' ? 'polygon(15% 0%, 100% 0%, 100% 85%, 85% 100%, 0% 100%, 0% 15%)' : undefined;
+
+                                          const borderRadiusStyle = el.mask === 'provelo_mask' ? '120px 24px 120px 24px' : undefined;
+
+                                          return (
+                                             <div
+                                                key={el.id}
+                                                className="absolute select-none overflow-hidden"
+                                                style={{
+                                                   left: `${el.x / 10}%`,
+                                                   top: `${el.y / 5.625}%`,
+                                                   width: `${el.w / 10}%`,
+                                                   height: `${el.h / 5.625}%`,
+                                                   zIndex: el.zIndex || 10,
+                                                   borderRadius: borderRadiusStyle
+                                                }}
+                                             >
+                                                {el.type === 'text' && (
+                                                   <div 
+                                                      className="w-full h-full break-words p-1 outline-none font-semibold text-slate-800"
+                                                      style={{
+                                                         fontSize: `${el.style?.fontSize ? el.style.fontSize * 0.75 : 12}px`,
+                                                         fontWeight: el.style?.fontWeight || 'normal',
+                                                         color: el.style?.color || '#334155',
+                                                         textAlign: el.style?.textAlign || 'left',
+                                                         lineHeight: '1.25'
+                                                      }}
+                                                   >
+                                                      {replaceTags(el.content).split('\\n').map((line: string, lIdx: number) => (
+                                                         <React.Fragment key={lIdx}>
+                                                            {line}
+                                                            {lIdx < replaceTags(el.content).split('\\n').length - 1 && <br />}
+                                                         </React.Fragment>
+                                                      ))}
+                                                   </div>
+                                                )}
+
+                                                {el.type === 'image' && (
+                                                   <img
+                                                      src={el.src}
+                                                      alt="Element"
+                                                      className="w-full h-full object-cover pointer-events-none"
+                                                      style={{
+                                                         clipPath: clipPathVal,
+                                                         borderRadius: borderRadiusStyle
+                                                      }}
+                                                   />
+                                                )}
+
+                                                {el.type === 'shape' && (
+                                                   <div
+                                                      className="w-full h-full shadow-xs"
+                                                      style={{
+                                                         backgroundColor: el.color || '#ef4444',
+                                                         borderRadius: `${el.radius || 0}px`
+                                                      }}
+                                                   />
+                                                )}
+                                             </div>
+                                          );
+                                       })}
+                                    </div>
+                                 );
+                              }
+
                               if (layout === 'cobertura') {
                                  if (coverStyle === 'provelo_split') {
                                     const finalSideImage = sideImage || "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200";
@@ -769,7 +851,8 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
 
                                              {/* Bullet points personalizados com check vermelho */}
                                              <ul className="space-y-2.5 text-[9.5px] font-bold text-slate-600 pl-1">
-                                                {conteudo.split('\\n').map((bullet, bIdx) => (
+                                                {conteudo.split('
+').map((bullet, bIdx) => (
                                                    <li key={bIdx} className="flex items-start gap-2.5">
                                                       <span className="w-4 h-4 rounded-full bg-[#ef4444] text-white flex items-center justify-center text-[7px] font-black shrink-0 mt-0.5 shadow-sm">✓</span>
                                                       <span className="leading-snug">{replaceTags(bullet)}</span>
@@ -887,7 +970,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                  
                                  const normalizeText = (text: string) => {
                                    if (!text) return "";
-                                   return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+                                   return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
                                  };
 
                                  const isLocado = (desc: string) => {
@@ -1156,8 +1239,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                               }
 
                               return null;
-                           })()
-                        ) : (
+                           })() ) : (
                            <>
                         
                         {/* SLIDE 01 (MENSAGEM DE VISITA E AGRADECIMENTO) */}
