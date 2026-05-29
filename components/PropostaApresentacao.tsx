@@ -87,7 +87,6 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
     
     return replaced;
   };
-  const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
   
   return (
     <>
