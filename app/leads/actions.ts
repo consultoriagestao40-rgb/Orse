@@ -68,7 +68,7 @@ export async function getUsersForFilter() {
     }
     const users = await prisma.user.findMany({
       where,
-      select: { id: true, nome: true },
+      select: { id: true, nome: true, avatarUrl: true },
       orderBy: { nome: 'asc' }
     });
     return { success: true, users };
@@ -534,7 +534,7 @@ export async function getLeadShares(leadId: string) {
   try {
     const shares = await prisma.leadShare.findMany({
       where: { leadId },
-      include: { user: { select: { id: true, nome: true, email: true, cargo: true } } }
+      include: { user: { select: { id: true, nome: true, email: true, cargo: true, avatarUrl: true } } }
     });
     return { success: true, shares };
   } catch (error: any) {
@@ -545,7 +545,7 @@ export async function getLeadShares(leadId: string) {
 export async function getAllUsers() {
   try {
     const users = await prisma.user.findMany({
-      select: { id: true, nome: true, cargo: true, role: true }
+      select: { id: true, nome: true, cargo: true, role: true, avatarUrl: true }
     });
     return { success: true, users };
   } catch (error: any) {

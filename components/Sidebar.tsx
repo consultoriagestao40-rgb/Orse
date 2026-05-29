@@ -101,6 +101,24 @@ const Sidebar = () => {
     setPasswordError('');
     setPasswordSuccess('');
 
+    // Se os campos de senha estiverem vazios, apenas consideramos concluído com sucesso (já que a foto foi salva na hora!)
+    if (!currentPassword && !newPassword && !confirmPassword) {
+      setPasswordSuccess('Perfil salvo com sucesso!');
+      setTimeout(() => {
+        setShowPasswordModal(false);
+        setPasswordSuccess('');
+      }, 1000);
+      setPasswordLoading(false);
+      return;
+    }
+
+    // Se algum campo de senha foi digitado, exige todos
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('Preencha os campos de senha atual e nova senha para alterá-la.');
+      setPasswordLoading(false);
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       setPasswordError('A confirmação da nova senha não confere.');
       setPasswordLoading(false);
@@ -704,6 +722,11 @@ const Sidebar = () => {
                   </label>
                 </div>
                 <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-2">Clique na foto para alterar</span>
+                {/* Nota de salvamento automático */}
+                <div className="mt-3 text-[10px] text-emerald-800 font-extrabold bg-emerald-50 border border-emerald-100/50 rounded-xl px-3.5 py-2 flex items-center gap-1.5 animate-in fade-in duration-300">
+                  <span>💡</span>
+                  <span>A foto de perfil é salva automaticamente ao ser selecionada!</span>
+                </div>
               </div>
 
               {/* Senha Atual */}
@@ -713,7 +736,6 @@ const Sidebar = () => {
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4D3E] transition-colors" size={16} />
                   <input 
                     type="password" 
-                    required
                     placeholder="Sua senha atual"
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-11 pr-4 outline-none focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 transition-all font-medium text-slate-700 text-sm"
                     value={currentPassword}
@@ -730,7 +752,6 @@ const Sidebar = () => {
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4D3E] transition-colors" size={16} />
                   <input 
                     type="password" 
-                    required
                     placeholder="Mínimo 4 caracteres"
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-11 pr-4 outline-none focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 transition-all font-medium text-slate-700 text-sm"
                     value={newPassword}
@@ -747,7 +768,6 @@ const Sidebar = () => {
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4D3E] transition-colors" size={16} />
                   <input 
                     type="password" 
-                    required
                     placeholder="Repita a nova senha"
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-11 pr-4 outline-none focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 transition-all font-medium text-slate-700 text-sm"
                     value={confirmPassword}
@@ -791,7 +811,7 @@ const Sidebar = () => {
                   {passwordLoading ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   ) : (
-                    'Salvar Senha'
+                    !currentPassword && !newPassword && !confirmPassword ? 'Concluir' : 'Salvar Senha'
                   )}
                 </button>
               </div>

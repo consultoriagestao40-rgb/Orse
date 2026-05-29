@@ -865,11 +865,22 @@ export default function LeadsKanban() {
                       )}
 
                       {lead.assignedTo && (
-                        <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 text-[9px] text-slate-400">
-                           <div className="flex items-center gap-1">
-                             <User size={10} /> {lead.assignedTo.nome.split(' ')[0]}
+                        <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 text-[9px] text-slate-400 font-sans">
+                           <div className="flex items-center gap-1.5">
+                             {lead.assignedTo.avatarUrl ? (
+                               <img 
+                                 src={lead.assignedTo.avatarUrl} 
+                                 alt={lead.assignedTo.nome} 
+                                 className="w-4.5 h-4.5 rounded-full object-cover border border-slate-100 shrink-0 shadow-xs"
+                               />
+                             ) : (
+                               <div className="w-4.5 h-4.5 rounded-full bg-emerald-600/15 text-emerald-700 border border-emerald-100/50 flex items-center justify-center text-[7px] font-black shrink-0 uppercase">
+                                 {lead.assignedTo.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                               </div>
+                             )}
+                             <span className="font-bold text-slate-700">{lead.assignedTo.nome.split(' ')[0]}</span>
                            </div>
-                           <div>
+                           <div className="font-semibold text-slate-400">
                              {safeDate(lead.updatedAt)}
                            </div>
                         </div>
@@ -1205,16 +1216,42 @@ export default function LeadsKanban() {
                   <div className="pt-6 border-t border-slate-50 space-y-4">
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Responsável</label>
-                      <select 
-                        value={selectedLead.assignedToId || ''} 
-                        onChange={(e) => handleOwnerChange(e.target.value)}
-                        className="w-full p-2 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white"
-                      >
-                        <option value="">Sem responsável</option>
-                        {filterUsers.map(u => (
-                          <option key={u.id} value={u.id}>{u.nome}</option>
-                        ))}
-                      </select>
+                      <div className="flex items-center gap-2.5">
+                        {(() => {
+                          const assignedUser = filterUsers.find(u => u.id === selectedLead.assignedToId);
+                          if (assignedUser?.avatarUrl) {
+                            return (
+                              <img 
+                                src={assignedUser.avatarUrl} 
+                                alt={assignedUser.nome} 
+                                className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0 shadow-sm animate-in fade-in zoom-in-95 duration-200"
+                              />
+                            );
+                          } else if (assignedUser) {
+                            const initials = assignedUser.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                            return (
+                              <div className="w-9 h-9 rounded-full bg-emerald-600/10 text-emerald-700 border border-emerald-100 flex items-center justify-center text-xs font-black shrink-0 uppercase animate-in fade-in zoom-in-95 duration-200">
+                                {initials}
+                              </div>
+                            );
+                          }
+                          return (
+                            <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs text-slate-400 shrink-0">
+                              👤
+                            </div>
+                          );
+                        })()}
+                        <select 
+                          value={selectedLead.assignedToId || ''} 
+                          onChange={(e) => handleOwnerChange(e.target.value)}
+                          className="flex-1 p-2 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white font-semibold outline-none focus:border-slate-300 transition-colors"
+                        >
+                          <option value="">Sem responsável</option>
+                          {filterUsers.map(u => (
+                            <option key={u.id} value={u.id}>{u.nome}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
 
                     <div>
