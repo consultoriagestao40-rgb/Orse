@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     console.log('[Asaas Webhook] Evento recebido:', body.event, 'Payment ID:', body.payment?.id);
 
     // Validação de segurança opcional se o token estiver configurado
-    const expectedToken = process.env.ASAAS_WEBHOOK_SECRET;
+    const expectedToken = process.env.ASAAS_WEBHOOK_SECRET || 'whsec_WpbRYip2l6RP6SmIF_GvoxcmcLdGcS9FTclFKQA71lI';
     if (expectedToken && token !== expectedToken) {
       console.warn('[Asaas Webhook] Token inválido recebido no header.');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

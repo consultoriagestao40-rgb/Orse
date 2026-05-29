@@ -5,10 +5,11 @@
  */
 
 const getAsaasConfig = () => {
-  const apiKey = process.env.ASAAS_API_KEY || '';
-  // Sandbox URL default as fallback
-  const baseUrl = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/api/v3';
-  return { apiKey, baseUrl, isConfigured: !!process.env.ASAAS_API_KEY };
+  const apiKey = process.env.ASAAS_API_KEY || '$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmJkY2MwMGM0LWVjODMtNDE5OC05ZmI2LWQwYjI1MjQxNzAxNjo6JGFhY2hfMzM2ZDRlMjktMzhhZS00NGYyLTg1YTUtNmY4NmRjMGFjMjk1';
+  // Automatically select production URL if production key is active as default
+  const defaultUrl = apiKey.startsWith('$aact_prod') ? 'https://api.asaas.com/v3' : 'https://sandbox.asaas.com/api/v3';
+  const baseUrl = process.env.ASAAS_API_URL || defaultUrl;
+  return { apiKey, baseUrl, isConfigured: true };
 };
 
 /**
