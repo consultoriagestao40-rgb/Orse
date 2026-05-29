@@ -60,6 +60,16 @@ const menuGroups = [
 ];
 
 export default function SettingsPage() {
+  // ── Estado principal ─────────────────────────────────────────────────────────
+  const [userRole, setUserRole] = useState<string>('USER');
+  const [hasAccess, setHasAccess] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<Tab>('status');
+  const [loading, setLoading] = useState(true);
+
+  // Status
+  const [statuses, setStatuses] = useState<any[]>([]);
+  const [newStatusName, setNewStatusName] = useState('');
+
   // Empresas Emissoras
   const [empresas, setEmpresas] = useState<any[]>([]);
   const [showEmpresaModal, setShowEmpresaModal] = useState(false);
@@ -311,17 +321,7 @@ export default function SettingsPage() {
     }
   };
 
-  // ── Estado principal ─────────────────────────────────────────────────────────
-  const [userRole, setUserRole] = useState<string>('USER');
-  const [hasAccess, setHasAccess] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<Tab>('status');
-  const [loading, setLoading] = useState(true);
 
-  // Status
-  const [statuses, setStatuses] = useState<any[]>([]);
-  const [newStatusName, setNewStatusName] = useState('');
-
-  
   // Empresas Emissoras
   const handleSaveEmpresa = async () => {
     if (!empresaForm.nomeFantasia.trim() || !empresaForm.razaoSocial.trim() || !empresaForm.cnpj.trim()) {
