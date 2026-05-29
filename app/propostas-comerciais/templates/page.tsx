@@ -835,6 +835,27 @@ export default function TemplatesPropostaPage() {
                         setSelectedElementId(null);
                       };
 
+                      const duplicateElement = (elementId: string) => {
+                        const el = elements.find((item: any) => item.id === elementId);
+                        if (!el) return;
+
+                        const list = [...secoes];
+                        const newId = `el_${el.type}_${Date.now()}`;
+                        const duplicated = {
+                          ...el,
+                          id: newId,
+                          x: Math.min(950, el.x + 30),
+                          y: Math.min(520, el.y + 30),
+                          zIndex: (el.zIndex || 10) + 1
+                        };
+
+                        const updatedElements = [...elements, duplicated];
+                        const updatedText = JSON.stringify({ ...slideData, elements: updatedElements });
+                        list[activeSlideIdx].texto = updatedText;
+                        setSecoes(list);
+                        setSelectedElementId(newId);
+                      };
+
                       const changeZIndex = (elementId: string, direction: 'front' | 'back') => {
                         const list = [...secoes];
                         const updatedElements = elements.map((item: any) => {
@@ -1042,6 +1063,44 @@ export default function TemplatesPropostaPage() {
                                       value={selectedElement.content}
                                       onChange={(e) => updateElementContent(selectedElement.id, e.target.value)}
                                     />
+                                    
+                                    {/* Quick Integration Tags Panel */}
+                                    <div className="mt-2.5 bg-emerald-50/50 border border-emerald-100 p-3 rounded-2xl">
+                                      <div className="flex justify-between items-center mb-1.5">
+                                        <span className="text-[9px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                          Tags de Integração Rápida
+                                        </span>
+                                        <span className="text-[8px] font-medium text-slate-400">Clique para inserir e copiar</span>
+                                      </div>
+                                      <div className="flex flex-wrap gap-1">
+                                        {[
+                                          ['[CLIENTE_NOME]', 'Cliente', 'Injeta o nome do cliente / Razão Social'],
+                                          ['[NUMERO_PROPOSTA]', 'Nº Proposta', 'Número da Proposta FPV'],
+                                          ['[REVISAO]', 'Revisão', 'Código da revisão atual (ex: R01)'],
+                                          ['[OBJETO_PROPOSTA]', 'Objeto', 'Objeto da proposta comercial'],
+                                          ['[ESCOPO_TECNICO]', 'Escopo', 'Escopo técnico da FPV']
+                                        ].map(([tag, label, desc]) => (
+                                          <button
+                                            key={tag}
+                                            type="button"
+                                            onClick={() => {
+                                              const currentContent = selectedElement.content || '';
+                                              const newContent = currentContent ? `${currentContent} ${tag}` : tag;
+                                              updateElementContent(selectedElement.id, newContent);
+                                              if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                                                navigator.clipboard.writeText(tag);
+                                              }
+                                            }}
+                                            className="bg-white hover:bg-emerald-100 active:scale-95 border border-emerald-200/60 px-2 py-0.5 rounded-lg text-[9px] font-bold text-emerald-700 shadow-xs transition-all flex items-center gap-0.5 cursor-pointer"
+                                            title={desc}
+                                          >
+                                            <span className="text-emerald-600 font-mono text-[8px]">{tag}</span>
+                                            <span className="text-[7px] text-slate-400 font-normal">({label})</span>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
                                   </div>
 
                                   <div className="grid grid-cols-2 gap-4">
@@ -1199,21 +1258,28 @@ export default function TemplatesPropostaPage() {
                                   <button
                                     type="button"
                                     onClick={() => changeZIndex(selectedElement.id, 'front')}
-                                    className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold px-3 py-2 rounded-xl text-[10px] uppercase shadow-xs flex-1 transition-all"
+                                    className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold px-2 py-2 rounded-xl text-[10px] uppercase shadow-xs flex-1 transition-all"
                                   >
                                     Trazer Frente
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => changeZIndex(selectedElement.id, 'back')}
-                                    className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold px-3 py-2 rounded-xl text-[10px] uppercase shadow-xs flex-1 transition-all"
+                                    className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold px-2 py-2 rounded-xl text-[10px] uppercase shadow-xs flex-1 transition-all"
                                   >
                                     Enviar Trás
                                   </button>
                                   <button
                                     type="button"
+                                    onClick={() => duplicateElement(selectedElement.id)}
+                                    className="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 font-bold px-2 py-2 rounded-xl text-[10px] uppercase shadow-xs flex-1 transition-all"
+                                  >
+                                    Duplicar
+                                  </button>
+                                  <button
+                                    type="button"
                                     onClick={() => removeElement(selectedElement.id)}
-                                    className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold px-3 py-2 rounded-xl text-[10px] uppercase shadow-xs flex-1 transition-all"
+                                    className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold px-2 py-2 rounded-xl text-[10px] uppercase shadow-xs flex-1 transition-all"
                                   >
                                     Deletar
                                   </button>
