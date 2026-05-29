@@ -851,8 +851,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
 
                                              {/* Bullet points personalizados com check vermelho */}
                                              <ul className="space-y-2.5 text-[9.5px] font-bold text-slate-600 pl-1">
-                                                {conteudo.split('
-').map((bullet, bIdx) => (
+                                                {conteudo.split('\n').map((bullet, bIdx) => (
                                                    <li key={bIdx} className="flex items-start gap-2.5">
                                                       <span className="w-4 h-4 rounded-full bg-[#ef4444] text-white flex items-center justify-center text-[7px] font-black shrink-0 mt-0.5 shadow-sm">✓</span>
                                                       <span className="leading-snug">{replaceTags(bullet)}</span>
