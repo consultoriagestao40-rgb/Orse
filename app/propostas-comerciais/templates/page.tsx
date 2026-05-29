@@ -887,6 +887,7 @@ export default function TemplatesPropostaPage() {
                                       onPointerDown={(e) => handlePointerDown(e, el.id)}
                                       onPointerMove={(e) => handlePointerMove(e, el.id)}
                                       onPointerUp={handlePointerUp}
+                                      onClick={(e) => e.stopPropagation()}
                                       className={`absolute select-none cursor-move group transition-shadow ${isSelected ? 'ring-2 ring-blue-500 ring-offset-1 z-[999] shadow-lg' : 'hover:ring-1 hover:ring-slate-300'}`}
                                       style={{
                                         left: `${el.x / 10}%`,
