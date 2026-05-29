@@ -3,9 +3,15 @@ import { ChevronLeft, ChevronRight, User, Cpu, Smartphone, Box, Drill, Trash, Pr
 import BrazilMap from '@/components/BrazilMap';
 
 export default function PropostaApresentacao({ proposta, resultado, empresaEmissora, presentationMode, setPresentationMode }: any) {
-  const [companyLogo, setCompanyLogo] = useState<string>('https://via.placeholder.com/300x80?text=Silva+Consultoria');
+  const [companyLogo, setCompanyLogo] = useState<string>(
+    proposta.tenant?.logoUrl || 'https://placehold.co/300x80?text=Silva+Consultoria'
+  );
 
   useEffect(() => {
+    if (proposta.tenant?.logoUrl) {
+      setCompanyLogo(proposta.tenant.logoUrl);
+      return;
+    }
     if (typeof window !== 'undefined') {
       const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
       if (cookie) {
@@ -19,7 +25,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
         }
       }
     }
-  }, []);
+  }, [proposta.tenant?.logoUrl]);
   const rawSlides = proposta.cliente?.clausulasA4 || [];
   const hasDynamicSlides = rawSlides.length > 0 && rawSlides.some((s: any) => s.texto.trim().startsWith('{'));
   const totalSlides = hasDynamicSlides ? rawSlides.length : 13;

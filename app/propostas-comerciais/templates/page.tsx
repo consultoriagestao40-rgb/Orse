@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { FileText, Plus, Edit2, Trash2, ArrowLeft, Save, ChevronUp, ChevronDown, X, Presentation } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { getLoggedUser } from '@/app/propostas/actions';
 import {
   getTemplatesProposta,
   createTemplateProposta,
@@ -39,7 +40,67 @@ export default function TemplatesPropostaPage() {
         }
       }
     }
+
+    const fetchLogoFromDb = async () => {
+      try {
+        const freshUser = await getLoggedUser();
+        if (freshUser && (freshUser as any).tenant?.logoUrl) {
+          setCompanyLogo((freshUser as any).tenant.logoUrl);
+        }
+      } catch (err) {
+        console.error('Error fetching tenant logo from database:', err);
+      }
+    };
+    fetchLogoFromDb();
   }, []);
+
+  // Global Keyboard Shortcuts (Delete/Backspace to remove selected element)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedElementId) return;
+
+      // Don't trigger if user is typing in a text area or input field
+      const activeEl = document.activeElement;
+      if (activeEl && (
+        activeEl.tagName === 'INPUT' || 
+        activeEl.tagName === 'TEXTAREA' || 
+        activeEl.getAttribute('contenteditable') === 'true'
+      )) {
+        return;
+      }
+
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        
+        setSecoes((prevSecoes) => {
+          const currentSlide = prevSecoes[activeSlideIdx];
+          if (!currentSlide) return prevSecoes;
+
+          let slideData: any = {};
+          try {
+            slideData = JSON.parse(currentSlide.texto);
+          } catch (err) {
+            return prevSecoes;
+          }
+
+          const elements = slideData.elements || [];
+          const updatedElements = elements.filter((item: any) => item.id !== selectedElementId);
+          const updatedText = JSON.stringify({ ...slideData, elements: updatedElements });
+
+          const list = [...prevSecoes];
+          list[activeSlideIdx] = { ...list[activeSlideIdx], texto: updatedText };
+          return list;
+        });
+        
+        setSelectedElementId(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedElementId, activeSlideIdx]);
 
   // Canvas Drag & Drop and Property States
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);

@@ -3,9 +3,15 @@ import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightb
 import BrazilMap from '@/components/BrazilMap';
 
 export default function PropostaApresentacaoPrint({ proposta, resultado, empresaEmissora }: { proposta: any, resultado?: any, empresaEmissora?: any }) {
-  const [companyLogo, setCompanyLogo] = useState<string>('https://via.placeholder.com/300x80?text=Silva+Consultoria');
+  const [companyLogo, setCompanyLogo] = useState<string>(
+    proposta.tenant?.logoUrl || 'https://placehold.co/300x80?text=Silva+Consultoria'
+  );
 
   useEffect(() => {
+    if (proposta.tenant?.logoUrl) {
+      setCompanyLogo(proposta.tenant.logoUrl);
+      return;
+    }
     if (typeof window !== 'undefined') {
       const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
       if (cookie) {
@@ -19,7 +25,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
         }
       }
     }
-  }, []);
+  }, [proposta.tenant?.logoUrl]);
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
 
   const rawSlides = proposta.cliente?.clausulasA4 || [];
