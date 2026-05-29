@@ -112,6 +112,11 @@ export default function TemplatesPropostaPage() {
   };
 
   return (
+    <>
+      <style dangerouslySetInnerHTML={{__html: `
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=Montserrat:wght@300;400;600;700;800;900&family=Inter:wght@300;400;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Roboto:wght@300;400;500;700;900&display=swap');
+      `}} />
+      
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
 
@@ -492,11 +497,34 @@ export default function TemplatesPropostaPage() {
                       }
 
                       return (
+    <>
+      <style dangerouslySetInnerHTML={{__html: `
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=Montserrat:wght@300;400;600;700;800;900&family=Inter:wght@300;400;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Roboto:wght@300;400;500;700;900&display=swap');
+      `}} />
+      
                         <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm bg-slate-900">
                           {/* Board 16:9 */}
-                          <div className="w-full aspect-[16/9] bg-white border-b border-slate-200 relative p-8 flex flex-col justify-between select-none text-slate-800">
+                          <div 
+                            className="w-full aspect-[16/9] bg-white border-b border-slate-200 relative p-8 flex flex-col justify-between select-none text-slate-800 overflow-hidden"
+                            style={{
+                              fontFamily: (slideData.fontFamily || 'Outfit') === 'Outfit' ? 'Outfit, sans-serif' : 
+                                          (slideData.fontFamily || 'Outfit') === 'Montserrat' ? 'Montserrat, sans-serif' : 
+                                          (slideData.fontFamily || 'Outfit') === 'Inter' ? 'Inter, sans-serif' : 
+                                          (slideData.fontFamily || 'Outfit') === 'Playfair' ? 'Playfair Display, serif' : 'Roboto, sans-serif',
+                              backgroundColor: slideData.bgColor || (slideData.layout === 'cobertura' && slideData.coverStyle !== 'provelo_split' ? '#020617' : '#ffffff'),
+                              textAlign: slideData.align || (slideData.layout === 'cobertura' && slideData.coverStyle !== 'provelo_split' ? 'center' : 'left'),
+                              color: slideData.textColor || '#334155'
+                            }}
+                          >
                             {/* Background image overlay */}
-                            {slideData.layout === 'cobertura' && slideData.bgImage && (
+                            {slideData.layout === 'cobertura' && slideData.coverStyle === 'provelo_split' && (
+                              <>
+                                 <div className="absolute left-0 top-0 bottom-0 w-3 bg-[#ef4444] rounded-r-lg z-30"></div>
+                                 <div className="absolute right-[33%] top-5 w-12 h-20 bg-rose-100/60 rounded-[20px] transform rotate-[15deg] pointer-events-none"></div>
+                                 <div className="absolute right-[38%] bottom-3 w-14 h-14 border-4 border-rose-100/60 rounded-full pointer-events-none"></div>
+                              </>
+                            )}
+                            {slideData.layout === 'cobertura' && slideData.bgImage && slideData.coverStyle !== 'provelo_split' && (
                               <>
                                 <img src={slideData.bgImage} alt="Background" className="absolute inset-0 w-full h-full object-cover opacity-45 filter blur-[0.5px]" />
                                 <div className="absolute inset-0 bg-[#1e4480]/80"></div>
@@ -511,51 +539,320 @@ export default function TemplatesPropostaPage() {
 
                             {/* Center elements */}
                             <div className="relative z-10 my-auto py-2 h-full flex flex-col justify-center">
-                              {slideData.layout === 'cobertura' ? (
-                                <div className="text-center text-white space-y-3">
-                                  <h2 className="text-xl font-black uppercase tracking-widest leading-none drop-shadow-md">{slideData.tituloSlide || "Proposta Comercial"}</h2>
-                                  <p className="text-[11px] font-bold text-white/80">{slideData.subtitulo || "Silva Facilities"}</p>
-                                  <div className="w-24 mx-auto border-t border-white/20 pt-2 text-[8px] font-bold uppercase tracking-wider text-white/50">
-                                    Capa Comercial
+{slideData.layout === 'cobertura' ? (
+                                slideData.coverStyle === 'provelo_split' ? (
+                                  <div className="grid grid-cols-12 gap-2 h-full items-center text-slate-800 text-left relative pr-2 select-none" style={{ fontFamily: 'Outfit' }}>
+                                    {/* Faixa Vermelha Vertical à Esquerda */}
+                                    <div className="absolute left-[-32px] top-[-32px] bottom-[-32px] w-3 bg-[#ef4444] rounded-r-lg z-30"></div>
+                                    {/* Forma Rosa Superior Direita */}
+                                    <div className="absolute right-[33%] top-5 w-12 h-20 bg-rose-100/60 rounded-[20px] transform rotate-[15deg] pointer-events-none"></div>
+                                    {/* Forma Rosa Inferior */}
+                                    <div className="absolute right-[38%] bottom-3 w-14 h-14 border-4 border-rose-100/60 rounded-full pointer-events-none"></div>
+
+                                    <div className="col-span-7 flex flex-col justify-between h-full pr-4 z-20">
+                                       <div className="flex items-center gap-1.5">
+                                          <img 
+                                             src={companyLogo} 
+                                             alt="Logo" 
+                                             className="max-h-8 w-auto object-contain"
+                                          />
+                                          <span className="text-[7px] font-black tracking-widest text-slate-400">FACILITIES</span>
+                                       </div>
+
+                                       <div className="flex flex-col space-y-2 my-auto pl-2">
+                                          <span className="text-[7.5px] font-black uppercase tracking-[0.25em] text-[#ef4444] block">MODELO DE PROPOSTA</span>
+                                          <h2 className="text-xl font-black uppercase leading-none tracking-tight text-slate-900" style={{ color: slideData.titleColor || undefined }}>{slideData.tituloSlide || "PROPOSTA"}</h2>
+                                          <p className="text-[8px] font-bold text-slate-500 leading-normal line-clamp-2">{slideData.subtitulo || "Silva Facilities"}</p>
+                                          
+                                          <div className="text-[7.5px] text-slate-600 font-bold space-y-0.5 pt-1">
+                                             <div className="text-slate-400 font-black tracking-widest text-[6px] uppercase">Cliente</div>
+                                             <div className="text-slate-950 font-black text-[9px]">Empresa XPTO</div>
+                                             <div>Nº Proposta: FPV-XXX | Revisão: R01</div>
+                                          </div>
+
+                                          {slideData.badgeText && (
+                                             <div className="pt-1">
+                                                <span className="text-[7.5px] font-black text-white px-4 py-1.5 rounded-full shadow-md select-none inline-block uppercase tracking-wider" style={{ backgroundColor: slideData.badgeColor || '#ef4444' }}>
+                                                   {slideData.badgeText}
+                                                </span>
+                                             </div>
+                                          )}
+                                       </div>
+
+                                       <div className="pt-2 border-t border-slate-100 flex gap-4 text-[7px] font-extrabold text-slate-400 pl-2">
+                                          <div className="flex items-center gap-1.5">
+                                             <div className="w-3.5 h-3.5 rounded-full bg-[#ef4444] text-white flex items-center justify-center text-[5px] font-black">✉</div>
+                                             <span className="text-slate-600">contato@provelo.com.br</span>
+                                          </div>
+                                          <div className="flex items-center gap-1.5">
+                                             <div className="w-3.5 h-3.5 rounded-full bg-[#ef4444] text-white flex items-center justify-center text-[5px] font-black">🌐</div>
+                                             <span className="text-slate-600">www.provelo.com.br</span>
+                                          </div>
+                                       </div>
+                                    </div>
+
+                                    <div className="col-span-5 h-full relative flex items-center justify-end overflow-hidden z-20">
+                                       <div className="w-[85%] h-[90%] rounded-l-[90px] overflow-hidden border-2 border-slate-100/50 shadow-xl relative">
+                                          <img 
+                                             src={slideData.sideImage || "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200"} 
+                                             alt="Capa Apresentação" 
+                                             className="w-full h-full object-cover"
+                                          />
+                                       </div>
+                                    </div>
                                   </div>
+                                ) : (
+                                  <div className="text-center text-white space-y-3">
+                                    <h2 className="text-xl font-black uppercase tracking-widest leading-none drop-shadow-md">{slideData.tituloSlide || "Proposta Comercial"}</h2>
+                                    <p className="text-[11px] font-bold text-white/80">{slideData.subtitulo || "Silva Facilities"}</p>
+                                    <div className="w-24 mx-auto border-t border-white/20 pt-2 text-[8px] font-bold uppercase tracking-wider text-white/50">
+                                      Capa Comercial
+                                    </div>
+                                  </div>
+                                )
+                              ) : slideData.layout === 'quem_somos' ? (
+                                <div className="grid grid-cols-12 h-full z-10 select-none text-white relative pl-2 items-stretch" style={{ fontFamily: 'Outfit' }}>
+                                   {/* Faixa Vermelha Vertical à Esquerda */}
+                                   <div className="absolute left-[-32px] top-[-32px] bottom-[-32px] w-3 bg-[#ef4444] rounded-r-lg z-30"></div>
+                                   
+                                   <div className="col-span-5 bg-[#ef4444] p-6 flex flex-col justify-center space-y-3 z-20 pl-6 relative text-left">
+                                      <h2 className="text-xl font-black uppercase tracking-tight text-white leading-none">{slideData.tituloSlide || "Quem Somos"}</h2>
+                                      <p className="text-[8px] font-semibold leading-relaxed text-white/95 text-justify line-clamp-5">{slideData.conteudo || "A Provelo é uma empresa..."}</p>
+                                   </div>
+
+                                   <div className="col-span-7 h-full relative flex items-center justify-center p-4 z-10 bg-slate-950/20">
+                                      <div className="relative z-20 flex gap-4 w-full justify-center items-center">
+                                         <div className="w-1/2 aspect-[3/4] rounded-2xl overflow-hidden border-2 border-[#ef4444] shadow-md">
+                                            <img src={slideData.sideImage || "https://images.unsplash.com/photo-1606857521015-7f9fcf423740?q=80&w=200"} alt="Workspace 1" className="w-full h-full object-cover" />
+                                         </div>
+                                         <div className="w-1/2 aspect-[3/4] rounded-2xl overflow-hidden border-2 border-[#ef4444] shadow-md mt-6">
+                                            <img src={slideData.sideImage2 || "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=200"} alt="Workspace 2" className="w-full h-full object-cover" />
+                                         </div>
+                                      </div>
+                                   </div>
                                 </div>
                               ) : slideData.layout === 'agradecimento' ? (
-                                <div className="grid grid-cols-12 gap-4 items-center">
-                                  <div className="col-span-8 space-y-2">
-                                    <h3 className="text-base font-black text-[#1e4480] uppercase leading-none">{slideData.tituloSlide || "Olá!"}</h3>
-                                    <p className="text-[9.5px] text-slate-600 leading-relaxed text-justify line-clamp-3">{slideData.conteudo || "Agradecemos a oportunidade..."}</p>
-                                  </div>
-                                  <div className="col-span-4 border-l border-slate-100 pl-4 text-center">
-                                    <div className="w-10 h-10 rounded-full bg-slate-200 mx-auto mb-1 flex items-center justify-center text-xs font-black text-slate-400 shadow-sm border border-white">CS</div>
-                                    <span className="text-[8px] font-black text-slate-800 block">Consultor Comercial</span>
-                                  </div>
-                                </div>
-                              ) : slideData.layout === 'servicos' ? (
-                                <div className="space-y-2">
-                                  <h3 className="text-sm font-black text-[#1e4480] uppercase leading-none text-center">{slideData.tituloSlide || "Nossos Serviços"}</h3>
-                                  <p className="text-[8px] text-slate-400 text-center font-bold">{slideData.subtitulo}</p>
-                                  <div className="grid grid-cols-3 gap-2 pt-2">
-                                    {['facilities', 'portaria', 'limpeza'].map(v => (
-                                      <div key={v} className="bg-slate-50 border border-slate-200/60 rounded-xl p-2.5 text-center shadow-xs">
-                                        <span className="text-[8px] font-black text-[#1e4480] block uppercase">{v}</span>
-                                        <span className="text-[7px] text-slate-400 block mt-0.5">Operação Integrada</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
+                                 <div className="grid grid-cols-12 gap-4 items-center">
+                                   <div className="col-span-8 space-y-2">
+                                     <h3 className="text-base font-black text-[#1e4480] uppercase leading-none" style={{ color: slideData.titleColor }}>{slideData.tituloSlide || "Olá!"}</h3>
+                                     <p className="text-[9.5px] text-slate-600 leading-relaxed text-justify line-clamp-3">{slideData.conteudo || "Agradecemos a oportunidade..."}</p>
+                                   </div>
+                                   <div className="col-span-4 border-l border-slate-100 pl-4 text-center">
+                                     <div className="w-10 h-10 rounded-full bg-slate-200 mx-auto mb-1 flex items-center justify-center text-xs font-black text-slate-400 shadow-sm border border-white">CS</div>
+                                     <span className="text-[8px] font-black text-slate-800 block">Consultor Comercial</span>
+                                   </div>
+                                 </div>
                               ) : slideData.layout === 'valores' ? (
-                                <div className="space-y-2">
-                                  <h3 className="text-sm font-black text-[#1e4480] uppercase leading-none text-center">{slideData.tituloSlide || "Nossos Valores"}</h3>
-                                  <p className="text-[9.5px] text-slate-500 text-center leading-relaxed px-4">{slideData.conteudo}</p>
-                                  <div className="flex justify-around pt-2">
-                                    {['Ética', 'Inovação', 'Eficiência'].map(v => (
-                                      <div key={v} className="flex flex-col items-center">
-                                        <div className="w-7 h-7 rounded-full bg-[#1e4480] text-white flex items-center justify-center text-[10px] font-bold shadow-xs">★</div>
-                                        <span className="text-[8px] font-black mt-1 text-slate-700">{v}</span>
+                                 slideData.coverStyle === 'provelo_split' ? (
+                                    <div className="grid grid-cols-12 gap-2 h-full items-center text-slate-800 text-left relative pr-2 select-none" style={{ fontFamily: 'Outfit' }}>
+                                       <div className="absolute left-[-32px] top-[-32px] bottom-[-32px] w-3 bg-[#ef4444] rounded-r-lg z-30"></div>
+                                       
+                                       <div className="col-span-7 flex flex-col justify-between h-full pr-4 text-left pl-6">
+                                          <div>
+                                             <h2 className="text-xl font-black uppercase text-slate-900 tracking-tight leading-none mb-2" style={{ color: slideData.titleColor }}>{slideData.tituloSlide || "NOSSOS VALORES"}</h2>
+                                             <div className="space-y-1.5">
+                                                <div>
+                                                   <h4 className="text-[9px] font-black text-[#ef4444] uppercase leading-none">{slideData.val1_title || "Qualidade"}</h4>
+                                                   <p className="text-[7.5px] font-semibold text-slate-500 line-clamp-1">{slideData.val1_text || "Compromisso..."}</p>
+                                                </div>
+                                                <div>
+                                                   <h4 className="text-[9px] font-black text-[#ef4444] uppercase leading-none">{slideData.val2_title || "Relacionamento"}</h4>
+                                                   <p className="text-[7.5px] font-semibold text-slate-500 line-clamp-1">{slideData.val2_text || "Valorização..."}</p>
+                                                </div>
+                                                <div>
+                                                   <h4 className="text-[9px] font-black text-[#ef4444] uppercase leading-none">{slideData.val3_title || "Evolução"}</h4>
+                                                   <p className="text-[7.5px] font-semibold text-slate-500 line-clamp-1">{slideData.val3_text || "Evolução contínua..."}</p>
+                                                </div>
+                                             </div>
+                                          </div>
+                                       </div>
+
+                                       <div className="col-span-5 h-[90%] relative flex items-center justify-end overflow-hidden">
+                                          <div className="absolute right-0 bottom-0 top-0 w-[45%] bg-[#ef4444] rounded-l-[50px] z-10"></div>
+                                          <div className="w-[85%] h-full rounded-l-[90px] overflow-hidden border-2 border-slate-100/50 shadow-xl relative z-20 mr-2">
+                                             <img 
+                                                src={slideData.sideImage || "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=600"} 
+                                                alt="Values" 
+                                                className="w-full h-full object-cover"
+                                             />
+                                          </div>
+                                       </div>
+                                    </div>
+                                 ) : (
+                                    <div className="space-y-2">
+                                      <h3 className="text-sm font-black text-[#1e4480] uppercase leading-none text-center" style={{ color: slideData.titleColor }}>{slideData.tituloSlide || "Nossos Valores"}</h3>
+                                      <p className="text-[9.5px] text-slate-500 text-center leading-relaxed px-4">{slideData.conteudo}</p>
+                                      <div className="flex justify-around pt-2">
+                                        {['Ética', 'Inovação', 'Eficiência'].map(v => (
+                                          <div key={v} className="flex flex-col items-center">
+                                            <div className="w-7 h-7 rounded-full bg-[#1e4480] text-white flex items-center justify-center text-[10px] font-bold shadow-xs">★</div>
+                                            <span className="text-[8px] font-black mt-1 text-slate-700">{v}</span>
+                                          </div>
+                                        ))}
                                       </div>
-                                    ))}
-                                  </div>
-                                </div>
+                                    </div>
+                                 )
+                              ) : slideData.layout === 'performance' ? (
+                                 <div className="grid grid-cols-12 gap-2 h-full items-center text-slate-800 text-left relative pr-2 select-none" style={{ fontFamily: 'Outfit' }}>
+                                    <div className="absolute left-[-32px] top-[-32px] bottom-[-32px] w-3 bg-[#ef4444] rounded-r-lg z-30"></div>
+                                    
+                                    <div className="col-span-5 flex flex-col justify-between h-full pr-2 pl-6">
+                                       <div className="space-y-1">
+                                          <span className="text-[7px] font-black uppercase text-slate-400 block">DESEMPENHO</span>
+                                          <h2 className="text-lg font-black uppercase text-slate-900 leading-none" style={{ color: slideData.titleColor }}>{slideData.tituloSlide || "NOSSA PERFORMANCE"}</h2>
+                                       </div>
+                                       <div className="w-full aspect-[16/10] rounded-xl overflow-hidden shadow-sm mt-2 border border-slate-100">
+                                          <img src={slideData.sideImage || "https://images.unsplash.com/photo-1542362567-b07eac79094d?q=80&w=200"} alt="Prédio" className="w-full h-full object-cover" />
+                                       </div>
+                                    </div>
+
+                                    <div className="col-span-7 flex flex-col justify-center space-y-3 pl-4">
+                                       <div className="flex items-center gap-3">
+                                          <div className="bg-[#ef4444] text-white w-20 py-2 rounded-xl flex flex-col items-center justify-center text-center shrink-0">
+                                             <span className="text-[10px] font-black leading-none">29 MIL</span>
+                                             <span className="text-[5.5px] font-black text-white/80 uppercase">HORAS</span>
+                                          </div>
+                                          <p className="text-[7.5px] font-semibold text-slate-500 leading-snug line-clamp-2">{slideData.val1_text || "Visitas técnicas e monitoramento..."}</p>
+                                       </div>
+
+                                       <div className="flex items-center gap-3">
+                                          <div className="bg-[#ef4444] text-white w-20 py-2 rounded-xl flex flex-col items-center justify-center text-center shrink-0">
+                                             <span className="text-[10px] font-black leading-none">1.220</span>
+                                             <span className="text-[5.5px] font-black text-white/80 uppercase">VISITAS</span>
+                                          </div>
+                                          <p className="text-[7.5px] font-semibold text-slate-500 leading-snug line-clamp-2">{slideData.val2_text || "Atendimentos operacionais integrados..."}</p>
+                                       </div>
+                                    </div>
+                                 </div>
+                              ) : slideData.layout === 'servicos' ? (
+                                 slideData.servicosStyle === 'provelo_grid' ? (
+                                    <div className="grid grid-cols-12 gap-2 h-full items-center text-slate-800 text-left relative pr-2 select-none" style={{ fontFamily: 'Outfit' }}>
+                                       <div className="absolute left-[-32px] top-[-32px] bottom-[-32px] w-3 bg-[#ef4444] rounded-r-lg z-30"></div>
+                                       
+                                       <div className="col-span-4 flex flex-col justify-center h-full pr-2 pl-6">
+                                          <span className="text-[7px] font-black uppercase text-[#ef4444] block">PORTFÓLIO</span>
+                                          <h2 className="text-xl font-black uppercase text-slate-900 leading-none mb-2" style={{ color: slideData.titleColor }}>{slideData.tituloSlide || "NOSSOS SERVIÇOS"}</h2>
+                                          <p className="text-[7.5px] font-semibold text-slate-500 leading-relaxed line-clamp-4">{slideData.subtitulo || slideData.conteudo}</p>
+                                       </div>
+
+                                       <div className="col-span-8 grid grid-cols-3 gap-3 items-center py-1">
+                                          {[
+                                             { label: "LIMPEZA", img: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=100" },
+                                             { label: "SEGURANÇA", img: "https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?q=80&w=100" },
+                                             { label: "PORTARIA", img: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=100" }
+                                          ].map((serv, sIdx) => (
+                                             <div key={sIdx} className="bg-white rounded-2xl border border-slate-200 p-1 text-center flex flex-col items-center justify-between aspect-[4/5] overflow-hidden shadow-sm">
+                                                <div className="w-full h-[70%] rounded-xl overflow-hidden mb-1">
+                                                   <img src={serv.img} alt={serv.label} className="w-full h-full object-cover" />
+                                                </div>
+                                                <span className="text-[5.5px] font-black text-white bg-[#ef4444] px-2 py-1 rounded-full uppercase tracking-wider block mb-0.5 w-[90%] truncate">
+                                                   {serv.label}
+                                                </span>
+                                             </div>
+                                          ))}
+                                       </div>
+                                    </div>
+                                 ) : (
+                                    <div className="space-y-2">
+                                      <h3 className="text-sm font-black text-[#1e4480] uppercase leading-none text-center" style={{ color: slideData.titleColor }}>{slideData.tituloSlide || "Nossos Serviços"}</h3>
+                                      <p className="text-[8px] text-slate-400 text-center font-bold">{slideData.subtitulo}</p>
+                                      <div className="grid grid-cols-3 gap-2 pt-2">
+                                        {['facilities', 'portaria', 'limpeza'].map(v => (
+                                          <div key={v} className="bg-slate-50 border border-slate-200/60 rounded-xl p-2.5 text-center shadow-xs">
+                                            <span className="text-[8px] font-black text-[#1e4480] block uppercase">{v}</span>
+                                            <span className="text-[7px] text-slate-400 block mt-0.5">Operação Integrada</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                 )
+                              ) : slideData.layout === 'atuacao' ? (
+                                 <div className="grid grid-cols-12 gap-2 h-full items-center text-slate-800 text-left relative pr-2 select-none" style={{ fontFamily: 'Outfit' }}>
+                                    <div className="absolute left-[-32px] top-[-32px] bottom-[-32px] w-3 bg-[#ef4444] rounded-r-lg z-30"></div>
+                                    
+                                    <div className="col-span-6 flex flex-col justify-between h-full pr-4 pl-6">
+                                       <div className="space-y-1">
+                                          <span className="text-[7px] font-black uppercase text-[#ef4444] block">ESTRUTURA</span>
+                                          <h2 className="text-xl font-black uppercase text-slate-900 leading-none" style={{ color: slideData.titleColor }}>{slideData.tituloSlide || "ATUAÇÃO NACIONAL"}</h2>
+                                       </div>
+
+                                       <div className="space-y-1.5 my-auto pt-2">
+                                          {[
+                                             { num: slideData.stat1_num || '+$2M', text: 'Investidos em tecnologia...' },
+                                             { num: slideData.stat2_num || '+10M', text: 'Novos empregos...' }
+                                          ].map((st, sIdx) => (
+                                             <div key={sIdx} className="bg-[#ef4444] text-white px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-xs border border-white/10">
+                                                <span className="text-xs font-black tracking-tighter shrink-0 w-12 text-center border-r border-white/20 pr-2">{st.num}</span>
+                                                <span className="text-[6.5px] font-bold text-white/90 leading-tight text-left line-clamp-1">{st.text}</span>
+                                             </div>
+                                          ))}
+                                       </div>
+                                    </div>
+
+                                    <div className="col-span-6 h-full relative flex items-center justify-center p-2">
+                                       <div className="absolute right-0 bottom-0 top-0 w-[45%] bg-[#ef4444] rounded-l-[50px] z-10"></div>
+                                       <div className="w-[85%] h-full bg-[#fafafa]/80 rounded-[20px] border border-slate-200/50 shadow-md p-3 relative z-20 flex flex-col justify-center items-center">
+                                          <div className="w-full h-full flex items-center justify-center">
+                                             <div className="text-[7px] text-slate-400 font-bold uppercase">[ MAPA DO BRASIL ]</div>
+                                          </div>
+                                       </div>
+                                    </div>
+                                 </div>
+                              ) : slideData.layout === 'gestao' ? (
+                                 <div className="grid grid-cols-12 gap-2 h-full items-center text-slate-800 text-left relative pr-2 select-none" style={{ fontFamily: 'Outfit' }}>
+                                    <div className="absolute left-[-32px] top-[-32px] bottom-[-32px] w-3 bg-[#ef4444] rounded-r-lg z-30"></div>
+                                    
+                                    <div className="col-span-7 flex flex-col justify-between h-full pr-4 pl-6 my-auto">
+                                       <div className="space-y-2">
+                                          <span className="text-[7px] font-black uppercase text-[#ef4444] block">TECNOLOGIA</span>
+                                          <h2 className="text-xl font-black uppercase text-slate-900 leading-none" style={{ color: slideData.titleColor }}>{slideData.tituloSlide || "GESTÃO TRANSPARENTE"}</h2>
+                                          <p className="text-[7.5px] font-semibold text-slate-500 leading-normal line-clamp-2">{slideData.subtitulo || "Controle operacional..."}</p>
+                                          
+                                          <ul className="space-y-1 text-[7.5px] font-bold text-slate-600 pl-1">
+                                             <li className="flex items-center gap-1.5">
+                                                <span className="w-3 h-3 rounded-full bg-[#ef4444] text-white flex items-center justify-center text-[5px] font-black">✓</span>
+                                                <span>Monitoramento em tempo real</span>
+                                             </li>
+                                             <li className="flex items-center gap-1.5">
+                                                <span className="w-3 h-3 rounded-full bg-[#ef4444] text-white flex items-center justify-center text-[5px] font-black">✓</span>
+                                                <span>Relatórios operacionais integrados</span>
+                                             </li>
+                                          </ul>
+                                       </div>
+                                    </div>
+
+                                    <div className="col-span-5 h-[80%] relative flex items-center justify-center p-2">
+                                       <div className="w-full relative shadow-md rounded-xl overflow-hidden border border-slate-200 bg-slate-900 p-1 transform hover:rotate-[-1deg]">
+                                          <div className="w-full aspect-[16/10] bg-slate-100 rounded-md overflow-hidden relative shadow-inner">
+                                             <img src={slideData.sideImage || "https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=200"} alt="Dashboard Screen" className="w-full h-full object-cover" />
+                                          </div>
+                                       </div>
+                                    </div>
+                                 </div>
+                              ) : slideData.layout === 'fundadores' ? (
+                                 <div className="flex flex-col justify-between h-full z-10 overflow-hidden bg-white select-none text-slate-800 relative" style={{ fontFamily: 'Outfit' }}>
+                                    <div className="absolute left-[-32px] top-[-32px] bottom-[-32px] w-3 bg-[#ef4444] rounded-r-lg z-30"></div>
+                                    
+                                    <div className="h-[45%] flex flex-col justify-center items-center text-center px-6 pt-4">
+                                       <span className="text-[7.5px] font-black uppercase tracking-widest text-[#ef4444] block mb-0.5">SOBRE NÓS</span>
+                                       <h2 className="text-xl font-black uppercase text-slate-900 leading-none" style={{ color: slideData.titleColor }}>{slideData.tituloSlide || "FUNDADORES"}</h2>
+                                       <p className="text-[7.5px] font-bold text-slate-500 max-w-md line-clamp-1 mt-1">{slideData.subtitulo || "Transparência e confiança..."}</p>
+                                    </div>
+
+                                    <div className="h-[55%] bg-[#ef4444] relative flex items-center justify-around px-6 z-20 border-t-2 border-white shadow-inner">
+                                       {[
+                                          { name: slideData.f1_name || 'Ádamo', role: 'CEO', img: slideData.f1_photo || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=100' },
+                                          { name: slideData.f2_name || 'Guilherme', role: 'CPO', img: slideData.f2_photo || 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=100' }
+                                       ].map((fnd, fIdx) => (
+                                          <div key={fIdx} className="flex flex-col items-center text-center space-y-1">
+                                             <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md relative bg-white">
+                                                <img src={fnd.img} alt={fnd.name} className="w-full h-full object-cover" />
+                                             </div>
+                                             <span className="text-[8px] font-black text-white leading-none">{fnd.name}</span>
+                                          </div>
+                                       ))}
+                                    </div>
+                                 </div>
                               ) : slideData.layout === 'tabela' ? (
                                 <div className="space-y-2">
                                   <h3 className="text-sm font-black text-[#1e4480] uppercase leading-none">{slideData.tituloSlide || "Quadro Comercial"}</h3>
@@ -642,9 +939,14 @@ export default function TemplatesPropostaPage() {
                                   }}
                                 >
                                   <option value="cobertura">Capa da Apresentação</option>
+                                  <option value="quem_somos">Quem Somos</option>
                                   <option value="agradecimento">Olá [Agradecimento]</option>
                                   <option value="valores">Nossos Valores</option>
+                                  <option value="performance">Nossa Performance</option>
                                   <option value="servicos">Principais Serviços</option>
+                                  <option value="atuacao">Atuação Nacional</option>
+                                  <option value="gestao">Gestão Transparente</option>
+                                  <option value="fundadores">Conheça os Fundadores</option>
                                   <option value="texto">Lâmina de Texto e Conteúdo</option>
                                   <option value="tabela">Tabela de Preços (Calculadora FPV)</option>
                                   <option value="itens">Itens Inclusos/Exclusos (FPV)</option>
@@ -688,23 +990,151 @@ export default function TemplatesPropostaPage() {
                                 </div>
                               )}
 
-                              {slideData.layout === 'cobertura' && (
-                                <div className="col-span-2">
-                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Imagem de Fundo (URL)</label>
-                                  <input
-                                    type="text"
+{/* Configurações Avançadas de Layout */}
+                              <div className="col-span-2 grid grid-cols-2 gap-4 border-t border-slate-100 pt-3">
+                                <div>
+                                  <label className="text-[9px] font-black text-[#ef4444] uppercase tracking-widest block mb-1">Estilo da Capa / Serviços / Valores</label>
+                                  <select
                                     className="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-2.5 font-bold focus:outline-none focus:border-[#1B4D3E] transition-colors"
-                                    value={slideData.bgImage || ''}
-                                    placeholder="Ex: https://images.unsplash.com/photo-..."
+                                    value={slideData.coverStyle || 'full'}
                                     onChange={e => {
                                       const list = [...secoes];
-                                      const updatedText = JSON.stringify({ ...slideData, bgImage: e.target.value });
+                                      const updatedText = JSON.stringify({ ...slideData, coverStyle: e.target.value, servicosStyle: e.target.value === 'provelo_split' ? 'provelo_grid' : 'simple' });
+                                      list[activeSlideIdx].texto = updatedText;
+                                      setSecoes(list);
+                                    }}
+                                  >
+                                    <option value="full">Estilo Padrão (Full Screen)</option>
+                                    <option value="provelo_split">Estilo Provelo Premium (Split / Alta Conversão)</option>
+                                  </select>
+                                </div>
+
+                                <div>
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Fonte / Tipografia</label>
+                                  <select
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-2.5 font-bold focus:outline-none focus:border-[#1B4D3E] transition-colors"
+                                    value={slideData.fontFamily || 'Outfit'}
+                                    onChange={e => {
+                                      const list = [...secoes];
+                                      const updatedText = JSON.stringify({ ...slideData, fontFamily: e.target.value });
+                                      list[activeSlideIdx].texto = updatedText;
+                                      setSecoes(list);
+                                    }}
+                                  >
+                                    <option value="Outfit">Outfit (Moderna Provelo)</option>
+                                    <option value="Montserrat">Montserrat (Impacto)</option>
+                                    <option value="Inter">Inter (Limpa/SaaS)</option>
+                                    <option value="Playfair">Playfair (Sofisticada)</option>
+                                    <option value="Roboto">Roboto (Clássica)</option>
+                                  </select>
+                                </div>
+
+                                <div>
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Alinhamento do Texto</label>
+                                  <select
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-2.5 font-bold focus:outline-none focus:border-[#1B4D3E] transition-colors"
+                                    value={slideData.align || 'left'}
+                                    onChange={e => {
+                                      const list = [...secoes];
+                                      const updatedText = JSON.stringify({ ...slideData, align: e.target.value });
+                                      list[activeSlideIdx].texto = updatedText;
+                                      setSecoes(list);
+                                    }}
+                                  >
+                                    <option value="left">Esquerda</option>
+                                    <option value="center">Centralizado</option>
+                                    <option value="right">Direita</option>
+                                  </select>
+                                </div>
+
+                                <div>
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Cor do Título</label>
+                                  <input
+                                    type="text"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-2.5 font-bold focus:outline-none"
+                                    value={slideData.titleColor || ''}
+                                    placeholder="Ex: #ef4444 (Vermelho)"
+                                    onChange={e => {
+                                      const list = [...secoes];
+                                      const updatedText = JSON.stringify({ ...slideData, titleColor: e.target.value });
                                       list[activeSlideIdx].texto = updatedText;
                                       setSecoes(list);
                                     }}
                                   />
                                 </div>
-                              )}
+                              </div>
+
+                              {/* Configurações específicas por Layout */}
+                              <div className="col-span-2 grid grid-cols-2 gap-4 border-t border-slate-100 pt-3">
+                                <div>
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Imagem / Foto Principal (Lado Direito)</label>
+                                  <input
+                                    type="text"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-2.5 font-bold"
+                                    value={slideData.sideImage || ''}
+                                    placeholder="Ex: URL da imagem do trabalhador ou produto"
+                                    onChange={e => {
+                                      const list = [...secoes];
+                                      const updatedText = JSON.stringify({ ...slideData, sideImage: e.target.value });
+                                      list[activeSlideIdx].texto = updatedText;
+                                      setSecoes(list);
+                                    }}
+                                  />
+                                </div>
+
+                                {slideData.layout === 'quem_somos' && (
+                                  <div>
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Foto Secundária (Quem Somos)</label>
+                                    <input
+                                      type="text"
+                                      className="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-2.5 font-bold"
+                                      value={slideData.sideImage2 || ''}
+                                      placeholder="Ex: URL da segunda foto de equipe"
+                                      onChange={e => {
+                                        const list = [...secoes];
+                                        const updatedText = JSON.stringify({ ...slideData, sideImage2: e.target.value });
+                                        list[activeSlideIdx].texto = updatedText;
+                                        setSecoes(list);
+                                      }}
+                                    />
+                                  </div>
+                                )}
+
+                                {slideData.layout === 'cobertura' && (
+                                  <>
+                                    <div>
+                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Texto da Etiqueta (ex: Terceirização)</label>
+                                      <input
+                                        type="text"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-2.5 font-bold"
+                                        value={slideData.badgeText || ''}
+                                        placeholder="Ex: Terceirização de Mão de Obra"
+                                        onChange={e => {
+                                          const list = [...secoes];
+                                          const updatedText = JSON.stringify({ ...slideData, badgeText: e.target.value });
+                                          list[activeSlideIdx].texto = updatedText;
+                                          setSecoes(list);
+                                        }}
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Cor da Etiqueta</label>
+                                      <input
+                                        type="text"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs px-3 py-2.5 font-bold"
+                                        value={slideData.badgeColor || '#ef4444'}
+                                        placeholder="Ex: #ef4444"
+                                        onChange={e => {
+                                          const list = [...secoes];
+                                          const updatedText = JSON.stringify({ ...slideData, badgeColor: e.target.value });
+                                          list[activeSlideIdx].texto = updatedText;
+                                          setSecoes(list);
+                                        }}
+                                      />
+                                    </div>
+                                  </>
+                                )}
+                              </div>
 
                               {slideData.layout !== 'cobertura' && slideData.layout !== 'tabela' && slideData.layout !== 'itens' && slideData.layout !== 'aceite' && (
                                 <div className="col-span-2">
@@ -749,5 +1179,6 @@ export default function TemplatesPropostaPage() {
         </div>
       </main>
     </div>
+  )</>
   );
 }

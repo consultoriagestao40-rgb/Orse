@@ -102,6 +102,13 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
   return (
     <>
       <style dangerouslySetInnerHTML={{__html: `
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=Montserrat:wght@300;400;600;700;800;900&family=Inter:wght@300;400;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Roboto:wght@300;400;500;700;900&display=swap');
+        .font-outfit { font-family: 'Outfit', sans-serif !important; }
+        .font-montserrat { font-family: 'Montserrat', sans-serif !important; }
+        .font-inter { font-family: 'Inter', sans-serif !important; }
+        .font-playfair { font-family: 'Playfair Display', serif !important; }
+        .font-roboto { font-family: 'Roboto', sans-serif !important; }
+        
         @media print {
             @page {
                 size: 297mm 167mm !important;
@@ -224,51 +231,217 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                               const subtitulo = slideData.subtitulo || '';
                               const conteudo = slideData.conteudo || '';
                               const bgImage = slideData.bgImage || '';
-                              const slideNum = slideIdx + 1;
                               
+                              const align = slideData.align || 'left';
+                              const fontFamily = slideData.fontFamily || 'Outfit';
+                              const titleColor = slideData.titleColor || '';
+                              const textColor = slideData.textColor || '';
+                              const bgColor = slideData.bgColor || '#ffffff';
+                              const coverStyle = slideData.coverStyle || 'full';
+                              const badgeText = slideData.badgeText || '';
+                              const badgeColor = slideData.badgeColor || '#ef4444';
+                              const sideImage = slideData.sideImage || '';
+                              const sideImage2 = slideData.sideImage2 || '';
+                              const servicosStyle = slideData.servicosStyle || 'simple';
+                              const slideNum = slideIdx + 1;
+
+                              // Stats controls
+                              const stat1_num = slideData.stat1_num || '+$2M';
+                              const stat1_text = slideData.stat1_text || 'Investidos em tecnologia, segurança e qualidade dos nossos serviços entregues.';
+                              const stat2_num = slideData.stat2_num || '+10M';
+                              const stat2_text = slideData.stat2_text || 'Novos empregos gerados a partir das nossas implementações.';
+                              const stat3_num = slideData.stat3_num || '+330';
+                              const stat3_text = slideData.stat3_text || 'Clientes que são beneficiados pelos nossos serviços de forma direta.';
+                              const stat4_num = slideData.stat4_num || '82%';
+                              const stat4_text = slideData.stat4_text || 'De redução em custos operacionais, graças à qualidade e ao controle dos nossos processos.';
+
+                              // Values controls
+                              const val1_title = slideData.val1_title || 'Compromisso com a Qualidade';
+                              const val1_text = slideData.val1_text || 'Entregamos serviços com excelência, priorizando a segurança, a padronização e a eficiência operacional em cada detalhe.';
+                              const val2_title = slideData.val2_title || 'Valorização do relacionamento';
+                              const val2_text = slideData.val2_text || 'Valorizamos as pessoas por trás dos processos — nossos colaboradores, clientes e parceiros. Acreditamos que relações duradouras se constroem com respeito, transparência e empatia em todas as interações.';
+                              const val3_title = slideData.val3_title || 'Evolução Contínua';
+                              const val3_text = slideData.val3_text || 'Buscamos sempre melhorar. Investimos em inovação, capacitação e tecnologia para oferecer soluções cada vez mais modernas, ágeis e alinhadas às necessidades do mercado.';
+
+                              // Founders controls
+                              const f1_name = slideData.f1_name || 'Ádamo Quadros';
+                              const f1_role = slideData.f1_role || 'Chief Executive Officer (CEO)';
+                              const f1_photo = slideData.f1_photo || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=300';
+                              const f2_name = slideData.f2_name || 'Guilherme França';
+                              const f2_role = slideData.f2_role || 'Chief Product Officer (CPO)';
+                              const f2_photo = slideData.f2_photo || 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=300';
+                              const f3_name = slideData.f3_name || 'Giovanna Castro';
+                              const f3_role = slideData.f3_role || 'Chief Technology Officer (CTO)';
+                              const f3_photo = slideData.f3_photo || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=300';
+
+                              // Styling maps
+                              const fontClass = fontFamily === 'Outfit' ? 'font-outfit' : 
+                                                fontFamily === 'Montserrat' ? 'font-montserrat' : 
+                                                fontFamily === 'Inter' ? 'font-inter' : 
+                                                fontFamily === 'Playfair' ? 'font-playfair' : 'font-roboto';
+
+                              const baseStyle: any = {
+                                 fontFamily: fontFamily === 'Outfit' ? 'Outfit, sans-serif' : 
+                                             fontFamily === 'Montserrat' ? 'Montserrat, sans-serif' : 
+                                             fontFamily === 'Inter' ? 'Inter, sans-serif' : 
+                                             fontFamily === 'Playfair' ? 'Playfair Display, serif' : 'Roboto, sans-serif',
+                                 textAlign: align,
+                                 color: textColor || undefined
+                              };
+
                               if (layout === 'cobertura') {
-                                 const finalBgImage = bgImage || "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200";
-                                 return (
-                                    <div key={slideIdx} className="print-slide w-full aspect-[16/9] border border-slate-200 bg-[#020617] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-white">
-                                       <img 
-                                          src={finalBgImage} 
-                                          alt="Capa Fundo" 
-                                          className="absolute inset-0 w-full h-full object-cover opacity-40 scale-105 filter blur-[0.5px]"
-                                       />
-                                       <div className="absolute inset-0 bg-[#1e4480]/85 backdrop-blur-[1px]"></div>
-                                       
-                                       <div className="relative z-20 flex flex-col justify-center items-center h-full w-full space-y-12">
-                                          <div className="flex flex-col items-center space-y-4">
-                                             <img 
-                                                src={companyLogo} 
-                                                alt="Silva Consultoria Logo" 
-                                                className="max-h-32 w-auto object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
-                                             />
-                                             <div className="text-[11px] font-black tracking-[0.3em] text-white/90 uppercase pl-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">FACILITIES</div>
-                                          </div>
-                                          <div className="w-full max-w-2xl border-2 border-white rounded-full bg-white/10 px-12 py-4 shadow-xl backdrop-blur-md text-center">
-                                             <span className="text-white text-base font-black tracking-[0.25em] uppercase">
-                                                {replaceTags(tituloSlide)}
-                                             </span>
+                                 if (coverStyle === 'provelo_split') {
+                                    const finalSideImage = sideImage || "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200";
+                                    return (
+                                       <div key={slideIdx} className={`print-slide w-full aspect-[16/9] border border-slate-200 p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800 bg-white select-none ${fontClass}`} style={{ ...baseStyle, backgroundColor: bgColor }}>
+                                          {/* Faixa Vermelha Vertical à Esquerda */}
+                                          <div className="absolute left-0 top-0 bottom-0 w-4 bg-[#ef4444] rounded-r-2xl"></div>
+                                          {/* Forma Rosa Superior Direita */}
+                                          <div className="absolute right-[33%] top-10 w-24 h-40 bg-rose-100/60 rounded-[40px] transform rotate-[15deg] pointer-events-none"></div>
+                                          {/* Forma Rosa Inferior */}
+                                          <div className="absolute right-[38%] bottom-6 w-28 h-28 border-8 border-rose-100/60 rounded-full pointer-events-none"></div>
+
+                                          <div className="relative z-20 flex flex-col justify-between h-full w-full">
+                                             <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
+                                                <div className="flex items-center gap-3">
+                                                   <img 
+                                                      src={companyLogo} 
+                                                      alt="Logo" 
+                                                      className="max-h-12 w-auto object-contain"
+                                                   />
+                                                   <span className="text-[10px] font-black tracking-[0.3em] text-slate-400">FACILITIES</span>
+                                                </div>
+                                             </div>
+
+                                             <div className="grid grid-cols-12 gap-8 my-auto items-center">
+                                                <div className="col-span-7 flex flex-col space-y-4 text-left">
+                                                   <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#ef4444] block">MODELO DE PROPOSTA</span>
+                                                   <h2 className="text-5xl font-black uppercase leading-none tracking-tight text-slate-900" style={{ color: titleColor || undefined }}>{replaceTags(tituloSlide)}</h2>
+                                                   <p className="text-[11px] font-bold text-slate-500 leading-relaxed max-w-lg">{replaceTags(subtitulo)}</p>
+                                                   
+                                                   <div className="text-[10px] text-slate-600 font-bold space-y-0.5 pt-2">
+                                                      <div className="text-slate-400 font-black tracking-widest text-[8px] uppercase">Cliente</div>
+                                                      <div className="text-slate-950 font-black text-[12px]">{proposta.cliente?.nomeFantasia || proposta.cliente?.razaoSocial || "Empresa XPTO"}</div>
+                                                      <div>Nº Proposta: <span className="font-extrabold text-slate-800">{proposta.cliente?.numeroProposta || `FPV-${String(proposta.numero || 'XXX').padStart(3, '0')}`}</span> | Revisão: <span className="font-extrabold text-slate-800">{proposta.cliente?.revisao || "R01"}</span></div>
+                                                   </div>
+
+                                                   {badgeText && (
+                                                      <div className="pt-2">
+                                                         <span className="text-[10px] font-black text-white px-6 py-2 rounded-full shadow-md select-none inline-block uppercase tracking-wider" style={{ backgroundColor: badgeColor }}>
+                                                            {badgeText}
+                                                         </span>
+                                                      </div>
+                                                   )}
+                                                </div>
+
+                                                <div className="col-span-5 h-full relative flex items-center justify-end overflow-hidden">
+                                                   <div className="w-[85%] h-[240px] rounded-l-[120px] overflow-hidden border-4 border-slate-100/50 shadow-2xl relative">
+                                                      <img 
+                                                         src={finalSideImage} 
+                                                         alt="Capa Apresentação" 
+                                                         className="w-full h-full object-cover"
+                                                      />
+                                                   </div>
+                                                </div>
+                                             </div>
+
+                                             <div className="pt-4 border-t border-slate-100 flex justify-between items-center w-full text-[9px] font-extrabold text-slate-400">
+                                                <div className="flex gap-8">
+                                                   <div className="flex items-center gap-2">
+                                                      <div className="w-5 h-5 rounded-full bg-[#ef4444] text-white flex items-center justify-center text-[7px] font-black shadow-sm">✉</div>
+                                                      <span className="text-slate-600">contato@provelo.com.br</span>
+                                                   </div>
+                                                   <div className="flex items-center gap-2">
+                                                      <div className="w-5 h-5 rounded-full bg-[#ef4444] text-white flex items-center justify-center text-[7px] font-black shadow-sm">🌐</div>
+                                                      <span className="text-slate-600">www.provelo.com.br</span>
+                                                   </div>
+                                                </div>
+                                                <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">{String(slideNum).padStart(2, '0')}</span>
+                                             </div>
                                           </div>
                                        </div>
-                                       
-                                       <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-4 mt-auto">
-                                          <div className="flex justify-start gap-16 text-white/70 text-[10px] font-extrabold uppercase tracking-wider">
-                                             <div className="space-y-1">
-                                                <div>Cliente: <strong className="text-white">{proposta.cliente?.nomeFantasia || proposta.cliente?.razaoSocial || "Nome do Cliente"}</strong></div>
-                                                <div>Nº Proposta: <strong className="text-white">{proposta.cliente?.numeroProposta || `FPV-${String(proposta.numero || 'XXX').padStart(3, '0')}`}</strong></div>
+                                    );
+                                 } else {
+                                    const finalBgImage = bgImage || "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200";
+                                    return (
+                                       <div key={slideIdx} className={`print-slide w-full aspect-[16/9] border border-slate-200 bg-[#020617] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-white ${fontClass}`} style={baseStyle}>
+                                          <img 
+                                             src={finalBgImage} 
+                                             alt="Capa Fundo" 
+                                             className="absolute inset-0 w-full h-full object-cover opacity-40 scale-105 filter blur-[0.5px]"
+                                          />
+                                          <div className="absolute inset-0 bg-[#1e4480]/85 backdrop-blur-[1px]"></div>
+                                          
+                                          <div className="relative z-20 flex flex-col justify-center items-center h-full w-full space-y-12">
+                                             <div className="flex flex-col items-center space-y-4">
+                                                <img 
+                                                   src={companyLogo} 
+                                                   alt="Silva Consultoria Logo" 
+                                                   className="max-h-32 w-auto object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
+                                                />
+                                                <div className="text-[11px] font-black tracking-[0.3em] text-white/90 uppercase pl-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">FACILITIES</div>
                                              </div>
-                                             <div className="space-y-1">
-                                                <div>Data: <strong className="text-white">
-                                                   {proposta.cliente?.dataElaboracao 
-                                                      ? new Date(proposta.cliente.dataElaboracao + 'T12:00:00').toLocaleDateString('pt-BR') 
-                                                      : new Date().toLocaleDateString('pt-BR')}
-                                                </strong></div>
-                                                <div>Revisão: <strong className="text-white">{proposta.cliente?.revisao || "R01"}</strong></div>
+                                             <div className="w-full max-w-2xl border-2 border-white rounded-full bg-white/10 px-12 py-4 shadow-xl backdrop-blur-md text-center">
+                                                <span className="text-white text-base font-black tracking-[0.25em] uppercase">
+                                                   {replaceTags(tituloSlide)}
+                                                </span>
                                              </div>
                                           </div>
-                                          <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">{String(slideNum).padStart(2, '0')}</span>
+                                          
+                                          <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-4 mt-auto">
+                                             <div className="flex justify-start gap-16 text-white/70 text-[10px] font-extrabold uppercase tracking-wider">
+                                                <div className="space-y-1 text-left">
+                                                   <div>Cliente: <strong className="text-white">{proposta.cliente?.nomeFantasia || proposta.cliente?.razaoSocial || "Nome do Cliente"}</strong></div>
+                                                   <div>Nº Proposta: <strong className="text-white">{proposta.cliente?.numeroProposta || `FPV-${String(proposta.numero || 'XXX').padStart(3, '0')}`}</strong></div>
+                                                </div>
+                                                <div className="space-y-1 text-left">
+                                                   <div>Data: <strong className="text-white">
+                                                      {proposta.cliente?.dataElaboracao 
+                                                         ? new Date(proposta.cliente.dataElaboracao + 'T12:00:00').toLocaleDateString('pt-BR') 
+                                                         : new Date().toLocaleDateString('pt-BR')}
+                                                   </strong></div>
+                                                   <div>Revisão: <strong className="text-white">{proposta.cliente?.revisao || "R01"}</strong></div>
+                                                </div>
+                                             </div>
+                                             <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">{String(slideNum).padStart(2, '0')}</span>
+                                          </div>
+                                       </div>
+                                    );
+                                 }
+                              }
+
+                              if (layout === 'quem_somos') {
+                                 const finalSideImage = sideImage || "https://images.unsplash.com/photo-1606857521015-7f9fcf423740?q=80&w=500";
+                                 const finalSideImage2 = sideImage2 || "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=500";
+                                 const finalBg = bgImage || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1000";
+                                 
+                                 return (
+                                    <div key={slideIdx} className={`print-slide w-full aspect-[16/9] border border-slate-200 z-10 overflow-hidden bg-slate-900 select-none text-white h-[100vh] grid grid-cols-12 ${fontClass}`} style={baseStyle}>
+                                       {/* Faixa Vermelha Vertical à Esquerda */}
+                                       <div className="absolute left-0 top-0 bottom-0 w-4 bg-[#ef4444] rounded-r-2xl z-30"></div>
+                                       
+                                       <div className="col-span-5 bg-[#ef4444] p-16 flex flex-col justify-center space-y-6 z-20 pl-20 relative text-left">
+                                          <h2 className="text-5xl font-black uppercase tracking-tight text-white leading-none" style={{ color: titleColor || undefined }}>{replaceTags(tituloSlide)}</h2>
+                                          <p className="text-[11px] font-semibold leading-relaxed text-white/95 whitespace-pre-line text-justify">{replaceTags(conteudo)}</p>
+                                          <div className="absolute bottom-6 left-20 text-[8px] font-bold text-white/50 tracking-widest">PROVELO SERVIÇOS</div>
+                                       </div>
+
+                                       <div className="col-span-7 h-full relative flex items-center justify-center p-12 z-10">
+                                          <img 
+                                             src={finalBg} 
+                                             alt="Office Facade" 
+                                             className="absolute inset-0 w-full h-full object-cover opacity-15 filter grayscale"
+                                          />
+                                          <div className="absolute inset-0 bg-slate-950/40"></div>
+
+                                          <div className="relative z-20 flex gap-8 w-full max-w-xl justify-center items-center">
+                                             <div className="w-1/2 aspect-[3/4] rounded-3xl overflow-hidden border-[6px] border-[#ef4444] shadow-2xl">
+                                                <img src={finalSideImage} alt="Workspace 1" className="w-full h-full object-cover" />
+                                             </div>
+                                             <div className="w-1/2 aspect-[3/4] rounded-3xl overflow-hidden border-[6px] border-[#ef4444] shadow-2xl mt-12">
+                                                <img src={finalSideImage2} alt="Workspace 2" className="w-full h-full object-cover" />
+                                             </div>
+                                          </div>
                                        </div>
                                     </div>
                                  );
@@ -276,7 +449,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
 
                               if (layout === 'agradecimento') {
                                  return (
-                                    <div key={slideIdx} className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
+                                    <div key={slideIdx} className={`print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] ${fontClass}`} style={{ ...baseStyle, backgroundColor: bgColor }}>
                                        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" xmlns="http://www.w3.org/2000/svg">
                                           <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
                                           <line x1="-50" y1="200" x2="400" y2="-250" stroke="#E2E8F0" strokeWidth="6" />
@@ -287,8 +460,8 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                        </svg>
 
                                        <div className="grid grid-cols-12 gap-8 items-center h-full relative z-10">
-                                          <div className="col-span-8 flex flex-col justify-center space-y-5 pr-4">
-                                             <h2 className="text-3xl font-black text-[#1E3A8A] tracking-tight leading-none uppercase">
+                                          <div className="col-span-8 flex flex-col justify-center space-y-5 pr-4 text-left">
+                                             <h2 className="text-3xl font-black text-[#1E3A8A] tracking-tight leading-none uppercase" style={{ color: titleColor || undefined }}>
                                                 {replaceTags(tituloSlide)}
                                              </h2>
                                              {subtitulo && <p className="text-slate-500 text-sm font-bold uppercase tracking-wider -mt-2">{replaceTags(subtitulo)}</p>}
@@ -336,135 +509,399 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                               }
 
                               if (layout === 'valores') {
-                                 return (
-                                    <div key={slideIdx} className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
-                                       <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" xmlns="http://www.w3.org/2000/svg">
-                                          <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
-                                          <line x1="-50" y1="200" x2="400" y2="-250" stroke="#E2E8F0" strokeWidth="6" />
-                                          <line x1="-50" y1="250" x2="450" y2="-250" stroke="#E2E8F0" strokeWidth="3" />
-                                          <line x1="600" y1="800" x2="1100" y2="300" stroke="#E2E8F0" strokeWidth="10" />
-                                          <line x1="650" y1="800" x2="1150" y2="300" stroke="#E2E8F0" strokeWidth="6" />
-                                          <line x1="700" y1="800" x2="1200" y2="300" stroke="#E2E8F0" strokeWidth="3" />
-                                       </svg>
-                                       
-                                       <div className="grid grid-cols-12 gap-8 items-center h-[calc(100%-40px)] relative z-10">
-                                          <div className="col-span-7 flex flex-col justify-center space-y-4 pl-2 h-full">
-                                             <div>
-                                                <h2 className="text-4xl font-black text-[#1E3A8A] tracking-tight leading-none uppercase">
-                                                   {replaceTags(tituloSlide)}
-                                                </h2>
-                                                {subtitulo && <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mt-1">{replaceTags(subtitulo)}</p>}
-                                                <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-5 text-justify whitespace-pre-line">
-                                                   {replaceTags(conteudo)}
-                                                </p>
+                                 if (coverStyle === 'provelo_split') {
+                                    const finalSideImage = sideImage || "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=600";
+                                    return (
+                                       <div key={slideIdx} className={`print-slide w-full aspect-[16/9] border border-slate-200 p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] text-slate-800 bg-white select-none ${fontClass}`} style={{ ...baseStyle, backgroundColor: bgColor }}>
+                                          <div className="absolute left-0 top-0 bottom-0 w-4 bg-[#ef4444] rounded-r-2xl z-30"></div>
+                                          
+                                          <div className="relative z-20 flex flex-col justify-between h-full w-full">
+                                             <div className="grid grid-cols-12 gap-8 my-auto items-center">
+                                                <div className="col-span-7 flex flex-col space-y-4 text-left pl-6">
+                                                   <h2 className="text-4xl font-black uppercase text-slate-900 tracking-tight leading-none mb-4" style={{ color: titleColor || undefined }}>{replaceTags(tituloSlide)}</h2>
+                                                   
+                                                   <div className="space-y-4">
+                                                      <div className="space-y-1">
+                                                         <h4 className="text-[12px] font-black text-[#ef4444] uppercase tracking-wide">{val1_title}</h4>
+                                                         <p className="text-[9.5px] font-semibold leading-relaxed text-slate-500">{val1_text}</p>
+                                                      </div>
+                                                      <div className="space-y-1">
+                                                         <h4 className="text-[12px] font-black text-[#ef4444] uppercase tracking-wide">{val2_title}</h4>
+                                                         <p className="text-[9.5px] font-semibold leading-relaxed text-slate-500">{val2_text}</p>
+                                                      </div>
+                                                      <div className="space-y-1">
+                                                         <h4 className="text-[12px] font-black text-[#ef4444] uppercase tracking-wide">{val3_title}</h4>
+                                                         <p className="text-[9.5px] font-semibold leading-relaxed text-slate-500">{val3_text}</p>
+                                                      </div>
+                                                   </div>
+                                                </div>
+
+                                                <div className="col-span-5 h-[240px] relative flex items-center justify-end overflow-hidden">
+                                                   <div className="absolute right-0 bottom-0 top-0 w-[45%] bg-[#ef4444] rounded-l-[100px] z-10"></div>
+                                                   <div className="w-[85%] h-[95%] rounded-l-[120px] overflow-hidden border-4 border-slate-100/50 shadow-2xl relative z-20 mr-4">
+                                                      <img 
+                                                         src={finalSideImage} 
+                                                         alt="Values Image" 
+                                                         className="w-full h-full object-cover"
+                                                      />
+                                                   </div>
+                                                </div>
                                              </div>
-                                          </div>
 
-                                          <div className="col-span-5 h-full w-full flex items-center justify-center relative">
-                                             <div className="relative w-full h-[220px] z-20">
-                                                <img 
-                                                   src="/hand-support.png" 
-                                                   alt="Mão de suporte"
-                                                   className="absolute right-[-10px] bottom-[-85px] w-[320px] h-auto pointer-events-none opacity-90 z-0 mix-blend-multiply"
-                                                />
-                                                <div className="absolute top-[-12px] left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
-                                                   <Trophy size={36} className="text-white shrink-0" />
-                                                </div>
-
-                                                <div className="absolute bottom-[100px] left-4 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
-                                                   <Lightbulb size={36} className="text-white shrink-0" />
-                                                </div>
-
-                                                <div className="absolute bottom-[100px] right-4 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
-                                                   <Users size={36} className="text-white shrink-0" />
-                                                </div>
+                                             <div className="pt-4 border-t border-slate-100 flex justify-between items-center w-full text-[9px] font-extrabold text-slate-400 pl-6">
+                                                <span>www.smartbidhub.com.br</span>
+                                                <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">{String(slideNum).padStart(2, '0')}</span>
                                              </div>
                                           </div>
                                        </div>
+                                    );
+                                 } else {
+                                    return (
+                                       <div key={slideIdx} className={`print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] ${fontClass}`} style={{ ...baseStyle, backgroundColor: bgColor }}>
+                                          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" xmlns="http://www.w3.org/2000/svg">
+                                             <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
+                                             <line x1="-50" y1="200" x2="400" y2="-250" stroke="#E2E8F0" strokeWidth="6" />
+                                             <line x1="-50" y1="250" x2="450" y2="-250" stroke="#E2E8F0" strokeWidth="3" />
+                                             <line x1="600" y1="800" x2="1100" y2="300" stroke="#E2E8F0" strokeWidth="10" />
+                                             <line x1="650" y1="800" x2="1150" y2="300" stroke="#E2E8F0" strokeWidth="6" />
+                                             <line x1="700" y1="800" x2="1200" y2="300" stroke="#E2E8F0" strokeWidth="3" />
+                                          </svg>
+                                          
+                                          <div className="grid grid-cols-12 gap-8 items-center h-[calc(100%-40px)] relative z-10">
+                                             <div className="col-span-7 flex flex-col justify-center space-y-4 pl-2 h-full text-left">
+                                                <div>
+                                                   <h2 className="text-4xl font-black text-[#1E3A8A] tracking-tight leading-none uppercase" style={{ color: titleColor || undefined }}>
+                                                      {replaceTags(tituloSlide)}
+                                                   </h2>
+                                                   {subtitulo && <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mt-1">{replaceTags(subtitulo)}</p>}
+                                                   <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-5 text-justify whitespace-pre-line">
+                                                      {replaceTags(conteudo)}
+                                                   </p>
+                                                </div>
+                                             </div>
 
-                                       <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto pr-28">
-                                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
-                                          <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">{String(slideNum).padStart(2, '0')}</span>
+                                             <div className="col-span-5 h-full w-full flex items-center justify-center relative">
+                                                <div className="relative w-full h-[220px] z-20">
+                                                   <img 
+                                                      src="/hand-support.png" 
+                                                      alt="Mão de suporte"
+                                                      className="absolute right-[-10px] bottom-[-85px] w-[320px] h-auto pointer-events-none opacity-90 z-0 mix-blend-multiply"
+                                                   />
+                                                   <div className="absolute top-[-12px] left-1/2 -translate-x-1/2 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
+                                                      <Trophy size={36} className="text-white shrink-0" />
+                                                   </div>
+
+                                                   <div className="absolute bottom-[100px] left-4 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
+                                                      <Lightbulb size={36} className="text-white shrink-0" />
+                                                   </div>
+
+                                                   <div className="absolute bottom-[100px] right-4 flex items-center justify-center w-20 h-20 rounded-full bg-[#1e4480] text-white shadow-2xl z-10 transition-all duration-300 hover:scale-105">
+                                                      <Users size={36} className="text-white shrink-0" />
+                                                   </div>
+                                                </div>
+                                             </div>
+                                          </div>
+
+                                          <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto pr-28">
+                                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
+                                             <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">{String(currentSlide).padStart(2, '0')}</span>
+                                          </div>
+                                       </div>
+                                    );
+                                 }
+                              }
+
+                              if (layout === 'performance') {
+                                 const finalSideImage = sideImage || "https://images.unsplash.com/photo-1542362567-b07eac79094d?q=80&w=600";
+                                 const val1_title = slideData.val1_title || "29 MIL HORAS DE SERVIÇO";
+                                 const val1_text = slideData.val1_text || "Em 2022, movimentamos mais de 29 mil horas de serviços prestados em contratos ativos, comprovando nossa capacidade de atuação em larga escala com controle e eficiência.";
+                                 const val2_title = slideData.val2_title || "1.220 VISITAS TÉCNICAS";
+                                 const val2_text = slideData.val2_text || "No mesmo ano, realizamos mais de 1.220 atendimentos e visitas técnicas, sempre com equipes treinadas, processos padronizados e foco na satisfação do cliente.";
+                                 
+                                 return (
+                                    <div key={slideIdx} className={`print-slide w-full aspect-[16/9] border border-slate-200 p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] bg-[#fafafa] select-none text-slate-800 animate-fadeIn ${fontClass}`} style={baseStyle}>
+                                       <div className="absolute left-0 top-0 bottom-0 w-4 bg-[#ef4444] rounded-r-2xl z-30"></div>
+                                       
+                                       <div className="grid grid-cols-12 gap-8 my-auto items-center h-full w-full text-left pl-6">
+                                          <div className="col-span-5 flex flex-col justify-between h-full pr-4 relative">
+                                             <div className="space-y-3">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block">NOSSA PERFORMANCE</span>
+                                                <h2 className="text-4xl font-black uppercase text-slate-900 tracking-tight leading-none" style={{ color: titleColor || undefined }}>{replaceTags(tituloSlide)}</h2>
+                                                <p className="text-[9px] font-bold text-slate-500 leading-normal text-justify">{replaceTags(subtitulo)}</p>
+                                             </div>
+
+                                             <div className="w-full aspect-[16/10] rounded-2xl overflow-hidden shadow-md border-2 border-white mt-4">
+                                                <img src={finalSideImage} alt="Performance Building" className="w-full h-full object-cover" />
+                                             </div>
+                                          </div>
+
+                                          <div className="col-span-7 flex flex-col justify-center space-y-6 pl-6">
+                                             <div className="flex items-center gap-6">
+                                                <div className="bg-[#ef4444] text-white w-44 py-4 rounded-3xl flex flex-col items-center justify-center shadow-lg shrink-0 text-center px-4">
+                                                   <span className="text-lg font-black leading-tight tracking-tight uppercase">{val1_title.split(' ')[0]} {val1_title.split(' ')[1]}</span>
+                                                   <span className="text-[7.5px] font-black tracking-widest text-white/80 uppercase mt-0.5">{val1_title.split(' ').slice(2).join(' ')}</span>
+                                                </div>
+                                                <p className="text-[9.5px] font-semibold leading-relaxed text-slate-500">{val1_text}</p>
+                                             </div>
+
+                                             <div className="flex items-center gap-6">
+                                                <div className="bg-[#ef4444] text-white w-44 py-4 rounded-3xl flex flex-col items-center justify-center shadow-lg shrink-0 text-center px-4">
+                                                   <span className="text-lg font-black leading-tight tracking-tight uppercase">{val2_title.split(' ')[0]} {val2_title.split(' ')[1]}</span>
+                                                   <span className="text-[7.5px] font-black tracking-widest text-white/80 uppercase mt-0.5">{val2_title.split(' ').slice(2).join(' ')}</span>
+                                                </div>
+                                                <p className="text-[9.5px] font-semibold leading-relaxed text-slate-500">{val2_text}</p>
+                                             </div>
+
+                                             <div className="pt-4 border-t border-slate-200 flex justify-between items-center w-full mt-4">
+                                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
+                                                <span className="text-[8px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{String(slideNum).padStart(2, '0')}</span>
+                                             </div>
+                                          </div>
                                        </div>
                                     </div>
                                  );
                               }
 
                               if (layout === 'servicos') {
-                                 return (
-                                    <div key={slideIdx} className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
-                                       <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" xmlns="http://www.w3.org/2000/svg">
-                                          <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
-                                          <line x1="-100" y1="150" x2="450" y2="-400" stroke="#F1F5F9" strokeWidth="12" />
-                                          <line x1="-100" y1="200" x2="500" y2="-400" stroke="#F1F5F9" strokeWidth="6" />
-                                          <line x1="-100" y1="250" x2="550" y2="-400" stroke="#F1F5F9" strokeWidth="3" />
-                                          <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
-                                          <line x1="550" y1="900" x2="1250" y2="200" stroke="#F1F5F9" strokeWidth="12" />
-                                       </svg>
-                                       
-                                       <div className="relative z-10 flex flex-col h-[calc(100%-30px)] justify-between">
-                                          <div>
-                                             <h2 className="text-3xl font-black text-[#1e4480] uppercase tracking-tight leading-none mb-2">
-                                                {replaceTags(tituloSlide)}
-                                             </h2>
-                                             {subtitulo && <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-6">{replaceTags(subtitulo)}</p>}
-
-                                             <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-2 text-justify whitespace-pre-line max-w-4xl">
-                                                {replaceTags(conteudo)}
-                                             </p>
-                                          </div>
-
-                                          <div className="flex justify-around items-center w-full pt-4 mt-auto border-t border-slate-100 relative z-20">
-                                             <div className="flex flex-col items-center justify-center">
-                                                <div className="bg-[#1e4480] text-white w-16 h-16 flex items-center justify-center rounded-full shadow-xl">
-                                                   <ConciergeBell size={24} className="text-white" />
-                                                </div>
-                                                <span className="text-[#1e4480] text-[10px] font-black tracking-wider uppercase mt-2">
-                                                   FACILITIES
-                                                </span>
+                                 if (servicosStyle === 'provelo_grid') {
+                                    return (
+                                       <div key={slideIdx} className={`print-slide w-full aspect-[16/9] border border-slate-200 p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] bg-[#fafafa] select-none text-slate-800 animate-fadeIn ${fontClass}`} style={baseStyle}>
+                                          <div className="absolute left-0 top-0 bottom-0 w-4 bg-[#ef4444] rounded-r-2xl z-30"></div>
+                                          
+                                          <div className="relative z-20 grid grid-cols-12 gap-8 my-auto items-center h-full w-full text-left pl-6">
+                                             <div className="col-span-4 flex flex-col justify-center h-full pr-4">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#ef4444] block">NOSSOS SERVIÇOS</span>
+                                                <h2 className="text-4xl font-black uppercase text-slate-900 tracking-tight leading-none mb-4" style={{ color: titleColor || undefined }}>{replaceTags(tituloSlide)}</h2>
+                                                <p className="text-[9.5px] font-bold text-slate-500 leading-relaxed text-justify">{replaceTags(subtitulo || conteudo)}</p>
+                                                <img src={companyLogo} alt="Logo" className="max-h-8 w-auto object-contain mt-8 self-start" />
                                              </div>
 
-                                             <div className="flex flex-col items-center justify-center">
-                                                <div className="bg-[#1e4480] text-white w-16 h-16 flex items-center justify-center rounded-full shadow-xl">
-                                                   <ShieldCheck size={24} className="text-white" />
-                                                </div>
-                                                <span className="text-[#1e4480] text-[10px] font-black tracking-wider uppercase mt-2">
-                                                   PORTARIA
-                                                </span>
-                                             </div>
-
-                                             <div className="flex flex-col items-center justify-center">
-                                                <div className="bg-[#1e4480] text-white w-16 h-16 flex items-center justify-center rounded-full shadow-xl">
-                                                   <Sparkles size={24} className="text-white" />
-                                                </div>
-                                                <span className="text-[#1e4480] text-[10px] font-black tracking-wider uppercase mt-2">
-                                                   LIMPEZA
-                                                </span>
-                                             </div>
-
-                                             <div className="flex flex-col items-center justify-center">
-                                                <div className="bg-[#1e4480] text-white w-16 h-16 flex items-center justify-center rounded-full shadow-xl">
-                                                   <Wrench size={24} className="text-white" />
-                                                </div>
-                                                <span className="text-[#1e4480] text-[10px] font-black tracking-wider uppercase mt-2">
-                                                   MANUTENÇÃO
-                                                </span>
-                                             </div>
-
-                                             <div className="flex flex-col items-center justify-center">
-                                                <div className="bg-[#1e4480] text-white w-16 h-16 flex items-center justify-center rounded-full shadow-xl">
-                                                   <Trees size={24} className="text-white" />
-                                                </div>
-                                                <span className="text-[#1e4480] text-[10px] font-black tracking-wider uppercase mt-2">
-                                                   JARDINAGEM
-                                                </span>
+                                             <div className="col-span-8 grid grid-cols-3 gap-6 items-center py-2">
+                                                {[
+                                                   { label: "LIMPEZA", img: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=200" },
+                                                   { label: "SEGURANÇA", img: "https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?q=80&w=200" },
+                                                   { label: "COPEIRA", img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200" },
+                                                   { label: "MANUTENÇÃO", img: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=200" },
+                                                   { label: "RECEPÇÃO", img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200" },
+                                                   { label: "PORTARIA", img: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=200" }
+                                                ].map((serv, sIdx) => (
+                                                   <div key={sIdx} className="bg-white rounded-[24px] border border-slate-200/50 shadow-md p-2 text-center flex flex-col items-center justify-between hover:scale-105 transition-all duration-300 transform aspect-[4/5] overflow-hidden">
+                                                      <div className="w-full h-[70%] rounded-[20px] overflow-hidden mb-2">
+                                                         <img src={serv.img} alt={serv.label} className="w-full h-full object-cover" />
+                                                      </div>
+                                                      <span className="text-[7.5px] font-black text-white bg-[#ef4444] px-4 py-1.5 rounded-full uppercase tracking-wider block mb-1 shadow-sm w-[90%] truncate">
+                                                         {serv.label}
+                                                      </span>
+                                                   </div>
+                                                ))}
                                              </div>
                                           </div>
                                        </div>
+                                    );
+                                 } else {
+                                    return (
+                                       <div key={slideIdx} className={`print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] ${fontClass}`} style={{ ...baseStyle, backgroundColor: bgColor }}>
+                                          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-50" xmlns="http://www.w3.org/2000/svg">
+                                             <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
+                                             <line x1="-100" y1="150" x2="450" y2="-400" stroke="#F1F5F9" strokeWidth="12" />
+                                             <line x1="-100" y1="200" x2="500" y2="-400" stroke="#F1F5F9" strokeWidth="6" />
+                                             <line x1="-100" y1="250" x2="550" y2="-400" stroke="#F1F5F9" strokeWidth="3" />
+                                             <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
+                                             <line x1="550" y1="900" x2="1250" y2="200" stroke="#F1F5F9" strokeWidth="12" />
+                                          </svg>
+                                          
+                                          <div className="relative z-10 flex flex-col h-[calc(100%-30px)] justify-between text-left">
+                                             <div>
+                                                <h2 className="text-3xl font-black text-[#1e4480] uppercase tracking-tight leading-none mb-2" style={{ color: titleColor || undefined }}>
+                                                   {replaceTags(tituloSlide)}
+                                                </h2>
+                                                {subtitulo && <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-6">{replaceTags(subtitulo)}</p>}
 
-                                       <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto pr-28">
-                                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
-                                          <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">{String(slideNum).padStart(2, '0')}</span>
+                                                <p className="text-slate-600 text-[14px] font-semibold leading-relaxed mt-2 text-justify whitespace-pre-line max-w-4xl">
+                                                   {replaceTags(conteudo)}
+                                                </p>
+                                             </div>
+
+                                             <div className="flex justify-around items-center w-full pt-4 mt-auto border-t border-slate-100 relative z-20">
+                                                <div className="flex flex-col items-center justify-center">
+                                                   <div className="bg-[#1e4480] text-white w-16 h-16 flex items-center justify-center rounded-full shadow-xl">
+                                                      <ConciergeBell size={24} className="text-white" />
+                                                   </div>
+                                                   <span className="text-[#1e4480] text-[10px] font-black tracking-wider uppercase mt-2">
+                                                      FACILITIES
+                                                   </span>
+                                                </div>
+
+                                                <div className="flex flex-col items-center justify-center">
+                                                   <div className="bg-[#1e4480] text-white w-16 h-16 flex items-center justify-center rounded-full shadow-xl">
+                                                      <ShieldCheck size={24} className="text-white" />
+                                                   </div>
+                                                   <span className="text-[#1e4480] text-[10px] font-black tracking-wider uppercase mt-2">
+                                                      PORTARIA
+                                                   </span>
+                                                </div>
+
+                                                <div className="flex flex-col items-center justify-center">
+                                                   <div className="bg-[#1e4480] text-white w-16 h-16 flex items-center justify-center rounded-full shadow-xl">
+                                                      <Sparkles size={24} className="text-white" />
+                                                   </div>
+                                                   <span className="text-[#1e4480] text-[10px] font-black tracking-wider uppercase mt-2">
+                                                      LIMPEZA
+                                                   </span>
+                                                </div>
+
+                                                <div className="flex flex-col items-center justify-center">
+                                                   <div className="bg-[#1e4480] text-white w-16 h-16 flex items-center justify-center rounded-full shadow-xl">
+                                                      <Wrench size={24} className="text-white" />
+                                                   </div>
+                                                   <span className="text-[#1e4480] text-[10px] font-black tracking-wider uppercase mt-2">
+                                                      MANUTENÇÃO
+                                                   </span>
+                                                </div>
+
+                                                <div className="flex flex-col items-center justify-center">
+                                                   <div className="bg-[#1e4480] text-white w-16 h-16 flex items-center justify-center rounded-full shadow-xl">
+                                                      <Trees size={24} className="text-white" />
+                                                   </div>
+                                                   <span className="text-[#1e4480] text-[10px] font-black tracking-wider uppercase mt-2">
+                                                      JARDINAGEM
+                                                   </span>
+                                                </div>
+                                             </div>
+                                          </div>
+
+                                          <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto pr-28">
+                                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
+                                             <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">{String(currentSlide).padStart(2, '0')}</span>
+                                          </div>
+                                       </div>
+                                    );
+                                 }
+                              }
+
+                              if (layout === 'atuacao') {
+                                 return (
+                                    <div key={slideIdx} className={`print-slide w-full aspect-[16/9] border border-slate-200 p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] bg-white select-none text-slate-800 ${fontClass}`} style={baseStyle}>
+                                       <div className="absolute left-0 top-0 bottom-0 w-4 bg-[#ef4444] rounded-r-2xl z-30"></div>
+                                       
+                                       <div className="relative z-20 grid grid-cols-12 gap-8 my-auto items-center h-full w-full text-left pl-6">
+                                          <div className="col-span-6 flex flex-col justify-between h-full pr-8">
+                                             <div className="space-y-2">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#ef4444] block">ATUAÇÃO NACIONAL</span>
+                                                <h2 className="text-4xl font-black uppercase text-slate-900 tracking-tight leading-none" style={{ color: titleColor || undefined }}>{replaceTags(tituloSlide)}</h2>
+                                                <p className="text-[9.5px] font-semibold leading-relaxed text-slate-500 text-justify">{replaceTags(subtitulo || conteudo)}</p>
+                                             </div>
+
+                                             <div className="space-y-2.5 my-auto pt-4">
+                                                {[
+                                                   { num: stat1_num, text: stat1_text },
+                                                   { num: stat2_num, text: stat2_text },
+                                                   { num: stat3_num, text: stat3_text },
+                                                   { num: stat4_num, text: stat4_text }
+                                                ].map((st, sIdx) => (
+                                                   <div key={sIdx} className="bg-[#ef4444] text-white px-5 py-2.5 rounded-2xl flex items-center gap-4 shadow-md w-full border border-white/10">
+                                                      <span className="text-xl font-black tracking-tighter w-20 shrink-0 text-center border-r border-white/20 pr-4">{st.num}</span>
+                                                      <span className="text-[8px] font-bold text-white/90 leading-tight text-left">{st.text}</span>
+                                                   </div>
+                                                ))}
+                                             </div>
+
+                                             <div className="flex justify-between items-center border-t border-slate-100 pt-3">
+                                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
+                                                <span className="text-[8px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">{String(slideNum).padStart(2, '0')}</span>
+                                             </div>
+                                          </div>
+
+                                          <div className="col-span-6 h-full relative flex items-center justify-center p-4 z-20">
+                                             <div className="absolute right-0 bottom-0 top-0 w-[45%] bg-[#ef4444] rounded-l-[100px] z-10"></div>
+                                             
+                                             <div className="w-[85%] h-[240px] bg-[#fafafa]/80 rounded-[40px] border border-slate-200/50 shadow-2xl p-6 relative z-20 flex flex-col justify-center items-center">
+                                                <div className="flex items-center gap-2 bg-white px-4 py-1.5 rounded-full border border-slate-200 shadow-sm mb-4 self-center">
+                                                   <img src={companyLogo} alt="Logo" className="max-h-5 w-auto object-contain" />
+                                                   <span className="text-[8px] font-black text-slate-800">SERVICES</span>
+                                                </div>
+                                                <div className="w-full h-[80%] flex items-center justify-center relative">
+                                                   <BrazilMap highlightedStates={['SP', 'RJ', 'MG', 'PR']} className="w-full h-full text-[#ef4444]" />
+                                                </div>
+                                             </div>
+                                          </div>
+                                       </div>
+                                    </div>
+                                 );
+                              }
+
+                              if (layout === 'gestao') {
+                                 const finalSideImage = sideImage || "https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=800";
+                                 return (
+                                    <div key={slideIdx} className={`print-slide w-full aspect-[16/9] border border-slate-200 p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] bg-white select-none text-slate-800 ${fontClass}`} style={baseStyle}>
+                                       <div className="absolute left-0 top-0 bottom-0 w-4 bg-[#ef4444] rounded-r-2xl z-30"></div>
+                                       <div className="absolute right-0 top-0 bottom-0 w-4 bg-[#ef4444] rounded-l-2xl z-30"></div>
+
+                                       <div className="relative z-20 grid grid-cols-12 gap-8 my-auto items-center h-full w-full text-left pl-6 pr-6">
+                                          <div className="col-span-7 flex flex-col justify-between h-full pr-8">
+                                             <div className="space-y-4 my-auto">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#ef4444] block">TECNOLOGIA OPERACIONAL</span>
+                                                <h2 className="text-4xl font-black uppercase text-slate-900 tracking-tight leading-none" style={{ color: titleColor || undefined }}>{replaceTags(tituloSlide)}</h2>
+                                                <p className="text-[9.5px] font-semibold leading-relaxed text-slate-500 text-justify mb-4">{replaceTags(subtitulo)}</p>
+
+                                                <ul className="space-y-2.5 text-[9.5px] font-bold text-slate-600 pl-1">
+                                                   {conteudo.split('
+').map((bullet, bIdx) => (
+                                                      <li key={bIdx} className="flex items-start gap-2.5">
+                                                         <span className="w-4 h-4 rounded-full bg-[#ef4444] text-white flex items-center justify-center text-[7px] font-black shrink-0 mt-0.5 shadow-sm">✓</span>
+                                                         <span className="leading-snug">{replaceTags(bullet)}</span>
+                                                      </li>
+                                                   ))}
+                                                </ul>
+                                             </div>
+
+                                             <div className="flex justify-between items-center border-t border-slate-100 pt-3">
+                                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
+                                                <span className="text-[8px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{String(slideNum).padStart(2, '0')}</span>
+                                             </div>
+                                          </div>
+
+                                          <div className="col-span-5 h-[240px] relative flex items-center justify-center p-4">
+                                             <div className="w-full relative shadow-2xl rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 p-2 transform hover:rotate-[-1deg]">
+                                                <div className="w-full aspect-[16/10] bg-white rounded-lg overflow-hidden relative shadow-inner border border-slate-350">
+                                                   <img src={finalSideImage} alt="Dashboard Screen" className="w-full h-full object-cover" />
+                                                </div>
+                                                <div className="w-full h-2.5 bg-slate-800 mt-1.5 rounded-b-xl border-t border-slate-700"></div>
+                                             </div>
+                                          </div>
+                                       </div>
+                                    </div>
+                                 );
+                              }
+
+                              if (layout === 'fundadores') {
+                                 return (
+                                    <div key={slideIdx} className={`print-slide w-full aspect-[16/9] border border-slate-200 z-10 overflow-hidden bg-white select-none text-slate-800 h-[100vh] flex flex-col justify-between ${fontClass}`} style={baseStyle}>
+                                       <div className="absolute left-0 top-0 bottom-0 w-4 bg-[#ef4444] rounded-r-2xl z-30"></div>
+                                       <div className="absolute right-0 top-0 bottom-0 w-4 bg-[#ef4444] rounded-l-2xl z-30"></div>
+
+                                       <div className="h-[45%] flex flex-col justify-center items-center text-center px-16 pl-20 pr-20 pt-8 z-20">
+                                          <span className="text-[9px] font-black uppercase tracking-[0.25em] text-[#ef4444] block mb-1">CONHEÇA NOSSOS</span>
+                                          <h2 className="text-4xl font-black uppercase text-slate-900 tracking-tight leading-none mb-3" style={{ color: titleColor || undefined }}>{replaceTags(tituloSlide)}</h2>
+                                          <p className="text-[10px] font-bold text-slate-500 max-w-xl leading-normal">{replaceTags(subtitulo || conteudo)}</p>
+                                       </div>
+
+                                       <div className="h-[55%] bg-[#ef4444] relative flex items-center justify-around px-16 pl-20 pr-20 z-20 border-t-4 border-white shadow-inner">
+                                          {[
+                                             { name: f1_name, role: f1_role, img: f1_photo },
+                                             { name: f2_name, role: f2_role, img: f2_photo },
+                                             { name: f3_name, role: f3_role, img: f3_photo }
+                                          ].map((fnd, fIdx) => (
+                                             <div key={fIdx} className="flex flex-col items-center text-center space-y-2">
+                                                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-2xl relative bg-white">
+                                                   <img src={fnd.img} alt={fnd.name} className="w-full h-full object-cover" />
+                                                </div>
+                                                <div className="flex flex-col text-white">
+                                                   <span className="text-[11px] font-black tracking-tight leading-none">{fnd.name}</span>
+                                                   <span className="text-[8px] font-bold text-white/80 uppercase mt-0.5 tracking-wider">{fnd.role}</span>
+                                                </div>
+                                             </div>
+                                          ))}
                                        </div>
                                     </div>
                                  );
@@ -472,7 +909,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
 
                               if (layout === 'texto') {
                                  return (
-                                    <div key={slideIdx} className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
+                                    <div key={slideIdx} className={`print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-16 flex flex-col justify-between relative overflow-hidden h-[100vh] ${fontClass}`} style={{ ...baseStyle, backgroundColor: bgColor }}>
                                        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" xmlns="http://www.w3.org/2000/svg">
                                           <line x1="-50" y1="150" x2="350" y2="-250" stroke="#E2E8F0" strokeWidth="10" />
                                           <line x1="-50" y1="200" x2="400" y2="-250" stroke="#E2E8F0" strokeWidth="6" />
@@ -480,10 +917,10 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                           <line x1="650" y1="800" x2="1150" y2="300" stroke="#E2E8F0" strokeWidth="6" />
                                        </svg>
 
-                                       <div className="flex flex-col justify-between h-full relative z-10">
+                                       <div className="flex flex-col justify-between h-full relative z-10 text-left">
                                           <div className="flex justify-between items-start pb-4 border-b border-slate-100">
                                              <div className="flex flex-col">
-                                                <h2 className="text-3xl font-black text-[#1e4480] tracking-tight leading-none uppercase">
+                                                <h2 className="text-3xl font-black text-[#1e4480] tracking-tight leading-none uppercase" style={{ color: titleColor || undefined }}>
                                                    {replaceTags(tituloSlide)}
                                                 </h2>
                                                 {subtitulo && <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mt-1">{replaceTags(subtitulo)}</p>}
@@ -520,7 +957,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                  
                                  const normalizeText = (text: string) => {
                                    if (!text) return "";
-                                   return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+                                   return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
                                  };
 
                                  const isLocado = (desc: string) => {
@@ -565,13 +1002,13 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                  };
 
                                  return (
-                                    <div key={slideIdx} className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-12 flex flex-col justify-between relative overflow-hidden h-[100vh]">
+                                    <div key={slideIdx} className={`print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-12 flex flex-col justify-between relative overflow-hidden h-[100vh] ${fontClass}`} style={baseStyle}>
                                        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
                                           <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
                                           <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
                                        </svg>
 
-                                       <div className="relative z-10 flex flex-col h-full justify-between">
+                                       <div className="relative z-10 flex flex-col h-full justify-between text-left">
                                           <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                              <div className="flex flex-col">
                                                 <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">{replaceTags(tituloSlide)}</h2>
@@ -594,7 +1031,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                                          <td className="py-2.5 px-4 font-black">Mão de Obra Efetiva (Postos)</td>
                                                          <td className="py-2.5 px-4 text-right font-black text-[#1e4480]">{fc(maoDeObraSubtotal)}</td>
                                                       </tr>
-                                                      {renderInsumoRow('Materiais e Equipamentos', applyCascata(Number(proposta.insumos?.materiais || 0) + Number(isSpot ? totalMaquinasNaoLocadas : proposta.insumos?.maquinas || 0)))}
+                                                      {renderInsumoRow('Materiais e Equipamentos', applyCascata(Number(proposta.insumos?.materials || 0) + Number(isSpot ? totalMaquinasNaoLocadas : proposta.insumos?.maquinas || 0)))}
                                                       {renderInsumoRow('Descartáveis e Higiene', applyCascata(Number(proposta.insumos?.descartaveis || 0)))}
                                                       {renderInsumoRow(isSpot ? 'Equipamentos Locados' : 'Outros Serviços / Operações', applyCascata(Number(isSpot ? totalMaquinasLocadas : proposta.insumos?.servicos || 0)))}
                                                    </tbody>
@@ -643,13 +1080,13 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
 
                               if (layout === 'itens') {
                                  return (
-                                    <div key={slideIdx} className="print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-12 flex flex-col justify-between relative overflow-hidden h-[100vh]">
+                                    <div key={slideIdx} className={`print-slide w-full aspect-[16/9] border border-slate-200 bg-white p-12 flex flex-col justify-between relative overflow-hidden h-[100vh] ${fontClass}`} style={baseStyle}>
                                        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
                                           <line x1="-100" y1="100" x2="400" y2="-400" stroke="#F1F5F9" strokeWidth="18" />
                                           <line x1="500" y1="900" x2="1200" y2="200" stroke="#F1F5F9" strokeWidth="18" />
                                        </svg>
 
-                                       <div className="relative z-10 flex flex-col h-full justify-between">
+                                       <div className="relative z-10 flex flex-col h-full justify-between text-left">
                                           <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                              <div className="flex flex-col">
                                                 <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">{replaceTags(tituloSlide)}</h2>
@@ -697,7 +1134,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
 
                                           <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
                                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
-                                             <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded font-black">{String(slideNum).padStart(2, '0')}</span>
+                                             <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded font-black">{String(currentSlide).padStart(2, '0')}</span>
                                           </div>
                                        </div>
                                     </div>
@@ -706,13 +1143,13 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
 
                               if (layout === 'aceite') {
                                  return (
-                                    <div key={slideIdx} className="print-slide w-full aspect-[16/9] border border-slate-200 bg-[#1e4480] p-12 flex flex-col justify-between relative overflow-hidden h-[100vh] text-white">
+                                    <div key={slideIdx} className={`print-slide w-full aspect-[16/9] border border-slate-200 bg-[#1e4480] p-12 flex flex-col justify-between relative overflow-hidden h-[100vh] text-white ${fontClass}`} style={baseStyle}>
                                        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
                                           <line x1="-50" y1="150" x2="350" y2="-250" stroke="#FFFFFF" strokeWidth="10" />
                                           <line x1="600" y1="800" x2="1100" y2="300" stroke="#FFFFFF" strokeWidth="10" />
                                        </svg>
 
-                                       <div className="relative z-10 flex flex-col h-full justify-between">
+                                       <div className="relative z-10 flex flex-col h-full justify-between text-left">
                                           <div className="flex justify-between items-center w-full pb-4 border-b border-white/20">
                                              <div className="flex flex-col">
                                                 <h2 className="text-xl font-black text-white uppercase tracking-tight">{replaceTags(tituloSlide)}</h2>
@@ -779,9 +1216,9 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                              </div>
                                           </div>
 
-                                          <div className="flex justify-between items-center border-t border-white/20 pt-4 mt-auto">
+                                          <div className="flex justify-between items-center border-t border-white/20 pt-4 mt-auto pr-28">
                                              <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.smartbidhub.com.br</span>
-                                             <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded font-black">{String(slideNum).padStart(2, '0')}</span>
+                                             <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded">{String(slideNum).padStart(2, '0')}</span>
                                           </div>
                                        </div>
                                     </div>
