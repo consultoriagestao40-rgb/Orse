@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
+import BrazilMap from '@/components/BrazilMap';
 import { 
   FileText, ArrowLeft, Save, Printer, Building2, Tag, Trash2, ShieldCheck, 
   ChevronUp, ChevronDown, Plus, X, Undo, Redo, Copy, Paintbrush, 
   Lock, Unlock, Eye, EyeOff, Smile, Phone, Mail, Award, Users, DollarSign, 
-  Star, Briefcase, HelpCircle, Edit2, Play, Search, Image as ImageIcon, Sparkles
+  Star, Briefcase, HelpCircle, Edit2, Play, Search, Image as ImageIcon, Sparkles,
+  Layout
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
@@ -35,6 +37,160 @@ const iconPresets = [
   'ThumbsUp', 'Calendar', 'MapPin', 'Clock', 'FileText', 
   'TrendingUp', 'Heart', 'Coffee', 'CheckCircle2'
 ];
+
+const renderChartElement = (el: any, slideBgColor: string = '#ffffff') => {
+  const chartType = el.chartType || 'donut';
+  const chartData = el.chartData || [
+    { label: 'Limpeza', value: 45, color: '#ef4444' },
+    { label: 'Portaria', value: 30, color: '#1B4D3E' },
+    { label: 'Recepção', value: 25, color: '#3b82f6' }
+  ];
+
+  const total = chartData.reduce((sum: number, item: any) => sum + (Number(item.value) || 0), 0);
+
+  if (chartType === 'donut' || chartType === 'pie') {
+    let currentAngle = 0;
+    const radius = 80;
+    const cx = 100;
+    const cy = 100;
+
+    return (
+      <div className="w-full h-full flex items-center justify-between p-2 gap-4">
+        {/* SVG Chart */}
+        <div className="relative shrink-0" style={{ width: '50%', height: '100%', minWidth: '80px' }}>
+          <svg className="w-full h-full" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">
+            {total > 0 ? (
+              chartData.map((item: any, idx: number) => {
+                const val = Number(item.value) || 0;
+                const angle = (val / total) * 360;
+                const startAngle = currentAngle;
+                const endAngle = currentAngle + angle;
+                currentAngle += angle;
+
+                const polarToCartesian = (centerX: number, centerY: number, r: number, angleInDegrees: number) => {
+                  const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+                  return {
+                    x: centerX + (r * Math.cos(angleInRadians)),
+                    y: centerY + (r * Math.sin(angleInRadians))
+                  };
+                };
+
+                const start = polarToCartesian(cx, cy, radius, endAngle);
+                const end = polarToCartesian(cx, cy, radius, startAngle);
+                const largeArcFlag = angle <= 180 ? "0" : "1";
+                const d = [
+                  "M", cx, cy,
+                  "L", start.x, start.y,
+                  "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y,
+                  "Z"
+                ].join(" ");
+
+                return (
+                  <path
+                    key={idx}
+                    d={d}
+                    fill={item.color || '#cccccc'}
+                    stroke={slideBgColor}
+                    strokeWidth="1.5"
+                  />
+                );
+              })
+            ) : (
+              <circle cx={cx} cy={cy} r={radius} fill="#e2e8f0" />
+            )}
+            
+            {chartType === 'donut' && (
+              <circle cx={cx} cy={cy} r={radius * 0.55} fill={slideBgColor} />
+            )}
+          </svg>
+        </div>
+
+        {/* Legend */}
+        <div className="flex-1 flex flex-col justify-center gap-1.5 overflow-y-auto max-h-full pr-1">
+          {chartData.map((item: any, idx: number) => {
+            const val = Number(item.value) || 0;
+            const percent = total > 0 ? ((val / total) * 100).toFixed(0) : '0';
+            return (
+              <div key={idx} className="flex items-center gap-2 text-left min-w-0">
+                <div 
+                  className="w-2.5 h-2.5 rounded-full shrink-0" 
+                  style={{ backgroundColor: item.color || '#cccccc' }}
+                />
+                <div className="flex-1 min-w-0 leading-tight">
+                  <div className="text-[10px] font-black text-slate-700 truncate">{item.label}</div>
+                  <div className="text-[9px] font-bold text-slate-400">{val} ({percent}%)</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  } else if (chartType === 'bar') {
+    const maxVal = Math.max(...chartData.map((item: any) => Number(item.value) || 1), 1);
+
+    return (
+      <div className="w-full h-full flex flex-col justify-center p-3 gap-2 overflow-y-auto">
+        {chartData.map((item: any, idx: number) => {
+          const val = Number(item.value) || 0;
+          const pctOfMax = (val / maxVal) * 100;
+          const pctOfTotal = total > 0 ? ((val / total) * 100).toFixed(0) : '0';
+
+          return (
+            <div key={idx} className="space-y-1">
+              <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-700">
+                <span className="truncate max-w-[70%]">{item.label}</span>
+                <span className="text-slate-500">{val} ({pctOfTotal}%)</span>
+              </div>
+              <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden relative">
+                <div 
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ 
+                    width: `${pctOfMax}%`, 
+                    backgroundColor: item.color || '#ef4444' 
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  } else if (chartType === 'column') {
+    const maxVal = Math.max(...chartData.map((item: any) => Number(item.value) || 1), 1);
+
+    return (
+      <div className="w-full h-full flex flex-col justify-between p-3">
+        <div className="flex-1 flex items-end justify-around gap-2 px-1">
+          {chartData.map((item: any, idx: number) => {
+            const val = Number(item.value) || 0;
+            const pctOfMax = (val / maxVal) * 80;
+            const pctOfTotal = total > 0 ? ((val / total) * 100).toFixed(0) : '0';
+
+            return (
+              <div key={idx} className="flex-1 flex flex-col items-center justify-end h-full gap-1">
+                <span className="text-[9px] font-black text-slate-700 leading-none">{val}</span>
+                <div 
+                  className="w-full rounded-t-lg transition-all duration-500"
+                  style={{ 
+                    height: `${pctOfMax}%`, 
+                    backgroundColor: item.color || '#ef4444',
+                    minHeight: '4px'
+                  }}
+                />
+                <span className="text-[8px] font-black text-slate-400 truncate max-w-full leading-none uppercase mt-1">
+                  {item.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
 
 export default function DocumentoPropostaDetail() {
   const router = useRouter();
@@ -70,6 +226,7 @@ export default function DocumentoPropostaDetail() {
   const [searchIcon, setSearchIcon] = useState('');
   const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
   const [tempLayerName, setTempLayerName] = useState('');
+  const [activeCanvaTab, setActiveCanvaTab] = useState<'laminas' | 'elementos' | 'layouts' | 'estilos'>('laminas');
 
   const saveToHistory = (newSecoes: any[]) => {
     const listCopy = JSON.parse(JSON.stringify(newSecoes));
@@ -486,7 +643,7 @@ export default function DocumentoPropostaDetail() {
     setSelectedElementId(null);
   };
 
-  const addCustomElement = (type: 'text' | 'image' | 'shape' | 'icon', iconName?: string) => {
+  const addCustomElement = (type: 'text' | 'image' | 'shape' | 'icon', iconName?: string, textPreset?: 'title' | 'subtitle' | 'body') => {
     const list = [...secoes];
     const currentSlide = list[activeSlideIdx];
     if (!currentSlide) return;
@@ -502,13 +659,16 @@ export default function DocumentoPropostaDetail() {
     let newEl: any = {};
 
     if (type === 'text') {
+      const fontSize = textPreset === 'title' ? 32 : textPreset === 'subtitle' ? 20 : 12;
+      const fontWeight = textPreset === 'title' ? '900' : textPreset === 'subtitle' ? 'bold' : 'normal';
+      const content = textPreset === 'title' ? 'Inserir um título' : textPreset === 'subtitle' ? 'Inserir um subtítulo' : 'Inserir um pouquinho de texto';
       newEl = {
         id: `el_text_${Date.now()}`,
         type: 'text',
         name: `Caixa Texto ${elements.length + 1}`,
-        x: 150, y: 150, w: 350, h: 60,
-        content: 'Duplo clique para editar texto',
-        style: { fontSize: 16, fontWeight: 'normal', color: '#334155', textAlign: 'left' },
+        x: 150, y: 150, w: 350, h: textPreset === 'title' ? 80 : 60,
+        content,
+        style: { fontSize, fontWeight, color: '#334155', textAlign: 'left' },
         opacity: 100, rotate: 0, shadow: 'none', zIndex: elements.length + 10
       };
     } else if (type === 'image') {
@@ -538,6 +698,69 @@ export default function DocumentoPropostaDetail() {
         color: '#ef4444', opacity: 100, rotate: 0, zIndex: elements.length + 10
       };
     }
+
+    const updatedElements = [...elements, newEl];
+    const updatedText = JSON.stringify({ ...slideData, layout: 'canvas_custom', elements: updatedElements });
+    list[activeSlideIdx].texto = updatedText;
+    updateSecoesWithHistory(list);
+    setSelectedElementId(newEl.id);
+  };
+
+  const addCustomChartElement = (chartType: 'donut' | 'pie' | 'bar' | 'column') => {
+    const list = [...secoes];
+    const currentSlide = list[activeSlideIdx];
+    if (!currentSlide) return;
+
+    let slideData: any = {};
+    try {
+      slideData = JSON.parse(currentSlide.texto);
+    } catch (e) {
+      slideData = { layout: 'canvas_custom', elements: [] };
+    }
+
+    const elements = slideData.elements || [];
+    const newEl = {
+      id: `el_chart_${Date.now()}`,
+      type: 'chart',
+      chartType,
+      name: `Gráfico ${chartType === 'donut' ? 'Rosca' : chartType === 'pie' ? 'Pizza' : chartType === 'bar' ? 'Barra' : 'Colunas'}`,
+      x: 200, y: 150, w: 320, h: 220,
+      chartData: [
+        { label: 'Limpeza', value: 45, color: '#ef4444' },
+        { label: 'Portaria', value: 30, color: '#1B4D3E' },
+        { label: 'Recepção', value: 25, color: '#3b82f6' }
+      ],
+      opacity: 100, rotate: 0, shadow: 'suave', zIndex: elements.length + 10
+    };
+
+    const updatedElements = [...elements, newEl];
+    const updatedText = JSON.stringify({ ...slideData, layout: 'canvas_custom', elements: updatedElements });
+    list[activeSlideIdx].texto = updatedText;
+    updateSecoesWithHistory(list);
+    setSelectedElementId(newEl.id);
+  };
+
+  const addCustomMapElement = () => {
+    const list = [...secoes];
+    const currentSlide = list[activeSlideIdx];
+    if (!currentSlide) return;
+
+    let slideData: any = {};
+    try {
+      slideData = JSON.parse(currentSlide.texto);
+    } catch (e) {
+      slideData = { layout: 'canvas_custom', elements: [] };
+    }
+
+    const elements = slideData.elements || [];
+    const newEl = {
+      id: `el_map_${Date.now()}`,
+      type: 'map',
+      name: 'Mapa do Brasil',
+      x: 250, y: 100, w: 260, h: 260,
+      highlightedStates: ['PR', 'SC', 'RS'],
+      opacity: 100, rotate: 0, zIndex: elements.length + 10
+    };
 
     const updatedElements = [...elements, newEl];
     const updatedText = JSON.stringify({ ...slideData, layout: 'canvas_custom', elements: updatedElements });
@@ -829,83 +1052,526 @@ export default function DocumentoPropostaDetail() {
                 {/* CORPO: EDITOR VISUAL CANVA FULL WIDTH (GRID 12 COLUNAS) */}
                 <div className="grid grid-cols-12 gap-6 items-start">
                   
-                  {/* ESQUERDA: LISTA DE MINIATURAS DOS SLIDES (COL-3) */}
-                  <div className="col-span-12 lg:col-span-3 border border-slate-200 bg-white p-4 rounded-3xl space-y-4 max-h-[660px] overflow-y-auto shadow-xs">
-                    <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                      <h4 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest flex items-center gap-1.5">
-                        <Layout size={14} /> Lâminas do Slide Deck
-                      </h4>
+                  {/* ESQUERDA: O PAINEL DUPLO ESTILO CANVA (COL-3) */}
+                  <div className="col-span-12 lg:col-span-3 border border-slate-200 bg-white rounded-3xl overflow-hidden shadow-xs flex max-h-[660px] min-h-[580px]">
+                    
+                    {/* FAR-LEFT TOOLBAR (BARRA ESCURA ESTREITA) */}
+                    <div className="w-16 bg-slate-900 flex flex-col items-center py-4 space-y-5 text-white shrink-0">
                       <button
                         type="button"
-                        onClick={() => {
-                          const newSlide = {
-                            titulo: 'Novo Slide',
-                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#ffffff","textColor":"#334155","elements":[]}'
-                          };
-                          const list = [...secoes, newSlide];
-                          updateSecoesWithHistory(list);
-                          setActiveSlideIdx(list.length - 1);
-                        }}
-                        className="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase transition-all shadow-xs flex items-center gap-0.5 active:scale-95"
+                        onClick={() => setActiveCanvaTab('laminas')}
+                        className={`flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-xl transition-all cursor-pointer ${activeCanvaTab === 'laminas' ? 'bg-[#1B4D3E] text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+                        title="Lâminas do Slide"
                       >
-                        <Plus size={11} /> Adicionar
+                        <FileText size={18} />
+                        <span className="text-[7.5px] font-black uppercase tracking-wider">Lâminas</span>
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={() => setActiveCanvaTab('elementos')}
+                        className={`flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-xl transition-all cursor-pointer ${activeCanvaTab === 'elementos' ? 'bg-[#1B4D3E] text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+                        title="Biblioteca de Elementos"
+                      >
+                        <Sparkles size={18} />
+                        <span className="text-[7.5px] font-black uppercase tracking-wider">Elementos</span>
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={() => setActiveCanvaTab('layouts')}
+                        className={`flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-xl transition-all cursor-pointer ${activeCanvaTab === 'layouts' ? 'bg-[#1B4D3E] text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+                        title="Layouts da Proposta"
+                      >
+                        <Layout size={18} />
+                        <span className="text-[7.5px] font-black uppercase tracking-wider">Layouts</span>
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={() => setActiveCanvaTab('estilos')}
+                        className={`flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-xl transition-all cursor-pointer ${activeCanvaTab === 'estilos' ? 'bg-[#1B4D3E] text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+                        title="Estilos Globais"
+                      >
+                        <Paintbrush size={18} />
+                        <span className="text-[7.5px] font-black uppercase tracking-wider">Estilos</span>
                       </button>
                     </div>
 
-                    {secoes.length === 0 && (
-                      <p className="text-slate-400 text-xs text-center py-10 font-bold uppercase tracking-wider">Nenhum slide disponível.</p>
-                    )}
-
-                    <div className="space-y-1.5">
-                      {secoes.map((s, idx) => (
-                        <div
-                          key={idx}
-                          onClick={() => {
-                            setActiveSlideIdx(idx);
-                            setSelectedElementId(null);
-                          }}
-                          className={`flex items-center justify-between p-3 rounded-2xl border text-xs font-black cursor-pointer transition-all ${activeSlideIdx === idx ? 'bg-[#1B4D3E] border-[#1B4D3E] text-white shadow-md' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}
-                        >
-                          <span className="truncate flex-1 pr-1">{String(idx + 1).padStart(2, '0')}. {s.titulo}</span>
-                          
-                          <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              type="button"
-                              onClick={() => moveSecao(idx, 'up')}
-                              disabled={idx === 0}
-                              className={`p-0.5 rounded transition-colors ${activeSlideIdx === idx ? 'text-white/60 hover:text-white' : 'text-slate-400 hover:text-slate-700'} disabled:opacity-20`}
-                              title="Mover para cima"
-                            >
-                              <ChevronUp size={14} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => moveSecao(idx, 'down')}
-                              disabled={idx === secoes.length - 1}
-                              className={`p-0.5 rounded transition-colors ${activeSlideIdx === idx ? 'text-white/60 hover:text-white' : 'text-slate-400 hover:text-slate-700'} disabled:opacity-20`}
-                              title="Mover para baixo"
-                            >
-                              <ChevronDown size={14} />
-                            </button>
+                    {/* DYNAMIC SIDE PANEL CONTENT */}
+                    <div className="flex-1 p-4 overflow-y-auto max-h-[660px] flex flex-col bg-white">
+                      
+                      {/* TAB 1: LÂMINAS */}
+                      {activeCanvaTab === 'laminas' && (
+                        <div className="space-y-4 flex flex-col h-full">
+                          <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                            <h4 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest flex items-center gap-1.5">
+                              <FileText size={14} /> Lâminas do Deck
+                            </h4>
                             <button
                               type="button"
                               onClick={() => {
-                                if (confirm('Deseja excluir este slide definitivamente?')) {
-                                  const list = [...secoes];
-                                  list.splice(idx, 1);
-                                  updateSecoesWithHistory(list);
-                                  setActiveSlideIdx(Math.max(0, idx - 1));
-                                  setSelectedElementId(null);
-                                }
+                                const newSlide = {
+                                  titulo: 'Novo Slide',
+                                  texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#ffffff","textColor":"#334155","elements":[]}'
+                                };
+                                const list = [...secoes, newSlide];
+                                updateSecoesWithHistory(list);
+                                setActiveSlideIdx(list.length - 1);
                               }}
-                              className={`p-0.5 rounded transition-colors ${activeSlideIdx === idx ? 'text-white/60 hover:text-red-300' : 'text-slate-400 hover:text-red-500'}`}
-                              title="Excluir"
+                              className="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase transition-all shadow-xs flex items-center gap-0.5 active:scale-95 cursor-pointer"
                             >
-                              <X size={14} />
+                              <Plus size={10} /> Novo
                             </button>
                           </div>
+
+                          {secoes.length === 0 && (
+                            <p className="text-slate-400 text-xs text-center py-10 font-bold uppercase tracking-wider">Nenhum slide.</p>
+                          )}
+
+                          <div className="space-y-1.5 overflow-y-auto max-h-[460px] pr-1">
+                            {secoes.map((s, idx) => (
+                              <div
+                                key={idx}
+                                onClick={() => {
+                                  setActiveSlideIdx(idx);
+                                  setSelectedElementId(null);
+                                }}
+                                className={`flex items-center justify-between p-3 rounded-2xl border text-xs font-black cursor-pointer transition-all ${activeSlideIdx === idx ? 'bg-[#1B4D3E] border-[#1B4D3E] text-white shadow-md' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}
+                              >
+                                <span className="truncate flex-1 pr-1">{String(idx + 1).padStart(2, '0')}. {s.titulo}</span>
+                                
+                                <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    type="button"
+                                    onClick={() => moveSecao(idx, 'up')}
+                                    disabled={idx === 0}
+                                    className={`p-0.5 rounded transition-colors ${activeSlideIdx === idx ? 'text-white/60 hover:text-white' : 'text-slate-400 hover:text-slate-700'} disabled:opacity-20`}
+                                    title="Mover para cima"
+                                  >
+                                    <ChevronUp size={14} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => moveSecao(idx, 'down')}
+                                    disabled={idx === secoes.length - 1}
+                                    className={`p-0.5 rounded transition-colors ${activeSlideIdx === idx ? 'text-white/60 hover:text-white' : 'text-slate-400 hover:text-slate-700'} disabled:opacity-20`}
+                                    title="Mover para baixo"
+                                  >
+                                    <ChevronDown size={14} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (confirm('Deseja excluir este slide definitivamente?')) {
+                                        const list = [...secoes];
+                                        list.splice(idx, 1);
+                                        updateSecoesWithHistory(list);
+                                        setActiveSlideIdx(Math.max(0, idx - 1));
+                                        setSelectedElementId(null);
+                                      }
+                                    }}
+                                    className={`p-0.5 rounded transition-colors ${activeSlideIdx === idx ? 'text-white/60 hover:text-red-300' : 'text-slate-400 hover:text-red-500'}`}
+                                    title="Excluir"
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ))}
+                      )}
+
+                      {/* TAB 2: ELEMENTOS */}
+                      {activeCanvaTab === 'elementos' && (
+                        <div className="space-y-4 flex flex-col h-full">
+                          <div className="border-b border-slate-100 pb-2">
+                            <h4 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest flex items-center gap-1.5">
+                              <Sparkles size={14} /> Biblioteca de Elementos
+                            </h4>
+                          </div>
+
+                          <div className="space-y-5 overflow-y-auto max-h-[500px] pr-1">
+                            {/* Seção 1: Texto e Imagem */}
+                            <div className="space-y-2">
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Caixas de Texto (Estilos Canva)</span>
+                              <div className="space-y-2 mb-3">
+                                <button
+                                  type="button"
+                                  onClick={() => addCustomElement('text', undefined, 'title')}
+                                  className="w-full text-left p-3 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 gap-1.5 cursor-pointer transition-all active:scale-98 shadow-2xs"
+                                >
+                                  <span className="text-xl font-black block">Inserir um título</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => addCustomElement('text', undefined, 'subtitle')}
+                                  className="w-full text-left p-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 gap-1.5 cursor-pointer transition-all active:scale-98 shadow-2xs"
+                                >
+                                  <span className="text-sm font-bold block">Inserir um subtítulo</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => addCustomElement('text', undefined, 'body')}
+                                  className="w-full text-left p-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 gap-1.5 cursor-pointer transition-all active:scale-98 shadow-2xs"
+                                >
+                                  <span className="text-xs font-normal block text-slate-500">Inserir um pouquinho de texto</span>
+                                </button>
+                              </div>
+
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Mídias e Fotos</span>
+                              <div className="grid grid-cols-1 gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => addCustomElement('image')}
+                                  className="flex items-center justify-start p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 gap-3 cursor-pointer hover:border-slate-350 transition-all active:scale-95 w-full text-left"
+                                >
+                                  <div className="w-9 h-9 rounded-xl bg-slate-200 flex items-center justify-center shrink-0">
+                                    <ImageIcon size={18} className="text-[#1B4D3E]" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <span className="text-[10px] font-black uppercase block leading-tight text-[#1b4d3e]">Inserir Imagem / Foto</span>
+                                    <span className="text-[8px] font-bold text-slate-400 block mt-0.5 leading-none">Carregue arquivos locais ou links corporativos</span>
+                                  </div>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Seção 2: Formas (Shapes) */}
+                            <div className="space-y-2">
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Formas e Containers</span>
+                              <div className="grid grid-cols-2 gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const list = [...secoes];
+                                    const currentSlide = list[activeSlideIdx];
+                                    if (!currentSlide) return;
+                                    let slideData = JSON.parse(currentSlide.texto);
+                                    const newEl = {
+                                      id: `el_shape_${Date.now()}`,
+                                      type: 'shape',
+                                      name: `Quadrado`,
+                                      x: 200, y: 150, w: 180, h: 180,
+                                      color: '#ef4444', radius: 0, opacity: 100, rotate: 0, shadow: 'none', zIndex: (slideData.elements || []).length + 10
+                                    };
+                                    slideData.elements = [...(slideData.elements || []), newEl];
+                                    list[activeSlideIdx].texto = JSON.stringify(slideData);
+                                    updateSecoesWithHistory(list);
+                                    setSelectedElementId(newEl.id);
+                                  }}
+                                  className="flex flex-col items-center justify-center p-2.5 rounded-2xl border border-slate-250 bg-slate-50 hover:bg-slate-100 text-slate-700 gap-1.5 cursor-pointer transition-all active:scale-95"
+                                >
+                                  <div className="w-5 h-5 bg-slate-400 rounded-none shrink-0" />
+                                  <span className="text-[8.5px] font-black uppercase leading-none">Quadrado</span>
+                                </button>
+                                
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const list = [...secoes];
+                                    const currentSlide = list[activeSlideIdx];
+                                    if (!currentSlide) return;
+                                    let slideData = JSON.parse(currentSlide.texto);
+                                    const newEl = {
+                                      id: `el_shape_${Date.now()}`,
+                                      type: 'shape',
+                                      name: `Círculo`,
+                                      x: 200, y: 150, w: 180, h: 180,
+                                      color: '#3b82f6', radius: 99, opacity: 100, rotate: 0, shadow: 'none', zIndex: (slideData.elements || []).length + 10
+                                    };
+                                    slideData.elements = [...(slideData.elements || []), newEl];
+                                    list[activeSlideIdx].texto = JSON.stringify(slideData);
+                                    updateSecoesWithHistory(list);
+                                    setSelectedElementId(newEl.id);
+                                  }}
+                                  className="flex flex-col items-center justify-center p-2.5 rounded-2xl border border-slate-250 bg-slate-50 hover:bg-slate-100 text-slate-700 gap-1.5 cursor-pointer transition-all active:scale-95"
+                                >
+                                  <div className="w-5 h-5 bg-slate-400 rounded-full shrink-0" />
+                                  <span className="text-[8.5px] font-black uppercase leading-none">Círculo</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const list = [...secoes];
+                                    const currentSlide = list[activeSlideIdx];
+                                    if (!currentSlide) return;
+                                    let slideData = JSON.parse(currentSlide.texto);
+                                    const newEl = {
+                                      id: `el_shape_${Date.now()}`,
+                                      type: 'shape',
+                                      name: `Card Arredondado`,
+                                      x: 200, y: 150, w: 220, h: 120,
+                                      color: '#10b981', radius: 16, opacity: 100, rotate: 0, shadow: 'suave', zIndex: (slideData.elements || []).length + 10
+                                    };
+                                    slideData.elements = [...(slideData.elements || []), newEl];
+                                    list[activeSlideIdx].texto = JSON.stringify(slideData);
+                                    updateSecoesWithHistory(list);
+                                    setSelectedElementId(newEl.id);
+                                  }}
+                                  className="flex flex-col items-center justify-center p-2.5 rounded-2xl border border-slate-250 bg-slate-50 hover:bg-slate-100 text-slate-700 gap-1.5 cursor-pointer transition-all active:scale-95 col-span-2"
+                                >
+                                  <div className="w-12 h-6 bg-slate-400 rounded-md shrink-0" />
+                                  <span className="text-[8.5px] font-black uppercase leading-none">Card Arredondado (Container)</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Seção 3: Gráficos Dinâmicos */}
+                            <div className="space-y-2">
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Gráficos SVG Dinâmicos</span>
+                              <div className="grid grid-cols-2 gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => addCustomChartElement('donut')}
+                                  className="flex flex-col items-center justify-center p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 gap-2 cursor-pointer transition-all active:scale-95 text-center"
+                                >
+                                  <svg viewBox="0 0 32 32" className="w-7 h-7 text-[#ef4444] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <circle cx="16" cy="16" r="12" />
+                                    <circle cx="16" cy="16" r="6" strokeDasharray="3 3" />
+                                  </svg>
+                                  <span className="text-[8px] font-black uppercase leading-none">Gráfico Rosca</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => addCustomChartElement('pie')}
+                                  className="flex flex-col items-center justify-center p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 gap-2 cursor-pointer transition-all active:scale-95 text-center"
+                                >
+                                  <svg viewBox="0 0 32 32" className="w-7 h-7 text-[#3b82f6] shrink-0" fill="currentColor">
+                                    <path d="M16 16 L16 4 A12 12 0 0 1 28 16 Z" />
+                                    <path d="M16 16 L28 16 A12 12 0 1 1 16 4 Z" opacity="0.7" />
+                                  </svg>
+                                  <span className="text-[8px] font-black uppercase leading-none">Gráfico Pizza</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => addCustomChartElement('bar')}
+                                  className="flex flex-col items-center justify-center p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 gap-2 cursor-pointer transition-all active:scale-95 text-center"
+                                >
+                                  <div className="flex flex-col gap-1 w-8 shrink-0 py-1">
+                                    <div className="w-full h-1.5 bg-[#ef4444] rounded" />
+                                    <div className="w-3/4 h-1.5 bg-[#1B4D3E] rounded" />
+                                    <div className="w-1/2 h-1.5 bg-[#3b82f6] rounded" />
+                                  </div>
+                                  <span className="text-[8px] font-black uppercase leading-none">Barra Horizontal</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => addCustomChartElement('column')}
+                                  className="flex flex-col items-center justify-center p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 gap-2 cursor-pointer transition-all active:scale-95 text-center"
+                                >
+                                  <div className="flex items-end gap-1.5 h-6 w-8 shrink-0 justify-center">
+                                    <div className="w-1.5 h-3 bg-[#ef4444] rounded-t" />
+                                    <div className="w-1.5 h-5 bg-[#1B4D3E] rounded-t" />
+                                    <div className="w-1.5 h-2.5 bg-[#3b82f6] rounded-t" />
+                                  </div>
+                                  <span className="text-[8px] font-black uppercase leading-none">Coluna Vertical</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Seção 4: Ilustrações e Mapas */}
+                            <div className="space-y-2">
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Ilustrações & Cobertura</span>
+                              <div className="grid grid-cols-1 gap-2">
+                                <button
+                                  type="button"
+                                  onClick={addCustomMapElement}
+                                  className="flex items-center justify-start p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 gap-3 cursor-pointer transition-all active:scale-95 w-full text-left"
+                                >
+                                  <div className="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                                    <svg viewBox="0 0 100 100" className="w-8 h-8 text-[#1B4D3E]">
+                                      <path d="M25 40 L40 30 L55 35 L75 25 L85 45 L70 65 L80 85 L60 90 L45 75 L30 80 L20 60 Z" fill="currentColor" opacity="0.8" />
+                                    </svg>
+                                  </div>
+                                  <div className="flex-1">
+                                    <span className="text-[10px] font-black uppercase block leading-tight text-[#1b4d3e]">Mapa do Brasil Vetorial</span>
+                                    <span className="text-[8px] font-bold text-slate-400 block mt-0.5 leading-none">Desenho interativo 100% editável</span>
+                                  </div>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Seção 5: Ícones Lucide */}
+                            <div className="space-y-2">
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Biblioteca de Ícones</span>
+                              <div className="relative mb-2">
+                                <input
+                                  type="text"
+                                  placeholder="Pesquisar ícones..."
+                                  className="w-full bg-slate-50 border border-slate-200 rounded-xl text-[10px] pl-8 pr-3 py-1.5 font-semibold focus:outline-none focus:ring-1 focus:ring-[#1B4D3E]"
+                                  value={searchIcon}
+                                  onChange={(e) => setSearchIcon(e.target.value)}
+                                />
+                                <Search size={12} className="absolute left-3 top-2 text-slate-400" />
+                              </div>
+                              <div className="grid grid-cols-4 gap-1 p-2 bg-slate-50 rounded-2xl border border-slate-200 max-h-[140px] overflow-y-auto">
+                                {iconPresets.filter(ic => ic.toLowerCase().includes(searchIcon.toLowerCase())).map(ic => (
+                                  <button
+                                    key={ic}
+                                    type="button"
+                                    onClick={() => addCustomElement('icon', ic)}
+                                    className="p-2 rounded-xl hover:bg-slate-200 flex items-center justify-center text-[#ef4444] transition-all cursor-pointer"
+                                    title={ic}
+                                  >
+                                    <LucideIconRenderer name={ic} size={16} color="#ef4444" />
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* TAB 3: LAYOUTS */}
+                      {activeCanvaTab === 'layouts' && (
+                        <div className="space-y-4 flex flex-col h-full">
+                          <div className="border-b border-slate-100 pb-2">
+                            <h4 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest flex items-center gap-1.5">
+                              <Layout size={14} /> Gabaritos de Layouts
+                            </h4>
+                          </div>
+
+                          <div className="space-y-2.5 overflow-y-auto max-h-[500px]">
+                            <p className="text-[9px] text-slate-400 font-bold uppercase leading-relaxed mb-1">Substitua a lâmina atual por um template premium:</p>
+                            
+                            {[
+                              ['provelo_split', 'Capa com Foto (Split)', 'Ideal para a capa principal da proposta comercial.'],
+                              ['valores', 'Valores Institucionais', 'Apresentação de pilares éticos e missões.'],
+                              ['performance', 'Performance e KPIs', 'Card de números de atendimento e metas.'],
+                              ['fundadores', 'Sócios e Fundadores', 'Apresentação de diretores e rostos da empresa.']
+                            ].map(([typeKey, title, desc]) => (
+                              <button
+                                key={typeKey}
+                                type="button"
+                                onClick={() => {
+                                  if (confirm('Atenção: isto substituirá o conteúdo atual do slide. Deseja continuar?')) {
+                                    applyGabarito(typeKey);
+                                  }
+                                }}
+                                className="w-full text-left p-3 rounded-2xl border border-slate-200 hover:border-slate-350 hover:bg-slate-50 transition-all cursor-pointer flex flex-col gap-1 active:scale-98"
+                              >
+                                <span className="text-[10px] font-black text-slate-800 uppercase leading-none block">{title}</span>
+                                <span className="text-[8px] font-bold text-slate-400 leading-normal block">{desc}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* TAB 4: ESTILOS */}
+                      {activeCanvaTab === 'estilos' && (
+                        <div className="space-y-4 flex flex-col h-full">
+                          <div className="border-b border-slate-100 pb-2">
+                            <h4 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest flex items-center gap-1.5">
+                              <Paintbrush size={14} /> Estilos do Slide
+                            </h4>
+                          </div>
+
+                          <div className="space-y-4 overflow-y-auto max-h-[500px] pr-1">
+                            {/* Slide Background Color */}
+                            <div className="space-y-2">
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Cor de Fundo da Lâmina</span>
+                              
+                              <div className="flex gap-1.5 items-center">
+                                <input
+                                  type="color"
+                                  className="w-8 h-8 rounded-lg border border-slate-200 cursor-pointer shrink-0"
+                                  value={slideData.bgColor || '#ffffff'}
+                                  onChange={(e) => {
+                                    const list = [...secoes];
+                                    list[activeSlideIdx].texto = JSON.stringify({ ...slideData, bgColor: e.target.value });
+                                    updateSecoesWithHistory(list);
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  className="w-full bg-slate-50 border border-slate-200 rounded-xl text-[10px] px-2 py-1.5 font-mono uppercase text-slate-700 focus:outline-none"
+                                  value={slideData.bgColor || '#ffffff'}
+                                  onChange={(e) => {
+                                    const list = [...secoes];
+                                    list[activeSlideIdx].texto = JSON.stringify({ ...slideData, bgColor: e.target.value });
+                                    updateSecoesWithHistory(list);
+                                  }}
+                                />
+                              </div>
+
+                              {/* harmonious presets */}
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {['#ffffff', '#f8fafc', '#f1f5f9', '#0f172a', '#1e293b', '#1B4D3E', '#ef4444', '#1e4480'].map(c => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => {
+                                      const list = [...secoes];
+                                      list[activeSlideIdx].texto = JSON.stringify({ ...slideData, bgColor: c });
+                                      updateSecoesWithHistory(list);
+                                    }}
+                                    className="w-5 h-5 rounded border border-slate-200 cursor-pointer hover:scale-110 transition-transform"
+                                    style={{ backgroundColor: c }}
+                                    title={c}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Slide Background Image */}
+                            <div className="space-y-2 pt-2 border-t border-slate-100">
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Imagem de Fundo</span>
+                              
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="w-full text-[10px] text-slate-500 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-xl file:border-0 file:text-[8px] file:font-black file:uppercase file:bg-emerald-50 file:text-emerald-700 file:cursor-pointer hover:file:bg-emerald-100"
+                                onChange={(e) => uploadBgImageClient(e, slideData)}
+                              />
+
+                              {slideData.bgImage && (
+                                <div className="mt-2 flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-150">
+                                  <span className="text-[9px] text-slate-500 font-bold truncate max-w-[70%]">Fundo Ativo</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const list = [...secoes];
+                                      const { bgImage, ...rest } = slideData;
+                                      list[activeSlideIdx].texto = JSON.stringify(rest);
+                                      updateSecoesWithHistory(list);
+                                    }}
+                                    className="text-red-500 hover:text-red-700 text-[8px] font-black uppercase cursor-pointer"
+                                  >
+                                    Limpar
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Typography select */}
+                            <div className="space-y-2 pt-2 border-t border-slate-100">
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Família de Fontes</span>
+                              <select
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs px-3 py-2 font-black text-slate-700 focus:outline-none"
+                                value={slideData.fontFamily || 'Outfit'}
+                                onChange={(e) => {
+                                  const list = [...secoes];
+                                  list[activeSlideIdx].texto = JSON.stringify({ ...slideData, fontFamily: e.target.value });
+                                  updateSecoesWithHistory(list);
+                                }}
+                              >
+                                <option value="Outfit">Outfit (Moderna Provelo)</option>
+                                <option value="Montserrat">Montserrat (Geométrica)</option>
+                                <option value="Inter">Inter (Sólida)</option>
+                                <option value="Playfair">Playfair Display (Serifada Premium)</option>
+                                <option value="Roboto">Roboto (Clássica)</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -938,11 +1604,11 @@ export default function DocumentoPropostaDetail() {
                         setElementStart({ x: el.x, y: el.y, w: el.w, h: el.h });
 
                         if (isResizeHandle) {
-                          setIsResizing(true);
-                          setIsDragging(false);
+                           setIsResizing(true);
+                           setIsDragging(false);
                         } else {
-                          setIsDragging(true);
-                          setIsResizing(false);
+                           setIsDragging(true);
+                           setIsResizing(false);
                         }
 
                         e.currentTarget.setPointerCapture(e.pointerId);
@@ -1039,33 +1705,9 @@ export default function DocumentoPropostaDetail() {
                       return (
                         <div className="space-y-4">
                           
-                          {/* BARRA DE BOTÕES E GABARITOS DE LAYOUT */}
-                          <div className="bg-white border border-slate-200 p-3 rounded-2xl flex flex-wrap gap-2 items-center justify-between shadow-xs">
-                            <div className="flex gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() => addCustomElement('text')}
-                                className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-black px-3 py-1.5 rounded-lg text-[9px] uppercase shadow-xs cursor-pointer active:scale-95 transition-all"
-                              >
-                                + Texto
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => addCustomElement('image')}
-                                className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-black px-3 py-1.5 rounded-lg text-[9px] uppercase shadow-xs cursor-pointer active:scale-95 transition-all"
-                              >
-                                + Foto
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => addCustomElement('shape')}
-                                className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-black px-3 py-1.5 rounded-lg text-[9px] uppercase shadow-xs cursor-pointer active:scale-95 transition-all"
-                              >
-                                + Forma
-                              </button>
-                            </div>
-
-                            <div className="flex items-center gap-1">
+                          {/* BARRA DE BOTÕES DE UTILIDADES */}
+                          <div className="bg-white border border-slate-200 px-4 py-2.5 rounded-2xl flex items-center justify-between shadow-xs">
+                            <div className="flex items-center gap-1.5">
                               <button
                                 type="button"
                                 onClick={handleUndo}
@@ -1086,35 +1728,26 @@ export default function DocumentoPropostaDetail() {
                               </button>
                             </div>
 
-                            <div className="flex gap-1 items-center">
-                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Layouts:</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Atalhos Ativos</span>
+                              <span className="bg-slate-100 text-slate-600 text-[8px] font-black px-2 py-0.5 rounded-md uppercase">Ctrl+D (Duplicar)</span>
+                              <span className="bg-slate-100 text-slate-600 text-[8px] font-black px-2 py-0.5 rounded-md uppercase">Del (Apagar)</span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5">
                               <button
                                 type="button"
-                                onClick={() => applyGabarito('provelo_split')}
-                                className="bg-red-50 hover:bg-red-100 text-[#ef4444] border border-red-150 font-black px-2.5 py-1.5 rounded-lg text-[9px] uppercase cursor-pointer"
+                                onClick={() => {
+                                  if (confirm('Tem certeza de que deseja limpar todos os elementos desta lâmina?')) {
+                                    const list = [...secoes];
+                                    list[activeSlideIdx].texto = JSON.stringify({ ...slideData, elements: [] });
+                                    updateSecoesWithHistory(list);
+                                    setSelectedElementId(null);
+                                  }
+                                }}
+                                className="text-red-600 hover:bg-red-50 font-black px-3 py-1.5 rounded-lg text-[9px] uppercase transition-all cursor-pointer"
                               >
-                                Capa
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => applyGabarito('valores')}
-                                className="bg-red-50 hover:bg-red-100 text-[#ef4444] border border-red-150 font-black px-2.5 py-1.5 rounded-lg text-[9px] uppercase cursor-pointer"
-                              >
-                                Valores
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => applyGabarito('performance')}
-                                className="bg-red-50 hover:bg-red-100 text-[#ef4444] border border-red-150 font-black px-2.5 py-1.5 rounded-lg text-[9px] uppercase cursor-pointer"
-                              >
-                                Métricas
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => applyGabarito('fundadores')}
-                                className="bg-red-50 hover:bg-red-100 text-[#ef4444] border border-red-150 font-black px-2.5 py-1.5 rounded-lg text-[9px] uppercase cursor-pointer"
-                              >
-                                Sócios
+                                Limpar Lâmina
                               </button>
                             </div>
                           </div>
@@ -1242,6 +1875,17 @@ export default function DocumentoPropostaDetail() {
                                               name={el.nameIcon || 'ShieldCheck'} 
                                               size={Math.min(el.w, el.h) * 0.9} 
                                               color={el.color || '#ef4444'} 
+                                            />
+                                          </div>
+                                        )}
+
+                                        {el.type === 'chart' && renderChartElement(el, slideData.bgColor || '#ffffff')}
+
+                                        {el.type === 'map' && (
+                                          <div className="w-full h-full p-2 flex items-center justify-center">
+                                            <BrazilMap 
+                                              highlightedStates={el.highlightedStates || ['PR', 'SC', 'RS']} 
+                                              className="w-full h-full text-[#1E3A8A]" 
                                             />
                                           </div>
                                         )}

@@ -9,6 +9,160 @@ const LucideIconRenderer = ({ name, className, size, color }: { name: string; cl
   return <IconComponent size={size} className={className} style={{ color }} />;
 };
 
+const renderChartElement = (el: any, slideBgColor: string = '#ffffff') => {
+  const chartType = el.chartType || 'donut';
+  const chartData = el.chartData || [
+    { label: 'Limpeza', value: 45, color: '#ef4444' },
+    { label: 'Portaria', value: 30, color: '#1B4D3E' },
+    { label: 'Recepção', value: 25, color: '#3b82f6' }
+  ];
+
+  const total = chartData.reduce((sum: number, item: any) => sum + (Number(item.value) || 0), 0);
+
+  if (chartType === 'donut' || chartType === 'pie') {
+    let currentAngle = 0;
+    const radius = 80;
+    const cx = 100;
+    const cy = 100;
+
+    return (
+      <div className="w-full h-full flex items-center justify-between p-2 gap-4">
+        {/* SVG Chart */}
+        <div className="relative shrink-0" style={{ width: '50%', height: '100%', minWidth: '80px' }}>
+          <svg className="w-full h-full" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">
+            {total > 0 ? (
+              chartData.map((item: any, idx: number) => {
+                const val = Number(item.value) || 0;
+                const angle = (val / total) * 360;
+                const startAngle = currentAngle;
+                const endAngle = currentAngle + angle;
+                currentAngle += angle;
+
+                const polarToCartesian = (centerX: number, centerY: number, r: number, angleInDegrees: number) => {
+                  const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+                  return {
+                    x: centerX + (r * Math.cos(angleInRadians)),
+                    y: centerY + (r * Math.sin(angleInRadians))
+                  };
+                };
+
+                const start = polarToCartesian(cx, cy, radius, endAngle);
+                const end = polarToCartesian(cx, cy, radius, startAngle);
+                const largeArcFlag = angle <= 180 ? "0" : "1";
+                const d = [
+                  "M", cx, cy,
+                  "L", start.x, start.y,
+                  "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y,
+                  "Z"
+                ].join(" ");
+
+                return (
+                  <path
+                    key={idx}
+                    d={d}
+                    fill={item.color || '#cccccc'}
+                    stroke={slideBgColor}
+                    strokeWidth="1.5"
+                  />
+                );
+              })
+            ) : (
+              <circle cx={cx} cy={cy} r={radius} fill="#e2e8f0" />
+            )}
+            
+            {chartType === 'donut' && (
+              <circle cx={cx} cy={cy} r={radius * 0.55} fill={slideBgColor} />
+            )}
+          </svg>
+        </div>
+
+        {/* Legend */}
+        <div className="flex-1 flex flex-col justify-center gap-1.5 overflow-y-auto max-h-full pr-1">
+          {chartData.map((item: any, idx: number) => {
+            const val = Number(item.value) || 0;
+            const percent = total > 0 ? ((val / total) * 100).toFixed(0) : '0';
+            return (
+              <div key={idx} className="flex items-center gap-2 text-left min-w-0">
+                <div 
+                  className="w-2.5 h-2.5 rounded-full shrink-0" 
+                  style={{ backgroundColor: item.color || '#cccccc' }}
+                />
+                <div className="flex-1 min-w-0 leading-tight">
+                  <div className="text-[10px] font-black text-slate-700 truncate">{item.label}</div>
+                  <div className="text-[9px] font-bold text-slate-400">{val} ({percent}%)</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  } else if (chartType === 'bar') {
+    const maxVal = Math.max(...chartData.map((item: any) => Number(item.value) || 1), 1);
+
+    return (
+      <div className="w-full h-full flex flex-col justify-center p-3 gap-2 overflow-y-auto">
+        {chartData.map((item: any, idx: number) => {
+          const val = Number(item.value) || 0;
+          const pctOfMax = (val / maxVal) * 100;
+          const pctOfTotal = total > 0 ? ((val / total) * 100).toFixed(0) : '0';
+
+          return (
+            <div key={idx} className="space-y-1">
+              <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-700">
+                <span className="truncate max-w-[70%]">{item.label}</span>
+                <span className="text-slate-500">{val} ({pctOfTotal}%)</span>
+              </div>
+              <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden relative">
+                <div 
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ 
+                    width: `${pctOfMax}%`, 
+                    backgroundColor: item.color || '#ef4444' 
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  } else if (chartType === 'column') {
+    const maxVal = Math.max(...chartData.map((item: any) => Number(item.value) || 1), 1);
+
+    return (
+      <div className="w-full h-full flex flex-col justify-between p-3">
+        <div className="flex-1 flex items-end justify-around gap-2 px-1">
+          {chartData.map((item: any, idx: number) => {
+            const val = Number(item.value) || 0;
+            const pctOfMax = (val / maxVal) * 80;
+            const pctOfTotal = total > 0 ? ((val / total) * 100).toFixed(0) : '0';
+
+            return (
+              <div key={idx} className="flex-1 flex flex-col items-center justify-end h-full gap-1">
+                <span className="text-[9px] font-black text-slate-700 leading-none">{val}</span>
+                <div 
+                  className="w-full rounded-t-lg transition-all duration-500"
+                  style={{ 
+                    height: `${pctOfMax}%`, 
+                    backgroundColor: item.color || '#ef4444',
+                    minHeight: '4px'
+                  }}
+                />
+                <span className="text-[8px] font-black text-slate-400 truncate max-w-full leading-none uppercase mt-1">
+                  {item.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
+
 export default function PropostaApresentacaoPrint({ proposta, resultado, empresaEmissora }: { proposta: any, resultado?: any, empresaEmissora?: any }) {
   const [companyLogo, setCompanyLogo] = useState<string>(
     proposta.tenant?.logoUrl || 'https://placehold.co/300x80?text=Silva+Consultoria'
@@ -395,10 +549,22 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                                 {el.type === 'icon' && (
                                                    <div className="w-full h-full flex items-center justify-center" style={{ transform: el.rotate ? `rotate(${el.rotate}deg)` : undefined, opacity: el.opacity !== undefined ? el.opacity / 100 : 1 }}>
                                                       <LucideIconRenderer 
-                                                         name={el.name} 
+                                                         name={el.nameIcon || el.name || 'ShieldCheck'} 
                                                          size={Math.min(el.w, el.h) * 0.9} 
                                                          color={el.color || '#ef4444'} 
                                                       />
+                                                   </div>
+                                                )}
+
+                                                {el.type === 'chart' && (
+                                                   <div className="w-full h-full" style={{ transform: el.rotate ? `rotate(${el.rotate}deg)` : undefined, opacity: el.opacity !== undefined ? el.opacity / 100 : 1 }}>
+                                                      {renderChartElement(el, slideData.bgColor || '#ffffff')}
+                                                   </div>
+                                                )}
+
+                                                {el.type === 'map' && (
+                                                   <div className="w-full h-full p-2 flex items-center justify-center" style={{ transform: el.rotate ? `rotate(${el.rotate}deg)` : undefined, opacity: el.opacity !== undefined ? el.opacity / 100 : 1 }}>
+                                                      <BrazilMap highlightedStates={el.highlightedStates || ['PR', 'SC', 'RS']} className="w-full h-full text-white" />
                                                    </div>
                                                 )}
                                              </div>
