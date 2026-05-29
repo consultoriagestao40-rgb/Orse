@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Lista de rotas públicas
-  const isPublicRoute = pathname === '/' || pathname === '/login' || pathname.startsWith('/api/setup') || pathname.startsWith('/_next') || pathname.includes('favicon')
+  const isPublicRoute = pathname === '/' || pathname === '/login' || pathname.startsWith('/proposta/ver/') || pathname.startsWith('/api/setup') || pathname.startsWith('/_next') || pathname.includes('favicon')
 
   if (!session && !isPublicRoute) {
     return NextResponse.redirect(new URL('/login', request.url))

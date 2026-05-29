@@ -323,3 +323,112 @@ export async function deleteTemplateProposta(id: string) {
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * Server Action para aprovar eletronicamente uma proposta comercial (FPV / Slide Deck)
+ */
+export async function aprovarPropostaAction(documentoId: string, payload: { nome: string, cpf: string, assinatura: string, ip: string }) {
+  try {
+    const doc = await prisma.documentoProposta.findUnique({
+      where: { id: documentoId },
+      include: {
+        proposta: {
+          include: {
+            user: true
+          }
+        },
+        client: true
+      }
+    });
+
+    if (!doc) {
+      return { success: false, error: 'Documento da proposta não encontrado.' };
+    }
+
+    // 1. Atualizar o documento no banco de dados com a assinatura
+    const updatedDoc = await prisma.documentoProposta.update({
+      where: { id: documentoId },
+      data: {
+        status: 'Aprovada',
+        statusAssinatura: 'ASSINADO',
+        dataAssinatura: new Date(),
+        assinaturaBase64: payload.assinatura,
+        ipAssinante: payload.ip,
+        nomeAssinante: payload.nome,
+        cpfAssinante: payload.cpf
+      }
+    });
+
+    // 2. Tentar atualizar também o status da FPV de origem para manter a sincronia
+    await prisma.proposta.update({
+      where: { id: doc.propostaId },
+      data: { status: 'Aprovada' }
+    }).catch(err => console.error('Erro ao atualizar FPV associada:', err));
+
+    // 3. Disparar notificação no WhatsApp do Vendedor via Z-API se estiver conectada
+    const vendedor = doc.proposta.user;
+    if (vendedor.celular) {
+      const cleanPhone = vendedor.celular.replace(/\D/g, '');
+      const tenantId = doc.tenantId;
+
+      let instanceId = process.env.ZAPI_INSTANCE_ID;
+      let token = process.env.ZAPI_TOKEN;
+      let clientToken = process.env.ZAPI_CLIENT_TOKEN;
+
+      if (tenantId) {
+        const tenant = await prisma.tenant.findUnique({
+          where: { id: tenantId },
+          select: {
+            whatsappInstanceId: true,
+            whatsappToken: true,
+            whatsappClientToken: true,
+            nomeFantasia: true
+          }
+        });
+        if (tenant && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
+          instanceId = tenant.whatsappInstanceId;
+          token = tenant.whatsappToken;
+          clientToken = tenant.whatsappClientToken;
+        }
+      }
+
+      if (instanceId && token && clientToken) {
+        try {
+          const numProposta = String(doc.proposta.numero).padStart(3, '0');
+          const clienteNome = doc.client.nomeFantasia || doc.client.razaoSocial || '';
+          
+          const text = `🎉 *PROPOSTA APROVADA!* 🎉\n\n` +
+                       `Olá, *${vendedor.nome}*!\n\n` +
+                       `Temos ótimas notícias! O cliente *${clienteNome}* acabou de visualizar, aprovar e assinar eletronicamente a proposta comercial *FPV-${numProposta}*!\n\n` +
+                       `✍️ *Assinado por:* ${payload.nome}\n` +
+                       `🆔 *CPF/CNPJ:* ${payload.cpf}\n` +
+                       `🌐 *IP:* ${payload.ip}\n` +
+                       `📅 *Data/Hora:* ${new Date().toLocaleString('pt-BR')}\n\n` +
+                       `Parabéns por mais este fechamento! 🚀💼`;
+
+          const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`;
+          await fetch(url, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Client-Token': clientToken
+            },
+            body: JSON.stringify({
+              phone: cleanPhone,
+              message: text
+            })
+          });
+        } catch (zapiErr) {
+          console.error('Erro ao disparar WhatsApp de fechamento via Z-API:', zapiErr);
+        }
+      }
+    }
+
+    revalidatePath('/propostas-comerciais');
+    revalidatePath(`/proposta/ver/${documentoId}`);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao aprovar proposta eletronicamente:', error);
+    return { success: false, error: error.message };
+  }
+}

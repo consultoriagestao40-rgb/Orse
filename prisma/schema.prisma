@@ -375,6 +375,15 @@ model DocumentoProposta {
   configApresentacao Json?
   status            String             @default("Rascunho")
   valorTotal        Float              @default(0)
+  
+  // Campos de Assinatura e Aceite Eletrônico
+  statusAssinatura  String?            // "PENDENTE", "ASSINADO", "RECUSADO"
+  dataAssinatura    DateTime?
+  assinaturaBase64  String?
+  ipAssinante       String?
+  nomeAssinante     String?
+  cpfAssinante      String?
+
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
