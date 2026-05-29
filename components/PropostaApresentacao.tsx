@@ -128,7 +128,6 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                         : "w-full max-w-[960px] aspect-[16/9] min-w-[760px] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative select-none flex flex-col justify-between"
                      }>
                         {hasDynamicSlides ? (
-                           hasDynamicSlides ? (
                            (() => {
                               const activeSlide = rawSlides[currentSlide - 1];
                               if (!activeSlide) return null;
@@ -1157,7 +1156,8 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                               }
 
                               return null;
-                           })() ) : (
+                           })()
+                        ) : (
                            <>
                         
                         {/* SLIDE 01 (MENSAGEM DE VISITA E AGRADECIMENTO) */}
