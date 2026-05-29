@@ -736,7 +736,7 @@ export default function LandingPage() {
           </div>
 
           <p className="text-xs font-semibold uppercase tracking-wider text-center md:text-left">
-            © 2026 Grupo JVS • Orse Technology. Todos os direitos reservados.
+            © 2026 Silva Consultoria Empresarial LTDA • CNPJ 40.180.983/0001-00. Todos os direitos reservados.
           </p>
 
           <div className="flex items-center gap-6 text-xs font-bold uppercase tracking-widest">

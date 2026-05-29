@@ -3,13 +3,13 @@ import { NextResponse } from 'next/server'
 
 export async function GET() {
   try {
-    // 1. Criar ou obter o Tenant "Grupo JVS"
+    // 1. Criar ou obter o Tenant "Silva Consultoria Empresarial LTDA"
     const tenant = await prisma.tenant.upsert({
-      where: { cnpj: '00.000.000/0001-00' },
-      update: { nomeFantasia: 'Grupo JVS' },
+      where: { cnpj: '40.180.983/0001-00' },
+      update: { nomeFantasia: 'Silva Consultoria Empresarial LTDA' },
       create: {
-        nomeFantasia: 'Grupo JVS',
-        cnpj: '00.000.000/0001-00'
+        nomeFantasia: 'Silva Consultoria Empresarial LTDA',
+        cnpj: '40.180.983/0001-00'
       }
     })
 
@@ -52,7 +52,7 @@ export async function GET() {
       }
     })
 
-    // 3. Migrar todas as tabelas órfãs (que possuem tenantId = null) para o Tenant do Grupo JVS
+    // 3. Migrar todas as tabelas órfãs (que possuem tenantId = null) para o Tenant da Silva Consultoria Empresarial LTDA
     const updates = await Promise.all([
       prisma.user.updateMany({ where: { tenantId: null }, data: { tenantId: tenant.id } }),
       prisma.client.updateMany({ where: { tenantId: null }, data: { tenantId: tenant.id } }),
@@ -102,9 +102,9 @@ export async function GET() {
             <div style="background: #0F172A; border-radius: 12px; padding: 20px; text-align: left; margin: 20px 0; font-family: monospace; font-size: 12px; color: #10B981;">
               <div style="font-weight: bold; border-bottom: 1px solid #1E293B; padding-bottom: 8px; margin-bottom: 8px; color: #94A3B8;">CONTAS CONFIGURADAS:</div>
               • 💻 Dono do SaaS: <b>admin@smartbidhub.com.br</b> (Senha: 123456)<br/>
-              • 🏢 CEO Grupo JVS: <b>${user.email}</b> (Senha: 123456)<br/>
+              • 🏢 CEO Silva Consultoria: <b>${user.email}</b> (Senha: 123456)<br/>
               
-              <div style="font-weight: bold; border-bottom: 1px solid #1E293B; padding-bottom: 8px; margin-bottom: 8px; margin-top: 16px; color: #94A3B8;">MIGRAÇÃO DE REGISTROS (ÓRFÃOS -> JVS):</div>
+              <div style="font-weight: bold; border-bottom: 1px solid #1E293B; padding-bottom: 8px; margin-bottom: 8px; margin-top: 16px; color: #94A3B8;">MIGRAÇÃO DE REGISTROS (ÓRFÃOS -> SILVA):</div>
               • Usuários Vinculados: ${counts.users}<br/>
               • Clientes Vinculados: ${counts.clients}<br/>
               • Leads Vinculados: ${counts.leads}<br/>

@@ -505,7 +505,7 @@ export default function TenantManagerDashboard() {
                       </td>
                     </tr>
                   ) : filteredTenants.map((t) => {
-                    const isMainOperator = t.cnpj === '00.000.000/0001-00';
+                    const isMainOperator = t.cnpj === '40.180.983/0001-00';
                     return (
                       <tr key={t.id} className="border-b border-slate-200 hover:bg-slate-50 transition-colors">
                         <td className="px-6 py-4">

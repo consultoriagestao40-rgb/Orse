@@ -9,7 +9,7 @@ import { getOrCreateAsaasCustomer, createAsaasPixCharge, createAsaasCardPayment 
  * Valida se o usuário logado possui privilégios de Super Administrador.
  * Libera acesso apenas para:
  * 1. O email master (cristiano@grupojvsserv.com.br)
- * 2. Ou usuários pertencentes ao tenant com o CNPJ do Grupo JVS (00.000.000/0001-00)
+ * 2. Ou usuários pertencentes ao tenant com o CNPJ da Silva Consultoria (40.180.983/0001-00)
  */
 export async function checkIsSuperAdmin() {
   try {
@@ -220,7 +220,7 @@ export async function updateTenantAction(
 }
 
 /**
- * Remove uma empresa cliente com travas estritas (não permite deletar o Grupo JVS pioneiro).
+ * Remove uma empresa cliente com travas estritas (não permite deletar a Silva Consultoria pioneira).
  */
 export async function deleteTenantAction(id: string) {
   const isSuper = await checkIsSuperAdmin();
@@ -251,7 +251,7 @@ export async function deleteTenantAction(id: string) {
 
 /**
  * Alterna o status ativo/bloqueado de uma empresa cliente (Tenant).
- * Protege a holding Grupo JVS contra suspensões acidentais.
+ * Protege a holding Silva Consultoria contra suspensões acidentais.
  */
 export async function toggleTenantActiveAction(id: string, active: boolean) {
   const isSuper = await checkIsSuperAdmin();

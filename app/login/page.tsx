@@ -102,7 +102,7 @@ export default function LoginPage() {
               <span className="text-[#10B981]">Facilities & Serviços</span>
             </h2>
             <p className="text-slate-400 text-lg max-w-md">
-              A plataforma definitiva para engenharia de custos e controle comercial do Grupo JVS.
+              A plataforma definitiva para engenharia de custos e controle comercial da Silva Consultoria Empresarial LTDA.
             </p>
           </div>
 
@@ -128,7 +128,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-slate-500 text-xs font-medium uppercase tracking-[0.2em]">
-            © 2026 Grupo JVS • Orse Technology
+            © 2026 Silva Consultoria Empresarial LTDA • CNPJ 40.180.983/0001-00
           </p>
         </div>
 
@@ -152,7 +152,7 @@ export default function LoginPage() {
                 <input 
                   type="email" 
                   required
-                  placeholder="exemplo@grupojvsserv.com.br"
+                  placeholder="exemplo@silvaconsultoria.com.br"
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 transition-all font-medium text-slate-700"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -317,7 +317,7 @@ export default function LoginPage() {
                       <input 
                         type="email" 
                         required
-                        placeholder="seu-email@grupojvsserv.com.br"
+                        placeholder="seu-email@silvaconsultoria.com.br"
                         className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 transition-all font-medium text-slate-700 text-sm"
                         value={forgotEmail}
                         onChange={(e) => setForgotEmail(e.target.value)}

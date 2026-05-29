@@ -102,7 +102,7 @@ function PropostaEditor() {
             vendedorNome: (!fullData.cliente.vendedorNome || fullData.cliente.vendedorNome === 'Ádamo Quadros') ? (currentUser?.nome || 'Ádamo Quadros') : fullData.cliente.vendedorNome,
             vendedorCargo: (!fullData.cliente.vendedorCargo || fullData.cliente.vendedorCargo === 'Novos Negócios') ? (currentUser?.cargo || (currentUser?.role === 'ADMIN' ? 'Diretor Comercial' : currentUser?.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios')) : fullData.cliente.vendedorCargo,
             vendedorTelefone: (!fullData.cliente.vendedorTelefone || fullData.cliente.vendedorTelefone === '(41) 9 9737-0880') ? (currentUser?.celular || '(41) 9 9737-0880') : fullData.cliente.vendedorTelefone,
-            vendedorEmail: (!fullData.cliente.vendedorEmail || fullData.cliente.vendedorEmail === 'adamo@grupojvsserv.com.br') ? (currentUser?.email || 'adamo@grupojvsserv.com.br') : fullData.cliente.vendedorEmail,
+            vendedorEmail: (!fullData.cliente.vendedorEmail || fullData.cliente.vendedorEmail === 'contato@silvaconsultoria.com.br') ? (currentUser?.email || 'contato@silvaconsultoria.com.br') : fullData.cliente.vendedorEmail,
             quadroEfetivoSubtitulo: fullData.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
             quadroEfetivoClausula1: fullData.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
             quadroEfetivoClausula2: fullData.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
@@ -424,7 +424,7 @@ function PropostaEditor() {
                  vendedorNome: (!fullData.cliente.vendedorNome || fullData.cliente.vendedorNome === 'Ádamo Quadros') ? (loggedUser?.nome || 'Ádamo Quadros') : fullData.cliente.vendedorNome,
                  vendedorCargo: (!fullData.cliente.vendedorCargo || fullData.cliente.vendedorCargo === 'Novos Negócios') ? (loggedUser?.cargo || (loggedUser?.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser?.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios')) : fullData.cliente.vendedorCargo,
                  vendedorTelefone: (!fullData.cliente.vendedorTelefone || fullData.cliente.vendedorTelefone === '(41) 9 9737-0880' || fullData.cliente.vendedorTelefone === '(41) 99737-0880') ? (loggedUser?.celular || '(41) 9 9737-0880') : fullData.cliente.vendedorTelefone,
-                 vendedorEmail: (!fullData.cliente.vendedorEmail || fullData.cliente.vendedorEmail === 'adamo@grupojvsserv.com.br') ? (loggedUser?.email || 'adamo@grupojvsserv.com.br') : fullData.cliente.vendedorEmail,
+                 vendedorEmail: (!fullData.cliente.vendedorEmail || fullData.cliente.vendedorEmail === 'contato@silvaconsultoria.com.br') ? (loggedUser?.email || 'contato@silvaconsultoria.com.br') : fullData.cliente.vendedorEmail,
                   quadroEfetivoSubtitulo: fullData.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
                   quadroEfetivoClausula1: fullData.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
                   quadroEfetivoClausula2: fullData.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
@@ -3325,7 +3325,7 @@ function PropostaEditor() {
                                           <span className="text-sm font-black tracking-tight">{proposta.cliente.vendedorNome || "Ádamo Quadros"}</span>
                                           <span className="text-[10px] text-slate-200/80 font-bold uppercase tracking-wider">{proposta.cliente.vendedorCargo || "Novos Negócios"}</span>
                                           <span className="text-[10px] text-slate-200/80 font-bold">{proposta.cliente.vendedorTelefone || "(41) 9 9737-0880"}</span>
-                                          <span className="text-[10px] text-slate-200/80 font-bold truncate">{proposta.cliente.vendedorEmail || "adamo@grupojvsserv.com.br"}</span>
+                                          <span className="text-[10px] text-slate-200/80 font-bold truncate">{proposta.cliente.vendedorEmail || "contato@silvaconsultoria.com.br"}</span>
                                        </div>
                                     </div>
                                  </div>
@@ -3333,8 +3333,8 @@ function PropostaEditor() {
                                  {/* Logo JVS no Slide 1 */}
                                  <div className="col-span-4 flex flex-col justify-center items-center pl-8 border-l border-slate-100 h-full">
                                     <img 
-                                       src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                       alt="JVS Facilities" 
+                                       src="https://via.placeholder.com/300x80?text=Silva+Consultoria" 
+                                       alt="Silva Consultoria" 
                                        className="max-h-24 w-auto object-contain mb-4"
                                     />
                                     <div className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">FACILITIES</div>
@@ -3342,7 +3342,7 @@ function PropostaEditor() {
                               </div>
 
                               <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto pr-28">
-                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
                                  <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">02</span>
                               </div>
 
@@ -3364,11 +3364,11 @@ function PropostaEditor() {
 
                               {/* Conteúdo Central */}
                               <div className="relative z-20 flex flex-col justify-center items-center h-full w-full space-y-12">
-                                 {/* Logo JVS Facilities em Branco Puro */}
+                                 {/* Logo Silva Consultoria em Branco Puro */}
                                  <div className="flex flex-col items-center space-y-4 animate-fadeIn">
                                     <img 
-                                       src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                       alt="JVS Facilities Logo" 
+                                       src="https://via.placeholder.com/300x80?text=Silva+Consultoria" 
+                                       alt="Silva Consultoria Logo" 
                                        className="max-h-32 w-auto object-contain"
                                     />
                                     <div className="text-[11px] font-black tracking-[0.3em] text-white/90 uppercase pl-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">FACILITIES</div>
@@ -3491,7 +3491,7 @@ function PropostaEditor() {
                                </div>
 
                                <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-4 mt-auto">
-                                  <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                  <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.smartbidhub.com.br</span>
                                   <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">03</span>
                                </div>
                             </div>
@@ -3545,7 +3545,7 @@ function PropostaEditor() {
                                </div>
 
                                <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
-                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
                                   <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">04</span>
                                </div>
                             </div>
@@ -3720,7 +3720,7 @@ function PropostaEditor() {
                                </div>
 
                                <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
-                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
                                   <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">05</span>
                                </div>
                             </div>
@@ -3753,7 +3753,7 @@ function PropostaEditor() {
                                               </div>
                                            </div>
                                            <p className="text-white/90 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
-                                              Com processos minuciosos e detalhados, o setor industrial trouxe para o escopo da JVS Facilities a capacidade de atender clientes de alta exigência. Possuímos qualidade técnica validada no mercado para atender as mais variadas necessidades da indústria.
+                                              Com processos minuciosos e detalhados, o setor industrial trouxe para o escopo da Silva Consultoria a capacidade de atender clientes de alta exigência. Possuímos qualidade técnica validada no mercado para atender as mais variadas necessidades da indústria.
                                            </p>
                                         </div>
 
@@ -3825,7 +3825,7 @@ function PropostaEditor() {
                                </div>
 
                                <div className="flex justify-between items-center border-t border-white/20 pt-4 mt-auto">
-                                  <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                  <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest">www.smartbidhub.com.br</span>
                                   <span className="text-[9px] font-black text-white/80 bg-white/10 px-2.5 py-0.5 rounded">06</span>
                                </div>
                             </div>
@@ -3896,7 +3896,7 @@ function PropostaEditor() {
 
                                      {/* Rodapé Esquerdo */}
                                      <div className="pt-4 border-t border-slate-100 flex items-center text-slate-400 text-[9px] font-bold uppercase tracking-widest">
-                                        <span>www.grupojvsserv.com.br</span>
+                                        <span>www.smartbidhub.com.br</span>
                                      </div>
                                   </div>
                                </div>
@@ -3975,7 +3975,7 @@ function PropostaEditor() {
 
                                      {/* Rodapé Direito */}
                                      <div className="pt-4 border-t border-white/20 flex justify-between items-center text-white/60 text-[9px] font-bold">
-                                        <span className="uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                        <span className="uppercase tracking-widest">www.smartbidhub.com.br</span>
                                         <span className="text-white/80 bg-white/10 px-2.5 py-0.5 rounded font-black">07</span>
                                      </div>
                                   </div>
@@ -4003,8 +4003,8 @@ function PropostaEditor() {
                                         OBJETO & ESCOPO TÉCNICO
                                      </h2>
                                      <img 
-                                        src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                        alt="JVS Facilities Logo" 
+                                        src="https://via.placeholder.com/300x80?text=Silva+Consultoria" 
+                                        alt="Silva Consultoria Logo" 
                                         className="max-h-10 w-auto object-contain"
                                      />
                                   </div>
@@ -4045,7 +4045,7 @@ function PropostaEditor() {
 
                                   {/* Footer */}
                                   <div className="flex justify-between items-center w-full text-slate-400 text-[9px] font-bold uppercase tracking-wider pt-2 border-t border-slate-100">
-                                     <span>www.grupojvsserv.com.br</span>
+                                     <span>www.smartbidhub.com.br</span>
                                      <span className="text-[#1e4480] bg-slate-100 px-2.5 py-0.5 rounded font-black">08</span>
                                   </div>
                                </div>
@@ -4063,10 +4063,10 @@ function PropostaEditor() {
                                <div className="flex flex-col justify-between h-full relative z-10 w-full">
                                   <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                      <div className="flex flex-col">
-                                        <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                        <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                         <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">QUADRO DE EQUIPE EFETIVO</h2>
                                      </div>
-                                     <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
+                                     <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
 
                                   <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-stretch">
@@ -4136,7 +4136,7 @@ function PropostaEditor() {
                                   </div>
 
                                   <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
-                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
                                      <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">09</span>
                                   </div>
                                </div>
@@ -4153,10 +4153,10 @@ function PropostaEditor() {
                                <div className="relative z-10 flex flex-col h-full justify-between">
                                   <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                      <div className="flex flex-col">
-                                        <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                        <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                         <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUSÍDOS</h2>
                                      </div>
-                                     <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
+                                     <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
 
                                   <div className="my-auto w-full max-w-4xl mx-auto">
@@ -4197,7 +4197,7 @@ function PropostaEditor() {
                                   </div>
 
                                   <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
-                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
                                      <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">10</span>
                                   </div>
                                </div>
@@ -4247,10 +4247,10 @@ function PropostaEditor() {
                                   <div className="relative z-10 flex flex-col h-full justify-between">
                                      <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                         <div className="flex flex-col">
-                                           <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                           <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                            <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">RESUMO DA PROPOSTA COMERCIAL</h2>
                                         </div>
-                                        <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
+                                        <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                                      </div>
 
                                      <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-stretch">
@@ -4306,7 +4306,7 @@ function PropostaEditor() {
                                      </div>
 
                                      <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
-                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
                                         <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">11</span>
                                      </div>
                                   </div>
@@ -4324,10 +4324,10 @@ function PropostaEditor() {
                                <div className="relative z-10 flex flex-col h-full justify-between">
                                   <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                      <div className="flex flex-col">
-                                        <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                        <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                         <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">CONDIÇÕES GERAIS DA PROPOSTA</h2>
                                      </div>
-                                     <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
+                                     <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
                              {(() => {
                                 const condsColab = [
@@ -4417,7 +4417,7 @@ function PropostaEditor() {
                                 );
                              })()}
 <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
-                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
                                      <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded font-black">12</span>
                                   </div>
                                </div>
@@ -4434,10 +4434,10 @@ function PropostaEditor() {
                                <div className="relative z-10 flex flex-col h-full justify-between">
                                   <div className="flex justify-between items-center w-full pb-4 border-b border-white/20">
                                      <div className="flex flex-col">
-                                        <span className="text-white/70 text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                        <span className="text-white/70 text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                         <h2 className="text-xl font-black text-white uppercase tracking-tight">TERMO DE ACEITE E CONTRATAÇÃO</h2>
                                      </div>
-                                     <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
+                                     <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
 
                                   <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-center text-white">
@@ -4489,7 +4489,7 @@ function PropostaEditor() {
                                         <div className="bg-white/10 rounded-2xl p-5 border border-white/15 shadow-md flex flex-col justify-between h-40">
                                            <div className="flex flex-col">
                                               <span className="text-[10px] font-black tracking-[0.2em] uppercase text-white/90">CONTRATADA</span>
-                                              <span className="text-[8.5px] text-white/70 font-semibold mt-1 truncate">JVS Serv. Terceirizados Ltda.</span>
+                                              <span className="text-[8.5px] text-white/70 font-semibold mt-1 truncate">Silva Consultoria Empresarial LTDA</span>
                                            </div>
                                            <div className="border-t border-white/30 pt-3 mt-auto flex flex-col text-center">
                                               <div className="h-6 w-full mb-1 flex items-center justify-center">
@@ -4503,7 +4503,7 @@ function PropostaEditor() {
                                   </div>
 
                                   <div className="flex justify-between items-center border-t border-white/20 pt-4 mt-auto">
-                                     <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                     <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.smartbidhub.com.br</span>
                                      <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded">13</span>
                                   </div>
                                </div>
@@ -5856,8 +5856,8 @@ function PropostaEditor() {
                         <div className="relative z-20 flex flex-col justify-center items-center h-full w-full space-y-12">
                            <div className="flex flex-col items-center space-y-4">
                               <img 
-                                 src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                 alt="JVS Facilities Logo" 
+                                 src="https://via.placeholder.com/300x80?text=Silva+Consultoria" 
+                                 alt="Silva Consultoria Logo" 
                                  className="max-h-32 w-auto object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
                               />
                               <div className="text-[11px] font-black tracking-[0.3em] text-white/90 uppercase pl-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">FACILITIES</div>
@@ -5918,21 +5918,21 @@ function PropostaEditor() {
                                     <span className="text-sm font-black tracking-tight">{proposta.cliente.vendedorNome || "Ádamo Quadros"}</span>
                                     <span className="text-[10px] text-slate-200/80 font-bold uppercase tracking-wider">{proposta.cliente.vendedorCargo || "Novos Negócios"}</span>
                                     <span className="text-[10px] text-slate-200/80 font-bold">{proposta.cliente.vendedorTelefone || "(41) 9 9737-0880"}</span>
-                                    <span className="text-[10px] text-slate-200/80 font-bold truncate">{proposta.cliente.vendedorEmail || "adamo@grupojvsserv.com.br"}</span>
+                                    <span className="text-[10px] text-slate-200/80 font-bold truncate">{proposta.cliente.vendedorEmail || "contato@silvaconsultoria.com.br"}</span>
                                  </div>
                               </div>
                            </div>
                            <div className="col-span-4 flex flex-col justify-center items-center pl-8 border-l border-slate-100 h-full">
                               <img 
-                                 src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                 alt="JVS Facilities" 
+                                 src="https://via.placeholder.com/300x80?text=Silva+Consultoria" 
+                                 alt="Silva Consultoria" 
                                  className="max-h-24 w-auto object-contain mb-4"
                               />
                               <div className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">FACILITIES</div>
                            </div>
                         </div>
                         <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
-                           <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                           <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
                            <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">02</span>
                         </div>
                      </div>
@@ -6024,7 +6024,7 @@ function PropostaEditor() {
                          </div>
 
                          <div className="relative z-20 flex justify-between items-end w-full text-white/70 text-[10px] font-extrabold uppercase tracking-wider pr-4 mt-auto">
-                            <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                            <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.smartbidhub.com.br</span>
                             <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">03</span>
                          </div>
                       </div>
@@ -6077,7 +6077,7 @@ function PropostaEditor() {
                          </div>
 
                          <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
                             <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">04</span>
                          </div>
                       </div>
@@ -6249,7 +6249,7 @@ function PropostaEditor() {
                          </div>
 
                          <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
                             <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">05</span>
                          </div>
                       </div>
@@ -6281,7 +6281,7 @@ function PropostaEditor() {
                                         </div>
                                      </div>
                                      <p className="text-white/90 text-[14px] font-semibold leading-relaxed mt-2 text-justify">
-                                        Com processos minuciosos e detalhados, o setor industrial trouxe para o escopo da JVS Facilities a capacidade de atender clientes de alta exigência. Possuímos qualidade técnica validada no mercado para atender as mais variadas necessidades da indústria.
+                                        Com processos minuciosos e detalhados, o setor industrial trouxe para o escopo da Silva Consultoria a capacidade de atender clientes de alta exigência. Possuímos qualidade técnica validada no mercado para atender as mais variadas necessidades da indústria.
                                      </p>
                                   </div>
 
@@ -6353,7 +6353,7 @@ function PropostaEditor() {
                          </div>
 
                          <div className="flex justify-between items-center border-t border-white/20 pt-4 mt-auto">
-                            <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                            <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest">www.smartbidhub.com.br</span>
                             <span className="text-[9px] font-black text-white/80 bg-white/10 px-2.5 py-0.5 rounded">06</span>
                          </div>
                       </div>
@@ -6418,7 +6418,7 @@ function PropostaEditor() {
                                </div>
                                
                                <div className="pt-4 border-t border-slate-100 flex items-center text-slate-400 text-[9px] font-bold uppercase tracking-widest">
-                                  <span>www.grupojvsserv.com.br</span>
+                                  <span>www.smartbidhub.com.br</span>
                                 </div>
                             </div>
                          </div>
@@ -6491,7 +6491,7 @@ function PropostaEditor() {
                                </div>
                                
                                <div className="pt-4 border-t border-white/20 flex justify-between items-center text-white/60 text-[9px] font-bold">
-                                  <span className="uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                  <span className="uppercase tracking-widest">www.smartbidhub.com.br</span>
                                   <span className="text-white/80 bg-white/10 px-2.5 py-0.5 rounded font-black">07</span>
                                </div>
                             </div>
@@ -6518,8 +6518,8 @@ function PropostaEditor() {
                                    OBJETO & ESCOPO TÉCNICO
                                 </h2>
                                 <img 
-                                   src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" 
-                                   alt="JVS Facilities Logo" 
+                                   src="https://via.placeholder.com/300x80?text=Silva+Consultoria" 
+                                   alt="Silva Consultoria Logo" 
                                    className="max-h-10 w-auto object-contain"
                                 />
                              </div>
@@ -6560,7 +6560,7 @@ function PropostaEditor() {
 
                              {/* Footer */}
                              <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto text-slate-400 text-[9px] font-bold">
-                                <span className="uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                <span className="uppercase tracking-widest">www.smartbidhub.com.br</span>
                                 <span className="text-[#1e4480] bg-slate-100 px-2.5 py-0.5 rounded font-black">08</span>
                              </div>
                           </div>
@@ -6576,10 +6576,10 @@ function PropostaEditor() {
                          <div className="flex flex-col justify-between h-full relative z-10 w-full">
                             <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                <div className="flex flex-col">
-                                  <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                  <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                   <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">QUADRO DE EQUIPE EFETIVO</h2>
                                </div>
-                               <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
+                               <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                             </div>
 
                             <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-stretch">
@@ -6649,7 +6649,7 @@ function PropostaEditor() {
                             </div>
 
                             <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
-                               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
                                <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">09</span>
                             </div>
                          </div>
@@ -6665,10 +6665,10 @@ function PropostaEditor() {
                          <div className="relative z-10 flex flex-col h-full justify-between">
                             <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                <div className="flex flex-col">
-                                  <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                  <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                   <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUSÍDOS</h2>
                                </div>
-                               <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
+                               <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                             </div>
 
                             <div className="my-auto w-full max-w-4xl mx-auto">
@@ -6709,7 +6709,7 @@ function PropostaEditor() {
                             </div>
 
                             <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
-                               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
                                <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">10</span>
                             </div>
                          </div>
@@ -6759,10 +6759,10 @@ function PropostaEditor() {
                                <div className="relative z-10 flex flex-col h-full justify-between">
                                   <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                      <div className="flex flex-col">
-                                        <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                        <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                         <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">RESUMO DA PROPOSTA COMERCIAL</h2>
                                      </div>
-                                     <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
+                                     <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                                   </div>
 
                                   <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-stretch">
@@ -6818,7 +6818,7 @@ function PropostaEditor() {
                                   </div>
 
                                   <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
-                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
                                      <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">11</span>
                                   </div>
                                </div>
@@ -6836,10 +6836,10 @@ function PropostaEditor() {
                          <div className="relative z-10 flex flex-col h-full justify-between">
                             <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                <div className="flex flex-col">
-                                  <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                  <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                   <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">CONDIÇÕES GERAIS DA PROPOSTA</h2>
                                </div>
-                               <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
+                               <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                             </div>
 
                             
@@ -6931,7 +6931,7 @@ function PropostaEditor() {
                                       );
                                    })()}
                             <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
-                               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
                                <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded font-black">12</span>
                             </div>
                          </div>
@@ -6947,10 +6947,10 @@ function PropostaEditor() {
                          <div className="relative z-10 flex flex-col h-full justify-between">
                             <div className="flex justify-between items-center w-full pb-4 border-b border-white/20">
                                <div className="flex flex-col">
-                                  <span className="text-white/70 text-[10px] font-black tracking-[0.2em] uppercase">JVS FACILITIES</span>
+                                  <span className="text-white/70 text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
                                   <h2 className="text-xl font-black text-white uppercase tracking-tight">TERMO DE ACEITE E CONTRATAÇÃO</h2>
                                </div>
-                               <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="JVS Logo" className="max-h-10 w-auto object-contain" />
+                               <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Silva Logo" className="max-h-10 w-auto object-contain" />
                             </div>
 
                             <div className="my-auto w-full max-w-4xl mx-auto grid grid-cols-12 gap-8 items-center text-white">
@@ -7002,7 +7002,7 @@ function PropostaEditor() {
                                   <div className="bg-white/10 rounded-2xl p-5 border border-white/15 shadow-md flex flex-col justify-between h-40">
                                      <div className="flex flex-col">
                                         <span className="text-[10px] font-black tracking-[0.2em] uppercase text-white/90">CONTRATADA</span>
-                                        <span className="text-[8.5px] text-white/70 font-semibold mt-1 truncate">JVS Serv. Terceirizados Ltda.</span>
+                                        <span className="text-[8.5px] text-white/70 font-semibold mt-1 truncate">Silva Consultoria Empresarial LTDA</span>
                                      </div>
                                      <div className="border-t border-white/30 pt-3 mt-auto flex flex-col text-center">
                                         <div className="h-6 w-full mb-1 flex items-center justify-center">
@@ -7016,7 +7016,7 @@ function PropostaEditor() {
                             </div>
 
                             <div className="flex justify-between items-center border-t border-white/20 pt-4 mt-auto">
-                               <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.grupojvsserv.com.br</span>
+                               <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">www.smartbidhub.com.br</span>
                                <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded">13</span>
                             </div>
                          </div>

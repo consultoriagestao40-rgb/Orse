@@ -412,7 +412,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
 
           {/* LOGOTIPO NA DIREITA */}
           <div className="w-40 flex justify-end">
-            <img src="https://grupojvsserv.com.br/wp-content/uploads/2023/11/logo-horizontal-300px.png" alt="Logo" className="h-16 object-contain" />
+            <img src="https://via.placeholder.com/300x80?text=Silva+Consultoria" alt="Logo" className="h-16 object-contain" />
           </div>
         </div>
 

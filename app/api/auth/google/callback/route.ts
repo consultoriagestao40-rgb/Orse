@@ -49,16 +49,16 @@ export async function GET(request: Request) {
       return new NextResponse('Erro: E-mail não fornecido pela conta Google.', { status: 400 })
     }
 
-    // 3. Buscar ou criar o Tenant do "Grupo JVS" como tenant padrão
+    // 3. Buscar ou criar o Tenant "Silva Consultoria Empresarial LTDA" como tenant padrão
     let defaultTenant = await prisma.tenant.findUnique({
-      where: { cnpj: '00.000.000/0001-00' }
+      where: { cnpj: '40.180.983/0001-00' }
     })
 
     if (!defaultTenant) {
       defaultTenant = await prisma.tenant.create({
         data: {
-          nomeFantasia: 'Grupo JVS',
-          cnpj: '00.000.000/0001-00'
+          nomeFantasia: 'Silva Consultoria Empresarial LTDA',
+          cnpj: '40.180.983/0001-00'
         }
       })
     }
