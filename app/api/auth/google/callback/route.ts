@@ -104,6 +104,7 @@ export async function GET(request: Request) {
       role: user.role,
       email: user.email,
       tenantId: user.tenantId,
+      avatarUrl: user.avatarUrl || undefined,
       iniciais: user.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase()
     }), {
       maxAge: 60 * 60 * 24 * 7

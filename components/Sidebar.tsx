@@ -6,7 +6,7 @@ import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, 
 import { usePathname } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
-import { changeMyPassword, changeMyAvatar } from '@/app/propostas/actions';
+import { changeMyPassword, changeMyAvatar, getLoggedUser } from '@/app/propostas/actions';
  
 const Sidebar = () => {
   const pathname = usePathname();
@@ -326,6 +326,30 @@ const Sidebar = () => {
         setIsCollapsed(true);
       }
 
+      // Buscar dados atualizados do usuário diretamente do banco de dados (evita cookies desatualizados)
+      const fetchFreshUser = async () => {
+        try {
+          const freshUser = await getLoggedUser();
+          if (freshUser) {
+            const userObj = {
+              nome: freshUser.nome,
+              role: freshUser.role,
+              email: freshUser.email,
+              tenantId: freshUser.tenantId,
+              avatarUrl: freshUser.avatarUrl || undefined,
+              iniciais: freshUser.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase()
+            };
+            setUser(userObj);
+            
+            // Atualiza o cookie local com os dados mais recentes do banco
+            const encoded = encodeURIComponent(JSON.stringify(userObj));
+            document.cookie = `sb_user=${encoded}; path=/; max-age=${60 * 60 * 24 * 7}; Secure; SameSite=Lax`;
+          }
+        } catch (err) {
+          console.error('Erro ao buscar dados atualizados do usuário:', err);
+        }
+      };
+
       // Checa se o tenant do inquilino está ativo e verifica o status do teste de 7 dias
       const verifyActiveStatus = async () => {
         try {
@@ -351,6 +375,7 @@ const Sidebar = () => {
       };
       
       verifyActiveStatus();
+      fetchFreshUser();
     }
   }, []);
 

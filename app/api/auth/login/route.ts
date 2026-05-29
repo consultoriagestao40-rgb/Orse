@@ -41,6 +41,7 @@ export async function POST(request: Request) {
       role: user.role,
       email: user.email,
       tenantId: user.tenantId,
+      avatarUrl: user.avatarUrl || undefined,
       iniciais: user.nome.split(' ').map(n => n[0]).join('').toUpperCase()
     }), {
       maxAge: 60 * 60 * 24 * 7
