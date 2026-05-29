@@ -196,7 +196,20 @@ export default function ContratosDashboard() {
                 <div className="mt-2 text-[10px] text-slate-400 font-medium border-t border-slate-50 pt-2 flex flex-col gap-1">
                   <div className="flex justify-between items-center">
                     <span>Criado por:</span>
-                    <span className="font-bold text-slate-600">{c.proposta?.user?.nome || 'Sistema'}</span>
+                    <div className="flex items-center gap-1">
+                      {c.proposta?.user?.avatarUrl ? (
+                        <img 
+                          src={c.proposta.user.avatarUrl} 
+                          alt={c.proposta.user.nome} 
+                          className="w-4 h-4 rounded-full object-cover border border-slate-200"
+                        />
+                      ) : (
+                        <div className="w-4 h-4 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[7px] font-black text-[#1B4D3E] uppercase border border-slate-200">
+                          {(c.proposta?.user?.nome || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                        </div>
+                      )}
+                      <span className="font-bold text-slate-600">{c.proposta?.user?.nome || 'Sistema'}</span>
+                    </div>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Gerado em:</span>
@@ -351,7 +364,22 @@ export default function ContratosDashboard() {
                         <td className="px-6 py-3 font-bold text-slate-700">{gerarNumeroContrato(c)}</td>
                         <td className="px-6 py-3 font-semibold text-slate-800">{c.client?.razaoSocial || c.client?.nomeFantasia}</td>
                         <td className="px-6 py-3 text-slate-600">{c.empresaEmissora?.nomeFantasia}</td>
-                        <td className="px-6 py-3 text-slate-600 font-medium">{c.proposta?.user?.nome || 'Sistema'}</td>
+                        <td className="px-6 py-3">
+                          <div className="flex items-center gap-1.5">
+                            {c.proposta?.user?.avatarUrl ? (
+                              <img 
+                                src={c.proposta.user.avatarUrl} 
+                                alt={c.proposta.user.nome} 
+                                className="w-5 h-5 rounded-full object-cover border border-slate-200"
+                              />
+                            ) : (
+                              <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
+                                {(c.proposta?.user?.nome || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                              </div>
+                            )}
+                            <span className="text-slate-600 font-medium">{c.proposta?.user?.nome || 'Sistema'}</span>
+                          </div>
+                        </td>
                         <td className="px-6 py-3 text-slate-500 font-mono text-xs">{new Date(c.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                         <td className="px-6 py-3 text-center text-slate-600 font-medium">
                           {c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : '-'}

@@ -382,7 +382,8 @@ export async function getPropostas() {
         valor: lastVersao?.precoVenda || 0,
         status: p.status,
         versao: lastVersao?.versao || 1,
-        usuario: p.user.nome
+        usuario: p.user.nome,
+        avatarUrl: p.user.avatarUrl
       };
     });
   } catch (error) {
@@ -734,7 +735,7 @@ export async function getUsersList() {
 
     const users = await prisma.user.findMany({
       orderBy: { nome: 'asc' },
-      select: { id: true, nome: true, role: true }
+      select: { id: true, nome: true, role: true, avatarUrl: true }
     });
     return users;
   } catch (error) {

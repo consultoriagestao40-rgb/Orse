@@ -37,7 +37,8 @@ export async function getDocumentosProposta() {
         status: d.status,
         data: d.createdAt.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
         versaoFPV: lastVersao?.versao || 1,
-        usuario: d.proposta?.user?.nome || 'Sistema'
+        usuario: d.proposta?.user?.nome || 'Sistema',
+        avatarUrl: d.proposta?.user?.avatarUrl || null
       };
     });
   } catch (error) {

@@ -211,7 +211,22 @@ export default function PropostasComerciaisDashboard() {
                       </td>
                       <td className="px-6 py-3 font-semibold text-slate-700">{doc.cliente}</td>
                       <td className="px-6 py-3 text-slate-500">{doc.empresa}</td>
-                      <td className="px-6 py-3 text-slate-600 font-medium">{doc.usuario || 'Sistema'}</td>
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-1.5">
+                          {doc.avatarUrl ? (
+                            <img 
+                              src={doc.avatarUrl} 
+                              alt={doc.usuario} 
+                              className="w-5 h-5 rounded-full object-cover border border-slate-200"
+                            />
+                          ) : (
+                            <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
+                              {(doc.usuario || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                            </div>
+                          )}
+                          <span className="text-slate-600 font-medium">{doc.usuario || 'Sistema'}</span>
+                        </div>
+                      </td>
                       <td className="px-6 py-3 text-slate-500 font-mono text-xs">{doc.data}</td>
                       <td className="px-6 py-3 font-bold text-[#1B4D3E] text-right">{fmt(doc.valor)}</td>
                       <td className="px-6 py-3 text-center">
@@ -278,7 +293,20 @@ export default function PropostasComerciaisDashboard() {
                           <p className="font-bold text-slate-800 text-sm mb-1">{doc.cliente}</p>
                           <div className="flex justify-between items-center text-xs text-slate-500 mb-2">
                             <span>FPV #{doc.numeroFPV}</span>
-                            <span className="font-medium text-slate-400">{doc.usuario || 'Sistema'}</span>
+                            <div className="flex items-center gap-1">
+                              {doc.avatarUrl ? (
+                                <img 
+                                  src={doc.avatarUrl} 
+                                  alt={doc.usuario} 
+                                  className="w-4 h-4 rounded-full object-cover border border-slate-200"
+                                />
+                              ) : (
+                                <div className="w-4 h-4 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[7px] font-black text-[#1B4D3E] uppercase border border-slate-200">
+                                  {(doc.usuario || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                                </div>
+                              )}
+                              <span className="font-medium text-slate-400">{doc.usuario || 'Sistema'}</span>
+                            </div>
                           </div>
                           <p className="font-black text-[#1B4D3E]">{fmt(doc.valor)}</p>
                           <div className="mt-2 text-[10px] text-slate-400 font-medium flex justify-between items-center border-t border-slate-50 pt-2">

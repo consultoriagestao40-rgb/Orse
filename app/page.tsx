@@ -190,9 +190,17 @@ function ProposalsDashboard() {
 
       <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase">
-            {(prop.usuario || '?').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-          </div>
+          {prop.avatarUrl ? (
+            <img 
+              src={prop.avatarUrl} 
+              alt={prop.usuario} 
+              className="w-5 h-5 rounded-full object-cover border border-slate-200"
+            />
+          ) : (
+            <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
+              {(prop.usuario || '?').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+            </div>
+          )}
           <span className="text-[10px] text-slate-500 font-medium">{prop.usuario}</span>
         </div>
         <ActionMenu prop={prop} />
@@ -203,69 +211,82 @@ function ProposalsDashboard() {
   // ── Coluna de Kanban reutilizável ───────────────────────────────────────────
   const KanbanColumn = ({ label, color, cards, total, type = 'status', onDropProp }: {
     label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor'; onDropProp?: (propId: string) => void;
-  }) => (
-    <div 
-      className="flex-shrink-0 w-72 flex flex-col"
-      onDragOver={(e) => {
-        e.preventDefault(); // Necessário para permitir o drop
-        e.currentTarget.classList.add('bg-slate-200/50', 'rounded-xl');
-      }}
-      onDragLeave={(e) => {
-        e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl');
-      }}
-      onDrop={(e) => {
-        e.preventDefault();
-        e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl');
-        const propId = e.dataTransfer.getData('text/plain');
-        if (propId && onDropProp) onDropProp(propId);
-      }}
-    >
-      {/* Cabeçalho da coluna */}
-      <div className="bg-white border border-slate-200 rounded-xl mb-3 p-4 shadow-sm">
-        {type === 'status' ? (
-          <>
-            <div className="flex items-center justify-between mb-2">
-              <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${color || 'bg-slate-100 text-slate-600'}`}>
-                {label}
-              </span>
-              <span className="text-xs font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
-                {cards.length}
-              </span>
-            </div>
-            <p className="text-sm font-black text-[#1B4D3E]">{fmt(total)}</p>
-            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Volume total da coluna</p>
-          </>
-        ) : (
-          <>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-9 h-9 rounded-xl bg-[#1B4D3E]/10 flex items-center justify-center text-[#1B4D3E] font-black text-sm uppercase">
-                {label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+  }) => {
+    const userObj = usersList.find(u => u.nome === label);
+    const colAvatarUrl = userObj?.avatarUrl;
+
+    return (
+      <div 
+        className="flex-shrink-0 w-72 flex flex-col"
+        onDragOver={(e) => {
+          e.preventDefault(); // Necessário para permitir o drop
+          e.currentTarget.classList.add('bg-slate-200/50', 'rounded-xl');
+        }}
+        onDragLeave={(e) => {
+          e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl');
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl');
+          const propId = e.dataTransfer.getData('text/plain');
+          if (propId && onDropProp) onDropProp(propId);
+        }}
+      >
+        {/* Cabeçalho da coluna */}
+        <div className="bg-white border border-slate-200 rounded-xl mb-3 p-4 shadow-sm">
+          {type === 'status' ? (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${color || 'bg-slate-100 text-slate-600'}`}>
+                  {label}
+                </span>
+                <span className="text-xs font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
+                  {cards.length}
+                </span>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-black text-slate-800 truncate">{label}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[10px] text-slate-400 font-medium">{cards.length} proposta{cards.length !== 1 ? 's' : ''}</span>
+              <p className="text-sm font-black text-[#1B4D3E]">{fmt(total)}</p>
+              <p className="text-[10px] text-slate-400 font-medium mt-0.5">Volume total da coluna</p>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 mb-2">
+                {colAvatarUrl ? (
+                  <img 
+                    src={colAvatarUrl} 
+                    alt={label} 
+                    className="w-9 h-9 rounded-xl object-cover border border-slate-200"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-xl bg-[#1B4D3E]/10 flex items-center justify-center text-[#1B4D3E] font-black text-sm uppercase border border-slate-200">
+                    {label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-black text-slate-800 truncate">{label}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[10px] text-slate-400 font-medium">{cards.length} proposta{cards.length !== 1 ? 's' : ''}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <p className="text-base font-black text-[#1B4D3E]">{fmt(total)}</p>
-            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Volume total</p>
-          </>
-        )}
-      </div>
+              <p className="text-base font-black text-[#1B4D3E]">{fmt(total)}</p>
+              <p className="text-[10px] text-slate-400 font-medium mt-0.5">Volume total</p>
+            </>
+          )}
+        </div>
 
-      {/* Cards */}
-      <div className="flex flex-col gap-3 flex-1">
-        {cards.length === 0 ? (
-          <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
-            <p className="text-xs text-slate-300 font-medium">Sem propostas</p>
-          </div>
-        ) : (
-          cards.map(prop => <ProposalCard key={prop.id} prop={prop} />)
-        )}
+        {/* Cards */}
+        <div className="flex flex-col gap-3 flex-1">
+          {cards.length === 0 ? (
+            <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
+              <p className="text-xs text-slate-300 font-medium">Sem propostas</p>
+            </div>
+          ) : (
+            cards.map(prop => <ProposalCard key={prop.id} prop={prop} />)
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
@@ -407,7 +428,20 @@ function ProposalsDashboard() {
                         </td>
                         <td className="px-6 py-3">
                           <p className="font-semibold text-slate-700">{prop.cliente}</p>
-                          <p className="text-[10px] text-slate-500 font-medium">Resp: {prop.usuario}</p>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            {prop.avatarUrl ? (
+                              <img 
+                                src={prop.avatarUrl} 
+                                alt={prop.usuario} 
+                                className="w-4.5 h-4.5 rounded-full object-cover border border-slate-200"
+                              />
+                            ) : (
+                              <div className="w-4.5 h-4.5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[7px] font-black text-[#1B4D3E] uppercase border border-slate-200">
+                                {(prop.usuario || '?').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                              </div>
+                            )}
+                            <span className="text-[10px] text-slate-500 font-medium">Resp: {prop.usuario}</span>
+                          </div>
                         </td>
                         <td className="px-6 py-3 font-bold text-slate-800 text-right">
                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(prop.valor)}
