@@ -200,11 +200,20 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                               </div>
                               <div className="space-y-4">
                                  <span className="text-xs font-bold text-slate-500 block">Att,</span>
-                                 <div className="bg-[#2B547E] text-white px-5 py-3 rounded-2xl inline-flex flex-col space-y-0.5 shadow-md max-w-sm">
-                                    <span className="text-sm font-black tracking-tight">{proposta.cliente.vendedorNome || "Ádamo Quadros"}</span>
-                                    <span className="text-[10px] text-slate-200/80 font-bold uppercase tracking-wider">{proposta.cliente.vendedorCargo || "Novos Negócios"}</span>
-                                    <span className="text-[10px] text-slate-200/80 font-bold">{proposta.cliente.vendedorTelefone || "(41) 9 9737-0880"}</span>
-                                    <span className="text-[10px] text-slate-200/80 font-bold truncate">{proposta.cliente.vendedorEmail || "contato@silvaconsultoria.com.br"}</span>
+                                 <div className="bg-[#2B547E] text-white px-5 py-3 rounded-2xl inline-flex flex-row items-center gap-4 shadow-md max-w-sm">
+                                    {proposta.cliente.vendedorAvatarUrl ? (
+                                       <img 
+                                          src={proposta.cliente.vendedorAvatarUrl} 
+                                          alt={proposta.cliente.vendedorNome} 
+                                          className="w-12 h-12 rounded-full object-cover border border-white/20 shadow-sm shrink-0"
+                                       />
+                                    ) : null}
+                                    <div className="flex flex-col space-y-0.5 overflow-hidden">
+                                       <span className="text-sm font-black tracking-tight">{proposta.cliente.vendedorNome || "Ádamo Quadros"}</span>
+                                       <span className="text-[10px] text-slate-200/80 font-bold uppercase tracking-wider">{proposta.cliente.vendedorCargo || "Novos Negócios"}</span>
+                                       <span className="text-[10px] text-slate-200/80 font-bold">{proposta.cliente.vendedorTelefone || "(41) 9 9737-0880"}</span>
+                                       <span className="text-[10px] text-slate-200/80 font-bold truncate">{proposta.cliente.vendedorEmail || "contato@silvaconsultoria.com.br"}</span>
+                                    </div>
                                  </div>
                               </div>
                            </div>

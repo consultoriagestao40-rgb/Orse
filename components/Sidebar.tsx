@@ -6,14 +6,76 @@ import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, 
 import { usePathname } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
-import { changeMyPassword } from '@/app/propostas/actions';
+import { changeMyPassword, changeMyAvatar } from '@/app/propostas/actions';
  
 const Sidebar = () => {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTenantBlocked, setIsTenantBlocked] = useState(false);
   
-  const [user, setUser] = useState<{ nome: string; role: string; email?: string; tenantId?: string | null; iniciais: string } | null>(null);
+  const [user, setUser] = useState<{ nome: string; role: string; email?: string; tenantId?: string | null; iniciais: string; avatarUrl?: string } | null>(null);
+
+  const handleSidebarAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Por favor, selecione uma imagem de até 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 256;
+        const MAX_HEIGHT = 256;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        
+        const res = await changeMyAvatar(dataUrl);
+        if (res.success && res.avatarUrl) {
+          setUser(prev => prev ? { ...prev, avatarUrl: res.avatarUrl } : null);
+          const cookiesList = document.cookie.split(';');
+          const userCookie = cookiesList.find(c => c.trim().startsWith('sb_user='));
+          if (userCookie) {
+            try {
+              const decoded = JSON.parse(decodeURIComponent(userCookie.split('=')[1]));
+              decoded.avatarUrl = res.avatarUrl;
+              const encoded = encodeURIComponent(JSON.stringify(decoded));
+              document.cookie = `sb_user=${encoded}; path=/; max-age=${60 * 60 * 24 * 7}; Secure; SameSite=Lax`;
+            } catch (err) {
+              console.error('Error updating sb_user cookie:', err);
+            }
+          }
+        } else {
+          alert('Erro ao salvar foto de perfil: ' + (res.error || 'Erro desconhecido.'));
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Estados do modal de Alterar Senha Premium
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -488,9 +550,17 @@ const Sidebar = () => {
           title="Alterar minha senha"
           className={`flex items-center gap-3 p-3 bg-slate-50 rounded-[1.5rem] border border-slate-100 group relative cursor-pointer hover:bg-slate-100 hover:border-slate-200 transition-all ${isCollapsed ? 'justify-center' : ''}`}
         >
-          <div className="w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white font-black text-xs shadow-md shrink-0">
-            {user?.iniciais || 'US'}
-          </div>
+          {user?.avatarUrl ? (
+            <img 
+              src={user.avatarUrl} 
+              alt={user.nome} 
+              className="w-10 h-10 rounded-xl object-cover border border-slate-100 shadow-md shrink-0 animate-fadeIn"
+            />
+          ) : (
+            <div className="w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white font-black text-xs shadow-md shrink-0">
+              {user?.iniciais || 'US'}
+            </div>
+          )}
           {!isCollapsed && (
             <div className="overflow-hidden flex-1">
               <p className="text-xs font-black text-slate-800 truncate">{user?.nome || 'Carregando...'}</p>
@@ -583,17 +653,17 @@ const Sidebar = () => {
       </div>
     )}
 
-      {/* MODAL ALTERAR SENHA PREMIUM */}
+      {/* MODAL MEU PERFIL E SEGURANÇA */}
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="bg-[#1B4D3E] p-8 text-white relative">
               <h3 className="text-xl font-black tracking-tighter uppercase flex items-center gap-2">
                 <KeyRound size={20} className="text-[#10B981]" />
-                Segurança <span className="text-[#10B981]">de Acesso</span>
+                Meu Perfil <span className="text-[#10B981]">& Segurança</span>
               </h3>
               <p className="text-emerald-100/60 text-xs mt-1">
-                Altere a sua senha de acesso corporativa para garantir a proteção dos dados.
+                Personalize sua foto de perfil corporativo ou altere sua senha de acesso.
               </p>
               <button 
                 onClick={() => setShowPasswordModal(false)} 
@@ -605,6 +675,37 @@ const Sidebar = () => {
             </div>
 
             <form onSubmit={handleChangePassword} className="p-8 space-y-5">
+              {/* Foto de Perfil Upload */}
+              <div className="flex flex-col items-center justify-center pb-4 border-b border-slate-100">
+                <div className="relative group cursor-pointer">
+                  <input 
+                    type="file" 
+                    id="sidebar-avatar-upload" 
+                    accept="image/png, image/jpeg" 
+                    className="hidden" 
+                    onChange={handleSidebarAvatarChange}
+                  />
+                  <label htmlFor="sidebar-avatar-upload" className="cursor-pointer block relative">
+                    {user?.avatarUrl ? (
+                      <img 
+                        src={user.avatarUrl} 
+                        alt="Preview Profile" 
+                        className="w-24 h-24 rounded-3xl object-cover border-2 border-[#1B4D3E] shadow-lg group-hover:opacity-85 transition-all"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-3xl bg-slate-100 border border-slate-200 flex flex-col items-center justify-center text-slate-400 group-hover:bg-slate-200 transition-all">
+                        <PlusCircle size={20} className="text-[#1B4D3E]" />
+                        <span className="text-[9px] font-black uppercase tracking-wider mt-1">Foto</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center bg-[#1B4D3E]/60 text-white rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity">
+                      <PlusCircle size={16} />
+                    </div>
+                  </label>
+                </div>
+                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-2">Clique na foto para alterar</span>
+              </div>
+
               {/* Senha Atual */}
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha Atual</label>

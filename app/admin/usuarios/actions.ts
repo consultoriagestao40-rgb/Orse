@@ -72,6 +72,7 @@ export async function createUsuario(data: any) {
         celular: data.celular || null,
         managerId: data.managerId || null,
         tenantId: user?.tenantId || null,
+        avatarUrl: data.avatarUrl || null,
       },
     });
     revalidatePath('/admin/usuarios');
@@ -104,6 +105,7 @@ export async function updateUsuario(id: string, data: any) {
         cargo: data.cargo || null,
         celular: data.celular || null,
         managerId: data.managerId || null,
+        avatarUrl: data.avatarUrl !== undefined ? data.avatarUrl : undefined,
       },
     });
     revalidatePath('/admin/usuarios');

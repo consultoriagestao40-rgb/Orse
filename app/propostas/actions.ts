@@ -446,6 +446,7 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
     const proposta = await prisma.proposta.findUnique({
       where: { id },
       include: {
+        user: true,
         versoes: {
           orderBy: { versao: 'desc' },
           include: { items: true }
@@ -512,10 +513,11 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
         revisao: meta.revisao || '',
         tipoServicos: meta.tipoServicos || '',
         tipoProposta: meta.tipoProposta || 'RECORRENTE',
-        vendedorNome: meta.vendedorNome || 'Ádamo Quadros',
-        vendedorCargo: meta.vendedorCargo || 'Novos Negócios',
-        vendedorTelefone: meta.vendedorTelefone || '(41) 9 9737-0880',
-        vendedorEmail: meta.vendedorEmail || 'contato@silvaconsultoria.com.br',
+        vendedorNome: meta.vendedorNome || proposta.user?.nome || 'Ádamo Quadros',
+        vendedorCargo: meta.vendedorCargo || proposta.user?.cargo || 'Novos Negócios',
+        vendedorTelefone: meta.vendedorTelefone || proposta.user?.celular || '(41) 9 9737-0880',
+        vendedorEmail: meta.vendedorEmail || proposta.user?.email || 'contato@silvaconsultoria.com.br',
+        vendedorAvatarUrl: proposta.user?.avatarUrl || null,
         quadroEfetivoSubtitulo: meta.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
         quadroEfetivoClausula1: meta.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
         quadroEfetivoClausula2: meta.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
@@ -853,6 +855,23 @@ export async function changeMyPassword(currentPassword: string, newPassword: str
     return { success: true };
   } catch (error: any) {
     console.error('Erro ao trocar a senha:', error);
+    return { success: false, error: error.message || 'Erro desconhecido.' };
+  }
+}
+
+export async function changeMyAvatar(avatarUrl: string) {
+  try {
+    const user = await getLoggedUser();
+    if (!user) {
+      return { success: false, error: 'Usuário não autenticado.' };
+    }
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: { avatarUrl }
+    });
+    return { success: true, avatarUrl: updated.avatarUrl };
+  } catch (error: any) {
+    console.error('Erro ao salvar avatar:', error);
     return { success: false, error: error.message || 'Erro desconhecido.' };
   }
 }

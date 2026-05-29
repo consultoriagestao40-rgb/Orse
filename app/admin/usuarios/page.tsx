@@ -68,8 +68,53 @@ export default function UsuariosPage() {
     role: 'USER',
     cargo: '',
     celular: '',
-    managerId: ''
+    managerId: '',
+    avatarUrl: ''
   });
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      showAlert('Arquivo Muito Grande', 'Por favor, selecione uma imagem de até 5MB.', 'warning');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 256;
+        const MAX_HEIGHT = 256;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        setFormData(prev => ({ ...prev, avatarUrl: dataUrl }));
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     loadUsuarios();
@@ -111,7 +156,8 @@ export default function UsuariosPage() {
       role: 'USER',
       cargo: '',
       celular: '',
-      managerId: ''
+      managerId: '',
+      avatarUrl: ''
     });
     setShowModal(true);
   }
@@ -125,7 +171,8 @@ export default function UsuariosPage() {
       role: user.role || 'USER',
       cargo: user.cargo || '',
       celular: user.celular || '',
-      managerId: user.managerId || ''
+      managerId: user.managerId || '',
+      avatarUrl: user.avatarUrl || ''
     });
     setShowModal(true);
   }
@@ -156,7 +203,8 @@ export default function UsuariosPage() {
         role: 'USER', 
         cargo: '', 
         celular: '', 
-        managerId: '' 
+        managerId: '',
+        avatarUrl: ''
       });
       loadUsuarios();
     } else {
@@ -263,9 +311,17 @@ export default function UsuariosPage() {
                 <tr key={u.id} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-[#1B4D3E] font-black text-sm group-hover:bg-[#1B4D3E] group-hover:text-white transition-all">
-                        {u.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2)}
-                      </div>
+                      {u.avatarUrl ? (
+                        <img 
+                          src={u.avatarUrl} 
+                          alt={u.nome} 
+                          className="w-12 h-12 rounded-2xl object-cover border border-slate-100 shadow-sm shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-[#1B4D3E] font-black text-sm group-hover:bg-[#1B4D3E] group-hover:text-white transition-all shrink-0">
+                          {u.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2)}
+                        </div>
+                      )}
                       <div>
                         <p className="font-black text-slate-900 text-sm uppercase tracking-tight">{u.nome}</p>
                         <p className="text-xs text-slate-500 font-medium">{u.email}</p>
@@ -346,6 +402,37 @@ export default function UsuariosPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="p-10 space-y-6">
+                {/* Upload de Avatar Premium */}
+                <div className="flex flex-col items-center justify-center pb-4">
+                  <div className="relative group cursor-pointer">
+                    <input 
+                      type="file" 
+                      id="avatar-upload" 
+                      accept="image/png, image/jpeg" 
+                      className="hidden" 
+                      onChange={handleAvatarChange}
+                    />
+                    <label htmlFor="avatar-upload" className="cursor-pointer block relative">
+                      {formData.avatarUrl ? (
+                        <img 
+                          src={formData.avatarUrl} 
+                          alt="Preview Avatar" 
+                          className="w-24 h-24 rounded-3xl object-cover border-2 border-[#1B4D3E] shadow-lg group-hover:opacity-85 transition-all"
+                        />
+                      ) : (
+                        <div className="w-24 h-24 rounded-3xl bg-slate-100 border border-slate-200 flex flex-col items-center justify-center text-slate-400 group-hover:bg-slate-200 transition-all">
+                          <Plus size={20} />
+                          <span className="text-[9px] font-black uppercase tracking-wider mt-1">Foto</span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center bg-[#1B4D3E]/60 text-white rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Plus size={16} />
+                      </div>
+                    </label>
+                  </div>
+                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-2">Clique para alterar a foto</span>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Completo</label>

@@ -241,11 +241,43 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
         </table>
       </div>
 
-      <div className="mt-20 pt-10 grid grid-cols-1 gap-16 text-center break-inside-avoid print:break-inside-avoid max-w-md mx-auto">
-         <div>
-            <div className="border-t border-black pt-2 font-black">CLIENTE</div>
-            <div className="mt-1 font-bold text-[10px]">{proposta.cliente?.razaoSocial || proposta.cliente?.cliente || "Cliente"}</div>
-            <div className="text-[10px] text-slate-500 uppercase">{proposta.cliente?.contato || "Representante Legal"}</div>
+      <div className="mt-24 pt-10 grid grid-cols-2 gap-12 text-center break-inside-avoid print:break-inside-avoid max-w-2xl mx-auto font-sans">
+         {/* ISSUER / SELLER SIGNATURE */}
+         <div className="flex flex-col items-center justify-end">
+            {proposta.cliente?.vendedorAvatarUrl ? (
+               <img 
+                  src={proposta.cliente.vendedorAvatarUrl} 
+                  alt={proposta.cliente.vendedorNome || "Vendedor"} 
+                  className="w-14 h-14 rounded-full object-cover border border-slate-300 shadow-xs mb-3 shrink-0"
+               />
+            ) : (
+               <div className="w-14 h-14 rounded-full border border-dashed border-slate-300 flex items-center justify-center text-slate-300 text-[10px] mb-3 shrink-0">
+                  Foto
+               </div>
+            )}
+            <div className="w-full border-t border-slate-900 pt-2 font-black text-[10px] uppercase">
+               {empresaEmissora?.nomeFantasia || "CONTRATADA"}
+            </div>
+            <div className="mt-1 font-bold text-[10px] text-slate-800">
+               {proposta.cliente?.vendedorNome || "Ádamo Quadros"}
+            </div>
+            <div className="text-[9px] text-slate-500 uppercase tracking-wider">
+               {proposta.cliente?.vendedorCargo || "Novos Negócios"}
+            </div>
+         </div>
+
+         {/* CLIENT SIGNATURE */}
+         <div className="flex flex-col items-center justify-end">
+            <div className="w-14 h-14 mb-3 shrink-0"></div> {/* Spacer to align with the seller signature */}
+            <div className="w-full border-t border-slate-900 pt-2 font-black text-[10px] uppercase">
+               {proposta.cliente?.razaoSocial || proposta.cliente?.cliente || "CLIENTE"}
+            </div>
+            <div className="mt-1 font-bold text-[10px] text-slate-800">
+               {proposta.cliente?.contato || "Representante Legal"}
+            </div>
+            <div className="text-[9px] text-slate-500 uppercase tracking-wider">
+               {proposta.cliente?.contatoCargo || "Testemunha / Aceite"}
+            </div>
          </div>
       </div>
     </div>
