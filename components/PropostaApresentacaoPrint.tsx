@@ -791,7 +791,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                               return null;
                            })
                         ) : (
-
+                           <>
                      {/* SLIDE 01 PRINT - CAPA COMERCIAL */}
                      <div className="print-slide w-full aspect-[16/9] border border-slate-200 bg-[#020617] p-16 flex flex-col justify-between relative overflow-hidden h-[100vh]">
                         {/* Imagem de Fundo Nativa HTML para Garantir Renderização */}
@@ -1979,10 +1979,10 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                <span className="text-[9px] font-black text-white bg-white/10 px-2.5 py-0.5 rounded">13</span>
                             </div>
                          </div>
+                      </div>
+                           </>
                         )}
                       </div>
-
-                   </div>
     </>
   );
 }

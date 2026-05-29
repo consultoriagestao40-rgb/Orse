@@ -705,7 +705,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                               return null;
                            })()
                         ) : (
-
+                           <>
                         
                         {/* SLIDE 01 (MENSAGEM DE VISITA E AGRADECIMENTO) */}
                         {currentSlide === 2 && (
@@ -1960,6 +1960,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                </div>
                             </div>
                          )}
+                           </>
                         )}
                      </div>
                   </div>
