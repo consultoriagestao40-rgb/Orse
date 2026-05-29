@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import { 
   FileText, Plus, Search, 
   LayoutList, LayoutGrid, UserSquare2,
-  Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer
+  Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer, Share2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getPropostas } from '@/app/propostas/actions';
@@ -257,6 +257,17 @@ export default function PropostasComerciaisDashboard() {
                             className="text-slate-500 hover:text-[#1B4D3E] p-1 transition-colors"
                           >
                             <Printer size={16} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              const shareUrl = `${window.location.origin}/proposta/ver/${doc.id}`;
+                              navigator.clipboard.writeText(shareUrl);
+                              alert('Link da proposta interativa copiado com sucesso! Compartilhe com seu cliente.');
+                            }}
+                            title="Copiar Link Interativo"
+                            className="text-emerald-500 hover:text-emerald-700 p-1 transition-colors"
+                          >
+                            <Share2 size={16} />
                           </button>
                           <button onClick={async () => {
                             if(confirm('Excluir proposta comercial?')) {
