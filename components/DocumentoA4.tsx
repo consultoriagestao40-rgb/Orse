@@ -372,14 +372,14 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
   };
 
   return (
-    <div className="bg-slate-200 min-h-screen py-8 flex flex-col items-center overflow-auto print:bg-white print:py-0">
+    <div className="bg-slate-200 min-h-screen py-8 flex flex-col items-center overflow-x-hidden overflow-y-auto print:bg-white print:py-0 w-full">
       
       {/* Botão de Voltar para não bugar o fluxo - Só aparece na tela, não na impressão */}
-      <div className="w-[210mm] mb-4 flex justify-between no-print">
-        <button onClick={() => window.history.back()} className="px-4 py-2 bg-white rounded-lg shadow text-sm font-bold text-slate-600 hover:bg-slate-50">
+      <div className="w-full max-w-[210mm] px-4 mb-4 flex justify-between items-center no-print">
+        <button onClick={() => window.history.back()} className="px-4 py-2 bg-white rounded-lg shadow text-sm font-bold text-slate-600 hover:bg-slate-50 shrink-0">
           ← Voltar
         </button>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center no-mobile-controls">
           <div className="flex items-center gap-1 bg-white rounded-lg shadow px-2 py-1 mr-4 no-print border border-slate-200">
             <button onClick={() => setZoomLevel(prev => Math.max(0.5, prev - 0.1))} className="w-8 h-8 flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-800 rounded-md font-bold transition-colors" title="Reduzir Zoom">-</button>
             <span className="text-xs font-bold text-slate-600 w-12 text-center">{Math.round(zoomLevel * 100)}%</span>
@@ -418,6 +418,11 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
       </div>
 
       <style dangerouslySetInnerHTML={{__html: `
+        @media (max-width: 840px) {
+          .no-mobile-controls {
+            display: none !important;
+          }
+        }
         @media print {
           /* Zera a margem nativa e remove cabeçalho/rodapé do navegador */
           @page { margin: 0 !important; size: auto; }
@@ -470,7 +475,20 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
              height: 20mm;
           }
           .print-content-cell {
-             padding: 0 20mm !important;
+              padding: 0 20mm !important;
+          }
+          
+          /* Neutralizar os wrappers de escala para a impressão */
+          .no-print-height {
+            height: auto !important;
+            display: block !important;
+            overflow: visible !important;
+          }
+          .no-print-transform {
+            transform: none !important;
+            display: block !important;
+            height: auto !important;
+            overflow: visible !important;
           }
         }
       `}} />
@@ -481,7 +499,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
       >
         <div 
           ref={docRef}
-          className="transition-transform duration-200 origin-top flex justify-center print:block print:transform-none"
+          className="transition-transform duration-200 origin-top flex justify-center print:block print:transform-none no-print-transform"
           style={{ transform: `scale(${zoomLevel})` }}
         >
           <div className="print-a4-page bg-white w-[210mm] min-h-[297mm] print:min-h-0 shadow-2xl print:shadow-none relative text-slate-900 text-xs">
