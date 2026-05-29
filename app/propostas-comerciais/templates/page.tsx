@@ -54,6 +54,12 @@ export default function TemplatesPropostaPage() {
     };
     fetchLogoFromDb();
   }, []);
+  // Canvas Drag & Drop and Property States
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [elementStart, setElementStart] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
 
   // Global Keyboard Shortcuts (Delete/Backspace to remove selected element)
   useEffect(() => {
@@ -102,13 +108,6 @@ export default function TemplatesPropostaPage() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [selectedElementId, activeSlideIdx]);
-
-  // Canvas Drag & Drop and Property States
-  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isResizing, setIsResizing] = useState(false);
-  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
-  const [elementStart, setElementStart] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
 
   // Helper action to upload files locally
   const uploadSlideImageClient = async (e: any, elementId: string, slideData: any, setSecoes: any, activeSlideIdx: number, secoes: any) => {
