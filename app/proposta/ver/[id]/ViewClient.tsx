@@ -153,6 +153,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   const versao = fullProposta?.availableVersions?.[0];
   const mergedProposta = {
     ...fullProposta,
+    tenant: doc.tenant,
     cliente: {
       ...(fullProposta?.cliente || {}),
       ...doc.client,
@@ -174,7 +175,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     <div className="bg-slate-900 w-full min-h-screen text-white font-sans overflow-x-hidden pb-20 select-none">
       
       {/* HEADER DE STATUS & AÇÃO RÁPIDA */}
-      <div className="bg-[#1B4D3E] border-b border-[#13382D] px-6 py-4 flex justify-between items-center print:hidden relative z-50">
+      <div className="bg-[#1B4D3E] border-b border-[#13382D] px-6 py-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 print:hidden relative z-50">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-white/10 rounded-xl">
             <FileText size={18} className="text-white" />
@@ -189,7 +190,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-end gap-3">
           {approved ? (
             <div className="bg-emerald-500/20 border border-emerald-500/40 px-4 py-2 rounded-xl flex items-center gap-2 text-xs font-black uppercase tracking-wider text-emerald-300">
               <CheckCircle size={14} /> Proposta Aprovada

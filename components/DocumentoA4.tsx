@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export default function DocumentoA4({ proposta, resultado, empresaEmissora, templates, onUpdateClausulas, onUpdateCliente, onUpdateItens }: { proposta: any, resultado: any, empresaEmissora: any, templates?: any[], onUpdateClausulas?: (c: any[]) => void, onUpdateCliente?: (c: any) => void, onUpdateItens?: (i: any[]) => void }) {
-  const [companyLogo, setCompanyLogo] = useState<string>('https://via.placeholder.com/300x80?text=Silva+Consultoria');
+  const [companyLogo, setCompanyLogo] = useState<string>(
+    proposta.tenant?.logoUrl || 'https://via.placeholder.com/300x80?text=Silva+Consultoria'
+  );
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (proposta.tenant?.logoUrl) {
+      setCompanyLogo(proposta.tenant.logoUrl);
+    } else if (typeof window !== 'undefined') {
       const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
       if (cookie) {
         try {
@@ -17,9 +21,48 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
         }
       }
     }
-  }, []);
+  }, [proposta.tenant?.logoUrl]);
+
   const [showEditorModal, setShowEditorModal] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [scaledHeight, setScaledHeight] = useState<string | number>('auto');
+  
+  const docRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-responsividade para telas menores de 840px
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleResize = () => {
+        if (window.innerWidth < 840) {
+          const computedZoom = (window.innerWidth - 32) / 794;
+          setZoomLevel(Math.max(0.35, computedZoom));
+        } else {
+          setZoomLevel(1);
+        }
+      };
+      
+      handleResize();
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
+
+  // Observador de redimensionamento do documento para ajustar a altura da caixa pai
+  useEffect(() => {
+    if (docRef.current && typeof window !== 'undefined') {
+      const docEl = docRef.current;
+      const updateHeight = () => {
+        setScaledHeight(docEl.offsetHeight * zoomLevel);
+      };
+      
+      const resizeObserver = new ResizeObserver(updateHeight);
+      resizeObserver.observe(docEl);
+      
+      updateHeight();
+      
+      return () => resizeObserver.disconnect();
+    }
+  }, [zoomLevel]);
 
   if (!proposta || !proposta.cliente) return <div className="p-10 text-center">Carregando dados da proposta...</div>;
   if (!empresaEmissora) return <div className="p-10 text-center">Selecione uma Empresa Emissora para visualizar o documento.</div>;
@@ -433,10 +476,15 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
       `}} />
 
       <div 
-        className="transition-transform duration-200 origin-top w-full flex justify-center print:block print:transform-none"
-        style={{ transform: `scale(${zoomLevel})`, marginBottom: zoomLevel > 1 ? `${(zoomLevel - 1) * 297}mm` : '0' }}
+        className="w-full flex justify-center no-print-height print:h-auto print:overflow-visible" 
+        style={{ height: scaledHeight }}
       >
-        <div className="print-a4-page bg-white w-[210mm] min-h-[297mm] print:min-h-0 shadow-2xl print:shadow-none relative text-slate-900 text-xs">
+        <div 
+          ref={docRef}
+          className="transition-transform duration-200 origin-top flex justify-center print:block print:transform-none"
+          style={{ transform: `scale(${zoomLevel})` }}
+        >
+          <div className="print-a4-page bg-white w-[210mm] min-h-[297mm] print:min-h-0 shadow-2xl print:shadow-none relative text-slate-900 text-xs">
           <table className="w-full border-collapse break-inside-avoid print:break-inside-avoid">
           <thead>
             <tr><td className="print-margin-header border-none p-0"></td></tr>
@@ -691,6 +739,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
         </table>
         </div>
       </div>
+    </div>
 
       {/* MODAL DE EDIÇÃO DE CLÁUSULAS */}
       {showEditorModal && (

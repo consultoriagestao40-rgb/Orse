@@ -54,6 +54,7 @@ export async function getDocumentoPropostaById(id: string) {
       include: {
         client: true,
         empresaEmissora: true,
+        tenant: true,
         proposta: {
           include: {
             versoes: {
