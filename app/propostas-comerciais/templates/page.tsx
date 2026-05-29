@@ -136,6 +136,26 @@ export default function TemplatesPropostaPage() {
     reader.readAsDataURL(file);
   };
 
+  const uploadBgImageClient = async (e: any, slideData: any, setSecoes: any, activeSlideIdx: number, secoes: any) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event: any) => {
+      const base64Data = event.target.result;
+      const res = await uploadSlideImageAction(base64Data, file.name);
+      if (res.success && res.fileUrl) {
+        const list = [...secoes];
+        const updatedText = JSON.stringify({ ...slideData, bgImage: res.fileUrl });
+        list[activeSlideIdx].texto = updatedText;
+        setSecoes(list);
+      } else {
+        alert("Erro ao fazer upload da imagem de fundo: " + (res.error || "Tente novamente"));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Helper template injector for pre-designed slide layouts
   const applyGabarito = (layoutType: string, setSecoes: any, activeSlideIdx: number, secoes: any) => {
     const list = [...secoes];
@@ -940,6 +960,9 @@ export default function TemplatesPropostaPage() {
                               onClick={() => setSelectedElementId(null)}
                               style={{
                                 backgroundColor: slideData.bgColor || '#ffffff',
+                                backgroundImage: slideData.bgImage ? `url(${slideData.bgImage})` : undefined,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
                                 fontFamily: (slideData.fontFamily || 'Outfit') === 'Outfit' ? 'Outfit, sans-serif' : 
                                             (slideData.fontFamily || 'Outfit') === 'Montserrat' ? 'Montserrat, sans-serif' : 
                                             (slideData.fontFamily || 'Outfit') === 'Inter' ? 'Inter, sans-serif' : 
@@ -1339,6 +1362,109 @@ export default function TemplatesPropostaPage() {
                                       }}
                                     />
                                   </div>
+                                </div>
+
+                                <div>
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Cor de Título Global</label>
+                                  <div className="flex gap-2">
+                                    <input
+                                      type="color"
+                                      className="w-8 h-8 rounded border border-slate-200 cursor-pointer"
+                                      value={slideData.titleColor || '#0f172a'}
+                                      onChange={(e) => {
+                                        const list = [...secoes];
+                                        const updatedText = JSON.stringify({ ...slideData, titleColor: e.target.value });
+                                        list[activeSlideIdx].texto = updatedText;
+                                        setSecoes(list);
+                                      }}
+                                    />
+                                    <input
+                                      type="text"
+                                      className="flex-1 bg-white border border-slate-200 rounded-lg text-xs px-3 py-2 font-mono uppercase"
+                                      value={slideData.titleColor || '#0f172a'}
+                                      onChange={(e) => {
+                                        const list = [...secoes];
+                                        const updatedText = JSON.stringify({ ...slideData, titleColor: e.target.value });
+                                        list[activeSlideIdx].texto = updatedText;
+                                        setSecoes(list);
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Cor de Texto Global</label>
+                                  <div className="flex gap-2">
+                                    <input
+                                      type="color"
+                                      className="w-8 h-8 rounded border border-slate-200 cursor-pointer"
+                                      value={slideData.textColor || '#475569'}
+                                      onChange={(e) => {
+                                        const list = [...secoes];
+                                        const updatedText = JSON.stringify({ ...slideData, textColor: e.target.value });
+                                        list[activeSlideIdx].texto = updatedText;
+                                        setSecoes(list);
+                                      }}
+                                    />
+                                    <input
+                                      type="text"
+                                      className="flex-1 bg-white border border-slate-200 rounded-lg text-xs px-3 py-2 font-mono uppercase"
+                                      value={slideData.textColor || '#475569'}
+                                      onChange={(e) => {
+                                        const list = [...secoes];
+                                        const updatedText = JSON.stringify({ ...slideData, textColor: e.target.value });
+                                        list[activeSlideIdx].texto = updatedText;
+                                        setSecoes(list);
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Imagem de Fundo Global</label>
+                                  {slideData.bgImage ? (
+                                    <div className="space-y-2">
+                                      <div className="flex items-center gap-2 bg-white border border-slate-200 p-2 rounded-xl">
+                                        <img src={slideData.bgImage} alt="Background" className="w-12 h-8 rounded object-cover border border-slate-100" />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const list = [...secoes];
+                                            const updatedText = JSON.stringify({ ...slideData, bgImage: null });
+                                            list[activeSlideIdx].texto = updatedText;
+                                            setSecoes(list);
+                                          }}
+                                          className="text-red-500 hover:text-red-700 text-[10px] font-black uppercase cursor-pointer"
+                                        >
+                                          Remover Imagem
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[9px] file:font-black file:uppercase file:bg-emerald-50 file:text-emerald-700 file:cursor-pointer hover:file:bg-emerald-100"
+                                        onChange={(e) => uploadBgImageClient(e, slideData, setSecoes, activeSlideIdx, secoes)}
+                                      />
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase shrink-0">Ou URL:</span>
+                                        <input
+                                          type="text"
+                                          placeholder="https://exemplo.com/imagem.png"
+                                          className="w-full bg-white border border-slate-200 rounded-lg text-xs px-2 py-1 font-mono focus:outline-none focus:border-[#1B4D3E]"
+                                          value={slideData.bgImage || ''}
+                                          onChange={(e) => {
+                                            const list = [...secoes];
+                                            const updatedText = JSON.stringify({ ...slideData, bgImage: e.target.value || null });
+                                            list[activeSlideIdx].texto = updatedText;
+                                            setSecoes(list);
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
 
                                 <div className="border-t border-slate-200 pt-4 mt-2">

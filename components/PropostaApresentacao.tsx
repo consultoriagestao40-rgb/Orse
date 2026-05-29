@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, User, Cpu, Smartphone, Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, Factory, Store, Bus, Building, Hospital, ShoppingBag, GraduationCap, Share2, Clock, CreditCard, ShieldCheck, MapPin, Calendar, UserCheck, Briefcase } from 'lucide-react';
 import BrazilMap from '@/components/BrazilMap';
+import * as Icons from 'lucide-react';
+
+const LucideIconRenderer = ({ name, className, size, color }: { name: string; className?: string; size?: number; color?: string }) => {
+  const IconComponent = (Icons as any)[name];
+  if (!IconComponent) return <Icons.HelpCircle size={size} className={className} />;
+  return <IconComponent size={size} className={className} style={{ color }} />;
+};
 
 export default function PropostaApresentacao({ proposta, resultado, empresaEmissora, presentationMode, setPresentationMode }: any) {
   const [companyLogo, setCompanyLogo] = useState<string>(
@@ -27,7 +34,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
     }
   }, [proposta.tenant?.logoUrl]);
   const rawSlides = proposta.cliente?.clausulasA4 || [];
-  const hasDynamicSlides = rawSlides.length > 0 && rawSlides.some((s: any) => s.texto.trim().startsWith('{'));
+  const hasDynamicSlides = rawSlides.length > 0 && rawSlides.some((s: any) => s.texto && typeof s.texto === 'string' && s.texto.trim().startsWith('{'));
   const totalSlides = hasDynamicSlides ? rawSlides.length : 13;
 
   const [currentSlide, setCurrentSlide] = useState(1);
@@ -215,7 +222,10 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                        style={{
                                           ...baseStyle,
                                           backgroundColor: bgColor || '#ffffff',
-                                          color: textColor || '#334155'
+                                          color: textColor || '#334155',
+                                          backgroundImage: bgImage ? `url(${bgImage})` : undefined,
+                                          backgroundSize: 'cover',
+                                          backgroundPosition: 'center'
                                        }}
                                     >
                                        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none opacity-40"></div>
@@ -249,13 +259,16 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                                          fontWeight: el.style?.fontWeight || 'normal',
                                                          color: el.style?.color || '#334155',
                                                          textAlign: el.style?.textAlign || 'left',
-                                                         lineHeight: '1.25'
+                                                         lineHeight: '1.25',
+                                                         opacity: el.opacity !== undefined ? el.opacity / 100 : 1,
+                                                         transform: el.rotate ? `rotate(${el.rotate}deg)` : undefined,
+                                                         textShadow: el.shadow === 'suave' ? '1px 1px 2px rgba(0,0,0,0.2)' : el.shadow === 'forte' ? '2px 2px 4px rgba(0,0,0,0.4)' : el.shadow === 'neon' ? `0 0 8px ${el.style?.color || '#334155'}` : undefined
                                                       }}
                                                    >
-                                                      {replaceTags(el.content).split('\\n').map((line: string, lIdx: number) => (
+                                                      {replaceTags(el.content).split(/\r?\n|\\n/).map((line: string, lIdx: number) => (
                                                          <React.Fragment key={lIdx}>
                                                             {line}
-                                                            {lIdx < replaceTags(el.content).split('\\n').length - 1 && <br />}
+                                                            {lIdx < replaceTags(el.content).split(/\r?\n|\\n/).length - 1 && <br />}
                                                          </React.Fragment>
                                                       ))}
                                                    </div>
@@ -268,7 +281,11 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                                       className="w-full h-full object-cover pointer-events-none"
                                                       style={{
                                                          clipPath: clipPathVal,
-                                                         borderRadius: borderRadiusStyle
+                                                         borderRadius: borderRadiusStyle,
+                                                         opacity: el.opacity !== undefined ? el.opacity / 100 : 1,
+                                                         transform: el.rotate ? `rotate(${el.rotate}deg)` : undefined,
+                                                         boxShadow: el.shadow === 'suave' ? '0 4px 6px -1px rgba(0,0,0,0.1)' : el.shadow === 'forte' ? '0 20px 25px -5px rgba(0,0,0,0.1)' : undefined,
+                                                         filter: `${el.grayscale ? 'grayscale(100%) ' : ''}${el.sepia ? 'sepia(100%) ' : ''}${el.brightness !== undefined ? `brightness(${el.brightness}%) ` : ''}${el.contrast !== undefined ? `contrast(${el.contrast}%) ` : ''}${el.blur !== undefined ? `blur(${el.blur}px) ` : ''}`
                                                       }}
                                                    />
                                                 )}
@@ -278,9 +295,22 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                                       className="w-full h-full shadow-xs"
                                                       style={{
                                                          backgroundColor: el.color || '#ef4444',
-                                                         borderRadius: `${el.radius || 0}px`
+                                                         borderRadius: `${el.radius || 0}px`,
+                                                         opacity: el.opacity !== undefined ? el.opacity / 100 : 1,
+                                                         transform: el.rotate ? `rotate(${el.rotate}deg)` : undefined,
+                                                         boxShadow: el.shadow === 'suave' ? '0 4px 6px -1px rgba(0,0,0,0.1)' : el.shadow === 'forte' ? '0 20px 25px -5px rgba(0,0,0,0.1)' : el.shadow === 'neon' ? `0 0 15px ${el.color || '#ef4444'}` : undefined
                                                       }}
                                                    />
+                                                )}
+
+                                                {el.type === 'icon' && (
+                                                   <div className="w-full h-full flex items-center justify-center" style={{ transform: el.rotate ? `rotate(${el.rotate}deg)` : undefined, opacity: el.opacity !== undefined ? el.opacity / 100 : 1 }}>
+                                                      <LucideIconRenderer 
+                                                         name={el.name} 
+                                                         size={Math.min(el.w, el.h) * 0.9} 
+                                                         color={el.color || '#ef4444'} 
+                                                      />
+                                                   </div>
                                                 )}
                                              </div>
                                           );
