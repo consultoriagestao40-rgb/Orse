@@ -240,6 +240,7 @@ export async function getTemplatesProposta() {
       await prisma.templatePropostaComercial.create({
         data: {
           nome: 'Apresentação (Slide Deck)',
+          tipo: 'SLIDE_DECK',
           tenantId: user.tenantId,
           secoes: {
             create: [
@@ -275,12 +276,13 @@ export async function getTemplatePropostaById(id: string) {
   }
 }
 
-export async function createTemplateProposta(nome: string, secoes: { titulo: string; texto: string; ordem: number }[]) {
+export async function createTemplateProposta(nome: string, secoes: { titulo: string; texto: string; ordem: number }[], tipo: string = 'A4') {
   const user = await getLoggedUser();
   try {
     const t = await prisma.templatePropostaComercial.create({
       data: {
         nome,
+        tipo,
         tenantId: user?.tenantId || null,
         secoes: {
           create: secoes.map(s => ({ titulo: s.titulo, texto: s.texto, ordem: s.ordem }))
@@ -295,7 +297,7 @@ export async function createTemplateProposta(nome: string, secoes: { titulo: str
   }
 }
 
-export async function updateTemplateProposta(id: string, nome: string, secoes: { titulo: string; texto: string; ordem: number }[]) {
+export async function updateTemplateProposta(id: string, nome: string, secoes: { titulo: string; texto: string; ordem: number }[], tipo: string = 'A4') {
   try {
     // Apagar seções antigas e recriar
     await prisma.secaoTemplateProposta.deleteMany({ where: { templateId: id } });
@@ -303,6 +305,7 @@ export async function updateTemplateProposta(id: string, nome: string, secoes: {
       where: { id },
       data: {
         nome,
+        tipo,
         secoes: {
           create: secoes.map(s => ({ titulo: s.titulo, texto: s.texto, ordem: s.ordem }))
         }
