@@ -36,11 +36,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
   const [canvaEmbedUrl, setCanvaEmbedUrl] = useState(
     configApresentacao?.canvaEmbedUrl || ''
   );
-  const [validadeDays, setValidadeDays] = useState<number | ''>(
-    configApresentacao?.validadeDays && configApresentacao.validadeDays > 0
-      ? configApresentacao.validadeDays
-      : 7 // Padrão de 7 dias caso seja novo ou anteriormente permanente
-  );
+  const [validadeDays, setValidadeDays] = useState<number | ''>('');
 
   // Carregar as minutas disponíveis no sistema
   useEffect(() => {
@@ -344,10 +340,10 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
           </button>
           <button 
             onClick={handleSaveAndCopy}
-            disabled={loading}
+            disabled={loading || !validadeDays || Number(validadeDays) <= 0}
             className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer ${
-              loading 
-                ? 'bg-slate-150 text-slate-400 border border-slate-250 cursor-not-allowed shadow-none'
+              loading || !validadeDays || Number(validadeDays) <= 0
+                ? 'bg-slate-150 text-slate-400 border border-slate-250 cursor-not-allowed shadow-none opacity-60'
                 : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/10 active:scale-[0.98]'
             }`}
           >
