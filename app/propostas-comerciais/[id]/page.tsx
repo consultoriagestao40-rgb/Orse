@@ -1096,8 +1096,8 @@ export default function DocumentoPropostaDetail() {
               </div>
             </header>
 
-            {/* LAYOUT CONDICIONAL DO EDITOR */}
-            {doc.tipo === 'SLIDE_DECK' ? (
+            {/* LAYOUT CONDICIONAL DO EDITOR: Desativado o editor de slides Canva/Deck. Agora a apresentação é configurada estritamente através do Link do Cliente. */}
+            {false ? (
               <div className="space-y-6">
                 
                 {/* TOPO: DASHBOARD DE DETALHES GERAIS HORIZONTAL */}
