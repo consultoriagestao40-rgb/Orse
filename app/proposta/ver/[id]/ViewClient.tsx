@@ -182,7 +182,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   };
 
   const isSlide = !!doc.templateOrigem?.nome?.toLowerCase()?.includes('apresenta') || doc.tipo === 'SLIDE_DECK';
-  const hasCanva = isSlide && !!doc.configApresentacao?.useCanva && !!doc.configApresentacao?.canvaEmbedUrl;
+  const hasCanva = !!doc.configApresentacao?.useCanva && !!doc.configApresentacao?.canvaEmbedUrl;
 
   const navItems = [
     { id: 'apresentacao', label: '1. Apresentação Slides', icon: Presentation, show: tabsConfig.apresentacao && hasCanva },
@@ -327,46 +327,87 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
       {/* WORKSPACE DIVIDIDO (SIDEBAR + MAIN CANVAS) */}
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row p-4 md:p-8 gap-6 print:p-0 print:m-0">
         
-        {/* SIDEBAR DE TABS DE NAVEGAÇÃO */}
-        <aside className="w-full md:w-64 shrink-0 space-y-4 print:hidden">
-          <div className="bg-slate-950/60 border border-white/5 rounded-3xl p-5 space-y-3 backdrop-blur-md">
-            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-2 px-1">
-              Menu de Navegação
-            </span>
-            <div className="flex flex-col gap-1.5">
+        {/* SIDEBAR DE TABS DE NAVEGAÇÃO (ESTILO SEGUNDA FOTO - PREMIUM WHITE) */}
+        <aside className="w-full md:w-80 shrink-0 bg-white border border-slate-200 rounded-3xl p-6 shadow-xl flex flex-col justify-between text-slate-800 print:hidden font-sans">
+          <div>
+            {/* Header da Proposta */}
+            <div className="space-y-1 text-left pb-4 border-b border-slate-100">
+              <h2 className="text-sm font-black text-slate-800 tracking-tight leading-snug">
+                Proposta para {doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Empresa'}
+              </h2>
+              <p className="text-[9.5px] text-slate-400 font-bold uppercase tracking-wider">
+                Criada em {doc.data || new Date().toLocaleDateString('pt-BR')} por {doc.vendedorResponsavel || 'Novos Negócios'}
+              </p>
+              <div className="inline-block mt-2 bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-xl border border-emerald-100/50">
+                Válida até {doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR')}
+              </div>
+            </div>
+
+            {/* Card Cliente */}
+            <div className="mt-5 bg-slate-50 border border-slate-200/50 rounded-2xl p-4 text-left">
+              <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-widest block">Cliente</span>
+              <h4 className="text-xs font-black text-[#1B4D3E] uppercase mt-1 leading-snug">
+                {doc.client?.razaoSocial || doc.client?.nomeFantasia || 'Cliente'}
+              </h4>
+              <p className="text-[9px] text-slate-500 font-bold mt-1">
+                {doc.client?.cnpj || 'CNPJ não informado'}
+              </p>
+            </div>
+
+            {/* Menu de Navegação */}
+            <div className="flex flex-col gap-1.5 mt-6">
               {navItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => setActiveClientTab(item.id)}
-                  className={`w-full text-left px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-3 active:scale-[0.98] cursor-pointer border ${
+                  className={`w-full text-left px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-between active:scale-[0.98] cursor-pointer border ${
                     activeClientTab === item.id
-                      ? 'bg-gradient-to-r from-[#1B4D3E]/30 to-[#1b4d3e]/10 border-emerald-500/20 text-emerald-300 shadow-md shadow-emerald-950/20'
-                      : 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      ? 'bg-slate-100 border-slate-200 text-[#1B4D3E] shadow-xs'
+                      : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                   }`}
                 >
-                  <item.icon size={16} />
-                  {item.label}
+                  <div className="flex items-center gap-3">
+                    <item.icon size={16} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+                    <span>{item.label}</span>
+                  </div>
+                  <ChevronRight size={14} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : 'text-slate-350'} />
                 </button>
               ))}
             </div>
           </div>
 
-          {/* STATUS BOX IN SIDEBAR */}
-          <div className="bg-slate-950/40 border border-white/5 rounded-3xl p-5 space-y-3 backdrop-blur-sm">
-            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-1 px-1">
-              Status da Proposta
-            </span>
-            <div className="flex items-center gap-3">
-              <div className={`w-3.5 h-3.5 rounded-full ${approved ? 'bg-emerald-500 shadow-lg shadow-emerald-500/30' : 'bg-amber-500 shadow-lg shadow-amber-500/30'} animate-pulse shrink-0`} />
-              <div>
-                <div className="text-[10px] font-black text-white uppercase tracking-wider">
-                  {approved ? 'Assinada Eletronicamente' : 'Pendente de Análise'}
-                </div>
-                <div className="text-[9px] text-slate-500 font-bold uppercase mt-0.5">
-                  {approved ? 'Aceite Comercial Registrado' : 'Aguardando Aprovação'}
-                </div>
+          {/* Rodapé da Sidebar - Botões de Ação Dinâmicos */}
+          <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col gap-2.5">
+            {approved ? (
+              <div className="bg-emerald-50 border border-emerald-150 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+                <CheckCircle2 size={24} className="text-emerald-600 mb-1" />
+                <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Proposta Aprovada</span>
+                <span className="text-[8.5px] text-emerald-600 font-bold uppercase mt-0.5">Assinatura Registrada</span>
               </div>
-            </div>
+            ) : (
+              <>
+                <button
+                  onClick={() => setShowApprovalModal(true)}
+                  className="w-full bg-[#10B981] hover:bg-[#0da673] text-white font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl shadow-lg shadow-emerald-500/10 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span className="text-[14px]">👍</span> Aceitar Proposta
+                </button>
+                
+                <button
+                  onClick={() => setShowNegotiationModal(true)}
+                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-slate-200/50"
+                >
+                  <span className="text-[14px]">👎</span> Declinar Proposta
+                </button>
+
+                <button
+                  onClick={() => setShowNegotiationModal(true)}
+                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-slate-200/50"
+                >
+                  <span className="text-[14px]">💬</span> Comentar
+                </button>
+              </>
+            )}
           </div>
         </aside>
 
