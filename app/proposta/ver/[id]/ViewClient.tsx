@@ -283,7 +283,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   }, [activeClientTab]);
 
   return (
-    <div className="bg-[#FAFBFD] w-full min-h-screen text-slate-800 font-sans flex flex-col md:flex-row select-none">
+    <div className="bg-[#FAFBFD] w-full h-screen text-slate-800 font-sans flex flex-col md:flex-row overflow-hidden select-none">
         
         {/* SIDEBAR DE TABS DE NAVEGAÇÃO (ESTILO SEGUNDA FOTO - PREMIUM WHITE) */}
         <aside className="w-full md:w-80 shrink-0 bg-white border border-slate-200 rounded-3xl p-6 shadow-xl flex flex-col justify-between text-slate-800 print:hidden font-sans">
@@ -370,7 +370,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
         </aside>
 
         {/* CONTAINER PRINCIPAL DE CONTEÚDO (CANVAS) */}
-        <main className="flex-1 min-h-[600px] print:w-full print:p-0 print:m-0">
+        <main className="flex-1 h-full overflow-y-auto p-4 md:p-8 bg-[#FAFBFD] print:w-full print:p-0 print:m-0">
 
           {/* 1. ABA: APRESENTAÇÃO CANVA */}
           {activeClientTab === 'apresentacao' && hasCanva && (
