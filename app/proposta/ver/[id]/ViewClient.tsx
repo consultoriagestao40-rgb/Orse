@@ -182,7 +182,9 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   };
 
   const isSlide = !!doc.templateOrigem?.nome?.toLowerCase()?.includes('apresenta') || doc.tipo === 'SLIDE_DECK';
-  const canvaUrl = doc.configApresentacao?.canvaEmbedUrl || doc.configApresentacao?.clientTabs?.canvaEmbedUrl || '';
+  const canvaUrl = doc.id === 'cmpsloy27000004jlxvb5n9xo'
+    ? 'https://www.canva.com/design/DAHCXKiLmiQ/v3lyl52DMCmsHRbgxx8uHQ/view?embed'
+    : (doc.configApresentacao?.canvaEmbedUrl || doc.configApresentacao?.clientTabs?.canvaEmbedUrl || '');
   const hasCanva = !!canvaUrl;
 
   const navItems = [
@@ -282,21 +284,29 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     }
   }, [activeClientTab]);
 
-  return (
+return (
     <div className="bg-[#FAFBFD] w-full h-screen text-slate-800 font-sans flex flex-col md:flex-row overflow-hidden select-none">
         
         {/* SIDEBAR DE TABS DE NAVEGAÇÃO (ESTILO SEGUNDA FOTO - PREMIUM WHITE) */}
         <aside className="w-full md:w-80 shrink-0 bg-white border border-slate-200 rounded-3xl p-6 shadow-xl flex flex-col justify-between text-slate-800 print:hidden font-sans">
           <div>
-            {/* Header da Proposta */}
-            <div className="space-y-1 text-left pb-4 border-b border-slate-100">
-              <h2 className="text-sm font-black text-slate-800 tracking-tight leading-snug">
+            {/* Header da Proposta com FPV e Versão em Destaque */}
+            <div className="space-y-1.5 text-left pb-4 border-b border-slate-100 font-sans">
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-250 font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
+                  FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')}
+                </span>
+                <span className="text-[10px] bg-slate-50 text-slate-500 border border-slate-200 font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
+                  Versão v{versao?.versao || 1}
+                </span>
+              </div>
+              <h2 className="text-sm font-black text-slate-800 tracking-tight leading-snug mt-2">
                 Proposta para {doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Empresa'}
               </h2>
               <p className="text-[9.5px] text-slate-400 font-bold uppercase tracking-wider">
                 Criada em {doc.data || new Date().toLocaleDateString('pt-BR')} por {doc.vendedorResponsavel || 'Novos Negócios'}
               </p>
-              <div className="inline-block mt-2 bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-xl border border-emerald-100/50">
+              <div className="inline-block mt-1 bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-xl border border-emerald-100/50">
                 Válida até {doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR')}
               </div>
             </div>
@@ -428,8 +438,8 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
           {activeClientTab === 'fpv' && fullProposta && (
             <div className="space-y-6 animate-fadeIn">
               
-              {/* Menu secundário horizontal para abas financeiras */}
-              <div className="bg-slate-950/60 p-2 border border-white/5 rounded-3xl flex overflow-x-auto gap-2 scrollbar-none print:hidden">
+              {/* Menu secundário horizontal para abas financeiras (Estilo Excel CRM - Quadrado) */}
+              <div className="bg-white border border-slate-200 flex overflow-x-auto gap-0 scrollbar-none print:hidden mb-4 font-sans text-xs">
                 {[
                   { id: 'premissas', label: '2. Premissas', icon: TrendingUp },
                   { id: 'encargos', label: '3. Encargos', icon: Layers },
@@ -441,20 +451,20 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
                   <button
                     key={t.id}
                     onClick={() => setActiveFpvTab(t.id as any)}
-                    className={`px-4 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${
+                    className={`px-5 py-3 text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer border-b-2 ${
                       activeFpvTab === t.id
-                        ? 'bg-[#10B981] text-white shadow-lg shadow-emerald-950/20'
-                        : 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                        ? 'border-[#1B4D3E] bg-slate-50 text-[#1B4D3E] font-extrabold'
+                        : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                     }`}
                   >
-                    <t.icon size={13} />
+                    <t.icon size={13} className={activeFpvTab === t.id ? 'text-[#1B4D3E]' : 'text-slate-400'} />
                     {t.label}
                   </button>
                 ))}
               </div>
 
-              {/* RENDER OPERACIONAL DE CADA ABA FPV */}
-              <div className="bg-white rounded-3xl p-6 md:p-8 text-slate-800 shadow-2xl shadow-slate-950/20">
+              {/* RENDER OPERACIONAL DE CADA ABA FPV (ESTILO SPREADSHEET PLANA SEM BORDAS ARREDONDADAS) */}
+              <div className="bg-white border border-slate-200 p-6 md:p-8 text-slate-800 shadow-sm rounded-none">
 
                 {/* Sub-Aba 2: Premissas do Projeto */}
                 {activeFpvTab === 'premissas' && (
