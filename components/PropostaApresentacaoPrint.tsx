@@ -669,6 +669,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                                          color={el.color || '#ef4444'} 
                                                       />
                                                    </div>
+                                                )}
                                                 {el.type === 'chart' && (
                                                    <div className="w-full h-full" style={{ transform: el.rotate ? `rotate(${el.rotate}deg)` : undefined, opacity: el.opacity !== undefined ? el.opacity / 100 : 1 }}>
                                                       {renderChartElement(el, slideData.bgColor || '#ffffff')}

@@ -2714,6 +2714,7 @@ export default function TemplatesPropostaPage() {
                                   );
                                 })}
                             </div>
+                          </div>
                           );
                         })()}
 
