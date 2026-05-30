@@ -199,16 +199,48 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
     let replaced = text;
     
     const clienteNome = proposta.cliente?.nomeFantasia || proposta.cliente?.razaoSocial || proposta.cliente?.cliente || '';
-    const numProposta = proposta.cliente?.numeroProposta || `FPV-${String(proposta.numero || 'XXX').padStart(3, '0')}`;
+    const clienteCnpj = proposta.cliente?.cnpj || '';
+    const clienteEndereco = proposta.cliente?.endereco || proposta.cliente?.localPrestacao || '';
+    const clienteContato = proposta.cliente?.contato || proposta.cliente?.contatoNome || '';
+    
+    const vendedorNome = proposta.cliente?.vendedorNome || proposta.proposta?.user?.nome || 'Ádamo Quadros';
+    const vendedorEmail = proposta.cliente?.vendedorEmail || proposta.proposta?.user?.email || 'contato@provelo.com.br';
+    const vendedorTelefone = proposta.cliente?.vendedorTelefone || proposta.proposta?.user?.celular || '(41) 9 9737-0880';
+    
+    const numProposta = proposta.cliente?.numeroProposta || (proposta.numero ? `FPV-${String(proposta.numero).padStart(3, '0')}` : 'FPV-XXX');
     const revisao = proposta.cliente?.revisao || 'R01';
+    
+    const dataProposta = proposta.cliente?.dataElaboracao 
+      ? new Date(proposta.cliente.dataElaboracao + 'T12:00:00').toLocaleDateString('pt-BR') 
+      : new Date().toLocaleDateString('pt-BR');
+      
+    const validadeProposta = proposta.cliente?.dataVencimento 
+      ? new Date(proposta.cliente.dataVencimento + 'T12:00:00').toLocaleDateString('pt-BR') 
+      : 'A definir';
+      
     const objeto = proposta.cliente?.objetoProposta || proposta.cliente?.tipoServicos || 'Prestação de serviços especializados de limpeza, conservação e facilities.';
     const escopo = proposta.cliente?.escopoTecnico || 'Detalhamento das atividades operacionais conforme solicitação e cronograma alinhado.';
+    const localPrestacao = proposta.cliente?.localPrestacao || proposta.cliente?.endereco || 'Local a ser definido';
+    const prazoContrato = proposta.cliente?.prazoContrato || '12 meses';
     
     replaced = replaced.replace(/\[CLIENTE_NOME\]/g, clienteNome);
+    replaced = replaced.replace(/\[CLIENTE_CNPJ\]/g, clienteCnpj);
+    replaced = replaced.replace(/\[CLIENTE_ENDERECO\]/g, clienteEndereco);
+    replaced = replaced.replace(/\[CLIENTE_CONTATO\]/g, clienteContato);
+    
+    replaced = replaced.replace(/\[VENDEDOR_NOME\]/g, vendedorNome);
+    replaced = replaced.replace(/\[VENDEDOR_EMAIL\]/g, vendedorEmail);
+    replaced = replaced.replace(/\[VENDEDOR_TELEFONE\]/g, vendedorTelefone);
+    
     replaced = replaced.replace(/\[NUMERO_PROPOSTA\]/g, numProposta);
     replaced = replaced.replace(/\[REVISAO\]/g, revisao);
+    replaced = replaced.replace(/\[DATA_PROPOSTA\]/g, dataProposta);
+    replaced = replaced.replace(/\[VALIDADE_PROPOSTA\]/g, validadeProposta);
+    
     replaced = replaced.replace(/\[OBJETO_PROPOSTA\]/g, objeto);
     replaced = replaced.replace(/\[ESCOPO_TECNICO\]/g, escopo);
+    replaced = replaced.replace(/\[LOCAL_PRESTACAO\]/g, localPrestacao);
+    replaced = replaced.replace(/\[PRAZO_CONTRATO\]/g, prazoContrato);
     
     const divisorTributos = resultado?.divisor || 1;
     const txAdm = (proposta.premissas?.taxaAdm || 0) / 100;
@@ -249,8 +281,11 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
       Number(isSpot ? 0 : proposta.insumos?.servicos || 0)
     );
 
-    const valorTotal = formatCurrency(maoDeObraSubtotal + insumosSubtotal);
-    replaced = replaced.replace(/\[VALOR_TOTAL\]/g, valorTotal);
+    const totalMensal = maoDeObraSubtotal + insumosSubtotal;
+    
+    replaced = replaced.replace(/\[VALOR_MENSAL\]/g, formatCurrency(totalMensal));
+    replaced = replaced.replace(/\[VALOR_ANUAL\]/g, formatCurrency(totalMensal * 12));
+    replaced = replaced.replace(/\[VALOR_TOTAL\]/g, formatCurrency(totalMensal));
 
     const condicoes = (proposta.cliente?.condicoesCliente || []).join('\n');
     replaced = replaced.replace(/\[CONDICOES_COMERCIAIS\]/g, condicoes);
