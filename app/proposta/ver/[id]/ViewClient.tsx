@@ -3,7 +3,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DocumentoA4 from '@/components/DocumentoA4';
 import PropostaApresentacao from '@/components/PropostaApresentacao';
-import PropostaApresentacaoPrint from '@/components/PropostaApresentacaoPrint';
+import dynamic from 'next/dynamic';
+
+const PropostaApresentacaoPrint = dynamic(
+  () => import('@/components/PropostaApresentacaoPrint'),
+  { ssr: false }
+);
 import { aprovarPropostaAction } from '@/app/propostas-comerciais/actions';
 import { getTemplates } from '@/app/contratos/actions';
 import { 
