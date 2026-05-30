@@ -223,7 +223,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
       {/* RENDERIZADOR DO MODELO */}
       {isSlide ? (
         doc.configApresentacao?.useCanva && doc.configApresentacao?.canvaEmbedUrl ? (
-          /* APRESENTAÇÃO INTEGRADA DO CANVA */
+          /* APRESENTAÇÃO INTEGRADA E INTERATIVA DO CANVA */
           <div className="w-full max-w-6xl mx-auto px-4 py-8 space-y-6 animate-fadeIn">
             {/* Banner de Instrução do Canva - oculto na impressão */}
             <div className="bg-[#1B4D3E]/30 border border-emerald-500/20 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-3 backdrop-blur-md print:hidden">

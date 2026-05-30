@@ -1092,7 +1092,7 @@ export default function DocumentoPropostaDetail() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-50">
+<div className="p-3 rounded-2xl bg-emerald-50 text-emerald-50">
                       <Tag size={20} />
                     </div>
                     <div>
@@ -1102,7 +1102,7 @@ export default function DocumentoPropostaDetail() {
                   </div>
                 </div>
 
-                {/* INTERFACE DO CANVA INTEGRADO (EMBED) */}
+                {/* INTERFACE DO CANVA INTEGRADO (EMBED E TELA CHEIA) */}
                 <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
