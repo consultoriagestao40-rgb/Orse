@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import DocumentoA4 from '@/components/DocumentoA4';
-import PropostaApresentacao from '@/components/PropostaApresentacao';
 import dynamic from 'next/dynamic';
 import { aprovarPropostaAction } from '@/app/propostas-comerciais/actions';
 import { getTemplates } from '@/app/contratos/actions';
