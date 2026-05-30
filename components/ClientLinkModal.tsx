@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Copy, Check, Share2, FileText, Calculator, BookOpen, Presentation } from 'lucide-react';
+import { X, Copy, Check, Share2, FileText, Calculator, BookOpen, Presentation, Clock, Calendar } from 'lucide-react';
 import { getTemplates } from '@/app/contratos/actions';
 import { updateConfigApresentacao } from '@/app/propostas-comerciais/actions';
 
@@ -36,6 +36,9 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
   const [canvaEmbedUrl, setCanvaEmbedUrl] = useState(
     configApresentacao?.canvaEmbedUrl || ''
   );
+  const [validadeDays, setValidadeDays] = useState<number>(
+    configApresentacao?.validadeDays || 0 // 0 = Permanente
+  );
 
   // Carregar as minutas disponíveis no sistema
   useEffect(() => {
@@ -69,7 +72,12 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
           fpv,
           minuta,
           minutaTemplateId
-        }
+        },
+        validadeDays,
+        linkCreatedAt: new Date().toISOString(),
+        linkExpiresAt: validadeDays > 0 
+          ? new Date(new Date().getTime() + validadeDays * 24 * 60 * 60 * 1000).toISOString()
+          : null
       };
 
       const res = await updateConfigApresentacao(documentoId, newConfig);
@@ -249,6 +257,39 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                   </select>
                 </div>
               )}
+            </div>
+
+            {/* 5. PRAZO DE VALIDADE DO LINK */}
+            <div className="p-4 border rounded-2xl border-slate-200 bg-white space-y-3">
+              <div className="flex items-center gap-1.5 font-black text-xs uppercase tracking-wider text-slate-800">
+                <Clock size={14} className="text-amber-600" />
+                Validade do Link Comercial
+              </div>
+              <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
+                Escolha após quanto tempo o link de acesso público do cliente expirará automaticamente.
+              </p>
+              
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { value: 0, label: 'Permanente' },
+                  { value: 5, label: '5 dias' },
+                  { value: 10, label: '10 dias' },
+                  { value: 30, label: '30 dias' }
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setValidadeDays(opt.value)}
+                    className={`py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border cursor-pointer ${
+                      validadeDays === opt.value
+                        ? 'bg-amber-50 border-amber-300 text-amber-700 font-bold'
+                        : 'bg-white border-slate-250 text-slate-500 hover:bg-slate-50 hover:text-slate-850'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
           </div>
