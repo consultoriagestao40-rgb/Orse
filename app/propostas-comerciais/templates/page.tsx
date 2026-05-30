@@ -2491,9 +2491,9 @@ export default function TemplatesPropostaPage() {
                           );
                         })()}
 
-                      </div> {/* p-5 right sidebar content */}
-                    </div> {/* col-span-12 lg:col-span-3 right sidebar panel */}
-                  </div> {/* grid-cols-12 items-start */}
+                      </div>
+                    </div>
+                  </div>
                 );
               })()}{/* Salvar bottom */}
               <div className="flex justify-end pt-2 border-t border-slate-200">
