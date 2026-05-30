@@ -1003,7 +1003,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
 
                                           <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto pr-28">
                                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
-                                             <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">{String(currentSlide).padStart(2, '0')}</span>
+                                             <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">{String(slideNum).padStart(2, '0')}</span>
                                           </div>
                                        </div>
                                     );
@@ -1171,7 +1171,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
 
                                           <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto pr-28">
                                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
-                                             <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">{String(currentSlide).padStart(2, '0')}</span>
+                                             <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded">{String(slideNum).padStart(2, '0')}</span>
                                           </div>
                                        </div>
                                     );
@@ -1532,7 +1532,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
 
                                           <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-auto">
                                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">www.smartbidhub.com.br</span>
-                                             <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded font-black">{String(currentSlide).padStart(2, '0')}</span>
+                                             <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded font-black">{String(slideNum).padStart(2, '0')}</span>
                                           </div>
                                        </div>
                                     </div>
