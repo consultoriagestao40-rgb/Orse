@@ -546,8 +546,8 @@ return (
           {activeClientTab === 'fpv' && fullProposta && (
             <div className="space-y-6 animate-fadeIn">
               
-              {/* Menu secundário horizontal para abas financeiras (Estilo Excel CRM - Quadrado) */}
-              <div className="bg-white border border-slate-200 flex overflow-x-auto gap-0 scrollbar-none print:hidden mb-4 font-sans text-xs">
+              {/* Menu secundário para abas financeiras (Layout Responsivo Premium - Grid que se adapta a Mobile e PC) */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 print:hidden mb-6 font-sans text-xs">
                 {[
                   { id: 'premissas', label: '2. Premissas', icon: TrendingUp },
                   { id: 'encargos', label: `3. Encargos (${totalGeralEncargos.toFixed(2)}%)`, icon: Layers },
@@ -559,14 +559,14 @@ return (
                   <button
                     key={t.id}
                     onClick={() => setActiveFpvTab(t.id as any)}
-                    className={`px-5 py-3 text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer border-b-2 ${
+                    className={`px-3 py-3 font-black uppercase tracking-wider transition-all flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2 cursor-pointer border rounded-2xl text-center sm:text-left ${
                       activeFpvTab === t.id
-                        ? 'border-[#1B4D3E] bg-slate-50 text-[#1B4D3E] font-extrabold'
-                        : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                        ? 'border-[#1B4D3E] bg-emerald-50/40 text-[#1B4D3E] font-extrabold shadow-xs'
+                        : 'border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 hover:border-slate-300'
                     }`}
                   >
                     <t.icon size={13} className={activeFpvTab === t.id ? 'text-[#1B4D3E]' : 'text-slate-400'} />
-                    {t.label}
+                    <span className="text-[9px] sm:text-[9.5px] leading-tight break-words">{t.label}</span>
                   </button>
                 ))}
               </div>
