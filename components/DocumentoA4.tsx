@@ -205,7 +205,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
         </div>
 
         {/* VALOR TOTAL */}
-        <div className="w-full mt-8 p-5 bg-[#1B4D3E] text-white flex justify-between items-center text-center font-black text-base mb-2 uppercase tracking-wide rounded-none border border-emerald-950 shadow-md">
+        <div className="w-full mt-8 p-5 bg-[#1B4D3E] total-premium-card text-white flex justify-between items-center text-center font-black text-base mb-2 uppercase tracking-wide rounded-none border border-emerald-950 shadow-md">
           <span className="text-emerald-300 tracking-wider">VALOR TOTAL DA PROPOSTA:</span>
           <span className="text-2xl text-emerald-400 font-black tracking-tight">{fmt(totalGeral)} {isSpot ? '' : 'Mensal'}</span>
         </div>
@@ -425,14 +425,14 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
           }
           
           /* Preservar a estilização do bloco de total premium */
-          .bg-\\[\\#1B4D3E\\] {
+          .total-premium-card {
             background-color: #1B4D3E !important;
             border: 1px solid #10b981 !important;
           }
-          .bg-\\[\\#1B4D3E\\] span {
+          .total-premium-card span {
             color: #10B981 !important;
           }
-          .bg-\\[\\#1B4D3E\\] span.text-2xl {
+          .total-premium-card span.text-2xl {
             color: #10B981 !important;
           }
 
