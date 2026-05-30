@@ -1,5 +1,5 @@
 import React from 'react';
-import { getDocumentoPropostaById } from './actions';
+import { getDocumentoPropostaById } from './queries';
 import { getPropostaCompleta } from '@/app/propostas/actions';
 import ViewClient from './ViewClient';
 import { Metadata } from 'next';
