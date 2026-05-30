@@ -4,8 +4,29 @@ import BrazilMap from '@/components/BrazilMap';
 import * as Icons from 'lucide-react';
 
 const LucideIconRenderer = ({ name, className, size, color }: { name: string; className?: string; size?: number | string; color?: string }) => {
-  const IconComponent = (Icons as any)[name];
-  if (!IconComponent) return <Icons.HelpCircle size={size} className={className} style={{ color }} />;
+  const IconComponent = (Icons as any)[name] || (Icons as any)['HelpCircle'] || (Icons as any)['CircleHelp'] || (Icons as any)['Info'];
+  if (!IconComponent) {
+    const finalSize = size || 24;
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={finalSize}
+        height={finalSize}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+        style={{ color }}
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+        <line x1="12" y1="17" x2="12.01" y2="17" />
+      </svg>
+    );
+  }
   return <IconComponent size={size} className={className} style={{ color }} />;
 };
 
