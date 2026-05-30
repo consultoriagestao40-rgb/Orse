@@ -14,6 +14,7 @@ import * as Icons from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { getLoggedUser } from '@/app/propostas/actions';
 import ClientLinkModal from '@/components/ClientLinkModal';
+import ClientTrackingModal from '@/components/ClientTrackingModal';
 import { 
   getDocumentoPropostaById, 
   updateDocumentoStatus, 
@@ -283,6 +284,7 @@ export default function DocumentoPropostaDetail() {
   const [tempLayerName, setTempLayerName] = useState('');
   const [activeCanvaTab, setActiveCanvaTab] = useState<'laminas' | 'elementos' | 'layouts' | 'estilos'>('laminas');
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showTrackingModal, setShowTrackingModal] = useState(false);
   
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const copyToClipboard = (text: string, fieldId: string) => {
@@ -1067,6 +1069,16 @@ export default function DocumentoPropostaDetail() {
                   className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold py-2 px-4 rounded-xl text-xs flex items-center gap-2 shadow-xs transition-all active:scale-95"
                 >
                   <Printer size={16} /> Gerar PDF / Imprimir
+                </button>
+                <button
+                  onClick={() => setShowTrackingModal(true)}
+                  className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-black py-2 px-4 rounded-xl text-xs flex items-center gap-2 shadow-xs transition-all active:scale-95 cursor-pointer relative"
+                  title="Ver Relatório de Acesso do Cliente"
+                >
+                  <Eye size={16} /> Acessos
+                  {doc?.configApresentacao?.viewTracking?.history?.length > 0 && (
+                    <span className="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full animate-pulse border border-white translate-x-1/2 -translate-y-1/2" />
+                  )}
                 </button>
                 <button
                   onClick={() => setShowShareModal(true)}
@@ -3289,6 +3301,12 @@ export default function DocumentoPropostaDetail() {
             setConfigApresentacao(newConfig);
             if (doc) setDoc({ ...doc, configApresentacao: newConfig });
           }}
+        />
+      )}
+      {showTrackingModal && doc && (
+        <ClientTrackingModal 
+          doc={doc}
+          onClose={() => setShowTrackingModal(false)}
         />
       )}
     </>

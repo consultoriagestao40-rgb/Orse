@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DocumentoA4 from '@/components/DocumentoA4';
 import dynamic from 'next/dynamic';
-import { aprovarPropostaAction } from '@/app/propostas-comerciais/actions';
+import { aprovarPropostaAction, recusarPropostaAction, trackDocumentoView } from '@/app/propostas-comerciais/actions';
 import { getTemplates } from '@/app/contratos/actions';
 import { 
   CheckCircle, Edit, FileText, X, Printer, CheckCircle2, ShieldCheck, Mail, MapPin, 
@@ -21,6 +21,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   const [approved, setApproved] = useState(doc.statusAssinatura === 'ASSINADO');
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showNegotiationModal, setShowNegotiationModal] = useState(false);
+  const [negotiationType, setNegotiationType] = useState<'comment' | 'decline'>('comment');
 
   // Signature Form States
   const [signerNome, setSignerNome] = useState('');
@@ -58,6 +59,15 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
       .then(data => setSignerIp(data.ip))
       .catch(() => setSignerIp('187.64.12.195 (Lookup falhou)'));
   }, []);
+
+  // 3. Track client tab views in real time
+  useEffect(() => {
+    if (doc?.id && activeClientTab) {
+      trackDocumentoView(doc.id, activeClientTab).catch(err =>
+        console.error('Erro ao registrar visualização da aba:', err)
+      );
+    }
+  }, [activeClientTab, doc?.id]);
 
   // Signature Canvas Drawing Handlers
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -140,11 +150,30 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     }
   };
 
-  const handleSendNegotiation = () => {
+  const handleSendNegotiation = async () => {
     if (!negotiationText.trim()) return;
-    alert('Sua mensagem/contraproposta foi registrada e enviada para o vendedor. Em breve entraremos em contato!');
-    setShowNegotiationModal(false);
-    setNegotiationText('');
+    setLoading(true);
+    try {
+      if (negotiationType === 'decline') {
+        const res = await recusarPropostaAction(doc.id, negotiationText);
+        if (res.success) {
+          alert('Proposta recusada com sucesso. O vendedor foi notificado via WhatsApp!');
+          setShowNegotiationModal(false);
+          setNegotiationText('');
+          window.location.reload();
+        } else {
+          alert('Erro ao recusar proposta: ' + res.error);
+        }
+      } else {
+        alert('Sua mensagem/contraproposta foi registrada e enviada para o vendedor. Em breve entraremos em contato!');
+        setShowNegotiationModal(false);
+        setNegotiationText('');
+      }
+    } catch (e: any) {
+      alert('Erro ao enviar mensagem: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Merge fullProposta com as seções do documento e valores
@@ -467,14 +496,20 @@ return (
                 </button>
                 
                 <button
-                  onClick={() => setShowNegotiationModal(true)}
+                  onClick={() => {
+                    setNegotiationType('decline');
+                    setShowNegotiationModal(true);
+                  }}
                   className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-slate-200/50"
                 >
                   <span className="text-[14px]">👎</span> Declinar Proposta
                 </button>
 
                 <button
-                  onClick={() => setShowNegotiationModal(true)}
+                  onClick={() => {
+                    setNegotiationType('comment');
+                    setShowNegotiationModal(true);
+                  }}
                   className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-slate-200/50"
                 >
                   <span className="text-[14px]">💬</span> Comentar
@@ -1685,9 +1720,11 @@ return (
         <div className="fixed inset-0 bg-black/80 z-[99999] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white text-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 animate-fadeIn">
             
-            <div className="bg-[#1e4480] px-6 py-4 border-b border-slate-800 flex justify-between items-center text-white">
+            <div className={`px-6 py-4 border-b flex justify-between items-center text-white ${
+              negotiationType === 'decline' ? 'bg-red-700 border-red-800' : 'bg-[#1e4480] border-slate-800'
+            }`}>
               <h2 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                <Edit size={16} /> Solicitar Ajustes ou Contraproposta
+                <Edit size={16} /> {negotiationType === 'decline' ? '👎 Declinar e Recusar Proposta' : '💬 Solicitar Ajustes ou Contraproposta'}
               </h2>
               <button 
                 onClick={() => setShowNegotiationModal(false)}
@@ -1699,7 +1736,10 @@ return (
 
             <div className="p-8 space-y-4">
               <p className="text-[10px] text-slate-500 font-semibold uppercase leading-relaxed">
-                Descreva as alterações, ajustes de premissas ou dúvidas que você possui sobre a proposta. O consultor responsável receberá sua mensagem instantaneamente.
+                {negotiationType === 'decline' 
+                  ? 'Descreva a justificativa para recusar/declinar esta proposta comercial. O consultor responsável receberá sua resposta instantaneamente via WhatsApp.'
+                  : 'Descreva as alterações, ajustes de premissas ou dúvidas que você possui sobre a proposta. O consultor responsável receberá sua mensagem instantaneamente.'
+                }
               </p>
 
               <textarea 
@@ -1726,7 +1766,7 @@ return (
                       : 'bg-[#1e4480] hover:bg-slate-800 shadow-slate-500/20 active:scale-[0.98]'
                   }`}
                 >
-                  Enviar Mensagem
+                  {negotiationType === 'decline' ? 'Recusar Proposta ⚠️' : 'Enviar Mensagem'}
                 </button>
               </div>
 

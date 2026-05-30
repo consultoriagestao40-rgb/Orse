@@ -5,12 +5,13 @@ import Sidebar from '@/components/Sidebar';
 import { 
   FileText, Plus, Search, 
   LayoutList, LayoutGrid, UserSquare2,
-  Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer, Share2
+  Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer, Share2, Eye
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getPropostas } from '@/app/propostas/actions';
 import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
 import ClientLinkModal from '@/components/ClientLinkModal';
+import ClientTrackingModal from '@/components/ClientTrackingModal';
 import { 
   getDocumentosProposta, 
   getTemplatesProposta, 
@@ -38,6 +39,7 @@ export default function PropostasComerciaisDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('lista');
   const [activeShareDoc, setActiveShareDoc] = useState<any | null>(null);
+  const [activeTrackingDoc, setActiveTrackingDoc] = useState<any | null>(null);
 
   // Dados para modal de criação
   const [fpvs, setFpvs] = useState<any[]>([]);
@@ -261,9 +263,19 @@ export default function PropostasComerciaisDashboard() {
                             <Printer size={16} />
                           </button>
                            <button
+                             onClick={() => setActiveTrackingDoc(doc)}
+                             title="Ver Relatório de Acesso do Cliente"
+                             className="text-indigo-500 hover:text-indigo-700 p-1 transition-colors relative cursor-pointer"
+                           >
+                             <Eye size={16} />
+                             {doc.configApresentacao?.viewTracking?.history?.length > 0 && (
+                               <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                             )}
+                           </button>
+                           <button
                              onClick={() => setActiveShareDoc(doc)}
-                             title="Copiar Link Interativo"
-                             className="text-emerald-500 hover:text-emerald-700 p-1 transition-colors"
+                             title="Configurar e Copiar Link"
+                             className="text-emerald-500 hover:text-emerald-700 p-1 transition-colors cursor-pointer"
                            >
                              <Share2 size={16} />
                            </button>
@@ -414,6 +426,12 @@ export default function PropostasComerciaisDashboard() {
           onSaveSuccess={(newConfig) => {
             setDocs(docs.map(d => d.id === activeShareDoc.id ? { ...d, configApresentacao: newConfig } : d));
           }}
+        />
+      )}
+      {activeTrackingDoc && (
+        <ClientTrackingModal 
+          doc={activeTrackingDoc}
+          onClose={() => setActiveTrackingDoc(null)}
         />
       )}
 
