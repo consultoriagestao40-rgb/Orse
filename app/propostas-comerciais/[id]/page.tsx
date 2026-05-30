@@ -8,11 +8,12 @@ import {
   ChevronUp, ChevronDown, Plus, X, Undo, Redo, Copy, Paintbrush, 
   Lock, Unlock, Eye, EyeOff, Smile, Phone, Mail, Award, Users, DollarSign, 
   Star, Briefcase, HelpCircle, Edit2, Play, Search, Image as ImageIcon, Sparkles,
-  Layout
+  Layout, Share2
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { getLoggedUser } from '@/app/propostas/actions';
+import ClientLinkModal from '@/components/ClientLinkModal';
 import { 
   getDocumentoPropostaById, 
   updateDocumentoStatus, 
@@ -281,6 +282,7 @@ export default function DocumentoPropostaDetail() {
   const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
   const [tempLayerName, setTempLayerName] = useState('');
   const [activeCanvaTab, setActiveCanvaTab] = useState<'laminas' | 'elementos' | 'layouts' | 'estilos'>('laminas');
+  const [showShareModal, setShowShareModal] = useState(false);
   
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const copyToClipboard = (text: string, fieldId: string) => {
@@ -1065,6 +1067,12 @@ export default function DocumentoPropostaDetail() {
                   className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold py-2 px-4 rounded-xl text-xs flex items-center gap-2 shadow-xs transition-all active:scale-95"
                 >
                   <Printer size={16} /> Gerar PDF / Imprimir
+                </button>
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  className="bg-emerald-50 hover:bg-emerald-100 text-[#1B4D3E] border border-emerald-200 font-black py-2 px-4 rounded-xl text-xs flex items-center gap-2 shadow-xs transition-all active:scale-95 cursor-pointer"
+                >
+                  <Share2 size={16} /> Link do Cliente
                 </button>
                 <button
                   onClick={handleSave}
@@ -3269,9 +3277,18 @@ export default function DocumentoPropostaDetail() {
               </div>
             )}
 
-          </div>
-        </main>
       </div>
+      {showShareModal && (
+        <ClientLinkModal 
+          documentoId={id}
+          configApresentacao={configApresentacao}
+          onClose={() => setShowShareModal(false)}
+          onSaveSuccess={(newConfig) => {
+            setConfigApresentacao(newConfig);
+            if (doc) setDoc({ ...doc, configApresentacao: newConfig });
+          }}
+        />
+      )}
     </>
   );
 }

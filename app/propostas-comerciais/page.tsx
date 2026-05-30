@@ -10,6 +10,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { getPropostas } from '@/app/propostas/actions';
 import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
+import ClientLinkModal from '@/components/ClientLinkModal';
 import { 
   getDocumentosProposta, 
   getTemplatesProposta, 
@@ -36,6 +37,7 @@ export default function PropostasComerciaisDashboard() {
   const [docs, setDocs] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('lista');
+  const [activeShareDoc, setActiveShareDoc] = useState<any | null>(null);
 
   // Dados para modal de criação
   const [fpvs, setFpvs] = useState<any[]>([]);
@@ -258,17 +260,13 @@ export default function PropostasComerciaisDashboard() {
                           >
                             <Printer size={16} />
                           </button>
-                          <button
-                            onClick={() => {
-                              const shareUrl = `${window.location.origin}/proposta/ver/${doc.id}`;
-                              navigator.clipboard.writeText(shareUrl);
-                              alert('Link da proposta interativa copiado com sucesso! Compartilhe com seu cliente.');
-                            }}
-                            title="Copiar Link Interativo"
-                            className="text-emerald-500 hover:text-emerald-700 p-1 transition-colors"
-                          >
-                            <Share2 size={16} />
-                          </button>
+                           <button
+                             onClick={() => setActiveShareDoc(doc)}
+                             title="Copiar Link Interativo"
+                             className="text-emerald-500 hover:text-emerald-700 p-1 transition-colors"
+                           >
+                             <Share2 size={16} />
+                           </button>
                           <button onClick={async () => {
                             if(confirm('Excluir proposta comercial?')) {
                               await deleteDocumentoProposta(doc.id);
@@ -406,7 +404,15 @@ export default function PropostasComerciaisDashboard() {
               </div>
             </div>
           </div>
-        </div>
+      {activeShareDoc && (
+        <ClientLinkModal 
+          documentoId={activeShareDoc.id}
+          configApresentacao={activeShareDoc.configApresentacao}
+          onClose={() => setActiveShareDoc(null)}
+          onSaveSuccess={(newConfig) => {
+            setDocs(docs.map(d => d.id === activeShareDoc.id ? { ...d, configApresentacao: newConfig } : d));
+          }}
+        />
       )}
 
     </div>
