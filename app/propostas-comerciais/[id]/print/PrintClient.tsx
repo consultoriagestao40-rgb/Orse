@@ -36,6 +36,13 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
   const versao = fullProposta?.availableVersions?.[0];
   const mergedProposta = {
     ...fullProposta,
+    tenant: doc.tenant,
+    statusAssinatura: doc.statusAssinatura,
+    nomeAssinante: doc.nomeAssinante,
+    cpfAssinante: doc.cpfAssinante,
+    ipAssinante: doc.ipAssinante,
+    dataAssinatura: doc.dataAssinatura,
+    assinaturaBase64: doc.assinaturaBase64,
     cliente: {
       ...(fullProposta?.cliente || {}),
       ...doc.client, // Importante: sobrescreve dados de meta com o Cliente REAL do BD!

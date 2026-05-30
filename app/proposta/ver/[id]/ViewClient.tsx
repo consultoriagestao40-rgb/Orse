@@ -154,6 +154,12 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   const mergedProposta = {
     ...fullProposta,
     tenant: doc.tenant,
+    statusAssinatura: doc.statusAssinatura,
+    nomeAssinante: doc.nomeAssinante,
+    cpfAssinante: doc.cpfAssinante,
+    ipAssinante: doc.ipAssinante,
+    dataAssinatura: doc.dataAssinatura,
+    assinaturaBase64: doc.assinaturaBase64,
     cliente: {
       ...(fullProposta?.cliente || {}),
       ...doc.client,

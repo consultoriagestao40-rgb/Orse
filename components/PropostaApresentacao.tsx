@@ -579,26 +579,128 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                                 }}
                                              >
                                                 {el.type === 'text' && (
-                                                   <div 
-                                                      className="w-full h-full break-words p-1 outline-none font-semibold text-slate-800"
-                                                      style={{
-                                                         fontSize: `${el.style?.fontSize ? el.style.fontSize * 0.1 : 1.2}cqw`,
-                                                         fontWeight: el.style?.fontWeight || 'normal',
-                                                         color: el.style?.color || '#334155',
-                                                         textAlign: el.style?.textAlign || 'left',
-                                                         lineHeight: '1.25',
-                                                         opacity: el.opacity !== undefined ? el.opacity / 100 : 1,
-                                                         transform: el.rotate ? `rotate(${el.rotate}deg)` : undefined,
-                                                         textShadow: el.shadow === 'suave' ? '0.1cqw 0.1cqw 0.2cqw rgba(0,0,0,0.2)' : el.shadow === 'forte' ? '0.2cqw 0.2cqw 0.4cqw rgba(0,0,0,0.4)' : el.shadow === 'neon' ? `0 0 0.8cqw ${el.style?.color || '#334155'}` : undefined
-                                                      }}
-                                                   >
-                                                      {replaceTags(el.content).split(/\r?\n|\\n/).map((line: string, lIdx: number) => (
-                                                         <React.Fragment key={lIdx}>
-                                                            {line}
-                                                            {lIdx < replaceTags(el.content).split(/\r?\n|\\n/).length - 1 && <br />}
-                                                         </React.Fragment>
-                                                      ))}
-                                                   </div>
+                                                   el.content.includes('[TERMO_ACEITE]') ? (
+                                                      <div 
+                                                         className="w-full h-full p-4 flex flex-col justify-between bg-slate-900/5 hover:bg-slate-900/10 border-2 border-[#1B4D3E]/30 border-dashed rounded-3xl select-none relative transition-all"
+                                                         style={{
+                                                            fontSize: '1.1cqw',
+                                                            transform: el.rotate ? `rotate(${el.rotate}deg)` : undefined,
+                                                            opacity: el.opacity !== undefined ? el.opacity / 100 : 1,
+                                                            zIndex: el.zIndex || 10
+                                                         }}
+                                                      >
+                                                         {proposta.statusAssinatura === 'ASSINADO' ? (
+                                                            <div className="flex flex-col h-full justify-between gap-2.5">
+                                                               <div className="flex items-center justify-between border-b border-[#1B4D3E]/20 pb-2">
+                                                                  <span className="text-[1.2cqw] font-black text-[#1B4D3E] flex items-center gap-1.5 tracking-wider uppercase">
+                                                                     <Icons.ShieldCheck className="w-[1.6cqw] h-[1.6cqw] text-[#1B4D3E]" /> ACEITE CONFIRMADO
+                                                                  </span>
+                                                                  <span className="text-[0.8cqw] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-0.5 rounded-full uppercase tracking-wider">
+                                                                     ✓ Assinado
+                                                                  </span>
+                                                               </div>
+
+                                                               <div className="grid grid-cols-12 gap-4 items-center flex-1">
+                                                                  <div className="col-span-7 space-y-1.5 text-[0.95cqw] text-slate-700 font-semibold">
+                                                                     <div className="space-y-0.5">
+                                                                        <div className="text-[0.7cqw] text-slate-400 font-black uppercase tracking-widest leading-none">Assinado por</div>
+                                                                        <div className="text-slate-900 text-[1.1cqw] font-extrabold leading-tight">{proposta.nomeAssinante}</div>
+                                                                     </div>
+                                                                     <div className="grid grid-cols-2 gap-2">
+                                                                        <div className="space-y-0.5">
+                                                                           <div className="text-[0.7cqw] text-slate-400 font-black uppercase tracking-widest leading-none">Documento (CPF)</div>
+                                                                           <div className="font-mono text-[0.9cqw] text-slate-800 leading-none">{proposta.cpfAssinante}</div>
+                                                                        </div>
+                                                                        <div className="space-y-0.5">
+                                                                           <div className="text-[0.7cqw] text-slate-400 font-black uppercase tracking-widest leading-none">Endereço IP</div>
+                                                                           <div className="font-mono text-[0.9cqw] text-slate-800 leading-none">{proposta.ipAssinante}</div>
+                                                                        </div>
+                                                                     </div>
+                                                                     <div className="space-y-0.5">
+                                                                        <div className="text-[0.7cqw] text-slate-400 font-black uppercase tracking-widest leading-none">Data / Hora do Aceite</div>
+                                                                        <div className="text-[0.9cqw] text-slate-800 leading-none">{proposta.dataAssinatura ? new Date(proposta.dataAssinatura).toLocaleString('pt-BR') : '-'}</div>
+                                                                     </div>
+                                                                  </div>
+
+                                                                  <div className="col-span-5 h-full flex flex-col justify-center items-center">
+                                                                     <div className="w-full aspect-[8/3] bg-emerald-50 border border-dashed border-emerald-300 rounded-2xl p-2.5 flex items-center justify-center relative overflow-hidden shadow-inner">
+                                                                        {proposta.assinaturaBase64 ? (
+                                                                           <img src={proposta.assinaturaBase64} alt="Assinatura Eletrônica" className="h-full w-auto object-contain mix-blend-multiply opacity-90" />
+                                                                        ) : (
+                                                                           <span className="text-[0.8cqw] text-emerald-800/60 font-bold uppercase tracking-wider">Assinatura</span>
+                                                                        )}
+                                                                     </div>
+                                                                     <span className="text-[0.6cqw] text-slate-400 font-bold uppercase tracking-widest mt-1.5">Assinatura Digital SmartBid</span>
+                                                                  </div>
+                                                               </div>
+                                                            </div>
+                                                         ) : (
+                                                            <div className="flex flex-col h-full justify-between gap-2.5">
+                                                               <div className="flex items-center justify-between border-b border-amber-500/20 pb-2">
+                                                                  <span className="text-[1.2cqw] font-black text-amber-800 flex items-center gap-1.5 tracking-wider uppercase">
+                                                                     <Icons.Lock className="w-[1.6cqw] h-[1.6cqw] text-amber-700" /> Aguardando Aceite
+                                                                  </span>
+                                                                  <span className="text-[0.8cqw] font-bold bg-amber-100 text-amber-800 border border-amber-300 px-3 py-0.5 rounded-full uppercase tracking-wider">
+                                                                     ⚡ Pendente
+                                                                  </span>
+                                                               </div>
+
+                                                               <div className="grid grid-cols-12 gap-4 items-center flex-1">
+                                                                  <div className="col-span-7 space-y-1.5 text-[0.95cqw] text-slate-700 font-semibold">
+                                                                     <div className="grid grid-cols-2 gap-2">
+                                                                        <div>
+                                                                           <div className="text-[0.7cqw] text-slate-400 font-black uppercase tracking-widest leading-none">Razão Social</div>
+                                                                           <div className="text-slate-900 text-[0.95cqw] font-bold truncate leading-tight">{proposta.cliente?.razaoSocial || proposta.cliente?.cliente || "Não informada"}</div>
+                                                                        </div>
+                                                                        <div>
+                                                                           <div className="text-[0.7cqw] text-slate-400 font-black uppercase tracking-widest leading-none">CNPJ do Cliente</div>
+                                                                           <div className="font-mono text-[0.9cqw] text-slate-800 leading-none">{proposta.cliente?.cnpj || "Não informado"}</div>
+                                                                        </div>
+                                                                     </div>
+                                                                     <div className="grid grid-cols-2 gap-2">
+                                                                        <div>
+                                                                           <div className="text-[0.7cqw] text-slate-400 font-black uppercase tracking-widest leading-none">Contato</div>
+                                                                           <div className="text-slate-900 text-[0.95cqw] font-bold truncate leading-tight">{proposta.cliente?.contato || "Representante Legal"}</div>
+                                                                        </div>
+                                                                        <div>
+                                                                           <div className="text-[0.7cqw] text-slate-400 font-black uppercase tracking-widest leading-none">Data de Início</div>
+                                                                           <div className="text-slate-900 text-[0.95cqw] font-bold leading-none">{proposta.cliente?.dataInicio ? new Date(proposta.cliente.dataInicio + 'T12:00:00').toLocaleDateString('pt-BR') : "A definir"}</div>
+                                                                        </div>
+                                                                     </div>
+                                                                  </div>
+
+                                                                  <div className="col-span-5 h-full flex flex-col justify-center items-center">
+                                                                     <div className="w-full aspect-[8/3] bg-slate-100 border border-dashed border-slate-300 rounded-2xl p-2.5 flex flex-col items-center justify-center relative overflow-hidden shadow-inner text-center gap-0.5">
+                                                                        <span className="text-[0.8cqw] text-slate-500 font-black uppercase tracking-wider leading-none">Painel de Assinatura</span>
+                                                                        <span className="text-[0.6cqw] text-slate-400 font-semibold leading-tight">Assine eletronicamente através do botão de aprovação no topo</span>
+                                                                     </div>
+                                                                  </div>
+                                                               </div>
+                                                            </div>
+                                                         )}
+                                                      </div>
+                                                   ) : (
+                                                      <div 
+                                                         className="w-full h-full break-words p-1 outline-none font-semibold text-slate-800"
+                                                         style={{
+                                                            fontSize: `${el.style?.fontSize ? el.style.fontSize * 0.1 : 1.2}cqw`,
+                                                            fontWeight: el.style?.fontWeight || 'normal',
+                                                            color: el.style?.color || '#334155',
+                                                            textAlign: el.style?.textAlign || 'left',
+                                                            lineHeight: '1.25',
+                                                            opacity: el.opacity !== undefined ? el.opacity / 100 : 1,
+                                                            transform: el.rotate ? `rotate(${el.rotate}deg)` : undefined,
+                                                            textShadow: el.shadow === 'suave' ? '0.1cqw 0.1cqw 0.2cqw rgba(0,0,0,0.2)' : el.shadow === 'forte' ? '0.2cqw 0.2cqw 0.4cqw rgba(0,0,0,0.4)' : el.shadow === 'neon' ? `0 0 0.8cqw ${el.style?.color || '#334155'}` : undefined
+                                                         }}
+                                                      >
+                                                         {replaceTags(el.content).split(/\r?\n|\\n/).map((line: string, lIdx: number) => (
+                                                            <React.Fragment key={lIdx}>
+                                                               {line}
+                                                               {lIdx < replaceTags(el.content).split(/\r?\n|\\n/).length - 1 && <br />}
+                                                            </React.Fragment>
+                                                         ))}
+                                                      </div>
+                                                   )
                                                 )}
 
                                                 {el.type === 'image' && (
