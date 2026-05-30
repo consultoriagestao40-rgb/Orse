@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DocumentoA4 from '@/components/DocumentoA4';
 import dynamic from 'next/dynamic';
-import { aprovarPropostaAction, recusarPropostaAction, trackDocumentoView } from '@/app/propostas-comerciais/actions';
+import { aprovarPropostaAction, recusarPropostaAction, trackDocumentoView } from './actions';
 import { getTemplates } from '@/app/contratos/actions';
 import { 
   CheckCircle, Edit, FileText, X, Printer, CheckCircle2, ShieldCheck, Mail, MapPin, 
