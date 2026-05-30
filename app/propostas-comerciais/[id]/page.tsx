@@ -1207,8 +1207,9 @@ export default function DocumentoPropostaDetail() {
                   <div className="grid grid-cols-12 gap-6 items-start">
                   
                   {/* ESQUERDA: O PAINEL DUPLO ESTILO CANVA (COL-3) */}
-                    
-                    {/* FAR-LEFT TOOLBAR (BARRA ESCURA ESTREITA) */}
+                     <div className="col-span-12 lg:col-span-3 border border-slate-200 bg-white rounded-3xl overflow-hidden shadow-xs flex max-h-[660px] min-h-[580px]">
+                     
+                     {/* FAR-LEFT TOOLBAR (BARRA ESCURA ESTREITA) */}
                     <div className="w-16 bg-slate-900 flex flex-col items-center py-4 space-y-5 text-white shrink-0">
                       <button
                         type="button"
