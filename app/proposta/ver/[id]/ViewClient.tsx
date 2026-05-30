@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { aprovarPropostaAction, recusarPropostaAction, trackDocumentoView, getMinutaTemplateById } from './actions';
 import { 
   CheckCircle, Edit, FileText, X, Printer, CheckCircle2, ShieldCheck, Mail, MapPin, 
-  Smartphone, User, Presentation, Calculator, BookOpen, ChevronRight, TrendingUp,
+  Smartphone, User, Presentation, Calculator, BookOpen, ChevronRight, ChevronLeft, Menu, TrendingUp,
   UserCheck, ClipboardList, Package, Layers, Info, Download
 } from 'lucide-react';
 
@@ -21,6 +21,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showNegotiationModal, setShowNegotiationModal] = useState(false);
   const [negotiationType, setNegotiationType] = useState<'comment' | 'decline'>('comment');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Signature Form States
   const [signerNome, setSignerNome] = useState('');
@@ -423,101 +424,197 @@ return (
       `}} />
         
         {/* SIDEBAR DE TABS DE NAVEGAÇÃO (ESTILO SEGUNDA FOTO - PREMIUM WHITE) */}
-        <aside className="w-full md:w-80 shrink-0 bg-white border border-slate-200 rounded-3xl p-6 shadow-xl flex flex-col justify-between text-slate-800 print:hidden font-sans">
-          <div>
-            {/* Header da Proposta com FPV e Versão em Destaque */}
-            <div className="space-y-1.5 text-left pb-4 border-b border-slate-100 font-sans">
-              <div className="flex justify-between items-center gap-2">
-                <span className="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-250 font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
-                  FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')}
-                </span>
-                <span className="text-[10px] bg-slate-50 text-slate-500 border border-slate-200 font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
-                  Versão v{versao?.versao || 1}
-                </span>
-              </div>
-              <h2 className="text-sm font-black text-slate-800 tracking-tight leading-snug mt-2">
-                Proposta para {doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Empresa'}
-              </h2>
-              <p className="text-[9.5px] text-slate-400 font-bold uppercase tracking-wider">
-                Criada em {doc.data || new Date().toLocaleDateString('pt-BR')} por {doc.vendedorResponsavel || 'Novos Negócios'}
-              </p>
-              <div className="inline-block mt-1 bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-xl border border-emerald-100/50">
-                Válida até {doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR')}
-              </div>
-            </div>
+        <aside className={`shrink-0 bg-white border border-slate-200 shadow-xl flex flex-col justify-between text-slate-800 print:hidden font-sans transition-all duration-300 ${
+          sidebarCollapsed 
+            ? 'w-full md:w-20 p-4 items-center rounded-2xl md:rounded-3xl' 
+            : 'w-full md:w-80 p-6 rounded-3xl'
+        }`}>
+          {sidebarCollapsed ? (
+            /* COLLAPSED VIEW */
+            <div className="flex flex-col items-center justify-between h-full w-full">
+              <div className="flex flex-col items-center w-full">
+                {/* Header Collapsed */}
+                <div className="flex flex-col items-center gap-4 pb-4 border-b border-slate-100 w-full">
+                  <button 
+                    onClick={() => setSidebarCollapsed(false)} 
+                    className="p-2 hover:bg-slate-50 text-slate-400 hover:text-[#1B4D3E] rounded-xl transition-all cursor-pointer hidden md:flex items-center justify-center shrink-0 border border-slate-100 hover:border-[#1B4D3E]/20"
+                    title="Expandir Menu"
+                  >
+                    <Menu size={18} />
+                  </button>
+                  <span className="text-[8px] bg-emerald-50 text-emerald-800 border border-emerald-250 font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md text-center shrink-0">
+                    V{versao?.versao || 1}
+                  </span>
+                </div>
 
-            {/* Card Cliente */}
-            <div className="mt-5 bg-slate-50 border border-slate-200/50 rounded-2xl p-4 text-left">
-              <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-widest block">Cliente</span>
-              <h4 className="text-xs font-black text-[#1B4D3E] uppercase mt-1 leading-snug">
-                {doc.client?.razaoSocial || doc.client?.nomeFantasia || 'Cliente'}
-              </h4>
-              <p className="text-[9px] text-slate-500 font-bold mt-1">
-                {doc.client?.cnpj || 'CNPJ não informado'}
-              </p>
-            </div>
+                {/* Nav Items Collapsed */}
+                <div className="flex flex-col gap-3 mt-6 w-full items-center">
+                  {navItems.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveClientTab(item.id)}
+                      title={item.label}
+                      className={`p-3.5 rounded-2xl transition-all flex items-center justify-center active:scale-[0.98] cursor-pointer border ${
+                        activeClientTab === item.id
+                          ? 'bg-slate-100 border-slate-200 text-[#1B4D3E] shadow-xs'
+                          : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                      }`}
+                    >
+                      <item.icon size={18} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-            {/* Menu de Navegação */}
-            <div className="flex flex-col gap-1.5 mt-6">
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveClientTab(item.id)}
-                  className={`w-full text-left px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-between active:scale-[0.98] cursor-pointer border ${
-                    activeClientTab === item.id
-                      ? 'bg-slate-100 border-slate-200 text-[#1B4D3E] shadow-xs'
-                      : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <item.icon size={16} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : 'text-slate-400'} />
-                    <span>{item.label}</span>
+              {/* Actions Collapsed */}
+              <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col gap-3 items-center w-full">
+                {approved ? (
+                  <div className="bg-emerald-50 border border-emerald-150 p-2.5 rounded-2xl flex items-center justify-center text-center" title="Proposta Aprovada!">
+                    <CheckCircle2 size={18} className="text-emerald-600" />
                   </div>
-                  <ChevronRight size={14} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : 'text-slate-350'} />
-                </button>
-              ))}
-            </div>
-          </div>
+                ) : (
+                  <div className="flex flex-col gap-2 items-center w-full">
+                    <button
+                      onClick={() => setShowApprovalModal(true)}
+                      className="w-10 h-10 bg-[#10B981] hover:bg-[#0da673] text-white rounded-2xl flex items-center justify-center shadow-md cursor-pointer transition-all active:scale-95 text-xs font-bold"
+                      title="Aceitar Proposta"
+                    >
+                      👍
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setNegotiationType('decline');
+                        setShowNegotiationModal(true);
+                      }}
+                      className="w-10 h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/50 rounded-2xl flex items-center justify-center cursor-pointer transition-all active:scale-95 text-xs font-bold"
+                      title="Declinar Proposta"
+                    >
+                      👎
+                    </button>
 
-          {/* Rodapé da Sidebar - Botões de Ação Dinâmicos */}
-          <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col gap-2.5">
-            {approved ? (
-              <div className="bg-emerald-50 border border-emerald-150 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-                <CheckCircle2 size={24} className="text-emerald-600 mb-1" />
-                <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Proposta Aprovada</span>
-                <span className="text-[8.5px] text-emerald-600 font-bold uppercase mt-0.5">Assinatura Registrada</span>
+                    <button
+                      onClick={() => {
+                        setNegotiationType('comment');
+                        setShowNegotiationModal(true);
+                      }}
+                      className="w-10 h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/50 rounded-2xl flex items-center justify-center cursor-pointer transition-all active:scale-95 text-xs font-bold"
+                      title="Comentar"
+                    >
+                      💬
+                    </button>
+                  </div>
+                )}
               </div>
-            ) : (
-              <>
-                <button
-                  onClick={() => setShowApprovalModal(true)}
-                  className="w-full bg-[#10B981] hover:bg-[#0da673] text-white font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl shadow-lg shadow-emerald-500/10 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <span className="text-[14px]">👍</span> Aceitar Proposta
-                </button>
-                
-                <button
-                  onClick={() => {
-                    setNegotiationType('decline');
-                    setShowNegotiationModal(true);
-                  }}
-                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-slate-200/50"
-                >
-                  <span className="text-[14px]">👎</span> Declinar Proposta
-                </button>
+            </div>
+          ) : (
+            /* EXPANDED VIEW */
+            <div className="flex flex-col justify-between h-full w-full">
+              <div>
+                {/* Header da Proposta com FPV e Versão em Destaque */}
+                <div className="space-y-1.5 text-left pb-4 border-b border-slate-100 font-sans">
+                  <div className="flex justify-between items-center gap-2">
+                    <div className="flex gap-1.5">
+                      <span className="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-250 font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
+                        FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')}
+                      </span>
+                      <span className="text-[10px] bg-slate-50 text-slate-500 border border-slate-200 font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
+                        Versão v{versao?.versao || 1}
+                      </span>
+                    </div>
+                    <button 
+                      onClick={() => setSidebarCollapsed(true)} 
+                      className="p-1.5 hover:bg-slate-50 text-slate-400 hover:text-[#1B4D3E] rounded-xl transition-all cursor-pointer hidden md:flex items-center justify-center shrink-0 border border-transparent hover:border-slate-200/60"
+                      title="Recolher Menu"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                  </div>
+                  <h2 className="text-sm font-black text-slate-800 tracking-tight leading-snug mt-2">
+                    Proposta para {doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Empresa'}
+                  </h2>
+                  <p className="text-[9.5px] text-slate-400 font-bold uppercase tracking-wider">
+                    Criada em {doc.data || new Date().toLocaleDateString('pt-BR')} por {doc.vendedorResponsavel || 'Novos Negócios'}
+                  </p>
+                  <div className="inline-block mt-1 bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-xl border border-emerald-100/50">
+                    Válida até {doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR')}
+                  </div>
+                </div>
 
-                <button
-                  onClick={() => {
-                    setNegotiationType('comment');
-                    setShowNegotiationModal(true);
-                  }}
-                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-slate-200/50"
-                >
-                  <span className="text-[14px]">💬</span> Comentar
-                </button>
-              </>
-            )}
-          </div>
+                {/* Card Cliente */}
+                <div className="mt-5 bg-slate-50 border border-slate-200/50 rounded-2xl p-4 text-left animate-fadeIn">
+                  <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-widest block">Cliente</span>
+                  <h4 className="text-xs font-black text-[#1B4D3E] uppercase mt-1 leading-snug">
+                    {doc.client?.razaoSocial || doc.client?.nomeFantasia || 'Cliente'}
+                  </h4>
+                  <p className="text-[9px] text-slate-500 font-bold mt-1">
+                    {doc.client?.cnpj || 'CNPJ não informado'}
+                  </p>
+                </div>
+
+                {/* Menu de Navegação */}
+                <div className="flex flex-col gap-1.5 mt-6">
+                  {navItems.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveClientTab(item.id)}
+                      className={`w-full text-left px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-between active:scale-[0.98] cursor-pointer border ${
+                        activeClientTab === item.id
+                          ? 'bg-slate-100 border-slate-200 text-[#1B4D3E] shadow-xs'
+                          : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <item.icon size={16} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+                        <span>{item.label}</span>
+                      </div>
+                      <ChevronRight size={14} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : 'text-slate-350'} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Rodapé da Sidebar - Botões de Ação Dinâmicos */}
+              <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col gap-2.5">
+                {approved ? (
+                  <div className="bg-emerald-50 border border-emerald-150 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+                    <CheckCircle2 size={24} className="text-emerald-600 mb-1" />
+                    <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Proposta Aprovada</span>
+                    <span className="text-[8.5px] text-emerald-600 font-bold uppercase mt-0.5">Assinatura Registrada</span>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setShowApprovalModal(true)}
+                      className="w-full bg-[#10B981] hover:bg-[#0da673] text-white font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl shadow-lg shadow-emerald-500/10 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <span className="text-[14px]">👍</span> Aceitar Proposta
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setNegotiationType('decline');
+                        setShowNegotiationModal(true);
+                      }}
+                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-slate-200/50"
+                    >
+                      <span className="text-[14px]">👎</span> Declinar Proposta
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setNegotiationType('comment');
+                        setShowNegotiationModal(true);
+                      }}
+                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-slate-200/50"
+                    >
+                      <span className="text-[14px]">💬</span> Comentar
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </aside>
 
         {/* CONTAINER PRINCIPAL DE CONTEÚDO (CANVAS) */}
