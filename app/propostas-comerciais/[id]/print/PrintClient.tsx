@@ -22,7 +22,7 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
   useEffect(() => {
     // Timeout para garantir que todas as fontes e imagens carregaram
     // Somente imprime automático se for A4, apresentação é pra apresentar na tela primeiro.
-    const isSlide = doc.templateOrigem?.nome?.toLowerCase().includes('apresenta') || doc.tipo === 'SLIDE_DECK';
+    const isSlide = !!doc.templateOrigem?.nome?.toLowerCase()?.includes('apresenta') || doc.tipo === 'SLIDE_DECK';
     if (!isSlide) {
        const timer = setTimeout(() => {
          window.print();
@@ -51,7 +51,7 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
     }
   };
 
-  const isSlide = doc.templateOrigem?.nome?.toLowerCase().includes('apresenta') || doc.tipo === 'SLIDE_DECK';
+  const isSlide = !!doc.templateOrigem?.nome?.toLowerCase()?.includes('apresenta') || doc.tipo === 'SLIDE_DECK';
 
   if (isSlide) {
     return (

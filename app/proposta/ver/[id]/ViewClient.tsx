@@ -169,7 +169,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     }
   };
 
-  const isSlide = doc.templateOrigem?.nome?.toLowerCase().includes('apresenta') || doc.tipo === 'SLIDE_DECK';
+  const isSlide = !!doc.templateOrigem?.nome?.toLowerCase()?.includes('apresenta') || doc.tipo === 'SLIDE_DECK';
 
   return (
     <div className="bg-slate-900 w-full min-h-screen text-white font-sans overflow-x-hidden pb-20 select-none">
