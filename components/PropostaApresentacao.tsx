@@ -3,9 +3,9 @@ import { ChevronLeft, ChevronRight, User, Cpu, Smartphone, Box, Drill, Trash, Pr
 import BrazilMap from '@/components/BrazilMap';
 import * as Icons from 'lucide-react';
 
-const LucideIconRenderer = ({ name, className, size, color }: { name: string; className?: string; size?: number; color?: string }) => {
+const LucideIconRenderer = ({ name, className, size, color }: { name: string; className?: string; size?: number | string; color?: string }) => {
   const IconComponent = (Icons as any)[name];
-  if (!IconComponent) return <Icons.HelpCircle size={size} className={className} />;
+  if (!IconComponent) return <Icons.HelpCircle size={size} className={className} style={{ color }} />;
   return <IconComponent size={size} className={className} style={{ color }} />;
 };
 
@@ -269,6 +269,141 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
         .font-inter { font-family: 'Inter', sans-serif !important; }
         .font-playfair { font-family: 'Playfair Display', serif !important; }
         .font-roboto { font-family: 'Roboto', sans-serif !important; }
+
+        .slide-container {
+           container-type: inline-size;
+        }
+        
+        /* Font size overrides */
+        .slide-container .text-5xl { font-size: 4.8cqw !important; }
+        .slide-container .text-4xl { font-size: 3.8cqw !important; }
+        .slide-container .text-3xl { font-size: 3.0cqw !important; }
+        .slide-container .text-2xl { font-size: 2.4cqw !important; }
+        .slide-container .text-xl { font-size: 2.0cqw !important; }
+        .slide-container .text-lg { font-size: 1.8cqw !important; }
+        .slide-container .text-base { font-size: 1.6cqw !important; }
+        .slide-container .text-sm { font-size: 1.4cqw !important; }
+        .slide-container .text-xs { font-size: 1.2cqw !important; }
+        
+        .slide-container .text-\[15px\] { font-size: 1.5cqw !important; }
+        .slide-container .text-\[14px\] { font-size: 1.4cqw !important; }
+        .slide-container .text-\[13px\] { font-size: 1.3cqw !important; }
+        .slide-container .text-\[12px\] { font-size: 1.2cqw !important; }
+        .slide-container .text-\[11px\] { font-size: 1.1cqw !important; }
+        .slide-container .text-\[10px\] { font-size: 1.0cqw !important; }
+        .slide-container .text-\[9\.5px\] { font-size: 0.95cqw !important; }
+        .slide-container .text-\[9px\] { font-size: 0.9cqw !important; }
+        .slide-container .text-\[8px\] { font-size: 0.8cqw !important; }
+        .slide-container .text-\[7px\] { font-size: 0.7cqw !important; }
+        
+        /* Padding overrides */
+        .slide-container .p-16 { padding: 6.4cqw !important; }
+        .slide-container .p-12 { padding: 4.8cqw !important; }
+        .slide-container .p-8 { padding: 3.2cqw !important; }
+        .slide-container .p-6 { padding: 2.4cqw !important; }
+        .slide-container .p-4 { padding: 1.6cqw !important; }
+        .slide-container .p-3 { padding: 1.2cqw !important; }
+        .slide-container .p-2 { padding: 0.8cqw !important; }
+        
+        .slide-container .px-16 { padding-left: 6.4cqw !important; padding-right: 6.4cqw !important; }
+        .slide-container .px-12 { padding-left: 4.8cqw !important; padding-right: 4.8cqw !important; }
+        .slide-container .px-8 { padding-left: 3.2cqw !important; padding-right: 3.2cqw !important; }
+        .slide-container .px-6 { padding-left: 2.4cqw !important; padding-right: 2.4cqw !important; }
+        .slide-container .px-5 { padding-left: 2.0cqw !important; padding-right: 2.0cqw !important; }
+        .slide-container .px-4 { padding-left: 1.6cqw !important; padding-right: 1.6cqw !important; }
+        .slide-container .px-3\.5 { padding-left: 1.4cqw !important; padding-right: 1.4cqw !important; }
+        .slide-container .px-3 { padding-left: 1.2cqw !important; padding-right: 1.2cqw !important; }
+        
+        .slide-container .py-16 { padding-top: 6.4cqw !important; padding-bottom: 6.4cqw !important; }
+        .slide-container .py-12 { padding-top: 4.8cqw !important; padding-bottom: 4.8cqw !important; }
+        .slide-container .py-8 { padding-top: 3.2cqw !important; padding-bottom: 3.2cqw !important; }
+        .slide-container .py-6 { padding-top: 2.4cqw !important; padding-bottom: 2.4cqw !important; }
+        .slide-container .py-4 { padding-top: 1.6cqw !important; padding-bottom: 1.6cqw !important; }
+        .slide-container .py-3\.5 { padding-top: 1.4cqw !important; padding-bottom: 1.4cqw !important; }
+        .slide-container .py-3 { padding-top: 1.2cqw !important; padding-bottom: 1.2cqw !important; }
+        .slide-container .py-2\.5 { padding-top: 1.0cqw !important; padding-bottom: 1.0cqw !important; }
+        .slide-container .py-2 { padding-top: 0.8cqw !important; padding-bottom: 0.8cqw !important; }
+        .slide-container .py-1\.5 { padding-top: 0.6cqw !important; padding-bottom: 0.6cqw !important; }
+        .slide-container .py-1 { padding-top: 0.4cqw !important; padding-bottom: 0.4cqw !important; }
+        
+        .slide-container .pr-28 { padding-right: 11.2cqw !important; }
+        .slide-container .pr-16 { padding-right: 6.4cqw !important; }
+        .slide-container .pr-8 { padding-right: 3.2cqw !important; }
+        .slide-container .pr-6 { padding-right: 2.4cqw !important; }
+        .slide-container .pr-4 { padding-right: 1.6cqw !important; }
+        .slide-container .pr-1 { padding-right: 0.4cqw !important; }
+        
+        .slide-container .pl-20 { padding-left: 8.0cqw !important; }
+        .slide-container .pl-16 { padding-left: 6.4cqw !important; }
+        .slide-container .pl-8 { padding-left: 3.2cqw !important; }
+        .slide-container .pl-6 { padding-left: 2.4cqw !important; }
+        
+        /* Margin & Spacing overrides */
+        .slide-container .space-y-12 > * + * { margin-top: 4.8cqw !important; }
+        .slide-container .space-y-6 > * + * { margin-top: 2.4cqw !important; }
+        .slide-container .space-y-5 > * + * { margin-top: 2.0cqw !important; }
+        .slide-container .space-y-4 > * + * { margin-top: 1.6cqw !important; }
+        .slide-container .space-y-3 > * + * { margin-top: 1.2cqw !important; }
+        .slide-container .space-y-2 > * + * { margin-top: 0.8cqw !important; }
+        .slide-container .space-y-1.5 > * + * { margin-top: 0.6cqw !important; }
+        .slide-container .space-y-1 > * + * { margin-top: 0.4cqw !important; }
+        .slide-container .space-y-0.5 > * + * { margin-top: 0.2cqw !important; }
+        
+        .slide-container .gap-12 { gap: 4.8cqw !important; }
+        .slide-container .gap-8 { gap: 3.2cqw !important; }
+        .slide-container .gap-6 { gap: 2.4cqw !important; }
+        .slide-container .gap-4 { gap: 1.6cqw !important; }
+        .slide-container .gap-3 { gap: 1.2cqw !important; }
+        .slide-container .gap-2\.5 { gap: 1.0cqw !important; }
+        .slide-container .gap-2 { gap: 0.8cqw !important; }
+        .slide-container .gap-1.5 { gap: 0.6cqw !important; }
+        
+        .slide-container .mb-8 { margin-bottom: 3.2cqw !important; }
+        .slide-container .mb-6 { margin-bottom: 2.4cqw !important; }
+        .slide-container .mb-4 { margin-bottom: 1.6cqw !important; }
+        .slide-container .mb-3 { margin-bottom: 1.2cqw !important; }
+        .slide-container .mb-2 { margin-bottom: 0.8cqw !important; }
+        .slide-container .mb-1 { margin-bottom: 0.4cqw !important; }
+        
+        .slide-container .mt-12 { margin-top: 4.8cqw !important; }
+        .slide-container .mt-5 { margin-top: 2.0cqw !important; }
+        .slide-container .mt-1 { margin-top: 0.4cqw !important; }
+        .slide-container .mt-0.5 { margin-top: 0.2cqw !important; }
+        
+        .slide-container .pt-4 { padding-top: 1.6cqw !important; }
+        .slide-container .pt-2 { padding-top: 0.8cqw !important; }
+        
+        /* BorderRadius & Border overrides */
+        .slide-container .rounded-3xl { border-radius: 2.4cqw !important; }
+        .slide-container .rounded-2xl { border-radius: 1.6cqw !important; }
+        .slide-container .rounded-xl { border-radius: 1.2cqw !important; }
+        .slide-container .rounded-lg { border-radius: 0.8cqw !important; }
+        .slide-container .rounded-md { border-radius: 0.6cqw !important; }
+        .slide-container .rounded-full { border-radius: 9999px !important; }
+        
+        .slide-container .border-8 { border-width: 0.8cqw !important; }
+        .slide-container .border-4 { border-width: 0.4cqw !important; }
+        .slide-container .border-2 { border-width: 0.2cqw !important; }
+        .slide-container .border-\[6px\] { border-width: 0.6cqw !important; }
+        
+        /* Widths, heights & asset sizes overrides */
+        .slide-container .max-h-32 { max-height: 12.8cqw !important; }
+        .slide-container .max-h-24 { max-height: 9.6cqw !important; }
+        .slide-container .max-h-16 { max-height: 6.4cqw !important; }
+        .slide-container .max-h-12 { max-height: 4.8cqw !important; }
+        .slide-container .max-h-8 { max-height: 3.2cqw !important; }
+        .slide-container .w-24 { width: 9.6cqw !important; }
+        .slide-container .h-40 { height: 16.0cqw !important; }
+        .slide-container .w-28 { width: 11.2cqw !important; }
+        .slide-container .h-28 { height: 11.2cqw !important; }
+        .slide-container .w-20 { width: 8.0cqw !important; }
+        .slide-container .w-12 { width: 4.8cqw !important; }
+        .slide-container .h-12 { height: 4.8cqw !important; }
+        .slide-container .w-5 { width: 2.0cqw !important; }
+        .slide-container .h-5 { height: 2.0cqw !important; }
+        .slide-container .w-4 { width: 1.6cqw !important; }
+        .slide-container .w-2.5 { width: 1.0cqw !important; }
+        .slide-container .h-2.5 { height: 1.0cqw !important; }
       `}} />
       
       <div className={presentationMode 
@@ -294,8 +429,8 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                      </button>
 
                      <div className={presentationMode
-                        ? "w-[90vw] h-[50.625vw] max-h-[85vh] max-w-[151.1vh] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative flex flex-col justify-between"
-                        : "w-full max-w-[960px] aspect-[16/9] min-w-[760px] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative select-none flex flex-col justify-between"
+                        ? "w-[90vw] h-[50.625vw] max-h-[85vh] max-w-[151.1vh] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative flex flex-col justify-between slide-container"
+                        : "w-full max-w-[960px] aspect-[16/9] min-w-[760px] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden relative select-none flex flex-col justify-between slide-container"
                      }>
                         {hasDynamicSlides ? (
                            (() => {
@@ -412,14 +547,14 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                                    <div 
                                                       className="w-full h-full break-words p-1 outline-none font-semibold text-slate-800"
                                                       style={{
-                                                         fontSize: `${el.style?.fontSize ? el.style.fontSize * 0.75 : 12}px`,
+                                                         fontSize: `${el.style?.fontSize ? el.style.fontSize * 0.1 : 1.2}cqw`,
                                                          fontWeight: el.style?.fontWeight || 'normal',
                                                          color: el.style?.color || '#334155',
                                                          textAlign: el.style?.textAlign || 'left',
                                                          lineHeight: '1.25',
                                                          opacity: el.opacity !== undefined ? el.opacity / 100 : 1,
                                                          transform: el.rotate ? `rotate(${el.rotate}deg)` : undefined,
-                                                         textShadow: el.shadow === 'suave' ? '1px 1px 2px rgba(0,0,0,0.2)' : el.shadow === 'forte' ? '2px 2px 4px rgba(0,0,0,0.4)' : el.shadow === 'neon' ? `0 0 8px ${el.style?.color || '#334155'}` : undefined
+                                                         textShadow: el.shadow === 'suave' ? '0.1cqw 0.1cqw 0.2cqw rgba(0,0,0,0.2)' : el.shadow === 'forte' ? '0.2cqw 0.2cqw 0.4cqw rgba(0,0,0,0.4)' : el.shadow === 'neon' ? `0 0 0.8cqw ${el.style?.color || '#334155'}` : undefined
                                                       }}
                                                    >
                                                       {replaceTags(el.content).split(/\r?\n|\\n/).map((line: string, lIdx: number) => (
@@ -441,8 +576,8 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                                          borderRadius: borderRadiusStyle,
                                                          opacity: el.opacity !== undefined ? el.opacity / 100 : 1,
                                                          transform: el.rotate ? `rotate(${el.rotate}deg)` : undefined,
-                                                         boxShadow: el.shadow === 'suave' ? '0 4px 6px -1px rgba(0,0,0,0.1)' : el.shadow === 'forte' ? '0 20px 25px -5px rgba(0,0,0,0.1)' : undefined,
-                                                         filter: `${el.grayscale ? 'grayscale(100%) ' : ''}${el.sepia ? 'sepia(100%) ' : ''}${el.brightness !== undefined ? `brightness(${el.brightness}%) ` : ''}${el.contrast !== undefined ? `contrast(${el.contrast}%) ` : ''}${el.blur !== undefined ? `blur(${el.blur}px) ` : ''}`
+                                                         boxShadow: el.shadow === 'suave' ? '0 0.4cqw 0.6cqw -0.1cqw rgba(0,0,0,0.1)' : el.shadow === 'forte' ? '0 2.0cqw 2.5cqw -0.5cqw rgba(0,0,0,0.1)' : undefined,
+                                                         filter: `${el.grayscale ? 'grayscale(100%) ' : ''}${el.sepia ? 'sepia(100%) ' : ''}${el.brightness !== undefined ? `brightness(${el.brightness}%) ` : ''}${el.contrast !== undefined ? `contrast(${el.contrast}%) ` : ''}${el.blur !== undefined ? `blur(${el.blur * 0.1}cqw) ` : ''}`
                                                       }}
                                                    />
                                                 )}
@@ -452,10 +587,10 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                                       className="w-full h-full shadow-xs"
                                                       style={{
                                                          backgroundColor: el.color || '#ef4444',
-                                                         borderRadius: `${el.radius || 0}px`,
+                                                         borderRadius: `${el.radius ? el.radius * 0.1 : 0}cqw`,
                                                          opacity: el.opacity !== undefined ? el.opacity / 100 : 1,
                                                          transform: el.rotate ? `rotate(${el.rotate}deg)` : undefined,
-                                                         boxShadow: el.shadow === 'suave' ? '0 4px 6px -1px rgba(0,0,0,0.1)' : el.shadow === 'forte' ? '0 20px 25px -5px rgba(0,0,0,0.1)' : el.shadow === 'neon' ? `0 0 15px ${el.color || '#ef4444'}` : undefined
+                                                         boxShadow: el.shadow === 'suave' ? '0 0.4cqw 0.6cqw -0.1cqw rgba(0,0,0,0.1)' : el.shadow === 'forte' ? '0 2.0cqw 2.5cqw -0.5cqw rgba(0,0,0,0.1)' : el.shadow === 'neon' ? `0 0 1.5cqw ${el.color || '#ef4444'}` : undefined
                                                       }}
                                                    />
                                                 )}
@@ -464,7 +599,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                                     <div className="w-full h-full flex items-center justify-center" style={{ transform: el.rotate ? `rotate(${el.rotate}deg)` : undefined, opacity: el.opacity !== undefined ? el.opacity / 100 : 1 }}>
                                                        <LucideIconRenderer 
                                                           name={el.nameIcon || el.name || 'ShieldCheck'} 
-                                                          size={Math.min(el.w, el.h) * 0.9} 
+                                                          size="90%" 
                                                           color={el.color || '#ef4444'} 
                                                        />
                                                     </div>
@@ -2132,7 +2267,7 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                            <div className="space-y-1">
                                               <h3 className="text-white text-xs font-black tracking-wider uppercase">CHECK-LIST FÁCIL</h3>
                                               <p className="text-white/80 text-[8px] font-semibold leading-relaxed">
-                                                 Plataforma digital de desenvolvimento e gestão de processos internos com registro fotográfico, SLA's etc.
+                                                 Plataforma digital de desenvolvimento e gestão de processos internos com registro fotográfico, SLA&apos;s etc.
                                               </p>
                                               {/* Logo Check-List Fácil */}
                                               <div className="pt-1.5 flex items-center gap-1 select-none text-[#10B981]">

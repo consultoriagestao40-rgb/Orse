@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '@/components/Sidebar';
 import BrazilMap from '@/components/BrazilMap';
 import { 
@@ -239,6 +239,49 @@ const curatedIcons = [
   { title: 'Cobertura de Atendimento', name: 'MapPin', tags: ['localização', 'cobertura', 'presença', 'endereço', 'filial'] }
 ];
 
+const FVP_INTEGRATION_TAGS = [
+  { tag: '[CLIENTE_NOME]', label: 'Cliente', desc: 'Nome Fantasia do Cliente' },
+  { tag: '[CLIENTE_CNPJ]', label: 'CNPJ Cliente', desc: 'CNPJ do Cliente' },
+  { tag: '[CLIENTE_ENDERECO]', label: 'Endereço Cliente', desc: 'Endereço Completo do Cliente' },
+  { tag: '[CLIENTE_CONTATO]', label: 'Contato Cliente', desc: 'Nome do Contato Principal no Cliente' },
+  { tag: '[VENDEDOR_NOME]', label: 'Vendedor Nome', desc: 'Nome do Vendedor / Consultor Comercial' },
+  { tag: '[VENDEDOR_EMAIL]', label: 'Vendedor Email', desc: 'Email de contato do Vendedor' },
+  { tag: '[VENDEDOR_TELEFONE]', label: 'Vendedor Tel.', desc: 'Telefone do Vendedor' },
+  { tag: '[NUMERO_PROPOSTA]', label: 'Nº Proposta', desc: 'Número da Proposta (ex: FPV-010)' },
+  { tag: '[REVISAO]', label: 'Revisão', desc: 'Número da Revisão Atual (ex: R03)' },
+  { tag: '[DATA_PROPOSTA]', label: 'Data Proposta', desc: 'Data de Emissão da Proposta' },
+  { tag: '[VALIDADE_PROPOSTA]', label: 'Validade Prop.', desc: 'Data Limite de Validade da Proposta' },
+  { tag: '[OBJETO_PROPOSTA]', label: 'Objeto Prop.', desc: 'Objeto da Proposta Comercial' },
+  { tag: '[ESCOPO_TECNICO]', label: 'Escopo Técnico', desc: 'Descrição Detalhada do Escopo' },
+  { tag: '[LOCAL_PRESTACAO]', label: 'Local Prestação', desc: 'Local onde o serviço será realizado' },
+  { tag: '[VALOR_MENSAL]', label: 'Valor Mensal', desc: 'Valor total dos serviços mensais' },
+  { tag: '[VALOR_ANUAL]', label: 'Valor Anual', desc: 'Valor total anual contratado' },
+  { tag: '[VALOR_TOTAL]', label: 'Valor Total', desc: 'Valor total global da proposta' },
+  { tag: '[TABELA]', label: 'Tabela Financeira', desc: 'Quadro Completo de Preços e Insumos' },
+  { tag: '[ITENS]', label: 'Itens Inc/Exc', desc: 'Listagem de Itens Inclusos e Exclusos' },
+  { tag: '[CONDICOES_COMERCIAIS]', label: 'Condições Com.', desc: 'Condições de Faturamento e Pagamento' },
+  { tag: '[PRAZO_CONTRATO]', label: 'Prazo Contrato', desc: 'Vigência do Contrato Proposto' },
+  { tag: '[LOGO_EMPRESA]', label: 'Logo Empresa', desc: 'Imagem da Logo da sua Empresa/Tenant' },
+  { tag: '[TERMO_ACEITE]', label: 'Termo de Aceite', desc: 'Assinaturas e Termo de Aceite Final' }
+];
+
+const isLightColor = (hex: string) => {
+  if (!hex) return true;
+  const color = hex.replace('#', '');
+  if (color.length === 3) {
+    const r = parseInt(color[0] + color[0], 16);
+    const g = parseInt(color[1] + color[1], 16);
+    const b = parseInt(color[2] + color[2], 16);
+    return (r * 299 + g * 587 + b * 114) / 1000 > 155;
+  } else if (color.length === 6) {
+    const r = parseInt(color.substring(0, 2), 16);
+    const g = parseInt(color.substring(2, 4), 16);
+    const b = parseInt(color.substring(4, 6), 16);
+    return (r * 299 + g * 587 + b * 114) / 1000 > 155;
+  }
+  return true;
+};
+
 export default function TemplatesPropostaPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -294,7 +337,9 @@ export default function TemplatesPropostaPage() {
   const [selectedElementCat, setSelectedElementCat] = useState<'tudo' | 'graficos' | 'fotos'>('tudo');
   const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
   const [tempLayerName, setTempLayerName] = useState('');
-  const [activeCanvaTab, setActiveCanvaTab] = useState<'laminas' | 'elementos' | 'layouts' | 'estilos'>('laminas');
+  const [activeCanvaTab, setActiveCanvaTab] = useState<'laminas' | 'elementos' | 'layouts' | 'estilos' | 'tags' | 'camadas'>('laminas');
+  const [imageReplaceElementId, setImageReplaceElementId] = useState<string | null>(null);
+  const imageReplaceInputRef = useRef<HTMLInputElement>(null);
 
   // Global Keyboard Shortcuts (Delete/Backspace to remove selected element)
   useEffect(() => {
@@ -344,6 +389,160 @@ export default function TemplatesPropostaPage() {
     };
   }, [selectedElementId, activeSlideIdx]);
 
+  // History state for Undo/Redo
+  const [history, setHistory] = useState<{ secoes: { titulo: string; texto: string }[]; activeSlideIdx: number }[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const isUndoRedoAction = React.useRef(false);
+
+  // Automatically watch secoes & activeSlideIdx changes to record history
+  useEffect(() => {
+    if (isUndoRedoAction.current) {
+      isUndoRedoAction.current = false;
+      return;
+    }
+    
+    if (!editingTemplate || secoes.length === 0) return;
+
+    const nextState = { secoes: JSON.parse(JSON.stringify(secoes)), activeSlideIdx };
+    
+    setHistory(prevHistory => {
+      const cleanHistory = prevHistory.slice(0, historyIndex + 1);
+      
+      // Check if last state is identical
+      if (cleanHistory.length > 0) {
+        const lastState = cleanHistory[cleanHistory.length - 1];
+        if (JSON.stringify(lastState.secoes) === JSON.stringify(nextState.secoes) && lastState.activeSlideIdx === nextState.activeSlideIdx) {
+          return prevHistory;
+        }
+      }
+      
+      const updatedHistory = [...cleanHistory, nextState].slice(-50);
+      setHistoryIndex(updatedHistory.length - 1);
+      return updatedHistory;
+    });
+  }, [secoes, activeSlideIdx, editingTemplate]);
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const prevIdx = historyIndex - 1;
+      const prevPayload = history[prevIdx];
+      if (prevPayload) {
+        isUndoRedoAction.current = true;
+        setHistoryIndex(prevIdx);
+        setSecoes(JSON.parse(JSON.stringify(prevPayload.secoes)));
+        setActiveSlideIdx(prevPayload.activeSlideIdx);
+      }
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      const nextIdx = historyIndex + 1;
+      const nextPayload = history[nextIdx];
+      if (nextPayload) {
+        isUndoRedoAction.current = true;
+        setHistoryIndex(nextIdx);
+        setSecoes(JSON.parse(JSON.stringify(nextPayload.secoes)));
+        setActiveSlideIdx(nextPayload.activeSlideIdx);
+      }
+    }
+  };
+
+  // Global keyboard listener for Ctrl+Z / Ctrl+Y / Cmd+Z / Cmd+Y
+  useEffect(() => {
+    const handleUndoRedoKey = (e: KeyboardEvent) => {
+      // Ignore if user is writing inside input/textarea
+      const activeEl = document.activeElement;
+      if (activeEl && (
+        activeEl.tagName === 'INPUT' || 
+        activeEl.tagName === 'TEXTAREA' || 
+        activeEl.getAttribute('contenteditable') === 'true'
+      )) {
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        handleUndo();
+      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        handleRedo();
+      } else if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+
+    window.addEventListener('keydown', handleUndoRedoKey);
+    return () => {
+      window.removeEventListener('keydown', handleUndoRedoKey);
+    };
+  }, [history, historyIndex]);
+
+  // Tag helper to insert exactly at textarea cursor position
+  const insertTagAtCursor = (textareaId: string, tag: string, onUpdate: (newText: string) => void, currentValue: string) => {
+    const textarea = document.getElementById(textareaId) as HTMLTextAreaElement;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const newText = currentValue.substring(0, start) + tag + currentValue.substring(end);
+      onUpdate(newText);
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + tag.length, start + tag.length);
+      }, 0);
+    } else {
+      onUpdate(currentValue ? `${currentValue} ${tag}` : tag);
+    }
+  };
+
+  // Conversor de Lâmina Legada para Canva 100% Visual
+  const convertLegacyToCanvas = (slideData: any) => {
+    const layout = slideData.layout || 'texto';
+    const titulo = slideData.tituloSlide || slideData.titulo || '';
+    const subtitulo = slideData.subtitulo || '';
+    const conteudo = slideData.conteudo || slideData.texto || '';
+    
+    const bgColor = slideData.bgColor || '#ffffff';
+    const textColor = slideData.textColor || '#334155';
+    const fontFamily = slideData.fontFamily || 'Outfit';
+    
+    const elements: any[] = [];
+    
+    if (layout === 'cobertura') {
+      elements.push(
+        { id: `bg_left_${Date.now()}`, type: "shape", name: "Fundo Esquerdo", x: 0, y: 0, w: 570, h: 563, color: "#1E3E62", radius: 0, zIndex: 10 },
+        { id: `pill_orange_${Date.now()}`, type: "shape", name: "Pilar Laranja", x: 40, y: 130, w: 20, h: 360, color: "#F59E0B", radius: 10, zIndex: 20 },
+        { id: `img_logo_${Date.now()}`, type: "image", name: "Logotipo", x: 90, y: 80, w: 140, h: 50, src: companyLogo, mask: "none", zIndex: 30 },
+        { id: `txt_title_${Date.now()}`, type: "text", name: "Título", x: 90, y: 175, w: 440, h: 100, content: titulo || "Proposta de Terceirização", style: { fontSize: 32, fontWeight: "900", color: "#ffffff", textAlign: "left" }, zIndex: 30 },
+        { id: `txt_sub_${Date.now()}`, type: "text", name: "Subtítulo", x: 90, y: 305, w: 440, h: 50, content: `${subtitulo || "[CLIENTE_NOME]"}\n27/05/2024`, style: { fontSize: 13, fontWeight: "bold", color: "#94a3b8", textAlign: "left" }, zIndex: 30 },
+        { id: `img_cover_${Date.now()}`, type: "image", name: "Foto Principal", x: 570, y: 0, w: 430, h: 563, src: slideData.bgImage || "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=600", mask: "none", zIndex: 10 }
+      );
+    } else if (layout === 'agradecimento' || layout === 'texto' || layout === 'valores') {
+      elements.push(
+        { id: `accent_shape_${Date.now()}`, type: 'shape', name: 'Acento Superior', x: 100, y: 60, w: 100, h: 6, color: '#1B4D3E', radius: 3, opacity: 100, rotate: 0, zIndex: 10 },
+        { id: `txt_title_${Date.now()}`, type: 'text', name: 'Título Principal', x: 100, y: 80, w: 800, h: 60, content: titulo || 'Olá Cliente', style: { fontSize: 28, fontWeight: '900', color: '#0f172a', textAlign: 'left' }, opacity: 100, rotate: 0, zIndex: 20 },
+        { id: `txt_sub_${Date.now()}`, type: 'text', name: 'Subtítulo', x: 100, y: 140, w: 800, h: 30, content: subtitulo || 'Agradecemos a Oportunidade', style: { fontSize: 14, fontWeight: 'bold', color: '#64748b', textAlign: 'left' }, opacity: 100, rotate: 0, zIndex: 20 },
+        { id: `txt_content_${Date.now()}`, type: 'text', name: 'Corpo do Texto', x: 100, y: 190, w: 800, h: 250, content: conteudo || 'Digite seu texto aqui...', style: { fontSize: 13, fontWeight: 'normal', color: '#334155', textAlign: 'left' }, opacity: 100, rotate: 0, zIndex: 20 }
+      );
+    } else {
+      elements.push(
+        { id: `txt_title_${Date.now()}`, type: 'text', name: 'Título Principal', x: 80, y: 60, w: 840, h: 50, content: titulo || 'Título do Slide', style: { fontSize: 26, fontWeight: '900', color: '#0f172a', textAlign: 'left' }, opacity: 100, rotate: 0, zIndex: 20 },
+        { id: `txt_sub_${Date.now()}`, type: 'text', name: 'Subtítulo', x: 80, y: 110, w: 840, h: 30, content: subtitulo || 'Subtítulo do slide', style: { fontSize: 12, fontWeight: 'bold', color: '#64748b', textAlign: 'left' }, opacity: 100, rotate: 0, zIndex: 20 },
+        { id: `txt_content_${Date.now()}`, type: 'text', name: 'Corpo do Texto', x: 80, y: 160, w: 840, h: 320, content: conteudo || 'Conteúdo...', style: { fontSize: 12, fontWeight: 'normal', color: '#334155', textAlign: 'left' }, opacity: 100, rotate: 0, zIndex: 20 }
+      );
+    }
+
+    return {
+      layout: 'canvas_custom',
+      fontFamily,
+      bgColor,
+      textColor,
+      bgImage: slideData.bgImage || null,
+      elements
+    };
+  };
+
   // Helper action to upload files locally
   const uploadSlideImageClient = async (e: any, elementId: string, slideData: any, setSecoes: any, activeSlideIdx: number, secoes: any) => {
     const file = e.target.files?.[0];
@@ -391,69 +590,181 @@ export default function TemplatesPropostaPage() {
     reader.readAsDataURL(file);
   };
 
-  // Helper template injector for pre-designed slide layouts
+  const handleImageReplace = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !imageReplaceElementId) return;
+    const reader = new FileReader();
+    reader.onload = async (event: any) => {
+      const base64Data = event.target.result;
+      const res = await uploadSlideImageAction(base64Data, file.name);
+      if (res.success && res.fileUrl) {
+        setSecoes(prev => {
+          const list = [...prev];
+          const currentSlide = list[activeSlideIdx];
+          if (!currentSlide) return prev;
+          let sd: any = {};
+          try { sd = JSON.parse(currentSlide.texto); } catch { return prev; }
+          const updatedElements = (sd.elements || []).map((el: any) =>
+            el.id === imageReplaceElementId ? { ...el, src: res.fileUrl } : el
+          );
+          list[activeSlideIdx] = { ...currentSlide, texto: JSON.stringify({ ...sd, elements: updatedElements }) };
+          return list;
+        });
+      } else {
+        alert('Erro ao substituir imagem: ' + (res.error || 'Tente novamente'));
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+    setImageReplaceElementId(null);
+  };
+
   const applyGabarito = (layoutType: string, setSecoes: any, activeSlideIdx: number, secoes: any) => {
     const list = [...secoes];
     let elements: any[] = [];
-    let titleColor = "#ef4444";
+    let titleColor = "#1B4D3E";
     let textColor = "#475569";
     let bgColor = "#ffffff";
 
     if (layoutType === 'provelo_split') {
+      titleColor = "#0f172a";
+      textColor = "#475569";
+      bgColor = "#ffffff";
       elements = [
-        { id: "el_red_bar", type: "shape", x: 0, y: 0, w: 20, h: 563, color: "#ef4444", radius: 0, zIndex: 10 },
+        { id: "el_red_bar", type: "shape", x: 0, y: 0, w: 20, h: 563, color: "#1B4D3E", radius: 0, zIndex: 10 },
         { id: "el_logo", type: "image", x: 60, y: 40, w: 120, h: 40, src: companyLogo, mask: "none", zIndex: 20 },
-        { id: "el_badge", type: "text", x: 60, y: 150, w: 300, h: 25, content: "MODELO DE PROPOSTA", style: { fontSize: 10, fontWeight: "900", color: "#ef4444", textAlign: "left" }, zIndex: 20 },
+        { id: "el_badge", type: "text", x: 60, y: 150, w: 300, h: 25, content: "PROPOSTA COMERCIAL", style: { fontSize: 10, fontWeight: "900", color: "#1B4D3E", textAlign: "left" }, zIndex: 20 },
         { id: "el_title", type: "text", x: 60, y: 185, w: 500, h: 90, content: "[CLIENTE_NOME]", style: { fontSize: 38, fontWeight: "900", color: "#0f172a", textAlign: "left" }, zIndex: 20 },
-        { id: "el_subtitle", type: "text", x: 60, y: 285, w: 500, h: 50, content: "Proposta Comercial para prestação de serviços e facilities.", style: { fontSize: 13, fontWeight: "normal", color: "#475569", textAlign: "left" }, zIndex: 20 },
-        { id: "el_info", type: "text", x: 60, y: 350, w: 500, h: 60, content: "Nº Proposta: FPV-XXX | Revisão: R01\nElaborado por Novos Negócios", style: { fontSize: 11, fontWeight: "bold", color: "#64748b", textAlign: "left" }, zIndex: 20 },
+        { id: "el_subtitle", type: "text", x: 60, y: 285, w: 500, h: 50, content: "Serviço Proposto: [OBJETO_PROPOSTA]", style: { fontSize: 13, fontWeight: "bold", color: "#475569", textAlign: "left" }, zIndex: 20 },
+        { id: "el_info", type: "text", x: 60, y: 350, w: 500, h: 60, content: "Código: [NUMERO_PROPOSTA] | Revisão: [REVISAO]\nData de Emissão: [DATA_PROPOSTA] | Validade: [VALIDADE_PROPOSTA]", style: { fontSize: 11, fontWeight: "bold", color: "#64748b", textAlign: "left" }, zIndex: 20 },
         { id: "el_side_img", type: "image", x: 580, y: 40, w: 380, h: 480, src: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=600", mask: "provelo_mask", zIndex: 20 }
       ];
     } else if (layoutType === 'valores') {
+      titleColor = "#0f172a";
+      textColor = "#475569";
+      bgColor = "#ffffff";
       elements = [
-        { id: "el_red_bar", type: "shape", x: 0, y: 0, w: 20, h: 563, color: "#ef4444", radius: 0, zIndex: 10 },
-        { id: "el_title", type: "text", x: 60, y: 40, w: 500, h: 50, content: "NOSSOS VALORES", style: { fontSize: 30, fontWeight: "900", color: "#0f172a", textAlign: "left" }, zIndex: 20 },
-        { id: "el_v1_title", type: "text", x: 60, y: 110, w: 480, h: 22, content: "Compromisso com a Qualidade", style: { fontSize: 13, fontWeight: "900", color: "#ef4444", textAlign: "left" }, zIndex: 20 },
-        { id: "el_v1_text", type: "text", x: 60, y: 135, w: 480, h: 60, content: "Entregamos serviços com excelência, priorizando a segurança, a padronização e a eficiência operacional em cada detalhe.", style: { fontSize: 10, fontWeight: "normal", color: "#475569", textAlign: "left" }, zIndex: 20 },
-        { id: "el_v2_title", type: "text", x: 60, y: 205, w: 480, h: 22, content: "Valorização do Relacionamento", style: { fontSize: 13, fontWeight: "900", color: "#ef4444", textAlign: "left" }, zIndex: 20 },
-        { id: "el_v2_text", type: "text", x: 60, y: 230, w: 480, h: 60, content: "Valorizamos as pessoas por trás dos processos — nossos colaboradores, clientes e parceiros. Relações duradouras com respeito e transparência.", style: { fontSize: 10, fontWeight: "normal", color: "#475569", textAlign: "left" }, zIndex: 20 },
-        { id: "el_v3_title", type: "text", x: 60, y: 300, w: 480, h: 22, content: "Evolução Contínua", style: { fontSize: 13, fontWeight: "900", color: "#ef4444", textAlign: "left" }, zIndex: 20 },
-        { id: "el_v3_text", type: "text", x: 60, y: 325, w: 480, h: 60, content: "Buscamos sempre melhorar. Investimos em inovação, capacitação e tecnologia para oferecer soluções modernas e ágeis.", style: { fontSize: 10, fontWeight: "normal", color: "#475569", textAlign: "left" }, zIndex: 20 },
+        { id: "el_red_bar", type: "shape", x: 0, y: 0, w: 20, h: 563, color: "#1B4D3E", radius: 0, zIndex: 10 },
+        { id: "el_title", type: "text", x: 60, y: 40, w: 500, h: 50, content: "NOSSOS VALORES INSTITUCIONAIS", style: { fontSize: 30, fontWeight: "900", color: "#0f172a", textAlign: "left" }, zIndex: 20 },
+        { id: "el_v1_title", type: "text", x: 60, y: 110, w: 480, h: 22, content: "01. Compromisso com a Qualidade", style: { fontSize: 13, fontWeight: "900", color: "#1B4D3E", textAlign: "left" }, zIndex: 20 },
+        { id: "el_v1_text", type: "text", x: 60, y: 135, w: 480, h: 60, content: "Priorizamos a segurança, a padronização e a eficiência em cada serviço entregue, superando as expectativas em cada contrato.", style: { fontSize: 10, fontWeight: "normal", color: "#475569", textAlign: "left" }, zIndex: 20 },
+        { id: "el_v2_title", type: "text", x: 60, y: 205, w: 480, h: 22, content: "02. Relações de Parceria e Confiança", style: { fontSize: 13, fontWeight: "900", color: "#1B4D3E", textAlign: "left" }, zIndex: 20 },
+        { id: "el_v2_text", type: "text", x: 60, y: 230, w: 480, h: 60, content: "Buscamos construir relacionamentos duradouros pautados no respeito mútuo, transparência total e diálogo constante com o cliente.", style: { fontSize: 10, fontWeight: "normal", color: "#475569", textAlign: "left" }, zIndex: 20 },
+        { id: "el_v3_title", type: "text", x: 60, y: 300, w: 480, h: 22, content: "03. Inovação & Tecnologia", style: { fontSize: 13, fontWeight: "900", color: "#1B4D3E", textAlign: "left" }, zIndex: 20 },
+        { id: "el_v3_text", type: "text", x: 60, y: 325, w: 480, h: 60, content: "Utilizamos as melhores ferramentas de gestão e metodologias modernas para garantir processos ágeis, controlados e otimizados.", style: { fontSize: 10, fontWeight: "normal", color: "#475569", textAlign: "left" }, zIndex: 20 },
         { id: "el_side_img", type: "image", x: 580, y: 40, w: 380, h: 480, src: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=600", mask: "provelo_mask", zIndex: 20 }
       ];
-    } else if (layoutType === 'performance') {
+    } else if (layoutType === 'capa_navy') {
+      titleColor = "#ffffff";
+      textColor = "#e2e8f0";
+      bgColor = "#0f172a";
       elements = [
-        { id: "el_red_bar", type: "shape", x: 0, y: 0, w: 20, h: 563, color: "#ef4444", radius: 0, zIndex: 10 },
-        { id: "el_title", type: "text", x: 60, y: 40, w: 500, h: 50, content: "NOSSA PERFORMANCE", style: { fontSize: 30, fontWeight: "900", color: "#0f172a", textAlign: "left" }, zIndex: 20 },
-        { id: "el_sub", type: "text", x: 60, y: 95, w: 460, h: 60, content: "Na Provelo, resultado é mais do que uma meta — é um reflexo direto do nosso compromisso com excelência operacional, qualidade no atendimento e foco total no cliente.", style: { fontSize: 10, fontWeight: "bold", color: "#64748b", textAlign: "left" }, zIndex: 20 },
+        { id: "el_bg_glow", type: "shape", x: 500, y: -200, w: 600, h: 600, color: "#1e3a8a", radius: 300, opacity: 30, zIndex: 5 },
+        { id: "el_accent_bar", type: "shape", x: 60, y: 460, w: 200, h: 8, color: "#10b981", radius: 4, zIndex: 10 },
+        { id: "el_logo", type: "image", x: 60, y: 60, w: 140, h: 45, src: companyLogo, mask: "none", zIndex: 20 },
+        { id: "el_badge", type: "text", x: 60, y: 170, w: 400, h: 25, content: "PROPOSTA COMERCIAL PREMIUM", style: { fontSize: 11, fontWeight: "900", color: "#10b981", textAlign: "left" }, zIndex: 20 },
+        { id: "el_title", type: "text", x: 60, y: 205, w: 800, h: 100, content: "[CLIENTE_NOME]", style: { fontSize: 44, fontWeight: "900", color: "#ffffff", textAlign: "left" }, zIndex: 20 },
+        { id: "el_subtitle", type: "text", x: 60, y: 315, w: 800, h: 45, content: "Prestação de Serviços Especializados: [OBJETO_PROPOSTA]", style: { fontSize: 15, fontWeight: "bold", color: "#cbd5e1", textAlign: "left" }, zIndex: 20 },
+        { id: "el_meta", type: "text", x: 60, y: 380, w: 500, h: 60, content: "Código: [NUMERO_PROPOSTA] | Revisão: [REVISAO]\nData de Emissão: [DATA_PROPOSTA] | Validade: [VALIDADE_PROPOSTA]", style: { fontSize: 11, fontWeight: "normal", color: "#94a3b8", textAlign: "left" }, zIndex: 20 },
+        { id: "el_consultant", type: "text", x: 600, y: 380, w: 300, h: 60, content: "Responsável Comercial:\n[VENDEDOR_NOME] | [VENDEDOR_EMAIL]", style: { fontSize: 11, fontWeight: "bold", color: "#cbd5e1", textAlign: "right" }, zIndex: 20 }
+      ];
+    } else if (layoutType === 'resumo_financeiro') {
+      titleColor = "#0f172a";
+      textColor = "#475569";
+      bgColor = "#ffffff";
+      elements = [
+        { id: "el_top_bar", type: "shape", x: 0, y: 0, w: 960, h: 10, color: "#1B4D3E", radius: 0, zIndex: 10 },
+        { id: "el_title", type: "text", x: 60, y: 40, w: 600, h: 45, content: "PROPOSTA FINANCEIRA", style: { fontSize: 26, fontWeight: "900", color: "#0f172a", textAlign: "left" }, zIndex: 20 },
+        { id: "el_sub", type: "text", x: 60, y: 85, w: 600, h: 25, content: "Valores consolidados para prestação de serviços referente a [OBJETO_PROPOSTA]", style: { fontSize: 11, fontWeight: "bold", color: "#64748b", textAlign: "left" }, zIndex: 20 },
+        { id: "el_box_mensal", type: "shape", x: 60, y: 130, w: 260, h: 90, color: "#f8fafc", radius: 16, zIndex: 10 },
+        { id: "el_box_mensal_lbl", type: "text", x: 80, y: 145, w: 220, h: 20, content: "VALOR MENSAL ESTIMADO", style: { fontSize: 9, fontWeight: "900", color: "#64748b", textAlign: "left" }, zIndex: 20 },
+        { id: "el_box_mensal_val", type: "text", x: 80, y: 165, w: 220, h: 40, content: "[VALOR_MENSAL]", style: { fontSize: 22, fontWeight: "900", color: "#1B4D3E", textAlign: "left" }, zIndex: 20 },
+        { id: "el_box_total", type: "shape", x: 350, y: 130, w: 260, h: 90, color: "#1B4D3E", radius: 16, zIndex: 10 },
+        { id: "el_box_total_lbl", type: "text", x: 370, y: 145, w: 220, h: 20, content: "VALOR TOTAL GLOBAL", style: { fontSize: 9, fontWeight: "900", color: "#a7f3d0", textAlign: "left" }, zIndex: 20 },
+        { id: "el_box_total_val", type: "text", x: 370, y: 165, w: 220, h: 40, content: "[VALOR_TOTAL]", style: { fontSize: 22, fontWeight: "900", color: "#ffffff", textAlign: "left" }, zIndex: 20 },
+        { id: "el_box_prazo", type: "shape", x: 640, y: 130, w: 260, h: 90, color: "#f8fafc", radius: 16, zIndex: 10 },
+        { id: "el_box_prazo_lbl", type: "text", x: 660, y: 145, w: 220, h: 20, content: "PRAZO DE VIGÊNCIA", style: { fontSize: 9, fontWeight: "900", color: "#64748b", textAlign: "left" }, zIndex: 20 },
+        { id: "el_box_prazo_val", type: "text", x: 660, y: 165, w: 220, h: 40, content: "[PRAZO_CONTRATO]", style: { fontSize: 20, fontWeight: "900", color: "#0f172a", textAlign: "left" }, zIndex: 20 },
+        { id: "el_tabela_tag", type: "text", x: 60, y: 245, w: 840, h: 200, content: "[TABELA]", style: { fontSize: 13, fontWeight: "bold", color: "#475569", textAlign: "center" }, zIndex: 20 },
+        { id: "el_obs", type: "text", x: 60, y: 460, w: 840, h: 40, content: "* Condições de Pagamento: [CONDICOES_COMERCIAIS]\n* Tabela inclui todos os encargos sociais, trabalhistas e insumos necessários para execução dos serviços.", style: { fontSize: 9, fontWeight: "bold", color: "#94a3b8", textAlign: "left" }, zIndex: 20 }
+      ];
+    } else if (layoutType === 'equipe_servicos') {
+      titleColor = "#0f172a";
+      textColor = "#475569";
+      bgColor = "#ffffff";
+      elements = [
+        { id: "el_top_bar", type: "shape", x: 0, y: 0, w: 960, h: 10, color: "#1B4D3E", radius: 0, zIndex: 10 },
+        { id: "el_title", type: "text", x: 60, y: 40, w: 840, h: 40, content: "NOSSOS SERVIÇOS & EQUIPE", style: { fontSize: 26, fontWeight: "900", color: "#0f172a", textAlign: "center" }, zIndex: 20 },
+        { id: "el_sub", type: "text", x: 60, y: 85, w: 840, h: 25, content: "Alocação planejada e infraestrutura técnica dedicada ao projeto [OBJETO_PROPOSTA]", style: { fontSize: 11, fontWeight: "bold", color: "#64748b", textAlign: "center" }, zIndex: 20 },
+        { id: "el_c1_bg", type: "shape", x: 60, y: 130, w: 260, h: 320, color: "#f8fafc", radius: 16, zIndex: 10 },
+        { id: "el_c1_img", type: "image", x: 80, y: 150, w: 220, h: 140, src: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=300", mask: "none", zIndex: 20 },
+        { id: "el_c1_title", type: "text", x: 80, y: 305, w: 220, h: 25, content: "Gestão Operacional", style: { fontSize: 13, fontWeight: "900", color: "#1B4D3E", textAlign: "center" }, zIndex: 20 },
+        { id: "el_c1_text", type: "text", x: 80, y: 335, w: 220, h: 100, content: "Supervisão e gerenciamento diário conduzido por nossa equipe técnica para manter o padrão de excelência acordado em [LOCAL_PRESTACAO].", style: { fontSize: 9.5, fontWeight: "normal", color: "#475569", textAlign: "center" }, zIndex: 20 },
+        { id: "el_c2_bg", type: "shape", x: 350, y: 130, w: 260, h: 320, color: "#f8fafc", radius: 16, zIndex: 10 },
+        { id: "el_c2_img", type: "image", x: 370, y: 150, w: 220, h: 140, src: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=300", mask: "none", zIndex: 20 },
+        { id: "el_c2_title", type: "text", x: 370, y: 305, w: 220, h: 25, content: "Equipe Alocada", style: { fontSize: 13, fontWeight: "900", color: "#1B4D3E", textAlign: "center" }, zIndex: 20 },
+        { id: "el_c2_text", type: "text", x: 370, y: 335, w: 220, h: 100, content: "Profissionais qualificados, devidamente treinados e uniformizados, prontos para atuar conforme as especificidades da sua operação.", style: { fontSize: 9.5, fontWeight: "normal", color: "#475569", textAlign: "center" }, zIndex: 20 },
+        { id: "el_c3_bg", type: "shape", x: 640, y: 130, w: 260, h: 320, color: "#f8fafc", radius: 16, zIndex: 10 },
+        { id: "el_c3_img", type: "image", x: 660, y: 150, w: 220, h: 140, src: "https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=300", mask: "none", zIndex: 20 },
+        { id: "el_c3_title", type: "text", x: 660, y: 305, w: 220, h: 25, content: "Atendimento & Suporte", style: { fontSize: 13, fontWeight: "900", color: "#1B4D3E", textAlign: "center" }, zIndex: 20 },
+        { id: "el_c3_text", type: "text", x: 660, y: 335, w: 220, h: 100, content: "Contato direto com [VENDEDOR_NOME] ([VENDEDOR_TELEFONE]) para plantão de dúvidas, solicitações extras ou melhorias.", style: { fontSize: 9.5, fontWeight: "normal", color: "#475569", textAlign: "center" }, zIndex: 20 }
+      ];
+    } else if (layoutType === 'sobre_nos') {
+      titleColor = "#0f172a";
+      textColor = "#475569";
+      bgColor = "#ffffff";
+      elements = [
+        { id: "el_top_bar", type: "shape", x: 0, y: 0, w: 960, h: 10, color: "#1B4D3E", radius: 0, zIndex: 10 },
+        { id: "el_title", type: "text", x: 60, y: 40, w: 500, h: 45, content: "SOBRE NOSSA EMPRESA", style: { fontSize: 26, fontWeight: "900", color: "#0f172a", textAlign: "left" }, zIndex: 20 },
+        { id: "el_sub", type: "text", x: 60, y: 85, w: 500, h: 25, content: "Sua parceira estratégica em soluções de facilities e infraestrutura", style: { fontSize: 11, fontWeight: "bold", color: "#64748b", textAlign: "left" }, zIndex: 20 },
+        { id: "el_desc", type: "text", x: 60, y: 130, w: 460, h: 180, content: "Somos especialistas em desenvolver soluções sob medida para cada cliente, garantindo qualidade superior, redução de custos e processos otimizados.\n\nCom ampla presença em [LOCAL_PRESTACAO], integramos tecnologia e pessoas capacitadas para manter a sua infraestrutura funcionando com a máxima eficiência operacional.", style: { fontSize: 11, fontWeight: "normal", color: "#475569", textAlign: "left" }, zIndex: 20 },
+        { id: "el_logo_card", type: "shape", x: 60, y: 330, w: 460, h: 120, color: "#f8fafc", radius: 16, zIndex: 10 },
+        { id: "el_logo_company", type: "image", x: 220, y: 360, w: 140, h: 45, src: companyLogo, mask: "none", zIndex: 20 },
+        { id: "el_img_decor", type: "image", x: 560, y: 130, w: 340, h: 320, src: "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=400", mask: "provelo_mask", zIndex: 20 }
+      ];
+    } else if (layoutType === 'termos_aceite') {
+      titleColor = "#0f172a";
+      textColor = "#475569";
+      bgColor = "#ffffff";
+      elements = [
+        { id: "el_top_bar", type: "shape", x: 0, y: 0, w: 960, h: 10, color: "#1B4D3E", radius: 0, zIndex: 10 },
+        { id: "el_title", type: "text", x: 60, y: 40, w: 840, h: 40, content: "CONCORDÂNCIA E ACEITE", style: { fontSize: 26, fontWeight: "900", color: "#0f172a", textAlign: "center" }, zIndex: 20 },
+        { id: "el_sub", type: "text", x: 60, y: 85, w: 840, h: 25, content: "Declaração de concordância com os termos comerciais descritos na proposta [NUMERO_PROPOSTA]", style: { fontSize: 11, fontWeight: "bold", color: "#64748b", textAlign: "center" }, zIndex: 20 },
+        { id: "el_term_box", type: "shape", x: 60, y: 130, w: 840, h: 180, color: "#f8fafc", radius: 16, zIndex: 10 },
+        { id: "el_term_text", type: "text", x: 80, y: 150, w: 800, h: 140, content: "Ao assinar digitalmente este documento, as partes concordam plenamente com as cláusulas, escopos técnicos, condições financeiras e prazos descritos nesta proposta comercial.\n\nOs serviços serão prestados em [LOCAL_PRESTACAO] com vigência contratual prevista em [PRAZO_CONTRATO]. O faturamento e cobrança seguirão a modalidade de [CONDICOES_COMERCIAIS].", style: { fontSize: 11, fontWeight: "normal", color: "#475569", textAlign: "left" }, zIndex: 20 },
+        { id: "el_sig_tag", type: "text", x: 60, y: 330, w: 840, h: 120, content: "[TERMO_ACEITE]", style: { fontSize: 12, fontWeight: "bold", color: "#475569", textAlign: "center" }, zIndex: 20 }
+      ];
+    } else if (layoutType === 'performance') {
+      titleColor = "#0f172a";
+      textColor = "#475569";
+      bgColor = "#ffffff";
+      elements = [
+        { id: "el_red_bar", type: "shape", x: 0, y: 0, w: 20, h: 563, color: "#1B4D3E", radius: 0, zIndex: 10 },
+        { id: "el_title", type: "text", x: 60, y: 40, w: 500, h: 50, content: "NOSSA CAPACIDADE E EFICIÊNCIA", style: { fontSize: 30, fontWeight: "900", color: "#0f172a", textAlign: "left" }, zIndex: 20 },
+        { id: "el_sub", type: "text", x: 60, y: 95, w: 460, h: 60, content: "Oferecemos soluções integradas com forte controle gerencial, monitoramento ativo e dedicação em tempo integral ao escopo contratado em [LOCAL_PRESTACAO].", style: { fontSize: 10, fontWeight: "bold", color: "#64748b", textAlign: "left" }, zIndex: 20 },
         { id: "el_img_building", type: "image", x: 60, y: 170, w: 460, h: 320, src: "https://images.unsplash.com/photo-1542362567-b07eac79094d?q=80&w=600", mask: "none", zIndex: 20 },
-        
-        { id: "el_p1_box", type: "shape", x: 560, y: 90, w: 160, h: 100, color: "#ef4444", radius: 24, zIndex: 20 },
-        { id: "el_p1_title", type: "text", x: 570, y: 110, w: 140, h: 40, content: "29 MIL", style: { fontSize: 20, fontWeight: "900", color: "#ffffff", textAlign: "center" }, zIndex: 30 },
-        { id: "el_p1_sub", type: "text", x: 570, y: 150, w: 140, h: 30, content: "HORAS DE SERVIÇO", style: { fontSize: 7, fontWeight: "900", color: "#ffffff", textAlign: "center" }, zIndex: 30 },
-        { id: "el_p1_text", type: "text", x: 740, y: 90, w: 220, h: 100, content: "Em 2022, movimentamos mais de 29 mil horas de serviços prestados em contratos ativos, comprovando nossa capacidade de atuação em larga escala com controle e eficiência.", style: { fontSize: 10, fontWeight: "normal", color: "#475569", textAlign: "left" }, zIndex: 30 },
-
-        { id: "el_p2_box", type: "shape", x: 560, y: 220, w: 160, h: 100, color: "#ef4444", radius: 24, zIndex: 20 },
-        { id: "el_p2_title", type: "text", x: 570, y: 240, w: 140, h: 40, content: "1.220", style: { fontSize: 20, fontWeight: "900", color: "#ffffff", textAlign: "center" }, zIndex: 30 },
-        { id: "el_p2_sub", type: "text", x: 570, y: 280, w: 140, h: 30, content: "VISITAS TÉCNICAS", style: { fontSize: 7, fontWeight: "900", color: "#ffffff", textAlign: "center" }, zIndex: 30 },
-        { id: "el_p2_text", type: "text", x: 740, y: 220, w: 220, h: 100, content: "No mesmo ano, realizamos mais de 1.220 atendimentos e visitas técnicas, sempre com equipes treinadas, processos padronizados e foco na satisfação do cliente.", style: { fontSize: 10, fontWeight: "normal", color: "#475569", textAlign: "left" }, zIndex: 30 }
+        { id: "el_p1_box", type: "shape", x: 560, y: 90, w: 160, h: 100, color: "#1B4D3E", radius: 24, zIndex: 20 },
+        { id: "el_p1_title", type: "text", x: 570, y: 110, w: 140, h: 40, content: "[PRAZO_CONTRATO]", style: { fontSize: 15, fontWeight: "900", color: "#ffffff", textAlign: "center" }, zIndex: 30 },
+        { id: "el_p1_sub", type: "text", x: 570, y: 150, w: 140, h: 30, content: "PRAZO DE VIGÊNCIA", style: { fontSize: 7, fontWeight: "900", color: "#ffffff", textAlign: "center" }, zIndex: 30 },
+        { id: "el_p1_text", type: "text", x: 740, y: 90, w: 220, h: 100, content: "Contrato planejado para vigorar em toda a sua extensão operacional, promovendo estabilidade, treinamento contínuo de pessoal e foco em produtividade de longo prazo.", style: { fontSize: 10, fontWeight: "normal", color: "#475569", textAlign: "left" }, zIndex: 30 },
+        { id: "el_p2_box", type: "shape", x: 560, y: 220, w: 160, h: 100, color: "#1B4D3E", radius: 24, zIndex: 20 },
+        { id: "el_p2_title", type: "text", x: 570, y: 240, w: 140, h: 40, content: "SUPORTE", style: { fontSize: 15, fontWeight: "900", color: "#ffffff", textAlign: "center" }, zIndex: 30 },
+        { id: "el_p2_sub", type: "text", x: 570, y: 280, w: 140, h: 30, content: "CONTATO COMERCIAL", style: { fontSize: 7, fontWeight: "900", color: "#ffffff", textAlign: "center" }, zIndex: 30 },
+        { id: "el_p2_text", type: "text", x: 740, y: 220, w: 220, h: 100, content: "Canal aberto de atendimento direto com o consultor [VENDEDOR_NOME] ([VENDEDOR_TELEFONE] | [VENDEDOR_EMAIL]) para suporte imediato e resolução ágil.", style: { fontSize: 10, fontWeight: "normal", color: "#475569", textAlign: "left" }, zIndex: 30 }
       ];
     } else if (layoutType === 'fundadores') {
+      titleColor = "#0f172a";
+      textColor = "#475569";
+      bgColor = "#ffffff";
       elements = [
-        { id: "el_title", type: "text", x: 60, y: 40, w: 880, h: 40, content: "CONHEÇA NOSSOS FUNDADORES", style: { fontSize: 28, fontWeight: "900", color: "#0f172a", textAlign: "center" }, zIndex: 20 },
-        { id: "el_sub", type: "text", x: 60, y: 85, w: 880, h: 30, content: "Transparência e confiança em conhecer a base da nossa excelência", style: { fontSize: 12, fontWeight: "bold", color: "#475569", textAlign: "center" }, zIndex: 20 },
-        
-        { id: "el_f1_photo", type: "image", x: 140, y: 150, w: 180, h: 180, src: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200", mask: "circle", zIndex: 20 },
-        { id: "el_f1_name", type: "text", x: 140, y: 345, w: 180, h: 25, content: "Ádamo Quadros", style: { fontSize: 13, fontWeight: "900", color: "#0f172a", textAlign: "center" }, zIndex: 20 },
-        { id: "el_f1_role", type: "text", x: 140, y: 370, w: 180, h: 20, content: "Chief Executive Officer (CEO)", style: { fontSize: 9, fontWeight: "bold", color: "#ef4444", textAlign: "center" }, zIndex: 20 },
-
-        { id: "el_f2_photo", type: "image", x: 410, y: 150, w: 180, h: 180, src: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=200", mask: "circle", zIndex: 20 },
-        { id: "el_f2_name", type: "text", x: 410, y: 345, w: 180, h: 25, content: "Guilherme França", style: { fontSize: 13, fontWeight: "900", color: "#0f172a", textAlign: "center" }, zIndex: 20 },
-        { id: "el_f2_role", type: "text", x: 410, y: 370, w: 180, h: 20, content: "Chief Product Officer (CPO)", style: { fontSize: 9, fontWeight: "bold", color: "#ef4444", textAlign: "center" }, zIndex: 20 },
-
-        { id: "el_f3_photo", type: "image", x: 680, y: 150, w: 180, h: 180, src: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200", mask: "circle", zIndex: 20 },
-        { id: "el_f3_name", type: "text", x: 680, y: 345, w: 180, h: 25, content: "Giovanna Castro", style: { fontSize: 13, fontWeight: "900", color: "#0f172a", textAlign: "center" }, zIndex: 20 },
-        { id: "el_f3_role", type: "text", x: 680, y: 370, w: 180, h: 20, content: "Chief Technology Officer (CTO)", style: { fontSize: 9, fontWeight: "bold", color: "#ef4444", textAlign: "center" }, zIndex: 20 }
+        { id: "el_title", type: "text", x: 60, y: 40, w: 880, h: 40, content: "RESPONSÁVEIS PELA PROPOSTA", style: { fontSize: 28, fontWeight: "900", color: "#0f172a", textAlign: "center" }, zIndex: 20 },
+        { id: "el_sub", type: "text", x: 60, y: 85, w: 880, h: 30, content: "Sua equipe de atendimento exclusivo Silva Consultoria", style: { fontSize: 12, fontWeight: "bold", color: "#475569", textAlign: "center" }, zIndex: 20 },
+        { id: "el_f1_photo", type: "image", x: 260, y: 150, w: 180, h: 180, src: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200", mask: "circle", zIndex: 20 },
+        { id: "el_f1_name", type: "text", x: 260, y: 345, w: 180, h: 25, content: "[VENDEDOR_NOME]", style: { fontSize: 13, fontWeight: "900", color: "#0f172a", textAlign: "center" }, zIndex: 20 },
+        { id: "el_f1_role", type: "text", x: 260, y: 370, w: 180, h: 20, content: "Gestor Comercial de Contas", style: { fontSize: 9, fontWeight: "bold", color: "#1B4D3E", textAlign: "center" }, zIndex: 20 },
+        { id: "el_f2_photo", type: "image", x: 520, y: 150, w: 180, h: 180, src: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200", mask: "circle", zIndex: 20 },
+        { id: "el_f2_name", type: "text", x: 520, y: 345, w: 180, h: 25, content: "Contato Silva Consultoria", style: { fontSize: 13, fontWeight: "900", color: "#0f172a", textAlign: "center" }, zIndex: 20 },
+        { id: "el_f2_role", type: "text", x: 520, y: 370, w: 180, h: 20, content: "[VENDEDOR_EMAIL]", style: { fontSize: 9, fontWeight: "bold", color: "#1B4D3E", textAlign: "center" }, zIndex: 20 }
       ];
     }
 
@@ -463,6 +774,7 @@ export default function TemplatesPropostaPage() {
       bgColor,
       textColor,
       titleColor,
+      bgPattern: layoutType === 'capa_navy' ? 'diagonal_lines' : 'none',
       elements
     });
     list[activeSlideIdx].texto = updatedText;
@@ -480,25 +792,31 @@ export default function TemplatesPropostaPage() {
   useEffect(() => { loadData(); }, []);
 
   const openEditor = (tmpl?: any) => {
-    if (tmpl) {
-      setEditingTemplate(tmpl);
-      setNome(tmpl.nome);
-      setTipo(tmpl.tipo || 'A4');
-      setActiveSlideIdx(0);
-      setSecoes((tmpl.secoes || []).map((s: any) => ({ titulo: s.titulo, texto: s.texto })));
-    } else {
-      setEditingTemplate('new');
-      setNome('');
-      setTipo('A4');
-      setActiveSlideIdx(0);
-      setSecoes([
-        { titulo: 'CLÁUSULA 01 - DO OBJETO E ESCOPO', texto: '[OBJETO_PROPOSTA]\n\n[ESCOPO_TECNICO]' },
-        { titulo: 'CLÁUSULA 02 - DAS CONDIÇÕES COMERCIAIS', texto: '[CONDICOES_COMERCIAIS]' },
-        { titulo: 'CLÁUSULA 03 - RESUMO COMERCIAL DA PROPOSTA', texto: 'Valores referentes aos serviços prestados, equipe alocada e insumos, conforme detalhamento a seguir:\n\n[TABELA]' },
-        { titulo: 'CLÁUSULA 04 - ITENS INCLUSOS E EXCLUSOS', texto: '[ITENS]' },
-        { titulo: 'CLÁUSULA 05 - TERMO DE ACEITE', texto: '[TERMO_ACEITE]' },
-      ]);
-    }
+    // Reset history
+    setHistory([]);
+    setHistoryIndex(-1);
+    isUndoRedoAction.current = false;
+
+    const initialSecoes = tmpl 
+      ? (tmpl.secoes || []).map((s: any) => ({ titulo: s.titulo, texto: s.texto }))
+      : [
+          { titulo: 'CLÁUSULA 01 - DO OBJETO E ESCOPO', texto: '[OBJETO_PROPOSTA]\n\n[ESCOPO_TECNICO]' },
+          { titulo: 'CLÁUSULA 02 - DAS CONDIÇÕES COMERCIAIS', texto: '[CONDICOES_COMERCIAIS]' },
+          { titulo: 'CLÁUSULA 03 - RESUMO COMERCIAL DA PROPOSTA', texto: 'Valores referentes aos serviços prestados, equipe alocada e insumos, conforme detalhamento a seguir:\n\n[TABELA]' },
+          { titulo: 'CLÁUSULA 04 - ITENS INCLUSOS E EXCLUSOS', texto: '[ITENS]' },
+          { titulo: 'CLÁUSULA 05 - TERMO DE ACEITE', texto: '[TERMO_ACEITE]' },
+        ];
+        
+    setEditingTemplate(tmpl || 'new');
+    setNome(tmpl ? tmpl.nome : '');
+    setTipo(tmpl ? (tmpl.tipo || 'A4') : 'A4');
+    setActiveSlideIdx(0);
+    setSecoes(initialSecoes);
+    
+    // Explicitly initialize history
+    setHistory([{ secoes: JSON.parse(JSON.stringify(initialSecoes)), activeSlideIdx: 0 }]);
+    setHistoryIndex(0);
+    isUndoRedoAction.current = true; // prevent automatic record on initial state mount
   };
 
   const closeEditor = () => {
@@ -566,8 +884,8 @@ export default function TemplatesPropostaPage() {
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
 
-      <main className="flex-1 p-8 overflow-y-auto">
-        <div className={`${editingTemplate ? 'max-w-[1700px]' : 'max-w-5xl'} mx-auto space-y-6`}>
+      <main className={`flex-1 ${editingTemplate && tipo === 'SLIDE_DECK' ? 'p-3' : 'p-8'} overflow-y-auto`}>
+        <div className={`${editingTemplate && tipo === 'SLIDE_DECK' ? 'max-w-full' : editingTemplate ? 'max-w-[1700px]' : 'max-w-5xl'} mx-auto ${editingTemplate && tipo === 'SLIDE_DECK' ? 'space-y-3' : 'space-y-6'}`}>
 
           {/* HEADER */}
           <header className="flex justify-between items-end border-b border-slate-300 pb-4">
@@ -592,19 +910,90 @@ export default function TemplatesPropostaPage() {
               </button>
             )}
             {editingTemplate && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Nome inline */}
+                <input
+                  type="text"
+                  value={nome}
+                  onChange={e => setNome(e.target.value)}
+                  placeholder="Nome do template..."
+                  className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-700 w-44 focus:outline-none focus:ring-2 focus:ring-[#1B4D3E] bg-white shadow-sm"
+                />
+
+                {/* Tipo compacto */}
+                <div className="flex gap-0 bg-slate-100 p-0.5 rounded-lg border border-slate-200 shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTipo('A4');
+                      if (secoes.some(s => s.texto.trim().startsWith('{'))) {
+                        setSecoes([
+                          { titulo: 'CLÁUSULA 01 - DO OBJETO E ESCOPO', texto: '[OBJETO_PROPOSTA]\n\n[ESCOPO_TECNICO]' },
+                          { titulo: 'CLÁUSULA 02 - DAS CONDIÇÕES COMERCIAIS', texto: '[CONDICOES_COMERCIAIS]' },
+                          { titulo: 'CLÁUSULA 03 - RESUMO COMERCIAL DA PROPOSTA', texto: 'Valores referentes aos serviços prestados:\n\n[TABELA]' },
+                          { titulo: 'CLÁUSULA 04 - ITENS INCLUSOS E EXCLUSOS', texto: '[ITENS]' },
+                          { titulo: 'CLÁUSULA 05 - TERMO DE ACEITE', texto: '[TERMO_ACEITE]' }
+                        ]);
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-md text-xs font-black uppercase transition-all cursor-pointer ${tipo === 'A4' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    A4
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTipo('SLIDE_DECK');
+                      if (!secoes.some(s => s.texto.trim().startsWith('{'))) {
+                        setSecoes([
+                          { titulo: 'Capa da Apresentação', texto: '{"layout":"cobertura","tituloSlide":"Proposta Comercial","subtitulo":"Silva Facilities","bgImage":"https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200"}' },
+                          { titulo: 'Olá Cliente', texto: '{"layout":"agradecimento","tituloSlide":"Agradecimento","subtitulo":"Obrigado pela oportunidade!","conteudo":"Apresentamos nossa proposta para prestação de serviços terceirizados."}' },
+                          { titulo: 'Quem Somos', texto: '{"layout":"valores","tituloSlide":"Quem Somos","subtitulo":"Mais de 30 anos no mercado","conteudo":"Nosso compromisso é guiado por princípios sólidos."}' },
+                          { titulo: 'Quadro Financeiro', texto: '{"layout":"tabela","tituloSlide":"Resumo Financeiro","subtitulo":"Investimento Proposto","conteudo":"[TABELA]"}' },
+                          { titulo: 'Termo de Aceite', texto: '{"layout":"aceite","tituloSlide":"Assinatura e Aceite","subtitulo":"Prontos para iniciar","conteudo":"[TERMO_ACEITE]"}' }
+                        ]);
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-md text-xs font-black uppercase transition-all cursor-pointer ${tipo === 'SLIDE_DECK' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    Slides
+                  </button>
+                </div>
+
+                {/* Undo / Redo */}
+                <div className="flex items-center gap-0.5 bg-slate-100 p-0.5 rounded-lg border border-slate-200 shadow-sm">
+                  <button
+                    type="button"
+                    onClick={handleUndo}
+                    disabled={historyIndex <= 0}
+                    className="p-1.5 text-slate-500 hover:text-[#1B4D3E] disabled:text-slate-300 hover:bg-white disabled:bg-transparent rounded-md transition-all active:scale-95 cursor-pointer disabled:cursor-not-allowed"
+                    title="Desfazer (Ctrl+Z)"
+                  >
+                    <Undo size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRedo}
+                    disabled={historyIndex >= history.length - 1}
+                    className="p-1.5 text-slate-500 hover:text-[#1B4D3E] disabled:text-slate-300 hover:bg-white disabled:bg-transparent rounded-md transition-all active:scale-95 cursor-pointer disabled:cursor-not-allowed"
+                    title="Refazer (Ctrl+Y)"
+                  >
+                    <Redo size={14} />
+                  </button>
+                </div>
+
                 <button
                   onClick={closeEditor}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 px-4 rounded text-sm flex items-center gap-2 transition-colors"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-1.5 px-3 rounded-lg text-sm flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  <X size={16} /> Cancelar
+                  <X size={14} /> Cancelar
                 </button>
                 <button
                   onClick={saveTemplate}
                   disabled={saving}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded text-sm flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-5 rounded-lg text-sm flex items-center gap-1.5 shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
                 >
-                  <Save size={18} /> {saving ? 'Salvando...' : 'Salvar Template'}
+                  <Save size={14} /> {saving ? 'Salvando...' : 'Salvar'}
                 </button>
               </div>
             )}
@@ -678,65 +1067,7 @@ export default function TemplatesPropostaPage() {
 
           {/* EDITOR DE TEMPLATE */}
           {editingTemplate && (
-            <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 space-y-6">
-
-              {/* Nome & Tipo Selector */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider block mb-2">Nome do Template</label>
-                  <input
-                    type="text"
-                    value={nome}
-                    onChange={e => setNome(e.target.value)}
-                    placeholder="Ex: Proposta Simples (Terceirização)"
-                    className="w-full border border-slate-300 rounded-lg p-3 text-sm font-bold focus:ring-2 focus:ring-[#1B4D3E] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider block mb-2">Tipo de Proposta</label>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTipo('A4');
-                        if (secoes.some(s => s.texto.trim().startsWith('{'))) {
-                          setSecoes([
-                            { titulo: 'CLÁUSULA 01 - DO OBJETO E ESCOPO', texto: '[OBJETO_PROPOSTA]\n\n[ESCOPO_TECNICO]' },
-                            { titulo: 'CLÁUSULA 02 - DAS CONDIÇÕES COMERCIAIS', texto: '[CONDICOES_COMERCIAIS]' },
-                            { titulo: 'CLÁUSULA 03 - RESUMO COMERCIAL DA PROPOSTA', texto: 'Valores referentes aos serviços prestados, equipe alocada e insumos, conforme detalhamento:\n\n[TABELA]' },
-                            { titulo: 'CLÁUSULA 04 - ITENS INCLUSOS E EXCLUSOS', texto: '[ITENS]' },
-                            { titulo: 'CLÁUSULA 05 - TERMO DE ACEITE', texto: '[TERMO_ACEITE]' }
-                          ]);
-                        }
-                      }}
-                      className={`flex-1 py-3 px-4 rounded-lg text-xs font-black uppercase border transition-all ${tipo === 'A4' ? 'bg-[#1B4D3E] border-[#1B4D3E] text-white shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}
-                    >
-                      A4 (PDF / Impressão)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTipo('SLIDE_DECK');
-                        if (!secoes.some(s => s.texto.trim().startsWith('{'))) {
-                          setSecoes([
-                            { titulo: 'Capa da Apresentação', texto: '{"layout":"cobertura","tituloSlide":"Proposta Comercial","subtitulo":"Silva Facilities","bgImage":"https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200"}' },
-                            { titulo: 'Olá Cliente', texto: '{"layout":"agradecimento","tituloSlide":"Agradecimento","subtitulo":"Obrigado pela oportunidade!","conteudo":"Apresentamos nossa proposta para prestação de serviços terceirizados, desenvolvida sob medida para corresponder às suas necessidades."}' },
-                            { titulo: 'Quem Somos', texto: '{"layout":"valores","tituloSlide":"Quem Somos","subtitulo":"Mais de 30 anos no mercado","conteudo":"Nosso compromisso é guiado por princípios sólidos: agimos com ética, agilidade, eficiência e foco em pessoas."}' },
-                            { titulo: 'Principais Serviços', texto: '{"layout":"servicos","tituloSlide":"Nossos Serviços","subtitulo":"Especialistas em Facilities","conteudo":"Oferecemos serviços especializados de Limpeza, Conservação, Portaria, Recepção e Jardinagem com alta qualidade."}' },
-                            { titulo: 'Quadro Financeiro', texto: '{"layout":"tabela","tituloSlide":"Resumo Financeiro","subtitulo":"Investimento Proposto","conteudo":"[TABELA]"}' },
-                            { titulo: 'Itens Inclusos', texto: '{"layout":"itens","tituloSlide":"Itens Inclusos e Exclusos","subtitulo":"Premissas Contratuais","conteudo":"[ITENS]"}' },
-                            { titulo: 'Termo de Aceite', texto: '{"layout":"aceite","tituloSlide":"Assinatura e Aceite","subtitulo":"Prontos para iniciar","conteudo":"[TERMO_ACEITE]"}' }
-                          ]);
-                        }
-                      }}
-                      className={`flex-1 py-3 px-4 rounded-lg text-xs font-black uppercase border transition-all ${tipo === 'SLIDE_DECK' ? 'bg-[#1B4D3E] border-[#1B4D3E] text-white shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}
-                    >
-                      Apresentação (Slide Deck)
-                    </button>
-                  </div>
-                </div>
-              </div>
+            <div className={tipo === 'A4' ? 'bg-white border border-slate-200 rounded-xl shadow-sm p-6 space-y-6' : 'bg-white border border-slate-200 rounded-2xl shadow-lg overflow-hidden'}>
 
               {/* EDITOR A4 */}
               {tipo === 'A4' && (
@@ -748,17 +1079,7 @@ export default function TemplatesPropostaPage() {
                       Use as tags abaixo para injetar automaticamente os dados da FPV no PDF gerado:
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {[
-                        ['[CLIENTE_NOME]', 'Nome Fantasia do Cliente'],
-                        ['[NUMERO_PROPOSTA]', 'Número da Proposta (ex: FPV-010)'],
-                        ['[REVISAO]', 'Número da Revisão Atual (ex: R03)'],
-                        ['[OBJETO_PROPOSTA]', 'Objeto da Proposta (Aba 1 FPV)'],
-                        ['[ESCOPO_TECNICO]', 'Escopo Técnico (Aba 1 FPV)'],
-                        ['[CONDICOES_COMERCIAIS]', 'Condições do Cliente (Aba 1 FPV)'],
-                        ['[TABELA]', 'Quadro Efetivo + Insumos'],
-                        ['[ITENS]', 'Itens Inclusos/Exclusos'],
-                        ['[TERMO_ACEITE]', 'Assinatura / Termo de Aceite'],
-                      ].map(([tag, desc]) => (
+                      {FVP_INTEGRATION_TAGS.map(({ tag, desc }) => (
                         <span key={tag} className="bg-white border border-blue-200 px-2 py-1 rounded text-[10px] font-bold text-blue-700 shadow-sm cursor-default" title={desc}>
                           {tag}
                         </span>
@@ -836,6 +1157,7 @@ export default function TemplatesPropostaPage() {
                             Texto / Tags
                           </label>
                           <textarea
+                            id={`textarea-a4-${idx}`}
                             className="w-full bg-white border border-slate-200 rounded-lg text-sm px-4 py-3 min-h-[120px] resize-y focus:outline-none focus:border-[#1B4D3E] transition-colors font-mono"
                             value={s.texto}
                             placeholder="Digite o texto ou insira uma tag como [OBJETO_PROPOSTA]..."
@@ -845,6 +1167,33 @@ export default function TemplatesPropostaPage() {
                               setSecoes(list);
                             }}
                           />
+
+                          {/* Clique para inserir tags dinâmicas */}
+                          <div className="mt-2.5 bg-emerald-50/40 border border-emerald-100/60 p-2.5 rounded-xl">
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <Tag size={11} className="text-emerald-700" />
+                              <span className="text-[9px] font-black text-emerald-800 uppercase tracking-wider font-sans">Tags de Integração FPV (Clique para Inserir no Cursor):</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {FVP_INTEGRATION_TAGS.map(({ tag, label }) => (
+                                <button
+                                  key={tag}
+                                  type="button"
+                                  onClick={() => {
+                                    insertTagAtCursor(`textarea-a4-${idx}`, tag, (newText) => {
+                                      const list = [...secoes];
+                                      list[idx].texto = newText;
+                                      setSecoes(list);
+                                    }, s.texto);
+                                  }}
+                                  title={tag}
+                                  className="bg-white hover:bg-emerald-100 active:scale-95 border border-emerald-250/70 px-2 py-0.5 rounded-lg text-[8.5px] font-black text-emerald-700 shadow-2xs transition-all cursor-pointer font-sans"
+                                >
+                                  {label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -1145,7 +1494,7 @@ export default function TemplatesPropostaPage() {
                 const selectedElement = elements.find((item: any) => item.id === selectedElementId);
 
                 return (
-                  <div className="grid grid-cols-12 gap-6 items-start pt-2 border-t border-slate-100">
+                  <div className="grid grid-cols-12 gap-0 items-start">
                     
                     {/* ESQUERDA: O PAINEL DUPLO ESTILO CANVA (COL-3) */}
                     <div className="col-span-12 lg:col-span-3 border border-slate-200 bg-white rounded-3xl overflow-hidden shadow-xs flex max-h-[660px] min-h-[580px]">
@@ -1190,6 +1539,26 @@ export default function TemplatesPropostaPage() {
                         >
                           <Paintbrush size={18} />
                           <span className="text-[7.5px] font-black uppercase tracking-wider font-sans">Estilos</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setActiveCanvaTab('tags')}
+                          className={`flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-xl transition-all cursor-pointer ${activeCanvaTab === 'tags' ? 'bg-[#1B4D3E] text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+                          title="Tags de Integração FPV"
+                        >
+                          <Tag size={18} />
+                          <span className="text-[7.5px] font-black uppercase tracking-wider font-sans">Tags</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setActiveCanvaTab('camadas')}
+                          className={`flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-xl transition-all cursor-pointer ${activeCanvaTab === 'camadas' ? 'bg-[#1B4D3E] text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+                          title="Gerenciador de Camadas"
+                        >
+                          <Icons.Layers size={18} />
+                          <span className="text-[7.5px] font-black uppercase tracking-wider font-sans">Camadas</span>
                         </button>
                       </div>
 
@@ -1581,9 +1950,14 @@ export default function TemplatesPropostaPage() {
                               
                               {[
                                 ['provelo_split', 'Capa com Foto (Split)', 'Ideal para a capa principal da proposta comercial.'],
-                                ['valores', 'Valores Institucionais', 'Apresentação de pilares éticos e missões.'],
-                                ['performance', 'Performance e KPIs', 'Card de números de atendimento e metas.'],
-                                ['fundadores', 'Sócios e Fundadores', 'Apresentação de diretores e rostos da empresa.']
+                                ['capa_navy', 'Capa Navy Premium', 'Design corporativo escuro de alto padrão com texturas.'],
+                                ['valores', 'Valores Institucionais', 'Apresentação dos valores éticos e pilares da empresa.'],
+                                ['resumo_financeiro', 'Resumo Financeiro (Tabela)', 'Quadro de valores mensais, totais e prazos com tabela.'],
+                                ['equipe_servicos', 'Nossos Serviços & Equipe', 'Cards com fotos e descrições dos serviços oferecidos.'],
+                                ['sobre_nos', 'Sobre Nossa Empresa', 'Apresentação institucional completa com logo e imagem.'],
+                                ['termos_aceite', 'Concordância & Aceite', 'Termo de aceite final e campo para assinaturas.'],
+                                ['performance', 'Performance e KPIs', 'Card de números de atendimento e metas operacionais.'],
+                                ['fundadores', 'Sócios & Equipe Técnica', 'Apresentação de diretores e rostos da equipe.']
                               ].map(([typeKey, title, desc]) => (
                                 <button
                                   key={typeKey}
@@ -1598,7 +1972,7 @@ export default function TemplatesPropostaPage() {
                                   <span className="text-[10px] font-black text-slate-800 uppercase leading-none block font-sans">{title}</span>
                                   <span className="text-[8px] font-bold text-slate-400 leading-normal block font-sans">{desc}</span>
                                 </button>
-                              ))}
+                              ))}}
                             </div>
                           </div>
                         )}
@@ -1708,24 +2082,341 @@ export default function TemplatesPropostaPage() {
                                   <option value="Roboto">Roboto (Clássica)</option>
                                 </select>
                               </div>
+
+                              {/* Textura / Padrão de Fundo */}
+                              <div className="space-y-2 pt-2 border-t border-slate-100">
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block font-sans">Textura / Padrão de Fundo</span>
+                                <select
+                                  className="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs px-3 py-2 font-black text-slate-700 focus:outline-none"
+                                  value={slideData.bgPattern || 'none'}
+                                  onChange={(e) => {
+                                    const list = [...secoes];
+                                    list[activeSlideIdx].texto = JSON.stringify({ ...slideData, bgPattern: e.target.value });
+                                    setSecoes(list);
+                                  }}
+                                >
+                                  <option value="none">Nenhum padrão</option>
+                                  <option value="diagonal_lines">Linhas Diagonais Suaves (Navy Look)</option>
+                                  <option value="dots">Pontilhado Clean</option>
+                                  <option value="grid">Malha / Grid Profissional</option>
+                                  <option value="gradient_light">Gradiente Sutil</option>
+                                </select>
+                              </div>
                             </div>
                           </div>
                         )}
+
+                        {/* TAB 5: TAGS DE INTEGRAÇÃO */}
+                        {activeCanvaTab === 'tags' && (
+                          <div className="space-y-4 flex flex-col h-full">
+                            <div className="border-b border-slate-100 pb-2">
+                              <h4 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest flex items-center gap-1.5 font-sans">
+                                <Tag size={14} /> Tags de Integração
+                              </h4>
+                            </div>
+
+                            <p className="text-[9.5px] text-slate-400 font-bold uppercase leading-normal font-sans">
+                              Clique para injetar no elemento de texto selecionado ou criar um novo elemento na lâmina:
+                            </p>
+
+                            <div className="space-y-1.5 overflow-y-auto max-h-[460px] pr-1 scrollbar-thin">
+                              {FVP_INTEGRATION_TAGS.map(({ tag, desc }) => (
+                                <button
+                                  key={tag}
+                                  type="button"
+                                  onClick={() => {
+                                    if (selectedElement && selectedElement.type === 'text') {
+                                      insertTagAtCursor(`textarea-canva-${selectedElement.id}`, tag, (newText) => {
+                                        updateElementContent(selectedElement.id, newText);
+                                      }, selectedElement.content);
+                                    } else {
+                                      const list = [...secoes];
+                                      const currentSlide = list[activeSlideIdx];
+                                      if (!currentSlide) return;
+                                      let slideData = JSON.parse(currentSlide.texto);
+                                      const newEl = {
+                                        id: `el_text_tag_${Date.now()}`,
+                                        type: 'text',
+                                        name: `Tag: ${tag}`,
+                                        x: 200, y: 200, w: 300, h: 40,
+                                        content: tag,
+                                        style: { fontSize: 14, fontWeight: "bold", color: "#334155", textAlign: "left" },
+                                        opacity: 100, rotate: 0, zIndex: (slideData.elements || []).length + 10
+                                      };
+                                      slideData.elements = [...(slideData.elements || []), newEl];
+                                      list[activeSlideIdx].texto = JSON.stringify(slideData);
+                                      setSecoes(list);
+                                      setSelectedElementId(newEl.id);
+                                    }
+                                  }}
+                                  className="w-full text-left p-3 rounded-2xl border border-slate-200 hover:border-emerald-350 hover:bg-emerald-50/20 transition-all cursor-pointer flex flex-col gap-1 active:scale-98"
+                                >
+                                  <span className="text-[10.5px] font-black text-emerald-800 font-mono">{tag}</span>
+                                  <span className="text-[8.5px] font-bold text-slate-400 leading-normal font-sans">{desc}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* TAB 6: CAMADAS */}
+                        {activeCanvaTab === 'camadas' && (() => {
+                          const elements = slideData.elements || [];
+                          if (elements.length === 0) {
+                            return <p className="text-xs text-slate-400 text-center font-bold uppercase tracking-wider py-10 font-sans">Nenhum elemento nesta lâmina.</p>;
+                          }
+
+                          const sortedElements = [...elements].sort((a: any, b: any) => (b.zIndex || 10) - (a.zIndex || 10));
+
+                          return (
+                            <div className="space-y-4 animate-fadeIn flex flex-col h-full">
+                              <div className="border-b border-slate-100 pb-2">
+                                <h4 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest flex items-center gap-1.5 font-sans">
+                                  <Icons.Layers size={14} /> Gerenciador de Camadas
+                                </h4>
+                              </div>
+
+                              <div className="space-y-1.5 overflow-y-auto max-h-[460px] pr-1.5 scrollbar-thin">
+                                {sortedElements.map((el: any) => {
+                                  const isSelected = selectedElementId === el.id;
+                                  return (
+                                    <div
+                                      key={el.id}
+                                      onClick={() => setSelectedElementId(el.id)}
+                                      className={`p-2.5 rounded-xl border flex items-center justify-between text-xs font-bold transition-all cursor-pointer ${isSelected ? 'bg-blue-50 border-blue-400 text-blue-800' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                                    >
+                                      <div className="flex items-center gap-1.5 truncate flex-1 pr-2">
+                                        <span className="text-[7px] font-black bg-slate-200 text-slate-500 px-1 py-0.5 rounded uppercase font-sans">
+                                          {el.type}
+                                        </span>
+                                        
+                                        {editingLayerId === el.id ? (
+                                          <input
+                                            type="text"
+                                            className="flex-1 bg-white border border-slate-350 rounded px-1 py-0.5 text-xs text-slate-700 font-bold focus:outline-none"
+                                            value={tempLayerName}
+                                            onChange={(e) => setTempLayerName(e.target.value)}
+                                            onBlur={() => renameLayerElement(el.id, tempLayerName)}
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') renameLayerElement(el.id, tempLayerName);
+                                            }}
+                                            autoFocus
+                                            onClick={(e) => e.stopPropagation()}
+                                          />
+                                        ) : (
+                                          <span 
+                                            className="truncate font-semibold font-sans"
+                                            onDoubleClick={(e) => {
+                                              e.stopPropagation();
+                                              setEditingLayerId(el.id);
+                                              setTempLayerName(el.name || el.id);
+                                            }}
+                                            title="Duplo clique para renomear"
+                                          >
+                                            {el.name || el.id}
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                          type="button"
+                                          onClick={() => toggleLockElement(el.id)}
+                                          className={`p-0.5 rounded transition-colors cursor-pointer ${el.locked ? 'text-amber-600 bg-amber-50' : 'text-slate-400 hover:text-slate-700'}`}
+                                          title={el.locked ? 'Desbloquear' : 'Bloquear'}
+                                        >
+                                          {el.locked ? <Lock size={12} /> : <Unlock size={12} />}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => changeZIndex(el.id, 'front')}
+                                          className="p-0.5 text-slate-400 hover:text-blue-500 rounded transition-colors cursor-pointer"
+                                          title="Avançar"
+                                        >
+                                          <ChevronUp size={12} />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => changeZIndex(el.id, 'back')}
+                                          className="p-0.5 text-slate-400 hover:text-blue-500 rounded transition-colors cursor-pointer"
+                                          title="Recuar"
+                                        >
+                                          <ChevronDown size={12} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
 
-                    {/* CENTRO: CANVAS 16:9 DE ÁREA DE TRABALHO E BARRAS GLOBAIS DE ATALHO (COL-6) */}
-                    <div className="col-span-12 lg:col-span-6 space-y-4">
-                      
+                    {/* CENTRO: CANVAS 16:9 DE ÁREA DE TRABALHO E BARRAS GLOBAIS DE ATALHO (COL-9) */}
+                    <div className="col-span-12 lg:col-span-9 flex flex-col gap-2 p-3">
+
+                      {/* ═══ CONTEXTUAL TOOLBAR ═══ */}
+                      {selectedElement ? (
+                        <div className="bg-white border border-slate-200 rounded-2xl px-3 py-2 flex items-center gap-2 flex-wrap shadow-md">
+                          {/* Type badge */}
+                          <span className="text-[9px] font-black bg-slate-100 text-slate-500 px-2 py-1 rounded-md uppercase tracking-wider shrink-0">
+                            {selectedElement.type === 'text' ? '✏️ Texto' : selectedElement.type === 'image' ? '🖼 Foto' : selectedElement.type === 'shape' ? '⬜ Forma' : selectedElement.type === 'icon' ? '⭐ Ícone' : '📊 Gráfico'}
+                          </span>
+                          <div className="w-px h-5 bg-slate-200 shrink-0" />
+
+                          {/* IMAGE CONTROLS */}
+                          {selectedElement.type === 'image' && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => { setImageReplaceElementId(selectedElement.id); imageReplaceInputRef.current?.click(); }}
+                                className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all cursor-pointer active:scale-95"
+                              >
+                                <ImageIcon size={12} /> Substituir Foto
+                              </button>
+                              <select
+                                className="bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 px-2 py-1.5 focus:outline-none cursor-pointer"
+                                value={selectedElement.mask || 'none'}
+                                onChange={(e) => updateElementStyle(selectedElement.id, 'mask', e.target.value)}
+                              >
+                                <option value="none">Sem Máscara</option>
+                                <option value="circle">Círculo</option>
+                                <option value="hexagon">Hexágono</option>
+                                <option value="shield">Escudo</option>
+                                <option value="provelo_mask">Provelo Shape</option>
+                              </select>
+                            </>
+                          )}
+
+                          {/* TEXT CONTROLS */}
+                          {selectedElement.type === 'text' && (
+                            <>
+                              <select
+                                className="bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 px-2 py-1.5 focus:outline-none cursor-pointer"
+                                value={selectedElement.style?.fontSize || 14}
+                                onChange={(e) => updateElementStyle(selectedElement.id, 'fontSize', Number(e.target.value))}
+                              >
+                                {[8,9,10,11,12,13,14,16,18,20,24,28,32,36,42,48,56,64,72,80,96].map(s => (
+                                  <option key={s} value={s}>{s}px</option>
+                                ))}
+                              </select>
+                              <button
+                                type="button"
+                                onClick={() => updateElementStyle(selectedElement.id, 'fontWeight', (selectedElement.style?.fontWeight === 'bold' || selectedElement.style?.fontWeight === '700' || selectedElement.style?.fontWeight === '900') ? 'normal' : 'bold')}
+                                className={`w-7 h-7 rounded-lg text-xs font-black border transition-all cursor-pointer ${(selectedElement.style?.fontWeight === 'bold' || selectedElement.style?.fontWeight === '700' || selectedElement.style?.fontWeight === '900') ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                              >B</button>
+                              <select
+                                className="bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 px-2 py-1.5 focus:outline-none cursor-pointer"
+                                value={selectedElement.style?.textAlign || 'left'}
+                                onChange={(e) => updateElementStyle(selectedElement.id, 'textAlign', e.target.value)}
+                              >
+                                <option value="left">← Esq</option>
+                                <option value="center">↔ Centro</option>
+                                <option value="right">→ Dir</option>
+                              </select>
+                              <input
+                                type="color"
+                                className="w-7 h-7 rounded-lg border border-slate-200 cursor-pointer p-0.5"
+                                value={selectedElement.style?.color || '#334155'}
+                                onChange={(e) => updateElementStyle(selectedElement.id, 'color', e.target.value)}
+                                title="Cor do Texto"
+                              />
+                            </>
+                          )}
+
+                          {/* SHAPE CONTROLS */}
+                          {selectedElement.type === 'shape' && (
+                            <>
+                              <input
+                                type="color"
+                                className="w-7 h-7 rounded-lg border border-slate-200 cursor-pointer p-0.5"
+                                value={selectedElement.color || '#ef4444'}
+                                onChange={(e) => updateElementStyle(selectedElement.id, 'color', e.target.value)}
+                                title="Cor da Forma"
+                              />
+                              <div className="flex items-center gap-1">
+                                <span className="text-[9px] text-slate-400 font-bold">Raio</span>
+                                <input
+                                  type="range" min="0" max="9999"
+                                  className="w-16 h-1.5 accent-[#1B4D3E]"
+                                  value={selectedElement.radius || 0}
+                                  onChange={(e) => updateElementStyle(selectedElement.id, 'radius', Number(e.target.value))}
+                                />
+                                <span className="text-[9px] text-slate-500 font-mono w-6">{selectedElement.radius || 0}</span>
+                              </div>
+                            </>
+                          )}
+
+                          {/* ICON CONTROLS */}
+                          {selectedElement.type === 'icon' && (
+                            <input
+                              type="color"
+                              className="w-7 h-7 rounded-lg border border-slate-200 cursor-pointer p-0.5"
+                              value={selectedElement.color || '#1B4D3E'}
+                              onChange={(e) => updateElementStyle(selectedElement.id, 'color', e.target.value)}
+                              title="Cor do Ícone"
+                            />
+                          )}
+
+                          <div className="w-px h-5 bg-slate-200 shrink-0" />
+
+                          {/* OPACITY - for all */}
+                          <div className="flex items-center gap-1">
+                            <span className="text-[9px] text-slate-400 font-bold">Opac.</span>
+                            <input
+                              type="range" min="0" max="100"
+                              className="w-16 h-1.5 accent-[#1B4D3E]"
+                              value={selectedElement.opacity !== undefined ? selectedElement.opacity : 100}
+                              onChange={(e) => updateElementStyle(selectedElement.id, 'opacity', Number(e.target.value))}
+                            />
+                            <span className="text-[9px] text-slate-500 font-mono w-7">{selectedElement.opacity !== undefined ? selectedElement.opacity : 100}%</span>
+                          </div>
+
+                          <div className="w-px h-5 bg-slate-200 shrink-0" />
+
+                          {/* ACTION BUTTONS */}
+                          <button type="button" onClick={() => duplicateElement(selectedElement.id)} className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all cursor-pointer" title="Duplicar">
+                            <Copy size={13} />
+                          </button>
+                          <button type="button" onClick={() => toggleLockElement(selectedElement.id)} className={`p-1.5 rounded-lg transition-all cursor-pointer ${selectedElement.locked ? 'text-amber-600 bg-amber-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`} title={selectedElement.locked ? 'Desbloquear' : 'Bloquear'}>
+                            {selectedElement.locked ? <Lock size={13} /> : <Unlock size={13} />}
+                          </button>
+                          <button type="button" onClick={() => removeElement(selectedElement.id)} className="p-1.5 text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer" title="Apagar">
+                            <Trash2 size={13} />
+                          </button>
+                          <button type="button" onClick={() => setSelectedElementId(null)} className="p-1.5 text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all cursor-pointer ml-auto" title="Fechar toolbar">
+                            <X size={13} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-[9px] text-slate-300 font-bold flex gap-3 items-center justify-center py-1.5 rounded-xl uppercase tracking-wider font-sans">
+                          <span>Clique em um elemento para editar</span>
+                          <span>·</span><span>⌨️ <b>Del:</b> Apagar</span>
+                          <span>·</span><span>↩️ <b>Ctrl+Z:</b> Desfazer</span>
+                          <span>·</span><span>📋 <b>Ctrl+C/V:</b> Copiar/Colar</span>
+                        </div>
+                      )}
+
                       {/* O CANVAS DE TRABALHO 16:9 */}
-                      <div className="border border-slate-200 rounded-3xl overflow-hidden shadow-xl bg-slate-50 relative">
+                      <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xl bg-slate-100 relative">
                         <div 
                           className="w-full aspect-[16/9] relative select-none overflow-hidden cursor-crosshair transition-all"
                           onClick={() => setSelectedElementId(null)}
                           style={{
                             backgroundColor: slideData.bgColor || '#ffffff',
-                            backgroundImage: slideData.bgImage ? `url(${slideData.bgImage})` : undefined,
-                            backgroundSize: 'cover',
+                            backgroundImage: 
+                              slideData.bgPattern === 'diagonal_lines'
+                                ? `repeating-linear-gradient(45deg, transparent, transparent 10px, ${isLightColor(slideData.bgColor) ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)'} 10px, ${isLightColor(slideData.bgColor) ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)'} 12px)`
+                                : slideData.bgPattern === 'dots'
+                                ? `radial-gradient(${isLightColor(slideData.bgColor) ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.1)'} 1px, transparent 1px)`
+                                : slideData.bgPattern === 'grid'
+                                ? `linear-gradient(${isLightColor(slideData.bgColor) ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.03)'} 1px, transparent 1px), linear-gradient(90deg, ${isLightColor(slideData.bgColor) ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.03)'} 1px, transparent 1px)`
+                                : slideData.bgPattern === 'gradient_light'
+                                ? `radial-gradient(circle at 20% 30%, ${isLightColor(slideData.bgColor) ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.05)'}, transparent), radial-gradient(circle at 80% 70%, ${isLightColor(slideData.bgColor) ? 'rgba(0,0,0,0.01)' : 'rgba(255,255,255,0.03)'}, transparent)`
+                                : slideData.bgImage ? `url(${slideData.bgImage})` : undefined,
+                            backgroundSize: slideData.bgPattern === 'dots' ? '16px 16px' : slideData.bgPattern === 'grid' ? '20px 20px' : 'cover',
                             backgroundPosition: 'center',
                             fontFamily: (slideData.fontFamily || 'Outfit') === 'Outfit' ? 'Outfit, sans-serif' : 
                                         (slideData.fontFamily || 'Outfit') === 'Montserrat' ? 'Montserrat, sans-serif' : 
@@ -1753,6 +2444,13 @@ export default function TemplatesPropostaPage() {
                                   onPointerMove={(e) => handlePointerMove(e, el.id)}
                                   onPointerUp={handlePointerUp}
                                   onClick={(e) => e.stopPropagation()}
+                                  onDoubleClick={(e) => {
+                                    e.stopPropagation();
+                                    if (el.type === 'image' && !el.locked) {
+                                      setImageReplaceElementId(el.id);
+                                      imageReplaceInputRef.current?.click();
+                                    }
+                                  }}
                                   className={`absolute select-none cursor-move transition-shadow ${isSelected ? 'ring-2 ring-blue-500 ring-offset-1 z-[999] shadow-lg' : 'hover:ring-1 hover:ring-slate-350'}`}
                                   style={{
                                     left: `${el.x / 10}%`,
@@ -1851,660 +2549,48 @@ export default function TemplatesPropostaPage() {
                               );
                             })
                           ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center p-12 text-slate-500 bg-white border border-slate-200 rounded-3xl shadow-inner">
-                              <Presentation size={48} className="text-slate-400 mb-4 shrink-0" />
-                              <h4 className="text-sm font-black uppercase text-slate-800 font-sans">Visualização do Modelo Legado</h4>
-                              <p className="text-xs text-slate-400 mt-2 max-w-sm text-center font-sans">Clique em qualquer um dos layouts Provelo no menu lateral de Layouts para carregar os slides Canva interativos!</p>
+                            <div className="w-full h-full flex flex-col items-center justify-center p-10 text-slate-500 bg-white border border-slate-200 rounded-3xl shadow-inner text-center">
+                              <div className="w-14 h-14 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center shadow-2xs mb-4 text-[#1B4D3E] animate-pulse">
+                                <Sparkles size={24} />
+                              </div>
+                              <h4 className="text-sm font-black uppercase text-slate-800 font-sans tracking-wide">Modelo de Lâmina Pré-definida</h4>
+                              <p className="text-xs text-slate-400 mt-2 max-w-sm leading-relaxed font-sans">
+                                Esta lâmina está utilizando o formato legado pré-definido (<b>{slideData.layout || 'texto'}</b>). 
+                                Converta para o novo editor visual para poder arrastar elementos, adicionar fotos, ícones e criar designs premium!
+                              </p>
+                              
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const list = [...secoes];
+                                  const converted = convertLegacyToCanvas(slideData);
+                                  list[activeSlideIdx].texto = JSON.stringify(converted);
+                                  setSecoes(list);
+                                  setSelectedElementId(null);
+                                }}
+                                className="mt-5 bg-[#1B4D3E] hover:bg-[#1B4D3E]/95 text-white font-black px-5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md active:scale-95 flex items-center gap-1.5 cursor-pointer font-sans"
+                              >
+                                <Sparkles size={13} /> Converter para Canva Editável
+                              </button>
                             </div>
                           )}
                         </div>
                       </div>
 
-                      {/* KEYBOARD SHORTCUTS INSTRUCTION */}
-                      <div className="text-[10px] text-slate-400 font-bold flex gap-4 items-center justify-center bg-slate-50 border border-slate-200 py-2.5 rounded-2xl uppercase tracking-wider font-sans">
-                        <span>⌨️ <b>Setas:</b> Mover 1px</span>
-                        <span>⚡ <b>Shift+Setas:</b> Mover 10px</span>
-                        <span>📋 <b>Ctrl+C / V:</b> Copiar/Colar</span>
-                        <span>✨ <b>Ctrl+D:</b> Duplicar</span>
-                        <span>🗑️ <b>Delete:</b> Apagar</span>
-                      </div>
+                      {/* Hidden input for double-click image replacement */}
+                      <input
+                        ref={imageReplaceInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageReplace}
+                      />
 
                     </div>
 
-                    {/* DIREITA: PAINEL DE PROPRIEDADES E CAMADAS (COL-3) */}
-                    <div className="col-span-12 lg:col-span-3 border border-slate-200 bg-white rounded-3xl shadow-xs overflow-hidden max-h-[660px] flex flex-col">
-                      
-                      {/* ABAS DO PAINEL DIREITO */}
-                      <div className="flex border-b border-slate-100 bg-slate-50/50 shrink-0">
-                        {[
-                          ['conteudo', 'Elemento'],
-                          ['estilo', 'Estilo'],
-                          ['camadas', 'Camadas'],
-                          ['paleta', 'Global']
-                        ].map(([tab, label]) => (
-                          <button
-                            key={tab}
-                            type="button"
-                            onClick={() => setActiveTab(tab as any)}
-                            className={`flex-1 py-3 text-[10px] font-black uppercase tracking-wider transition-all border-b-2 font-sans ${activeTab === tab ? 'border-[#1B4D3E] text-[#1B4D3E] bg-white' : 'border-transparent text-slate-400 hover:text-slate-700'}`}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* CONTEÚDO DAS ABAS DIREITAS */}
-                      <div className="p-5 overflow-y-auto flex-1 space-y-5 text-slate-800 scrollbar-thin">
-                        
-                        {/* 1. ABA ELEMENTO CONTEÚDO */}
-                        {activeTab === 'conteudo' && (() => {
-                          if (!selectedElement) {
-                            return (
-                              <div className="text-center py-10 space-y-3">
-                                <Smile size={32} className="text-slate-350 mx-auto" />
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider leading-relaxed font-sans">Selecione um elemento do slide para começar a editar suas propriedades.</p>
-                              </div>
-                            );
-                          }
-
-                          return (
-                            <div className="space-y-5">
-                              
-                              <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2 flex justify-between items-center font-sans">
-                                <span>TIPO: {selectedElement.type.toUpperCase()}</span>
-                                {selectedElement.locked && <span className="text-amber-600 flex items-center gap-0.5"><Lock size={10} /> BLOQUEADO</span>}
-                              </h5>
-
-                              {/* TEXT CONTENT EDITING */}
-                              {selectedElement.type === 'text' && (
-                                <div className="space-y-4">
-                                  <div>
-                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1 font-sans">Conteúdo do Texto (\n = quebrar linha)</label>
-                                    <textarea
-                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs px-3 py-2 min-h-[70px] font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#1B4D3E]"
-                                      value={selectedElement.content}
-                                      onChange={(e) => updateElementContent(selectedElement.id, e.target.value)}
-                                    />
-                                    
-                                    {/* QUICK INTEGRATION TAGS INJECTION */}
-                                    <div className="mt-2.5 bg-emerald-50/50 border border-emerald-100 p-2.5 rounded-2xl space-y-1.5">
-                                      <span className="text-[8px] font-black text-emerald-800 uppercase tracking-wider block font-sans">Tags de Integração FPV:</span>
-                                      <div className="flex flex-wrap gap-1">
-                                        {[
-                                          ['[CLIENTE_NOME]', 'Cliente'],
-                                          ['[NUMERO_PROPOSTA]', 'Proposta'],
-                                          ['[REVISAO]', 'Revisão'],
-                                          ['[OBJETO_PROPOSTA]', 'Objeto'],
-                                          ['[ESCOPO_TECNICO]', 'Escopo'],
-                                          ['[VALOR_TOTAL]', 'Valor Total'],
-                                          ['[TABELA]', 'Tabela Fin.'],
-                                          ['[ITENS]', 'Itens Inc/Exc'],
-                                          ['[CONDICOES_COMERCIAIS]', 'Condições Com.'],
-                                          ['[TERMO_ACEITE]', 'Aceite']
-                                        ].map(([tag, label]) => (
-                                          <button
-                                            key={tag}
-                                            type="button"
-                                            onClick={() => {
-                                              const newContent = selectedElement.content ? `${selectedElement.content} ${tag}` : tag;
-                                              updateElementContent(selectedElement.id, newContent);
-                                            }}
-                                            className="bg-white hover:bg-emerald-100 active:scale-95 border border-emerald-250 px-2 py-0.5 rounded-lg text-[8px] font-black text-emerald-700 shadow-2xs transition-all cursor-pointer font-sans"
-                                          >
-                                            {label}
-                                          </button>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1 font-sans">Tamanho da Fonte</label>
-                                      <input
-                                        type="number"
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs px-3 py-2 font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#1B4D3E]"
-                                        value={selectedElement.style?.fontSize || 16}
-                                        onChange={(e) => updateElementStyle(selectedElement.id, 'fontSize', Number(e.target.value) || 16)}
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1 font-sans">Cor do Texto</label>
-                                      <div className="flex gap-1.5">
-                                        <input
-                                          type="color"
-                                          className="w-8 h-8 rounded-lg border border-slate-200 cursor-pointer shrink-0"
-                                          value={selectedElement.style?.color || '#334155'}
-                                          onChange={(e) => updateElementStyle(selectedElement.id, 'color', e.target.value)}
-                                        />
-                                        <input
-                                          type="text"
-                                          className="w-full bg-slate-50 border border-slate-200 rounded-xl text-[10px] px-2 font-mono uppercase text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#1B4D3E]"
-                                          value={selectedElement.style?.color || '#334155'}
-                                          onChange={(e) => updateElementStyle(selectedElement.id, 'color', e.target.value)}
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div>
-                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1 font-sans">Espessura (Peso)</label>
-                                    <div className="grid grid-cols-3 gap-1">
-                                      {[
-                                        ['normal', 'Normal'],
-                                        ['bold', 'Negrito'],
-                                        ['900', 'Black']
-                                      ].map(([wt, label]) => (
-                                        <button
-                                          key={wt}
-                                          type="button"
-                                          onClick={() => updateElementStyle(selectedElement.id, 'fontWeight', wt)}
-                                          className={`py-1.5 rounded-lg text-[9px] font-black uppercase transition-all font-sans cursor-pointer ${selectedElement.style?.fontWeight === wt ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100'}`}
-                                        >
-                                          {label}
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </div>
-
-                                  <div>
-                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1 font-sans">Alinhamento</label>
-                                    <div className="grid grid-cols-3 gap-1">
-                                      {[
-                                        ['left', 'Esquerda'],
-                                        ['center', 'Centro'],
-                                        ['right', 'Direita']
-                                      ].map(([al, label]) => (
-                                        <button
-                                          key={al}
-                                          type="button"
-                                          onClick={() => updateElementStyle(selectedElement.id, 'textAlign', al)}
-                                          className={`py-1.5 rounded-lg text-[9px] font-black uppercase transition-all font-sans cursor-pointer ${selectedElement.style?.textAlign === al ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100'}`}
-                                        >
-                                          {label}
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* IMAGE SOURCE EDITING */}
-                              {selectedElement.type === 'image' && (
-                                <div className="space-y-4">
-                                  <div>
-                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block font-sans mb-1">Carregar Imagem Real (Subir Foto)</label>
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      className="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-emerald-50 file:text-emerald-700 file:cursor-pointer hover:file:bg-emerald-100"
-                                      onChange={(e) => uploadSlideImageClient(e, selectedElement.id, slideData, setSecoes, activeSlideIdx, secoes)}
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block font-sans mb-1">URL da Imagem</label>
-                                    <input
-                                      type="text"
-                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs px-3 py-2 text-slate-700 focus:outline-none"
-                                      value={selectedElement.src || ''}
-                                      onChange={(e) => updateElementStyle(selectedElement.id, 'src', e.target.value)}
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block font-sans mb-1">Moldura da Foto (Estética Premium)</label>
-                                    <select
-                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs px-3 py-2 font-bold text-slate-700 focus:outline-none cursor-pointer"
-                                      value={selectedElement.mask || 'none'}
-                                      onChange={(e) => updateElementStyle(selectedElement.id, 'mask', e.target.value)}
-                                    >
-                                      <option value="none">Nenhuma Moldura (Retangular)</option>
-                                      <option value="circle">Círculo Perfeito (Fundadores)</option>
-                                      <option value="provelo_mask">Cantos Arredondados Provelo</option>
-                                      <option value="hexagon">Hexágono Geométrico</option>
-                                      <option value="shield">Escudo Corporativo</option>
-                                    </select>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* SHAPE COLORS */}
-                              {selectedElement.type === 'shape' && (
-                                <div className="space-y-4">
-                                  <div>
-                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block font-sans mb-1">Cor do Preenchimento</label>
-                                    <div className="flex gap-2">
-                                      <input
-                                        type="color"
-                                        className="w-8 h-8 rounded border border-slate-200 cursor-pointer shrink-0"
-                                        value={selectedElement.color || '#ef4444'}
-                                        onChange={(e) => updateElementStyle(selectedElement.id, 'color', e.target.value)}
-                                      />
-                                      <input
-                                        type="text"
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs px-3 py-2 font-mono uppercase text-slate-700 focus:outline-none"
-                                        value={selectedElement.color || '#ef4444'}
-                                        onChange={(e) => updateElementStyle(selectedElement.id, 'color', e.target.value)}
-                                      />
-                                    </div>
-                                  </div>
-
-                                  <div>
-                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block font-sans mb-1">Arredondamento dos Cantos (px)</label>
-                                    <input
-                                      type="number"
-                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs px-3 py-2 text-slate-700 focus:outline-none"
-                                      value={selectedElement.radius || 0}
-                                      onChange={(e) => updateElementStyle(selectedElement.id, 'radius', Number(e.target.value))}
-                                    />
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* CHART DATA EDITOR */}
-                              {selectedElement.type === 'chart' && (
-                                <div className="space-y-4">
-                                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block font-sans">Dados do Gráfico</span>
-                                  
-                                  <div className="space-y-2.5">
-                                    {(selectedElement.chartData || []).map((item: any, idx: number) => (
-                                      <div key={idx} className="bg-slate-50 p-2.5 border border-slate-200 rounded-xl space-y-2">
-                                        <div className="flex items-center gap-1.5">
-                                          <input 
-                                            type="color" 
-                                            value={item.color || '#cccccc'} 
-                                            onChange={(e) => {
-                                              const updatedData = [...selectedElement.chartData];
-                                              updatedData[idx].color = e.target.value;
-                                              updateElementStyle(selectedElement.id, 'chartData', updatedData);
-                                            }}
-                                            className="w-5 h-5 rounded cursor-pointer shrink-0"
-                                          />
-                                          <input 
-                                            type="text" 
-                                            value={item.label || ''} 
-                                            onChange={(e) => {
-                                              const updatedData = [...selectedElement.chartData];
-                                              updatedData[idx].label = e.target.value;
-                                              updateElementStyle(selectedElement.id, 'chartData', updatedData);
-                                            }}
-                                            placeholder="Rótulo"
-                                            className="flex-1 bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[10px] font-bold text-slate-700 focus:outline-none"
-                                          />
-                                          <input 
-                                            type="number" 
-                                            value={item.value || 0} 
-                                            onChange={(e) => {
-                                              const updatedData = [...selectedElement.chartData];
-                                              updatedData[idx].value = Number(e.target.value) || 0;
-                                              updateElementStyle(selectedElement.id, 'chartData', updatedData);
-                                            }}
-                                            placeholder="Valor"
-                                            className="w-14 bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-700 text-right focus:outline-none"
-                                          />
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Action controls (lock/unlock, duplicate, depth, remove) */}
-                              <div className="border-t border-slate-100 pt-4 space-y-2">
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block font-sans">Ações do Elemento</span>
-                                <div className="grid grid-cols-2 gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleLockElement(selectedElement.id)}
-                                    className={`flex items-center gap-1.5 justify-center py-2 px-3 rounded-xl border text-[10px] font-bold uppercase transition-all active:scale-95 cursor-pointer font-sans ${selectedElement.locked ? 'bg-amber-50 border-amber-200 text-amber-700' : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'}`}
-                                  >
-                                    {selectedElement.locked ? <Lock size={12} /> : <Unlock size={12} />}
-                                    {selectedElement.locked ? 'Desbloquear' : 'Bloquear'}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      // Duplicate action
-                                      const list = [...secoes];
-                                      const newEl = {
-                                        ...selectedElement,
-                                        id: `${selectedElement.type}_dup_${Date.now()}`,
-                                        x: Math.min(900, selectedElement.x + 20),
-                                        y: Math.min(500, selectedElement.y + 20),
-                                        zIndex: (selectedElement.zIndex || 10) + 1
-                                      };
-                                      const updatedElements = [...elements, newEl];
-                                      const updatedText = JSON.stringify({ ...slideData, elements: updatedElements });
-                                      list[activeSlideIdx].texto = updatedText;
-                                      setSecoes(list);
-                                      setSelectedElementId(newEl.id);
-                                    }}
-                                    className="flex items-center gap-1.5 justify-center py-2 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-[10px] font-bold uppercase transition-all active:scale-95 cursor-pointer font-sans"
-                                  >
-                                    <Icons.Copy size={12} /> Duplicar
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => changeZIndex(selectedElement.id, 'front')}
-                                    className="flex items-center gap-1.5 justify-center py-2 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-[10px] font-bold uppercase transition-all active:scale-95 cursor-pointer font-sans"
-                                  >
-                                    <ChevronUp size={12} /> Avançar
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => changeZIndex(selectedElement.id, 'back')}
-                                    className="flex items-center gap-1.5 justify-center py-2 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-[10px] font-bold uppercase transition-all active:scale-95 cursor-pointer font-sans"
-                                  >
-                                    <ChevronDown size={12} /> Recuar
-                                  </button>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => removeElement(selectedElement.id)}
-                                  className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-[10px] font-black uppercase transition-all active:scale-95 cursor-pointer font-sans"
-                                >
-                                  <Trash2 size={12} /> Excluir Elemento
-                                </button>
-                              </div>
-
-                            </div>
-                          );
-                        })()}
-
-                        {/* 2. ABA ESTILOS DE ELEMENTOS (OPACIDADE, ROTAÇÃO, SOMBRA) */}
-                        {activeTab === 'estilo' && (() => {
-                          if (!selectedElement) {
-                            return (
-                              <div className="text-center py-10 space-y-3">
-                                <Smile size={32} className="text-slate-350 mx-auto animate-pulse" />
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider font-sans leading-relaxed">Selecione um elemento para ajustar os estilos premium.</p>
-                              </div>
-                            );
-                          }
-
-                          return (
-                            <div className="space-y-5 animate-fadeIn">
-                              <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2 font-sans">Estilos Avançados</h5>
-
-                              {/* OPACIDADE */}
-                              <div>
-                                <div className="flex justify-between items-center mb-1">
-                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block font-sans">Opacidade / Transparência</label>
-                                  <span className="text-[10px] font-mono font-bold text-[#1B4D3E]">{selectedElement.opacity !== undefined ? selectedElement.opacity : 100}%</span>
-                                </div>
-                                <input
-                                  type="range"
-                                  min="0"
-                                  max="100"
-                                  className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#1B4D3E]"
-                                  value={selectedElement.opacity !== undefined ? selectedElement.opacity : 100}
-                                  onChange={(e) => updateElementStyle(selectedElement.id, 'opacity', Number(e.target.value))}
-                                />
-                              </div>
-
-                              {/* ROTAÇÃO */}
-                              <div>
-                                <div className="flex justify-between items-center mb-1">
-                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block font-sans">Rotação do Elemento</label>
-                                  <span className="text-[10px] font-mono font-bold text-[#1B4D3E]">{selectedElement.rotate || 0}°</span>
-                                </div>
-                                <input
-                                  type="range"
-                                  min="0"
-                                  max="360"
-                                  className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#1B4D3E]"
-                                  value={selectedElement.rotate || 0}
-                                  onChange={(e) => updateElementStyle(selectedElement.id, 'rotate', Number(e.target.value))}
-                                />
-                              </div>
-
-                              {/* SOMBRAS */}
-                              <div>
-                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2 font-sans">Sombra Projetada (Estética Premium)</label>
-                                <div className="grid grid-cols-2 gap-1.5">
-                                  {[
-                                    ['none', 'Nenhuma'],
-                                    ['suave', 'Sombra Suave'],
-                                    ['forte', 'Sombra Forte'],
-                                    ['neon', 'Sombra Neon']
-                                  ].map(([sh, label]) => (
-                                    <button
-                                      key={sh}
-                                      type="button"
-                                      onClick={() => updateElementStyle(selectedElement.id, 'shadow', sh)}
-                                      className={`py-2 rounded-xl text-[9px] font-black uppercase transition-all font-sans cursor-pointer ${selectedElement.shadow === sh || (!selectedElement.shadow && sh === 'none') ? 'bg-[#1B4D3E] text-white shadow-md' : 'bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100'}`}
-                                    >
-                                      {label}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })()}
-
-                        {/* 3. ABA CAMADAS (LAYERS LIST & CADEADO LOCK) */}
-                        {activeTab === 'camadas' && (() => {
-                          const elements = slideData.elements || [];
-                          if (elements.length === 0) {
-                            return <p className="text-xs text-slate-400 text-center font-bold uppercase tracking-wider py-10 font-sans">Nenhum elemento nesta lâmina.</p>;
-                          }
-
-                          // Sorted by zIndex desc (top layers appear at top of list)
-                          const sortedElements = [...elements].sort((a: any, b: any) => (b.zIndex || 10) - (a.zIndex || 10));
-
-                          return (
-                            <div className="space-y-4 animate-fadeIn">
-                              <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2 font-sans">Gerenciador de Camadas</h5>
-                              
-                              <div className="space-y-1.5 max-h-[350px] overflow-y-auto pr-1">
-                                {sortedElements.map((el: any) => {
-                                  const isSelected = selectedElementId === el.id;
-                                  return (
-                                    <div
-                                      key={el.id}
-                                      onClick={() => setSelectedElementId(el.id)}
-                                      className={`p-2 rounded-xl border flex items-center justify-between text-xs font-bold transition-all cursor-pointer ${isSelected ? 'bg-blue-50 border-blue-400 text-blue-800' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
-                                    >
-                                      <div className="flex items-center gap-2 truncate flex-1 pr-2">
-                                        <span className="text-[8px] font-black bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded uppercase font-sans">
-                                          {el.type}
-                                        </span>
-                                        
-                                        {editingLayerId === el.id ? (
-                                          <input
-                                            type="text"
-                                            className="flex-1 bg-white border border-slate-300 rounded px-1.5 py-0.5 text-xs text-slate-700 font-bold focus:outline-none"
-                                            value={tempLayerName}
-                                            onChange={(e) => setTempLayerName(e.target.value)}
-                                            onBlur={() => renameLayerElement(el.id, tempLayerName)}
-                                            onKeyDown={(e) => {
-                                              if (e.key === 'Enter') renameLayerElement(el.id, tempLayerName);
-                                            }}
-                                            autoFocus
-                                            onClick={(e) => e.stopPropagation()}
-                                          />
-                                        ) : (
-                                          <span 
-                                            className="truncate font-semibold font-sans"
-                                            onDoubleClick={(e) => {
-                                              e.stopPropagation();
-                                              setEditingLayerId(el.id);
-                                              setTempLayerName(el.name || el.id);
-                                            }}
-                                            title="Duplo clique para renomear"
-                                          >
-                                            {el.name || el.id}
-                                          </span>
-                                        )}
-                                      </div>
-
-                                      <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-                                        {/* Lock pad */}
-                                        <button
-                                          type="button"
-                                          onClick={() => toggleLockElement(el.id)}
-                                          className={`p-1 rounded transition-colors cursor-pointer ${el.locked ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-slate-400 hover:text-slate-700'}`}
-                                          title={el.locked ? 'Desbloquear elemento' : 'Bloquear elemento'}
-                                        >
-                                          {el.locked ? <Lock size={12} /> : <Unlock size={12} />}
-                                        </button>
-                                        {/* Layer sorting arrows */}
-                                        <button
-                                          type="button"
-                                          onClick={() => changeZIndex(el.id, 'front')}
-                                          className="p-1 text-slate-400 hover:text-blue-500 rounded transition-colors cursor-pointer"
-                                          title="Trazer para frente"
-                                        >
-                                          <ChevronUp size={12} />
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => changeZIndex(el.id, 'back')}
-                                          className="p-1 text-slate-400 hover:text-blue-500 rounded transition-colors cursor-pointer"
-                                          title="Enviar para trás"
-                                        >
-                                          <ChevronDown size={12} />
-                                        </button>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-
-                            </div>
-                          );
-                        })()}
-
-                        {/* 4. ABA FONTES E PALETAS GLOBAIS */}
-                        {activeTab === 'paleta' && (() => {
-                          const updateGlobalStyle = (key: string, val: string) => {
-                            const list = [...secoes];
-                            const updatedText = JSON.stringify({ ...slideData, [key]: val });
-                            list[activeSlideIdx].texto = updatedText;
-                            setSecoes(list);
-                          };
-
-                          return (
-                            <div className="space-y-4 animate-fadeIn">
-                              
-                              <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2 font-sans">Estilos Globais da Lâmina</h5>
-
-                              {/* NOME / TÍTULO DA LÂMINA */}
-                              <div>
-                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1 font-sans">Nome/Título do Slide (Lâmina)</label>
-                                <input
-                                  type="text"
-                                  className="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs px-3 py-2 font-bold focus:outline-none focus:border-[#1B4D3E] text-slate-700"
-                                  value={secoes[activeSlideIdx]?.titulo || ''}
-                                  onChange={(e) => {
-                                    const list = [...secoes];
-                                    list[activeSlideIdx].titulo = e.target.value;
-                                    
-                                    try {
-                                      const oldText = JSON.parse(list[activeSlideIdx].texto);
-                                      list[activeSlideIdx].texto = JSON.stringify({ ...oldText, tituloSlide: e.target.value });
-                                    } catch (err) {}
-                                    
-                                    setSecoes(list);
-                                  }}
-                                />
-                              </div>
-
-                              {/* TIPOGRAFIA */}
-                              <div>
-                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1 font-sans">Tipografia Global</label>
-                                <select
-                                  className="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs px-3 py-2.5 font-black text-slate-700 focus:outline-none cursor-pointer"
-                                  value={slideData.fontFamily || 'Outfit'}
-                                  onChange={(e) => updateGlobalStyle('fontFamily', e.target.value)}
-                                >
-                                  <option value="Outfit">Outfit (Moderna - Provelo)</option>
-                                  <option value="Montserrat">Montserrat (Robusta/Sólida)</option>
-                                  <option value="Inter">Inter (Limpa/Legível)</option>
-                                  <option value="Playfair">Playfair Display (Serifada/Premium)</option>
-                                  <option value="Roboto">Roboto (Padrão Corporativo)</option>
-                                </select>
-                              </div>
-
-                              {/* COR DE FUNDO */}
-                              <div>
-                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1 font-sans">Cor de Fundo Global</label>
-                                <div className="flex gap-2">
-                                  <input
-                                    type="color"
-                                    className="w-8 h-8 rounded border border-slate-200 cursor-pointer shrink-0"
-                                    value={slideData.bgColor || '#ffffff'}
-                                    onChange={(e) => updateGlobalStyle('bgColor', e.target.value)}
-                                  />
-                                  <input
-                                    type="text"
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs px-3 py-2 font-mono uppercase text-slate-700 focus:outline-none"
-                                    value={slideData.bgColor || '#ffffff'}
-                                    onChange={(e) => updateGlobalStyle('bgColor', e.target.value)}
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="border-t border-slate-200 pt-4 mt-2">
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2 font-sans">Paletas Prontas Recomendadas</span>
-                                <div className="grid grid-cols-2 gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const list = [...secoes];
-                                      const updatedText = JSON.stringify({ ...slideData, bgColor: '#ffffff', textColor: '#475569', titleColor: '#0f172a' });
-                                      list[activeSlideIdx].texto = updatedText;
-                                      setSecoes(list);
-                                    }}
-                                    className="border border-slate-200 bg-white hover:bg-slate-50 p-2.5 rounded-xl text-left flex items-center justify-between cursor-pointer"
-                                  >
-                                    <span className="text-[9px] font-black uppercase text-slate-700 font-sans">Tema Claro</span>
-                                    <div className="flex gap-0.5 shadow-xs">
-                                      <div className="w-2 h-2 rounded-full bg-slate-900"></div>
-                                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                                      <div className="w-2 h-2 rounded-full bg-slate-300"></div>
-                                    </div>
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const list = [...secoes];
-                                      const updatedText = JSON.stringify({ ...slideData, bgColor: '#0f172a', textColor: '#cbd5e1', titleColor: '#ffffff' });
-                                      list[activeSlideIdx].texto = updatedText;
-                                      setSecoes(list);
-                                    }}
-                                    className="border border-slate-800 bg-slate-900 hover:bg-slate-800 p-2.5 rounded-xl text-left flex items-center justify-between text-white cursor-pointer"
-                                  >
-                                    <span className="text-[9px] font-black uppercase text-slate-300 font-sans">Tema Escuro</span>
-                                    <div className="flex gap-0.5 shadow-xs">
-                                      <div className="w-2 h-2 rounded-full bg-white"></div>
-                                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                                      <div className="w-2 h-2 rounded-full bg-slate-700"></div>
-                                    </div>
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })()}
-
-                      </div>
-                    </div>
                   </div>
                 );
-              })()}{/* Salvar bottom */}
-              <div className="flex justify-end pt-2 border-t border-slate-200">
-                <button
-                  onClick={saveTemplate}
-                  disabled={saving}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-8 rounded text-sm flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50"
-                >
-                  <Save size={18} /> {saving ? 'Salvando...' : 'Salvar Template'}
-                </button>
-              </div>
+              })()}
             </div>
           )}
 
