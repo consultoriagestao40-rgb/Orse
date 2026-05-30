@@ -2407,7 +2407,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                          <div className="flex flex-col justify-between h-full relative z-10 w-full">
                             <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                <div className="flex flex-col">
-                                  <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
+                                  <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">{proposta.tenant?.nomeFantasia || proposta.tenant?.razaoSocial || "SILVA CONSULTORIA"}</span>
                                   <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">QUADRO DE EQUIPE EFETIVO</h2>
                                </div>
                                <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
@@ -2496,7 +2496,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                          <div className="relative z-10 flex flex-col h-full justify-between">
                             <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                <div className="flex flex-col">
-                                  <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
+                                  <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">{proposta.tenant?.nomeFantasia || proposta.tenant?.razaoSocial || "SILVA CONSULTORIA"}</span>
                                   <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">ITENS INCLUSOS E EXCLUSÍDOS</h2>
                                </div>
                                <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
@@ -2611,7 +2611,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                <div className="relative z-10 flex flex-col h-full justify-between">
                                   <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                      <div className="flex flex-col">
-                                        <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
+                                        <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">{proposta.tenant?.nomeFantasia || proposta.tenant?.razaoSocial || "SILVA CONSULTORIA"}</span>
                                         <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">RESUMO DA PROPOSTA COMERCIAL</h2>
                                      </div>
                                      <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
@@ -2688,7 +2688,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                          <div className="relative z-10 flex flex-col h-full justify-between">
                             <div className="flex justify-between items-center w-full pb-4 border-b border-slate-100">
                                <div className="flex flex-col">
-                                  <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
+                                  <span className="text-[#1e4480] text-[10px] font-black tracking-[0.2em] uppercase">{proposta.tenant?.nomeFantasia || proposta.tenant?.razaoSocial || "SILVA CONSULTORIA"}</span>
                                   <h2 className="text-xl font-black text-[#1e4480] uppercase tracking-tight">CONDIÇÕES GERAIS DA PROPOSTA</h2>
                                </div>
                                <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
@@ -2799,7 +2799,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                          <div className="relative z-10 flex flex-col h-full justify-between">
                             <div className="flex justify-between items-center w-full pb-4 border-b border-white/20">
                                <div className="flex flex-col">
-                                  <span className="text-white/70 text-[10px] font-black tracking-[0.2em] uppercase">SILVA CONSULTORIA</span>
+                                  <span className="text-white/70 text-[10px] font-black tracking-[0.2em] uppercase">{proposta.tenant?.nomeFantasia || proposta.tenant?.razaoSocial || "SILVA CONSULTORIA"}</span>
                                   <h2 className="text-xl font-black text-white uppercase tracking-tight">TERMO DE ACEITE E CONTRATAÇÃO</h2>
                                </div>
                                <img src={companyLogo} alt="Silva Logo" className="max-h-10 w-auto object-contain" />
