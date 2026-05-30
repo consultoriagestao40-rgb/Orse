@@ -826,140 +826,274 @@ return (
                         Planilha de Custos
                       </div>
                       
-                      <table className="w-full text-left border-collapse text-xs">
+                      <table className="w-full text-left border-collapse text-xs text-slate-800">
                         <thead>
-                          <tr className="bg-slate-100 text-slate-600 text-[9.5px] font-black uppercase tracking-wider border-b border-slate-200">
-                            <th className="px-6 py-3">1) Função</th>
-                            <th className="px-6 py-3 text-center w-28">Qtd. / %</th>
-                            <th className="px-6 py-3 text-right w-36">Custo Unit</th>
-                            <th className="px-6 py-3 text-right w-40">Total</th>
+                          {/* MONTANTE A */}
+                          <tr className="bg-[#1B4D3E] text-white border-b border-white/20">
+                            <th colSpan={4} className="py-2.5 px-6 text-center uppercase tracking-widest font-black text-[9.5px]">Montante "A" - Mão-de-obra</th>
+                          </tr>
+                          <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-300 text-[10px] uppercase tracking-wider">
+                            <th className="py-2 px-6 w-[50%]">1) Função</th>
+                            <th className="py-2 px-6 text-center">Qtd.</th>
+                            <th className="py-2 px-6 text-right">Custo Unit</th>
+                            <th className="py-2 px-6 text-right">Total</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {/* Montante A Sub-Header Banner */}
-                          <tr className="bg-[#1B4D3E] text-white font-extrabold text-[9.5px] uppercase tracking-wider">
-                            <td colSpan={4} className="px-6 py-2.5">Montante "A" - Mão-de-Obra</td>
-                          </tr>
-
-                          {/* Function breakdown matching Screenshot 5 */}
-                          {(versao?.resultado?.items || []).map((item: any, idx: number) => {
-                            const qty = item.quantidade || 1;
-                            const remu = item.detalhes?.remuneracao || 0;
-                            const tot = remu * qty;
+                          {/* Colaboradores list */}
+                          {fullProposta.equipe.map((p: any, idx: number) => {
+                            const itemRes = versao?.resultado?.items?.find((x: any) => x.id === p.id);
+                            const custoTotal = itemRes?.detalhes?.remuneracao || 0;
+                            const isSpotItem = p.tipoItem === 'SPOT';
+                            const qty = isSpotItem ? (p.quantidadeDemanda || 1) : (p.quantidade || 1);
+                            const custoUnitario = isSpotItem ? (custoTotal / qty) : custoTotal;
+                            const totalLinha = isSpotItem ? custoTotal : (custoTotal * p.quantidade);
                             return (
-                              <tr key={item.id || idx} className="border-b border-slate-150 hover:bg-slate-50 bg-white">
-                                <td className="px-6 py-3 pl-8 text-slate-700 font-bold">{item.nomeCargo}</td>
-                                <td className="px-6 py-3 text-center font-bold text-slate-800">{qty}</td>
-                                <td className="px-6 py-3 text-right font-medium text-slate-600">{formatCurrency(remu)}</td>
-                                <td className="px-6 py-3 text-right font-bold text-slate-850 border-l border-slate-100">{formatCurrency(tot)}</td>
+                              <tr key={idx} className="border-b border-slate-200 border-dotted hover:bg-slate-50 bg-white">
+                                <td className="py-1.5 px-6 font-semibold text-slate-800">{p.nomeCargo}</td>
+                                <td className="py-1.5 px-6 text-center font-bold">{qty}</td>
+                                <td className="py-1.5 px-6 text-right">{formatCurrency(custoUnitario)}</td>
+                                <td className="py-1.5 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100">{formatCurrency(totalLinha)}</td>
                               </tr>
                             );
                           })}
+                          
+                          {/* Total Função */}
+                          <tr className="bg-[#3b8026] text-white font-bold border-y border-[#2d631d] text-[9.5px]">
+                            <td colSpan={3} className="py-1.5 px-6 text-right uppercase">Total Função</td>
+                            <td className="py-1.5 px-6 text-right border-l border-emerald-800">
+                              {formatCurrency(versao?.resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.remuneracao || 0) * i.quantidade), 0) || 0)}
+                            </td>
+                          </tr>
 
-                          {/* Total Função Row */}
+                          {/* Encargos e Outros */}
                           {(() => {
-                            const totalFuncaoSum = versao?.resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.remuneracao || 0) * i.quantidade), 0) || 0;
+                            const isSpot = fullProposta.cliente?.tipoProposta === 'SPOT' || fullProposta.tipoItem === 'SPOT' || versao?.resultado?.items?.some((i: any) => i.tipoItem === 'SPOT');
+                            if (isSpot) return null;
                             return (
-                              <tr className="bg-[#1B4D3E] text-white font-extrabold text-[9.5px] uppercase tracking-wider border-b border-slate-200">
-                                <td colSpan={3} className="px-6 py-2.5">Total Função</td>
-                                <td className="px-6 py-2.5 text-right text-[10px] border-l border-emerald-800">{formatCurrency(totalFuncaoSum)}</td>
-                              </tr>
+                              <>
+                                <tr className="border-b border-slate-200 border-dotted bg-white">
+                                  <td className="py-1.5 px-6 font-bold">2) Encargos Sociais</td>
+                                  <td className="py-1.5 px-6 text-center font-bold">{totalGeralEncargos.toFixed(2)}%</td>
+                                  <td className="py-1.5 px-6 text-right">-</td>
+                                  <td className="py-1.5 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100">
+                                    {formatCurrency(versao?.resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.encargos || 0) * i.quantidade), 0) || 0)}
+                                  </td>
+                                </tr>
+                                <tr className="border-b border-slate-200 border-dotted bg-white">
+                                  <td className="py-1.5 px-6 font-bold">3) Outros (Especificar)</td>
+                                  <td className="py-1.5 px-6 text-center font-bold">-</td>
+                                  <td className="py-1.5 px-6 text-right">-</td>
+                                  <td className="py-1.5 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100">{formatCurrency(0)}</td>
+                                </tr>
+                              </>
                             );
                           })()}
-
-                          {/* 2. Encargos Sociais Row */}
-                          <tr className="border-b border-slate-150 hover:bg-slate-50 bg-white">
-                            <td className="px-6 py-3 pl-8 text-slate-700 font-bold">2) Encargos Sociais</td>
-                            <td className="px-6 py-3 text-center font-black text-slate-800">{totalGeralEncargos.toFixed(2)}%</td>
-                            <td className="px-6 py-3 text-center text-slate-400">-</td>
-                            <td className="px-6 py-3 text-right font-bold text-slate-850 border-l border-slate-100">
-                              {formatCurrency(versao?.resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.encargos || 0) * i.quantidade), 0))}
+                          
+                          {/* Total Montante A */}
+                          <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white text-[9.5px]">
+                            <td colSpan={3} className="py-2 px-6 text-right uppercase tracking-wider">Total do Montante "A" (Bloco A)</td>
+                            <td className="py-2 px-6 text-right border-l border-emerald-950">
+                              {formatCurrency(versao?.resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.blocoA || 0) * i.quantidade), 0) || 0)}
                             </td>
                           </tr>
 
-                          {/* 3. Outros (Especificar) Row */}
-                          <tr className="border-b border-slate-150 hover:bg-slate-50 bg-white">
-                            <td className="px-6 py-3 pl-8 text-slate-700 font-bold">3) Outros (Especificar)</td>
-                            <td className="px-6 py-3 text-center text-slate-400">-</td>
-                            <td className="px-6 py-3 text-center text-slate-400">-</td>
-                            <td className="px-6 py-3 text-right font-bold text-slate-850 border-l border-slate-100">{formatCurrency(0)}</td>
+                          {/* MONTANTE B */}
+                          <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
+                            <th colSpan={4} className="py-2 px-6 text-center uppercase tracking-widest font-black text-[9.5px]">Montante "B" - Insumos</th>
                           </tr>
-
-                          {/* TOTAL DO MONTANTE A (BLOCO A) Subtotal Row */}
-                          <tr className="bg-[#11382D] text-white font-black text-[10px] uppercase tracking-wider border-b border-slate-200 shadow-inner">
-                            <td colSpan={3} className="px-6 py-3">Total do Montante "A" (Bloco A)</td>
-                            <td className="px-6 py-3 text-right text-[10.5px] border-l border-emerald-950">
-                              {formatCurrency(versao?.resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.blocoA || 0) * i.quantidade), 0))}
-                            </td>
-                          </tr>
-
-                          {/* Montante B Sub-Header Banner */}
-                          <tr className="bg-[#1B4D3E] text-white font-extrabold text-[9.5px] uppercase tracking-wider border-t border-slate-200">
-                            <td colSpan={4} className="px-6 py-2.5">Montante "B" - Insumos</td>
-                          </tr>
-
-                          {/* Breakdown of Insumos matching Screenshot 5 */}
                           {(() => {
-                            const totalUniformesEpis = versao?.resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.ativos || 0) * i.quantidade), 0) || 0;
-                            const totalMateriaisLimpeza = (fullProposta.insumos?.detalheMateriais || []).reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0) || 0;
-                            const totalMaquinasEquip = (fullProposta.insumos?.detalheMaquinas || []).reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0) || 0;
-                            const totalDescartaveis = (fullProposta.insumos?.detalheDescartaveis || []).reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0) || 0;
-                            const totalServicos = (fullProposta.insumos?.detalheServicos || []).reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0) || 0;
-                            const totalB = totalUniformesEpis + totalMateriaisLimpeza + totalMaquinasEquip + totalDescartaveis + totalServicos;
+                            const isSpot = fullProposta.cliente?.tipoProposta === 'SPOT' || fullProposta.tipoItem === 'SPOT' || versao?.resultado?.items?.some((i: any) => i.tipoItem === 'SPOT');
+                            
+                            const b = versao?.resultado?.items?.reduce((acc: any, i: any) => {
+                              const d = i.detalhes?.detalheBlocoB;
+                              return {
+                                ativos: acc.ativos + (i.detalhes?.ativos || 0) * i.quantidade,
+                                materiais: acc.materiais + (d?.materiais || 0) * i.quantidade,
+                                maquinas: acc.maquinas + (d?.maquinas || 0) * i.quantidade,
+                                descartaveis: acc.descartaveis + (d?.descartaveis || 0) * i.quantidade,
+                                servicos: acc.servicos + (d?.servicos || 0) * i.quantidade,
+                              };
+                            }, { ativos: 0, materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0 }) || { ativos: 0, materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0 };
+
+                            const rawRows = [
+                              ...(!isSpot ? [{ label: "Uniformes e EPI's", val: b.ativos }] : []),
+                              { label: 'Materiais e produtos de limpeza', val: fullProposta.insumos?.materiais || 0 },
+                              { label: 'Máquinas e equipamentos', val: fullProposta.insumos?.maquinas || 0 },
+                              { label: 'Descartáveis', val: fullProposta.insumos?.descartaveis || 0 },
+                              { label: 'Serviços (Descriminar)', val: fullProposta.insumos?.servicos || 0 },
+                            ];
+
+                            const rows = rawRows.map((r, idx) => ({
+                              label: `${idx + 1}) ${r.label}`,
+                              val: r.val
+                            }));
+
+                            const totalB = b.ativos + (fullProposta.insumos?.materiais || 0) + (fullProposta.insumos?.maquinas || 0) + (fullProposta.insumos?.descartaveis || 0) + (fullProposta.insumos?.servicos || 0);
 
                             return (
                               <>
-                                <tr className="border-b border-slate-150 hover:bg-slate-50 bg-white">
-                                  <td className="px-6 py-3 pl-8 text-slate-700 font-bold">1) Uniformes e EPI's</td>
-                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
-                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
-                                  <td className="px-6 py-3 text-right font-bold text-slate-850 border-l border-slate-100">{formatCurrency(totalUniformesEpis)}</td>
-                                </tr>
-                                <tr className="border-b border-slate-150 hover:bg-slate-50 bg-white">
-                                  <td className="px-6 py-3 pl-8 text-slate-700 font-bold">2) Materiais e produtos de limpeza</td>
-                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
-                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
-                                  <td className="px-6 py-3 text-right font-bold text-slate-850 border-l border-slate-100">{formatCurrency(totalMateriaisLimpeza)}</td>
-                                </tr>
-                                <tr className="border-b border-slate-150 hover:bg-slate-50 bg-white">
-                                  <td className="px-6 py-3 pl-8 text-slate-700 font-bold">3) Máquinas e equipamentos</td>
-                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
-                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
-                                  <td className="px-6 py-3 text-right font-bold text-slate-850 border-l border-slate-100">{formatCurrency(totalMaquinasEquip)}</td>
-                                </tr>
-                                <tr className="border-b border-slate-150 hover:bg-slate-50 bg-white">
-                                  <td className="px-6 py-3 pl-8 text-slate-700 font-bold">4) Descartáveis</td>
-                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
-                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
-                                  <td className="px-6 py-3 text-right font-bold text-slate-850 border-l border-slate-100">{formatCurrency(totalDescartaveis)}</td>
-                                </tr>
-                                <tr className="border-b border-slate-150 hover:bg-slate-50 bg-white">
-                                  <td className="px-6 py-3 pl-8 text-slate-700 font-bold">5) Serviços (Descriminar)</td>
-                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
-                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
-                                  <td className="px-6 py-3 text-right font-bold text-slate-850 border-l border-slate-100">{formatCurrency(totalServicos)}</td>
-                                </tr>
-
-                                {/* TOTAL DO MONTANTE B Subtotal Row */}
-                                <tr className="bg-[#11382D] text-white font-black text-[10px] uppercase tracking-wider border-b border-slate-200 shadow-inner">
-                                  <td colSpan={3} className="px-6 py-3">Total do Montante "B"</td>
-                                  <td className="px-6 py-3 text-right text-[10.5px] border-l border-emerald-950">{formatCurrency(totalB)}</td>
-                                </tr>
-
-                                {/* TOTAL DOS MONTANTES DIRETOS (A + B) Grand Total Row */}
-                                <tr className="bg-slate-200 text-slate-850 font-black text-[10.5px] uppercase tracking-wider border-y border-slate-350 shadow-sm">
-                                  <td className="px-6 py-3.5">Total dos Montantes Diretos (A + B)</td>
-                                  <td className="px-6 py-3.5 text-center text-slate-400">-</td>
-                                  <td className="px-6 py-3.5 text-center text-slate-400">-</td>
-                                  <td className="px-6 py-3.5 text-right text-[11px] border-l border-slate-300">
-                                    {formatCurrency(
-                                      (versao?.resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.blocoA || 0) * i.quantidade), 0) || 0) + totalB
-                                    )}
+                                {rows.map((row, i) => (
+                                  <tr key={i} className="border-b border-slate-200 border-dotted bg-white">
+                                    <td colSpan={3} className="py-1.5 px-6 font-bold">{row.label}</td>
+                                    <td className="py-1.5 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100">{formatCurrency(row.val)}</td>
+                                  </tr>
+                                ))}
+                                {/* Total Montante B */}
+                                <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white text-[9.5px]">
+                                  <td colSpan={3} className="py-2 px-6 text-right uppercase tracking-wider">Total do Montante "B"</td>
+                                  <td className="py-2 px-6 text-right border-l border-emerald-950">
+                                    {formatCurrency(totalB)}
                                   </td>
                                 </tr>
                               </>
                             );
                           })()}
+
+                          {/* MONTANTE C */}
+                          {(() => {
+                            const isSpot = fullProposta.cliente?.tipoProposta === 'SPOT' || fullProposta.tipoItem === 'SPOT' || versao?.resultado?.items?.some((i: any) => i.tipoItem === 'SPOT');
+                            if (isSpot) return null;
+
+                            const bC = versao?.resultado?.items?.reduce((acc: any, i: any) => {
+                              const d = i.detalhes?.detalheBlocoC;
+                              return {
+                                va: acc.va + (d?.va || 0) * i.quantidade,
+                                vt: acc.vt + (d?.vt || 0) * i.quantidade,
+                                custosSindicato: acc.custosSindicato + (d?.custosSindicato || 0) * i.quantidade,
+                                vaFerias: acc.vaFerias + (d?.vaFerias || 0) * i.quantidade,
+                                cestaBasica: acc.cestaBasica + (d?.cestaBasica || 0) * i.quantidade,
+                                descontoVA: acc.descontoVA + (d?.descontoVA || 0) * i.quantidade,
+                                descontoVT: acc.descontoVT + (d?.descontoVT || 0) * i.quantidade,
+                                exames: acc.exames + (d?.exames || 0) * i.quantidade,
+                                reservaTecnica: acc.reservaTecnica + (d?.reservaTecnica || 0) * i.quantidade,
+                                reservaTecnicaPct: d?.reservaTecnicaPct || acc.reservaTecnicaPct,
+                                manutencao: acc.manutencao + (d?.manutencao || 0) * i.quantidade,
+                                manutencaoPct: d?.manutencaoPct || acc.manutencaoPct,
+                                outros: acc.outros + (d?.outros || 0) * i.quantidade,
+                              };
+                            }, { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 }) || { va:0, vt:0, custosSindicato:0, vaFerias:0, cestaBasica:0, descontoVA:0, descontoVT:0, exames:0, reservaTecnica:0, reservaTecnicaPct:0, manutencao:0, manutencaoPct:0, outros:0 };
+
+                            const rows = [
+                              { label: '1) Vale Alimentação', val: bC.va },
+                              { label: '2) Vale Transporte', val: bC.vt },
+                              { label: '3) Custos com Sindicatos', val: bC.custosSindicato },
+                              { label: '4) Vale Alimentação Sobre Férias', val: bC.vaFerias },
+                              { label: '5) Cesta Básica Assiduidade(+)', val: bC.cestaBasica },
+                              { label: '6) Desconto de VA(-)', val: bC.descontoVA, red: true },
+                              { label: '7) Desconto de VT(-)', val: bC.descontoVT, red: true },
+                              { label: '8) Exames Médicos', val: bC.exames },
+                              { label: '9) Reservas Técnicas', val: bC.reservaTecnica, pct: bC.reservaTecnicaPct },
+                              { label: '10) Manutenção Equipamentos', val: bC.manutencao, pct: bC.manutencaoPct },
+                              { label: '11) Outros (especificar)', val: bC.outros },
+                            ];
+
+                            const totalC = versao?.resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.beneficios || 0) * i.quantidade), 0) || 0;
+
+                            return (
+                              <>
+                                <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
+                                  <th colSpan={4} className="py-2 px-6 text-center uppercase tracking-widest font-black text-[9.5px]">Montante "C" - Benefícios Detalhados (13 Itens)</th>
+                                </tr>
+                                {rows.map((row, i) => (
+                                  <tr key={i} className="border-b border-slate-200 border-dotted bg-white">
+                                    <td colSpan={row.pct !== undefined ? 2 : 3} className={`py-1.5 px-6 font-bold ${row.red ? "text-red-600" : ""}`}>{row.label}</td>
+                                    {row.pct !== undefined && (
+                                      <td className="py-1.5 px-6 text-center font-bold bg-slate-50 text-slate-500 w-24">
+                                        {row.pct.toFixed(2)} %
+                                      </td>
+                                    )}
+                                    <td className={`py-1.5 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100 ${row.red ? "text-red-600 font-bold" : ""}`}>
+                                      {row.val < 0 ? "-" + formatCurrency(Math.abs(row.val)) : formatCurrency(row.val)}
+                                    </td>
+                                  </tr>
+                                ))}
+                                {/* Total Montante C */}
+                                <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white text-[9.5px]">
+                                  <td colSpan={3} className="py-2 px-6 text-right uppercase tracking-wider">Total do Montante "C"</td>
+                                  <td className="py-2 px-6 text-right border-l border-emerald-950">
+                                    {formatCurrency(totalC)}
+                                  </td>
+                                </tr>
+                              </>
+                            );
+                          })()}
+
+                          {/* MONTANTE D - BDI */}
+                          <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
+                            <th colSpan={4} className="py-2 px-6 text-center uppercase tracking-widest font-black text-[9.5px]">Montante "D" - BDI</th>
+                          </tr>
+                          <tr className="border-b border-slate-200 border-dotted bg-white">
+                            <td className="py-1.5 px-6 font-bold w-[50%]">Administração</td>
+                            <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{(fullProposta.premissas?.taxaAdm || 0).toFixed(2)}%</td>
+                            <td className="py-1.5 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100">
+                              {formatCurrency(versao?.resultado?.taxaAdm || 0)}
+                            </td>
+                          </tr>
+                          <tr className="border-b border-slate-200 border-dotted bg-white">
+                            <td className="py-1.5 px-6 font-bold">Lucro</td>
+                            <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{(fullProposta.premissas?.margemLucro || 0).toFixed(2)}%</td>
+                            <td className="py-1.5 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100">
+                              {formatCurrency(versao?.resultado?.margemLucro || 0)}
+                            </td>
+                          </tr>
+                          <tr className="border-b border-slate-200 border-dotted bg-white">
+                            <td className="py-1.5 px-6 font-bold">Comissão do Vendedor</td>
+                            <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{(fullProposta.premissas?.comissaoVendedor || 0).toFixed(2)}%</td>
+                            <td className="py-1.5 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100">
+                              {formatCurrency(versao?.resultado?.comissaoVendedor || 0)}
+                            </td>
+                          </tr>
+                          <tr className="bg-[#599e41] text-white font-bold border-y border-[#488234] text-[9.5px]">
+                            <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total dos Montantes "A+B+C+D"</td>
+                            <td className="py-2.5 px-6 text-right border-l border-[#3a692a]">
+                              {formatCurrency((versao?.resultado?.custoDiretoTotal || 0) + (versao?.resultado?.taxaAdm || 0) + (versao?.resultado?.margemLucro || 0) + (versao?.resultado?.comissaoVendedor || 0))}
+                            </td>
+                          </tr>
+
+                          {/* IMPOSTOS */}
+                          {(() => {
+                            const totalTributos = ((fullProposta.premissas?.tributos || []).reduce((acc: number, t: any) => acc + (t.percent || 0), 0));
+                            return (
+                              <>
+                                <tr className="bg-[#8ec277] text-slate-900 border-b border-white text-[9.5px]">
+                                  <td className="py-2 px-6 font-bold uppercase">Impostos</td>
+                                  <td colSpan={2} className="py-2 px-6 text-center font-bold bg-slate-50/50">{totalTributos.toFixed(2)}%</td>
+                                  <td className="py-2 px-6 text-right font-bold border-l border-[#7bb363]">{formatCurrency(versao?.resultado?.impostosTotais || 0)}</td>
+                                </tr>
+                                {(fullProposta.premissas?.tributos || []).map((t: any, i: number) => (
+                                  <tr key={i} className="border-b border-slate-200 border-dotted bg-white">
+                                    <td className="py-1 px-6 font-bold">{t.nome}</td>
+                                    <td colSpan={2} className="py-1 px-6 text-center font-bold bg-slate-50">{t.percent.toFixed(2)}%</td>
+                                    <td className="py-1 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100">
+                                      {formatCurrency((versao?.resultado?.faturamentoBruto || 0) * (t.percent / 100))}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </>
+                            );
+                          })()}
+
+                          {/* TOTAIS FINAIS */}
+                          <tr className="bg-[#1B4D3E] text-white font-black border-t-4 border-white text-xs tracking-widest uppercase">
+                            <td colSpan={3} className="py-4 px-6 text-right">Total dos Montantes "A+B+C+D" + Impostos</td>
+                            <td className="py-4 px-6 text-right text-emerald-350 border-l border-emerald-950 font-black text-sm">
+                              {formatCurrency(versao?.resultado?.faturamentoBruto || doc.valorTotal || 0)}
+                            </td>
+                          </tr>
+                          {(() => {
+                            const isSpot = fullProposta.cliente?.tipoProposta === 'SPOT' || fullProposta.tipoItem === 'SPOT' || versao?.resultado?.items?.some((i: any) => i.tipoItem === 'SPOT');
+                            if (isSpot) return null;
+                            return (
+                              <tr className="bg-black text-white font-black border-t border-slate-800 text-[10px] tracking-widest uppercase">
+                                <td colSpan={3} className="py-3 px-6 text-right">Valor Total Anual do Contrato</td>
+                                <td className="py-3 px-6 text-right text-emerald-500 border-l border-slate-900 font-bold">
+                                  {formatCurrency((versao?.resultado?.faturamentoBruto || 0) * 12)}
+                                </td>
+                              </tr>
+                            );
+                          })()}
+
                         </tbody>
                       </table>
                     </div>
