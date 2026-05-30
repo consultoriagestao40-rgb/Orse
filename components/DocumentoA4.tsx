@@ -205,11 +205,12 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
         </div>
 
         {/* VALOR TOTAL */}
-        <div className="w-full mt-8 p-4 bg-green-50 border-2 border-green-600 flex justify-center items-center text-center text-green-900 font-black text-lg mb-2 uppercase tracking-wide">
-          Valor Total da Proposta: {fmt(totalGeral)} {isSpot ? '' : 'Mensal'}
+        <div className="w-full mt-8 p-5 bg-[#1B4D3E] text-white flex justify-between items-center text-center font-black text-base mb-2 uppercase tracking-wide rounded-none border border-emerald-950 shadow-md">
+          <span className="text-emerald-300 tracking-wider">VALOR TOTAL DA PROPOSTA:</span>
+          <span className="text-2xl text-emerald-400 font-black tracking-tight">{fmt(totalGeral)} {isSpot ? '' : 'Mensal'}</span>
         </div>
         {totalGeral > 0 && (
-          <div className="text-center text-green-800 font-bold text-[10px] uppercase mb-12 tracking-wider">
+          <div className="text-center text-[#1B4D3E] font-bold text-[10px] uppercase mb-12 tracking-wider">
             ({require('numero-por-extenso').porExtenso(totalGeral, require('numero-por-extenso').estilo.monetario)})
           </div>
         )}
@@ -375,6 +376,66 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
     return (
       <div className="w-full text-slate-900 text-xs">
         <style dangerouslySetInnerHTML={{__html: `
+          /* Overrides globais para modelo sem bordas idêntico ao da minuta */
+          table, th, td {
+            border: none !important;
+          }
+          table {
+            width: 100% !important;
+          }
+          thead tr {
+            background: transparent !important;
+            color: #0f172a !important;
+            border-bottom: 2px solid #0f172a !important;
+          }
+          thead th {
+            color: #0f172a !important;
+            font-weight: 950 !important;
+            text-transform: uppercase !important;
+            padding: 8px 4px !important;
+          }
+          tbody tr {
+            background: transparent !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+          }
+          tbody tr:hover {
+            background-color: #f8fafc !important;
+          }
+          tbody td {
+            padding: 8px 4px !important;
+          }
+          tfoot tr {
+            background: #f8fafc !important;
+            color: #0f172a !important;
+            border-top: 2px solid #0f172a !important;
+            font-weight: 900 !important;
+          }
+          tfoot td {
+            padding: 8px 4px !important;
+          }
+          .bg-slate-100 {
+            background-color: transparent !important;
+          }
+          .bg-slate-900 {
+            background-color: transparent !important;
+            color: #0f172a !important;
+          }
+          .text-white {
+            color: #0f172a !important;
+          }
+          
+          /* Preservar a estilização do bloco de total premium */
+          .bg-\\[\\#1B4D3E\\] {
+            background-color: #1B4D3E !important;
+            border: 1px solid #10b981 !important;
+          }
+          .bg-\\[\\#1B4D3E\\] span {
+            color: #10B981 !important;
+          }
+          .bg-\\[\\#1B4D3E\\] span.text-2xl {
+            color: #10B981 !important;
+          }
+
           @media print {
             @page { margin: 0 !important; size: auto; }
             .no-print, [class*="no-print"] { display: none !important; }

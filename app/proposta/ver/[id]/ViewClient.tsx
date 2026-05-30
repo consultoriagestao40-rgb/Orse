@@ -231,7 +231,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
 
   const sumGroup = (g: any) => g ? Object.values(g).reduce((a: any, b: any) => a + Number(b), 0) as number : 0;
-  const totalGeralEncargos = fullProposta?.encargos?.grupoA ? (sumGroup(fullProposta.encargos.grupoA) + sumGroup(fullProposta.encargos.grupoB) + sumGroup(fullProposta.encargos.grupoC) + sumGroup(fullProposta.encargos.grupoD) + sumGroup(fullProposta.encargos.grupoE) + sumGroup(fullProposta.encargos.grupoF)) : 0;
+  const totalGeralEncargos = fullProposta?.encargos?.grupoA ? (sumGroup(fullProposta?.encargos?.grupoA) + sumGroup(fullProposta?.encargos?.grupoB) + sumGroup(fullProposta?.encargos?.grupoC) + sumGroup(fullProposta?.encargos?.grupoD) + sumGroup(fullProposta?.encargos?.grupoE) + sumGroup(fullProposta?.encargos?.grupoF)) : 0;
 
   // -------------------------------------------------------------
   // MOTOR DE LEITURA E SUBSTITUIÇÃO DE CLÁUSULAS DA MINUTA (ABA 04)
@@ -246,7 +246,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     
     let tableItens = '';
     if (fullProposta?.equipe) {
-      tableItens = fullProposta.equipe.map((i: any) => `${i.quantidade || 1}x ${i.nomeCargo} (${i.escala || ''})`).join(', ');
+      tableItens = fullProposta?.equipe?.map((i: any) => `${i.quantidade || 1}x ${i.nomeCargo} (${i.escala || ''})`).join(', ') || '';
     }
 
     const numFormatted = String(doc.proposta?.numero || '').padStart(3, '0');
@@ -299,6 +299,41 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
 
 return (
     <div className="bg-[#FAFBFD] w-full h-screen text-slate-800 font-sans flex flex-col md:flex-row overflow-hidden select-none">
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          @page { margin: 0 !important; size: auto; }
+          .no-print, [class*="no-print"] { display: none !important; }
+          * {
+             -webkit-print-color-adjust: exact !important;
+             print-color-adjust: exact !important;
+             color-adjust: exact !important;
+          }
+          html, body, #__next, 
+          [class*="h-screen"],
+          [class*="min-h-screen"], 
+          [class*="overflow-hidden"],
+          [class*="overflow-y-auto"] {
+            background: white !important;
+            background-color: white !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
+            display: block !important;
+            position: static !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          main {
+            height: auto !important;
+            overflow: visible !important;
+            display: block !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+          }
+        }
+      `}} />
         
         {/* SIDEBAR DE TABS DE NAVEGAÇÃO (ESTILO SEGUNDA FOTO - PREMIUM WHITE) */}
         <aside className="w-full md:w-80 shrink-0 bg-white border border-slate-200 rounded-3xl p-6 shadow-xl flex flex-col justify-between text-slate-800 print:hidden font-sans">
@@ -425,6 +460,12 @@ return (
                   >
                     📥 Exportar PDF (Canva)
                   </a>
+                  <button
+                    onClick={() => window.print()}
+                    className="bg-[#1e4480] hover:bg-blue-800 text-white font-black text-[9px] uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all border border-transparent shadow-md cursor-pointer whitespace-nowrap flex items-center gap-1.5 font-bold"
+                  >
+                    🖨️ Imprimir Apresentação (A4)
+                  </button>
                 </div>
               </div>
 
@@ -498,19 +539,19 @@ return (
                       <div className="bg-white p-5 border border-slate-200 flex flex-col gap-2 rounded-none">
                         <span className="text-[10px] font-black text-slate-550 uppercase tracking-wider">TAXA ADMINISTRATIVA (%)</span>
                         <div className="bg-white border border-slate-200 px-4 py-2.5 text-xs font-black text-slate-800 rounded-none shadow-sm select-none">
-                          {(fullProposta.premissas?.taxaAdm || 0).toString().replace('.', ',')}
+                          {(fullProposta?.premissas?.taxaAdm || 0).toString().replace('.', ',')}
                         </div>
                       </div>
                       <div className="bg-white p-5 border border-slate-200 flex flex-col gap-2 rounded-none">
                         <span className="text-[10px] font-black text-slate-550 uppercase tracking-wider">MARGEM DE LUCRO (%)</span>
                         <div className="bg-white border border-slate-200 px-4 py-2.5 text-xs font-black text-slate-800 rounded-none shadow-sm select-none">
-                          {(fullProposta.premissas?.margemLucro || 0).toString().replace('.', ',')}
+                          {(fullProposta?.premissas?.margemLucro || 0).toString().replace('.', ',')}
                         </div>
                       </div>
                       <div className="bg-white p-5 border border-slate-200 flex flex-col gap-2 rounded-none">
                         <span className="text-[10px] font-black text-slate-550 uppercase tracking-wider">COMISSÃO DO VENDEDOR (%)</span>
                         <div className="bg-white border border-slate-200 px-4 py-2.5 text-xs font-black text-slate-800 rounded-none shadow-sm select-none">
-                          {(fullProposta.premissas?.comissaoVendedor || 0).toString().replace('.', ',')}
+                          {(fullProposta?.premissas?.comissaoVendedor || 0).toString().replace('.', ',')}
                         </div>
                       </div>
                     </div>
