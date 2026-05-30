@@ -3175,10 +3175,10 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
 
                             const maoDeObraSubtotal = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
                             const insumosSubtotal = applyCascata(
-                              Number(proposta.insumos.materiais || 0) + 
-                              Number(isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : proposta.insumos.maquinas || 0) + 
-                              Number(proposta.insumos.descartaveis || 0) + 
-                              Number(isSpot ? 0 : proposta.insumos.servicos || 0)
+                              Number(proposta.insumos?.materiais || 0) + 
+                              Number(isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : proposta.insumos?.maquinas || 0) + 
+                              Number(proposta.insumos?.descartaveis || 0) + 
+                              Number(isSpot ? 0 : proposta.insumos?.servicos || 0)
                             );
 
                             const renderInsumoRow = (label: string, value: number) => {
@@ -3223,9 +3223,9 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                                     <td className="py-3.5 px-4 font-black">Mão de Obra Efetiva (Postos)</td>
                                                     <td className="py-3.5 px-4 text-right font-black text-[#1e4480]">{fc(maoDeObraSubtotal)}</td>
                                                  </tr>
-                                                 {renderInsumoRow('Materiais e Equipamentos', applyCascata(Number(proposta.insumos.materiais || 0) + Number(isSpot ? totalMaquinasNaoLocadas : proposta.insumos.maquinas || 0)))}
-                                                 {renderInsumoRow('Descartáveis e Higiene', applyCascata(Number(proposta.insumos.descartaveis || 0)))}
-                                                 {renderInsumoRow(isSpot ? 'Equipamentos Locados' : 'Outros Serviços / Operações', applyCascata(Number(isSpot ? totalMaquinasLocadas : proposta.insumos.servicos || 0)))}
+                                                 {renderInsumoRow('Materiais e Equipamentos', applyCascata(Number(proposta.insumos?.materiais || 0) + Number(isSpot ? totalMaquinasNaoLocadas : proposta.insumos?.maquinas || 0)))}
+                                                 {renderInsumoRow('Descartáveis e Higiene', applyCascata(Number(proposta.insumos?.descartaveis || 0)))}
+                                                 {renderInsumoRow(isSpot ? 'Equipamentos Locados' : 'Outros Serviços / Operações', applyCascata(Number(isSpot ? totalMaquinasLocadas : proposta.insumos?.servicos || 0)))}
                                               </tbody>
                                            </table>
                                            
