@@ -213,6 +213,14 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   // CONTROLE DAS PLANILHAS FINANCEIRAS FPV DETALHADAS (ABAS 02 A 09)
   // -------------------------------------------------------------
   const [activeFpvTab, setActiveFpvTab] = useState<'premissas' | 'encargos' | 'equipe' | 'insumos' | 'extrato' | 'resumo'>('resumo');
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    grupoA: false,
+    grupoB: false,
+    grupoC: false,
+    grupoD: false,
+    grupoE: false,
+    grupoF: false,
+  });
 
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
@@ -468,100 +476,140 @@ return (
 
                 {/* Sub-Aba 2: Premissas do Projeto */}
                 {activeFpvTab === 'premissas' && (
-                  <div className="space-y-6">
-                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest border-b pb-3 flex items-center gap-2">
-                      <TrendingUp size={16} className="text-emerald-600" /> Premissas de Taxas e Impostos
-                    </h3>
+                  <div className="space-y-6 animate-fadeIn">
+                    {/* Top 3 boxes (Premissas) matching Screenshot 2 */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col justify-between">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Taxa Administrativa</span>
-                        <span className="text-2xl font-black text-[#1B4D3E] mt-2">{(fullProposta.premissas?.taxaAdm || 0).toFixed(2)}%</span>
+                      <div className="bg-white p-5 border border-slate-200 flex flex-col gap-2 rounded-none">
+                        <span className="text-[10px] font-black text-slate-550 uppercase tracking-wider">TAXA ADMINISTRATIVA (%)</span>
+                        <div className="bg-white border border-slate-200 px-4 py-2.5 text-xs font-black text-slate-800 rounded-none shadow-sm select-none">
+                          {(fullProposta.premissas?.taxaAdm || 0).toString().replace('.', ',')}
+                        </div>
                       </div>
-                      <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col justify-between">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Margem de Lucro</span>
-                        <span className="text-2xl font-black text-[#1B4D3E] mt-2">{(fullProposta.premissas?.margemLucro || 0).toFixed(2)}%</span>
+                      <div className="bg-white p-5 border border-slate-200 flex flex-col gap-2 rounded-none">
+                        <span className="text-[10px] font-black text-slate-550 uppercase tracking-wider">MARGEM DE LUCRO (%)</span>
+                        <div className="bg-white border border-slate-200 px-4 py-2.5 text-xs font-black text-slate-800 rounded-none shadow-sm select-none">
+                          {(fullProposta.premissas?.margemLucro || 0).toString().replace('.', ',')}
+                        </div>
                       </div>
-                      <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col justify-between">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Comissão Comercial</span>
-                        <span className="text-2xl font-black text-[#1B4D3E] mt-2">{(fullProposta.premissas?.comissaoVendedor || 0).toFixed(2)}%</span>
+                      <div className="bg-white p-5 border border-slate-200 flex flex-col gap-2 rounded-none">
+                        <span className="text-[10px] font-black text-slate-550 uppercase tracking-wider">COMISSÃO DO VENDEDOR (%)</span>
+                        <div className="bg-white border border-slate-200 px-4 py-2.5 text-xs font-black text-slate-800 rounded-none shadow-sm select-none">
+                          {(fullProposta.premissas?.comissaoVendedor || 0).toString().replace('.', ',')}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="bg-slate-50 rounded-2xl border border-slate-150 overflow-hidden mt-6">
-                      <div className="bg-[#1B4D3E] text-white font-bold uppercase text-[10px] py-3.5 px-5 tracking-wider">
-                        Tributos e Impostos Incidentes
+                    {/* Composição Tributária matching Screenshot 2 */}
+                    <div className="bg-white border border-slate-200 p-6 rounded-none space-y-4">
+                      <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">Composição Tributária</h4>
+                        <button className="text-[10px] font-black text-emerald-800 hover:text-emerald-950 uppercase tracking-widest flex items-center gap-1 cursor-not-allowed opacity-80 bg-white border border-slate-200 px-3 py-1.5 rounded-none">
+                          + Nova Linha
+                        </button>
                       </div>
-                      <table className="w-full text-left border-collapse text-xs">
-                        <thead>
-                          <tr className="bg-slate-100 text-slate-500 font-extrabold text-[9px] uppercase border-b border-slate-200">
-                            <th className="py-2.5 px-6">Tributo</th>
-                            <th className="py-2.5 px-6 text-right w-36">Percentual (%)</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(fullProposta.premissas?.tributos || []).map((t: any, i: number) => (
-                            <tr key={t.id || i} className="border-b border-slate-200 last:border-0 hover:bg-slate-50 bg-white">
-                              <td className="py-3 px-6 font-semibold uppercase text-slate-700">{t.nome}</td>
-                              <td className="py-3 px-6 text-right font-bold text-slate-800">{(t.percent || 0).toFixed(2)}%</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                        <tfoot>
-                          <tr className="bg-emerald-50 text-[#1B4D3E] font-black border-t border-slate-250">
-                            <td className="py-3.5 px-6 uppercase tracking-wider text-[10px]">Alíquota Efetiva de Impostos</td>
-                            <td className="py-3.5 px-6 text-right">
-                              {((fullProposta.premissas?.tributos || []).reduce((acc: number, t: any) => acc + (t.percent || 0), 0)).toFixed(2)}%
-                            </td>
-                          </tr>
-                        </tfoot>
-                      </table>
+                      <div className="space-y-3">
+                        {(fullProposta.premissas?.tributos || []).map((t: any, i: number) => (
+                          <div key={t.id || i} className="flex items-center gap-3">
+                            {/* Nome do Tributo Box */}
+                            <div className="flex-1 bg-white border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700 uppercase rounded-none select-none">
+                              {t.nome}
+                            </div>
+                            
+                            {/* Percentual Box */}
+                            <div className="flex items-center gap-2">
+                              <div className="bg-white border border-slate-200 px-4 py-2 text-xs font-black text-slate-800 rounded-none w-24 text-right select-none">
+                                {(t.percent || 0).toString().replace('.', ',')}
+                              </div>
+                              <span className="text-xs font-bold text-slate-400 w-4">%</span>
+                            </div>
+
+                            {/* Trash Icon */}
+                            <button className="text-slate-300 hover:text-red-500 p-1.5 cursor-not-allowed">
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Carga Tributária Consolidada bar */}
+                      <div className="bg-[#1B4D3E] text-white flex justify-between items-center px-6 py-4 font-black uppercase text-xs tracking-wider rounded-none mt-6 shadow-sm">
+                        <span>Carga Tributária Consolidada</span>
+                        <span className="text-sm text-emerald-300">
+                          {((fullProposta.premissas?.tributos || []).reduce((acc: number, t: any) => acc + (t.percent || 0), 0)).toFixed(2).replace('.', ',')}%
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {/* Sub-Aba 3: Encargos Sociais */}
                 {activeFpvTab === 'encargos' && (
-                  <div className="space-y-6">
-                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest border-b pb-3 flex items-center gap-2">
-                      <Layers size={16} className="text-emerald-600" /> Detalhamento de Encargos Sociais CLT
+                  <div className="space-y-6 animate-fadeIn">
+                    <h3 className="text-xs font-black text-slate-700 uppercase tracking-widest border-b border-slate-250 pb-3 flex items-center gap-2">
+                      <Layers size={16} className="text-[#1B4D3E]" /> Parâmetros Sociais e Trabalhistas
                     </h3>
                     <div className="space-y-4">
                       {[
-                        { id: 'grupoA', title: 'Grupo A - Encargos Básicos (INSS, FGTS, Seguro Acidente...)', data: fullProposta.encargos?.grupoA },
-                        { id: 'grupoB', title: 'Grupo B - Provisões Trabalhistas (Férias, 13º Salário, Terço...)', data: fullProposta.encargos?.grupoB },
-                        { id: 'grupoC', title: 'Grupo C - Afastamentos e Indenizações (Aviso Prévio, Multa FGTS...)', data: fullProposta.encargos?.grupoC },
-                        { id: 'grupoD', title: 'Grupo D - Reincidência de Encargos Sociais', data: fullProposta.encargos?.grupoD },
-                        { id: 'grupoE', title: 'Grupo E - Custos Sociais e Outros Custos', data: fullProposta.encargos?.grupoE },
-                        { id: 'grupoF', title: 'Grupo F - Benefícios Obrigatórios CCT', data: fullProposta.encargos?.grupoF },
+                        { id: 'grupoA', title: 'ENCARGOS SOCIAIS - GRUPO A', subtitle: 'Obrigações que incidem diretamente sobre a folha de pagamento', data: fullProposta.encargos?.grupoA },
+                        { id: 'grupoB', title: 'ENCARGOS SOCIAIS - GRUPO B', subtitle: 'Ocorrências de faltas / ausências justificadas. Incide o Grupo A', data: fullProposta.encargos?.grupoB },
+                        { id: 'grupoC', title: 'ENCARGOS SOCIAIS - GRUPO C', subtitle: 'Afastamentos temporários e provisões que não incidem sobre outros grupos', data: fullProposta.encargos?.grupoC },
+                        { id: 'grupoD', title: 'ENCARGOS SOCIAIS - GRUPO D', subtitle: 'Demissão sem justa causa e indenizações', data: fullProposta.encargos?.grupoD },
+                        { id: 'grupoE', title: 'ENCARGOS SOCIAIS - GRUPO E', subtitle: 'Provisionamento de casos especiais (maternidade, etc)', data: fullProposta.encargos?.grupoE },
+                        { id: 'grupoF', title: 'ENCARGOS SOCIAIS - GRUPO F', subtitle: 'Benefícios e encargos sociais diretos previstos em CCT', data: fullProposta.encargos?.grupoF },
                       ].map((grp) => {
                         if (!grp.data) return null;
+                        const isExpanded = !!expandedGroups[grp.id];
+                        const groupSum = sumGroup(grp.data);
                         return (
-                          <div key={grp.id} className="bg-slate-50 rounded-2xl border border-slate-150 overflow-hidden">
-                            <div className="bg-slate-700 text-white font-bold uppercase text-[9px] py-2.5 px-5 tracking-wider">
-                              {grp.title}
-                            </div>
-                            <table className="w-full text-left border-collapse text-[11px]">
-                              <tbody>
-                                {Object.entries(grp.data).map(([key, val]: any) => (
-                                  <tr key={key} className="border-b border-slate-200 last:border-0 hover:bg-slate-50 bg-white">
-                                    <td className="py-2.5 px-6 font-bold uppercase text-slate-500 text-[9px]">
-                                      {key === 'previdenciaSocial' ? 'INSS - PREVIDENCIA SOCIAL' : key.replace(/([A-Z])/g, ' $1').trim()}
-                                    </td>
-                                    <td className="py-2.5 px-6 text-right font-black text-slate-800 w-32">
-                                      {Number(val).toFixed(2)}%
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                              <tfoot>
-                                <tr className="bg-emerald-50 text-[#1B4D3E] font-black border-t border-slate-200">
-                                  <td className="py-2.5 px-6 text-[9.5px] uppercase">Total do Grupo</td>
-                                  <td className="py-2.5 px-6 text-right">
-                                    {sumGroup(grp.data).toFixed(2)}%
-                                  </td>
-                                </tr>
-                              </tfoot>
-                            </table>
+                          <div key={grp.id} className="bg-white border border-slate-200 rounded-none overflow-hidden transition-all duration-200 shadow-sm">
+                            {/* Toggle Header Box */}
+                            <button
+                              onClick={() => setExpandedGroups(prev => ({ ...prev, [grp.id]: !prev[grp.id] }))}
+                              className="w-full bg-[#1B4D3E] hover:bg-[#164336] text-white flex justify-between items-center py-3.5 px-6 font-black uppercase text-[10px] tracking-wider transition-colors select-none text-left cursor-pointer rounded-none"
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className="text-[12px] font-bold">{isExpanded ? '▼' : '▶'}</span>
+                                <span>{grp.title}</span>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className="bg-white/10 px-3 py-1 text-[10px] font-black border border-white/10 rounded-none text-emerald-200">
+                                  Total: {groupSum.toFixed(2)}%
+                                </span>
+                              </div>
+                            </button>
+
+                            {/* Dropdown breakdown list */}
+                            {isExpanded && (
+                              <div className="animate-fadeIn">
+                                {grp.subtitle && (
+                                  <div className="bg-slate-50 border-b border-slate-150 py-2.5 px-6 text-[10px] text-slate-550 font-bold uppercase tracking-wider">
+                                    {grp.subtitle}
+                                  </div>
+                                )}
+                                <table className="w-full text-left border-collapse text-xs">
+                                  <tbody>
+                                    {Object.entries(grp.data).map(([key, val]: any) => (
+                                      <tr key={key} className="border-b border-slate-150 last:border-0 hover:bg-slate-50 bg-white">
+                                        <td className="py-3 px-6 font-bold uppercase text-slate-600 text-[10px]">
+                                          {key === 'previdenciaSocial' ? 'INSS - PREVIDENCIA SOCIAL' : key.replace(/([A-Z])/g, ' $1').trim()}
+                                        </td>
+                                        <td className="py-3 px-6 text-right font-black text-slate-800 w-32 border-l border-slate-100 select-none">
+                                          {Number(val).toFixed(2)}%
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                  <tfoot>
+                                    <tr className="bg-emerald-50/50 text-[#1B4D3E] font-black border-t border-slate-200">
+                                      <td className="py-3 px-6 text-[10px] uppercase">Total {grp.title.replace('ENCARGOS SOCIAIS - ', '')}</td>
+                                      <td className="py-3 px-6 text-right text-[11px] border-l border-emerald-100/50 select-none">
+                                        {groupSum.toFixed(2)}%
+                                      </td>
+                                    </tr>
+                                  </tfoot>
+                                </table>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -571,46 +619,79 @@ return (
 
                 {/* Sub-Aba 4: Quadro de Equipe / Colaboradores */}
                 {activeFpvTab === 'equipe' && (
-                  <div className="space-y-6">
-                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest border-b pb-3 flex items-center gap-2">
-                      <UserCheck size={16} className="text-emerald-600" /> Quadro de Mão de Obra e Postos
-                    </h3>
-                    <div className="overflow-x-auto border border-slate-200 rounded-2xl">
-                      <table className="w-full text-left border-collapse text-xs">
-                        <thead>
-                          <tr className="bg-[#1B4D3E] text-white text-[9.5px] font-black uppercase tracking-wider">
-                            <th className="px-5 py-3 w-12 text-center">Item</th>
-                            <th className="px-5 py-3">Cargo / Função</th>
-                            <th className="px-5 py-3 text-center">Escala</th>
-                            <th className="px-5 py-3 text-center">Qtd.</th>
-                            <th className="px-5 py-3 text-right">Piso Salarial (R$)</th>
-                            <th className="px-5 py-3 text-right">Adicionais (R$)</th>
-                            <th className="px-5 py-3 text-right">Valor Venda Unit (R$)</th>
-                            <th className="px-5 py-3 text-right">Valor Venda Total (R$)</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {fullProposta.equipe.map((p: any, idx: number) => {
-                            const itemRes = versao?.resultado?.items?.find((x: any) => x.id === p.id);
-                            const totalVenda = itemRes?.precoVenda || 0;
-                            const isSpotItem = p.tipoItem === 'SPOT';
-                            const qty = isSpotItem ? (p.quantidadeDemanda || 1) : (p.quantidade || 1);
-                            const valorVendaUnit = qty > 0 ? (totalVenda / qty) : 0;
-                            return (
-                              <tr key={p.id || idx} className={`border-b border-slate-200 hover:bg-slate-50 bg-white ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
-                                <td className="px-5 py-3.5 text-center font-bold text-slate-400">{idx + 1}</td>
-                                <td className="px-5 py-3.5 font-bold text-slate-800">{p.nomeCargo}</td>
-                                <td className="px-5 py-3.5 text-center font-semibold text-slate-500">{p.escala || '-'}</td>
-                                <td className="px-5 py-3.5 text-center font-black text-slate-800">{qty}</td>
-                                <td className="px-5 py-3.5 text-right font-medium">{formatCurrency(p.salarioBase || 0)}</td>
-                                <td className="px-5 py-3.5 text-right font-medium">{formatCurrency((p.adicionalPericulosidade || 0) + (p.adicionalInsalubridade || 0) + (p.adicionalNoturno || 0))}</td>
-                                <td className="px-5 py-3.5 text-right font-bold text-slate-700">{formatCurrency(valorVendaUnit)}</td>
-                                <td className="px-5 py-3.5 text-right font-black text-emerald-800 bg-emerald-50/50">{formatCurrency(totalVenda)}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="bg-white border border-slate-200 rounded-none overflow-hidden shadow-sm">
+                      {/* Table Header Bar */}
+                      <div className="bg-[#1B4D3E] text-white flex justify-between items-center py-3.5 px-6 font-black uppercase text-[10px] tracking-wider rounded-none">
+                        <div className="flex items-center gap-2">
+                          <UserCheck size={14} />
+                          <span>QUADRO DE COLABORADORES</span>
+                        </div>
+                        <button className="bg-emerald-950/40 border border-white/20 hover:bg-emerald-950/60 px-3 py-1.5 text-[9px] uppercase tracking-wider font-extrabold flex items-center gap-1 cursor-not-allowed opacity-80">
+                          + Inserir Posto
+                        </button>
+                      </div>
+
+                      {/* Table Column Header Labels */}
+                      <div className="bg-slate-50 border-b border-slate-200 grid grid-cols-12 text-[9px] font-black uppercase tracking-wider text-slate-500 py-2.5 px-6 gap-4">
+                        <div className="col-span-1 text-center">Qtd.</div>
+                        <div className="col-span-6">Função Vinculada à CCT</div>
+                        <div className="col-span-3">Escala</div>
+                        <div className="col-span-2 text-right">Ação</div>
+                      </div>
+
+                      {/* Table Body Rows */}
+                      <div className="divide-y divide-slate-150">
+                        {fullProposta.equipe.map((p: any, idx: number) => {
+                          const isSpotItem = p.tipoItem === 'SPOT';
+                          const qty = isSpotItem ? (p.quantidadeDemanda || 1) : (p.quantidade || 1);
+                          return (
+                            <div key={p.id || idx} className="grid grid-cols-12 items-center py-4 px-6 gap-4 hover:bg-slate-50/50 bg-white">
+                              {/* QTD Input Style Box */}
+                              <div className="col-span-1 flex justify-center">
+                                <div className="w-16 bg-white border border-slate-200 px-3 py-2 text-center text-xs font-black text-slate-800 rounded-none shadow-sm select-none">
+                                  {qty}
+                                </div>
+                              </div>
+
+                              {/* Cargo Dropdown style box */}
+                              <div className="col-span-6">
+                                <div className="bg-white border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700 rounded-none shadow-sm select-none flex justify-between items-center truncate">
+                                  <span>{p.nomeCargo}</span>
+                                  <span className="text-slate-300 text-[10px]">▼</span>
+                                </div>
+                              </div>
+
+                              {/* Escala Dropdown style box */}
+                              <div className="col-span-3">
+                                <div className="bg-white border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 rounded-none shadow-sm select-none flex justify-between items-center">
+                                  <span>{p.escala || '6x1 (44h)'}</span>
+                                  <span className="text-slate-300 text-[10px]">▼</span>
+                                </div>
+                              </div>
+
+                              {/* Action Buttons Mocked */}
+                              <div className="col-span-2 flex items-center justify-end gap-2 text-xs">
+                                <button className="border border-slate-200 hover:bg-slate-50 text-[9px] font-black text-slate-600 uppercase tracking-widest px-2.5 py-1.5 rounded-none flex items-center gap-1 cursor-not-allowed opacity-80 whitespace-nowrap bg-white">
+                                  ⚙ Adicionais
+                                </button>
+                                <button className="border border-slate-200 hover:bg-slate-50 text-[9px] font-black text-slate-600 uppercase tracking-widest px-2.5 py-1.5 rounded-none flex items-center gap-1 cursor-not-allowed opacity-80 whitespace-nowrap bg-white">
+                                  <span className="text-red-500 font-bold">🛡</span> EPIs Especiais
+                                </button>
+                                <button className="text-slate-300 hover:text-red-500 p-1.5 cursor-not-allowed">
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        {fullProposta.equipe.length === 0 && (
+                          <div className="py-8 text-center text-slate-400 italic bg-white">
+                            Nenhum colaborador cadastrado.
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -621,13 +702,13 @@ return (
                     
                     {/* MATERIAIS */}
                     <div className="space-y-4">
-                      <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                      <h4 className="text-xs font-black text-slate-550 uppercase tracking-widest flex items-center gap-1.5">
                         📦 Materiais e Insumos Fisiológicos
                       </h4>
-                      <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+                      <div className="overflow-x-auto border border-slate-200 rounded-none shadow-sm">
                         <table className="w-full text-left border-collapse text-xs">
                           <thead>
-                            <tr className="bg-slate-100 text-slate-500 text-[9px] font-black uppercase border-b border-slate-200">
+                            <tr className="bg-slate-100 text-slate-600 text-[9px] font-black uppercase border-b border-slate-200">
                               <th className="px-5 py-2.5 w-16">Código</th>
                               <th className="px-5 py-2.5">Descrição</th>
                               <th className="px-5 py-2.5 text-right">Preço Unitário</th>
@@ -639,7 +720,7 @@ return (
                           <tbody>
                             {(fullProposta.insumos?.detalheMateriais || []).map((item: any) => (
                               <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 bg-white">
-                                <td className="px-5 py-3 font-mono text-[10px] text-slate-400">{item.codigo}</td>
+                                <td className="px-5 py-3 font-mono text-[10px] text-slate-450">{item.codigo}</td>
                                 <td className="px-5 py-3 font-bold text-slate-700">{item.descricao}</td>
                                 <td className="px-5 py-3 text-right">{formatCurrency(item.precoUnitario)}</td>
                                 <td className="px-5 py-3 text-center font-black">{item.quantidade}</td>
@@ -659,13 +740,13 @@ return (
 
                     {/* MÁQUINAS */}
                     <div className="space-y-4 pt-4">
-                      <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                      <h4 className="text-xs font-black text-slate-550 uppercase tracking-widest flex items-center gap-1.5">
                         ⚙️ Máquinas e Equipamentos
                       </h4>
-                      <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+                      <div className="overflow-x-auto border border-slate-200 rounded-none shadow-sm">
                         <table className="w-full text-left border-collapse text-xs">
                           <thead>
-                            <tr className="bg-slate-100 text-slate-500 text-[9px] font-black uppercase border-b border-slate-200">
+                            <tr className="bg-slate-100 text-slate-600 text-[9px] font-black uppercase border-b border-slate-200">
                               <th className="px-5 py-2.5 w-16">Código</th>
                               <th className="px-5 py-2.5">Descrição</th>
                               <th className="px-5 py-2.5 text-right">Preço Unitário</th>
@@ -677,7 +758,7 @@ return (
                           <tbody>
                             {(fullProposta.insumos?.detalheMaquinas || []).map((item: any) => (
                               <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 bg-white">
-                                <td className="px-5 py-3 font-mono text-[10px] text-slate-400">{item.codigo}</td>
+                                <td className="px-5 py-3 font-mono text-[10px] text-slate-450">{item.codigo}</td>
                                 <td className="px-5 py-3 font-bold text-slate-700">{item.descricao}</td>
                                 <td className="px-5 py-3 text-right">{formatCurrency(item.precoUnitario)}</td>
                                 <td className="px-5 py-3 text-center font-black">{item.quantidade}</td>
@@ -697,13 +778,13 @@ return (
 
                     {/* DESCARTÁVEIS */}
                     <div className="space-y-4 pt-4">
-                      <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                      <h4 className="text-xs font-black text-slate-550 uppercase tracking-widest flex items-center gap-1.5">
                         🧻 Descartáveis e EPIs
                       </h4>
-                      <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+                      <div className="overflow-x-auto border border-slate-200 rounded-none shadow-sm">
                         <table className="w-full text-left border-collapse text-xs">
                           <thead>
-                            <tr className="bg-slate-100 text-slate-500 text-[9px] font-black uppercase border-b border-slate-200">
+                            <tr className="bg-slate-100 text-slate-600 text-[9px] font-black uppercase border-b border-slate-200">
                               <th className="px-5 py-2.5 w-16">Código</th>
                               <th className="px-5 py-2.5">Descrição</th>
                               <th className="px-5 py-2.5 text-right">Preço Unitário</th>
@@ -715,7 +796,7 @@ return (
                           <tbody>
                             {(fullProposta.insumos?.detalheDescartaveis || []).map((item: any) => (
                               <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 bg-white">
-                                <td className="px-5 py-3 font-mono text-[10px] text-slate-400">{item.codigo}</td>
+                                <td className="px-5 py-3 font-mono text-[10px] text-slate-450">{item.codigo}</td>
                                 <td className="px-5 py-3 font-bold text-slate-700">{item.descricao}</td>
                                 <td className="px-5 py-3 text-right">{formatCurrency(item.precoUnitario)}</td>
                                 <td className="px-5 py-3 text-center font-black">{item.quantidade}</td>
@@ -738,80 +819,147 @@ return (
 
                 {/* Sub-Aba 8: Planilha de Custos / Extrato */}
                 {activeFpvTab === 'extrato' && (
-                  <div className="space-y-6">
-                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest border-b pb-3 flex items-center gap-2">
-                      <ClipboardList size={16} className="text-emerald-600" /> Planilha de Composição de Custos Unitários
-                    </h3>
-                    <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="bg-white border border-slate-200 rounded-none overflow-hidden shadow-sm">
+                      {/* Big Title Header Banner matching Screenshot 5 */}
+                      <div className="bg-[#1B4D3E] text-white py-4 px-6 text-center font-black uppercase text-xs tracking-wider rounded-none select-none">
+                        Planilha de Custos
+                      </div>
+                      
                       <table className="w-full text-left border-collapse text-xs">
                         <thead>
-                          <tr className="bg-[#1B4D3E] text-white text-[9.5px] font-black uppercase tracking-wider border-b border-slate-200">
-                            <th className="px-5 py-3">Montantes de Custos (Composição)</th>
-                            <th className="px-5 py-3 text-center w-32">Percentual (%)</th>
-                            <th className="px-5 py-3 text-right w-44">Valor Mensal (R$)</th>
+                          <tr className="bg-slate-100 text-slate-600 text-[9.5px] font-black uppercase tracking-wider border-b border-slate-200">
+                            <th className="px-6 py-3">1) Função</th>
+                            <th className="px-6 py-3 text-center w-28">Qtd. / %</th>
+                            <th className="px-6 py-3 text-right w-36">Custo Unit</th>
+                            <th className="px-6 py-3 text-right w-40">Total</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {/* Montante A */}
-                          <tr className="bg-slate-100 text-slate-700 font-extrabold text-[9.5px] uppercase border-y border-slate-200">
-                            <td colSpan={3} className="px-5 py-2 tracking-wider">Montante "A" - Mão-de-Obra Direta</td>
+                          {/* Montante A Sub-Header Banner */}
+                          <tr className="bg-[#1B4D3E] text-white font-extrabold text-[9.5px] uppercase tracking-wider">
+                            <td colSpan={4} className="px-6 py-2.5">Montante "A" - Mão-de-Obra</td>
                           </tr>
-                          <tr className="hover:bg-slate-50 bg-white">
-                            <td className="px-5 py-2.5 pl-8 text-slate-600">1. Piso Salarial / Remuneração Base</td>
-                            <td className="px-5 py-2.5 text-center text-slate-400">-</td>
-                            <td className="px-5 py-2.5 text-right font-medium text-slate-700">
-                              {formatCurrency(versao?.resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.remuneracao || 0) * i.quantidade), 0))}
-                            </td>
-                          </tr>
-                          <tr className="hover:bg-slate-50 bg-white">
-                            <td className="px-5 py-2.5 pl-8 text-slate-600">2. Encargos Sociais CLT</td>
-                            <td className="px-5 py-2.5 text-center font-bold text-slate-500">{totalGeralEncargos.toFixed(2)}%</td>
-                            <td className="px-5 py-2.5 text-right font-medium text-slate-700">
+
+                          {/* Function breakdown matching Screenshot 5 */}
+                          {(versao?.resultado?.items || []).map((item: any, idx: number) => {
+                            const qty = item.quantidade || 1;
+                            const remu = item.detalhes?.remuneracao || 0;
+                            const tot = remu * qty;
+                            return (
+                              <tr key={item.id || idx} className="border-b border-slate-150 hover:bg-slate-50 bg-white">
+                                <td className="px-6 py-3 pl-8 text-slate-700 font-bold">{item.nomeCargo}</td>
+                                <td className="px-6 py-3 text-center font-bold text-slate-800">{qty}</td>
+                                <td className="px-6 py-3 text-right font-medium text-slate-600">{formatCurrency(remu)}</td>
+                                <td className="px-6 py-3 text-right font-bold text-slate-850 border-l border-slate-100">{formatCurrency(tot)}</td>
+                              </tr>
+                            );
+                          })}
+
+                          {/* Total Função Row */}
+                          {(() => {
+                            const totalFuncaoSum = versao?.resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.remuneracao || 0) * i.quantidade), 0) || 0;
+                            return (
+                              <tr className="bg-[#1B4D3E] text-white font-extrabold text-[9.5px] uppercase tracking-wider border-b border-slate-200">
+                                <td colSpan={3} className="px-6 py-2.5">Total Função</td>
+                                <td className="px-6 py-2.5 text-right text-[10px] border-l border-emerald-800">{formatCurrency(totalFuncaoSum)}</td>
+                              </tr>
+                            );
+                          })()}
+
+                          {/* 2. Encargos Sociais Row */}
+                          <tr className="border-b border-slate-150 hover:bg-slate-50 bg-white">
+                            <td className="px-6 py-3 pl-8 text-slate-700 font-bold">2) Encargos Sociais</td>
+                            <td className="px-6 py-3 text-center font-black text-slate-800">{totalGeralEncargos.toFixed(2)}%</td>
+                            <td className="px-6 py-3 text-center text-slate-400">-</td>
+                            <td className="px-6 py-3 text-right font-bold text-slate-850 border-l border-slate-100">
                               {formatCurrency(versao?.resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.encargos || 0) * i.quantidade), 0))}
                             </td>
                           </tr>
-                          <tr className="bg-emerald-50/30 font-bold border-b border-slate-200">
-                            <td className="px-5 py-2.5 uppercase text-[#1B4D3E] text-[9px] tracking-wider">Subtotal Montante "A"</td>
-                            <td className="px-5 py-2.5 text-center text-slate-400">-</td>
-                            <td className="px-5 py-2.5 text-right text-[#1B4D3E]">
+
+                          {/* 3. Outros (Especificar) Row */}
+                          <tr className="border-b border-slate-150 hover:bg-slate-50 bg-white">
+                            <td className="px-6 py-3 pl-8 text-slate-700 font-bold">3) Outros (Especificar)</td>
+                            <td className="px-6 py-3 text-center text-slate-400">-</td>
+                            <td className="px-6 py-3 text-center text-slate-400">-</td>
+                            <td className="px-6 py-3 text-right font-bold text-slate-850 border-l border-slate-100">{formatCurrency(0)}</td>
+                          </tr>
+
+                          {/* TOTAL DO MONTANTE A (BLOCO A) Subtotal Row */}
+                          <tr className="bg-[#11382D] text-white font-black text-[10px] uppercase tracking-wider border-b border-slate-200 shadow-inner">
+                            <td colSpan={3} className="px-6 py-3">Total do Montante "A" (Bloco A)</td>
+                            <td className="px-6 py-3 text-right text-[10.5px] border-l border-emerald-950">
                               {formatCurrency(versao?.resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.blocoA || 0) * i.quantidade), 0))}
                             </td>
                           </tr>
 
-                          {/* Montante B */}
-                          <tr className="bg-slate-100 text-slate-700 font-extrabold text-[9.5px] uppercase border-y border-slate-200">
-                            <td colSpan={3} className="px-5 py-2 tracking-wider">Montante "B" - Insumos Operacionais</td>
-                          </tr>
-                          <tr className="hover:bg-slate-50 bg-white">
-                            <td className="px-5 py-2.5 pl-8 text-slate-600">1. Materiais de Limpeza e EPIs</td>
-                            <td className="px-5 py-2.5 text-center text-slate-400">-</td>
-                            <td className="px-5 py-2.5 text-right font-medium text-slate-700">
-                              {formatCurrency(versao?.resultado?.items?.reduce((acc: number, i: any) => acc + (((i.detalhes?.detalheBlocoB?.materiais || 0) + (i.detalhes?.detalheBlocoB?.descartaveis || 0)) * i.quantidade), 0))}
-                            </td>
-                          </tr>
-                          <tr className="hover:bg-slate-50 bg-white">
-                            <td className="px-5 py-2.5 pl-8 text-slate-600">2. Máquinas e Equipamentos Operacionais</td>
-                            <td className="px-5 py-2.5 text-center text-slate-400">-</td>
-                            <td className="px-5 py-2.5 text-right font-medium text-slate-700">
-                              {formatCurrency(versao?.resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.detalheBlocoB?.maquinas || 0) * i.quantidade), 0))}
-                            </td>
-                          </tr>
-                          <tr className="bg-emerald-50/30 font-bold border-b border-slate-200">
-                            <td className="px-5 py-2.5 uppercase text-[#1B4D3E] text-[9px] tracking-wider">Subtotal Montante "B"</td>
-                            <td className="px-5 py-2.5 text-center text-slate-400">-</td>
-                            <td className="px-5 py-2.5 text-right text-[#1B4D3E]">
-                              {formatCurrency(versao?.resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.blocoB || 0) * i.quantidade), 0))}
-                            </td>
+                          {/* Montante B Sub-Header Banner */}
+                          <tr className="bg-[#1B4D3E] text-white font-extrabold text-[9.5px] uppercase tracking-wider border-t border-slate-200">
+                            <td colSpan={4} className="px-6 py-2.5">Montante "B" - Insumos</td>
                           </tr>
 
-                          {/* Total Direto */}
-                          <tr className="bg-slate-200 font-black text-slate-800 border-y border-slate-350 text-[10px] uppercase">
-                            <td className="px-5 py-3">Total dos Montantes Diretos (A + B)</td>
-                            <td className="px-5 py-3 text-center">-</td>
-                            <td className="px-5 py-3 text-right">
-                              {formatCurrency(versao?.resultado?.items?.reduce((acc: number, i: any) => acc + (((i.detalhes?.blocoA || 0) + (i.detalhes?.blocoB || 0)) * i.quantidade), 0))}
-                            </td>
-                          </tr>
+                          {/* Breakdown of Insumos matching Screenshot 5 */}
+                          {(() => {
+                            const totalUniformesEpis = versao?.resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.ativos || 0) * i.quantidade), 0) || 0;
+                            const totalMateriaisLimpeza = (fullProposta.insumos?.detalheMateriais || []).reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0) || 0;
+                            const totalMaquinasEquip = (fullProposta.insumos?.detalheMaquinas || []).reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0) || 0;
+                            const totalDescartaveis = (fullProposta.insumos?.detalheDescartaveis || []).reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0) || 0;
+                            const totalServicos = (fullProposta.insumos?.detalheServicos || []).reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0) || 0;
+                            const totalB = totalUniformesEpis + totalMateriaisLimpeza + totalMaquinasEquip + totalDescartaveis + totalServicos;
+
+                            return (
+                              <>
+                                <tr className="border-b border-slate-150 hover:bg-slate-50 bg-white">
+                                  <td className="px-6 py-3 pl-8 text-slate-700 font-bold">1) Uniformes e EPI's</td>
+                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
+                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
+                                  <td className="px-6 py-3 text-right font-bold text-slate-850 border-l border-slate-100">{formatCurrency(totalUniformesEpis)}</td>
+                                </tr>
+                                <tr className="border-b border-slate-150 hover:bg-slate-50 bg-white">
+                                  <td className="px-6 py-3 pl-8 text-slate-700 font-bold">2) Materiais e produtos de limpeza</td>
+                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
+                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
+                                  <td className="px-6 py-3 text-right font-bold text-slate-850 border-l border-slate-100">{formatCurrency(totalMateriaisLimpeza)}</td>
+                                </tr>
+                                <tr className="border-b border-slate-150 hover:bg-slate-50 bg-white">
+                                  <td className="px-6 py-3 pl-8 text-slate-700 font-bold">3) Máquinas e equipamentos</td>
+                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
+                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
+                                  <td className="px-6 py-3 text-right font-bold text-slate-850 border-l border-slate-100">{formatCurrency(totalMaquinasEquip)}</td>
+                                </tr>
+                                <tr className="border-b border-slate-150 hover:bg-slate-50 bg-white">
+                                  <td className="px-6 py-3 pl-8 text-slate-700 font-bold">4) Descartáveis</td>
+                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
+                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
+                                  <td className="px-6 py-3 text-right font-bold text-slate-850 border-l border-slate-100">{formatCurrency(totalDescartaveis)}</td>
+                                </tr>
+                                <tr className="border-b border-slate-150 hover:bg-slate-50 bg-white">
+                                  <td className="px-6 py-3 pl-8 text-slate-700 font-bold">5) Serviços (Descriminar)</td>
+                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
+                                  <td className="px-6 py-3 text-center text-slate-400">-</td>
+                                  <td className="px-6 py-3 text-right font-bold text-slate-850 border-l border-slate-100">{formatCurrency(totalServicos)}</td>
+                                </tr>
+
+                                {/* TOTAL DO MONTANTE B Subtotal Row */}
+                                <tr className="bg-[#11382D] text-white font-black text-[10px] uppercase tracking-wider border-b border-slate-200 shadow-inner">
+                                  <td colSpan={3} className="px-6 py-3">Total do Montante "B"</td>
+                                  <td className="px-6 py-3 text-right text-[10.5px] border-l border-emerald-950">{formatCurrency(totalB)}</td>
+                                </tr>
+
+                                {/* TOTAL DOS MONTANTES DIRETOS (A + B) Grand Total Row */}
+                                <tr className="bg-slate-200 text-slate-850 font-black text-[10.5px] uppercase tracking-wider border-y border-slate-350 shadow-sm">
+                                  <td className="px-6 py-3.5">Total dos Montantes Diretos (A + B)</td>
+                                  <td className="px-6 py-3.5 text-center text-slate-400">-</td>
+                                  <td className="px-6 py-3.5 text-center text-slate-400">-</td>
+                                  <td className="px-6 py-3.5 text-right text-[11px] border-l border-slate-300">
+                                    {formatCurrency(
+                                      (versao?.resultado?.items?.reduce((acc: number, i: any) => acc + ((i.detalhes?.blocoA || 0) * i.quantidade), 0) || 0) + totalB
+                                    )}
+                                  </td>
+                                </tr>
+                              </>
+                            );
+                          })()}
                         </tbody>
                       </table>
                     </div>
