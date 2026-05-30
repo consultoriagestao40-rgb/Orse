@@ -1101,57 +1101,173 @@ return (
                 )}
 
                 {/* Sub-Aba 9: Resumo e Formação do Preço */}
-                {activeFpvTab === 'resumo' && (
-                  <div className="space-y-6">
-                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest border-b pb-3 flex items-center gap-2">
-                      <Info size={16} className="text-emerald-600" /> Resumo FPV e Preço Proposto
-                    </h3>
+                {activeFpvTab === 'resumo' && (() => {
+                  const fc = formatCurrency;
+                  const divisorTributos = versao?.resultado?.divisor || 1;
+                  const txAdm = (fullProposta.premissas?.taxaAdm || 0) / 100;
+                  const txLucro = (fullProposta.premissas?.margemLucro || 0) / 100;
 
-                    {/* Preço de Venda em destaque */}
-                    <div className="bg-[#1B4D3E] text-white p-8 rounded-3xl text-center space-y-2 border border-[#13382D] shadow-xl relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300 relative z-10">Valor Total Mensal Proposto</span>
-                      <h2 className="text-3xl md:text-5xl font-black relative z-10 tracking-tight">
-                        {formatCurrency(versao?.resultado?.valorTotalMensal || doc.valorTotal || 0)}
-                      </h2>
-                      <p className="text-[9.5px] text-slate-300/80 font-bold uppercase tracking-wider pt-2 relative z-10">
-                        * Contempla todos os encargos, tributos indiretos e taxas operacionais aplicadas.
-                      </p>
-                    </div>
+                  const normalizeText = (text: string) => {
+                    if (!text) return "";
+                    return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+                  };
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                      <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-3">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Margens Operacionais</span>
-                        <div className="space-y-2 text-xs">
-                          <div className="flex justify-between font-bold">
-                            <span className="text-slate-600">Resultado Lucro Bruto:</span>
-                            <span className="text-emerald-800">{formatCurrency(versao?.resultado?.dre?.margemBruta || 0)}</span>
-                          </div>
-                          <div className="flex justify-between font-bold">
-                            <span className="text-slate-600">Alíquota Média:</span>
-                            <span className="text-slate-800">{(fullProposta.premissas?.margemLucro || 0).toFixed(2)}%</span>
-                          </div>
+                  const isLocado = (desc: string) => {
+                    if (!desc) return false;
+                    const normalized = normalizeText(desc);
+                    return normalized.includes('locado') || normalized.includes('locada') || normalized.includes('locacao') || normalized.includes('locaco') || normalized.includes('locação');
+                  };
+
+                  const detalheMaquinas = fullProposta.insumos?.detalheMaquinas || [];
+                  const totalMaquinasLocadas = detalheMaquinas
+                    .filter((item: any) => isLocado(item.descricao))
+                    .reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
+                  const totalMaquinasNaoLocadas = detalheMaquinas
+                    .filter((item: any) => !isLocado(item.descricao))
+                    .reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
+
+                  const isSpot = fullProposta.cliente?.tipoProposta === 'SPOT' || fullProposta.tipoItem === 'SPOT' || versao?.resultado?.items?.some((i: any) => i.tipoItem === 'SPOT');
+
+                  // Função auxiliar para aplicar a cascata solicitada a um custo direto
+                  const applyCascata = (custo: any) => {
+                    const cD = Number(custo) || 0;
+                    const comAdm = cD * (1 + txAdm);
+                    const comLucro = comAdm * (1 + txLucro);
+                    return divisorTributos > 0 ? (comLucro / divisorTributos) : comLucro;
+                  };
+
+                  return (
+                    <div className="space-y-8 animate-fadeIn">
+                      <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest border-b pb-3 flex items-center gap-2">
+                        <Info size={16} className="text-emerald-600" /> Resumo FPV e Preço Proposto
+                      </h3>
+
+                      {/* BLOCO 1: MÃO DE OBRA */}
+                      <div className="bg-white border border-slate-200 rounded-none shadow-sm overflow-hidden">
+                        <div className="bg-[#1B4D3E] px-6 py-3.5 flex items-center gap-2">
+                          <UserCheck size={16} className="text-emerald-300" />
+                          <h2 className="text-[10px] font-black text-white uppercase tracking-widest">1) Mão de Obra — Quadro de Colaboradores</h2>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left border-collapse text-xs text-slate-800">
+                            <thead>
+                              <tr className="bg-[#1B4D3E] text-white text-[9.5px] font-black uppercase border-t border-emerald-900 border-opacity-40">
+                                <th className="px-6 py-2.5 w-16 text-center">Item</th>
+                                <th className="px-6 py-2.5">Descrição — Mão de Obra</th>
+                                <th className="px-6 py-2.5 text-center w-24">Qtd.</th>
+                                <th className="px-6 py-2.5 text-right w-36">Preço Unit. Venda</th>
+                                <th className="px-6 py-2.5 text-right w-40">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {fullProposta.equipe.length === 0 ? (
+                                <tr>
+                                  <td colSpan={5} className="px-6 py-8 text-center text-slate-400 italic bg-white">
+                                    Nenhum colaborador cadastrado nesta proposta.
+                                  </td>
+                                </tr>
+                              ) : (
+                                fullProposta.equipe.map((p: any, idx: number) => {
+                                  const itemRes = versao?.resultado?.items?.find((x: any) => x.id === p.id);
+                                  const precoVendaItem = itemRes?.precoVenda || 0;
+                                  const isSpotItem = p.tipoItem === 'SPOT';
+                                  const qty = isSpotItem ? (p.quantidadeDemanda || 1) : (p.quantidade || 1);
+                                  const precoUnitario = isSpotItem ? (precoVendaItem / qty) : (p.quantidade > 0 ? precoVendaItem / p.quantidade : 0);
+                                  return (
+                                    <tr key={p.id} className={`border-b border-slate-200 border-dotted hover:bg-slate-50/50 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}`}>
+                                      <td className="px-6 py-2 text-center font-bold text-slate-455">{idx + 1}</td>
+                                      <td className="px-6 py-2 font-bold text-slate-700">{p.nomeCargo}</td>
+                                      <td className="px-6 py-2 text-center font-black text-slate-800">{qty}</td>
+                                      <td className="px-6 py-2 text-right font-medium text-slate-600">{fc(precoUnitario)}</td>
+                                      <td className="px-6 py-2 text-right font-black bg-emerald-50/30 text-[#1B4D3E] border-l border-slate-100">{fc(precoVendaItem)}</td>
+                                    </tr>
+                                  );
+                                })
+                              )}
+                            </tbody>
+                            <tfoot>
+                              <tr className="bg-[#1B4D3E] text-white font-black text-[9.5px]">
+                                <td colSpan={4} className="px-6 py-3.5 text-right uppercase tracking-wider">Subtotal Mão de Obra (Preço de Venda Final)</td>
+                                <td className="px-6 py-3.5 text-right text-emerald-350 border-l border-emerald-950 font-black">
+                                  {fc(versao?.resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0)}
+                                </td>
+                              </tr>
+                            </tfoot>
+                          </table>
                         </div>
                       </div>
 
-                      <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-3">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Impostos Totais Faturados</span>
-                        <div className="space-y-2 text-xs">
-                          <div className="flex justify-between font-bold">
-                            <span className="text-slate-600">Valor Acumulado de Impostos:</span>
-                            <span className="text-red-700">{formatCurrency(versao?.resultado?.dre?.impostos || 0)}</span>
-                          </div>
-                          <div className="flex justify-between font-bold">
-                            <span className="text-slate-600">Alíquota Efetiva:</span>
-                            <span className="text-slate-800">
-                              {((fullProposta.premissas?.tributos || []).reduce((acc: number, t: any) => acc + (t.percent || 0), 0)).toFixed(2)}%
-                            </span>
-                          </div>
+                      {/* BLOCO 2: INSUMOS */}
+                      <div className="bg-white border border-slate-200 rounded-none shadow-sm overflow-hidden">
+                        <div className="bg-slate-700 px-6 py-3.5 flex items-center gap-2">
+                          <ClipboardList size={16} className="text-slate-350" />
+                          <h2 className="text-[10px] font-black text-white uppercase tracking-widest">2) Materiais, Equipamentos e Insumos</h2>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left border-collapse text-xs text-slate-800">
+                            <thead>
+                              <tr className="bg-slate-100 text-slate-600 text-[9.5px] font-black uppercase border-b border-slate-200">
+                                <th className="px-6 py-2.5 w-16 text-center">Item</th>
+                                <th className="px-6 py-2.5">Descrição</th>
+                                <th className="px-6 py-2.5 text-right w-48">Preço de Venda (R$)</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/50 bg-white">
+                                <td className="px-6 py-2.5 text-center font-bold text-slate-455">2</td>
+                                <td className="px-6 py-2.5 font-bold text-slate-700">Materiais e produtos de limpeza</td>
+                                <td className="px-6 py-2.5 text-right font-black text-slate-800 bg-emerald-50/10">{fc(applyCascata(fullProposta.insumos?.materiais))}</td>
+                              </tr>
+                              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/50 bg-white">
+                                <td className="px-6 py-2.5 text-center font-bold text-slate-455">3</td>
+                                <td className="px-6 py-2.5 font-bold text-slate-700">Máquinas e equipamentos</td>
+                                <td className="px-6 py-2.5 text-right font-black text-slate-800 bg-emerald-50/10">{fc(applyCascata(isSpot ? totalMaquinasNaoLocadas : fullProposta.insumos?.maquinas))}</td>
+                              </tr>
+                              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/50 bg-white">
+                                <td className="px-6 py-2.5 text-center font-bold text-slate-455">4</td>
+                                <td className="px-6 py-2.5 font-bold text-slate-700">Descartáveis</td>
+                                <td className="px-6 py-2.5 text-right font-black text-slate-800 bg-emerald-50/10">{fc(applyCascata(fullProposta.insumos?.descartaveis))}</td>
+                              </tr>
+                              <tr className="border-b border-slate-200 border-dotted hover:bg-slate-50/50 bg-white">
+                                <td className="px-6 py-2.5 text-center font-bold text-slate-455">5</td>
+                                <td className="px-6 py-2.5 font-bold text-slate-700 border-b border-slate-200">
+                                  {isSpot ? 'Equipamentos Locados' : `Serviços ${fullProposta.insumos?.servicosDescricao ? `(${fullProposta.insumos?.servicosDescricao})` : ''}`}
+                                </td>
+                                <td className="px-6 py-2.5 text-right font-black text-slate-800 bg-emerald-50/10">
+                                  {fc(applyCascata(isSpot ? totalMaquinasLocadas : fullProposta.insumos?.servicos))}
+                                </td>
+                              </tr>
+                            </tbody>
+                            <tfoot>
+                              <tr className="bg-slate-700 text-white font-black text-[9.5px]">
+                                <td colSpan={2} className="px-6 py-3.5 text-right uppercase tracking-wider">Subtotal Materiais e Insumos (Preço de Venda Final)</td>
+                                <td className="px-6 py-3.5 text-right text-emerald-350 border-l border-slate-800 font-black">
+                                  {fc(applyCascata(
+                                    Number(fullProposta.insumos?.materiais || 0) + 
+                                    Number(isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : fullProposta.insumos?.maquinas || 0) + 
+                                    Number(fullProposta.insumos?.descartaveis || 0) + 
+                                    Number(isSpot ? 0 : fullProposta.insumos?.servicos || 0)
+                                  ))}
+                                </td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* BLOCO TOTAL GERAL */}
+                      <div className="bg-[#1B4D3E] p-8 rounded-none border-t-4 border-emerald-400 flex flex-col sm:flex-row justify-between items-center gap-6 shadow-lg">
+                        <div className="text-white text-left">
+                          <h3 className="text-sm font-black uppercase tracking-widest text-emerald-300 mb-1">Total Geral da Proposta</h3>
+                          <p className="text-[10px] font-bold text-emerald-100/60 uppercase">Mão de Obra + Insumos Globais — Valor Final de Venda</p>
+                        </div>
+                        <div className="text-4xl md:text-5xl font-black text-emerald-350 tracking-tighter">
+                          {fc(versao?.resultado?.faturamentoBruto || doc.valorTotal || 0)}
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
               </div>
             </div>
