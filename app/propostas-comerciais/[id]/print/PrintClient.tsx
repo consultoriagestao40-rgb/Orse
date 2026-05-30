@@ -126,7 +126,7 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
               📥 Instruções para Exportar em Alta Qualidade (PDF)
             </h3>
             <div className="text-xs text-slate-600 leading-relaxed font-semibold space-y-3">
-              <p>Esta proposta comercial está utilizando uma **Apresentação Canva Premium integrada** para garantir o mais alto nível estético e de usabilidade.</p>
+              <p>Esta proposta comercial está utilizando uma **Apresentação Canva Premium integrada** vinculada à conta Canva <strong className="text-indigo-600">cristiano@grupojvsserv.com.br</strong> para garantir o mais alto nível estético e de usabilidade.</p>
               <p className="text-slate-500">Para salvar o arquivo como um **PDF de alta fidelidade** com fontes e imagens vetorizadas originais (sem as limitações de margem ou quebra de página do navegador):</p>
               
               <div className="bg-slate-50 border border-slate-150 rounded-2xl p-5 space-y-2">

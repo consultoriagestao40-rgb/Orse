@@ -1161,13 +1161,17 @@ export default function DocumentoPropostaDetail() {
                       </div>
 
                       <div className="col-span-12 md:col-span-4 bg-slate-50 border border-slate-150 rounded-3xl p-5 flex flex-col justify-center items-center text-center">
-                        <div className="w-14 h-14 bg-white text-emerald-700 rounded-full flex items-center justify-center shadow-sm mb-3 shrink-0 border border-slate-100">
+                        <div className="w-14 h-14 bg-white text-[#1B4D3E] rounded-full flex items-center justify-center shadow-sm mb-3 shrink-0 border border-slate-100">
                           <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12.9 2h-1.8C6.3 2 2.2 6.1 2.2 11.2v1.6c0 5.1 4.1 9.2 8.9 9.2h1.8c4.8 0 8.9-4.1 8.9-9.2v-1.6c0-5.1-4.1-9.2-8.9-9.2zm-2.4 15.6H8.7v-2.2H6.9v-1.8h1.8v-3.6H6.9V8.2h1.8V6h1.8v2.2h1.8v1.8H8.7v3.6h1.8v2.2zM17.1 12H12v-1.8h5.1V12zm0-3.6H12V6.6h5.1v1.8z" />
                           </svg>
                         </div>
                         <h5 className="text-[11px] font-black text-slate-800 uppercase tracking-wider">Apresentação Ativa</h5>
-                        <p className="text-[9px] text-slate-400 font-bold uppercase leading-relaxed mt-1">Ao ativar, o visualizador em tela cheia do Canva com transições nativas será renderizado na área pública do cliente, mantendo 100% da fidelidade e fontes originais.</p>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase leading-relaxed mt-1 mb-2.5">Ao ativar, o visualizador em tela cheia do Canva com transições nativas será renderizado na área pública do cliente, mantendo 100% da fidelidade e fontes originais.</p>
+                        <div className="bg-[#1b4d3e]/10 border border-[#1b4d3e]/15 px-3 py-1.5 rounded-xl flex items-center gap-1.5 w-full justify-center">
+                          <span className="w-1.5 h-1.5 bg-[#10b981] rounded-full animate-pulse animate-duration-1000" />
+                          <span className="text-[8px] text-[#1b4d3e] font-black uppercase tracking-wider">Conta Canva: cristiano@grupojvsserv.com.br</span>
+                        </div>
                       </div>
                     </div>
                   )}
