@@ -2553,6 +2553,27 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                          const txAdm = (proposta.premissas?.taxaAdm || 0) / 100;
                          const txLucro = (proposta.premissas?.margemLucro || 0) / 100;
                          
+                         const isSpot = proposta.equipe?.some((e: any) => e.tipoItem === 'SPOT');
+                          
+                         const normalizeText = (text: string) => {
+                           if (!text) return "";
+                           return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+                         };
+
+                         const isLocado = (desc: string) => {
+                           if (!desc) return false;
+                           const normalized = normalizeText(desc);
+                           return normalized.includes('locado') || normalized.includes('locada') || normalized.includes('locacao') || normalized.includes('locaco') || normalized.includes('locação');
+                         };
+
+                         const detalheMaquinas = proposta.insumos?.detalheMaquinas || [];
+                         const totalMaquinasLocadas = detalheMaquinas
+                           .filter((item: any) => isLocado(item.descricao))
+                           .reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
+                         const totalMaquinasNaoLocadas = detalheMaquinas
+                           .filter((item: any) => !isLocado(item.descricao))
+                           .reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
+
                          const applyCascata = (custo: any) => {
                            const cD = Number(custo) || 0;
                            const comAdm = cD * (1 + txAdm);
@@ -2563,9 +2584,9 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                          const maoDeObraSubtotal = resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0;
                          const insumosSubtotal = applyCascata(
                            Number(proposta.insumos?.materiais || 0) + 
-                           Number(proposta.insumos?.maquinas || 0) + 
+                           Number(isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : proposta.insumos?.maquinas || 0) + 
                            Number(proposta.insumos?.descartaveis || 0) + 
-                           Number(proposta.insumos?.servicos || 0)
+                           Number(isSpot ? 0 : proposta.insumos?.servicos || 0)
                          );
 
                          const renderInsumoRow = (label: string, value: number) => {
