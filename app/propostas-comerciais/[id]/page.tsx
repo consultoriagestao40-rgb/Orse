@@ -1102,11 +1102,107 @@ export default function DocumentoPropostaDetail() {
                   </div>
                 </div>
 
-                {/* CORPO: EDITOR VISUAL CANVA FULL WIDTH (GRID 12 COLUNAS) */}
-                <div className="grid grid-cols-12 gap-6 items-start">
+                {/* INTERFACE DO CANVA INTEGRADO (EMBED) */}
+                <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-indigo-100">
+                        <Sparkles size={22} className="animate-pulse" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">Apresentação Canva Premium</h4>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Monte seus slides no Canva com usabilidade profissional e apresente-os com fidelidade 100% nativa.</p>
+                      </div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={!!configApresentacao.useCanva}
+                        onChange={(e) => setConfigApresentacao({ ...configApresentacao, useCanva: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1B4D3E]"></div>
+                      <span className="ml-2.5 text-[10px] font-black text-slate-600 uppercase tracking-wider">Ativar Canva</span>
+                    </label>
+                  </div>
+
+                  {configApresentacao.useCanva && (
+                    <div className="grid grid-cols-12 gap-6 pt-4 border-t border-slate-100 animate-fadeIn">
+                      <div className="col-span-12 md:col-span-8 space-y-4 text-left">
+                        <div className="space-y-1.5">
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Código de Incorporação (Embed HTML) ou Link do Canva</label>
+                          <input
+                            type="text"
+                            placeholder="Cole o link inteligente (https://www.canva.com/design/.../view?embed) ou o código iframe do Canva..."
+                            value={configApresentacao.canvaEmbedUrl || ''}
+                            onChange={(e) => {
+                              let val = e.target.value;
+                              // Se colou código iframe, extrair a URL do atributo src
+                              if (val.includes('<iframe')) {
+                                const match = val.match(/src="([^"]+)"/);
+                                if (match && match[1]) {
+                                  val = match[1];
+                                }
+                              }
+                              setConfigApresentacao({ ...configApresentacao, canvaEmbedUrl: val });
+                            }}
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all text-slate-700 font-sans"
+                          />
+                        </div>
+                        <div className="bg-slate-50 border border-slate-150 rounded-2xl p-4 text-[9.5px] text-slate-500 font-semibold leading-relaxed space-y-2">
+                          <p className="font-bold text-slate-700">🎨 Como obter o link correto no Canva:</p>
+                          <ol className="list-decimal pl-4 space-y-1">
+                            <li>No editor do <strong>Canva</strong>, clique em <strong>Compartilhar</strong> (canto superior direito);</li>
+                            <li>Clique no botão <strong>Mais</strong> (...) e escolha a opção <strong>Incorporar (&lt;/&gt;)</strong>;</li>
+                            <li>Clique em <strong>Incorporar</strong> e copie o link rotulado como <strong>Link de incorporação inteligente</strong>;</li>
+                            <li>Cole o link acima e clique em <strong>Salvar Alterações</strong> no topo da página!</li>
+                          </ol>
+                        </div>
+                      </div>
+
+                      <div className="col-span-12 md:col-span-4 bg-slate-50 border border-slate-150 rounded-3xl p-5 flex flex-col justify-center items-center text-center">
+                        <div className="w-14 h-14 bg-white text-emerald-700 rounded-full flex items-center justify-center shadow-sm mb-3 shrink-0 border border-slate-100">
+                          <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12.9 2h-1.8C6.3 2 2.2 6.1 2.2 11.2v1.6c0 5.1 4.1 9.2 8.9 9.2h1.8c4.8 0 8.9-4.1 8.9-9.2v-1.6c0-5.1-4.1-9.2-8.9-9.2zm-2.4 15.6H8.7v-2.2H6.9v-1.8h1.8v-3.6H6.9V8.2h1.8V6h1.8v2.2h1.8v1.8H8.7v3.6h1.8v2.2zM17.1 12H12v-1.8h5.1V12zm0-3.6H12V6.6h5.1v1.8z" />
+                          </svg>
+                        </div>
+                        <h5 className="text-[11px] font-black text-slate-800 uppercase tracking-wider">Apresentação Ativa</h5>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase leading-relaxed mt-1">Ao ativar, o visualizador em tela cheia do Canva com transições nativas será renderizado na área pública do cliente, mantendo 100% da fidelidade e fontes originais.</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {configApresentacao.useCanva && configApresentacao.canvaEmbedUrl ? (
+                  /* PRÉ-VISUALIZAÇÃO DO CANVA EM TEMPO REAL */
+                  <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4 animate-fadeIn">
+                    <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                        👁️ Pré-visualização do Canva
+                      </h4>
+                      <a
+                        href={configApresentacao.canvaEmbedUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[9.5px] font-black text-[#1B4D3E] hover:underline uppercase tracking-wider"
+                      >
+                        Abrir em nova guia ↗
+                      </a>
+                    </div>
+                    <div className="w-full aspect-[16/9] bg-slate-900 rounded-2xl overflow-hidden shadow-inner relative border border-slate-250">
+                      <iframe
+                        src={configApresentacao.canvaEmbedUrl}
+                        loading="lazy"
+                        className="absolute inset-0 w-full h-full border-none"
+                        allowFullScreen
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  /* SE NÃO FOR CANVA, RENDERIZAR O WORKSPACE TRADICIONAL */
+                  <div className="grid grid-cols-12 gap-6 items-start">
                   
                   {/* ESQUERDA: O PAINEL DUPLO ESTILO CANVA (COL-3) */}
-                  <div className="col-span-12 lg:col-span-3 border border-slate-200 bg-white rounded-3xl overflow-hidden shadow-xs flex max-h-[660px] min-h-[580px]">
                     
                     {/* FAR-LEFT TOOLBAR (BARRA ESCURA ESTREITA) */}
                     <div className="w-16 bg-slate-900 flex flex-col items-center py-4 space-y-5 text-white shrink-0">
@@ -2799,9 +2895,9 @@ export default function DocumentoPropostaDetail() {
                   </div>
 
                 </div>
-
-              </div>
-            ) : (
+              )}
+            </div>
+          ) : (
               /* EDITOR CONTRATO A4 TRADICIONAL */
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 

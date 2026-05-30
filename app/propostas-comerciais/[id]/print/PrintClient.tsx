@@ -11,6 +11,7 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
   const [printed, setPrinted] = useState(false);
 
   const isSlide = !!doc.templateOrigem?.nome?.toLowerCase()?.includes('apresenta') || doc.tipo === 'SLIDE_DECK';
+  const useCanva = isSlide && !!doc.configApresentacao?.useCanva && !!doc.configApresentacao?.canvaEmbedUrl;
 
   // Merge fullProposta com as seções do documento comercial
   const versao = fullProposta?.availableVersions?.[0];
@@ -53,14 +54,14 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
 
   // Para slides: countdown de 3s e auto-print
   useEffect(() => {
-    if (!isSlide) return;
+    if (!isSlide || useCanva) return;
     if (countdown <= 0) {
       handlePrint();
       return;
     }
     const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
     return () => clearTimeout(timer);
-  }, [isSlide, countdown]);
+  }, [isSlide, countdown, useCanva]);
 
   if (!isSlide) {
     return (
@@ -71,6 +72,87 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
           empresaEmissora={doc.empresaEmissora}
         />
       </>
+    );
+  }
+
+  // RENDER DO CANVA EMBEDDED PRINT PREVIEW
+  if (useCanva) {
+    return (
+      <div className="bg-slate-50 w-full min-h-screen text-slate-800 font-sans print:bg-white select-none">
+        
+        {/* Banner de Impressão do Canva - Oculto na Impressão */}
+        <div className="print:hidden fixed top-0 left-0 right-0 z-[999999] bg-[#1b4d3e] text-white shadow-2xl">
+          <div className="max-w-5xl mx-auto flex items-center justify-between px-6 py-4 gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+              </div>
+              <div>
+                <div className="font-black text-sm uppercase tracking-wider leading-tight">Apresentação Canva Premium</div>
+                <div className="text-white/70 text-[10px] uppercase font-bold tracking-widest mt-0.5">Slides carregados diretamente do Canva com alta qualidade.</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                onClick={() => window.history.back()}
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-bold transition-all border border-white/15 uppercase tracking-wider"
+              >
+                ← Voltar
+              </button>
+              <a
+                href={doc.configApresentacao.canvaEmbedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-2 bg-[#10b981] hover:bg-emerald-600 text-white rounded-xl text-xs font-black transition-all shadow-lg shadow-emerald-700/20 flex items-center gap-2 uppercase tracking-widest"
+              >
+                Abrir no Canva ↗
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Espaçador para o banner fixo */}
+        <div className="print:hidden h-[80px]" />
+
+        {/* Corpo explicativo e Iframe no Navegador */}
+        <div className="max-w-5xl mx-auto px-4 py-10 space-y-6 print:p-0 print:m-0 print:space-y-0">
+          <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-md text-left print:hidden space-y-4">
+            <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
+              📥 Instruções para Exportar em Alta Qualidade (PDF)
+            </h3>
+            <div className="text-xs text-slate-600 leading-relaxed font-semibold space-y-3">
+              <p>Esta proposta comercial está utilizando uma **Apresentação Canva Premium integrada** para garantir o mais alto nível estético e de usabilidade.</p>
+              <p className="text-slate-500">Para salvar o arquivo como um **PDF de alta fidelidade** com fontes e imagens vetorizadas originais (sem as limitações de margem ou quebra de página do navegador):</p>
+              
+              <div className="bg-slate-50 border border-slate-150 rounded-2xl p-5 space-y-2">
+                <ol className="list-decimal pl-5 space-y-2 text-slate-600 font-bold uppercase tracking-wide text-[9px]">
+                  <li>Clique no botão <strong className="text-indigo-600">"Abrir no Canva ↗"</strong> acima para acessar a apresentação;</li>
+                  <li>No menu superior do Canva, clique no botão <strong className="text-slate-800">"Compartilhar"</strong> ou no ícone de download;</li>
+                  <li>Selecione a opção <strong className="text-slate-800">"Baixar"</strong>;</li>
+                  <li>Escolha o formato <strong className="text-indigo-600">"PDF Padrão"</strong> ou <strong className="text-indigo-600">"PDF para Impressão"</strong>;</li>
+                  <li>Clique em <strong>Baixar</strong> para obter a versão final em alta definição!</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
+          {/* Pré-visualização Interativa do Iframe */}
+          <div className="w-full aspect-[16/9] bg-slate-950 overflow-hidden relative rounded-3xl shadow-2xl border border-slate-200 shadow-indigo-950/5 print:border-none print:shadow-none print:rounded-none">
+            <iframe
+              src={doc.configApresentacao.canvaEmbedUrl}
+              loading="lazy"
+              className="absolute inset-0 w-full h-full border-none p-0 m-0"
+              allowFullScreen
+              allow="fullscreen"
+            />
+          </div>
+        </div>
+      </div>
     );
   }
 

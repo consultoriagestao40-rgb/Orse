@@ -222,24 +222,66 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
 
       {/* RENDERIZADOR DO MODELO */}
       {isSlide ? (
-        <div className="w-full">
-          <div className="print:hidden">
-            <PropostaApresentacao 
-              proposta={mergedProposta} 
-              resultado={versao?.resultado} 
-              empresaEmissora={doc.empresaEmissora}
-              presentationMode={presentationMode}
-              setPresentationMode={setPresentationMode}
-            />
+        doc.configApresentacao?.useCanva && doc.configApresentacao?.canvaEmbedUrl ? (
+          /* APRESENTAÇÃO INTEGRADA DO CANVA */
+          <div className="w-full max-w-6xl mx-auto px-4 py-8 space-y-6 animate-fadeIn">
+            {/* Banner de Instrução do Canva - oculto na impressão */}
+            <div className="bg-[#1B4D3E]/30 border border-emerald-500/20 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-3 backdrop-blur-md print:hidden">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center shrink-0">
+                  <CheckCircle size={16} />
+                </div>
+                <div>
+                  <h4 className="text-[11px] font-black uppercase tracking-wider text-emerald-200">Apresentação Canva Premium Ativa</h4>
+                  <p className="text-[9.5px] text-slate-400 font-bold uppercase mt-0.5">Slides carregados diretamente do Canva com fidelidade 100% original.</p>
+                </div>
+              </div>
+              <a
+                href={doc.configApresentacao.canvaEmbedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white/10 hover:bg-white/20 text-white font-black text-[9px] uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all border border-white/15"
+              >
+                Tela Cheia ↗
+              </a>
+            </div>
+
+            {/* Iframe Responsivo 16:9 */}
+            <div className="w-full aspect-[16/9] bg-slate-950 overflow-hidden relative rounded-3xl shadow-2xl border border-white/10 shadow-emerald-950/5">
+              <iframe
+                src={doc.configApresentacao.canvaEmbedUrl}
+                loading="lazy"
+                className="absolute inset-0 w-full h-full border-none p-0 m-0"
+                allowFullScreen
+                allow="fullscreen"
+              />
+            </div>
+
+            {/* Rodapé explicativo para download de PDF - rodapé de apoio */}
+            <div className="text-center text-[10px] text-slate-500 font-bold uppercase tracking-wider print:hidden py-2">
+              💡 Para salvar como PDF com qualidade gráfica total, use o menu de compartilhamento do Canva ou clique no botão de impressão.
+            </div>
           </div>
-          <div className="hidden print:block">
-            <PropostaApresentacaoPrint 
-              proposta={mergedProposta} 
-              resultado={versao?.resultado} 
-              empresaEmissora={doc.empresaEmissora}
-            />
+        ) : (
+          <div className="w-full">
+            <div className="print:hidden">
+              <PropostaApresentacao 
+                proposta={mergedProposta} 
+                resultado={versao?.resultado} 
+                empresaEmissora={doc.empresaEmissora}
+                presentationMode={presentationMode}
+                setPresentationMode={setPresentationMode}
+              />
+            </div>
+            <div className="hidden print:block">
+              <PropostaApresentacaoPrint 
+                proposta={mergedProposta} 
+                resultado={versao?.resultado} 
+                empresaEmissora={doc.empresaEmissora}
+              />
+            </div>
           </div>
-        </div>
+        )
       ) : (
         <div className="max-w-[960px] mx-auto py-10 px-4 print:py-0">
           <DocumentoA4 
