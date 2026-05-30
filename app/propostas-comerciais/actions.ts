@@ -106,6 +106,51 @@ export async function createDocumentoProposta(propostaId: string, templateId: st
     if (!template) throw new Error('Template não encontrado');
 
     const user = await getLoggedUser();
+    
+    let configApresentacao: any = null;
+
+    if (template.tipo === 'SLIDE_DECK') {
+      // Busca o primeiro template A4 para carregar as cláusulas de contrato padrão
+      const a4Template = await prisma.templatePropostaComercial.findFirst({
+        where: { 
+          tipo: 'A4',
+          tenantId: user?.tenantId || null
+        },
+        include: { secoes: { orderBy: { ordem: 'asc' } } }
+      }) || await prisma.templatePropostaComercial.findFirst({
+        where: { tipo: 'A4' },
+        include: { secoes: { orderBy: { ordem: 'asc' } } }
+      });
+
+      const defaultClausulas = a4Template && a4Template.secoes.length > 0
+        ? a4Template.secoes.map((s: any) => ({ titulo: s.titulo, texto: s.texto, ordem: s.ordem }))
+        : [
+            { ordem: 1, titulo: '1. APRESENTAÇÃO', texto: 'Apresentamos nossa proposta para prestação de serviços terceirizados...\n\n[ITENS]' },
+            { ordem: 2, titulo: '2. ESCOPO DO SERVIÇO', texto: 'Fornecimento de mão de obra capacitada...' },
+            { ordem: 3, titulo: '3. VALOR DO INVESTIMENTO', texto: 'O investimento mensal será de [VALOR_TOTAL].\n\n[TABELA]\n\n[TERMO_ACEITE]' }
+          ];
+
+      configApresentacao = {
+        clausulasA4: defaultClausulas,
+        condicoesCliente: fpv.client?.condicoesCliente || [
+          'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
+          'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
+          'Próximo reajuste Fevereiro/2026.'
+        ],
+        condicoesColaboradores: fpv.client?.condicoesColaboradores || [
+          'Vale alimentação de R$900,00;',
+          'Cesta trimestral de assiduidade;',
+          '2 Vales transporte por dia.'
+        ],
+        quadroEfetivoSubtitulo: fpv.client?.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
+        quadroEfetivoClausulas: [
+          fpv.client?.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
+          fpv.client?.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
+          fpv.client?.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).'
+        ]
+      };
+    }
+
     // Cria o documento e clona as seções do template
     const doc = await prisma.documentoProposta.create({
       data: {
@@ -116,6 +161,7 @@ export async function createDocumentoProposta(propostaId: string, templateId: st
         tipo: template.tipo || 'A4',
         valorTotal,
         tenantId: user?.tenantId || null,
+        configApresentacao: configApresentacao,
         secoes: {
           create: template.secoes.map((secao: any) => ({
             titulo: secao.titulo,

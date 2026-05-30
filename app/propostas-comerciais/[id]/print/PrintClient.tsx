@@ -27,7 +27,9 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
     cliente: {
       ...(fullProposta?.cliente || {}),
       ...doc.client,
-      clausulasA4: doc.secoes?.map((s: any) => ({ titulo: s.titulo, texto: s.texto })) || [],
+      clausulasA4: doc.tipo === 'SLIDE_DECK' 
+        ? (doc.configApresentacao?.clausulasA4 || [])
+        : (doc.secoes?.map((s: any) => ({ titulo: s.titulo, texto: s.texto })) || []),
       ...(doc.configApresentacao ? {
         condicoesCliente: doc.configApresentacao.condicoesCliente,
         condicoesColaboradores: doc.configApresentacao.condicoesColaboradores,
@@ -150,6 +152,20 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
               allowFullScreen
               allow="fullscreen"
             />
+          </div>
+
+          {/* FICHA TÉCNICA, ESCOPO E TABELAS FINANCEIRAS DA FPV (DOCUMENTO A4 DINÂMICO PARA PRINT/PDF) */}
+          <div className="border-t border-slate-200 pt-8 print:border-none print:pt-0">
+            <div className="max-w-[960px] mx-auto bg-white rounded-3xl border border-slate-200 p-6 md:p-10 shadow-lg shadow-slate-100/40 print:shadow-none print:border-none print:p-0">
+              <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-6 text-center print:hidden flex items-center justify-center gap-2">
+                📄 Ficha Técnica, Escopo Comercial e Aceite (Dados FPV)
+              </h3>
+              <DocumentoA4 
+                proposta={mergedProposta} 
+                resultado={versao?.resultado} 
+                empresaEmissora={doc.empresaEmissora} 
+              />
+            </div>
           </div>
         </div>
       </div>

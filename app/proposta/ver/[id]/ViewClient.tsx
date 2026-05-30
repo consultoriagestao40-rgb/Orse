@@ -163,7 +163,9 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     cliente: {
       ...(fullProposta?.cliente || {}),
       ...doc.client,
-      clausulasA4: doc.secoes?.map((s: any) => ({ titulo: s.titulo, texto: s.texto })) || [],
+      clausulasA4: doc.tipo === 'SLIDE_DECK' 
+        ? (doc.configApresentacao?.clausulasA4 || [])
+        : (doc.secoes?.map((s: any) => ({ titulo: s.titulo, texto: s.texto })) || []),
       ...(doc.configApresentacao ? {
         condicoesCliente: doc.configApresentacao.condicoesCliente,
         condicoesColaboradores: doc.configApresentacao.condicoesColaboradores,
@@ -260,6 +262,20 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
             {/* Rodapé explicativo para download de PDF - rodapé de apoio */}
             <div className="text-center text-[10px] text-slate-500 font-bold uppercase tracking-wider print:hidden py-2">
               💡 Para salvar como PDF com qualidade gráfica total, use o menu de compartilhamento do Canva ou clique no botão de impressão.
+            </div>
+
+            {/* FICHA TÉCNICA, ESCOPO E TABELAS FINANCEIRAS DA FPV (DOCUMENTO A4 COMPLETO) */}
+            <div className="border-t border-slate-200 pt-8 print:border-none print:pt-0">
+              <div className="max-w-[960px] mx-auto bg-white rounded-3xl border border-slate-200 p-6 md:p-10 shadow-lg shadow-slate-100/40 print:shadow-none print:border-none print:p-0">
+                <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-6 text-center print:hidden flex items-center justify-center gap-2">
+                  📄 Ficha Técnica, Escopo Comercial e Aceite (Dados FPV)
+                </h3>
+                <DocumentoA4 
+                  proposta={mergedProposta} 
+                  resultado={versao?.resultado} 
+                  empresaEmissora={doc.empresaEmissora} 
+                />
+              </div>
             </div>
           </div>
         ) : (
