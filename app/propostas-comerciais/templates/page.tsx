@@ -858,7 +858,7 @@ export default function TemplatesPropostaPage() {
   const loadData = async () => {
     setLoading(true);
     const res = await getTemplatesProposta();
-    setTemplates(res || []);
+    setTemplates((res || []).filter((t: any) => t.tipo !== 'SLIDE_DECK'));
     setLoading(false);
   };
 
@@ -1030,7 +1030,7 @@ export default function TemplatesPropostaPage() {
                 />
 
                 {/* Tipo compacto */}
-                <div className="flex gap-0 bg-slate-100 p-0.5 rounded-lg border border-slate-200 shadow-sm">
+                <div className="hidden flex gap-0 bg-slate-100 p-0.5 rounded-lg border border-slate-200 shadow-sm">
                   <button
                     type="button"
                     onClick={() => {

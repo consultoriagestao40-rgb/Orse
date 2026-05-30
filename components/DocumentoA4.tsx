@@ -377,52 +377,9 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
     return (
       <div className="w-full text-slate-900 text-xs">
         <style dangerouslySetInnerHTML={{__html: `
-          /* Overrides globais para modelo sem bordas idêntico ao da minuta */
-          table, th, td {
-            border: none !important;
-          }
+           /* Mantém o alinhamento das tabelas original */
           table {
             width: 100% !important;
-          }
-          thead tr {
-            background: transparent !important;
-            color: #0f172a !important;
-            border-bottom: 2px solid #0f172a !important;
-          }
-          thead th {
-            color: #0f172a !important;
-            font-weight: 950 !important;
-            text-transform: uppercase !important;
-            padding: 8px 4px !important;
-          }
-          tbody tr {
-            background: transparent !important;
-            border-bottom: 1px solid #e2e8f0 !important;
-          }
-          tbody tr:hover {
-            background-color: #f8fafc !important;
-          }
-          tbody td {
-            padding: 8px 4px !important;
-          }
-          tfoot tr {
-            background: #f8fafc !important;
-            color: #0f172a !important;
-            border-top: 2px solid #0f172a !important;
-            font-weight: 900 !important;
-          }
-          tfoot td {
-            padding: 8px 4px !important;
-          }
-          .bg-slate-100 {
-            background-color: transparent !important;
-          }
-          .bg-slate-900 {
-            background-color: transparent !important;
-            color: #0f172a !important;
-          }
-          .text-white {
-            color: #0f172a !important;
           }
           
           /* Preservar a estilização do bloco de total premium */
