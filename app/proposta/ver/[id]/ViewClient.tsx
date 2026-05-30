@@ -182,7 +182,8 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   };
 
   const isSlide = !!doc.templateOrigem?.nome?.toLowerCase()?.includes('apresenta') || doc.tipo === 'SLIDE_DECK';
-  const hasCanva = !!doc.configApresentacao?.useCanva && !!doc.configApresentacao?.canvaEmbedUrl;
+  const canvaUrl = doc.configApresentacao?.canvaEmbedUrl || doc.configApresentacao?.clientTabs?.canvaEmbedUrl || '';
+  const hasCanva = !!canvaUrl;
 
   const navItems = [
     { id: 'apresentacao', label: '1. Apresentação Slides', icon: Presentation, show: tabsConfig.apresentacao && hasCanva },
@@ -282,50 +283,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   }, [activeClientTab]);
 
   return (
-    <div className="bg-slate-900 w-full min-h-screen text-white font-sans overflow-x-hidden pb-10 select-none">
-      
-      {/* HEADER DE STATUS & AÇÃO RÁPIDA (Comercial / Cliente) */}
-      <header className="bg-[#1B4D3E] border-b border-[#13382D] px-6 py-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 print:hidden relative z-50">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-white/10 rounded-xl">
-            <FileText size={18} className="text-white" />
-          </div>
-          <div>
-            <h1 className="text-sm font-black uppercase tracking-wider">
-              {doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Proposta Comercial'}
-            </h1>
-            <p className="text-[10px] text-emerald-200 font-bold uppercase tracking-widest mt-0.5">
-              FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')} · Versão v{versao?.versao || 1}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-end gap-3">
-          {approved ? (
-            <div className="bg-emerald-500/20 border border-emerald-500/40 px-4 py-2 rounded-xl flex items-center gap-2 text-xs font-black uppercase tracking-wider text-emerald-300">
-              <CheckCircle size={14} /> Proposta Aprovada
-            </div>
-          ) : (
-            <>
-              <button 
-                onClick={() => setShowNegotiationModal(true)}
-                className="bg-white/10 hover:bg-white/20 text-white font-black text-[10px] uppercase tracking-widest px-4 py-3 rounded-xl transition-all active:scale-[0.98] cursor-pointer border border-white/10"
-              >
-                Solicitar Ajustes
-              </button>
-              <button 
-                onClick={() => setShowApprovalModal(true)}
-                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-black text-[10px] uppercase tracking-widest px-5 py-3 rounded-xl shadow-lg shadow-emerald-500/10 transition-all active:scale-[0.98] cursor-pointer flex items-center gap-1.5"
-              >
-                <CheckCircle size={14} /> Aprovar Proposta
-              </button>
-            </>
-          )}
-        </div>
-      </header>
-
-      {/* WORKSPACE DIVIDIDO (SIDEBAR + MAIN CANVAS) */}
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row p-4 md:p-8 gap-6 print:p-0 print:m-0">
+    <div className="bg-[#FAFBFD] w-full min-h-screen text-slate-800 font-sans flex flex-col md:flex-row select-none">
         
         {/* SIDEBAR DE TABS DE NAVEGAÇÃO (ESTILO SEGUNDA FOTO - PREMIUM WHITE) */}
         <aside className="w-full md:w-80 shrink-0 bg-white border border-slate-200 rounded-3xl p-6 shadow-xl flex flex-col justify-between text-slate-800 print:hidden font-sans">
@@ -428,7 +386,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
                   </div>
                 </div>
                 <a
-                  href={doc.configApresentacao.canvaEmbedUrl}
+                  href={canvaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-white/10 hover:bg-white/20 text-white font-black text-[9px] uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all border border-white/15 cursor-pointer whitespace-nowrap"
@@ -440,7 +398,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
               {/* Iframe 16:9 */}
               <div className="w-full aspect-[16/9] bg-slate-950 overflow-hidden relative rounded-3xl shadow-2xl border border-white/10 shadow-emerald-950/5">
                 <iframe
-                  src={doc.configApresentacao.canvaEmbedUrl}
+                  src={canvaUrl}
                   loading="lazy"
                   className="absolute inset-0 w-full h-full border-none p-0 m-0"
                   allowFullScreen
@@ -992,7 +950,6 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
           )}
 
         </main>
-      </div>
 
       {/* BOTÃO FLUTUANTE DE IMPRESSÃO */}
       <button

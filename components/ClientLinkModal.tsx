@@ -33,6 +33,9 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
   const [minutaTemplateId, setMinutaTemplateId] = useState(
     configApresentacao?.clientTabs?.minutaTemplateId || ''
   );
+  const [canvaEmbedUrl, setCanvaEmbedUrl] = useState(
+    configApresentacao?.canvaEmbedUrl || ''
+  );
 
   // Carregar as minutas disponíveis no sistema
   useEffect(() => {
@@ -58,6 +61,8 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
     try {
       const newConfig = {
         ...(configApresentacao || {}),
+        useCanva: apresentacao && !!canvaEmbedUrl.trim(),
+        canvaEmbedUrl: canvaEmbedUrl.trim(),
         clientTabs: {
           apresentacao,
           proposta,
@@ -122,23 +127,49 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
           <div className="space-y-3">
             
             {/* 1. APRESENTAÇÃO CANVA */}
-            <label className={`flex items-start gap-4 p-4 border rounded-2xl cursor-pointer transition-all hover:bg-slate-50 select-none ${apresentacao ? 'border-indigo-500/30 bg-indigo-50/5' : 'border-slate-200 bg-white'}`}>
-              <input 
-                type="checkbox" 
-                className="mt-1 w-4 h-4 text-indigo-650 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer"
-                checked={apresentacao}
-                onChange={(e) => setApresentacao(e.target.checked)}
-              />
-              <div className="flex-1 space-y-1">
-                <div className="flex items-center gap-1.5 font-black text-xs uppercase tracking-wider text-slate-800">
-                  <Presentation size={14} className="text-indigo-600" />
-                  1. Apresentação (Slides / Canva)
+            <div className={`p-4 border rounded-2xl transition-all ${apresentacao ? 'border-indigo-500/30 bg-indigo-50/5' : 'border-slate-200 bg-white'}`}>
+              <label className="flex items-start gap-4 cursor-pointer select-none">
+                <input 
+                  type="checkbox" 
+                  className="mt-1 w-4 h-4 text-indigo-650 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer"
+                  checked={apresentacao}
+                  onChange={(e) => setApresentacao(e.target.checked)}
+                />
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center gap-1.5 font-black text-xs uppercase tracking-wider text-slate-800">
+                    <Presentation size={14} className="text-indigo-600" />
+                    1. Apresentação (Slides / Canva)
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
+                    Renderiza os slides widescreen incorporados do Canva com alta fidelidade gráfica.
+                  </p>
                 </div>
-                <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
-                  Renderiza os slides widescreen incorporados do Canva com alta fidelidade gráfica.
-                </p>
-              </div>
-            </label>
+              </label>
+
+              {apresentacao && (
+                <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+                    Código de Incorporação (Embed HTML) ou Link do Canva
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder="Cole o link inteligente (https://www.canva.com/design/.../view?embed) ou o código iframe do Canva..."
+                    value={canvaEmbedUrl}
+                    onChange={(e) => {
+                      let val = e.target.value;
+                      if (val.includes('<iframe')) {
+                        const match = val.match(/src="([^"]+)"/);
+                        if (match && match[1]) {
+                          val = match[1];
+                        }
+                      }
+                      setCanvaEmbedUrl(val);
+                    }}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                </div>
+              )}
+            </div>
 
             {/* 2. PROPOSTA COMERCIAL A4 */}
             <label className={`flex items-start gap-4 p-4 border rounded-2xl cursor-pointer transition-all hover:bg-slate-50 select-none ${proposta ? 'border-emerald-500/30 bg-emerald-50/5' : 'border-slate-200 bg-white'}`}>
