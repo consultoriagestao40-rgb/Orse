@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import numeroPorExtenso from 'numero-por-extenso';
 
 export default function DocumentoA4({ proposta, resultado, empresaEmissora, templates, onUpdateClausulas, onUpdateCliente, onUpdateItens, isPublicView = false }: { proposta: any, resultado: any, empresaEmissora: any, templates?: any[], onUpdateClausulas?: (c: any[]) => void, onUpdateCliente?: (c: any) => void, onUpdateItens?: (i: any[]) => void, isPublicView?: boolean }) {
   const [companyLogo, setCompanyLogo] = useState<string>(
@@ -211,7 +212,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
         </div>
         {totalGeral > 0 && (
           <div className="text-center text-[#1B4D3E] font-bold text-[10px] uppercase mb-12 tracking-wider">
-            ({require('numero-por-extenso').porExtenso(totalGeral, require('numero-por-extenso').estilo.monetario)})
+            ({numeroPorExtenso.porExtenso(totalGeral, numeroPorExtenso.estilo.monetario)})
           </div>
         )}
     </div>
@@ -272,7 +273,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
             </tr>
             <tr className="border-b border-slate-300 text-[10px] text-slate-800">
               <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Valor</td>
-              <td className="px-4 py-2 font-black text-slate-900">{fmt(totalGeral)} {totalGeral > 0 ? `(${require('numero-por-extenso').porExtenso(totalGeral, require('numero-por-extenso').estilo.monetario)})` : ''}</td>
+              <td className="px-4 py-2 font-black text-slate-900">{fmt(totalGeral)} {totalGeral > 0 ? `(${numeroPorExtenso.porExtenso(totalGeral, numeroPorExtenso.estilo.monetario)})` : ''}</td>
             </tr>
             <tr className="border-b border-slate-300 text-[10px] text-slate-800">
               <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Início</td>
