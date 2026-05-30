@@ -232,6 +232,12 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   const sumGroup = (g: any) => g ? Object.values(g).reduce((a: any, b: any) => a + Number(b), 0) as number : 0;
   const totalGeralEncargos = fullProposta?.encargos?.grupoA ? (sumGroup(fullProposta?.encargos?.grupoA) + sumGroup(fullProposta?.encargos?.grupoB) + sumGroup(fullProposta?.encargos?.grupoC) + sumGroup(fullProposta?.encargos?.grupoD) + sumGroup(fullProposta?.encargos?.grupoE) + sumGroup(fullProposta?.encargos?.grupoF)) : 0;
 
+  const totalColaboradores = fullProposta?.equipe?.reduce((acc: number, p: any) => acc + (p.tipoItem === 'SPOT' ? (p.quantidadeDemanda || 1) : (p.quantidade || 1)), 0) || 0;
+
+  const totalInsumosDirect = Number(fullProposta?.insumos?.materiais || 0) + Number(fullProposta?.insumos?.maquinas || 0) + Number(fullProposta?.insumos?.descartaveis || 0) + Number(fullProposta?.insumos?.servicos || 0);
+
+  const totalFaturamento = versao?.resultado?.faturamentoBruto || doc.valorTotal || 0;
+
   const exportEncargosCSV = () => {
     const rows = [
       ['GRUPO / ENCARGO', 'VALOR (%)']
@@ -496,27 +502,13 @@ return (
                 </div>
                 <div className="flex gap-2 shrink-0 select-none">
                   <a
-                    href={canvaUrl}
+                    href={canvaUrl.replace('?embed', '')}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-white/10 hover:bg-white/20 text-white font-black text-[9px] uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all border border-white/15 cursor-pointer whitespace-nowrap"
+                    className="bg-[#10B981] hover:bg-[#0da673] text-white font-black text-[10px] uppercase tracking-wider px-6 py-2.5 rounded-xl transition-all border border-transparent shadow-md cursor-pointer whitespace-nowrap flex items-center gap-1.5 font-bold"
                   >
-                    Tela Cheia ↗
+                    🖥️ Apresentar / Exportar PDF no Canva ↗
                   </a>
-                  <a
-                    href={canvaUrl.replace('/view?embed', '').replace('?embed', '')}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-[#10B981] hover:bg-[#0da673] text-white font-black text-[9px] uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all border border-transparent shadow-md cursor-pointer whitespace-nowrap flex items-center gap-1.5 font-bold"
-                  >
-                    📥 Exportar PDF (Canva)
-                  </a>
-                  <button
-                    onClick={() => window.print()}
-                    className="bg-[#1e4480] hover:bg-blue-800 text-white font-black text-[9px] uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all border border-transparent shadow-md cursor-pointer whitespace-nowrap flex items-center gap-1.5 font-bold"
-                  >
-                    🖨️ Imprimir Apresentação (A4)
-                  </button>
                 </div>
               </div>
 
@@ -559,10 +551,10 @@ return (
                 {[
                   { id: 'premissas', label: '2. Premissas', icon: TrendingUp },
                   { id: 'encargos', label: `3. Encargos (${totalGeralEncargos.toFixed(2)}%)`, icon: Layers },
-                  { id: 'equipe', label: '4. Quadro Equipe', icon: UserCheck },
-                  { id: 'insumos', label: '5-7. Insumos', icon: Package },
-                  { id: 'extrato', label: '8. Custos (Planilha)', icon: ClipboardList },
-                  { id: 'resumo', label: '9. Preço & Resumo', icon: Info },
+                  { id: 'equipe', label: `4. Quadro Equipe (${totalColaboradores} ${totalColaboradores === 1 ? 'Posto' : 'Postos'})`, icon: UserCheck },
+                  { id: 'insumos', label: `5-7. Insumos (${formatCurrency(totalInsumosDirect)})`, icon: Package },
+                  { id: 'extrato', label: `8. Custos (${formatCurrency(totalFaturamento)})`, icon: ClipboardList },
+                  { id: 'resumo', label: `9. Preço & Resumo (${formatCurrency(totalFaturamento)})`, icon: Info },
                 ].map(t => (
                   <button
                     key={t.id}
@@ -814,9 +806,18 @@ return (
                           );
                         })}
 
-                        {fullProposta.equipe.length === 0 && (
+                        {fullProposta.equipe.length === 0 ? (
                           <div className="py-8 text-center text-slate-400 italic bg-white">
                             Nenhum colaborador cadastrado.
+                          </div>
+                        ) : (
+                          <div className="bg-slate-100 border-t border-slate-200 grid grid-cols-12 text-[10px] font-black uppercase tracking-wider text-[#1B4D3E] py-3.5 px-6 gap-4">
+                            <div className="col-span-1 text-center">
+                              Total: {totalColaboradores}
+                            </div>
+                            <div className="col-span-11 pl-3 font-extrabold text-[10px] uppercase">
+                              {totalColaboradores === 1 ? 'Colaborador alocado' : 'Colaboradores alocados no total'}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -824,126 +825,170 @@ return (
                   </div>
                 )}
 
-                {/* Sub-Aba 5-7: Insumos, Materiais, Máquinas */}
-                {activeFpvTab === 'insumos' && (
-                  <div className="space-y-8 animate-fadeIn">
-                    
-                    {/* MATERIAIS */}
-                    <div className="space-y-4">
-                      <h4 className="text-xs font-black text-slate-550 uppercase tracking-widest flex items-center gap-1.5">
-                        📦 Materiais e Insumos Fisiológicos
-                      </h4>
-                      <div className="overflow-x-auto border border-slate-200 rounded-none shadow-sm">
-                        <table className="w-full text-left border-collapse text-xs">
-                          <thead>
-                            <tr className="bg-slate-100 text-slate-600 text-[9px] font-black uppercase border-b border-slate-200">
-                              <th className="px-5 py-2.5 w-16">Código</th>
-                              <th className="px-5 py-2.5">Descrição</th>
-                              <th className="px-5 py-2.5 text-right">Preço Unitário</th>
-                              <th className="px-5 py-2.5 text-center w-24">Qtd.</th>
-                              <th className="px-5 py-2.5 text-center w-24">Vida Útil (Meses)</th>
-                              <th className="px-5 py-2.5 text-right">Custo Mensal (Venda)</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {(fullProposta.insumos?.detalheMateriais || []).map((item: any) => (
-                              <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 bg-white">
-                                <td className="px-5 py-3 font-mono text-[10px] text-slate-450">{item.codigo}</td>
-                                <td className="px-5 py-3 font-bold text-slate-700">{item.descricao}</td>
-                                <td className="px-5 py-3 text-right">{formatCurrency(item.precoUnitario)}</td>
-                                <td className="px-5 py-3 text-center font-black">{item.quantidade}</td>
-                                <td className="px-5 py-3 text-center">{item.vidaUtil}</td>
-                                <td className="px-5 py-3 text-right font-black text-[#1B4D3E] bg-emerald-50/20">{formatCurrency(item.custoMensal)}</td>
-                              </tr>
-                            ))}
-                            {(fullProposta.insumos?.detalheMateriais || []).length === 0 && (
-                              <tr>
-                                <td colSpan={6} className="px-6 py-6 text-center text-slate-400 italic bg-white">Nenhum material cadastrado nesta proposta.</td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                 {/* Sub-Aba 5-7: Insumos, Materiais, Máquinas */}
+                {activeFpvTab === 'insumos' && (() => {
+                  const detalheMateriais = fullProposta.insumos?.detalheMateriais || [];
+                  const totalQtyMateriais = detalheMateriais.reduce((acc: number, item: any) => acc + (item.quantidade || 0), 0);
+                  const totalCostMateriais = detalheMateriais.reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
 
-                    {/* MÁQUINAS */}
-                    <div className="space-y-4 pt-4">
-                      <h4 className="text-xs font-black text-slate-550 uppercase tracking-widest flex items-center gap-1.5">
-                        ⚙️ Máquinas e Equipamentos
-                      </h4>
-                      <div className="overflow-x-auto border border-slate-200 rounded-none shadow-sm">
-                        <table className="w-full text-left border-collapse text-xs">
-                          <thead>
-                            <tr className="bg-slate-100 text-slate-600 text-[9px] font-black uppercase border-b border-slate-200">
-                              <th className="px-5 py-2.5 w-16">Código</th>
-                              <th className="px-5 py-2.5">Descrição</th>
-                              <th className="px-5 py-2.5 text-right">Preço Unitário</th>
-                              <th className="px-5 py-2.5 text-center w-24">Qtd.</th>
-                              <th className="px-5 py-2.5 text-center w-24">Vida Útil (Meses)</th>
-                              <th className="px-5 py-2.5 text-right">Custo Mensal (Venda)</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {(fullProposta.insumos?.detalheMaquinas || []).map((item: any) => (
-                              <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 bg-white">
-                                <td className="px-5 py-3 font-mono text-[10px] text-slate-450">{item.codigo}</td>
-                                <td className="px-5 py-3 font-bold text-slate-700">{item.descricao}</td>
-                                <td className="px-5 py-3 text-right">{formatCurrency(item.precoUnitario)}</td>
-                                <td className="px-5 py-3 text-center font-black">{item.quantidade}</td>
-                                <td className="px-5 py-3 text-center">{item.vidaUtil}</td>
-                                <td className="px-5 py-3 text-right font-black text-[#1B4D3E] bg-emerald-50/20">{formatCurrency(item.custoMensal)}</td>
-                              </tr>
-                            ))}
-                            {(fullProposta.insumos?.detalheMaquinas || []).length === 0 && (
-                              <tr>
-                                <td colSpan={6} className="px-6 py-6 text-center text-slate-400 italic bg-white">Nenhum equipamento cadastrado.</td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                  const detalheMaquinas = fullProposta.insumos?.detalheMaquinas || [];
+                  const totalQtyMaquinas = detalheMaquinas.reduce((acc: number, item: any) => acc + (item.quantidade || 0), 0);
+                  const totalCostMaquinas = detalheMaquinas.reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
 
-                    {/* DESCARTÁVEIS */}
-                    <div className="space-y-4 pt-4">
-                      <h4 className="text-xs font-black text-slate-550 uppercase tracking-widest flex items-center gap-1.5">
-                        🧻 Descartáveis e EPIs
-                      </h4>
-                      <div className="overflow-x-auto border border-slate-200 rounded-none shadow-sm">
-                        <table className="w-full text-left border-collapse text-xs">
-                          <thead>
-                            <tr className="bg-slate-100 text-slate-600 text-[9px] font-black uppercase border-b border-slate-200">
-                              <th className="px-5 py-2.5 w-16">Código</th>
-                              <th className="px-5 py-2.5">Descrição</th>
-                              <th className="px-5 py-2.5 text-right">Preço Unitário</th>
-                              <th className="px-5 py-2.5 text-center w-24">Qtd.</th>
-                              <th className="px-5 py-2.5 text-center w-24">Vida Útil (Meses)</th>
-                              <th className="px-5 py-2.5 text-right">Custo Mensal (Venda)</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {(fullProposta.insumos?.detalheDescartaveis || []).map((item: any) => (
-                              <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 bg-white">
-                                <td className="px-5 py-3 font-mono text-[10px] text-slate-450">{item.codigo}</td>
-                                <td className="px-5 py-3 font-bold text-slate-700">{item.descricao}</td>
-                                <td className="px-5 py-3 text-right">{formatCurrency(item.precoUnitario)}</td>
-                                <td className="px-5 py-3 text-center font-black">{item.quantidade}</td>
-                                <td className="px-5 py-3 text-center">{item.vidaUtil}</td>
-                                <td className="px-5 py-3 text-right font-black text-[#1B4D3E] bg-emerald-50/20">{formatCurrency(item.custoMensal)}</td>
-                              </tr>
-                            ))}
-                            {(fullProposta.insumos?.detalheDescartaveis || []).length === 0 && (
-                              <tr>
-                                <td colSpan={6} className="px-6 py-6 text-center text-slate-400 italic bg-white">Nenhum descartável/EPI cadastrado.</td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                  const detalheDescartaveis = fullProposta.insumos?.detalheDescartaveis || [];
+                  const totalQtyDescartaveis = detalheDescartaveis.reduce((acc: number, item: any) => acc + (item.quantidade || 0), 0);
+                  const totalCostDescartaveis = detalheDescartaveis.reduce((acc: number, item: any) => acc + (item.custoMensal || 0), 0);
 
-                  </div>
-                )}
+                  return (
+                    <div className="space-y-8 animate-fadeIn">
+                      
+                      {/* MATERIAIS */}
+                      <div className="space-y-4">
+                        <h4 className="text-xs font-black text-slate-550 uppercase tracking-widest flex items-center gap-1.5">
+                          📦 Materiais e Insumos Fisiológicos
+                        </h4>
+                        <div className="overflow-x-auto border border-slate-200 rounded-none shadow-sm">
+                          <table className="w-full text-left border-collapse text-xs">
+                            <thead>
+                              <tr className="bg-slate-100 text-slate-600 text-[9px] font-black uppercase border-b border-slate-200">
+                                <th className="px-5 py-2.5 w-16">Código</th>
+                                <th className="px-5 py-2.5">Descrição</th>
+                                <th className="px-5 py-2.5 text-right">Preço Unitário</th>
+                                <th className="px-5 py-2.5 text-center w-24">Qtd.</th>
+                                <th className="px-5 py-2.5 text-center w-24">Vida Útil (Meses)</th>
+                                <th className="px-5 py-2.5 text-right">Custo Mensal (Venda)</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {detalheMateriais.map((item: any) => (
+                                <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 bg-white">
+                                  <td className="px-5 py-3 font-mono text-[10px] text-slate-455">{item.codigo}</td>
+                                  <td className="px-5 py-3 font-bold text-slate-700">{item.descricao}</td>
+                                  <td className="px-5 py-3 text-right">{formatCurrency(item.precoUnitario)}</td>
+                                  <td className="px-5 py-3 text-center font-black">{item.quantidade}</td>
+                                  <td className="px-5 py-3 text-center">{item.vidaUtil}</td>
+                                  <td className="px-5 py-3 text-right font-black text-[#1B4D3E] bg-emerald-50/20">{formatCurrency(item.custoMensal)}</td>
+                                </tr>
+                              ))}
+                              {detalheMateriais.length === 0 && (
+                                <tr>
+                                  <td colSpan={6} className="px-6 py-6 text-center text-slate-400 italic bg-white">Nenhum material cadastrado nesta proposta.</td>
+                                </tr>
+                              )}
+                            </tbody>
+                            {detalheMateriais.length > 0 && (
+                              <tfoot>
+                                <tr className="bg-emerald-50/50 text-[#1B4D3E] font-black border-t border-slate-200 text-xs">
+                                  <td colSpan={3} className="px-5 py-3 uppercase text-[9px] tracking-wider">Total Materiais e Insumos</td>
+                                  <td className="px-5 py-3 text-center">{totalQtyMateriais}</td>
+                                  <td className="px-5 py-3 text-center">-</td>
+                                  <td className="px-5 py-3 text-right bg-emerald-50 font-black">{formatCurrency(totalCostMateriais)}</td>
+                                </tr>
+                              </tfoot>
+                            )}
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* MÁQUINAS */}
+                      <div className="space-y-4 pt-4">
+                        <h4 className="text-xs font-black text-slate-550 uppercase tracking-widest flex items-center gap-1.5">
+                          ⚙️ Máquinas e Equipamentos
+                        </h4>
+                        <div className="overflow-x-auto border border-slate-200 rounded-none shadow-sm">
+                          <table className="w-full text-left border-collapse text-xs">
+                            <thead>
+                              <tr className="bg-slate-100 text-slate-600 text-[9px] font-black uppercase border-b border-slate-200">
+                                <th className="px-5 py-2.5 w-16">Código</th>
+                                <th className="px-5 py-2.5">Descrição</th>
+                                <th className="px-5 py-2.5 text-right">Preço Unitário</th>
+                                <th className="px-5 py-2.5 text-center w-24">Qtd.</th>
+                                <th className="px-5 py-2.5 text-center w-24">Vida Útil (Meses)</th>
+                                <th className="px-5 py-2.5 text-right">Custo Mensal (Venda)</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {detalheMaquinas.map((item: any) => (
+                                <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 bg-white">
+                                  <td className="px-5 py-3 font-mono text-[10px] text-slate-455">{item.codigo}</td>
+                                  <td className="px-5 py-3 font-bold text-slate-700">{item.descricao}</td>
+                                  <td className="px-5 py-3 text-right">{formatCurrency(item.precoUnitario)}</td>
+                                  <td className="px-5 py-3 text-center font-black">{item.quantidade}</td>
+                                  <td className="px-5 py-3 text-center">{item.vidaUtil}</td>
+                                  <td className="px-5 py-3 text-right font-black text-[#1B4D3E] bg-emerald-50/20">{formatCurrency(item.custoMensal)}</td>
+                                </tr>
+                              ))}
+                              {detalheMaquinas.length === 0 && (
+                                <tr>
+                                  <td colSpan={6} className="px-6 py-6 text-center text-slate-400 italic bg-white">Nenhum equipamento cadastrado.</td>
+                                </tr>
+                              )}
+                            </tbody>
+                            {detalheMaquinas.length > 0 && (
+                              <tfoot>
+                                <tr className="bg-emerald-50/50 text-[#1B4D3E] font-black border-t border-slate-200 text-xs">
+                                  <td colSpan={3} className="px-5 py-3 uppercase text-[9px] tracking-wider">Total Máquinas e Equipamentos</td>
+                                  <td className="px-5 py-3 text-center">{totalQtyMaquinas}</td>
+                                  <td className="px-5 py-3 text-center">-</td>
+                                  <td className="px-5 py-3 text-right bg-emerald-50 font-black">{formatCurrency(totalCostMaquinas)}</td>
+                                </tr>
+                              </tfoot>
+                            )}
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* DESCARTÁVEIS */}
+                      <div className="space-y-4 pt-4">
+                        <h4 className="text-xs font-black text-slate-550 uppercase tracking-widest flex items-center gap-1.5">
+                          🧻 Descartáveis e EPIs
+                        </h4>
+                        <div className="overflow-x-auto border border-slate-200 rounded-none shadow-sm">
+                          <table className="w-full text-left border-collapse text-xs">
+                            <thead>
+                              <tr className="bg-slate-100 text-slate-600 text-[9px] font-black uppercase border-b border-slate-200">
+                                <th className="px-5 py-2.5 w-16">Código</th>
+                                <th className="px-5 py-2.5">Descrição</th>
+                                <th className="px-5 py-2.5 text-right">Preço Unitário</th>
+                                <th className="px-5 py-2.5 text-center w-24">Qtd.</th>
+                                <th className="px-5 py-2.5 text-center w-24">Vida Útil (Meses)</th>
+                                <th className="px-5 py-2.5 text-right">Custo Mensal (Venda)</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {detalheDescartaveis.map((item: any) => (
+                                <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 bg-white">
+                                  <td className="px-5 py-3 font-mono text-[10px] text-slate-450">{item.codigo}</td>
+                                  <td className="px-5 py-3 font-bold text-slate-700">{item.descricao}</td>
+                                  <td className="px-5 py-3 text-right">{formatCurrency(item.precoUnitario)}</td>
+                                  <td className="px-5 py-3 text-center font-black">{item.quantidade}</td>
+                                  <td className="px-5 py-3 text-center">{item.vidaUtil}</td>
+                                  <td className="px-5 py-3 text-right font-black text-[#1B4D3E] bg-emerald-50/20">{formatCurrency(item.custoMensal)}</td>
+                                </tr>
+                              ))}
+                              {detalheDescartaveis.length === 0 && (
+                                <tr>
+                                  <td colSpan={6} className="px-6 py-6 text-center text-slate-400 italic bg-white">Nenhum descartável/EPI cadastrado.</td>
+                                </tr>
+                              )}
+                            </tbody>
+                            {detalheDescartaveis.length > 0 && (
+                              <tfoot>
+                                <tr className="bg-emerald-50/50 text-[#1B4D3E] font-black border-t border-slate-200 text-xs">
+                                  <td colSpan={3} className="px-5 py-3 uppercase text-[9px] tracking-wider">Total Descartáveis e EPIs</td>
+                                  <td className="px-5 py-3 text-center">{totalQtyDescartaveis}</td>
+                                  <td className="px-5 py-3 text-center">-</td>
+                                  <td className="px-5 py-3 text-right bg-emerald-50 font-black">{formatCurrency(totalCostDescartaveis)}</td>
+                                </tr>
+                              </tfoot>
+                            )}
+                          </table>
+                        </div>
+                      </div>
+
+                    </div>
+                  );
+                })()}
 
                 {/* Sub-Aba 8: Planilha de Custos / Extrato */}
                 {activeFpvTab === 'extrato' && (
@@ -1488,7 +1533,7 @@ return (
         </main>
 
       {/* Slide Deck printing engine wrapper */}
-      {activeClientTab === 'apresentacao' && (
+      {activeClientTab === 'apresentacao' && !hasCanva && (
         <div className="print-slide-deck-wrapper print:block hidden">
           <PropostaApresentacaoPrint 
             proposta={mergedProposta}
@@ -1499,15 +1544,17 @@ return (
       )}
 
       {/* BOTÃO FLUTUANTE DE IMPRESSÃO */}
-      <button
-        onClick={() => {
-          window.print();
-        }}
-        className="fixed bottom-6 right-6 z-[99999] bg-[#1e4480] hover:bg-slate-800 text-white p-4 rounded-xl shadow-2xl flex items-center justify-center transition-all hover:scale-105 border border-white/10 print:hidden cursor-pointer"
-        title="Salvar PDF / Imprimir"
-      >
-        <Printer size={20} />
-      </button>
+      {!(activeClientTab === 'apresentacao' && hasCanva) && (
+        <button
+          onClick={() => {
+            window.print();
+          }}
+          className="fixed bottom-6 right-6 z-[99999] bg-[#1e4480] hover:bg-slate-800 text-white p-4 rounded-xl shadow-2xl flex items-center justify-center transition-all hover:scale-105 border border-white/10 print:hidden cursor-pointer animate-fadeIn"
+          title="Salvar PDF / Imprimir"
+        >
+          <Printer size={20} />
+        </button>
+      )}
 
       {/* MODAL DE ASSINATURA ELETRÔNICA */}
       {showApprovalModal && (
