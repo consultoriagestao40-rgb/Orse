@@ -36,8 +36,10 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
   const [canvaEmbedUrl, setCanvaEmbedUrl] = useState(
     configApresentacao?.canvaEmbedUrl || ''
   );
-  const [validadeDays, setValidadeDays] = useState<number>(
-    configApresentacao?.validadeDays || 0 // 0 = Permanente
+  const [validadeDays, setValidadeDays] = useState<number | ''>(
+    configApresentacao?.validadeDays && configApresentacao.validadeDays > 0
+      ? configApresentacao.validadeDays
+      : 7 // Padrão de 7 dias caso seja novo ou anteriormente permanente
   );
 
   // Carregar as minutas disponíveis no sistema
@@ -60,6 +62,12 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
   }, [minutaTemplateId]);
 
   const handleSaveAndCopy = async () => {
+    const days = Number(validadeDays);
+    if (!validadeDays || isNaN(days) || days <= 0) {
+      alert('Por favor, informe um prazo de validade em dias (número maior que zero).');
+      return;
+    }
+
     setLoading(true);
     try {
       const newConfig = {
@@ -73,11 +81,9 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
           minuta,
           minutaTemplateId
         },
-        validadeDays,
+        validadeDays: days,
         linkCreatedAt: new Date().toISOString(),
-        linkExpiresAt: validadeDays > 0 
-          ? new Date(new Date().getTime() + validadeDays * 24 * 60 * 60 * 1000).toISOString()
-          : null
+        linkExpiresAt: new Date(new Date().getTime() + days * 24 * 60 * 60 * 1000).toISOString()
       };
 
       const res = await updateConfigApresentacao(documentoId, newConfig);
@@ -261,37 +267,46 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
 
             {/* 5. PRAZO DE VALIDADE DO LINK */}
             <div className="p-4 border rounded-2xl border-slate-200 bg-white space-y-3">
-              <div className="flex items-center gap-1.5 font-black text-xs uppercase tracking-wider text-slate-800">
-                <Clock size={14} className="text-amber-600" />
-                Validade do Link Comercial
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 font-black text-xs uppercase tracking-wider text-slate-800">
+                  <Clock size={14} className="text-amber-600" />
+                  Validade do Link Comercial
+                </div>
+                <span className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-red-50 text-red-650 border border-red-200">
+                  Obrigatório
+                </span>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
-                Escolha após quanto tempo o link de acesso público do cliente expirará automaticamente.
+              <p className="text-[10px] text-slate-400 font-medium leading-relaxed font-sans">
+                Insira obrigatoriamente a quantidade de dias para a validade desta proposta. Após esse prazo, o link de acesso público expirará automaticamente.
               </p>
               
-              <div className="grid grid-cols-4 gap-2">
-                {[
-                  { value: 0, label: 'Permanente' },
-                  { value: 5, label: '5 dias' },
-                  { value: 10, label: '10 dias' },
-                  { value: 30, label: '30 dias' }
-                ].map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setValidadeDays(opt.value)}
-                    className={`py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border cursor-pointer ${
-                      validadeDays === opt.value
-                        ? 'bg-amber-50 border-amber-300 text-amber-700 font-bold'
-                        : 'bg-white border-slate-250 text-slate-500 hover:bg-slate-50 hover:text-slate-850'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+              <div className="flex items-center gap-2 max-w-[200px]">
+                <div className="relative flex items-center w-full">
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder="Ex: 10"
+                    value={validadeDays}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setValidadeDays('');
+                      } else {
+                        const parsed = parseInt(val, 10);
+                        if (!isNaN(parsed)) {
+                          setValidadeDays(parsed >= 1 ? parsed : 1);
+                        }
+                      }
+                    }}
+                    className="w-full pl-3 pr-12 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-700 outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-all font-mono"
+                  />
+                  <div className="absolute right-3 text-[10px] font-black uppercase tracking-wider text-slate-400 pointer-events-none">
+                    dias
+                  </div>
+                </div>
               </div>
             </div>
-
           </div>
 
           {/* VISUALIZADOR DE LINK */}
