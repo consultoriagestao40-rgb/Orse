@@ -317,13 +317,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                 background: white !important;
             }
 
-            body * {
-                visibility: hidden !important;
-            }
-
-            .print-slide-deck, .print-slide-deck * {
-                visibility: visible !important;
-            }
+            /* Hiding of other elements on print is handled via display:none on the parent layout */
 
             .print-slide-deck {
                 display: block !important;

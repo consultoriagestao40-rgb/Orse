@@ -9,7 +9,7 @@ import { getTemplates } from '@/app/contratos/actions';
 import { 
   CheckCircle, Edit, FileText, X, Printer, CheckCircle2, ShieldCheck, Mail, MapPin, 
   Smartphone, User, Presentation, Calculator, BookOpen, ChevronRight, TrendingUp,
-  UserCheck, ClipboardList, Package, Layers, Info
+  UserCheck, ClipboardList, Package, Layers, Info, Download
 } from 'lucide-react';
 
 const PropostaApresentacaoPrint = dynamic(
@@ -233,6 +233,46 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   const sumGroup = (g: any) => g ? Object.values(g).reduce((a: any, b: any) => a + Number(b), 0) as number : 0;
   const totalGeralEncargos = fullProposta?.encargos?.grupoA ? (sumGroup(fullProposta?.encargos?.grupoA) + sumGroup(fullProposta?.encargos?.grupoB) + sumGroup(fullProposta?.encargos?.grupoC) + sumGroup(fullProposta?.encargos?.grupoD) + sumGroup(fullProposta?.encargos?.grupoE) + sumGroup(fullProposta?.encargos?.grupoF)) : 0;
 
+  const exportEncargosCSV = () => {
+    const rows = [
+      ['GRUPO / ENCARGO', 'VALOR (%)']
+    ];
+    
+    const grupos = [
+      { id: 'grupoA', title: 'ENCARGOS SOCIAIS - GRUPO A', data: fullProposta?.encargos?.grupoA },
+      { id: 'grupoB', title: 'ENCARGOS SOCIAIS - GRUPO B', data: fullProposta?.encargos?.grupoB },
+      { id: 'grupoC', title: 'ENCARGOS SOCIAIS - GRUPO C', data: fullProposta?.encargos?.grupoC },
+      { id: 'grupoD', title: 'ENCARGOS SOCIAIS - GRUPO D', data: fullProposta?.encargos?.grupoD },
+      { id: 'grupoE', title: 'ENCARGOS SOCIAIS - GRUPO E', data: fullProposta?.encargos?.grupoE },
+      { id: 'grupoF', title: 'ENCARGOS SOCIAIS - GRUPO F', data: fullProposta?.encargos?.grupoF },
+    ];
+
+    grupos.forEach(grp => {
+      if (!grp.data) return;
+      rows.push([]);
+      rows.push([grp.title, '']);
+      Object.entries(grp.data).forEach(([key, val]: any) => {
+        const label = key === 'previdenciaSocial' ? 'INSS - PREVIDENCIA SOCIAL' : key.replace(/([A-Z])/g, ' $1').trim().toUpperCase();
+        rows.push([label, `${Number(val).toFixed(2)}%`]);
+      });
+      rows.push([`TOTAL ${grp.title.replace('ENCARGOS SOCIAIS - ', '')}`, `${sumGroup(grp.data).toFixed(2)}%`]);
+    });
+
+    rows.push([]);
+    rows.push(['TOTAL GERAL DE ENCARGOS SOCIAIS', `${totalGeralEncargos.toFixed(2)}%`]);
+
+    const csvContent = "\uFEFF" + rows.map(e => e.map(val => `"${val.replace(/"/g, '""')}"`).join(";")).join("\n");
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `encargos_sociais_FPV_${doc.proposta?.numero || 'XXX'}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // -------------------------------------------------------------
   // MOTOR DE LEITURA E SUBSTITUIÇÃO DE CLÁUSULAS DA MINUTA (ABA 04)
   // -------------------------------------------------------------
@@ -308,6 +348,26 @@ return (
              print-color-adjust: exact !important;
              color-adjust: exact !important;
           }
+          ${activeClientTab === 'apresentacao' ? `
+            aside, main {
+              display: none !important;
+            }
+            .print-slide-deck-wrapper {
+              display: block !important;
+            }
+          ` : `
+            aside {
+              display: none !important;
+            }
+            main {
+              display: block !important;
+              width: 100% !important;
+              height: auto !important;
+              overflow: visible !important;
+              padding: 0 !important;
+              margin: 0 !important;
+            }
+          `}
           html, body, #__next, 
           [class*="h-screen"],
           [class*="min-h-screen"], 
@@ -323,14 +383,6 @@ return (
             position: static !important;
             padding: 0 !important;
             margin: 0 !important;
-          }
-          main {
-            height: auto !important;
-            overflow: visible !important;
-            display: block !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            width: 100% !important;
           }
         }
       `}} />
@@ -507,7 +559,7 @@ return (
               <div className="bg-white border border-slate-200 flex overflow-x-auto gap-0 scrollbar-none print:hidden mb-4 font-sans text-xs">
                 {[
                   { id: 'premissas', label: '2. Premissas', icon: TrendingUp },
-                  { id: 'encargos', label: '3. Encargos', icon: Layers },
+                  { id: 'encargos', label: `3. Encargos (${totalGeralEncargos.toFixed(2)}%)`, icon: Layers },
                   { id: 'equipe', label: '4. Quadro Equipe', icon: UserCheck },
                   { id: 'insumos', label: '5-7. Insumos', icon: Package },
                   { id: 'extrato', label: '8. Custos (Planilha)', icon: ClipboardList },
@@ -602,9 +654,17 @@ return (
                 {/* Sub-Aba 3: Encargos Sociais */}
                 {activeFpvTab === 'encargos' && (
                   <div className="space-y-6 animate-fadeIn">
-                    <h3 className="text-xs font-black text-slate-700 uppercase tracking-widest border-b border-slate-250 pb-3 flex items-center gap-2">
-                      <Layers size={16} className="text-[#1B4D3E]" /> Parâmetros Sociais e Trabalhistas
-                    </h3>
+                    <div className="flex justify-between items-center border-b border-slate-250 pb-3">
+                      <h3 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                        <Layers size={16} className="text-[#1B4D3E]" /> Parâmetros Sociais e Trabalhistas
+                      </h3>
+                      <button
+                        onClick={exportEncargosCSV}
+                        className="bg-emerald-50 hover:bg-emerald-100 text-[#1B4D3E] font-black text-[9px] uppercase tracking-widest px-3 py-1.5 rounded-xl border border-emerald-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs select-none"
+                      >
+                        <Download size={12} /> Exportar Planilha (CSV)
+                      </button>
+                    </div>
                     <div className="space-y-4">
                       {[
                         { id: 'grupoA', title: 'ENCARGOS SOCIAIS - GRUPO A', subtitle: 'Obrigações que incidem diretamente sobre a folha de pagamento', data: fullProposta.encargos?.grupoA },
@@ -625,7 +685,10 @@ return (
                               className="w-full bg-[#1B4D3E] hover:bg-[#164336] text-white flex justify-between items-center py-3.5 px-6 font-black uppercase text-[10px] tracking-wider transition-colors select-none text-left cursor-pointer rounded-none"
                             >
                               <div className="flex items-center gap-3">
-                                <span className="text-[12px] font-bold">{isExpanded ? '▼' : '▶'}</span>
+                                <span className="text-[12px] font-bold">
+                                  <span className="print:hidden">{isExpanded ? '▼' : '▶'}</span>
+                                  <span className="hidden print:inline">▼</span>
+                                </span>
                                 <span>{grp.title}</span>
                               </div>
                               <div className="flex items-center gap-3">
@@ -635,38 +698,36 @@ return (
                               </div>
                             </button>
 
-                            {/* Dropdown breakdown list */}
-                            {isExpanded && (
-                              <div className="animate-fadeIn">
-                                {grp.subtitle && (
-                                  <div className="bg-slate-50 border-b border-slate-150 py-2.5 px-6 text-[10px] text-slate-550 font-bold uppercase tracking-wider">
-                                    {grp.subtitle}
-                                  </div>
-                                )}
-                                <table className="w-full text-left border-collapse text-xs">
-                                  <tbody>
-                                    {Object.entries(grp.data).map(([key, val]: any) => (
-                                      <tr key={key} className="border-b border-slate-150 last:border-0 hover:bg-slate-50 bg-white">
-                                        <td className="py-3 px-6 font-bold uppercase text-slate-600 text-[10px]">
-                                          {key === 'previdenciaSocial' ? 'INSS - PREVIDENCIA SOCIAL' : key.replace(/([A-Z])/g, ' $1').trim()}
-                                        </td>
-                                        <td className="py-3 px-6 text-right font-black text-slate-800 w-32 border-l border-slate-100 select-none">
-                                          {Number(val).toFixed(2)}%
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                  <tfoot>
-                                    <tr className="bg-emerald-50/50 text-[#1B4D3E] font-black border-t border-slate-200">
-                                      <td className="py-3 px-6 text-[10px] uppercase">Total {grp.title.replace('ENCARGOS SOCIAIS - ', '')}</td>
-                                      <td className="py-3 px-6 text-right text-[11px] border-l border-emerald-100/50 select-none">
-                                        {groupSum.toFixed(2)}%
+                            {/* Dropdown breakdown list - ALWAYS in DOM but hidden/block dynamic print */}
+                            <div className={`${isExpanded ? 'block' : 'hidden print:block'} animate-fadeIn`}>
+                              {grp.subtitle && (
+                                <div className="bg-slate-50 border-b border-slate-150 py-2.5 px-6 text-[10px] text-slate-550 font-bold uppercase tracking-wider">
+                                  {grp.subtitle}
+                                </div>
+                              )}
+                              <table className="w-full text-left border-collapse text-xs">
+                                <tbody>
+                                  {Object.entries(grp.data).map(([key, val]: any) => (
+                                    <tr key={key} className="border-b border-slate-150 last:border-0 hover:bg-slate-50 bg-white">
+                                      <td className="py-3 px-6 font-bold uppercase text-slate-600 text-[10px]">
+                                        {key === 'previdenciaSocial' ? 'INSS - PREVIDENCIA SOCIAL' : key.replace(/([A-Z])/g, ' $1').trim()}
+                                      </td>
+                                      <td className="py-3 px-6 text-right font-black text-slate-800 w-32 border-l border-slate-100 select-none">
+                                        {Number(val).toFixed(2)}%
                                       </td>
                                     </tr>
-                                  </tfoot>
-                                </table>
-                              </div>
-                            )}
+                                  ))}
+                                </tbody>
+                                <tfoot>
+                                  <tr className="bg-emerald-50/50 text-[#1B4D3E] font-black border-t border-slate-200">
+                                    <td className="py-3 px-6 text-[10px] uppercase">Total {grp.title.replace('ENCARGOS SOCIAIS - ', '')}</td>
+                                    <td className="py-3 px-6 text-right text-[11px] border-l border-emerald-100/50 select-none">
+                                      {groupSum.toFixed(2)}%
+                                    </td>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                            </div>
                           </div>
                         );
                       })}
@@ -1429,7 +1490,7 @@ return (
 
       {/* Slide Deck printing engine wrapper */}
       {activeClientTab === 'apresentacao' && (
-        <div className="print:block hidden">
+        <div className="print-slide-deck-wrapper print:block hidden">
           <PropostaApresentacaoPrint 
             proposta={mergedProposta}
             resultado={versao?.resultado}
