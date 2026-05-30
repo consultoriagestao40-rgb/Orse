@@ -681,6 +681,9 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                                       <BrazilMap highlightedStates={el.highlightedStates || ['PR', 'SC', 'RS']} className="w-full h-full text-white" />
                                                    </div>
                                                 )}
+                                             </div>
+                                          );
+                                       })}
                                     </div>
                                  );
                               }
