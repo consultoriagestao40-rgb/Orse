@@ -40,6 +40,22 @@ export async function getDocumentoPropostaById(id: string) {
 }
 
 /**
+ * Server Action pública para buscar um template de minuta por ID
+ */
+export async function getMinutaTemplateById(templateId: string) {
+  try {
+    const template = await prisma.templateContrato.findUnique({
+      where: { id: templateId },
+      include: { clausulas: { orderBy: { ordem: 'asc' } } }
+    });
+    return { success: true, data: template };
+  } catch (error: any) {
+    console.error('Erro ao buscar template de minuta:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Server Action para aprovar eletronicamente uma proposta comercial (FPV / Slide Deck)
  */
 export async function aprovarPropostaAction(documentoId: string, payload: { nome: string, cpf: string, assinatura: string, ip: string }) {

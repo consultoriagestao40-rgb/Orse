@@ -3,8 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DocumentoA4 from '@/components/DocumentoA4';
 import dynamic from 'next/dynamic';
-import { aprovarPropostaAction, recusarPropostaAction, trackDocumentoView } from './actions';
-import { getTemplates } from '@/app/contratos/actions';
+import { aprovarPropostaAction, recusarPropostaAction, trackDocumentoView, getMinutaTemplateById } from './actions';
 import { 
   CheckCircle, Edit, FileText, X, Printer, CheckCircle2, ShieldCheck, Mail, MapPin, 
   Smartphone, User, Presentation, Calculator, BookOpen, ChevronRight, TrendingUp,
@@ -349,9 +348,9 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
       if (!templateId) return;
       setLoadingMinuta(true);
       try {
-        const res = await getTemplates();
+        const res = await getMinutaTemplateById(templateId);
         if (res.success && res.data) {
-          const matchingTemplate = res.data.find((t: any) => t.id === templateId);
+          const matchingTemplate = res.data;
           if (matchingTemplate && matchingTemplate.clausulas) {
             const formatted = matchingTemplate.clausulas.map((c: any) => ({
               ...c,
