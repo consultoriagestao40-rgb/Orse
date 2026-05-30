@@ -1972,7 +1972,7 @@ export default function TemplatesPropostaPage() {
                                   <span className="text-[10px] font-black text-slate-800 uppercase leading-none block font-sans">{title}</span>
                                   <span className="text-[8px] font-bold text-slate-400 leading-normal block font-sans">{desc}</span>
                                 </button>
-                              ))}}
+                              ))}
                             </div>
                           </div>
                         )}
