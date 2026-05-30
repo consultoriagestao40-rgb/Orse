@@ -4,11 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import DocumentoA4 from '@/components/DocumentoA4';
 import PropostaApresentacao from '@/components/PropostaApresentacao';
 import dynamic from 'next/dynamic';
-
-const PropostaApresentacaoPrint = dynamic(
-  () => import('@/components/PropostaApresentacaoPrint'),
-  { ssr: false }
-);
 import { aprovarPropostaAction } from '@/app/propostas-comerciais/actions';
 import { getTemplates } from '@/app/contratos/actions';
 import { 
@@ -16,6 +11,11 @@ import {
   Smartphone, User, Presentation, Calculator, BookOpen, ChevronRight, TrendingUp,
   UserCheck, ClipboardList, Package, Layers, Info
 } from 'lucide-react';
+
+const PropostaApresentacaoPrint = dynamic(
+  () => import('@/components/PropostaApresentacaoPrint'),
+  { ssr: false }
+);
 
 export default function ViewClient({ doc, fullProposta }: { doc: any, fullProposta: any }) {
   const [loading, setLoading] = useState(false);
