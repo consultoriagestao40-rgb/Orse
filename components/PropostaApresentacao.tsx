@@ -557,6 +557,16 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                     >
                                        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none opacity-40"></div>
 
+                                       {bgImage && (
+                                          <div 
+                                             className="absolute inset-0 z-0 pointer-events-none transition-all"
+                                             style={{
+                                                backgroundColor: slideData.bgOverlayColor || '#000000',
+                                                opacity: (slideData.bgOverlayOpacity !== undefined ? slideData.bgOverlayOpacity : 0) / 100
+                                             }}
+                                          />
+                                       )}
+
                                        {elements.map((el: any) => {
                                           const clipPathVal = el.mask === 'circle' ? 'ellipse(50% 50% at 50% 50%)' :
                                                               el.mask === 'shield' ? 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' :
@@ -751,6 +761,490 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                                                  {el.type === 'map' && (
                                                     <div className="w-full h-full p-2 flex items-center justify-center" style={{ transform: el.rotate ? `rotate(${el.rotate}deg)` : undefined, opacity: el.opacity !== undefined ? el.opacity / 100 : 1 }}>
                                                        <BrazilMap highlightedStates={el.highlightedStates || ['PR', 'SC', 'RS']} className="w-full h-full text-white" />
+                                                    </div>
+                                                 )}
+
+                                                 {el.type === 'jvs_facilities_logo_big' && (
+                                                    <div className="w-full h-full flex flex-col items-center justify-center text-center font-sans p-[1.2cqw] select-none text-white">
+                                                       <svg className="w-[8.0cqw] h-[8.0cqw] text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                                          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                                       </svg>
+                                                       <span className="text-[3.2cqw] font-extrabold tracking-widest mt-[0.8cqw] leading-none">JVS</span>
+                                                       <span className="text-[1.0cqw] font-semibold text-emerald-400 tracking-widest uppercase mt-[0.3cqw]">Facilities</span>
+                                                    </div>
+                                                 )}
+
+                                                 {el.type === 'quem_somos_metrics' && (
+                                                    <div className="w-full h-full flex flex-col justify-between p-[0.5cqw] font-sans">
+                                                       <div className="grid grid-cols-4 gap-[1.2cqw] w-full">
+                                                          <div className="bg-white p-[1.6cqw] rounded-[1.2cqw] border border-slate-200 text-center shadow-xs">
+                                                             <span className="text-[2.4cqw] font-extrabold text-[#0f3156] block">+30</span>
+                                                             <span className="text-[0.8cqw] text-slate-500 block uppercase font-bold mt-[0.3cqw]">Anos em Facilities</span>
+                                                          </div>
+                                                          <div className="bg-white p-[1.6cqw] rounded-[1.2cqw] border border-slate-200 text-center shadow-xs">
+                                                             <span className="text-[2.4cqw] font-extrabold text-[#0f3156] block">+100</span>
+                                                             <span className="text-[0.8cqw] text-slate-500 block uppercase font-bold mt-[0.3cqw]">Postos Ativos</span>
+                                                          </div>
+                                                          <div className="bg-white p-[1.6cqw] rounded-[1.2cqw] border border-slate-200 text-center shadow-xs">
+                                                             <span className="text-[2.4cqw] font-extrabold text-[#0f3156] block">+200</span>
+                                                             <span className="text-[0.8cqw] text-slate-500 block uppercase font-bold mt-[0.3cqw]">Clientes Atendidos</span>
+                                                          </div>
+                                                          <div className="bg-white p-[1.6cqw] rounded-[1.2cqw] border border-slate-200 text-center shadow-xs">
+                                                             <span className="text-[2.4cqw] font-extrabold text-[#0f3156] block">+500k m²</span>
+                                                             <span className="text-[0.8cqw] text-slate-500 block uppercase font-bold mt-[0.3cqw]">Pisos Tratados</span>
+                                                          </div>
+                                                       </div>
+                                                       <div className="bg-[#0f3156] text-white p-[1.6cqw] rounded-[1.2cqw] flex items-center justify-between mt-[1.2cqw] shadow-xs">
+                                                          <div>
+                                                             <h4 className="text-[1.1cqw] font-black uppercase tracking-wide">Atendimento em toda Região Sul</h4>
+                                                             <p className="text-[0.9cqw] text-slate-300 mt-[0.3cqw]">Estrutura física e tática no Paraná, Santa Catarina e Rio Grande do Sul.</p>
+                                                          </div>
+                                                          <span className="text-[0.9cqw] font-black uppercase tracking-wider text-emerald-400 shrink-0">JVS Região Sul</span>
+                                                       </div>
+                                                    </div>
+                                                 )}
+
+                                                 {el.type === 'servicos_cards' && (
+                                                    <div className="w-full h-full p-[0.5cqw] font-sans">
+                                                       <div className="grid grid-cols-3 gap-[1.2cqw]">
+                                                          <div className="bg-white border border-slate-250 p-[1.6cqw] rounded-[1.6cqw] shadow-xs flex flex-col justify-between text-left">
+                                                             <span className="text-emerald-600 font-extrabold text-[1.1cqw] uppercase block">Facilities</span>
+                                                             <p className="text-[0.9cqw] text-slate-500 mt-[0.6cqw] leading-relaxed">Gestão e execução de serviços essenciais, como limpeza, manutenção e segurança.</p>
+                                                          </div>
+                                                          <div className="bg-white border border-slate-250 p-[1.6cqw] rounded-[1.6cqw] shadow-xs flex flex-col justify-between text-left">
+                                                             <span className="text-emerald-600 font-extrabold text-[1.1cqw] uppercase block">Limpeza em Altura</span>
+                                                             <p className="text-[0.9cqw] text-slate-500 mt-[0.6cqw] leading-relaxed">Realizado em áreas de difícil acesso, como fachadas de prédios com total segurança.</p>
+                                                          </div>
+                                                          <div className="bg-white border border-slate-250 p-[1.6cqw] rounded-[1.6cqw] shadow-xs flex flex-col justify-between text-left">
+                                                             <span className="text-emerald-600 font-extrabold text-[1.1cqw] uppercase block">Portaria e Recepção</span>
+                                                             <p className="text-[0.9cqw] text-slate-500 mt-[0.6cqw] leading-relaxed">Atendimento premium, controle de acesso e agilidade para sua portaria corporativa.</p>
+                                                          </div>
+                                                       </div>
+                                                    </div>
+                                                 )}
+
+                                                 {el.type === 'setores_atendidos_grid' && (
+                                                    <div className="w-full h-full p-[0.5cqw] font-sans">
+                                                       <div className="grid grid-cols-2 gap-[1.2cqw]">
+                                                          <div className="bg-slate-50 p-[1.4cqw] rounded-[1.0cqw] border border-slate-200 shadow-xs text-left">
+                                                             <span className="font-extrabold text-[#0f3156] text-[1.0cqw] uppercase block">Indústria</span>
+                                                             <p className="text-[0.85cqw] text-slate-500 mt-[0.3cqw]">Processos operacionais de alta exigência e validação técnica de SST.</p>
+                                                          </div>
+                                                          <div className="bg-slate-50 p-[1.4cqw] rounded-[1.0cqw] border border-slate-200 shadow-xs text-left">
+                                                             <span className="font-extrabold text-[#0f3156] text-[1.0cqw] uppercase block">Varejo</span>
+                                                             <p className="text-[0.85cqw] text-slate-500 mt-[0.3cqw]">Superação de turnover e absenteísmo com controle rigoroso de indicadores.</p>
+                                                          </div>
+                                                          <div className="bg-slate-50 p-[1.4cqw] rounded-[1.0cqw] border border-slate-200 shadow-xs text-left">
+                                                             <span className="font-extrabold text-[#0f3156] text-[1.0cqw] uppercase block">Condomínios</span>
+                                                             <p className="text-[0.85cqw] text-slate-500 mt-[0.3cqw]">Conservação e controle de acesso com tecnologia em áreas residenciais.</p>
+                                                          </div>
+                                                          <div className="bg-slate-50 p-[1.4cqw] rounded-[1.0cqw] border border-slate-200 shadow-xs text-left">
+                                                             <span className="font-extrabold text-[#0f3156] text-[1.0cqw] uppercase block">Saúde</span>
+                                                             <p className="text-[0.85cqw] text-slate-500 mt-[0.3cqw]">Higienização técnica de ambientes críticos com absoluto rigor biológico.</p>
+                                                          </div>
+                                                       </div>
+                                                    </div>
+                                                 )}
+
+                                                 {el.type === 'diferenciais_grid' && (
+                                                    <div className="w-full h-full p-[0.5cqw] font-sans">
+                                                       <div className="grid grid-cols-2 gap-[1.2cqw]">
+                                                          <div className="bg-white border border-slate-200 p-[1.4cqw] rounded-[1.0cqw] shadow-xs text-left">
+                                                             <span className="font-extrabold text-[#0f3156] text-[1.0cqw] uppercase block">1. Aplicativo de Checklist Fácil</span>
+                                                             <p className="text-[0.85cqw] text-slate-500 mt-[0.3cqw]">Checklists diários de supervisão técnica, relatórios fotográficos de não-conformidade e SLA digital em tempo real.</p>
+                                                          </div>
+                                                          <div className="bg-white border border-slate-200 p-[1.4cqw] rounded-[1.0cqw] shadow-xs text-left">
+                                                             <span className="font-extrabold text-[#0f3156] text-[1.0cqw] uppercase block">2. Maquinários de Ponta (Tennant)</span>
+                                                             <p className="text-[0.85cqw] text-slate-500 mt-[0.3cqw]">Polidoras, lavadoras automáticas de pisos de alta pressão e equipamentos profissionais que otimizam a produtividade.</p>
+                                                          </div>
+                                                          <div className="bg-white border border-slate-200 p-[1.4cqw] rounded-[1.0cqw] shadow-xs text-left">
+                                                             <span className="font-extrabold text-[#0f3156] text-[1.0cqw] uppercase block">3. Mesa de Operações Nexus IA</span>
+                                                             <p className="text-[0.85cqw] text-slate-500 mt-[0.3cqw]">Tecnologia avançada de mesa de controle para gestão preditiva e alertas automatizados de faltas e coberturas rápidas.</p>
+                                                          </div>
+                                                          <div className="bg-white border border-slate-200 p-[1.4cqw] rounded-[1.0cqw] shadow-xs text-left">
+                                                             <span className="font-extrabold text-[#0f3156] text-[1.0cqw] uppercase block">4. R$ 180,00 de Prêmio Assiduidade</span>
+                                                             <p className="text-[0.85cqw] text-slate-500 mt-[0.3cqw]">Incentivo financeiro direto na folha de pagamento aos funcionários para garantir 100% de presença e evitar turnover.</p>
+                                                          </div>
+                                                       </div>
+                                                    </div>
+                                                 )}
+
+                                                 {el.type === 'responsabilidades_view' && (
+                                                    <div className="w-full h-full p-[0.5cqw] font-sans">
+                                                       <div className="grid grid-cols-2 gap-[1.6cqw] h-full">
+                                                          <div className="bg-slate-50 border border-slate-200 p-[1.6cqw] rounded-[1.6cqw] flex flex-col justify-between shadow-xs text-left">
+                                                             <h4 className="text-[1.0cqw] font-black text-[#0f3156] uppercase tracking-wider">Responsabilidades da JVS Facilities</h4>
+                                                             <ul className="text-[0.85cqw] text-slate-600 mt-[0.8cqw] space-y-[0.5cqw] leading-relaxed">
+                                                                <li>• Recrutamento, seleção e treinamento contínuo de todos os funcionários alocados;</li>
+                                                                <li>• Fornecimento completo de EPIs de alta qualidade e uniformes profissionais;</li>
+                                                                <li>• Responsabilidade integral sobre obrigações trabalhistas, previdenciárias e fiscais;</li>
+                                                                <li>• Supervisão tática operacional periódica (24/7 disponível para suporte).</li>
+                                                             </ul>
+                                                             <div className="mt-[1.2cqw] pt-[0.8cqw] border-t border-slate-200 text-center">
+                                                                <span className="text-[0.8cqw] font-black text-emerald-600 uppercase tracking-widest">Segurança Jurídica Absoluta</span>
+                                                             </div>
+                                                          </div>
+                                                          <div className="bg-slate-50 border border-slate-200 p-[1.6cqw] rounded-[1.6cqw] flex flex-col justify-between shadow-xs text-left">
+                                                             <h4 className="text-[1.0cqw] font-black text-[#0f3156] uppercase tracking-wider">Nossa Governança e SST</h4>
+                                                             <ul className="text-[0.85cqw] text-slate-600 mt-[0.8cqw] space-y-[0.5cqw] leading-relaxed">
+                                                                <li>• Emissão e controle digital de todas as guias trabalhistas (GFIP, GPS, Folha) mensais;</li>
+                                                                <li>• PCMSO e PGR atualizados e integrados ao eSocial;</li>
+                                                                <li>• Apólice de seguros contra terceiros ativa para cobrir incidentes patrimoniais;</li>
+                                                                <li>• Auditoria mensal livre de documentos trabalhistas pelo cliente.</li>
+                                                             </ul>
+                                                             <div className="mt-[1.2cqw] pt-[0.8cqw] border-t border-slate-200 text-center">
+                                                                <span className="text-[0.8cqw] font-black text-[#0f3156] uppercase tracking-widest">Transparência Certificada</span>
+                                                             </div>
+                                                          </div>
+                                                       </div>
+                                                    </div>
+                                                 )}
+
+                                                 {el.type === 'ferramentas_grid' && (
+                                                    <div className="w-full h-full p-[0.5cqw] font-sans">
+                                                       <div className="grid grid-cols-4 gap-[1.0cqw] w-full">
+                                                          <div className="bg-white p-[1.2cqw] rounded-[1.0cqw] border border-slate-200 shadow-xs flex flex-col items-center text-center">
+                                                             <LucideIconRenderer name="TrendingUp" className="text-[#0f3156] mb-[0.6cqw]" size="2.5cqw" />
+                                                             <span className="font-black text-slate-800 text-[0.85cqw] uppercase">Mesa de Operações</span>
+                                                             <span className="text-[0.75cqw] text-slate-400 mt-[0.3cqw]">Controle tático central</span>
+                                                          </div>
+                                                          <div className="bg-white p-[1.2cqw] rounded-[1.0cqw] border border-slate-200 shadow-xs flex flex-col items-center text-center">
+                                                             <LucideIconRenderer name="Cpu" className="text-[#0f3156] mb-[0.6cqw]" size="2.5cqw" />
+                                                             <span className="font-black text-slate-800 text-[0.85cqw] uppercase">Nexus IA</span>
+                                                             <span className="text-[0.75cqw] text-slate-400 mt-[0.3cqw]">Inteligência preditiva</span>
+                                                          </div>
+                                                          <div className="bg-white p-[1.2cqw] rounded-[1.0cqw] border border-slate-200 shadow-xs flex flex-col items-center text-center">
+                                                             <LucideIconRenderer name="FileText" className="text-[#0f3156] mb-[0.6cqw]" size="2.5cqw" />
+                                                             <span className="font-black text-slate-800 text-[0.85cqw] uppercase">Checklist Fácil</span>
+                                                             <span className="text-[0.75cqw] text-slate-400 mt-[0.3cqw]">Auditoria em tempo real</span>
+                                                          </div>
+                                                          <div className="bg-white p-[1.2cqw] rounded-[1.0cqw] border border-slate-200 shadow-xs flex flex-col items-center text-center">
+                                                             <LucideIconRenderer name="Wrench" className="text-[#0f3156] mb-[0.6cqw]" size="2.5cqw" />
+                                                             <span className="font-black text-slate-800 text-[0.85cqw] uppercase">Tennant Scrubber</span>
+                                                             <span className="text-[0.75cqw] text-slate-400 mt-[0.3cqw]">Mecanização avançada</span>
+                                                          </div>
+                                                       </div>
+                                                    </div>
+                                                 )}
+
+                                                 {el.type === 'quadro_efetivo_table' && (
+                                                    <div className="w-full h-full p-[0.5cqw] font-sans">
+                                                       <table className="w-full text-left border-collapse text-[0.85cqw] shadow-xs rounded-[1.0cqw] overflow-hidden border border-slate-200">
+                                                          <thead>
+                                                             <tr className="bg-[#0f3156] text-white uppercase tracking-wider text-[0.75cqw]">
+                                                                <th className="p-[1.0cqw]">Cargo Alocado</th>
+                                                                <th className="p-[1.0cqw] text-center">Qtde</th>
+                                                                <th className="p-[1.0cqw] text-center">Carga Horária</th>
+                                                                <th className="p-[1.0cqw] text-center">Escala de Trabalho</th>
+                                                                <th className="p-[1.0cqw] text-right">Custo Unitário</th>
+                                                                <th className="p-[1.0cqw] text-right">Custo Total</th>
+                                                             </tr>
+                                                          </thead>
+                                                          <tbody className="divide-y divide-slate-200 text-slate-700 bg-white">
+                                                             <tr>
+                                                                <td className="p-[1.0cqw] font-bold text-slate-900">Servente de Limpeza Masculino</td>
+                                                                <td className="p-[1.0cqw] text-center">2 Postos</td>
+                                                                <td className="p-[1.0cqw] text-center">44h Semanais</td>
+                                                                <td className="p-[1.0cqw] text-center">Escala 5x2 (Seg a Sex)</td>
+                                                                <td className="p-[1.0cqw] text-right">R$ 5.922,44</td>
+                                                                <td className="p-[1.0cqw] text-right font-bold">R$ 11.844,88</td>
+                                                             </tr>
+                                                             <tr>
+                                                                <td className="p-[1.0cqw] font-bold text-slate-900">Servente de Limpeza Feminino</td>
+                                                                <td className="p-[1.0cqw] text-center">6 Postos</td>
+                                                                <td className="p-[1.0cqw] text-center">44h Semanais</td>
+                                                                <td className="p-[1.0cqw] text-center">Escala 5x2 (Seg a Sex)</td>
+                                                                <td className="p-[1.0cqw] text-right">R$ 5.922,44</td>
+                                                                <td className="p-[1.0cqw] text-right font-bold">R$ 35.534,64</td>
+                                                             </tr>
+                                                             <tr>
+                                                                <td className="p-[1.0cqw] font-bold text-slate-900">Encarregada Geral de Facilities</td>
+                                                                <td className="p-[1.0cqw] text-center">1 Posto</td>
+                                                                <td className="p-[1.0cqw] text-center">44h Semanais</td>
+                                                                <td className="p-[1.0cqw] text-center">Escala 5x2 (Seg a Sex)</td>
+                                                                <td className="p-[1.0cqw] text-right">R$ 6.844,93</td>
+                                                                <td className="p-[1.0cqw] text-right font-bold">R$ 6.844,93</td>
+                                                             </tr>
+                                                             <tr className="bg-emerald-50 text-emerald-950 font-black border-t border-emerald-250">
+                                                                <td className="p-[1.0cqw]" colSpan={4}>QUADRO EFETIVO TOTAL CONTRATADO</td>
+                                                                <td className="p-[1.0cqw] text-center">9 Colaboradores</td>
+                                                                <td className="p-[1.0cqw] text-right text-emerald-600 text-[1.1cqw]">R$ 54.224,45</td>
+                                                             </tr>
+                                                          </tbody>
+                                                       </table>
+                                                    </div>
+                                                 )}
+
+                                                 {el.type === 'condicoes_comerciais_layout' && (
+                                                    <div className="w-full h-full p-[0.5cqw] font-sans">
+                                                       <div className="grid grid-cols-4 gap-[1.2cqw] w-full h-full">
+                                                          <div className="bg-white p-[1.6cqw] rounded-[1.6cqw] border border-slate-200 shadow-xs flex flex-col justify-between text-left">
+                                                             <span className="text-[0.8cqw] font-black text-[#0f3156] uppercase tracking-wider block">Vigência Contrato</span>
+                                                             <h3 className="text-[1.8cqw] font-black text-slate-900 mt-[0.5cqw]">{replaceTags('[PRAZO_CONTRATO]') || '12 Meses'}</h3>
+                                                             <p className="text-[0.75cqw] text-slate-400 mt-[0.5cqw]">Prazo padrão de vigência operacional rescindível.</p>
+                                                          </div>
+                                                          <div className="bg-white p-[1.6cqw] rounded-[1.6cqw] border border-slate-200 shadow-xs flex flex-col justify-between text-left">
+                                                             <span className="text-[0.8cqw] font-black text-[#0f3156] uppercase tracking-wider block">Faturamento</span>
+                                                             <h3 className="text-[1.5cqw] font-black text-slate-900 mt-[0.5cqw]">Mensal Faturado</h3>
+                                                             <p className="text-[0.75cqw] text-slate-400 mt-[0.5cqw]">{replaceTags('[CONDICOES_COMERCIAIS]') || 'Boleto faturado 15 dias'}</p>
+                                                          </div>
+                                                          <div className="bg-white p-[1.6cqw] rounded-[1.6cqw] border border-slate-200 shadow-xs flex flex-col justify-between text-left">
+                                                             <span className="text-[0.8cqw] font-black text-[#0f3156] uppercase tracking-wider block">Reajuste Preços</span>
+                                                             <h3 className="text-[1.8cqw] font-black text-[#0f3156] mt-[0.5cqw]">IPCA / CCT</h3>
+                                                             <p className="text-[0.75cqw] text-slate-400 mt-[0.5cqw]">Reajustes baseados no dissídio da categoria ou inflação.</p>
+                                                          </div>
+                                                          <div className="bg-white p-[1.6cqw] rounded-[1.6cqw] border border-slate-200 shadow-xs flex flex-col justify-between text-left">
+                                                             <span className="text-[0.8cqw] font-black text-emerald-600 uppercase tracking-wider block">Início Atividades</span>
+                                                             <h3 className="text-[1.8cqw] font-black text-emerald-600 mt-[0.5cqw]">10 Dias</h3>
+                                                             <p className="text-[0.75cqw] text-slate-400 mt-[0.5cqw]">Prazo máximo de mobilização após assinatura.</p>
+                                                          </div>
+                                                       </div>
+                                                    </div>
+                                                 )}
+
+                                                 {el.type === 'finance_table_supervisor' && (
+                                                    <div className="w-full h-full p-[0.5cqw] font-sans">
+                                                       <table className="w-full text-left border-collapse text-[0.85cqw] shadow-xs rounded-[1.0cqw] overflow-hidden border border-slate-200 bg-white">
+                                                          <thead>
+                                                             <tr className="bg-[#0f3156] text-white uppercase tracking-wider text-[0.75cqw]">
+                                                                <th className="p-[1.0cqw]">Serviço Terceirizado</th>
+                                                                <th className="p-[1.0cqw] text-center">Unidade</th>
+                                                                <th className="p-[1.0cqw] text-center">Postos</th>
+                                                                <th className="p-[1.0cqw] text-right">Preço Venda Unitário</th>
+                                                                <th className="p-[1.0cqw] text-right font-bold">Total Mensal Solução</th>
+                                                             </tr>
+                                                          </thead>
+                                                          <tbody className="divide-y divide-slate-100 text-slate-700">
+                                                             <tr>
+                                                                <td className="p-[1.0cqw] font-bold text-slate-900">Mão de Obra Limpeza e Conservação Profissional (Supervisor)</td>
+                                                                <td className="p-[1.0cqw] text-center">Mão de Obra</td>
+                                                                <td className="p-[1.0cqw] text-center">9 Postos</td>
+                                                                <td className="p-[1.0cqw] text-right">R$ 6.024,94</td>
+                                                                <td className="p-[1.0cqw] text-right font-bold">R$ 54.224,45</td>
+                                                             </tr>
+                                                             <tr>
+                                                                <td className="p-[1.0cqw] font-bold text-slate-900">Insumos de Limpeza, EPIs e Equipamentos Mecânicos Inclusos</td>
+                                                                <td className="p-[1.0cqw] text-center">Insumos</td>
+                                                                <td className="p-[1.0cqw] text-center">Kit Completo</td>
+                                                                <td className="p-[1.0cqw] text-right">R$ 19.806,08</td>
+                                                                <td className="p-[1.0cqw] text-right font-bold">R$ 19.806,08</td>
+                                                             </tr>
+                                                             <tr className="bg-emerald-50 text-emerald-950 font-black border-t border-emerald-250">
+                                                                <td className="p-[1.0cqw]" colSpan={3}>VALOR MENSAL INTEGRADO DO CONTRATO - OPÇÃO COM SUPERVISORA</td>
+                                                                <td className="p-[1.0cqw] text-right">SOLUÇÃO JVS</td>
+                                                                <td className="p-[1.0cqw] text-right text-emerald-600 text-[1.1cqw]">{replaceTags('[VALOR_MENSAL]')}</td>
+                                                             </tr>
+                                                          </tbody>
+                                                       </table>
+                                                    </div>
+                                                 )}
+
+                                                 {el.type === 'finance_table_encarregada' && (
+                                                    <div className="w-full h-full p-[0.5cqw] font-sans">
+                                                       <table className="w-full text-left border-collapse text-[0.85cqw] shadow-xs rounded-[1.0cqw] overflow-hidden border border-slate-200 bg-white">
+                                                          <thead>
+                                                             <tr className="bg-[#0f3156] text-white uppercase tracking-wider text-[0.75cqw]">
+                                                                <th className="p-[1.0cqw]">Serviço Terceirizado</th>
+                                                                <th className="p-[1.0cqw] text-center">Unidade</th>
+                                                                <th className="p-[1.0cqw] text-center">Postos</th>
+                                                                <th className="p-[1.0cqw] text-right">Preço Venda Unitário</th>
+                                                                <th className="p-[1.0cqw] text-right font-bold">Total Mensal Solução</th>
+                                                             </tr>
+                                                          </thead>
+                                                          <tbody className="divide-y divide-slate-100 text-slate-700">
+                                                             <tr>
+                                                                <td className="p-[1.0cqw] font-bold text-slate-900">Mão de Obra Limpeza e Conservação Profissional (Encarregada)</td>
+                                                                <td className="p-[1.0cqw] text-center">Mão de Obra</td>
+                                                                <td className="p-[1.0cqw] text-center">9 Postos</td>
+                                                                <td className="p-[1.0cqw] text-right">R$ 5.697,87</td>
+                                                                <td className="p-[1.0cqw] text-right font-bold">R$ 51.280,85</td>
+                                                             </tr>
+                                                             <tr>
+                                                                <td className="p-[1.0cqw] font-bold text-slate-900">Insumos de Limpeza, EPIs e Equipamentos Mecânicos Inclusos</td>
+                                                                <td className="p-[1.0cqw] text-center">Insumos</td>
+                                                                <td className="p-[1.0cqw] text-center">Kit Completo</td>
+                                                                <td className="p-[1.0cqw] text-right">R$ 19.806,08</td>
+                                                                <td className="p-[1.0cqw] text-right font-bold">R$ 19.806,08</td>
+                                                             </tr>
+                                                             <tr className="bg-emerald-50 text-emerald-950 font-black border-t border-emerald-250">
+                                                                <td className="p-[1.0cqw]" colSpan={3}>VALOR MENSAL INTEGRADO DO CONTRATO - OPÇÃO COM ENCARREGADA</td>
+                                                                <td className="p-[1.0cqw] text-right">SOLUÇÃO JVS</td>
+                                                                <td className="p-[1.0cqw] text-right text-emerald-600 text-[1.1cqw]">{formatCurrency(totalMensal * 0.96)}</td>
+                                                             </tr>
+                                                          </tbody>
+                                                       </table>
+                                                    </div>
+                                                 )}
+
+                                                 {el.type === 'checklist_tennant_specs' && (
+                                                    <div className="w-full h-full p-[0.5cqw] font-sans">
+                                                       <div className="grid grid-cols-2 gap-[1.6cqw] h-full w-full">
+                                                          <div className="bg-white border border-slate-200 p-[1.6cqw] rounded-[1.6cqw] shadow-xs flex flex-col justify-between text-left">
+                                                             <div>
+                                                                <span className="text-[0.8cqw] font-black text-emerald-600 uppercase block">Tecnologia Digital JVS</span>
+                                                                <h4 className="text-[1.1cqw] font-black text-[#0f3156] uppercase mt-[0.3cqw]">CHECKLIST FÁCIL OPERACIONAL</h4>
+                                                                <p className="text-[0.9cqw] text-slate-500 mt-[0.6cqw] leading-relaxed">Monitoramento em tempo real de todas as tarefas de higienização de cada posto. Relatórios digitais instantâneos compartilhados diretamente com o gestor do cliente.</p>
+                                                             </div>
+                                                             <div className="bg-emerald-50 text-emerald-900 p-[1.0cqw] rounded-lg text-[0.85cqw] font-semibold mt-[0.8cqw]">
+                                                                SLA Digital • Auditoria Fotográfica • Transparência Operacional
+                                                             </div>
+                                                          </div>
+                                                          <div className="bg-white border border-slate-200 p-[1.6cqw] rounded-[1.6cqw] shadow-xs flex flex-col justify-between text-left">
+                                                             <div>
+                                                                <span className="text-[0.8cqw] font-black text-[#0f3156] uppercase block">Mecanização de Alto Rendimento</span>
+                                                                <h4 className="text-[1.1cqw] font-black text-emerald-600 uppercase mt-[0.3cqw]">AUTO-LAVADORAS TENNANT</h4>
+                                                                <p className="text-[0.9cqw] text-slate-500 mt-[0.6cqw] leading-relaxed">Equipamentos industriais autopropelidos de lavagem e secagem de pisos que substituem processos manuais lentos. Aumentam a produtividade em até 300% com acabamento impecável.</p>
+                                                             </div>
+                                                             <div className="bg-slate-100 text-slate-800 p-[1.0cqw] rounded-lg text-[0.85cqw] font-semibold mt-[0.8cqw]">
+                                                                Auto-rendimento • Brilho Prolongado • Economia de Água e Químicos
+                                                             </div>
+                                                          </div>
+                                                       </div>
+                                                    </div>
+                                                 )}
+
+                                                 {el.type === 'nexus_assiduidade_specs' && (
+                                                    <div className="w-full h-full p-[0.5cqw] font-sans">
+                                                       <div className="grid grid-cols-2 gap-[1.6cqw] h-full w-full">
+                                                          <div className="bg-white border border-slate-200 p-[1.6cqw] rounded-[1.6cqw] shadow-xs flex flex-col justify-between text-left">
+                                                             <div>
+                                                                <span className="text-[0.8cqw] font-black text-[#0f3156] uppercase block">Inteligência Artificial Operacional</span>
+                                                                <h4 className="text-[1.1cqw] font-black text-emerald-600 uppercase mt-[0.3cqw]">NEXUS IA MESA DE OPERAÇÕES</h4>
+                                                                <p className="text-[0.9cqw] text-slate-500 mt-[0.6cqw] leading-relaxed">Plataforma preditiva integrada ao controle de ponto biométrico dos colaboradores. Detecta imediatamente atrasos em postos e aciona automaticamente volantes táticos de cobertura em até 30 minutos.</p>
+                                                             </div>
+                                                             <div className="bg-slate-100 text-slate-800 p-[1.0cqw] rounded-lg text-[0.85cqw] font-semibold mt-[0.8cqw]">
+                                                                Turnover Zero • Alertas SMS/Whats • Mesa de Resposta Rápida 24/7
+                                                             </div>
+                                                          </div>
+                                                          <div className="bg-white border border-slate-200 p-[1.6cqw] rounded-[1.6cqw] shadow-xs flex flex-col justify-between text-left">
+                                                             <div>
+                                                                <span className="text-[0.8cqw] font-black text-emerald-600 uppercase block">Engajamento & Produtividade</span>
+                                                                <h4 className="text-[1.1cqw] font-black text-[#0f3156] uppercase mt-[0.3cqw]">PRÊMIO ASSIDUIDADE R$ 180,00</h4>
+                                                                <p className="text-[0.9cqw] text-slate-500 mt-[0.6cqw] leading-relaxed">Bônus financeiro mensal direto em holerite pago pela JVS a todo colaborador com 100% de presença e pontualidade. Elimina faltas injustificadas e mantém a equipe motivada e focada.</p>
+                                                             </div>
+                                                             <div className="bg-emerald-50 text-emerald-900 p-[1.0cqw] rounded-lg text-[0.85cqw] font-semibold mt-[0.8cqw]">
+                                                                Fidelização de Equipe • Menor Absenteísmo do Mercado • Satisfação Garantida
+                                                             </div>
+                                                          </div>
+                                                       </div>
+                                                    </div>
+                                                 )}
+
+                                                 {el.type === 'capacidade_operacional_grid' && (
+                                                    <div className="w-full h-full p-[0.5cqw] font-sans">
+                                                       <div className="grid grid-cols-4 gap-[1.0cqw] w-full">
+                                                          <div className="bg-white p-[1.2cqw] rounded-[1.0cqw] border border-slate-200 shadow-xs text-center flex flex-col justify-between h-full">
+                                                             <span className="text-[1.0cqw] font-black text-[#0f3156] uppercase">Gente & Gestão</span>
+                                                             <p className="text-[0.75cqw] text-slate-500 mt-[0.5cqw] leading-normal">Seleção rigorosa e psicólogos dedicados para reduzir turnover e garantir perfil adequado.</p>
+                                                             <div className="bg-emerald-50 text-emerald-800 text-[0.7cqw] font-bold p-[0.3cqw] rounded mt-[0.5cqw]">Banco de Talentos</div>
+                                                          </div>
+                                                          <div className="bg-white p-[1.2cqw] rounded-[1.0cqw] border border-slate-200 shadow-xs text-center flex flex-col justify-between h-full">
+                                                             <span className="text-[1.0cqw] font-black text-[#0f3156] uppercase">SST & Engenharia</span>
+                                                             <p className="text-[0.75cqw] text-slate-500 mt-[0.5cqw] leading-normal">Engenheiros de segurança e técnicos volantes que garantem 100% de conformidade legal.</p>
+                                                             <div className="bg-emerald-50 text-emerald-800 text-[0.7cqw] font-bold p-[0.3cqw] rounded mt-[0.5cqw]">eSocial Sync</div>
+                                                          </div>
+                                                          <div className="bg-white p-[1.2cqw] rounded-[1.0cqw] border border-slate-200 shadow-xs text-center flex flex-col justify-between h-full">
+                                                             <span className="text-[1.0cqw] font-black text-[#0f3156] uppercase">Plantão Tático 24h</span>
+                                                             <p className="text-[0.75cqw] text-slate-500 mt-[0.5cqw] leading-normal">Mesa de operações central com equipe reserva a postos para coberturas e emergências.</p>
+                                                             <div className="bg-emerald-50 text-emerald-800 text-[0.7cqw] font-bold p-[0.3cqw] rounded mt-[0.5cqw]">Mesa Nexus IA</div>
+                                                          </div>
+                                                          <div className="bg-white p-[1.2cqw] rounded-[1.0cqw] border border-slate-200 shadow-xs text-center flex flex-col justify-between h-full">
+                                                             <span className="text-[1.0cqw] font-black text-[#0f3156] uppercase">Treinamento JVS</span>
+                                                             <p className="text-[0.75cqw] text-slate-500 mt-[0.5cqw] leading-normal">Centro de treinamento físico próprio para capacitação prática e homologação de processos.</p>
+                                                             <div className="bg-emerald-50 text-emerald-800 text-[0.7cqw] font-bold p-[0.3cqw] rounded mt-[0.5cqw]">Provelo Academy</div>
+                                                          </div>
+                                                       </div>
+                                                    </div>
+                                                 )}
+
+                                                 {el.type === 'clientes_grid_logos' && (
+                                                    <div className="w-full h-full p-[0.5cqw] font-sans">
+                                                       <div className="grid grid-cols-4 gap-[1.2cqw] w-full h-full">
+                                                          <div className="bg-white border border-slate-200 p-[1.6cqw] rounded-[1.6cqw] flex flex-col items-center justify-center text-center shadow-xs">
+                                                             <span className="text-emerald-600 font-extrabold text-[1.1cqw] uppercase block">CONDOR</span>
+                                                             <span className="text-[0.75cqw] text-slate-400 font-bold block mt-[0.3cqw]">Nilo Peçanha / PR</span>
+                                                          </div>
+                                                          <div className="bg-white border border-slate-200 p-[1.6cqw] rounded-[1.6cqw] flex flex-col items-center justify-center text-center shadow-xs">
+                                                             <span className="text-[#0f3156] font-extrabold text-[1.1cqw] uppercase block">DAJU</span>
+                                                             <span className="text-[0.75cqw] text-slate-400 font-bold block mt-[0.3cqw]">Cabral / PR</span>
+                                                          </div>
+                                                          <div className="bg-white border border-slate-200 p-[1.6cqw] rounded-[1.6cqw] flex flex-col items-center justify-center text-center shadow-xs">
+                                                             <span className="text-emerald-600 font-extrabold text-[1.1cqw] uppercase block">ERASTO GAERTNER</span>
+                                                             <span className="text-[0.75cqw] text-slate-400 font-bold block mt-[0.3cqw]">Hospital / PR</span>
+                                                          </div>
+                                                          <div className="bg-white border border-slate-200 p-[1.6cqw] rounded-[1.6cqw] flex flex-col items-center justify-center text-center shadow-xs">
+                                                             <span className="text-[#0f3156] font-extrabold text-[1.1cqw] uppercase block">FESTVAL</span>
+                                                             <span className="text-[0.75cqw] text-slate-400 font-bold block mt-[0.3cqw]">Batel / PR</span>
+                                                          </div>
+                                                       </div>
+                                                    </div>
+                                                 )}
+
+                                                 {el.type === 'aceite_comercial_form' && (
+                                                    <div className="w-full h-full p-[0.5cqw] font-sans">
+                                                       <div className="grid grid-cols-2 gap-[1.6cqw] h-full w-full text-slate-800">
+                                                          <div className="bg-white border border-slate-200 p-[1.6cqw] rounded-[1.6cqw] flex flex-col justify-between shadow-xs text-left">
+                                                             <div>
+                                                                <h4 className="text-[1.0cqw] font-black text-[#0f3156] uppercase tracking-wider">Aceite Legal da Proposta</h4>
+                                                                <p className="text-[0.8cqw] text-slate-500 mt-[0.6cqw] leading-relaxed">Ao assinar este termo de aceite, o cliente manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
+                                                                <p className="text-[0.8cqw] text-slate-600 mt-[0.6cqw] font-bold">Vendedor Responsável: {vendedorNome}</p>
+                                                             </div>
+                                                             <div className="bg-emerald-50 text-emerald-800 text-[0.8cqw] font-semibold p-[1.0cqw] rounded-lg border border-emerald-200 mt-[1.2cqw]">
+                                                                🔒 Assinatura Eletrônica Segura em conformidade com MP 2.200-2/2001.
+                                                             </div>
+                                                          </div>
+                                                          <div className="bg-white border border-slate-200 p-[1.6cqw] rounded-[1.6cqw] flex flex-col justify-center items-center text-center shadow-xs">
+                                                             <div className="w-full h-full flex items-center justify-center">
+                                                                {(() => {
+                                                                   const isSigned = proposta.statusAssinatura === 'ASSINADO' || proposta.cliente?.statusAssinatura === 'ASSINADO';
+                                                                   const signer = proposta.nomeAssinante || proposta.cliente?.nomeAssinante || 'Roberto Nilo';
+                                                                   const doc = proposta.cpfAssinante || proposta.cliente?.cpfAssinante || '000.000.000-00';
+                                                                   const ip = proposta.ipAssinante || proposta.cliente?.ipAssinante || '186.220.100.4';
+                                                                   const date = proposta.dataAssinatura || proposta.cliente?.dataAssinatura || new Date().toLocaleString('pt-BR');
+                                                                   const signImage = proposta.assinaturaBase64 || proposta.cliente?.assinaturaBase64;
+
+                                                                   if (isSigned) {
+                                                                      return (
+                                                                         <div className="w-full h-full flex flex-col justify-between border-2 border-emerald-500 rounded-xl bg-emerald-50/50 p-4 relative overflow-hidden select-text text-left">
+                                                                            <div className="absolute top-0 right-0 bg-emerald-500 text-white px-2 py-0.5 rounded-bl font-black text-[7px] uppercase tracking-wider">VERIFICADO</div>
+                                                                            <div>
+                                                                               <div className="flex items-center gap-1.5 text-emerald-850 font-extrabold text-[10px] uppercase">
+                                                                                  <span>✓ ASSINATURA REGISTRADA</span>
+                                                                               </div>
+                                                                               <div className="mt-2 text-[8px] text-slate-650 leading-relaxed font-mono">
+                                                                                  <div><b>Nome:</b> {signer}</div>
+                                                                                  <div><b>Doc:</b> {doc}</div>
+                                                                                  <div><b>IP:</b> {ip}</div>
+                                                                                  <div><b>Data:</b> {date}</div>
+                                                                               </div>
+                                                                            </div>
+                                                                            {signImage ? (
+                                                                               <div className="h-10 w-full border-t border-dashed border-emerald-300 mt-2 flex items-center justify-center p-1 bg-white/70 rounded">
+                                                                                  <img src={signImage} alt="Assinatura" className="max-h-full max-w-full object-contain" />
+                                                                               </div>
+                                                                            ) : (
+                                                                               <div className="h-8 w-full border-t border-dashed border-emerald-300 mt-2 flex items-center justify-center text-[9px] font-bold text-emerald-800 italic font-mono">
+                                                                                  Assinado Digitalmente
+                                                                               </div>
+                                                                            )}
+                                                                         </div>
+                                                                      );
+                                                                   }
+
+                                                                   return (
+                                                                      <div className="w-full h-full flex flex-col justify-between border-2 border-dashed border-slate-350 rounded-xl bg-slate-50 p-4 text-center select-none">
+                                                                         <div className="flex flex-col items-center justify-center my-auto">
+                                                                            <LucideIconRenderer name="Award" className="text-amber-500 mb-1" size="2.5cqw" />
+                                                                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-wide">Assinatura Pendente</span>
+                                                                            <span className="text-[8px] text-slate-400 mt-0.5 max-w-[150px] leading-normal">Aguardando aprovação digital no ambiente do cliente.</span>
+                                                                         </div>
+                                                                         <div className="text-[8px] text-slate-400 font-mono tracking-wider">STATUS: AGUARDANDO ACEITE</div>
+                                                                      </div>
+                                                                   );
+                                                                })()}
+                                                             </div>
+                                                          </div>
+                                                       </div>
                                                     </div>
                                                  )}
                                              </div>

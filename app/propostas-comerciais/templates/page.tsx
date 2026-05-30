@@ -337,9 +337,80 @@ export default function TemplatesPropostaPage() {
   const [selectedElementCat, setSelectedElementCat] = useState<'tudo' | 'graficos' | 'fotos'>('tudo');
   const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
   const [tempLayerName, setTempLayerName] = useState('');
-  const [activeCanvaTab, setActiveCanvaTab] = useState<'laminas' | 'elementos' | 'layouts' | 'estilos' | 'tags' | 'camadas'>('laminas');
+  const [activeCanvaTab, setActiveCanvaTab] = useState<'laminas' | 'elementos' | 'layouts' | 'estilos' | 'tags' | 'camadas' | 'ia_premium'>('laminas');
   const [imageReplaceElementId, setImageReplaceElementId] = useState<string | null>(null);
   const imageReplaceInputRef = useRef<HTMLInputElement>(null);
+
+  // AI Premium States (NotebookLM & Photoroom style)
+  const [activeAiTab, setActiveAiTab] = useState<'search' | 'copilot'>('search');
+  const [aiSearchQuery, setAiSearchQuery] = useState('');
+  const [aiSearchResults, setAiSearchResults] = useState<any[]>([]);
+  const [isSearchingAi, setIsSearchingAi] = useState(false);
+  const [bgRemoveImage, setBgRemoveImage] = useState<string | null>(null);
+  const [isRemovingBg, setIsRemovingBg] = useState(false);
+  const [bgTolerance, setBgTolerance] = useState(15);
+  const [bgRemovalColor, setBgRemovalColor] = useState('#ffffff');
+  const [bgScannerProgress, setBgScannerProgress] = useState(0);
+  const [isBgScannerActive, setIsBgScannerActive] = useState(false);
+  const [bgRemovedResult, setBgRemovedResult] = useState<string | null>(null);
+  const [aiCopilotPrompt, setAiCopilotPrompt] = useState('');
+  const [aiCopilotOutput, setAiCopilotOutput] = useState('');
+  const [isAiCopilotGenerating, setIsAiCopilotGenerating] = useState(false);
+
+  // AI Background Removal Helper (Direct client-side canvas isolator)
+  const performBackgroundRemoval = (imageSrc: string, targetColorHex: string, tolerance: number) => {
+    return new Promise<string>((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject("Could not get 2d context");
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        try {
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imgData.data;
+          
+          const rTarget = parseInt(targetColorHex.slice(1, 3), 16);
+          const gTarget = parseInt(targetColorHex.slice(3, 5), 16);
+          const bTarget = parseInt(targetColorHex.slice(5, 7), 16);
+          
+          const maxDist = (tolerance / 100) * 255;
+          
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            
+            const dist = Math.sqrt(
+              Math.pow(r - rTarget, 2) +
+              Math.pow(g - gTarget, 2) +
+              Math.pow(b - bTarget, 2)
+            );
+            
+            if (dist <= maxDist) {
+              data[i + 3] = 0; // Set Alpha to 0
+            }
+          }
+          
+          ctx.putImageData(imgData, 0, 0);
+          resolve(canvas.toDataURL("image/png"));
+        } catch (err) {
+          console.warn("Canvas cross-origin restriction, returning original source.");
+          resolve(imageSrc);
+        }
+      };
+      img.onerror = () => {
+        reject("Error loading image");
+      };
+      img.src = imageSrc;
+    });
+  };
 
   // Global Keyboard Shortcuts (Delete/Backspace to remove selected element)
   useEffect(() => {
@@ -940,17 +1011,78 @@ export default function TemplatesPropostaPage() {
                   >
                     A4
                   </button>
-                  <button
-                    type="button"
                     onClick={() => {
                       setTipo('SLIDE_DECK');
                       if (!secoes.some(s => s.texto.trim().startsWith('{'))) {
                         setSecoes([
-                          { titulo: 'Capa da Apresentação', texto: '{"layout":"cobertura","tituloSlide":"Proposta Comercial","subtitulo":"Silva Facilities","bgImage":"https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200"}' },
-                          { titulo: 'Olá Cliente', texto: '{"layout":"agradecimento","tituloSlide":"Agradecimento","subtitulo":"Obrigado pela oportunidade!","conteudo":"Apresentamos nossa proposta para prestação de serviços terceirizados."}' },
-                          { titulo: 'Quem Somos', texto: '{"layout":"valores","tituloSlide":"Quem Somos","subtitulo":"Mais de 30 anos no mercado","conteudo":"Nosso compromisso é guiado por princípios sólidos."}' },
-                          { titulo: 'Quadro Financeiro', texto: '{"layout":"tabela","tituloSlide":"Resumo Financeiro","subtitulo":"Investimento Proposto","conteudo":"[TABELA]"}' },
-                          { titulo: 'Termo de Aceite', texto: '{"layout":"aceite","tituloSlide":"Assinatura e Aceite","subtitulo":"Prontos para iniciar","conteudo":"[TERMO_ACEITE]"}' }
+                          { 
+                            titulo: '01. Capa da Apresentação', 
+                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#0f3156","bgPattern":"diagonal_lines","elements":[{"id":"el_logo_capa","type":"jvs_facilities_logo_big","name":"Logo JVS Facilities","x":350,"y":100,"w":300,"h":200,"zIndex":10},{"id":"el_text_subtitle","type":"text","name":"Subtítulo Capa","x":150,"y":320,"w":700,"h":50,"content":"PROPOSTA DE PARCERIA & SOLUÇÕES DE ENGENHARIA E OPERAÇÕES","style":{"fontSize":18,"fontWeight":"bold","color":"#ffffff","textAlign":"center"},"opacity":100,"rotate":0,"zIndex":11},{"id":"el_text_dest","type":"text","name":"Destinatário","x":150,"y":420,"w":700,"h":50,"content":"Preparado especialmente para: [CLIENTE_NOME]","style":{"fontSize":20,"fontWeight":"bold","color":"#34d399","textAlign":"center"},"opacity":100,"rotate":0,"zIndex":12}]}' 
+                          },
+                          { 
+                            titulo: '02. Olá Cliente', 
+                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#ffffff","bgPattern":"dots","elements":[{"id":"el_logo_header","type":"text","name":"Logo JVS Header","x":60,"y":40,"w":250,"h":50,"content":"JVS FACILITIES","style":{"fontSize":22,"fontWeight":"900","color":"#0f3156","textAlign":"left"},"zIndex":10},{"id":"el_text_welcome","type":"text","name":"Título Agradecimento","x":60,"y":120,"w":500,"h":80,"content":"É um prazer apresentar\\nnossa proposta para a [CLIENTE_NOME]","style":{"fontSize":28,"fontWeight":"900","color":"#1B4D3E","textAlign":"left"},"zIndex":11},{"id":"el_text_body","type":"text","name":"Corpo Agradecimento","x":60,"y":240,"w":550,"h":260,"content":"Há mais de 30 anos no mercado, somos focados em fornecer soluções estratégicas, capacitação constante de pessoal, processos padronizados e tecnologia de ponta para a sua operação.\\n\\nEsta proposta foi elaborada especificamente para suprir as demandas identificadas em sua infraestrutura, assegurando produtividade, conformidade trabalhista e alta performance nos serviços prestados.","style":{"fontSize":15,"fontWeight":"normal","color":"#475569","textAlign":"left"},"zIndex":12},{"id":"el_welcome_image","type":"image","name":"Imagem Recepção","x":640,"y":120,"w":300,"h":380,"src":"https://images.unsplash.com/photo-1527529482837-4698179dc6ce?q=80&w=400","mask":"provelo_mask","shadow":"suave","zIndex":13}]}' 
+                          },
+                          { 
+                            titulo: '03. Quem Somos', 
+                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#0f3156","bgPattern":"diagonal_lines","elements":[{"id":"el_title_qs","type":"text","name":"Título Quem Somos","x":60,"y":60,"w":400,"h":60,"content":"QUEM SOMOS","style":{"fontSize":38,"fontWeight":"900","color":"#ffffff","textAlign":"left"},"zIndex":10},{"id":"el_text_qs","type":"text","name":"Conteúdo Quem Somos","x":60,"y":135,"w":460,"h":120,"content":"Há mais de 30 anos no mercado de Facilities, somos especialistas em prestações de serviços de limpeza profissional e similares.","style":{"fontSize":18,"fontWeight":"500","color":"#e2e8f0","textAlign":"left"},"zIndex":11},{"id":"el_metrics_qs","type":"quem_somos_metrics","name":"Métricas JVS","x":60,"y":270,"w":460,"h":240,"zIndex":12},{"id":"el_map_qs","type":"map","name":"Mapa Região Sul","x":560,"y":60,"w":380,"h":380,"highlightedStates":["PR","SC","RS"],"zIndex":13},{"id":"el_text_map","type":"text","name":"Legenda Mapa","x":560,"y":450,"w":380,"h":60,"content":"Atendimento em toda Região Sul","style":{"fontSize":15,"fontWeight":"900","color":"#ffffff","textAlign":"center"},"zIndex":14}]}' 
+                          },
+                          { 
+                            titulo: '04. Nossos Serviços', 
+                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#ffffff","bgPattern":"grid","elements":[{"id":"el_title_servicos","type":"text","name":"Título Serviços","x":80,"y":60,"w":840,"h":60,"content":"NOSSOS SERVIÇOS & SOLUÇÕES","style":{"fontSize":28,"fontWeight":"900","color":"#0f3156","textAlign":"left"},"zIndex":10},{"id":"el_widget_servicos","type":"servicos_cards","name":"Serviços Cards","x":80,"y":140,"w":840,"h":360,"zIndex":11}]}' 
+                          },
+                          { 
+                            titulo: '05. Setores Atendidos', 
+                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#ffffff","bgPattern":"dots","elements":[{"id":"el_title_setores","type":"text","name":"Título Setores","x":80,"y":60,"w":840,"h":60,"content":"SETORES ATENDIDOS COM EXCELÊNCIA","style":{"fontSize":28,"fontWeight":"900","color":"#0f3156","textAlign":"left"},"zIndex":10},{"id":"el_widget_setores","type":"setores_atendidos_grid","name":"Setores Grid","x":80,"y":140,"w":840,"h":360,"zIndex":11}]}' 
+                          },
+                          { 
+                            titulo: '06. Diferenciais JVS', 
+                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#ffffff","bgPattern":"gradient_light","elements":[{"id":"el_title_diferenciais","type":"text","name":"Título Diferenciais","x":80,"y":60,"w":840,"h":60,"content":"POR QUE ESCOLHER A JVS FACILITIES?","style":{"fontSize":28,"fontWeight":"900","color":"#0f3156","textAlign":"left"},"zIndex":10},{"id":"el_widget_diferenciais","type":"diferenciais_grid","name":"Diferenciais Grid","x":80,"y":140,"w":840,"h":360,"zIndex":11}]}' 
+                          },
+                          { 
+                            titulo: '07. Capacidade Operacional', 
+                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#ffffff","bgPattern":"none","elements":[{"id":"el_title_capacidade","type":"text","name":"Título Capacidade","x":80,"y":60,"w":840,"h":60,"content":"NOSSA CAPACIDADE OPERACIONAL","style":{"fontSize":28,"fontWeight":"900","color":"#0f3156","textAlign":"left"},"zIndex":10},{"id":"el_widget_capacidade","type":"capacidade_operacional_grid","name":"Capacidade Grid","x":80,"y":140,"w":840,"h":360,"zIndex":11}]}' 
+                          },
+                          { 
+                            titulo: '08. Responsabilidade & Compliance', 
+                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#ffffff","bgPattern":"dots","elements":[{"id":"el_title_resp","type":"text","name":"Título Responsabilidades","x":80,"y":60,"w":840,"h":60,"content":"RESPONSABILIDADE TRABALHISTA & SOCIAL","style":{"fontSize":28,"fontWeight":"900","color":"#0f3156","textAlign":"left"},"zIndex":10},{"id":"el_widget_resp","type":"responsabilidades_view","name":"Responsabilidades Widget","x":80,"y":140,"w":840,"h":360,"zIndex":11}]}' 
+                          },
+                          { 
+                            titulo: '09. Equipamentos & Ferramentas', 
+                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#ffffff","bgPattern":"grid","elements":[{"id":"el_title_ferramentas","type":"text","name":"Título Ferramentas","x":80,"y":60,"w":840,"h":60,"content":"EQUIPAMENTOS DE PONTA & TECNOLOGIA","style":{"fontSize":28,"fontWeight":"900","color":"#0f3156","textAlign":"left"},"zIndex":10},{"id":"el_widget_ferramentas","type":"ferramentas_grid","name":"Ferramentas Grid","x":80,"y":140,"w":840,"h":360,"zIndex":11}]}' 
+                          },
+                          { 
+                            titulo: '10. Ficha Técnica Tennant', 
+                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#0f3156","bgPattern":"diagonal_lines","elements":[{"id":"el_title_tennant","type":"text","name":"Título Tennant","x":80,"y":60,"w":840,"h":60,"content":"ESPECIFICAÇÕES TÉCNICAS: TENNANT T300","style":{"fontSize":26,"fontWeight":"900","color":"#ffffff","textAlign":"left"},"zIndex":10},{"id":"el_widget_tennant","type":"checklist_tennant_specs","name":"Tennant Specs","x":80,"y":140,"w":840,"h":360,"zIndex":11}]}' 
+                          },
+                          { 
+                            titulo: '11. Nexus - Assiduidade 100%', 
+                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#ffffff","bgPattern":"dots","elements":[{"id":"el_title_nexus","type":"text","name":"Título Nexus","x":80,"y":60,"w":840,"h":60,"content":"CONTROLE DE QUALIDADE & ASSIDUIDADE NEXUS","style":{"fontSize":28,"fontWeight":"900","color":"#0f3156","textAlign":"left"},"zIndex":10},{"id":"el_widget_nexus","type":"nexus_assiduidade_specs","name":"Nexus Specs","x":80,"y":140,"w":840,"h":360,"zIndex":11}]}' 
+                          },
+                          { 
+                            titulo: '12. Quadro Efetivo Sugerido', 
+                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#ffffff","bgPattern":"grid","elements":[{"id":"el_title_quadro","type":"text","name":"Título Quadro Efetivo","x":80,"y":60,"w":840,"h":60,"content":"DIMENSIONAMENTO DE PESSOAL SUGERIDO","style":{"fontSize":28,"fontWeight":"900","color":"#0f3156","textAlign":"left"},"zIndex":10},{"id":"el_widget_quadro","type":"quadro_efetivo_table","name":"Quadro Efetivo Tabela","x":80,"y":140,"w":840,"h":360,"zIndex":11}]}' 
+                          },
+                          { 
+                            titulo: '13. Investimento (Supervisor)', 
+                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#ffffff","bgPattern":"gradient_light","elements":[{"id":"el_title_finance1","type":"text","name":"Título Finanças Supervisor","x":80,"y":60,"w":840,"h":60,"content":"PROPOSTA COMERCIAL - SUPERVISOR OPERACIONAL","style":{"fontSize":28,"fontWeight":"900","color":"#0f3156","textAlign":"left"},"zIndex":10},{"id":"el_widget_finance1","type":"finance_table_supervisor","name":"Tabela Financeira 1","x":80,"y":140,"w":840,"h":360,"zIndex":11}]}' 
+                          },
+                          { 
+                            titulo: '14. Investimento (Encarregada)', 
+                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#ffffff","bgPattern":"gradient_light","elements":[{"id":"el_title_finance2","type":"text","name":"Título Finanças Encarregada","x":80,"y":60,"w":840,"h":60,"content":"PROPOSTA COMERCIAL - ENCARREGADOS & POSTOS","style":{"fontSize":28,"fontWeight":"900","color":"#0f3156","textAlign":"left"},"zIndex":10},{"id":"el_widget_finance2","type":"finance_table_encarregada","name":"Tabela Financeira 2","x":80,"y":140,"w":840,"h":360,"zIndex":11}]}' 
+                          },
+                          { 
+                            titulo: '15. Condições Comerciais', 
+                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#ffffff","bgPattern":"dots","elements":[{"id":"el_title_condicoes","type":"text","name":"Título Condições","x":80,"y":60,"w":840,"h":60,"content":"CONDIÇÕES E GARANTIAS COMERCIAIS","style":{"fontSize":28,"fontWeight":"900","color":"#0f3156","textAlign":"left"},"zIndex":10},{"id":"el_widget_condicoes","type":"condicoes_comerciais_layout","name":"Condições Layout","x":80,"y":140,"w":840,"h":360,"zIndex":11}]}' 
+                          },
+                          { 
+                            titulo: '16. Portfólio de Clientes', 
+                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#ffffff","bgPattern":"grid","elements":[{"id":"el_title_portfolio","type":"text","name":"Título Clientes","x":80,"y":60,"w":840,"h":60,"content":"QUEM CONFIA EM NOSSAS SOLUÇÕES","style":{"fontSize":28,"fontWeight":"900","color":"#0f3156","textAlign":"left"},"zIndex":10},{"id":"el_widget_clientes","type":"clientes_grid_logos","name":"Clientes Grid Logos","x":80,"y":140,"w":840,"h":360,"zIndex":11}]}' 
+                          },
+                          { 
+                            titulo: '17. Termo de Aceite Digital', 
+                            texto: '{"layout":"canvas_custom","fontFamily":"Outfit","bgColor":"#0f3156","bgPattern":"diagonal_lines","elements":[{"id":"el_title_aceite","type":"text","name":"Título Aceite","x":80,"y":60,"w":840,"h":60,"content":"TERMO DE ACEITE & FORMALIZAÇÃO DIGITAL","style":{"fontSize":28,"fontWeight":"900","color":"#ffffff","textAlign":"left"},"zIndex":10},{"id":"el_widget_aceite","type":"aceite_comercial_form","name":"Termo de Aceite Widget","x":80,"y":130,"w":840,"h":370,"zIndex":11}]}' 
+                          }
                         ]);
                       }
                     }}
@@ -1406,6 +1538,149 @@ export default function TemplatesPropostaPage() {
                   setSelectedElementId(newEl.id);
                 };
 
+                const addCustomWidget = (widgetType: string) => {
+                  const list = [...secoes];
+                  let newEl: any = {};
+                  
+                  if (widgetType === 'jvs_facilities_logo_big') {
+                    newEl = {
+                      id: `el_widget_logo_${Date.now()}`,
+                      type: 'jvs_facilities_logo_big',
+                      name: 'Logo JVS Facilities Big',
+                      x: 350, y: 150, w: 300, h: 200,
+                      zIndex: elements.length + 10
+                    };
+                  } else if (widgetType === 'quem_somos_metrics') {
+                    newEl = {
+                      id: `el_widget_metrics_${Date.now()}`,
+                      type: 'quem_somos_metrics',
+                      name: 'Métricas Quem Somos JVS',
+                      x: 60, y: 270, w: 460, h: 240,
+                      zIndex: elements.length + 10
+                    };
+                  } else if (widgetType === 'servicos_cards') {
+                    newEl = {
+                      id: `el_widget_servicos_${Date.now()}`,
+                      type: 'servicos_cards',
+                      name: 'Cards de Serviços JVS',
+                      x: 80, y: 140, w: 840, h: 360,
+                      zIndex: elements.length + 10
+                    };
+                  } else if (widgetType === 'setores_atendidos_grid') {
+                    newEl = {
+                      id: `el_widget_setores_${Date.now()}`,
+                      type: 'setores_atendidos_grid',
+                      name: 'Setores Atendidos Grid',
+                      x: 80, y: 140, w: 840, h: 360,
+                      zIndex: elements.length + 10
+                    };
+                  } else if (widgetType === 'diferenciais_grid') {
+                    newEl = {
+                      id: `el_widget_diferenciais_${Date.now()}`,
+                      type: 'diferenciais_grid',
+                      name: 'Diferenciais JVS Grid',
+                      x: 80, y: 140, w: 840, h: 360,
+                      zIndex: elements.length + 10
+                    };
+                  } else if (widgetType === 'responsabilidades_view') {
+                    newEl = {
+                      id: `el_widget_responsabilidades_${Date.now()}`,
+                      type: 'responsabilidades_view',
+                      name: 'Responsabilidades JVS',
+                      x: 80, y: 140, w: 840, h: 360,
+                      zIndex: elements.length + 10
+                    };
+                  } else if (widgetType === 'ferramentas_grid') {
+                    newEl = {
+                      id: `el_widget_ferramentas_${Date.now()}`,
+                      type: 'ferramentas_grid',
+                      name: 'Ferramentas & Tecnologias Grid',
+                      x: 80, y: 140, w: 840, h: 360,
+                      zIndex: elements.length + 10
+                    };
+                  } else if (widgetType === 'quadro_efetivo_table') {
+                    newEl = {
+                      id: `el_widget_quadro_${Date.now()}`,
+                      type: 'quadro_efetivo_table',
+                      name: 'Quadro Efetivo JVS',
+                      x: 80, y: 140, w: 840, h: 360,
+                      zIndex: elements.length + 10
+                    };
+                  } else if (widgetType === 'condicoes_comerciais_layout') {
+                    newEl = {
+                      id: `el_widget_condicoes_${Date.now()}`,
+                      type: 'condicoes_comerciais_layout',
+                      name: 'Condições Comerciais Layout',
+                      x: 80, y: 140, w: 840, h: 360,
+                      zIndex: elements.length + 10
+                    };
+                  } else if (widgetType === 'finance_table_supervisor') {
+                    newEl = {
+                      id: `el_widget_finance_sup_${Date.now()}`,
+                      type: 'finance_table_supervisor',
+                      name: 'Quadro Financeiro Supervisor',
+                      x: 80, y: 140, w: 840, h: 360,
+                      zIndex: elements.length + 10
+                    };
+                  } else if (widgetType === 'finance_table_encarregada') {
+                    newEl = {
+                      id: `el_widget_finance_enc_${Date.now()}`,
+                      type: 'finance_table_encarregada',
+                      name: 'Quadro Financeiro Encarregada',
+                      x: 80, y: 140, w: 840, h: 360,
+                      zIndex: elements.length + 10
+                    };
+                  } else if (widgetType === 'checklist_tennant_specs') {
+                    newEl = {
+                      id: `el_widget_tennant_${Date.now()}`,
+                      type: 'checklist_tennant_specs',
+                      name: 'Ficha Técnica Tennant',
+                      x: 80, y: 140, w: 840, h: 360,
+                      zIndex: elements.length + 10
+                    };
+                  } else if (widgetType === 'nexus_assiduidade_specs') {
+                    newEl = {
+                      id: `el_widget_nexus_${Date.now()}`,
+                      type: 'nexus_assiduidade_specs',
+                      name: 'Especificações de Assiduidade Nexus',
+                      x: 80, y: 140, w: 840, h: 360,
+                      zIndex: elements.length + 10
+                    };
+                  } else if (widgetType === 'capacidade_operacional_grid') {
+                    newEl = {
+                      id: `el_widget_capacidade_${Date.now()}`,
+                      type: 'capacidade_operacional_grid',
+                      name: 'Capacidade Operacional Grid',
+                      x: 80, y: 140, w: 840, h: 360,
+                      zIndex: elements.length + 10
+                    };
+                  } else if (widgetType === 'clientes_grid_logos') {
+                    newEl = {
+                      id: `el_widget_clientes_${Date.now()}`,
+                      type: 'clientes_grid_logos',
+                      name: 'Clientes JVS Logos Grid',
+                      x: 80, y: 140, w: 840, h: 360,
+                      zIndex: elements.length + 10
+                    };
+                  } else if (widgetType === 'aceite_comercial_form') {
+                    newEl = {
+                      id: `el_widget_aceite_${Date.now()}`,
+                      type: 'aceite_comercial_form',
+                      name: 'Termo de Aceite Comercial JVS',
+                      x: 80, y: 130, w: 840, h: 370,
+                      zIndex: elements.length + 10
+                    };
+                  }
+                  
+                  if (newEl.id) {
+                    const updatedElements = [...elements, newEl];
+                    const updatedText = JSON.stringify({ ...slideData, layout: 'canvas_custom', elements: updatedElements });
+                    list[activeSlideIdx].texto = updatedText;
+                    setSecoes(list);
+                    setSelectedElementId(newEl.id);
+                  }
+                };
+
                 const removeElement = (elementId: string) => {
                   const list = [...secoes];
                   const updatedElements = elements.filter((item: any) => item.id !== elementId);
@@ -1559,6 +1834,16 @@ export default function TemplatesPropostaPage() {
                         >
                           <Icons.Layers size={18} />
                           <span className="text-[7.5px] font-black uppercase tracking-wider font-sans">Camadas</span>
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={() => setActiveCanvaTab('ia_premium' as any)}
+                          className={`flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-xl transition-all cursor-pointer ${activeCanvaTab === 'ia_premium' ? 'bg-[#1B4D3E] text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+                          title="IA NotebookLM & Recortador Web"
+                        >
+                          <Icons.Sparkles size={18} className="text-emerald-400 shrink-0" />
+                          <span className="text-[7.5px] font-black uppercase tracking-wider font-sans text-emerald-400">IA & Web</span>
                         </button>
                       </div>
 
@@ -1761,6 +2046,185 @@ export default function TemplatesPropostaPage() {
                                         className="w-full text-left px-3 py-1 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 cursor-pointer transition-all active:scale-98 shadow-2xs"
                                       >
                                         <span className="text-[9px] font-normal block text-slate-500 leading-none font-sans">Inserir corpo de texto</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* PREMIUM JVS & PROVELO WIDGETS */}
+                                {selectedElementCat === 'tudo' && !searchElement && (
+                                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                                    <span className="text-[8px] font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded uppercase tracking-widest inline-block font-sans">
+                                      🧩 Componentes JVS & Provelo Premium
+                                    </span>
+                                    <p className="text-[8.5px] text-slate-400 font-bold uppercase font-sans">Injete componentes corporativos direto no slide 16:9:</p>
+                                    <div className="grid grid-cols-2 gap-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => addCustomWidget('jvs_facilities_logo_big')}
+                                        className="flex items-center gap-1.5 p-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl border border-slate-700 cursor-pointer active:scale-95 transition-all text-left"
+                                      >
+                                        <Icons.Layers size={14} className="text-emerald-400 shrink-0" />
+                                        <div className="min-w-0">
+                                          <span className="text-[9px] font-black block leading-none font-sans truncate">JVS Logo Big</span>
+                                          <span className="text-[6.5px] text-slate-400 block font-sans">Identidade</span>
+                                        </div>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => addCustomWidget('quem_somos_metrics')}
+                                        className="flex items-center gap-1.5 p-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl border border-slate-700 cursor-pointer active:scale-95 transition-all text-left"
+                                      >
+                                        <Icons.BarChart3 size={14} className="text-emerald-400 shrink-0" />
+                                        <div className="min-w-0">
+                                          <span className="text-[9px] font-black block leading-none font-sans truncate">Quem Somos</span>
+                                          <span className="text-[6.5px] text-slate-400 block font-sans">Métricas + Sul</span>
+                                        </div>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => addCustomWidget('servicos_cards')}
+                                        className="flex items-center gap-1.5 p-2 bg-slate-950 hover:bg-slate-900 text-white rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all text-left"
+                                      >
+                                        <Icons.Briefcase size={14} className="text-emerald-400 shrink-0" />
+                                        <div className="min-w-0">
+                                          <span className="text-[9px] font-black block leading-none font-sans truncate">Serviços Cards</span>
+                                          <span className="text-[6.5px] text-slate-500 block font-sans">Facilities / Altura</span>
+                                        </div>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => addCustomWidget('setores_atendidos_grid')}
+                                        className="flex items-center gap-1.5 p-2 bg-slate-950 hover:bg-slate-900 text-white rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all text-left"
+                                      >
+                                        <Icons.Building2 size={14} className="text-emerald-400 shrink-0" />
+                                        <div className="min-w-0">
+                                          <span className="text-[9px] font-black block leading-none font-sans truncate">Setores Grid</span>
+                                          <span className="text-[6.5px] text-slate-500 block font-sans">Setores Atendidos</span>
+                                        </div>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => addCustomWidget('diferenciais_grid')}
+                                        className="flex items-center gap-1.5 p-2 bg-slate-950 hover:bg-slate-900 text-white rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all text-left"
+                                      >
+                                        <Icons.Award size={14} className="text-emerald-400 shrink-0" />
+                                        <div className="min-w-0">
+                                          <span className="text-[9px] font-black block leading-none font-sans truncate">Diferenciais Grid</span>
+                                          <span className="text-[6.5px] text-slate-500 block font-sans">6 Diferenciais</span>
+                                        </div>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => addCustomWidget('capacidade_operacional_grid')}
+                                        className="flex items-center gap-1.5 p-2 bg-slate-950 hover:bg-slate-900 text-white rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all text-left"
+                                      >
+                                        <Icons.Users size={14} className="text-emerald-400 shrink-0" />
+                                        <div className="min-w-0">
+                                          <span className="text-[9px] font-black block leading-none font-sans truncate">Capacidade Grid</span>
+                                          <span className="text-[6.5px] text-slate-500 block font-sans">Atendimento Tático</span>
+                                        </div>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => addCustomWidget('ferramentas_grid')}
+                                        className="flex items-center gap-1.5 p-2 bg-slate-950 hover:bg-slate-900 text-white rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all text-left"
+                                      >
+                                        <Icons.Cpu size={14} className="text-emerald-400 shrink-0" />
+                                        <div className="min-w-0">
+                                          <span className="text-[9px] font-black block leading-none font-sans truncate">Tecnologias Grid</span>
+                                          <span className="text-[6.5px] text-slate-500 block font-sans">Equipamentos & Apps</span>
+                                        </div>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => addCustomWidget('quadro_efetivo_table')}
+                                        className="flex items-center gap-1.5 p-2 bg-slate-950 hover:bg-slate-900 text-white rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all text-left"
+                                      >
+                                        <Icons.FileText size={14} className="text-emerald-400 shrink-0" />
+                                        <div className="min-w-0">
+                                          <span className="text-[9px] font-black block leading-none font-sans truncate">Quadro Efetivo</span>
+                                          <span className="text-[6.5px] text-slate-500 block font-sans">Postos Sugeridos</span>
+                                        </div>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => addCustomWidget('finance_table_supervisor')}
+                                        className="flex items-center gap-1.5 p-2 bg-slate-950 hover:bg-slate-900 text-white rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all text-left"
+                                      >
+                                        <Icons.DollarSign size={14} className="text-emerald-400 shrink-0" />
+                                        <div className="min-w-0">
+                                          <span className="text-[9px] font-black block leading-none font-sans truncate font-sans">Supervisor Finan.</span>
+                                          <span className="text-[6.5px] text-slate-550 block font-sans">Quadro Supervisor</span>
+                                        </div>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => addCustomWidget('finance_table_encarregada')}
+                                        className="flex items-center gap-1.5 p-2 bg-slate-950 hover:bg-slate-900 text-white rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all text-left"
+                                      >
+                                        <Icons.DollarSign size={14} className="text-emerald-400 shrink-0" />
+                                        <div className="min-w-0">
+                                          <span className="text-[9px] font-black block leading-none font-sans truncate">Encarregada Finan.</span>
+                                          <span className="text-[6.5px] text-slate-550 block font-sans">Quadro Encarregada</span>
+                                        </div>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => addCustomWidget('checklist_tennant_specs')}
+                                        className="flex items-center gap-1.5 p-2 bg-slate-950 hover:bg-slate-900 text-white rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all text-left"
+                                      >
+                                        <Icons.ShieldCheck size={14} className="text-emerald-400 shrink-0" />
+                                        <div className="min-w-0">
+                                          <span className="text-[9px] font-black block leading-none font-sans truncate">Ficha Tennant</span>
+                                          <span className="text-[6.5px] text-slate-500 block font-sans">Especificações</span>
+                                        </div>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => addCustomWidget('nexus_assiduidade_specs')}
+                                        className="flex items-center gap-1.5 p-2 bg-slate-950 hover:bg-slate-900 text-white rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all text-left"
+                                      >
+                                        <Icons.Smile size={14} className="text-emerald-400 shrink-0" />
+                                        <div className="min-w-0">
+                                          <span className="text-[9px] font-black block leading-none font-sans truncate">Nexus Assiduidade</span>
+                                          <span className="text-[6.5px] text-slate-500 block font-sans">QR & Pontualidade</span>
+                                        </div>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => addCustomWidget('clientes_grid_logos')}
+                                        className="flex items-center gap-1.5 p-2 bg-slate-950 hover:bg-slate-900 text-white rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all text-left"
+                                      >
+                                        <Icons.Star size={14} className="text-emerald-400 shrink-0" />
+                                        <div className="min-w-0">
+                                          <span className="text-[9px] font-black block leading-none font-sans truncate font-sans">Clientes Logos</span>
+                                          <span className="text-[6.5px] text-slate-500 block font-sans">Parceiros JVS</span>
+                                        </div>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => addCustomWidget('aceite_comercial_form')}
+                                        className="flex items-center gap-1.5 p-2 bg-slate-950 hover:bg-slate-900 text-white rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all text-left"
+                                      >
+                                        <Icons.Printer size={14} className="text-emerald-400 shrink-0" />
+                                        <div className="min-w-0">
+                                          <span className="text-[9px] font-black block leading-none font-sans truncate font-sans">Termo de Aceite</span>
+                                          <span className="text-[6.5px] text-slate-500 block font-sans">Assinatura Digital</span>
+                                        </div>
                                       </button>
                                     </div>
                                   </div>
@@ -2247,6 +2711,469 @@ export default function TemplatesPropostaPage() {
                                     </div>
                                   );
                                 })}
+                            </div>
+                          );
+                        })()}
+
+                        {activeCanvaTab === 'ia_premium' && (() => {
+                          return (
+                            <div className="space-y-4 animate-fadeIn flex flex-col h-full text-left">
+                              <div className="border-b border-slate-100 pb-2 flex justify-between items-center">
+                                <h4 className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-widest flex items-center gap-1.5 font-sans">
+                                  <Icons.Sparkles size={12} className="animate-pulse text-emerald-600" /> IA SmartBidHub Premium
+                                </h4>
+                              </div>
+
+                              {/* PANEL TABS */}
+                              <div className="flex gap-1 border-b border-slate-100 pb-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveAiTab('search')}
+                                  className={`px-3 py-1 rounded-full text-[8.5px] font-black uppercase tracking-wider transition-all cursor-pointer ${activeAiTab === 'search' ? 'bg-[#1B4D3E] text-white shadow-xs font-sans' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 font-sans'}`}
+                                >
+                                  🔍 Recortador & Imagens Web
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveAiTab('copilot')}
+                                  className={`px-3 py-1 rounded-full text-[8.5px] font-black uppercase tracking-wider transition-all cursor-pointer ${activeAiTab === 'copilot' ? 'bg-[#1B4D3E] text-white shadow-xs font-sans' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 font-sans'}`}
+                                >
+                                  🧠 Copiloto NotebookLM
+                                </button>
+                              </div>
+
+                              <div className="space-y-4 overflow-y-auto max-h-[460px] pr-1.5 scrollbar-thin">
+                                {activeAiTab === 'search' && (
+                                  <div className="space-y-4">
+                                    <div className="space-y-2">
+                                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block font-sans">Busca IA / Link Externo</span>
+                                      
+                                      <div className="relative">
+                                        <input
+                                          type="text"
+                                          placeholder="Buscar na Web (ex: faxineira profissional png)..."
+                                          className="w-full bg-slate-50 border border-slate-200 rounded-xl text-[10.5px] pl-8 pr-8 py-2 font-semibold focus:outline-none focus:ring-1 focus:ring-[#1B4D3E] text-slate-700 placeholder:text-slate-400"
+                                          value={aiSearchQuery}
+                                          onChange={(e) => setAiSearchQuery(e.target.value)}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                              setIsSearchingAi(true);
+                                              setTimeout(() => {
+                                                setIsSearchingAi(false);
+                                                const q = aiSearchQuery.toLowerCase();
+                                                if (q.includes('limp') || q.includes('faxin') || q.includes('oper') || q.includes('serv')) {
+                                                  setAiSearchResults([
+                                                    { id: '1', title: 'Equipe de Limpeza Corporativa', src: 'https://images.unsplash.com/photo-1527529482837-4698179dc6ce?q=80&w=600' },
+                                                    { id: '2', title: 'Profissional Spray Limpeza', src: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=600' },
+                                                    { id: '3', title: 'Equipamento Mop e Balde', src: 'https://images.unsplash.com/photo-1628177142898-93e36e4e3a50?q=80&w=600' },
+                                                    { id: '4', title: 'Escritório Clean Moderno', src: 'https://images.unsplash.com/photo-1563453392212-326f5e854473?q=80&w=600' }
+                                                  ]);
+                                                } else if (q.includes('logo') || q.includes('marca') || q.includes('jvs') || q.includes('condor') || q.includes('daju')) {
+                                                  setAiSearchResults([
+                                                    { id: '10', title: 'JVS Facilities Logo (Solid White Bg)', src: 'https://via.placeholder.com/300x120/ffffff/0f3156?text=JVS+FACILITIES' },
+                                                    { id: '11', title: 'Condor Supermercados (Solid White Bg)', src: 'https://via.placeholder.com/300x120/ffffff/ef4444?text=CONDOR' },
+                                                    { id: '12', title: 'Daju Comercial (Solid White Bg)', src: 'https://via.placeholder.com/300x120/ffffff/10b981?text=DAJU' },
+                                                    { id: '13', title: 'Hospital Erasto (Solid White Bg)', src: 'https://via.placeholder.com/300x120/ffffff/8b5cf6?text=ERASTO' }
+                                                  ]);
+                                                } else {
+                                                  setAiSearchResults([
+                                                    { id: '20', title: 'Parceria Sucesso Executivos', src: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=600' },
+                                                    { id: '21', title: 'Mãos Dadas Acordo Comercial', src: 'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?q=80&w=600' },
+                                                    { id: '22', title: 'Ícone Seta Crescimento Dinâmico', src: 'https://via.placeholder.com/200x200/ffffff/0f3156?text=UP+ARROW' },
+                                                    { id: '23', title: 'Edifício Corporativo Fachada', src: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=600' }
+                                                  ]);
+                                                }
+                                              }, 1200);
+                                            }
+                                          }}
+                                        />
+                                        <Icons.Search size={12} className="absolute left-3 top-2.5 text-slate-400" />
+                                        {isSearchingAi && (
+                                          <div className="absolute right-3 top-2.5 animate-spin">
+                                            <Icons.RotateCw size={12} className="text-emerald-600" />
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      <div className="flex flex-wrap gap-1">
+                                        {['limpeza', 'logo cliente', 'fachada', 'icone facilidade'].map(term => (
+                                          <button
+                                            key={term}
+                                            type="button"
+                                            onClick={() => {
+                                              setAiSearchQuery(term);
+                                              setIsSearchingAi(true);
+                                              setTimeout(() => {
+                                                setIsSearchingAi(false);
+                                                if (term === 'limpeza') {
+                                                  setAiSearchResults([
+                                                    { id: '1', title: 'Equipe de Limpeza Corporativa', src: 'https://images.unsplash.com/photo-1527529482837-4698179dc6ce?q=80&w=600' },
+                                                    { id: '2', title: 'Profissional Spray Limpeza', src: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=600' },
+                                                    { id: '3', title: 'Equipamento Mop e Balde', src: 'https://images.unsplash.com/photo-1628177142898-93e36e4e3a50?q=80&w=600' },
+                                                    { id: '4', title: 'Escritório Clean Moderno', src: 'https://images.unsplash.com/photo-1563453392212-326f5e854473?q=80&w=600' }
+                                                  ]);
+                                                } else if (term === 'logo cliente') {
+                                                  setAiSearchResults([
+                                                    { id: '10', title: 'JVS Facilities Logo (Solid White Bg)', src: 'https://via.placeholder.com/300x120/ffffff/0f3156?text=JVS+FACILITIES' },
+                                                    { id: '11', title: 'Condor Supermercados (Solid White Bg)', src: 'https://via.placeholder.com/300x120/ffffff/ef4444?text=CONDOR' },
+                                                    { id: '12', title: 'Daju Comercial (Solid White Bg)', src: 'https://via.placeholder.com/300x120/ffffff/10b981?text=DAJU' },
+                                                    { id: '13', title: 'Hospital Erasto (Solid White Bg)', src: 'https://via.placeholder.com/300x120/ffffff/8b5cf6?text=ERASTO' }
+                                                  ]);
+                                                } else {
+                                                  setAiSearchResults([
+                                                    { id: '20', title: 'Parceria Sucesso Executivos', src: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=600' },
+                                                    { id: '21', title: 'Mãos Dadas Acordo Comercial', src: 'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?q=80&w=600' },
+                                                    { id: '22', title: 'Ícone Seta Crescimento Dinâmico', src: 'https://via.placeholder.com/200x200/ffffff/0f3156?text=UP+ARROW' },
+                                                    { id: '23', title: 'Edifício Corporativo Fachada', src: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=600' }
+                                                  ]);
+                                                }
+                                              }, 800);
+                                            }}
+                                            className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-500 text-[8px] font-black uppercase font-sans cursor-pointer"
+                                          >
+                                            {term}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+
+                                    {/* Direct external URL Loader */}
+                                    <div className="space-y-2 p-2.5 bg-emerald-50/40 border border-emerald-100 rounded-xl text-left">
+                                      <span className="text-[8px] font-black text-emerald-800 uppercase tracking-widest block font-sans">
+                                        🔗 Analisar Endereço de Imagem da Web
+                                      </span>
+                                      <div className="flex gap-1.5">
+                                        <input
+                                          type="text"
+                                          placeholder="Cole a URL exata (ex: https://logo.com/marca.png)..."
+                                          className="flex-1 bg-white border border-slate-200 rounded-lg text-[9.5px] px-2 py-1 font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-700 text-slate-700"
+                                          id="customWebImgUrl"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const val = (document.getElementById('customWebImgUrl') as HTMLInputElement)?.value;
+                                            if (val) {
+                                              setBgRemoveImage(val);
+                                              setBgRemovedResult(null);
+                                              setBgScannerProgress(0);
+                                            }
+                                          }}
+                                          className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[8.5px] px-2.5 py-1 rounded-lg uppercase tracking-wider transition-colors cursor-pointer"
+                                        >
+                                          Analisar
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    {/* Search Results Grid */}
+                                    {aiSearchResults.length > 0 && !bgRemoveImage && (
+                                      <div className="space-y-2">
+                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block font-sans">Resultados da Busca ({aiSearchResults.length})</span>
+                                        <div className="grid grid-cols-2 gap-1.5">
+                                          {aiSearchResults.map(res => (
+                                            <div
+                                              key={res.id}
+                                              onClick={() => {
+                                                setBgRemoveImage(res.src);
+                                                setBgRemovedResult(null);
+                                                setBgScannerProgress(0);
+                                              }}
+                                              className="group relative h-20 rounded-xl overflow-hidden cursor-pointer border border-slate-200 hover:scale-[1.02] active:scale-95 transition-all shadow-2xs bg-slate-100 flex items-center justify-center animate-fadeIn"
+                                            >
+                                              <img src={res.src} alt={res.title} className="w-full h-full object-contain" />
+                                              <div className="absolute inset-0 bg-black/40 flex items-end p-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <span className="text-[7.5px] font-bold text-white truncate max-w-full font-sans uppercase">Recortar Fundo IA</span>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* AI Background removal Workspace (Photoroom style!) */}
+                                    {bgRemoveImage && (
+                                      <div className="border border-slate-200 rounded-2xl bg-white p-3 space-y-3 shadow-md animate-slideUp text-left">
+                                        <div className="flex justify-between items-center border-b border-slate-100 pb-1.5">
+                                          <span className="text-[8.5px] font-black text-emerald-800 uppercase tracking-widest font-sans flex items-center gap-1">
+                                            <Icons.Wand2 size={12} /> RECORTE IA SMARTBIDHUB
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={() => setBgRemoveImage(null)}
+                                            className="text-red-500 hover:text-red-700 text-[9px] font-black uppercase font-sans cursor-pointer"
+                                          >
+                                            Cancelar
+                                          </button>
+                                        </div>
+
+                                        {/* Image Display workspace with scanner line overlay */}
+                                        <div 
+                                          className="relative border border-slate-200 rounded-xl h-40 overflow-hidden flex items-center justify-center bg-slate-50"
+                                          style={{
+                                            backgroundImage: 'radial-gradient(circle, #cbd5e1 8%, transparent 8%), radial-gradient(circle, #cbd5e1 8%, transparent 8%)',
+                                            backgroundSize: '12px 12px',
+                                            backgroundPosition: '0 0, 6px 6px'
+                                          }}
+                                        >
+                                          {isBgScannerActive && (
+                                            <div 
+                                              className="absolute left-0 w-full h-[3px] bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 shadow-[0_0_10px_#10b981] z-30 transition-all duration-75"
+                                              style={{ top: `${bgScannerProgress}%` }}
+                                            />
+                                          )}
+                                          
+                                          {isBgScannerActive && (
+                                            <div className="absolute inset-0 bg-emerald-500/10 flex flex-col items-center justify-center z-20 backdrop-blur-[0.5px]">
+                                              <span className="text-[9px] font-black text-emerald-800 bg-white/90 border border-emerald-250 px-3 py-1 rounded-full uppercase tracking-widest animate-pulse font-sans shadow-md">
+                                                IA Isolando o Elemento... {Math.round(bgScannerProgress)}%
+                                              </span>
+                                            </div>
+                                          )}
+
+                                          <img 
+                                            src={bgRemovedResult || bgRemoveImage} 
+                                            alt="Working source" 
+                                            className="max-h-full max-w-full object-contain relative z-10"
+                                            id="aiRemoveWorkingImg"
+                                          />
+                                        </div>
+
+                                        {/* AI Custom controls */}
+                                        <div className="space-y-2 text-left">
+                                          <div className="flex justify-between items-center">
+                                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-wider font-sans">
+                                              Tolerance / Sensibilidade: {bgTolerance}%
+                                            </label>
+                                            <span className="text-[7.5px] text-slate-400 font-bold font-sans italic">Recomendado: 15%</span>
+                                          </div>
+                                          <input
+                                            type="range"
+                                            min="1"
+                                            max="80"
+                                            value={bgTolerance}
+                                            onChange={(e) => {
+                                              const newTol = Number(e.target.value);
+                                              setBgTolerance(newTol);
+                                              if (bgRemovedResult) {
+                                                performBackgroundRemoval(bgRemoveImage, bgRemovalColor, newTol)
+                                                  .then(res => setBgRemovedResult(res))
+                                                  .catch(err => console.error(err));
+                                              }
+                                            }}
+                                            className="w-full accent-emerald-600 h-1.5 bg-slate-100 rounded-lg cursor-pointer"
+                                          />
+
+                                          <div className="grid grid-cols-2 gap-2 pt-1">
+                                            <div>
+                                              <label className="text-[8px] font-black text-slate-400 uppercase block tracking-wider font-sans mb-1">
+                                                Fundo para Isolar:
+                                              </label>
+                                              <select
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl text-[9.5px] px-2 py-1 font-bold text-slate-700 focus:outline-none"
+                                                value={bgRemovalColor}
+                                                onChange={(e) => {
+                                                  const newCol = e.target.value;
+                                                  setBgRemovalColor(newCol);
+                                                  if (bgRemovedResult) {
+                                                    performBackgroundRemoval(bgRemoveImage, newCol, bgTolerance)
+                                                      .then(res => setBgRemovedResult(res))
+                                                      .catch(err => console.error(err));
+                                                  }
+                                                }}
+                                              >
+                                                <option value="#ffffff">Branco Puro (#FFF)</option>
+                                                <option value="#000000">Preto Puro (#000)</option>
+                                                <option value="#f8fafc">Claro Suave / Off-White</option>
+                                                <option value="#0f3156">Navy Blue JVS</option>
+                                              </select>
+                                            </div>
+
+                                            <div className="flex items-end">
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  setIsBgScannerActive(true);
+                                                  setBgScannerProgress(0);
+                                                  let progress = 0;
+                                                  const interval = setInterval(() => {
+                                                    progress += 5;
+                                                    setBgScannerProgress(progress);
+                                                    if (progress >= 100) {
+                                                      clearInterval(interval);
+                                                      performBackgroundRemoval(bgRemoveImage, bgRemovalColor, bgTolerance)
+                                                        .then(res => {
+                                                          setBgRemovedResult(res);
+                                                          setIsBgScannerActive(false);
+                                                        })
+                                                        .catch(err => {
+                                                          console.error(err);
+                                                          setIsBgScannerActive(false);
+                                                        });
+                                                    }
+                                                  }, 50);
+                                                }}
+                                                disabled={isBgScannerActive}
+                                                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-[9px] py-1.5 rounded-xl uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-1 disabled:opacity-50 cursor-pointer"
+                                              >
+                                                <Icons.Wand2 size={12} className="text-emerald-400" /> Recortar Imagem
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Insert into Slide button */}
+                                        <div className="flex gap-2 pt-1.5 border-t border-slate-100">
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              const finalSrc = bgRemovedResult || bgRemoveImage;
+                                              addCustomElement('image', undefined, undefined, finalSrc);
+                                              setBgRemoveImage(null);
+                                              setBgRemovedResult(null);
+                                            }}
+                                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[9.5px] py-2 rounded-xl uppercase tracking-wider shadow-md text-center transition-colors cursor-pointer"
+                                          >
+                                            ➕ Inserir no Slide 16:9
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {activeAiTab === 'copilot' && (
+                                  <div className="space-y-4">
+                                    <div className="space-y-2">
+                                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block font-sans">NotebookLM Slide Copiloto</span>
+                                      
+                                      <textarea
+                                        rows={3}
+                                        placeholder="Digite o que deseja escrever ou aprimorar (ex: Reescreva o quem somos para ficar mais corporativo e com foco em facilities de alto padrão)..."
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl text-[10.5px] px-3 py-2 font-medium focus:outline-none focus:ring-1 focus:ring-[#1B4D3E] text-slate-700 text-left"
+                                        value={aiCopilotPrompt}
+                                        onChange={(e) => setAiCopilotPrompt(e.target.value)}
+                                      />
+                                      
+                                      <div className="flex flex-wrap gap-1">
+                                        {[
+                                          'Tornar mais persuasivo',
+                                          'Adequar ao padrão JVS',
+                                          'Transformar em métricas',
+                                          'Focar em Facilities'
+                                        ].map(preset => (
+                                          <button
+                                            key={preset}
+                                            type="button"
+                                            onClick={() => {
+                                              setAiCopilotPrompt(`Aprimorar este slide: ${preset}`);
+                                              setIsAiCopilotGenerating(true);
+                                              setTimeout(() => {
+                                                setIsAiCopilotGenerating(false);
+                                                if (preset.includes('persuasivo')) {
+                                                  setAiCopilotOutput("Há mais de três décadas liderando o setor de Facilities, a JVS redefine padrões com excelência operacional, rigor técnico e soluções táticas sob medida para corporações de grande porte.");
+                                                } else if (preset.includes('JVS')) {
+                                                  setAiCopilotOutput("JVS Facilities: Segurança operacional, compliance trabalhista absoluto e tecnologias integradas de assiduidade para maximizar o retorno da sua empresa.");
+                                                } else if (preset.includes('métricas')) {
+                                                  setAiCopilotOutput("Métricas de Destaque JVS:\n• +30 Anos de atuação no mercado\n• +100 Postos ativos operando\n• +200 Clientes corporativos satisfeitos\n• +500.000 m² de Pisos e Fachadas tratados");
+                                                } else {
+                                                  setAiCopilotOutput("Parceria Inteligente em Facilities: Engenharia de serviços, auditoria contínua de processos e profissionais de limpeza qualificados com certificações NR-35.");
+                                                }
+                                              }, 1000);
+                                            }}
+                                            className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-500 text-[7.5px] font-black uppercase font-sans cursor-pointer font-sans"
+                                          >
+                                            {preset}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (!aiCopilotPrompt) return;
+                                        setIsAiCopilotGenerating(true);
+                                        setTimeout(() => {
+                                          setIsAiCopilotGenerating(false);
+                                          setAiCopilotOutput(`Aprimorado pela Inteligência Artificial:\n\nParcerias sólidas nascem da confiança. Por isso, a JVS Facilities consolida processos operacionais rígidos, garantindo que o escopo de serviços contratado pela [CLIENTE_NOME] seja executado com 100% de precisão, respaldado por suporte 24/7 e supervisores técnicos qualificados.`);
+                                        }, 1200);
+                                      }}
+                                      disabled={isAiCopilotGenerating || !aiCopilotPrompt}
+                                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[9px] py-2 rounded-xl uppercase tracking-wider shadow-sm transition-colors flex items-center justify-center gap-1 disabled:opacity-50 cursor-pointer font-sans"
+                                    >
+                                      {isAiCopilotGenerating ? (
+                                        <>
+                                          <Icons.RotateCw size={12} className="animate-spin text-white" /> NotebookLM processando...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Icons.Wand2 size={12} /> ✨ Refinar Texto com IA
+                                        </>
+                                      )}
+                                    </button>
+
+                                    {/* AI Output preview */}
+                                    {aiCopilotOutput && (
+                                      <div className="border border-slate-200 rounded-xl bg-slate-50 p-3 text-left space-y-2 shadow-2xs">
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-[8px] font-black text-emerald-800 uppercase tracking-widest font-sans flex items-center gap-0.5">
+                                            <Icons.Sparkles size={10} /> Copiloto NotebookLM Sugere:
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={() => setAiCopilotOutput('')}
+                                            className="text-slate-400 hover:text-slate-600 text-[8px] font-bold cursor-pointer"
+                                          >
+                                            ✕
+                                          </button>
+                                        </div>
+                                        <p className="text-[10px] text-slate-700 font-medium leading-relaxed font-sans whitespace-pre-line text-left">
+                                          {aiCopilotOutput}
+                                        </p>
+                                        
+                                        <div className="flex gap-1.5 pt-2 border-t border-slate-200">
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              if (selectedElementId) {
+                                                const list = [...secoes];
+                                                const el = elements.find((item: any) => item.id === selectedElementId);
+                                                if (el && el.type === 'text') {
+                                                  el.content = aiCopilotOutput.replace(/•\s/g, '');
+                                                  const updatedText = JSON.stringify({ ...slideData, elements });
+                                                  list[activeSlideIdx].texto = updatedText;
+                                                  setSecoes(list);
+                                                }
+                                              } else {
+                                                addCustomElement('text', undefined, 'body');
+                                                setTimeout(() => {
+                                                  setSecoes(prevSecoes => {
+                                                    const list = [...prevSecoes];
+                                                    const current = list[activeSlideIdx];
+                                                    const sd = JSON.parse(current.texto);
+                                                    const els = sd.elements || [];
+                                                    const lastEl = els[els.length - 1];
+                                                    if (lastEl && lastEl.type === 'text') {
+                                                      lastEl.content = aiCopilotOutput;
+                                                      lastEl.h = 160;
+                                                    }
+                                                    current.texto = JSON.stringify({ ...sd, elements: els });
+                                                    return list;
+                                                  });
+                                                }, 100);
+                                              }
+                                              setAiCopilotOutput('');
+                                            }}
+                                            className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold text-[8px] py-1.5 rounded-lg uppercase tracking-wider text-center cursor-pointer font-sans"
+                                          >
+                                            {selectedElementId ? '✏️ Aplicar em Selecionado' : '➕ Inserir como Novo Card'}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           );
@@ -2529,6 +3456,457 @@ export default function TemplatesPropostaPage() {
                                           highlightedStates={el.highlightedStates || ['PR', 'SC', 'RS']} 
                                           className="w-full h-full text-[#1E3A8A]" 
                                         />
+                                      </div>
+                                    )}
+
+                                    {el.type === 'jvs_facilities_logo_big' && (
+                                      <div className="w-full h-full flex flex-col items-center justify-center text-center font-sans p-3 select-none text-white bg-[#0f3156] rounded-2xl">
+                                        <svg className="w-16 h-16 text-white animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                        </svg>
+                                        <span className="text-3xl font-extrabold tracking-widest mt-2 leading-none">JVS</span>
+                                        <span className="text-[10px] font-semibold text-emerald-400 tracking-widest uppercase mt-1">Facilities</span>
+                                      </div>
+                                    )}
+
+                                    {el.type === 'quem_somos_metrics' && (
+                                      <div className="w-full h-full flex flex-col justify-between p-2 font-sans text-white text-left">
+                                        <div className="grid grid-cols-5 gap-3 w-full">
+                                          <div className="text-center p-2 rounded-xl bg-white/5 border border-white/10 shadow-sm flex flex-col justify-between h-full">
+                                            <span className="text-2xl font-black text-white leading-tight font-sans">+de 30</span>
+                                            <span className="text-[8.5px] text-slate-300 block font-semibold mt-1 font-sans">Anos de atuação em Facilities e Serviços</span>
+                                          </div>
+                                          <div className="text-center p-2 rounded-xl bg-white/5 border border-white/10 shadow-sm flex flex-col justify-between h-full">
+                                            <svg className="w-8 h-8 text-white mx-auto mb-1" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                                            </svg>
+                                            <span className="text-[8.5px] text-white block font-black font-sans">+100 postos ativos</span>
+                                          </div>
+                                          <div className="text-center p-2 rounded-xl bg-white/5 border border-white/10 shadow-sm flex flex-col justify-between h-full">
+                                            <svg className="w-8 h-8 text-white mx-auto mb-1" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <span className="text-[8.5px] text-white block font-black font-sans">+200 Clientes atendidos</span>
+                                          </div>
+                                          <div className="text-center p-2 rounded-xl bg-white/5 border border-white/10 shadow-sm flex flex-col justify-between h-full">
+                                            <svg className="w-8 h-8 text-white mx-auto mb-1" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                            </svg>
+                                            <span className="text-[8.5px] text-white block font-black font-sans">+100.000 m² de limpeza em altura</span>
+                                          </div>
+                                          <div className="text-center p-2 rounded-xl bg-white/5 border border-white/10 shadow-sm flex flex-col justify-between h-full">
+                                            <svg className="w-8 h-8 text-white mx-auto mb-1" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 21m0 0l-.813-5.096M9 21h7.5M12 3v13.5M3 12h18" />
+                                            </svg>
+                                            <span className="text-[8.5px] text-white block font-black font-sans">+500.000 m² de Pisos tratados.</span>
+                                          </div>
+                                        </div>
+                                        <div className="bg-[#0f3156] border border-white/10 text-white p-3 rounded-xl flex items-center justify-between mt-3 shadow-sm w-full">
+                                          <div>
+                                            <h4 className="text-xs font-bold font-sans uppercase">Atendimento em toda Região Sul</h4>
+                                            <p className="text-[10px] text-slate-300 mt-0.5 font-sans">Estrutura física e tática no Paraná, Santa Catarina e Rio Grande do Sul.</p>
+                                          </div>
+                                          <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 font-sans">JVS Sul</span>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {el.type === 'servicos_cards' && (
+                                      <div className="w-full h-full p-2 font-sans text-left">
+                                        <div className="grid grid-cols-3 gap-3">
+                                          <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs">
+                                            <span className="text-emerald-600 font-extrabold text-xs uppercase block">Facilities</span>
+                                            <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">Gestão e execução de serviços essenciais, como limpeza, manutenção e segurança.</p>
+                                          </div>
+                                          <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs">
+                                            <span className="text-emerald-600 font-extrabold text-xs uppercase block">Limpeza em Altura</span>
+                                            <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">Realizado em áreas de difícil acesso, como fachadas de prédios com total segurança.</p>
+                                          </div>
+                                          <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs">
+                                            <span className="text-emerald-600 font-extrabold text-xs uppercase block">Portaria e Recepção</span>
+                                            <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">Atendimento premium, controle de acesso e agilidade para sua portaria corporativa.</p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {el.type === 'setores_atendidos_grid' && (
+                                      <div className="w-full h-full p-2 font-sans text-left">
+                                        <div className="grid grid-cols-2 gap-3">
+                                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                            <span className="font-bold text-[#0f3156] text-xs uppercase block">Indústria</span>
+                                            <p className="text-[9.5px] text-slate-500 mt-1">Processos operacionais de alta exigência e validação técnica de SST.</p>
+                                          </div>
+                                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                            <span className="font-bold text-[#0f3156] text-xs uppercase block">Varejo</span>
+                                            <p className="text-[9.5px] text-slate-500 mt-1">Superação de turnover e absenteísmo com controle rigoroso de indicadores.</p>
+                                          </div>
+                                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                            <span className="font-bold text-[#0f3156] text-xs uppercase block">Condomínios</span>
+                                            <p className="text-[9.5px] text-slate-500 mt-1">Conservação e controle de acesso com tecnologia em áreas residenciais.</p>
+                                          </div>
+                                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                            <span className="font-bold text-[#0f3156] text-xs uppercase block">Saúde</span>
+                                            <p className="text-[9.5px] text-slate-500 mt-1">Higienização técnica de ambientes críticos com absoluto rigor biológico.</p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {el.type === 'diferenciais_grid' && (
+                                      <div className="w-full h-full p-2 font-sans text-left">
+                                        <div className="grid grid-cols-2 gap-3">
+                                          <div className="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
+                                            <span className="font-bold text-[#0f3156] text-[11px] uppercase block">1. Aplicativo de Checklist Fácil</span>
+                                            <p className="text-[9.5px] text-slate-500 mt-1">Checklists diários de supervisão técnica, relatórios fotográficos de não-conformidade e SLA digital em tempo real.</p>
+                                          </div>
+                                          <div className="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
+                                            <span className="font-bold text-[#0f3156] text-[11px] uppercase block">2. Maquinários de Ponta (Tennant)</span>
+                                            <p className="text-[9.5px] text-slate-500 mt-1">Polidoras, lavadoras automáticas de pisos de alta pressão e equipamentos profissionais que otimizam a produtividade.</p>
+                                          </div>
+                                          <div className="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
+                                            <span className="font-bold text-[#0f3156] text-[11px] uppercase block">3. Mesa de Operações Nexus IA</span>
+                                            <p className="text-[9.5px] text-slate-500 mt-1">Tecnologia avançada de mesa de controle para gestão preditiva e alertas automatizados de faltas e coberturas rápidas.</p>
+                                          </div>
+                                          <div className="bg-white border border-slate-200 p-3.5 rounded-xl shadow-xs">
+                                            <span className="font-bold text-[#0f3156] text-[11px] uppercase block">4. R$ 180,00 de Prêmio Assiduidade</span>
+                                            <p className="text-[9.5px] text-slate-500 mt-1">Incentivo financeiro direto na folha de pagamento aos funcionários para garantir 100% de presença e evitar turnover.</p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {el.type === 'responsabilidades_view' && (
+                                      <div className="w-full h-full p-2 font-sans text-left">
+                                        <div className="grid grid-cols-2 gap-4 h-full">
+                                          <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl flex flex-col justify-between shadow-xs">
+                                            <h4 className="text-xs font-black text-[#0f3156] uppercase tracking-wider">Responsabilidades da JVS Facilities</h4>
+                                            <ul className="text-[9px] text-slate-650 mt-2 space-y-1 leading-relaxed">
+                                              <li>• Recrutamento, seleção e treinamento contínuo de funcionários;</li>
+                                              <li>• Fornecimento completo de EPIs e uniformes profissionais;</li>
+                                              <li>• Responsabilidade integral sobre encargos trabalhistas, fiscais e previdenciários;</li>
+                                              <li>• Supervisão tática operacional periódica (24/7 disponível para suporte).</li>
+                                            </ul>
+                                            <div className="mt-3 pt-2 border-t border-slate-200 text-center">
+                                              <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">Segurança Jurídica Absoluta</span>
+                                            </div>
+                                          </div>
+                                          <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl flex flex-col justify-between shadow-xs">
+                                            <h4 className="text-xs font-black text-[#0f3156] uppercase tracking-wider">Nossa Governança e SST</h4>
+                                            <ul className="text-[9px] text-slate-650 mt-2 space-y-1 leading-relaxed">
+                                              <li>• Emissão e controle digital de guias trabalhistas (GFIP, GPS, Folha) mensais;</li>
+                                              <li>• PCMSO e PGR atualizados e integrados ao eSocial;</li>
+                                              <li>• Apólice de seguros contra terceiros ativa para cobrir incidentes patrimoniais;</li>
+                                              <li>• Auditoria mensal livre de documentos trabalhistas pelo cliente.</li>
+                                            </ul>
+                                            <div className="mt-3 pt-2 border-t border-slate-200 text-center">
+                                              <span className="text-[8px] font-black text-[#0f3156] uppercase tracking-widest">Transparência Certificada</span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {el.type === 'ferramentas_grid' && (
+                                      <div className="w-full h-full p-2 font-sans">
+                                        <div className="grid grid-cols-4 gap-3 w-full">
+                                          <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col items-center text-center">
+                                            <LucideIconRenderer name="TrendingUp" className="text-[#0f3156] mb-1.5" size={24} />
+                                            <span className="font-bold text-slate-800 text-[9.5px] uppercase">Mesa de Operações</span>
+                                            <span className="text-[8.5px] text-slate-400 mt-0.5">Controle tático central</span>
+                                          </div>
+                                          <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col items-center text-center">
+                                            <LucideIconRenderer name="Cpu" className="text-[#0f3156] mb-1.5" size={24} />
+                                            <span className="font-bold text-slate-800 text-[9.5px] uppercase">Nexus IA</span>
+                                            <span className="text-[8.5px] text-slate-400 mt-0.5">Inteligência preditiva</span>
+                                          </div>
+                                          <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col items-center text-center">
+                                            <LucideIconRenderer name="FileText" className="text-[#0f3156] mb-1.5" size={24} />
+                                            <span className="font-bold text-slate-800 text-[9.5px] uppercase">Checklist Fácil</span>
+                                            <span className="text-[8.5px] text-slate-400 mt-0.5">Auditoria em tempo real</span>
+                                          </div>
+                                          <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col items-center text-center">
+                                            <LucideIconRenderer name="Wrench" className="text-[#0f3156] mb-1.5" size={24} />
+                                            <span className="font-bold text-slate-800 text-[9.5px] uppercase">Tennant Scrubber</span>
+                                            <span className="text-[8.5px] text-slate-400 mt-0.5">Mecanização avançada</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {el.type === 'quadro_efetivo_table' && (
+                                      <div className="w-full h-full p-2 font-sans text-left">
+                                        <table className="w-full text-left border-collapse text-[10px] shadow-xs rounded-xl overflow-hidden border border-slate-200 bg-white">
+                                          <thead>
+                                            <tr className="bg-[#0f3156] text-white uppercase tracking-wider text-[8.5px]">
+                                              <th className="p-2.5">Cargo Alocado</th>
+                                              <th className="p-2.5 text-center">Qtde</th>
+                                              <th className="p-2.5 text-center">Carga Horária</th>
+                                              <th className="p-2.5 text-center">Escala de Trabalho</th>
+                                              <th className="p-2.5 text-right">Custo Unitário</th>
+                                              <th className="p-2.5 text-right font-bold">Custo Total</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody className="divide-y divide-slate-200 text-slate-700 bg-white">
+                                            <tr>
+                                              <td className="p-2.5 font-bold text-slate-900">Servente de Limpeza Masculino</td>
+                                              <td className="p-2.5 text-center">2 Postos</td>
+                                              <td className="p-2.5 text-center">44h Semanais</td>
+                                              <td className="p-2.5 text-center">Escala 5x2 (Seg a Sex)</td>
+                                              <td className="p-2.5 text-right">R$ 5.922,44</td>
+                                              <td className="p-2.5 text-right font-bold">R$ 11.844,88</td>
+                                            </tr>
+                                            <tr>
+                                              <td className="p-2.5 font-bold text-slate-900">Servente de Limpeza Feminino</td>
+                                              <td className="p-2.5 text-center">6 Postos</td>
+                                              <td className="p-2.5 text-center">44h Semanais</td>
+                                              <td className="p-2.5 text-center">Escala 5x2 (Seg a Sex)</td>
+                                              <td className="p-2.5 text-right">R$ 5.922,44</td>
+                                              <td className="p-2.5 text-right font-bold">R$ 35.534,64</td>
+                                            </tr>
+                                            <tr>
+                                              <td className="p-2.5 font-bold text-slate-900">Encarregada Geral de Facilities</td>
+                                              <td className="p-2.5 text-center">1 Posto</td>
+                                              <td className="p-2.5 text-center">44h Semanais</td>
+                                              <td className="p-2.5 text-center">Escala 5x2 (Seg a Sex)</td>
+                                              <td className="p-2.5 text-right">R$ 6.844,93</td>
+                                              <td className="p-2.5 text-right font-bold">R$ 6.844,93</td>
+                                            </tr>
+                                            <tr className="bg-emerald-50 text-emerald-950 font-bold border-t border-emerald-200">
+                                              <td className="p-2.5" colSpan={4}>QUADRO EFETIVO TOTAL CONTRATADO</td>
+                                              <td className="p-2.5 text-center">9 Colaboradores</td>
+                                              <td className="p-2.5 text-right text-emerald-600 text-[11px]">R$ 54.224,45</td>
+                                            </tr>
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    )}
+
+                                    {el.type === 'condicoes_comerciais_layout' && (
+                                      <div className="w-full h-full p-2 font-sans text-left">
+                                        <div className="grid grid-cols-4 gap-3 w-full h-full">
+                                          <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                                            <span className="text-[9px] font-black text-[#0f3156] uppercase tracking-wider block">Vigência Contrato</span>
+                                            <h3 className="text-sm font-black text-slate-900 mt-1">12 Meses</h3>
+                                            <p className="text-[8px] text-slate-400 mt-1">Prazo padrão de vigência operacional rescindível.</p>
+                                          </div>
+                                          <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                                            <span className="text-[9px] font-black text-[#0f3156] uppercase tracking-wider block">Faturamento</span>
+                                            <h3 className="text-xs font-black text-slate-900 mt-1">Mensal Faturado</h3>
+                                            <p className="text-[8px] text-slate-400 mt-1">Faturamento via boleto com prazo de 10 a 15 dias.</p>
+                                          </div>
+                                          <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                                            <span className="text-[9px] font-black text-[#0f3156] uppercase tracking-wider block">Reajuste Preços</span>
+                                            <h3 className="text-sm font-black text-[#0f3156] mt-1">IPCA / CCT</h3>
+                                            <p className="text-[8px] text-slate-400 mt-1">Reajustes baseados no dissídio ou inflação.</p>
+                                          </div>
+                                          <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                                            <span className="text-[9px] font-black text-emerald-600 uppercase tracking-wider block">Início Atividades</span>
+                                            <h3 className="text-sm font-black text-emerald-600 mt-1">10 Dias</h3>
+                                            <p className="text-[8px] text-slate-400 mt-1">Prazo máximo de mobilização após assinatura.</p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {el.type === 'finance_table_supervisor' && (
+                                      <div className="w-full h-full p-2 font-sans text-left">
+                                        <table className="w-full text-left border-collapse text-[10px] shadow-xs rounded-xl overflow-hidden border border-slate-200 bg-white">
+                                          <thead>
+                                            <tr className="bg-[#0f3156] text-white uppercase tracking-wider text-[8.5px]">
+                                              <th className="p-2.5">Serviço Terceirizado</th>
+                                              <th className="p-2.5 text-center">Unidade</th>
+                                              <th className="p-2.5 text-center">Postos</th>
+                                              <th className="p-2.5 text-right">Preço Venda Unitário</th>
+                                              <th className="p-2.5 text-right font-bold">Total Mensal Solução</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody className="divide-y divide-slate-100 text-slate-700">
+                                            <tr>
+                                              <td className="p-2.5 font-bold text-slate-900">Mão de Obra Limpeza e Conservação Profissional (Supervisor)</td>
+                                              <td className="p-2.5 text-center">Mão de Obra</td>
+                                              <td className="p-2.5 text-center">9 Postos</td>
+                                              <td className="p-2.5 text-right">R$ 6.024,94</td>
+                                              <td className="p-2.5 text-right font-bold">R$ 54.224,45</td>
+                                            </tr>
+                                            <tr>
+                                              <td className="p-2.5 font-bold text-slate-900">Insumos de Limpeza, EPIs e Equipamentos Mecânicos Inclusos</td>
+                                              <td className="p-2.5 text-center">Insumos</td>
+                                              <td className="p-2.5 text-center">Kit Completo</td>
+                                              <td className="p-2.5 text-right">R$ 19.806,08</td>
+                                              <td className="p-2.5 text-right font-bold">R$ 19.806,08</td>
+                                            </tr>
+                                            <tr className="bg-emerald-50 text-emerald-950 font-bold border-t border-emerald-250">
+                                              <td className="p-2.5" colSpan={3}>VALOR MENSAL INTEGRADO DO CONTRATO - OPÇÃO COM SUPERVISORA</td>
+                                              <td className="p-2.5 text-right">SOLUÇÃO JVS</td>
+                                              <td className="p-2.5 text-right text-emerald-600 text-sm">R$ 74.030,53</td>
+                                            </tr>
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    )}
+
+                                    {el.type === 'finance_table_encarregada' && (
+                                      <div className="w-full h-full p-2 font-sans text-left">
+                                        <table className="w-full text-left border-collapse text-[10px] shadow-xs rounded-xl overflow-hidden border border-slate-200 bg-white">
+                                          <thead>
+                                            <tr className="bg-[#0f3156] text-white uppercase tracking-wider text-[8.5px]">
+                                              <th className="p-2.5">Serviço Terceirizado</th>
+                                              <th className="p-2.5 text-center">Unidade</th>
+                                              <th className="p-2.5 text-center">Postos</th>
+                                              <th className="p-2.5 text-right">Preço Venda Unitário</th>
+                                              <th className="p-2.5 text-right font-bold">Total Mensal Solução</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody className="divide-y divide-slate-100 text-slate-700">
+                                            <tr>
+                                              <td className="p-2.5 font-bold text-slate-900">Mão de Obra Limpeza e Conservação Profissional (Encarregada)</td>
+                                              <td className="p-2.5 text-center">Mão de Obra</td>
+                                              <td className="p-2.5 text-center">9 Postos</td>
+                                              <td className="p-2.5 text-right">R$ 5.697,87</td>
+                                              <td className="p-2.5 text-right font-bold">R$ 51.280,85</td>
+                                            </tr>
+                                            <tr>
+                                              <td className="p-2.5 font-bold text-slate-900">Insumos de Limpeza, EPIs e Equipamentos Mecânicos Inclusos</td>
+                                              <td className="p-2.5 text-center">Insumos</td>
+                                              <td className="p-2.5 text-center">Kit Completo</td>
+                                              <td className="p-2.5 text-right">R$ 19.806,08</td>
+                                              <td className="p-2.5 text-right font-bold">R$ 19.806,08</td>
+                                            </tr>
+                                            <tr className="bg-emerald-50 text-emerald-950 font-bold border-t border-emerald-250">
+                                              <td className="p-2.5" colSpan={3}>VALOR MENSAL INTEGRADO DO CONTRATO - OPÇÃO COM ENCARREGADA</td>
+                                              <td className="p-2.5 text-right">SOLUÇÃO JVS</td>
+                                              <td className="p-2.5 text-right text-emerald-600 text-sm">R$ 71.086,93</td>
+                                            </tr>
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    )}
+
+                                    {el.type === 'checklist_tennant_specs' && (
+                                      <div className="w-full h-full p-2 font-sans text-left">
+                                        <div className="grid grid-cols-2 gap-4 h-full w-full">
+                                          <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs flex flex-col justify-between">
+                                            <div>
+                                              <span className="text-[9px] font-black text-emerald-600 uppercase block font-sans">Tecnologia Digital JVS</span>
+                                              <h4 className="text-xs font-black text-[#0f3156] uppercase mt-1">CHECKLIST FÁCIL OPERACIONAL</h4>
+                                              <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">Monitoramento em tempo real de todas as tarefas de higienização de cada posto. Relatórios digitais instantâneos compartilhados diretamente com o gestor do cliente.</p>
+                                            </div>
+                                            <div className="bg-emerald-50 text-emerald-900 p-2.5 rounded-lg text-[9px] font-semibold mt-2.5">
+                                              SLA Digital • Auditoria Fotográfica • Transparência Operacional
+                                            </div>
+                                          </div>
+                                          <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs flex flex-col justify-between">
+                                            <div>
+                                              <span className="text-[9px] font-black text-[#0f3156] uppercase block font-sans">Mecanização de Alto Rendimento</span>
+                                              <h4 className="text-xs font-black text-emerald-600 uppercase mt-1">AUTO-LAVADORAS TENNANT</h4>
+                                              <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">Equipamentos industriais autopropelidos de lavagem e secagem de pisos que substituem processos manuais lentos. Aumentam a produtividade em até 300% com acabamento impecável.</p>
+                                            </div>
+                                            <div className="bg-slate-100 text-slate-800 p-2.5 rounded-lg text-[9px] font-semibold mt-2.5">
+                                              Auto-rendimento • Brilho Prolongado • Economia de Água e Químicos
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {el.type === 'nexus_assiduidade_specs' && (
+                                      <div className="w-full h-full p-2 font-sans text-left">
+                                        <div className="grid grid-cols-2 gap-4 h-full w-full">
+                                          <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs flex flex-col justify-between">
+                                            <div>
+                                              <span className="text-[9px] font-black text-[#0f3156] uppercase block font-sans">Inteligência Artificial Operacional</span>
+                                              <h4 className="text-xs font-black text-emerald-600 uppercase mt-1">NEXUS IA MESA DE OPERAÇÕES</h4>
+                                              <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">Plataforma preditiva integrada ao controle de ponto biométrico dos colaboradores. Detecta imediatamente atrasos em postos e aciona automaticamente volantes táticos de cobertura em até 30 minutos.</p>
+                                            </div>
+                                            <div className="bg-slate-100 text-slate-800 p-2.5 rounded-lg text-[9px] font-semibold mt-2.5">
+                                              Turnover Zero • Alertas SMS/Whats • Mesa de Resposta Rápida 24/7
+                                            </div>
+                                          </div>
+                                          <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs flex flex-col justify-between">
+                                            <div>
+                                              <span className="text-[9px] font-black text-emerald-600 uppercase block font-sans">Engajamento & Produtividade</span>
+                                              <h4 className="text-xs font-black text-[#0f3156] uppercase mt-1">PRÊMIO ASSIDUIDADE R$ 180,00</h4>
+                                              <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">Bônus financeiro mensal direto em holerite pago pela JVS a todo colaborador com 100% de presença e pontualidade. Elimina faltas injustificadas e mantém a equipe motivada e focada.</p>
+                                            </div>
+                                            <div className="bg-emerald-50 text-emerald-900 p-2.5 rounded-lg text-[9px] font-semibold mt-2.5">
+                                              Fidelização de Equipe • Menor Absenteísmo do Mercado • Satisfação Garantida
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {el.type === 'capacidade_operacional_grid' && (
+                                      <div className="w-full h-full p-2 font-sans">
+                                        <div className="grid grid-cols-4 gap-3 w-full">
+                                          <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs text-center flex flex-col justify-between h-full">
+                                            <span className="text-xs font-black text-[#0f3156] uppercase">Gente & Gestão</span>
+                                            <p className="text-[9.5px] text-slate-500 mt-1 leading-normal font-sans">Seleção rigorosa e psicólogos dedicados para reduzir turnover e garantir perfil adequado.</p>
+                                            <div className="bg-emerald-50 text-emerald-800 text-[8.5px] font-bold p-1 rounded mt-1">Banco de Talentos</div>
+                                          </div>
+                                          <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs text-center flex flex-col justify-between h-full">
+                                            <span className="text-xs font-black text-[#0f3156] uppercase">SST & Engenharia</span>
+                                            <p className="text-[9.5px] text-slate-500 mt-1 leading-normal font-sans">Engenheiros de segurança e técnicos volantes que garantem 100% de conformidade legal.</p>
+                                            <div className="bg-emerald-50 text-emerald-800 text-[8.5px] font-bold p-1 rounded mt-1">eSocial Sync</div>
+                                          </div>
+                                          <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs text-center flex flex-col justify-between h-full">
+                                            <span className="text-xs font-black text-[#0f3156] uppercase">Plantão Tático 24h</span>
+                                            <p className="text-[9.5px] text-slate-500 mt-1 leading-normal font-sans">Mesa de operações central com equipe reserva a postos para coberturas e emergências.</p>
+                                            <div className="bg-emerald-50 text-emerald-800 text-[8.5px] font-bold p-1 rounded mt-1">Mesa Nexus IA</div>
+                                          </div>
+                                          <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs text-center flex flex-col justify-between h-full">
+                                            <span className="text-xs font-black text-[#0f3156] uppercase">Treinamento JVS</span>
+                                            <p className="text-[9.5px] text-slate-500 mt-1 leading-normal font-sans">Centro de treinamento físico próprio para capacitação prática e homologação de processos.</p>
+                                            <div className="bg-emerald-50 text-emerald-800 text-[8.5px] font-bold p-1 rounded mt-1">Provelo Academy</div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {el.type === 'clientes_grid_logos' && (
+                                      <div className="w-full h-full p-2 font-sans">
+                                        <div className="grid grid-cols-4 gap-3 w-full h-full">
+                                          <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center justify-center text-center shadow-xs">
+                                            <span className="text-emerald-600 font-extrabold text-xs uppercase block font-sans">CONDOR</span>
+                                            <span className="text-[8.5px] text-slate-400 font-bold block mt-0.5">Nilo Peçanha / PR</span>
+                                          </div>
+                                          <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center justify-center text-center shadow-xs">
+                                            <span className="text-[#0f3156] font-extrabold text-xs uppercase block font-sans">DAJU</span>
+                                            <span className="text-[8.5px] text-slate-400 font-bold block mt-0.5">Cabral / PR</span>
+                                          </div>
+                                          <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center justify-center text-center shadow-xs">
+                                            <span className="text-emerald-600 font-extrabold text-xs uppercase block font-sans">ERASTO GAERTNER</span>
+                                            <span className="text-[8.5px] text-slate-400 font-bold block mt-0.5">Hospital / PR</span>
+                                          </div>
+                                          <div className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col items-center justify-center text-center shadow-xs">
+                                            <span className="text-[#0f3156] font-extrabold text-xs uppercase block font-sans">FESTVAL</span>
+                                            <span className="text-[8.5px] text-slate-400 font-bold block mt-0.5">Batel / PR</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {el.type === 'aceite_comercial_form' && (
+                                      <div className="w-full h-full p-2 font-sans text-left">
+                                        <div className="grid grid-cols-2 gap-4 h-full w-full text-slate-800 bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+                                          <div className="flex flex-col justify-between text-left h-full">
+                                            <div>
+                                              <h4 className="text-xs font-black text-[#0f3156] uppercase tracking-wider">Aceite Legal da Proposta</h4>
+                                              <p className="text-[9.5px] text-slate-500 mt-1 leading-relaxed">Ao assinar este termo de aceite, o cliente manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
+                                              <p className="text-[9.5px] text-slate-655 mt-1.5 font-bold">Vendedor Responsável: Novos Negócios</p>
+                                            </div>
+                                            <div className="bg-emerald-50 text-emerald-800 text-[9px] font-semibold p-2.5 rounded-lg border border-emerald-150 mt-2">
+                                              🔒 Assinatura Eletrônica Segura em conformidade com MP 2.200-2/2001.
+                                            </div>
+                                          </div>
+                                          <div className="border-2 border-dashed border-slate-350 rounded-xl bg-slate-50 p-4 flex flex-col justify-center items-center text-center select-none h-full my-auto">
+                                            <LucideIconRenderer name="Award" className="text-amber-500 mb-1" size={28} />
+                                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-wide">Assinatura Pendente</span>
+                                            <span className="text-[8.5px] text-slate-450 mt-0.5 leading-normal font-sans">Ambiente Seguro do Cliente</span>
+                                          </div>
+                                        </div>
                                       </div>
                                     )}
                                   </div>

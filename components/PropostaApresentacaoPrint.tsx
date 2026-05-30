@@ -476,6 +476,16 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                     >
                                        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none opacity-40"></div>
 
+                                       {bgImage && (
+                                          <div 
+                                             className="absolute inset-0 z-0 pointer-events-none transition-all"
+                                             style={{
+                                                backgroundColor: slideData.bgOverlayColor || '#000000',
+                                                opacity: (slideData.bgOverlayOpacity !== undefined ? slideData.bgOverlayOpacity : 0) / 100
+                                             }}
+                                          />
+                                       )}
+
                                        {elements.map((el: any) => {
                                           const clipPathVal = el.mask === 'circle' ? 'ellipse(50% 50% at 50% 50%)' :
                                                               el.mask === 'shield' ? 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' :
@@ -659,8 +669,6 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                                          color={el.color || '#ef4444'} 
                                                       />
                                                    </div>
-                                                )}
-
                                                 {el.type === 'chart' && (
                                                    <div className="w-full h-full" style={{ transform: el.rotate ? `rotate(${el.rotate}deg)` : undefined, opacity: el.opacity !== undefined ? el.opacity / 100 : 1 }}>
                                                       {renderChartElement(el, slideData.bgColor || '#ffffff')}
@@ -672,9 +680,6 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                                                       <BrazilMap highlightedStates={el.highlightedStates || ['PR', 'SC', 'RS']} className="w-full h-full text-white" />
                                                    </div>
                                                 )}
-                                             </div>
-                                          );
-                                       })}
                                     </div>
                                  );
                               }
