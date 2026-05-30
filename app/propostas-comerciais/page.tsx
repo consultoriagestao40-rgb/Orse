@@ -404,6 +404,8 @@ export default function PropostasComerciaisDashboard() {
               </div>
             </div>
           </div>
+        </div>
+      )}
       {activeShareDoc && (
         <ClientLinkModal 
           documentoId={activeShareDoc.id}

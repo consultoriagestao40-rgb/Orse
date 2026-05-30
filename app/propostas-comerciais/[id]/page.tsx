@@ -3277,6 +3277,8 @@ export default function DocumentoPropostaDetail() {
               </div>
             )}
 
+          </div>
+        </main>
       </div>
       {showShareModal && (
         <ClientLinkModal 

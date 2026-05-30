@@ -4079,10 +4079,11 @@ export default function TemplatesPropostaPage() {
                       />
 
                     </div>
-                  )}
-                </div>
-              );
-            })()}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
             </div>
           )}
 
