@@ -110,6 +110,19 @@ export async function createDocumentoProposta(propostaId: string, templateId: st
     let configApresentacao: any = null;
 
     if (template.tipo === 'SLIDE_DECK') {
+      let templateUseCanva = false;
+      let templateCanvaUrl = '';
+
+      if (template.secoes && template.secoes.length > 0) {
+        try {
+          const parsed = JSON.parse(template.secoes[0].texto);
+          if (parsed.useCanva) {
+            templateUseCanva = true;
+            templateCanvaUrl = parsed.canvaEmbedUrl || '';
+          }
+        } catch (e) {}
+      }
+
       // Busca o primeiro template A4 para carregar as cláusulas de contrato padrão
       const a4Template = await prisma.templatePropostaComercial.findFirst({
         where: { 
@@ -132,6 +145,8 @@ export async function createDocumentoProposta(propostaId: string, templateId: st
 
       configApresentacao = {
         clausulasA4: defaultClausulas,
+        useCanva: templateUseCanva,
+        canvaEmbedUrl: templateCanvaUrl,
         condicoesCliente: fpv.client?.condicoesCliente || [
           'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
           'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',

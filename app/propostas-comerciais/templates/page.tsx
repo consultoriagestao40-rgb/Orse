@@ -294,6 +294,8 @@ export default function TemplatesPropostaPage() {
   const [tipo, setTipo] = useState('A4');
   const [activeSlideIdx, setActiveSlideIdx] = useState(0);
   const [secoes, setSecoes] = useState<{ titulo: string; texto: string }[]>([]);
+  const [useCanva, setUseCanva] = useState(false);
+  const [canvaEmbedUrl, setCanvaEmbedUrl] = useState('');
   const [companyLogo, setCompanyLogo] = useState<string>('https://via.placeholder.com/300x80?text=Silva+Consultoria');
 
   useEffect(() => {
@@ -878,6 +880,23 @@ export default function TemplatesPropostaPage() {
           { titulo: 'CLÁUSULA 05 - TERMO DE ACEITE', texto: '[TERMO_ACEITE]' },
         ];
         
+    let detectedUseCanva = false;
+    let detectedCanvaUrl = '';
+
+    if (tmpl && tmpl.tipo === 'SLIDE_DECK' && tmpl.secoes && tmpl.secoes.length > 0) {
+      try {
+        const firstSecao = tmpl.secoes[0];
+        const parsed = JSON.parse(firstSecao.texto);
+        if (parsed.useCanva) {
+          detectedUseCanva = true;
+          detectedCanvaUrl = parsed.canvaEmbedUrl || '';
+        }
+      } catch (e) {}
+    }
+
+    setUseCanva(detectedUseCanva);
+    setCanvaEmbedUrl(detectedCanvaUrl);
+
     setEditingTemplate(tmpl || 'new');
     setNome(tmpl ? tmpl.nome : '');
     setTipo(tmpl ? (tmpl.tipo || 'A4') : 'A4');
@@ -901,7 +920,26 @@ export default function TemplatesPropostaPage() {
   const saveTemplate = async () => {
     if (!nome.trim()) return alert('Dê um nome ao template.');
     setSaving(true);
-    const payload = secoes.map((s, i) => ({ ...s, ordem: i + 1 }));
+    const payload = secoes.map((s, i) => {
+      if (i === 0 && tipo === 'SLIDE_DECK') {
+        try {
+          const parsed = JSON.parse(s.texto);
+          parsed.useCanva = useCanva;
+          parsed.canvaEmbedUrl = canvaEmbedUrl;
+          return { ...s, texto: JSON.stringify(parsed), ordem: i + 1 };
+        } catch (e) {
+          const parsed = {
+            layout: 'canvas_custom',
+            bgColor: '#ffffff',
+            elements: [],
+            useCanva,
+            canvaEmbedUrl
+          };
+          return { ...s, texto: JSON.stringify(parsed), ordem: i + 1 };
+        }
+      }
+      return { ...s, ordem: i + 1 };
+    });
 
     let res: any;
     if (editingTemplate === 'new') {
@@ -1090,7 +1128,7 @@ export default function TemplatesPropostaPage() {
                     }}
                     className={`px-3 py-1.5 rounded-md text-xs font-black uppercase transition-all cursor-pointer ${tipo === 'SLIDE_DECK' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                   >
-                    Slides
+                    Apresentação (Canva/Slides)
                   </button>
                 </div>
 
@@ -1771,7 +1809,80 @@ export default function TemplatesPropostaPage() {
                 const selectedElement = elements.find((item: any) => item.id === selectedElementId);
 
                 return (
-                  <div className="grid grid-cols-12 gap-0 items-start">
+                  <div className="flex flex-col">
+                    
+                    {/* CARD INTEGRAÇÃO CANVA TEMPLATE */}
+                    <div className="p-6 bg-slate-50 border-b border-slate-200 space-y-4 text-left">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-indigo-100">
+                            <Sparkles size={22} className="animate-pulse" />
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">Apresentação Canva Premium</h4>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Defina a apresentação padrão do Canva para este modelo. Propostas criadas a partir deste template carregarão o Canva automaticamente.</p>
+                          </div>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
+                          <input
+                            type="checkbox"
+                            checked={useCanva}
+                            onChange={(e) => setUseCanva(e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1B4D3E]"></div>
+                          <span className="ml-2.5 text-[10px] font-black text-slate-600 uppercase tracking-wider">Ativar Canva neste Template</span>
+                        </label>
+                      </div>
+
+                      {useCanva && (
+                        <div className="grid grid-cols-12 gap-6 pt-4 border-t border-slate-200 animate-fadeIn">
+                          <div className="col-span-12 md:col-span-8 space-y-2">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Código de Incorporação (Embed HTML) ou Link do Canva</label>
+                            <input
+                              type="text"
+                              placeholder="Cole o link inteligente (https://www.canva.com/design/.../view?embed) ou o código iframe do Canva..."
+                              value={canvaEmbedUrl}
+                              onChange={(e) => {
+                                let val = e.target.value;
+                                if (val.includes('<iframe')) {
+                                  const match = val.match(/src="([^"]+)"/);
+                                  if (match && match[1]) {
+                                    val = match[1];
+                                  }
+                                }
+                                setCanvaEmbedUrl(val);
+                              }}
+                              className="w-full border border-slate-300 rounded-xl p-3 text-xs focus:ring-1 focus:ring-[#1B4D3E] focus:outline-none bg-white font-medium"
+                            />
+                          </div>
+                          <div className="col-span-12 md:col-span-4 flex items-end">
+                            <div className="bg-[#1b4d3e]/10 border border-[#1b4d3e]/15 px-3 py-3 rounded-xl flex items-center gap-1.5 w-full justify-center">
+                              <span className="w-1.5 h-1.5 bg-[#10b981] rounded-full animate-pulse" />
+                              <span className="text-[8px] text-[#1b4d3e] font-black uppercase tracking-wider">Canva Vinculado: cristiano@grupojvsserv.com.br</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {useCanva && canvaEmbedUrl ? (
+                      /* Live Canva Template Preview */
+                      <div className="p-6 bg-white border-t border-slate-200 text-left space-y-4">
+                        <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                          👁️ Pré-visualização dos Slides do Canva
+                        </h4>
+                        <div className="w-full max-w-4xl mx-auto aspect-[16/9] bg-slate-900 rounded-2xl overflow-hidden shadow-inner relative border border-slate-250">
+                          <iframe
+                            src={canvaEmbedUrl}
+                            loading="lazy"
+                            className="absolute inset-0 w-full h-full border-none"
+                            allowFullScreen
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-12 gap-0 items-start">
                     
                     {/* ESQUERDA: O PAINEL DUPLO ESTILO CANVA (COL-3) */}
                     <div className="col-span-12 lg:col-span-3 border border-slate-200 bg-white rounded-3xl overflow-hidden shadow-xs flex max-h-[660px] min-h-[580px]">
@@ -3968,10 +4079,10 @@ export default function TemplatesPropostaPage() {
                       />
 
                     </div>
-
-                  </div>
-                );
-              })()}
+                  )}
+                </div>
+              );
+            })()}
             </div>
           )}
 
