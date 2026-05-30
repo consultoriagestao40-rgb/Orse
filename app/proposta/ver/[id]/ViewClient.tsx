@@ -7,7 +7,7 @@ import { aprovarPropostaAction, recusarPropostaAction, trackDocumentoView, getMi
 import { 
   CheckCircle, Edit, FileText, X, Printer, CheckCircle2, ShieldCheck, Mail, MapPin, 
   Smartphone, User, Presentation, Calculator, BookOpen, ChevronRight, ChevronLeft, Menu, TrendingUp,
-  UserCheck, ClipboardList, Package, Layers, Info, Download
+  UserCheck, ClipboardList, Package, Layers, Info, Download, Clock
 } from 'lucide-react';
 
 const PropostaApresentacaoPrint = dynamic(
@@ -22,6 +22,44 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   const [showNegotiationModal, setShowNegotiationModal] = useState(false);
   const [negotiationType, setNegotiationType] = useState<'comment' | 'decline'>('comment');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Real-time Countdown Timer for link validity expiration
+  const [timeLeft, setTimeLeft] = useState<{
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+    isExpired: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    const expiresAtStr = doc.configApresentacao?.linkExpiresAt;
+    if (!expiresAtStr) return;
+
+    const expiresAt = new Date(expiresAtStr).getTime();
+
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const difference = expiresAt - now;
+
+      if (difference <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true });
+        return;
+      }
+
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+      setTimeLeft({ days, hours, minutes, seconds, isExpired: false });
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [doc.configApresentacao?.linkExpiresAt]);
 
   // Signature Form States
   const [signerNome, setSignerNome] = useState('');
@@ -536,9 +574,52 @@ return (
                   <p className="text-[9.5px] text-slate-400 font-bold uppercase tracking-wider">
                     Criada em {doc.data || new Date().toLocaleDateString('pt-BR')} por {doc.vendedorResponsavel || 'Novos Negócios'}
                   </p>
-                  <div className="inline-block mt-1 bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-xl border border-emerald-100/50">
-                    Válida até {doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR')}
-                  </div>
+                  {doc.configApresentacao?.linkExpiresAt ? (
+                    <div className="inline-block mt-1 bg-amber-50 text-amber-800 text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-xl border border-amber-250 animate-fadeIn">
+                      Válida até {new Date(doc.configApresentacao.linkExpiresAt).toLocaleDateString('pt-BR')}
+                    </div>
+                  ) : (
+                    <div className="inline-block mt-1 bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-xl border border-emerald-100/50">
+                      Válida até {doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR')}
+                    </div>
+                  )}
+
+                  {/* Real-time Countdown Timer Widget */}
+                  {timeLeft && !timeLeft.isExpired && (
+                    <div className="mt-3.5 bg-amber-500/[0.04] border border-amber-500/10 rounded-2xl p-3 text-left animate-fadeIn">
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <Clock size={11} className="text-amber-500 animate-pulse" />
+                        <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest block">
+                          Link Expira em:
+                        </span>
+                      </div>
+                      <div className="flex gap-1 items-center font-mono">
+                        {timeLeft.days > 0 && (
+                          <>
+                            <div className="flex flex-col items-center min-w-[34px] bg-white border border-slate-200/60 rounded-xl p-1 shadow-xs">
+                              <span className="text-[11px] font-black text-slate-800">{timeLeft.days}</span>
+                              <span className="text-[6.5px] text-slate-400 font-black uppercase tracking-wider">dias</span>
+                            </div>
+                            <span className="text-[10px] font-black text-slate-350 -mt-2">:</span>
+                          </>
+                        )}
+                        <div className="flex flex-col items-center min-w-[34px] bg-white border border-slate-200/60 rounded-xl p-1 shadow-xs">
+                          <span className="text-[11px] font-black text-slate-800">{String(timeLeft.hours).padStart(2, '0')}</span>
+                          <span className="text-[6.5px] text-slate-400 font-black uppercase tracking-wider">horas</span>
+                        </div>
+                        <span className="text-[10px] font-black text-slate-350 -mt-2">:</span>
+                        <div className="flex flex-col items-center min-w-[34px] bg-white border border-slate-200/60 rounded-xl p-1 shadow-xs">
+                          <span className="text-[11px] font-black text-slate-800">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                          <span className="text-[6.5px] text-slate-400 font-black uppercase tracking-wider">min</span>
+                        </div>
+                        <span className="text-[10px] font-black text-slate-350 -mt-2">:</span>
+                        <div className="flex flex-col items-center min-w-[34px] bg-white border border-slate-200/60 rounded-xl p-1 shadow-xs">
+                          <span className="text-[11px] font-black text-amber-600 animate-pulse">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                          <span className="text-[6.5px] text-slate-400 font-black uppercase tracking-wider">seg</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Card Cliente */}
