@@ -59,14 +59,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
       .catch(() => setSignerIp('187.64.12.195 (Lookup falhou)'));
   }, []);
 
-  // 3. Track client tab views in real time
-  useEffect(() => {
-    if (doc?.id && activeClientTab) {
-      trackDocumentoView(doc.id, activeClientTab).catch(err =>
-        console.error('Erro ao registrar visualização da aba:', err)
-      );
-    }
-  }, [activeClientTab, doc?.id]);
+
 
   // Signature Canvas Drawing Handlers
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -240,6 +233,15 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   useEffect(() => {
     setActiveClientTab(getFirstActiveTab());
   }, [doc]);
+
+  // 3. Track client tab views in real time (placed safely after activeClientTab initialization)
+  useEffect(() => {
+    if (doc?.id && activeClientTab) {
+      trackDocumentoView(doc.id, activeClientTab).catch(err =>
+        console.error('Erro ao registrar visualização da aba:', err)
+      );
+    }
+  }, [activeClientTab, doc?.id]);
 
   // -------------------------------------------------------------
   // CONTROLE DAS PLANILHAS FINANCEIRAS FPV DETALHADAS (ABAS 02 A 09)
