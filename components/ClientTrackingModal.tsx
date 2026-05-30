@@ -53,6 +53,19 @@ export default function ClientTrackingModal({ doc, onClose }: ClientTrackingModa
     return null;
   };
 
+  // Status flags (making it case-insensitive and supporting both DocumentoProposta and Proposta statuses)
+  const isApproved = doc.statusAssinatura === 'ASSINADO' || 
+    doc.status?.toLowerCase() === 'aprovada' || 
+    doc.status?.toLowerCase() === 'aprovado' || 
+    doc.proposta?.status?.toLowerCase() === 'aprovada' || 
+    doc.proposta?.status?.toLowerCase() === 'aprovado';
+
+  const isRejected = doc.statusAssinatura === 'RECUSADO' || 
+    doc.status?.toLowerCase() === 'recusada' || 
+    doc.status?.toLowerCase() === 'recusado' || 
+    doc.proposta?.status?.toLowerCase() === 'recusada' || 
+    doc.proposta?.status?.toLowerCase() === 'recusado';
+
   const timelineItems = [
     {
       id: 'sent',
@@ -101,17 +114,17 @@ export default function ClientTrackingModal({ doc, onClose }: ClientTrackingModa
     {
       id: 'status',
       title: '6. Resposta Final do Cliente',
-      subtitle: doc.statusAssinatura === 'ASSINADO' 
+      subtitle: isApproved 
         ? `Aprovada e assinada eletronicamente por ${doc.nomeAssinante || 'Cliente'}.` 
-        : doc.statusAssinatura === 'RECUSADO' 
+        : isRejected 
         ? 'A proposta foi recusada/declinada pelo cliente final.' 
         : 'Aguardando decisão de aceite ou recusa pelo cliente.',
-      checked: doc.statusAssinatura === 'ASSINADO' || doc.statusAssinatura === 'RECUSADO' || doc.status === 'Aprovada' || doc.status === 'Recusada',
-      dateText: doc.dataAssinatura ? fmtDate(doc.dataAssinatura) : doc.statusAssinatura === 'RECUSADO' ? 'Status: Recusada' : null,
+      checked: isApproved || isRejected,
+      dateText: doc.dataAssinatura ? fmtDate(doc.dataAssinatura) : isRejected ? 'Status: Recusada' : null,
       isStatusStep: true,
-      color: doc.statusAssinatura === 'ASSINADO' || doc.status === 'Aprovada'
+      color: isApproved
         ? 'border-emerald-500 bg-emerald-500 text-white'
-        : doc.statusAssinatura === 'RECUSADO' || doc.status === 'Recusada'
+        : isRejected
         ? 'border-red-500 bg-red-500 text-white'
         : 'border-slate-200 bg-white text-slate-300'
     }
@@ -203,8 +216,8 @@ export default function ClientTrackingModal({ doc, onClose }: ClientTrackingModa
             
             <div className="relative pl-6 border-l-2 border-slate-100 space-y-6 ml-3">
               {timelineItems.map((item, idx) => {
-                const isApprovedState = doc.statusAssinatura === 'ASSINADO' || doc.status === 'Aprovada';
-                const isRejectedState = doc.statusAssinatura === 'RECUSADO' || doc.status === 'Recusada';
+                const isApprovedState = isApproved;
+                const isRejectedState = isRejected;
 
                 return (
                   <div key={item.id} className="relative">
