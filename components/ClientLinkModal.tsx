@@ -100,10 +100,10 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-200 text-slate-800 font-sans">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-200 text-slate-800 font-sans">
         
         {/* HEADER */}
-        <div className="bg-[#1B4D3E] px-6 py-4 border-b border-[#13382D] flex justify-between items-center text-white">
+        <div className="bg-[#1B4D3E] px-6 py-4 border-b border-[#13382D] flex justify-between items-center text-white shrink-0">
           <h2 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
             <Share2 size={16} /> Configurar Link do Cliente
           </h2>
@@ -113,7 +113,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
         </div>
 
         {/* BODY */}
-        <div className="p-6 md:p-8 space-y-6">
+        <div className="p-6 md:p-8 space-y-6 overflow-y-auto flex-1 scrollbar-thin">
           <div className="space-y-1">
             <h3 className="text-sm font-extrabold uppercase tracking-wide text-slate-800">
               O que o cliente visualizará no link?
@@ -279,7 +279,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
         </div>
 
         {/* FOOTER */}
-        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 shrink-0">
           <button 
             onClick={onClose}
             className="px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider text-slate-500 bg-white border border-slate-350 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer"
