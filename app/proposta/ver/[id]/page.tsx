@@ -35,7 +35,7 @@ export default async function PublicPropostaView(props: { params: Promise<{ id: 
     );
   }
 
-  const fullProposta = await getPropostaCompleta(res.propostaId);
+  const fullProposta = await getPropostaCompleta(res.propostaId, undefined, true);
 
   let templateOrigem = null;
   if (res.templateOrigemId) {

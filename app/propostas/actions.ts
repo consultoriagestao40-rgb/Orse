@@ -439,11 +439,11 @@ export async function updatePropostaStatus(id: string, status: string) {
   }
 }
 
-export async function getPropostaCompleta(id: string, versionId?: string) {
+export async function getPropostaCompleta(id: string, versionId?: string, isPublic: boolean = false) {
   noStore();
   try {
-    const loggedUser = await getLoggedUser();
-    if (!loggedUser) return null;
+    const loggedUser = isPublic ? null : await getLoggedUser();
+    if (!isPublic && !loggedUser) return null;
 
     const proposta = await prisma.proposta.findUnique({
       where: { id },
@@ -460,7 +460,7 @@ export async function getPropostaCompleta(id: string, versionId?: string) {
     if (!proposta || !proposta.versoes.length) return null;
 
     // Validação de segurança por perfil
-    if (loggedUser.role !== 'ADMIN') {
+    if (!isPublic && loggedUser && loggedUser.role !== 'ADMIN') {
       const isShared = (proposta as any).shares?.some((s: any) => s.userId === loggedUser.id) || false;
       if (loggedUser.role === 'MANAGER') {
         const subordinateIds = await getSubordinateIds(loggedUser.id);

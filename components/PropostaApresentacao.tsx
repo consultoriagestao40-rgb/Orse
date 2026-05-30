@@ -2376,10 +2376,10 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
                          {currentSlide === 11 && (() => {
                             const fc = formatCurrency;
                             const divisorTributos = resultado?.divisor || 1;
-                            const txAdm = (proposta.premissas.taxaAdm || 0) / 100;
-                            const txLucro = (proposta.premissas.margemLucro || 0) / 100;
+                            const txAdm = (proposta.premissas?.taxaAdm || 0) / 100;
+                            const txLucro = (proposta.premissas?.margemLucro || 0) / 100;
                             
-                            const isSpot = proposta.equipe.some((e: any) => e.tipoItem === 'SPOT');
+                            const isSpot = proposta.equipe?.some((e: any) => e.tipoItem === 'SPOT');
                              
                             const normalizeText = (text: string) => {
                               if (!text) return "";

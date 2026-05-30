@@ -29,7 +29,7 @@ export default async function PropostaPrintServer(props: { params: Promise<{ id:
     return <div className="p-10 text-center">Proposta não encontrada.</div>;
   }
 
-  const fullProposta = await getPropostaCompleta(res.propostaId);
+  const fullProposta = await getPropostaCompleta(res.propostaId, undefined, true);
 
   // Precisamos do nome do template para o PrintClient saber se é slide ou não
   let templateOrigem = null;
