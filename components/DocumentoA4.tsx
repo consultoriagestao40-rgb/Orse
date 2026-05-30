@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-export default function DocumentoA4({ proposta, resultado, empresaEmissora, templates, onUpdateClausulas, onUpdateCliente, onUpdateItens }: { proposta: any, resultado: any, empresaEmissora: any, templates?: any[], onUpdateClausulas?: (c: any[]) => void, onUpdateCliente?: (c: any) => void, onUpdateItens?: (i: any[]) => void }) {
+export default function DocumentoA4({ proposta, resultado, empresaEmissora, templates, onUpdateClausulas, onUpdateCliente, onUpdateItens, isPublicView = false }: { proposta: any, resultado: any, empresaEmissora: any, templates?: any[], onUpdateClausulas?: (c: any[]) => void, onUpdateCliente?: (c: any) => void, onUpdateItens?: (i: any[]) => void, isPublicView?: boolean }) {
   const [companyLogo, setCompanyLogo] = useState<string>(
     proposta.tenant?.logoUrl || 'https://via.placeholder.com/300x80?text=Silva+Consultoria'
   );
@@ -370,6 +370,299 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
     
     onUpdateClausulas(renumbered);
   };
+
+  if (isPublicView) {
+    return (
+      <div className="w-full text-slate-900 text-xs">
+        <style dangerouslySetInnerHTML={{__html: `
+          @media print {
+            @page { margin: 0 !important; size: auto; }
+            .no-print, [class*="no-print"] { display: none !important; }
+            * {
+               -webkit-print-color-adjust: exact !important;
+               print-color-adjust: exact !important;
+               color-adjust: exact !important;
+            }
+            html, body, #__next, 
+            [class*="min-h-screen"], 
+            [class*="overflow-auto"] {
+              background: white !important;
+              background-color: white !important;
+              height: auto !important;
+              min-height: 0 !important;
+              max-height: none !important;
+              overflow: visible !important;
+              display: block !important;
+              position: static !important;
+              padding: 0 !important;
+              margin: 0 !important;
+            }
+            .print-a4-page {
+              display: block !important;
+              position: relative !important;
+              width: 210mm !important;
+              margin: 0 auto !important;
+              padding: 0 !important;
+              box-sizing: border-box !important;
+              box-shadow: none !important;
+              border: none !important;
+              height: auto !important;
+              min-height: 0 !important;
+              max-height: none !important;
+              overflow: visible !important;
+            }
+            .print-margin-header, .print-margin-footer { height: 20mm; }
+            .print-content-cell { padding: 0 20mm !important; }
+          }
+        `}} />
+
+        <div className="bg-white w-full relative text-slate-900 text-xs">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr><td className="print-margin-header border-none p-0"></td></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="print-content-cell px-4 py-6 md:px-12 md:py-10 border-none align-top">
+                  
+                  {/* CABEÇALHO HORIZONTAL */}
+                  <div className="flex items-center justify-between border-b-2 border-slate-900 pb-6 mb-6">
+                    <div className="w-32 hidden sm:block"></div>
+                    <div className="flex flex-col items-center text-center flex-1">
+                      <h1 className="text-lg font-black uppercase tracking-widest">{empresaEmissora.nomeFantasia}</h1>
+                      <p className="font-bold mt-1 text-[10px]">CNPJ: {empresaEmissora.cnpj}</p>
+                      {empresaEmissora.endereco && <p className="text-[10px]">{empresaEmissora.endereco}</p>}
+                      {empresaEmissora.telefone && <p className="text-[10px]">Telefone: {empresaEmissora.telefone}</p>}
+                      {empresaEmissora.email && <p className="text-[10px]">Email: {empresaEmissora.email}</p>}
+                    </div>
+                    <div className="w-32 flex justify-end">
+                      <img src={companyLogo} alt="Logo" className="h-12 object-contain" />
+                    </div>
+                  </div>
+
+                  {/* TÍTULO */}
+                  <div className="text-center mb-8">
+                    <h2 className="text-base font-black uppercase tracking-tight">PROPOSTA COMERCIAL DE PRESTAÇÃO DE SERVIÇOS</h2>
+                    <p className="font-bold mt-2 text-[10px]">Proposta nº {(proposta.cliente?.numeroProposta || "0000").toString().padStart(4, '0')} - Rev. {String(proposta.cliente?.revisao || "01").padStart(2, '0')}</p>
+                    <p className="text-[10px]">Data: {proposta.cliente?.dataElaboracao ? proposta.cliente.dataElaboracao.split('-').reverse().join('/') : new Date().toLocaleDateString('pt-BR')}</p>
+                  </div>
+
+                  {/* DADOS DO CLIENTE */}
+                  <div className="bg-slate-100 border-l-4 border-slate-900 p-4 mb-8">
+                    <h3 className="font-bold uppercase mb-3 text-xs text-slate-900">DADOS DO CLIENTE</h3>
+                    <div className="flex flex-col gap-1 text-xs text-slate-900">
+                      <p><strong>Cliente:</strong> {proposta.cliente?.cliente || proposta.cliente?.razaoSocial}</p>
+                      <p><strong>Código:</strong> {proposta.cliente?.codigo ? `CLI-${String(proposta.cliente.codigo).padStart(4, '0')}` : 'Não cadastrado'}</p>
+                      <p><strong>CNPJ/CPF:</strong> {proposta.cliente?.cnpj}</p>
+                      <p><strong>Endereço:</strong> {proposta.cliente?.endereco || proposta.cliente?.logradouro ? `${proposta.cliente?.logradouro || proposta.cliente?.endereco}${proposta.cliente?.numero ? `, ${proposta.cliente?.numero}` : ''}${proposta.cliente?.bairro ? `, ${proposta.cliente?.bairro}` : ''}${proposta.cliente?.cidade ? `, ${proposta.cliente?.cidade} - ${proposta.cliente?.uf}` : ''}` : proposta.cliente?.cidade}</p>
+                      <p><strong>Cidade:</strong> {proposta.cliente?.cidade || ''}</p>
+                      <p><strong>Telefone:</strong> {proposta.cliente?.celular || proposta.cliente?.telefone}</p>
+                      <p><strong>Email:</strong> {proposta.cliente?.email}</p>
+                      <p><strong>Contato:</strong> {proposta.cliente?.contato}</p>
+                    </div>
+                  </div>
+
+                  {/* CLÁUSULAS */}
+                  <h3 className="font-black uppercase mb-4 text-xs text-center border-b-2 border-slate-900 pb-2 mt-8">CLÁUSULAS E CONDIÇÕES</h3>
+                  <div className="space-y-4 text-justify">
+                    {proposta.cliente?.clausulasA4 && proposta.cliente.clausulasA4.length > 0 ? (
+                       <>
+                         {proposta.cliente.clausulasA4.map((clausula: any, idx: number) => {
+                            const clauseNum = idx + 1;
+                            let rawTitulo = clausula.titulo.replace(/^(?:CL[ÁA]US[U]?L[A]?|CL[ÁA]US[U]?|CL[ÁA]US)?\s*\d*\s*[\.\-–]?\s*/i, '').trim();
+                            rawTitulo = rawTitulo.replace(/^[\d.\s-]*\s*/, '').trim();
+                            const tituloFinal = `${String(clauseNum).padStart(2,'0')} - ${rawTitulo}`;
+                            const txt = clausula.texto || '';
+                            const hasTabela = txt.includes('[TABELA]');
+                            const hasItens = txt.includes('[ITENS]');
+                            const hasAceite = txt.includes('[TERMO_ACEITE]');
+
+                            const nomeCliente = proposta.cliente?.nomeFantasia || proposta.cliente?.razaoSocial || '';
+                            const textoLimpo = txt
+                              .replace(/\[CLIENTE_NOME\]/g, nomeCliente)
+                              .replace(/\[NUMERO_PROPOSTA\]/g, proposta.numero || '')
+                              .replace(/\[REVISAO\]/g, proposta.cliente?.revisao || `R${String(proposta.versao || 1).padStart(2, '0')}`)
+                              .replace(/\[TABELA\]/g, '')
+                              .replace(/\[ITENS\]/g, '')
+                              .replace(/\[TERMO_ACEITE\]/g, '')
+                              .replace(/\[OBJETO_PROPOSTA\]/g, proposta.cliente?.objetoProposta || '')
+                              .replace(/\[ESCOPO_TECNICO\]/g, (proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico) ? proposta.cliente.escopoTecnico : '')
+                              .replace(/\[CONDICOES_COMERCIAIS\]/g, (proposta.cliente?.condicoesCliente || []).join('\n'))
+                              .replace(/\[VALOR_TOTAL\]/g, fmt(totalGeral))
+                              .trim();
+
+                            let paragrafos = textoLimpo
+                              ? textoLimpo.split(/\n/).filter((p: string) => p.trim() !== '')
+                              : [];
+                              
+                            return (
+                              <div key={idx} className={idx > 0 ? "mt-6 break-inside-avoid print:break-inside-avoid" : ""}>
+                                <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">{tituloFinal}</h4>
+                                {paragrafos.length > 0 && (
+                                  <div className="pl-4 mt-2 mb-4">
+                                    {paragrafos.map((p: string, pIdx: number) => (
+                                      <p key={pIdx} className="mb-2 text-justify">
+                                        <span className="font-bold mr-1">{clauseNum}.{pIdx + 1}.</span>{p.replace(/^\d+\.\d+\.?\s*/, '')}
+                                      </p>
+                                    ))}
+                                  </div>
+                                )}
+                                
+                                {hasTabela && renderTabelaComercial()}
+                                {hasItens && renderTabelaItensInclusosExcluidos()}
+                                {hasAceite && renderTermoDeAceite(clauseNum, paragrafos.length)}
+                              </div>
+                            );
+                          })}
+                       </>
+                    ) : (
+                      <>
+                        {/* Fallback original */}
+                        <div>
+                          <h4 className="font-bold uppercase">01 - DO OBJETO E ESCOPO</h4>
+                          <div className="pl-4 mt-2">
+                            {proposta.cliente?.objetoProposta && (
+                              <p className="mb-2 text-justify">
+                                <span className="font-bold mr-1">1.1.</span>{proposta.cliente.objetoProposta}
+                              </p>
+                            )}
+                            {proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico && (
+                              <p className="text-justify">
+                                <span className="font-bold mr-1">1.2.</span>{proposta.cliente.escopoTecnico}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-bold uppercase mt-6">02 - DAS CONDIÇÕES COMERCIAIS</h4>
+                          <div className="pl-4 mt-2">
+                             {proposta.cliente?.condicoesCliente?.map((c: string, i: number) => (
+                                <p key={i} className="mb-2 text-justify">
+                                  <span className="font-bold mr-1">2.{i+1}.</span>{c}
+                                </p>
+                             ))}
+                             {!proposta.cliente?.condicoesCliente?.length && (
+                               <p className="text-justify"><span className="font-bold mr-1">2.1.</span>As condições comerciais seguirão o padrão estipulado em contrato, com vencimento conforme acordado e validade da proposta de 30 dias.</p>
+                             )}
+                          </div>
+                        </div>
+
+                        <div className="mt-6">
+                          <h4 className="font-bold uppercase">03 - RESUMO COMERCIAL DA PROPOSTA</h4>
+                          <div className="pl-4 mt-2">
+                            <p className="text-justify"><span className="font-bold mr-1">3.1.</span>Valores referentes aos serviços prestados, equipe alocada e insumos, conforme detalhamento a seguir:</p>
+                          </div>
+                          {renderTabelaComercial()}
+                        </div>
+
+                        <div className="mt-6 break-inside-avoid print:break-inside-avoid">
+                          <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">04 - ITENS INCLUSOS E EXCLUSOS</h4>
+                          {renderTabelaItensInclusosExcluidos()}
+                        </div>
+
+                        <div className="mt-16">
+                          <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">05 - TERMO DE ACEITE</h4>
+                          {renderTermoDeAceite(5, 0)}
+                        </div>
+                      </>
+                    )}
+
+                    {/* Fallback de Segurança */}
+                    {(() => {
+                      if (!proposta.cliente?.clausulasA4 || proposta.cliente.clausulasA4.length === 0) return null;
+                      const textStr = JSON.stringify(proposta.cliente?.clausulasA4 || []);
+                      const temObjeto = proposta.cliente.clausulasA4.some((c: any) => c.titulo.toUpperCase().includes('OBJETO') || c.titulo.toUpperCase().includes('ESCOPO'));
+                      const temCondicoes = proposta.cliente.clausulasA4.some((c: any) => c.titulo.toUpperCase().includes('CONDI'));
+                      const temAceite = proposta.cliente.clausulasA4.some((c: any) => c.titulo.toUpperCase().includes('ACEITE'));
+                      
+                      const missObjeto = !textStr.includes('[OBJETO_PROPOSTA]') && !textStr.includes('[ESCOPO_TECNICO]') && !temObjeto;
+                      const missCondicoes = !textStr.includes('[CONDICOES_COMERCIAIS]') && !temCondicoes;
+                      const missTabela = !textStr.includes('[TABELA]');
+                      const missItens = !textStr.includes('[ITENS]');
+                      const missAceite = !textStr.includes('[TERMO_ACEITE]') && !temAceite;
+                      
+                      const clauseOffset = proposta.cliente.clausulasA4.length + 1;
+                      let currentFallbackClause = clauseOffset;
+                      
+                      return (
+                        <div className="mt-8 space-y-8">
+                          {missObjeto && (
+                            <div className="break-inside-avoid print:break-inside-avoid">
+                              <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
+                                {String(currentFallbackClause++).padStart(2,'0')} - DO OBJETO E ESCOPO
+                              </h4>
+                              <div className="pl-4 mt-2">
+                                {proposta.cliente?.objetoProposta && (
+                                  <p className="mb-2 text-justify">
+                                    <span className="font-bold mr-1">{currentFallbackClause - 1}.1.</span>{proposta.cliente.objetoProposta}
+                                  </p>
+                                )}
+                                {proposta.cliente?.hasEscopoTecnico && proposta.cliente?.escopoTecnico && (
+                                  <p className="text-justify">
+                                    <span className="font-bold mr-1">{currentFallbackClause - 1}.2.</span>{proposta.cliente.escopoTecnico}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          {missCondicoes && (
+                            <div className="break-inside-avoid print:break-inside-avoid">
+                              <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
+                                {String(currentFallbackClause++).padStart(2,'0')} - DAS CONDIÇÕES COMERCIAIS
+                              </h4>
+                              <div className="pl-4 mt-2">
+                                 {proposta.cliente?.condicoesCliente?.map((c: string, i: number) => (
+                                    <p key={i} className="mb-2 text-justify">
+                                      <span className="font-bold mr-1">{currentFallbackClause - 1}.{i+1}.</span>{c}
+                                    </p>
+                                 ))}
+                                 {!proposta.cliente?.condicoesCliente?.length && (
+                                   <p className="text-justify"><span className="font-bold mr-1">{currentFallbackClause - 1}.1.</span>As condições comerciais seguirão o padrão estipulado em contrato, com vencimento conforme acordado e validade da proposta de 30 dias.</p>
+                                 )}
+                              </div>
+                            </div>
+                          )}
+                          {missTabela && (
+                            <div className="break-inside-avoid print:break-inside-avoid">
+                              <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
+                                {String(currentFallbackClause++).padStart(2,'0')} - RESUMO FINANCEIRO
+                              </h4>
+                              {renderTabelaComercial()}
+                            </div>
+                          )}
+                          {missItens && (
+                            <div className="break-inside-avoid print:break-inside-avoid">
+                              <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
+                                {String(currentFallbackClause++).padStart(2,'0')} - ITENS INCLUSOS E EXCLUSOS
+                              </h4>
+                              {renderTabelaItensInclusosExcluidos()}
+                            </div>
+                          )}
+                          {missAceite && (
+                            <div className="break-inside-avoid print:break-inside-avoid">
+                              <h4 className="font-bold uppercase border-b-2 border-slate-900 pb-2 mb-4">
+                                {String(currentFallbackClause++).padStart(2,'0')} - TERMO DE ACEITE
+                              </h4>
+                              {renderTermoDeAceite(currentFallbackClause - 1, 0)}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr><td className="print-margin-footer border-none p-0"></td></tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-slate-200 min-h-screen py-8 flex flex-col items-center overflow-x-hidden overflow-y-auto print:bg-white print:py-0 w-full">
