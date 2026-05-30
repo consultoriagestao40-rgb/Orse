@@ -280,6 +280,15 @@ export default function DocumentoPropostaDetail() {
   const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
   const [tempLayerName, setTempLayerName] = useState('');
   const [activeCanvaTab, setActiveCanvaTab] = useState<'laminas' | 'elementos' | 'layouts' | 'estilos'>('laminas');
+  
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const copyToClipboard = (text: string, fieldId: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedField(fieldId);
+      setTimeout(() => setCopiedField(null), 2000);
+    }
+  };
 
   const saveToHistory = (newSecoes: any[]) => {
     const listCopy = JSON.parse(JSON.stringify(newSecoes));
@@ -1178,29 +1187,126 @@ export default function DocumentoPropostaDetail() {
                 </div>
 
                 {configApresentacao.useCanva && configApresentacao.canvaEmbedUrl ? (
-                  /* PRÉ-VISUALIZAÇÃO DO CANVA EM TEMPO REAL */
-                  <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4 animate-fadeIn">
-                    <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                        👁️ Pré-visualização do Canva
-                      </h4>
-                      <a
-                        href={configApresentacao.canvaEmbedUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[9.5px] font-black text-[#1B4D3E] hover:underline uppercase tracking-wider"
-                      >
-                        Abrir em nova guia ↗
-                      </a>
+                  /* PRÉ-VISUALIZAÇÃO DE 2 COLUNAS: COPIADOR FPV E CANVAS PREVIEW */
+                  <div className="grid grid-cols-12 gap-6 items-start animate-fadeIn">
+                    
+                    {/* COLUNA ESQUERDA: COPIADOR DE VARIÁVEIS DA FPV */}
+                    <div className="col-span-12 lg:col-span-4 space-y-6">
+                      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs text-left space-y-4">
+                        <div>
+                          <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                            📋 Copiador de Variáveis FPV
+                          </h4>
+                          <p className="text-[9px] text-slate-400 font-bold uppercase mt-1 leading-relaxed">
+                            Use estas informações reais da proposta para preencher seus slides do Canva. Dê 1 clique para copiar o valor!
+                          </p>
+                        </div>
+
+                        <div className="space-y-3">
+                          
+                          {/* VARIÁVEL 1: CLIENTE */}
+                          <div 
+                            onClick={() => copyToClipboard(doc.client?.nomeFantasia || '', 'cliente')}
+                            className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 hover:border-indigo-500 hover:bg-indigo-50/10 transition-all cursor-pointer group relative overflow-hidden"
+                          >
+                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1 select-none">Nome do Cliente</label>
+                            <div className="text-[11px] font-black text-slate-700 truncate">{doc.client?.nomeFantasia}</div>
+                            <div className="text-[8px] text-slate-400 font-bold uppercase mt-1 select-none">Tag Canva: <strong className="text-indigo-600 font-black">[CLIENTE_NOME]</strong></div>
+                            
+                            {copiedField === 'cliente' ? (
+                              <div className="absolute inset-0 bg-[#1b4d3e]/90 text-white flex items-center justify-center text-[10px] font-black uppercase tracking-widest animate-fadeIn">
+                                Copiado com Sucesso! ✓
+                              </div>
+                            ) : (
+                              <span className="absolute top-3 right-3 text-[8px] font-black text-indigo-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Copiar 📋</span>
+                            )}
+                          </div>
+
+                          {/* VARIÁVEL 2: VALOR TOTAL */}
+                          <div 
+                            onClick={() => copyToClipboard(fmt(doc.valorTotal), 'valor')}
+                            className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 hover:border-indigo-500 hover:bg-indigo-50/10 transition-all cursor-pointer group relative overflow-hidden"
+                          >
+                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1 select-none">Valor Total Mensal (FPV)</label>
+                            <div className="text-sm font-black text-emerald-700">{fmt(doc.valorTotal)}</div>
+                            <div className="text-[8px] text-slate-400 font-bold uppercase mt-1 select-none">Tag Canva: <strong className="text-indigo-600 font-black">[VALOR_TOTAL]</strong></div>
+                            
+                            {copiedField === 'valor' ? (
+                              <div className="absolute inset-0 bg-[#1b4d3e]/90 text-white flex items-center justify-center text-[10px] font-black uppercase tracking-widest animate-fadeIn">
+                                Copiado com Sucesso! ✓
+                              </div>
+                            ) : (
+                              <span className="absolute top-3 right-3 text-[8px] font-black text-indigo-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Copiar 📋</span>
+                            )}
+                          </div>
+
+                          {/* VARIÁVEL 3: CÓDIGO PROPOSTA */}
+                          <div 
+                            onClick={() => copyToClipboard(`#${doc.codigo || id?.substring(0, 8).toUpperCase()}`, 'codigo')}
+                            className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 hover:border-indigo-500 hover:bg-indigo-50/10 transition-all cursor-pointer group relative overflow-hidden"
+                          >
+                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1 select-none">Código da Proposta</label>
+                            <div className="text-[11px] font-black text-slate-700">#{doc.codigo || id?.substring(0, 8).toUpperCase()}</div>
+                            <div className="text-[8px] text-slate-400 font-bold uppercase mt-1 select-none">Tag Canva: <strong className="text-indigo-600 font-black">[NUMERO_PROPOSTA]</strong></div>
+                            
+                            {copiedField === 'codigo' ? (
+                              <div className="absolute inset-0 bg-[#1b4d3e]/90 text-white flex items-center justify-center text-[10px] font-black uppercase tracking-widest animate-fadeIn">
+                                Copiado com Sucesso! ✓
+                              </div>
+                            ) : (
+                              <span className="absolute top-3 right-3 text-[8px] font-black text-indigo-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Copiar 📋</span>
+                            )}
+                          </div>
+
+                          {/* VARIÁVEL 4: EMPRESA EMISSORA */}
+                          <div 
+                            onClick={() => copyToClipboard(doc.empresaEmissora?.nomeFantasia || '', 'emissora')}
+                            className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 hover:border-indigo-500 hover:bg-indigo-50/10 transition-all cursor-pointer group relative overflow-hidden"
+                          >
+                            <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1 select-none">Empresa Emissora</label>
+                            <div className="text-[11px] font-black text-slate-700 truncate">{doc.empresaEmissora?.nomeFantasia}</div>
+                            <div className="text-[8px] text-slate-400 font-bold uppercase mt-1 select-none">Tag Canva: <strong className="text-indigo-600 font-black">[EMPRESA_EMISSORA]</strong></div>
+                            
+                            {copiedField === 'emissora' ? (
+                              <div className="absolute inset-0 bg-[#1b4d3e]/90 text-white flex items-center justify-center text-[10px] font-black uppercase tracking-widest animate-fadeIn">
+                                Copiado com Sucesso! ✓
+                              </div>
+                            ) : (
+                              <span className="absolute top-3 right-3 text-[8px] font-black text-indigo-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Copiar 📋</span>
+                            )}
+                          </div>
+
+                        </div>
+                      </div>
                     </div>
-                    <div className="w-full aspect-[16/9] bg-slate-900 rounded-2xl overflow-hidden shadow-inner relative border border-slate-250">
-                      <iframe
-                        src={configApresentacao.canvaEmbedUrl}
-                        loading="lazy"
-                        className="absolute inset-0 w-full h-full border-none"
-                        allowFullScreen
-                      />
+
+                    {/* COLUNA DIREITA: LIVE IFRAME PREVIEW */}
+                    <div className="col-span-12 lg:col-span-8 space-y-4">
+                      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
+                        <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                          <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                            👁️ Pré-visualização do Canva
+                          </h4>
+                          <a
+                            href={configApresentacao.canvaEmbedUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[9.5px] font-black text-[#1B4D3E] hover:underline uppercase tracking-wider"
+                          >
+                            Abrir em nova guia ↗
+                          </a>
+                        </div>
+                        <div className="w-full aspect-[16/9] bg-slate-900 rounded-2xl overflow-hidden shadow-inner relative border border-slate-250">
+                          <iframe
+                            src={configApresentacao.canvaEmbedUrl}
+                            loading="lazy"
+                            className="absolute inset-0 w-full h-full border-none"
+                            allowFullScreen
+                          />
+                        </div>
+                      </div>
                     </div>
+
                   </div>
                 ) : (
                   /* SE NÃO FOR CANVA, RENDERIZAR O WORKSPACE TRADICIONAL */
