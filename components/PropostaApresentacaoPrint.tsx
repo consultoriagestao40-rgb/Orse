@@ -279,6 +279,26 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
         .font-playfair { font-family: 'Playfair Display', serif !important; }
         .font-roboto { font-family: 'Roboto', sans-serif !important; }
         
+        .print-slide-deck {
+            display: block !important;
+            width: 100% !important;
+            max-width: 1120px !important;
+            margin: 0 auto !important;
+            padding: 2rem 1rem !important;
+        }
+        
+        .print-slide {
+            width: 100% !important;
+            height: auto !important;
+            aspect-ratio: 16/9 !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08) !important;
+            border-radius: 1.25rem !important;
+            margin-bottom: 3rem !important;
+            border: 1px solid #e2e8f0 !important;
+            background-color: white !important;
+            box-sizing: border-box !important;
+        }
+        
         @media print {
             @page {
                 size: 297mm 167mm !important;
@@ -333,6 +353,8 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
                 position: relative !important;
                 overflow: hidden !important;
                 border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
             }
 
             .print-slide-deck .text-[7.5px] { font-size: 16px !important; line-height: 22px !important; }
@@ -386,7 +408,7 @@ export default function PropostaApresentacaoPrint({ proposta, resultado, empresa
             }
         }
       `}} />
-      <div className="print-slide-deck hidden print:block">
+      <div className="print-slide-deck">
                         {hasDynamicSlides ? (
                            rawSlides.map((slide: any, slideIdx: number) => {
                               let slideData: any = {};
