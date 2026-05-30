@@ -1011,6 +1011,8 @@ export default function TemplatesPropostaPage() {
                   >
                     A4
                   </button>
+                  <button
+                    type="button"
                     onClick={() => {
                       setTipo('SLIDE_DECK');
                       if (!secoes.some(s => s.texto.trim().startsWith('{'))) {
