@@ -624,6 +624,17 @@ return (
                           </div>
                         );
                       })}
+
+                      {/* Total Geral de Encargos Sociais Card */}
+                      <div className="bg-[#1B4D3E] text-white flex justify-between items-center py-4 px-6 font-black uppercase text-[11px] tracking-wider rounded-none shadow-md mt-6">
+                        <div className="flex items-center gap-2">
+                          <Layers size={14} className="text-emerald-300" />
+                          <span>TOTAL GERAL DE ENCARGOS SOCIAIS</span>
+                        </div>
+                        <span className="bg-white/15 border border-white/25 px-4 py-1.5 text-[12px] font-black rounded-none text-emerald-300">
+                          {totalGeralEncargos.toFixed(2)}%
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1369,6 +1380,17 @@ return (
           )}
 
         </main>
+
+      {/* Slide Deck printing engine wrapper */}
+      {activeClientTab === 'apresentacao' && (
+        <div className="print:block hidden">
+          <PropostaApresentacaoPrint 
+            proposta={mergedProposta}
+            resultado={versao?.resultado}
+            empresaEmissora={doc.empresaEmissora}
+          />
+        </div>
+      )}
 
       {/* BOTÃO FLUTUANTE DE IMPRESSÃO */}
       <button
