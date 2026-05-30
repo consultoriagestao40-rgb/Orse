@@ -38,6 +38,57 @@ const iconPresets = [
   'TrendingUp', 'Heart', 'Coffee', 'CheckCircle2'
 ];
 
+const curatedPhotos = [
+  {
+    title: 'Limpeza e Conservação',
+    src: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=600',
+    tags: ['limpeza', 'conservação', 'higienização', 'serviço', 'facilities']
+  },
+  {
+    title: 'Recepção e Atendimento',
+    src: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=600',
+    tags: ['recepção', 'atendimento', 'secretária', 'recepcionista', 'portaria']
+  },
+  {
+    title: 'Jardinagem e Áreas Verdes',
+    src: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?q=80&w=600',
+    tags: ['jardinagem', 'jardim', 'verde', 'paisagismo', 'conservação']
+  },
+  {
+    title: 'Segurança e Monitoramento',
+    src: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=600',
+    tags: ['segurança', 'vigilância', 'guarda', 'portaria', 'controle']
+  },
+  {
+    title: 'Copa e Serviços de Apoio',
+    src: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=600',
+    tags: ['copa', 'café', 'atendimento', 'facilities', 'apoio']
+  },
+  {
+    title: 'Financeiro e Resultados',
+    src: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=600',
+    tags: ['valores', 'finanças', 'lucro', 'economia', 'sucesso', 'crescimento']
+  },
+  {
+    title: 'Escritório Corporativo',
+    src: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=600',
+    tags: ['corporate', 'escritório', 'condomínio', 'empresa', 'fachada']
+  }
+];
+
+const curatedIcons = [
+  { title: 'Segurança Garantida', name: 'ShieldCheck', tags: ['segurança', 'proteção', 'garantia', 'confiança', 'cuidado'] },
+  { title: 'Selo de Qualidade', name: 'Award', tags: ['qualidade', 'destaque', 'selo', 'prêmio', 'excelência'] },
+  { title: 'Equipe e Sócios', name: 'Users', tags: ['equipe', 'colaboradores', 'sócios', 'pessoas', 'recursos'] },
+  { title: 'Economia e Valores', name: 'DollarSign', tags: ['financeiro', 'economia', 'investimento', 'valores', 'custo'] },
+  { title: 'Serviço Profissional', name: 'Briefcase', tags: ['serviços', 'profissional', 'trabalho', 'negócios', 'vendas'] },
+  { title: 'Sede e Condomínios', name: 'Building2', tags: ['sede', 'condomínio', 'empresa', 'prédio', 'facilities'] },
+  { title: 'Eficiência e Sucesso', name: 'CheckCircle2', tags: ['eficiência', 'concluído', 'sucesso', 'feito', 'ok'] },
+  { title: 'Performance e Alta', name: 'TrendingUp', tags: ['crescimento', 'performance', 'resultados', 'lucro', 'metas'] },
+  { title: 'Escala e Tempo', name: 'Clock', tags: ['escala', 'pontualidade', 'tempo', 'horas', 'jornada'] },
+  { title: 'Cobertura de Atendimento', name: 'MapPin', tags: ['localização', 'cobertura', 'presença', 'endereço', 'filial'] }
+];
+
 const renderChartElement = (el: any, slideBgColor: string = '#ffffff') => {
   const chartType = el.chartType || 'donut';
   const chartData = el.chartData || [
@@ -1908,7 +1959,7 @@ export default function DocumentoPropostaDetail() {
                           </div>
 
                           {/* CANVAS PRINCIPAL DE DESENHO (16:9) */}
-                          <div className="border border-slate-200 rounded-3xl overflow-hidden shadow-lg bg-slate-900 relative">
+                          <div className="border border-slate-200 rounded-3xl overflow-hidden shadow-lg bg-slate-50 relative">
                             <div
                               onClick={() => setSelectedElementId(null)}
                               className="w-full aspect-[16/9] relative select-none overflow-hidden cursor-crosshair transition-all"
@@ -1923,8 +1974,6 @@ export default function DocumentoPropostaDetail() {
                                             (slideData.fontFamily || 'Outfit') === 'Playfair' ? 'Playfair Display, serif' : 'Roboto, sans-serif'
                               }}
                             >
-                              {/* Background grids */}
-                              <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none opacity-40"></div>
 
                               {/* Snapping Guidelines */}
                               {snapLines.x !== null && (
@@ -2064,10 +2113,10 @@ export default function DocumentoPropostaDetail() {
                                   );
                                 })
                               ) : (
-                                <div className="w-full h-full flex flex-col items-center justify-center p-12 text-slate-400 bg-slate-955/90 border-2 border-dashed border-slate-800 rounded-3xl">
-                                  <FileText size={48} className="text-slate-700 mb-4" />
-                                  <h4 className="text-sm font-black uppercase text-slate-300">Estrutura de Apresentação Legada</h4>
-                                  <p className="text-xs text-slate-500 mt-2 max-w-sm text-center">Injete um de nossos layouts Provelo premium no topo do editor para ativar o canvas arrastável Canva-Style!</p>
+                                <div className="w-full h-full flex flex-col items-center justify-center p-12 text-slate-500 bg-white border border-slate-200 rounded-3xl shadow-inner">
+                                  <FileText size={48} className="text-slate-400 mb-4" />
+                                  <h4 className="text-sm font-black uppercase text-slate-800">Estrutura de Apresentação Legada</h4>
+                                  <p className="text-xs text-slate-400 mt-2 max-w-sm text-center">Injete um de nossos layouts Provelo premium no topo do editor para ativar o canvas arrastável Canva-Style!</p>
                                 </div>
                               )}
                             </div>
@@ -2163,7 +2212,12 @@ export default function DocumentoPropostaDetail() {
                                         ['[NUMERO_PROPOSTA]', 'Proposta'],
                                         ['[REVISAO]', 'Revisão'],
                                         ['[OBJETO_PROPOSTA]', 'Objeto'],
-                                        ['[ESCOPO_TECNICO]', 'Escopo']
+                                        ['[ESCOPO_TECNICO]', 'Escopo'],
+                                        ['[VALOR_TOTAL]', 'Valor Total'],
+                                        ['[TABELA]', 'Tabela Fin.'],
+                                        ['[ITENS]', 'Itens Inc/Exc'],
+                                        ['[CONDICOES_COMERCIAIS]', 'Condições Com.'],
+                                        ['[TERMO_ACEITE]', 'Aceite']
                                       ].map(([tag, label]) => (
                                         <button
                                           key={tag}
@@ -2658,6 +2712,27 @@ export default function DocumentoPropostaDetail() {
                           <div className="space-y-4 animate-fadeIn">
                             
                             <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">Estilos Globais da Lâmina</h5>
+
+                            {/* NOME / TÍTULO DA LÂMINA */}
+                            <div>
+                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Nome/Título do Slide (Lâmina)</label>
+                              <input
+                                type="text"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs px-3 py-2 font-bold focus:outline-none focus:border-[#1B4D3E] text-slate-700"
+                                value={secoes[activeSlideIdx]?.titulo || ''}
+                                onChange={(e) => {
+                                  const list = [...secoes];
+                                  list[activeSlideIdx].titulo = e.target.value;
+                                  
+                                  try {
+                                    const oldText = JSON.parse(list[activeSlideIdx].texto);
+                                    list[activeSlideIdx].texto = JSON.stringify({ ...oldText, tituloSlide: e.target.value });
+                                  } catch (err) {}
+                                  
+                                  updateSecoesWithHistory(list);
+                                }}
+                              />
+                            </div>
 
                             {/* TIPOGRAFIA */}
                             <div>

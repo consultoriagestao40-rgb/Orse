@@ -38,5 +38,9 @@ export default async function ContratoPrintServer(props: { params: Promise<{ id:
     return <div className="p-10 text-center">Contrato não encontrado.</div>;
   }
 
-  return <PrintClient contrato={contrato} />;
+  // Serialização limpa em JSON para evitar que campos Date ou classes do Prisma
+  // quebrem o Next.js Server Components na passagem de props para o Client Component
+  const serializedContrato = JSON.parse(JSON.stringify(contrato));
+
+  return <PrintClient contrato={serializedContrato} />;
 }

@@ -251,6 +251,9 @@ export default function PropostaApresentacao({ proposta, resultado, empresaEmiss
 
     const valorTotal = formatCurrency(maoDeObraSubtotal + insumosSubtotal);
     replaced = replaced.replace(/\[VALOR_TOTAL\]/g, valorTotal);
+
+    const condicoes = (proposta.cliente?.condicoesCliente || []).join('\n');
+    replaced = replaced.replace(/\[CONDICOES_COMERCIAIS\]/g, condicoes);
     
     return replaced;
   };

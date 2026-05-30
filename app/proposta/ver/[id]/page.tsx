@@ -50,5 +50,10 @@ export default async function PublicPropostaView(props: { params: Promise<{ id: 
     templateOrigem
   };
 
-  return <ViewClient doc={docWithTemplate} fullProposta={fullProposta} />;
+  // Serialização limpa em JSON para evitar que campos Date ou classes do Prisma
+  // quebrem o Next.js Server Components na passagem de props para o Client Component
+  const serializedDoc = JSON.parse(JSON.stringify(docWithTemplate));
+  const serializedFullProposta = fullProposta ? JSON.parse(JSON.stringify(fullProposta)) : null;
+
+  return <ViewClient doc={serializedDoc} fullProposta={serializedFullProposta} />;
 }

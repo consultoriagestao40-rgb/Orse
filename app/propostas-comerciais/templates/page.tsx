@@ -2,7 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
-import { FileText, Plus, Edit2, Trash2, ArrowLeft, Save, ChevronUp, ChevronDown, X, Presentation } from 'lucide-react';
+import { 
+  FileText, ArrowLeft, Save, Printer, Building2, Tag, Trash2, ShieldCheck, 
+  ChevronUp, ChevronDown, Plus, X, Undo, Redo, Copy, Paintbrush, 
+  Lock, Unlock, Eye, EyeOff, Smile, Phone, Mail, Award, Users, DollarSign, 
+  Star, Briefcase, HelpCircle, Edit2, Play, Search, Image as ImageIcon, Sparkles,
+  Layout, Presentation
+} from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getLoggedUser } from '@/app/propostas/actions';
 import {
@@ -12,6 +19,70 @@ import {
   deleteTemplateProposta,
   uploadSlideImageAction
 } from '../actions';
+
+const LucideIconRenderer = ({ name, className, size, color }: { name: string; className?: string; size?: number; color?: string }) => {
+  const IconComponent = (Icons as any)[name];
+  if (!IconComponent) return <HelpCircle size={size} className={className} />;
+  return <IconComponent size={size} className={className} style={{ color }} />;
+};
+
+const iconPresets = [
+  'ShieldCheck', 'Star', 'Award', 'Users', 'Phone', 'Mail', 
+  'DollarSign', 'Briefcase', 'Building2', 'Tag', 'Smile', 
+  'ThumbsUp', 'Calendar', 'MapPin', 'Clock', 'FileText', 
+  'TrendingUp', 'Heart', 'Coffee', 'CheckCircle2'
+];
+
+const curatedPhotos = [
+  {
+    title: 'Limpeza e Conservação',
+    src: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=600',
+    tags: ['limpeza', 'conservação', 'higienização', 'serviço', 'facilities']
+  },
+  {
+    title: 'Recepção e Atendimento',
+    src: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=600',
+    tags: ['recepção', 'atendimento', 'secretária', 'recepcionista', 'portaria']
+  },
+  {
+    title: 'Jardinagem e Áreas Verdes',
+    src: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?q=80&w=600',
+    tags: ['jardinagem', 'jardim', 'verde', 'paisagismo', 'conservação']
+  },
+  {
+    title: 'Segurança e Monitoramento',
+    src: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=600',
+    tags: ['segurança', 'vigilância', 'guarda', 'portaria', 'controle']
+  },
+  {
+    title: 'Copa e Serviços de Apoio',
+    src: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=600',
+    tags: ['copa', 'café', 'atendimento', 'facilities', 'apoio']
+  },
+  {
+    title: 'Financeiro e Resultados',
+    src: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=600',
+    tags: ['valores', 'finanças', 'lucro', 'economia', 'sucesso', 'crescimento']
+  },
+  {
+    title: 'Escritório Corporativo',
+    src: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=600',
+    tags: ['corporate', 'escritório', 'condomínio', 'empresa', 'fachada']
+  }
+];
+
+const curatedIcons = [
+  { title: 'Segurança Garantida', name: 'ShieldCheck', tags: ['segurança', 'proteção', 'garantia', 'confiança', 'cuidado'] },
+  { title: 'Selo de Qualidade', name: 'Award', tags: ['qualidade', 'destaque', 'selo', 'prêmio', 'excelência'] },
+  { title: 'Equipe e Sócios', name: 'Users', tags: ['equipe', 'colaboradores', 'sócios', 'pessoas', 'recursos'] },
+  { title: 'Economia e Valores', name: 'DollarSign', tags: ['financeiro', 'economia', 'investimento', 'valores', 'custo'] },
+  { title: 'Serviço Profissional', name: 'Briefcase', tags: ['serviços', 'profissional', 'trabalho', 'negócios', 'vendas'] },
+  { title: 'Sede e Condomínios', name: 'Building2', tags: ['sede', 'condomínio', 'empresa', 'prédio', 'facilities'] },
+  { title: 'Eficiência e Sucesso', name: 'CheckCircle2', tags: ['eficiência', 'concluído', 'sucesso', 'feito', 'ok'] },
+  { title: 'Performance e Alta', name: 'TrendingUp', tags: ['crescimento', 'performance', 'resultados', 'lucro', 'metas'] },
+  { title: 'Escala e Tempo', name: 'Clock', tags: ['escala', 'pontualidade', 'tempo', 'horas', 'jornada'] },
+  { title: 'Cobertura de Atendimento', name: 'MapPin', tags: ['localização', 'cobertura', 'presença', 'endereço', 'filial'] }
+];
 
 export default function TemplatesPropostaPage() {
   const router = useRouter();
@@ -60,6 +131,15 @@ export default function TemplatesPropostaPage() {
   const [isResizing, setIsResizing] = useState(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [elementStart, setElementStart] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+
+  // Estados adicionais para a Gaveta e Abas do Canva
+  const [activeTab, setActiveTab] = useState<'conteudo' | 'estilo' | 'camadas' | 'paleta'>('conteudo');
+  const [searchIcon, setSearchIcon] = useState('');
+  const [searchElement, setSearchElement] = useState('');
+  const [selectedElementCat, setSelectedElementCat] = useState<'tudo' | 'graficos' | 'fotos'>('tudo');
+  const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
+  const [tempLayerName, setTempLayerName] = useState('');
+  const [activeCanvaTab, setActiveCanvaTab] = useState<'laminas' | 'elementos' | 'layouts' | 'estilos'>('laminas');
 
   // Global Keyboard Shortcuts (Delete/Backspace to remove selected element)
   useEffect(() => {
@@ -332,7 +412,7 @@ export default function TemplatesPropostaPage() {
       <Sidebar />
 
       <main className="flex-1 p-8 overflow-y-auto">
-        <div className="max-w-5xl mx-auto space-y-6">
+        <div className={`${editingTemplate ? 'max-w-[1700px]' : 'max-w-5xl'} mx-auto space-y-6`}>
 
           {/* HEADER */}
           <header className="flex justify-between items-end border-b border-slate-300 pb-4">
@@ -953,7 +1033,7 @@ export default function TemplatesPropostaPage() {
                           </div>
 
                           {/* O CANVAS DE TRABALHO 16:9 */}
-                          <div className="border border-slate-200 rounded-3xl overflow-hidden shadow-xl bg-slate-950 relative">
+                          <div className="border border-slate-200 rounded-3xl overflow-hidden shadow-xl bg-slate-50 relative">
                             {/* Proportional 16:9 Canvas box */}
                             <div 
                               className="w-full aspect-[16/9] relative select-none overflow-hidden cursor-crosshair transition-all"
@@ -969,8 +1049,6 @@ export default function TemplatesPropostaPage() {
                                             (slideData.fontFamily || 'Outfit') === 'Playfair' ? 'Playfair Display, serif' : 'Roboto, sans-serif'
                               }}
                             >
-                              {/* Background dots grid (for design cues) */}
-                              <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none opacity-40"></div>
 
                               {/* Draw elements */}
                               {isCanvasLayout ? (
@@ -1058,10 +1136,10 @@ export default function TemplatesPropostaPage() {
                                 })
                               ) : (
                                 // Legacy structured templates fallback previews (circle/split/etc.)
-                                <div className="w-full h-full flex flex-col items-center justify-center p-12 text-slate-400 bg-slate-900 border-2 border-dashed border-slate-800 rounded-2xl">
-                                  <Presentation size={48} className="text-slate-600 mb-4 shrink-0" />
-                                  <h4 className="text-sm font-black uppercase text-slate-300">Visualização do Modelo Legado</h4>
-                                  <p className="text-xs text-slate-500 mt-2 max-w-sm text-center">Clique em qualquer um dos botões "Layout Provelo" no painel superior para carregar os novos slides interativos arrastáveis no padrão da Provelo!</p>
+                                <div className="w-full h-full flex flex-col items-center justify-center p-12 text-slate-500 bg-white border border-slate-200 rounded-3xl shadow-inner">
+                                  <Presentation size={48} className="text-slate-400 mb-4 shrink-0" />
+                                  <h4 className="text-sm font-black uppercase text-slate-800">Visualização do Modelo Legado</h4>
+                                  <p className="text-xs text-slate-400 mt-2 max-w-sm text-center">Clique em qualquer um dos botões "Layout Provelo" no painel superior para carregar os novos slides interativos arrastáveis no padrão da Provelo!</p>
                                 </div>
                               )}
                             </div>
@@ -1101,7 +1179,12 @@ export default function TemplatesPropostaPage() {
                                           ['[NUMERO_PROPOSTA]', 'Nº Proposta', 'Número da Proposta FPV'],
                                           ['[REVISAO]', 'Revisão', 'Código da revisão atual (ex: R01)'],
                                           ['[OBJETO_PROPOSTA]', 'Objeto', 'Objeto da proposta comercial'],
-                                          ['[ESCOPO_TECNICO]', 'Escopo', 'Escopo técnico da FPV']
+                                          ['[ESCOPO_TECNICO]', 'Escopo', 'Escopo técnico da FPV'],
+                                          ['[VALOR_TOTAL]', 'Valor Total', 'Valor Total final da proposta'],
+                                          ['[TABELA]', 'Tabela Fin.', 'Tabela de Resumo Financeiro'],
+                                          ['[ITENS]', 'Itens Inc/Exc', 'Tabela de Itens Inclusos e Exclusos'],
+                                          ['[CONDICOES_COMERCIAIS]', 'Condições Com.', 'Condições comerciais acordadas'],
+                                          ['[TERMO_ACEITE]', 'Aceite', 'Termo de Aceite / Assinaturas']
                                         ].map(([tag, label, desc]) => (
                                           <button
                                             key={tag}
@@ -1316,6 +1399,26 @@ export default function TemplatesPropostaPage() {
                               </h4>
 
                               <div className="space-y-4">
+                                <div>
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Nome/Título do Slide (Lâmina)</label>
+                                  <input
+                                    type="text"
+                                    className="w-full bg-white border border-slate-200 rounded-lg text-xs px-3 py-2 font-bold focus:outline-none focus:border-[#1B4D3E]"
+                                    value={secoes[activeSlideIdx]?.titulo || ''}
+                                    onChange={(e) => {
+                                      const list = [...secoes];
+                                      list[activeSlideIdx].titulo = e.target.value;
+                                      
+                                      try {
+                                        const oldText = JSON.parse(list[activeSlideIdx].texto);
+                                        list[activeSlideIdx].texto = JSON.stringify({ ...oldText, tituloSlide: e.target.value });
+                                      } catch (err) {}
+                                      
+                                      setSecoes(list);
+                                    }}
+                                  />
+                                </div>
+
                                 <div>
                                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Tipografia Global do Slide</label>
                                   <select

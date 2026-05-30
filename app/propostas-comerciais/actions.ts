@@ -152,6 +152,9 @@ export async function updateSecoesDocumento(documentoId: string, secoes: { id?: 
       }
     });
     
+    revalidatePath(`/propostas-comerciais/${documentoId}`);
+    revalidatePath('/propostas-comerciais');
+    
     return { success: true };
   } catch (error: any) {
     console.error('Erro ao atualizar seções:', error);
