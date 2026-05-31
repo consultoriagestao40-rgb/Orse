@@ -774,7 +774,7 @@ export default function Page() {
       try {
         const userData = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
         setIsLoggedIn(true);
-        if (userData.email === 'admin@smartbidhub.com.br') {
+        if (userData.email === 'admin@smartbidhub.com.br' || userData.email === 'cristiano@grupojvsserv.com.br') {
           router.push('/admin/empresas');
         }
       } catch (err) {

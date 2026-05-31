@@ -467,136 +467,10 @@ const Sidebar = () => {
               </h1>
               <p className="text-[9px] text-slate-400 mt-2 font-black uppercase tracking-[0.2em] whitespace-nowrap">Enterprise FM System</p>
             </div>
-            
-            {/* Central de Notificações Popover */}
-            <div className="relative">
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-50 rounded-xl transition-all border border-slate-100 hover:border-slate-200 shadow-2xs shrink-0 cursor-pointer"
-                title="Notificações"
-              >
-                <Bell size={18} className="stroke-[2.5]" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white animate-pulse">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-
-              {showNotifications && (
-                <div className="absolute right-0 top-10 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-[999] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                  {/* Header Popover */}
-                  <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-                    <span className="text-xs font-black text-slate-800 uppercase tracking-wide">Central de Notificações</span>
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={handleMarkAllAsRead}
-                        className="text-[10px] font-black text-[#1B4D3E] hover:text-[#13382D] hover:underline cursor-pointer uppercase tracking-wider"
-                      >
-                        Lidas todas
-                      </button>
-                    )}
-                  </div>
-
-                  {/* List */}
-                  <div className="max-h-72 overflow-y-auto divide-y divide-slate-100">
-                    {notifications.length > 0 ? (
-                      notifications.map((n) => (
-                        <div
-                          key={n.id}
-                          onClick={() => handleMarkAsRead(n.id, n.link)}
-                          className={`p-3.5 hover:bg-slate-50 cursor-pointer transition-all flex gap-3 items-start ${
-                            !n.read ? 'bg-blue-50/20 font-semibold' : ''
-                          }`}
-                        >
-                          <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.read ? 'bg-blue-500' : 'bg-transparent'}`} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs text-slate-700 leading-normal break-words">{n.texto}</p>
-                            <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-tight flex items-center gap-1">
-                              <Clock size={9} /> {new Date(n.createdAt).toLocaleDateString('pt-BR')} às {new Date(n.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-8 text-center bg-white flex flex-col items-center justify-center">
-                        <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 mb-2 border border-slate-100">
-                          <Bell size={18} />
-                        </div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Nenhuma notificação por aqui.</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         ) : (
           <div className="w-full flex flex-col items-center gap-3">
             <div className="w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-base font-black shadow-lg shadow-emerald-200 transition-all shrink-0">S</div>
-            
-            {/* Central de Notificações Popover compacta */}
-            <div className="relative">
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2.5 text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-50 rounded-xl transition-all border border-slate-100 hover:border-slate-200 shadow-2xs shrink-0 cursor-pointer"
-                title="Notificações"
-              >
-                <Bell size={18} className="stroke-[2.5]" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white animate-pulse">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-
-              {showNotifications && (
-                <div className="absolute left-14 top-0 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-[999] overflow-hidden animate-in fade-in slide-in-from-left-2 duration-200">
-                  {/* Header Popover */}
-                  <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-                    <span className="text-xs font-black text-slate-800 uppercase tracking-wide">Central de Notificações</span>
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={handleMarkAllAsRead}
-                        className="text-[10px] font-black text-[#1B4D3E] hover:text-[#13382D] hover:underline cursor-pointer uppercase tracking-wider"
-                      >
-                        Lidas todas
-                      </button>
-                    )}
-                  </div>
-
-                  {/* List */}
-                  <div className="max-h-72 overflow-y-auto divide-y divide-slate-100">
-                    {notifications.length > 0 ? (
-                      notifications.map((n) => (
-                        <div
-                          key={n.id}
-                          onClick={() => handleMarkAsRead(n.id, n.link)}
-                          className={`p-3.5 hover:bg-slate-50 cursor-pointer transition-all flex gap-3 items-start ${
-                            !n.read ? 'bg-blue-50/20 font-semibold' : ''
-                          }`}
-                        >
-                          <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.read ? 'bg-blue-500' : 'bg-transparent'}`} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs text-slate-700 leading-normal break-words">{n.texto}</p>
-                            <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-tight flex items-center gap-1">
-                              <Clock size={9} /> {new Date(n.createdAt).toLocaleDateString('pt-BR')} às {new Date(n.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-8 text-center bg-white flex flex-col items-center justify-center">
-                        <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 mb-2 border border-slate-100">
-                          <Bell size={18} />
-                        </div>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Nenhuma notificação por aqui.</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         )}
         
@@ -613,14 +487,15 @@ const Sidebar = () => {
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {menuItems.filter(item => {
           const isPlatformAccount = user?.email === 'admin@smartbidhub.com.br';
+          const isSuperAdminUser = user?.email === 'admin@smartbidhub.com.br' || user?.email === 'cristiano@grupojvsserv.com.br';
           
           if (isPlatformAccount) {
             // Conta de Operador do SaaS: vê apenas gestão de empresas
             return item.href === '/admin/empresas';
           } else {
-            // Contas de Clientes (Grupo JVS, etc): não veem o painel de gestão de SaaS
-            if (item.roles.includes('SUPER_ADMIN') || item.href === '/admin/empresas') {
-              return false;
+            // Contas de Clientes: não veem o painel de gestão de SaaS, a menos que seja o Cristiano (Super Admin)
+            if (item.href === '/admin/empresas' || item.roles.includes('SUPER_ADMIN')) {
+              return isSuperAdminUser;
             }
             return item.roles.includes(user?.role || 'USER');
           }
@@ -1176,8 +1051,118 @@ const Sidebar = () => {
           </div>
         </div>
       )}
+
+      {/* CENTRAL DE NOTIFICAÇÕES FLUTUANTE NO CANTO SUPERIOR DIREITO */}
+      {user && (
+        <div className={`${trialStatus?.isTrialActive && !trialStatus?.trialExpired && trialStatus?.hasContact && countdownTime ? 'fixed top-3 right-[180px]' : 'fixed top-[18px] right-6'} z-[100] font-sans`}>
+          {/* Ícone de Sino Flutuante */}
+          <button
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="w-11 h-11 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center text-slate-600 hover:text-[#1B4D3E] shadow-sm hover:shadow transition-all relative cursor-pointer group"
+          >
+            <Bell size={20} className={`transition-transform duration-200 group-hover:scale-110 group-hover:rotate-12 ${unreadCount > 0 ? "text-[#1B4D3E]" : ""}`} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-xs">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+
+          {/* Popover de Notificações - Premium e Espaçoso */}
+          {showNotifications && (
+            <>
+              {/* Overlay invisível para fechar ao clicar fora */}
+              <div 
+                className="fixed inset-0 z-40 bg-transparent"
+                onClick={() => setShowNotifications(false)}
+              />
+              
+              <div className="absolute right-0 mt-3 w-[420px] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col">
+                {/* Header */}
+                <div className="bg-[#1B4D3E] text-white p-5 flex items-center justify-between border-b border-[#1B4D3E]/10 shrink-0">
+                  <div>
+                    <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                      🔔 Central de Notificações
+                    </h3>
+                    <p className="text-[9px] text-emerald-100/60 font-semibold uppercase mt-0.5">
+                      {unreadCount} pendente{unreadCount !== 1 ? 's' : ''} para leitura
+                    </p>
+                  </div>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={handleMarkAllAsRead}
+                      className="text-[9px] font-black uppercase tracking-wider text-emerald-300 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+                    >
+                      Ler todas
+                    </button>
+                  )}
+                </div>
+
+                {/* Body - Lista de Notificações */}
+                <div className="max-h-[350px] overflow-y-auto divide-y divide-slate-100 py-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                  {notifications.length === 0 ? (
+                    <div className="p-10 text-center flex flex-col items-center justify-center gap-3">
+                      <div className="w-12 h-12 bg-slate-50 border border-slate-200 text-slate-400 rounded-2xl flex items-center justify-center">
+                        <Bell size={20} className="opacity-40" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-700 uppercase tracking-wide">Tudo limpo por aqui!</p>
+                        <p className="text-[10px] text-slate-400 font-semibold mt-1">Você não possui novas notificações no momento.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        onClick={() => handleMarkAsRead(n.id, n.link)}
+                        className={`p-4 hover:bg-slate-50 transition-colors cursor-pointer flex gap-3.5 relative group ${
+                          !n.read ? 'bg-emerald-50/10' : ''
+                        }`}
+                      >
+                        {/* Ponto indicador de não lido */}
+                        {!n.read && (
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-[#1B4D3E] rounded-full" />
+                        )}
+                        
+                        {/* Ícone contextual da notificação */}
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
+                          !n.read 
+                            ? 'bg-[#1B4D3E]/10 border-[#1B4D3E]/20 text-[#1B4D3E]' 
+                            : 'bg-slate-50 border-slate-200 text-slate-400'
+                        }`}>
+                          <Bell size={15} />
+                        </div>
+
+                        {/* Conteúdo */}
+                        <div className="space-y-1.5 flex-1 min-w-0 pl-1">
+                          <p className={`text-xs text-slate-700 leading-relaxed font-semibold ${!n.read ? 'font-black text-slate-800' : ''}`}>
+                            {n.texto}
+                          </p>
+                          
+                          <div className="flex items-center justify-between gap-2">
+                            {/* Nome do usuário scoped (se for ADMIN) */}
+                            {user.role === 'ADMIN' && n.user?.nome && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[8px] font-black bg-slate-100 text-slate-500 border border-slate-200 uppercase tracking-wider">
+                                Para: {n.user.nome}
+                              </span>
+                            )}
+                            
+                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tight flex items-center gap-1">
+                              🕒 {new Date(n.createdAt).toLocaleDateString('pt-BR')} • {new Date(n.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </>
   );
 };
- 
+
 export default Sidebar;

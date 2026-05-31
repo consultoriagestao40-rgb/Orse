@@ -46,8 +46,11 @@ export async function checkIsSuperAdmin() {
 
     if (!user) return false;
 
-    // Condição de liberação master exclusiva do proprietário do SaaS pelo email verificado
-    const isPlatformAdmin = user.email === 'admin@smartbidhub.com.br';
+    // Condição de liberação master do proprietário do SaaS (admin@smartbidhub.com.br, cristiano@grupojvsserv.com.br, ou inquilinos da Silva Consultoria com cargo de ADMIN)
+    const isPlatformAdmin = 
+      user.email === 'admin@smartbidhub.com.br' || 
+      user.email === 'cristiano@grupojvsserv.com.br' || 
+      (user.tenant?.cnpj === '40.180.983/0001-00' && user.role === 'ADMIN');
 
     return isPlatformAdmin;
   } catch (error) {
@@ -308,7 +311,7 @@ export async function checkCurrentTenantActive() {
     }
 
     // O Super Admin da plataforma é imune a bloqueios
-    if (data.email === 'admin@smartbidhub.com.br') {
+    if (data.email === 'admin@smartbidhub.com.br' || data.email === 'cristiano@grupojvsserv.com.br') {
       return { success: true, active: true };
     }
 
@@ -352,7 +355,7 @@ export async function getTenantTrialStatus() {
     }
 
     // O Super Admin da plataforma é imune a bloqueios e testes
-    if (data.email === 'admin@smartbidhub.com.br') {
+    if (data.email === 'admin@smartbidhub.com.br' || data.email === 'cristiano@grupojvsserv.com.br') {
       return { 
         success: true, 
         isSuperAdmin: true, 

@@ -8,6 +8,7 @@ import {
   Fingerprint, FileText, Check, ChevronRight, Menu, X 
 } from 'lucide-react';
 import { getPlanConfigs } from '@/app/admin/empresas/actions';
+import Link from 'next/link';
 
 export default function LandingPage() {
   const [plans, setPlans] = useState<any[]>([]);
@@ -152,12 +153,12 @@ export default function LandingPage() {
 
           {/* CTA Buttons in top right */}
           <div className="hidden md:flex items-center gap-4">
-            <a 
+            <Link 
               href="/login" 
               className="text-xs font-bold uppercase tracking-widest text-slate-300 hover:text-white px-5 py-2.5 border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/8 rounded-xl transition-all"
             >
               Login
-            </a>
+            </Link>
             <a 
               href="/api/auth/google" 
               className="text-xs font-bold uppercase tracking-widest text-white px-5 py-2.5 bg-[#1B4D3E] hover:bg-[#13382D] border border-[#10B981]/30 hover:border-[#10B981]/50 rounded-xl transition-all shadow-lg shadow-emerald-950/50 flex items-center gap-2 group"
@@ -206,12 +207,12 @@ export default function LandingPage() {
             </a>
             
             <div className="flex gap-4 pt-4">
-              <a 
+              <Link 
                 href="/login" 
                 className="flex-1 text-center text-xs font-bold uppercase tracking-wider text-slate-300 py-3.5 border border-white/10 rounded-xl bg-white/5"
               >
                 Login
-              </a>
+              </Link>
               <a 
                 href="/api/auth/google" 
                 className="flex-1 text-center text-xs font-bold uppercase tracking-wider text-white py-3.5 bg-[#1B4D3E] border border-[#10B981]/30 rounded-xl"
@@ -709,12 +710,12 @@ export default function LandingPage() {
               Criar Minha Conta Grátis
               <ArrowRight size={16} />
             </a>
-            <a 
+            <Link 
               href="/login"
               className="px-10 py-5 bg-slate-900/60 hover:bg-slate-900/80 border border-white/10 text-sm font-black uppercase tracking-widest text-slate-300 hover:text-white rounded-2xl transition-all flex items-center justify-center"
             >
               Entrar em Conta Existente
-            </a>
+            </Link>
           </div>
 
           <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">
