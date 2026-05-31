@@ -9,7 +9,7 @@ interface ClientTrackingModalProps {
   onRefresh?: () => void;
 }
 
-function NegotiationItem({ item, docId, onRefresh }: { item: any; docId: string; onRefresh?: () => void }) {
+function NegotiationItem({ item, doc, onRefresh }: { item: any; doc: any; onRefresh?: () => void }) {
   const [replyText, setReplyText] = React.useState('');
   const [submittingReply, setSubmittingReply] = React.useState(false);
 
@@ -18,7 +18,7 @@ function NegotiationItem({ item, docId, onRefresh }: { item: any; docId: string;
     setSubmittingReply(true);
     try {
       const { responderAjusteAction } = await import('@/app/propostas-comerciais/actions');
-      const res = await responderAjusteAction(docId, item.id, replyText);
+      const res = await responderAjusteAction(doc.id, item.id, replyText);
       if (res.success) {
         alert('Resposta registrada com sucesso!');
         setReplyText('');
@@ -33,53 +33,119 @@ function NegotiationItem({ item, docId, onRefresh }: { item: any; docId: string;
     }
   };
 
+  const clientInitials = (item.nomeCliente || 'Cliente')
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase();
+
+  const sellerAvatar = doc.proposta?.user?.avatarUrl || doc.avatarUrl;
+  const sellerName = item.nomeVendedor || doc.proposta?.user?.nome || doc.usuario || 'Consultor';
+  const sellerInitials = sellerName
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase();
+
   return (
-    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4 text-left">
-      <div className="flex justify-between items-center">
-        <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
-          item.tipo === 'recusa' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
-        }`}>
-          {item.tipo === 'recusa' ? 'Recusa / Declínio' : 'Ajuste / Contraproposta'}
-        </span>
-        <span className="text-[9px] font-bold text-slate-400 font-mono">
+    <div className="bg-slate-50 border border-slate-200 rounded-3xl p-5 md:p-6 space-y-4 shadow-sm text-left">
+      
+      {/* CLIENT REQUEST HEADER WITH AVATAR */}
+      <div className="flex justify-between items-start gap-2">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center font-black text-sm uppercase border border-blue-200 shadow-sm shrink-0">
+            {clientInitials}
+          </div>
+          <div>
+            <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded leading-none ${
+              item.tipo === 'recusa' ? 'bg-red-50 text-red-700 font-bold border border-red-200' : 'bg-blue-50 text-blue-700 font-bold border border-blue-200'
+            }`}>
+              {item.tipo === 'recusa' ? 'Recusa / Declínio' : 'Ajuste / Contraproposta'}
+            </span>
+            <span className="text-xs font-black text-slate-800 block mt-1.5 leading-tight">{item.nomeCliente || 'Cliente'}</span>
+          </div>
+        </div>
+        <span className="text-[9px] font-bold text-slate-400 font-mono tracking-wider shrink-0">
           {new Date(item.data).toLocaleString('pt-BR')}
         </span>
       </div>
 
-      <div className="space-y-1">
-        <span className="block text-[8px] font-black text-slate-400 uppercase tracking-wider">
-          MENSAGEM DE {item.nomeCliente?.toUpperCase() || 'CLIENTE'}:
-        </span>
-        <p className="text-xs font-bold text-slate-700 leading-relaxed whitespace-pre-line bg-white border border-slate-150 p-3.5 rounded-xl">
+      <div className="pl-13">
+        <div className="text-xs font-bold text-slate-700 leading-relaxed whitespace-pre-line bg-white border border-slate-150 p-4 rounded-2xl rounded-tl-none shadow-inner">
           {item.mensagem}
-        </p>
+        </div>
       </div>
 
+      {/* SELLER RESPONSE SECTION */}
       {item.respondida ? (
-        <div className="border-t border-slate-200 pt-3 pl-4 border-l-2 border-emerald-500 space-y-2 bg-emerald-50/20 p-3 rounded-xl">
-          <div className="flex justify-between items-center text-[9px] font-black text-emerald-700 uppercase tracking-wider">
-            <span>✓ Resposta de {item.nomeVendedor || 'Consultor'}</span>
-            <span className="font-mono text-slate-450">{new Date(item.dataResposta).toLocaleString('pt-BR')}</span>
+        <div className="border-t border-slate-100 pt-4 mt-4 space-y-3">
+          <div className="flex justify-between items-start gap-2">
+            <div className="flex items-center gap-3">
+              {sellerAvatar ? (
+                <img 
+                  src={sellerAvatar} 
+                  alt={sellerName} 
+                  className="w-10 h-10 rounded-full object-cover border border-emerald-200 shadow-sm shrink-0 animate-fadeIn"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center font-black text-sm uppercase border border-emerald-200 shadow-sm shrink-0">
+                  {sellerInitials}
+                </div>
+              )}
+              <div>
+                <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-wider leading-none font-bold border border-emerald-200">
+                  ✓ Resposta do Consultor
+                </span>
+                <span className="text-xs font-black text-slate-800 block mt-1.5 leading-tight">{sellerName}</span>
+              </div>
+            </div>
+            <span className="text-[9px] font-bold text-slate-455 font-mono tracking-wider shrink-0">
+              {new Date(item.dataResposta).toLocaleString('pt-BR')}
+            </span>
           </div>
-          <p className="text-xs font-semibold text-slate-650 leading-relaxed whitespace-pre-line">
-            {item.resposta}
-          </p>
+
+          <div className="pl-13">
+            <div className="text-xs font-medium text-slate-600 leading-relaxed whitespace-pre-line bg-emerald-50/20 p-4 rounded-2xl rounded-tl-none shadow-sm border border-emerald-100">
+              {item.resposta}
+            </div>
+          </div>
         </div>
       ) : (
-        <div className="space-y-2 border-t border-slate-200 pt-3">
-          <span className="block text-[8px] font-black text-slate-400 uppercase tracking-wider">RESPONDER AO CLIENTE:</span>
+        <div className="space-y-3 border-t border-slate-100 pt-4 mt-4">
+          
+          {/* Form Header with Seller avatar to show who is replying */}
+          <div className="flex items-center gap-3 mb-2">
+            {sellerAvatar ? (
+              <img 
+                src={sellerAvatar} 
+                alt={sellerName} 
+                className="w-8 h-8 rounded-full object-cover border border-emerald-105 shrink-0 shadow-sm"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-650 flex items-center justify-center font-black text-xs uppercase border border-slate-200 shrink-0">
+                {sellerInitials}
+              </div>
+            )}
+            <div>
+              <span className="block text-[8px] font-black text-slate-400 uppercase tracking-wider">RESPONDER COMO:</span>
+              <span className="text-[11px] font-bold text-slate-700 block leading-tight">{sellerName}</span>
+            </div>
+          </div>
+
           <textarea
             rows={3}
             placeholder="Digite a resposta ou contraproposta que ficará disponível na área do cliente..."
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
-            className="w-full px-3 py-2 bg-white border border-slate-250 rounded-xl text-xs font-medium outline-none focus:border-[#1B4D3E] resize-none"
+            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-semibold text-slate-850 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] shadow-inner resize-none transition-all placeholder:text-slate-400"
           />
           <div className="flex justify-end">
             <button
               disabled={!replyText.trim() || submittingReply}
               onClick={handleSendReply}
-              className="px-4 py-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-lg text-xs font-black uppercase tracking-wider shadow-sm transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              className="px-5 py-2.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-md hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer transform hover:-translate-y-[1px] active:translate-y-0"
             >
               {submittingReply ? 'Enviando...' : 'Enviar Resposta'}
             </button>
@@ -402,7 +468,7 @@ export default function ClientTrackingModal({ doc, onClose, onRefresh }: ClientT
                     <NegotiationItem 
                       key={item.id} 
                       item={item} 
-                      docId={doc.id} 
+                      doc={doc} 
                       onRefresh={onRefresh} 
                     />
                   ))}

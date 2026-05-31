@@ -1821,54 +1821,104 @@ return (
                 </div>
               ) : (
                 <div className="relative pl-6 border-l-2 border-slate-100 space-y-8 ml-3 max-w-2xl mx-auto py-4 text-left">
-                  {doc.configApresentacao.negotiations.map((item: any) => (
-                    <div key={item.id} className="relative">
-                      {/* Circle Node Icon */}
-                      <div className={`absolute -left-[35px] top-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                        item.tipo === 'recusa' ? 'border-red-500 bg-red-500 text-white' : 'border-[#1e4480] bg-[#1e4480] text-white'
-                      }`}>
-                        {item.tipo === 'recusa' ? '👎' : '💬'}
-                      </div>
+                  {doc.configApresentacao.negotiations.map((item: any) => {
+                    const clientInitials = (item.nomeCliente || 'Cliente')
+                      .split(' ')
+                      .map((n: string) => n[0])
+                      .join('')
+                      .substring(0, 2)
+                      .toUpperCase();
 
-                      {/* Content Container */}
-                      <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-3">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
-                            item.tipo === 'recusa' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
-                          }`}>
-                            {item.tipo === 'recusa' 
-                              ? `Recusa por ${item.nomeCliente || 'Cliente'}` 
-                              : `Ajuste por ${item.nomeCliente || 'Cliente'}`
-                            }
-                          </span>
-                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider font-mono">
-                            {new Date(item.data).toLocaleString('pt-BR')}
-                          </span>
+                    const sellerAvatar = doc.proposta?.user?.avatarUrl;
+                    const sellerInitials = (item.nomeVendedor || doc.proposta?.user?.nome || 'Consultor')
+                      .split(' ')
+                      .map((n: string) => n[0])
+                      .join('')
+                      .substring(0, 2)
+                      .toUpperCase();
+
+                    return (
+                      <div key={item.id} className="relative pb-2">
+                        {/* Circle Node Icon */}
+                        <div className={`absolute -left-[35px] top-1.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                          item.tipo === 'recusa' ? 'border-red-500 bg-red-500 text-white' : 'border-[#1e4480] bg-[#1e4480] text-white'
+                        }`}>
+                          {item.tipo === 'recusa' ? '👎' : '💬'}
                         </div>
 
-                        <p className="text-xs font-semibold text-slate-700 leading-relaxed whitespace-pre-line">
-                          {item.mensagem}
-                        </p>
-
-                        {/* RESPOSTA DO VENDEDOR */}
-                        {item.respondida ? (
-                          <div className="border-t border-slate-200 pt-3 mt-3 pl-4 border-l-2 border-emerald-500 space-y-1">
-                            <div className="flex items-center justify-between text-[9px] font-bold text-emerald-700 uppercase tracking-wider">
-                              <span>✓ Resposta de {item.nomeVendedor || 'Consultor'}</span>
-                              <span className="font-mono text-slate-400">{new Date(item.dataResposta).toLocaleString('pt-BR')}</span>
+                        {/* Content Container */}
+                        <div className="bg-slate-50 border border-slate-200 rounded-3xl p-5 md:p-6 space-y-4 shadow-sm">
+                          
+                          {/* CLIENT REQUEST HEADER WITH AVATAR */}
+                          <div className="flex justify-between items-start gap-2">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center font-black text-sm uppercase border border-blue-200 shadow-sm shrink-0">
+                                {clientInitials}
+                              </div>
+                              <div>
+                                <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded leading-none ${
+                                  item.tipo === 'recusa' ? 'bg-red-105 text-red-700 font-bold border border-red-200' : 'bg-blue-50 text-blue-700 font-bold border border-blue-200'
+                                }`}>
+                                  {item.tipo === 'recusa' ? 'Recusa / Declínio' : 'Ajuste / Contraproposta'}
+                                </span>
+                                <span className="text-xs font-black text-slate-800 block mt-1.5 leading-tight">{item.nomeCliente || 'Cliente'}</span>
+                              </div>
                             </div>
-                            <p className="text-xs font-medium text-slate-600 leading-relaxed whitespace-pre-line">
-                              {item.resposta}
-                            </p>
+                            <span className="text-[9px] font-bold text-slate-400 font-mono tracking-wider shrink-0">
+                              {new Date(item.data).toLocaleString('pt-BR')}
+                            </span>
                           </div>
-                        ) : (
-                          <div className="text-[10px] text-slate-400 italic mt-2 font-medium">
-                            Aguardando retorno do consultor responsável...
+
+                          <div className="pl-13">
+                            <div className="text-xs font-bold text-slate-700 leading-relaxed whitespace-pre-line bg-white border border-slate-150 p-4 rounded-2xl rounded-tl-none shadow-inner">
+                              {item.mensagem}
+                            </div>
                           </div>
-                        )}
+
+                          {/* SELLER RESPONSE WITH ACTUAL AVATAR PICTURE */}
+                          {item.respondida ? (
+                            <div className="border-t border-slate-100 pt-4 mt-4 space-y-3">
+                              <div className="flex justify-between items-start gap-2">
+                                <div className="flex items-center gap-3">
+                                  {sellerAvatar ? (
+                                    <img 
+                                      src={sellerAvatar} 
+                                      alt={item.nomeVendedor || 'Consultor'} 
+                                      className="w-10 h-10 rounded-full object-cover border border-emerald-205 shadow-sm shrink-0 animate-fadeIn"
+                                    />
+                                  ) : (
+                                    <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center font-black text-sm uppercase border border-emerald-200 shadow-sm shrink-0">
+                                      {sellerInitials}
+                                    </div>
+                                  )}
+                                  <div>
+                                    <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-wider leading-none font-bold border border-emerald-200">
+                                      ✓ Resposta do Consultor
+                                    </span>
+                                    <span className="text-xs font-black text-slate-800 block mt-1.5 leading-tight">{item.nomeVendedor || 'Consultor'}</span>
+                                  </div>
+                                </div>
+                                <span className="text-[9px] font-bold text-slate-450 font-mono tracking-wider shrink-0">
+                                  {new Date(item.dataResposta).toLocaleString('pt-BR')}
+                                </span>
+                              </div>
+
+                              <div className="pl-13">
+                                <div className="text-xs font-medium text-slate-600 leading-relaxed whitespace-pre-line bg-emerald-50/20 border border-emerald-100 p-4 rounded-2xl rounded-tl-none shadow-sm">
+                                  {item.resposta}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-[10px] text-slate-400 italic mt-2 font-medium pl-13 text-left">
+                              Aguardando retorno do consultor responsável...
+                            </div>
+                          )}
+
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -2088,25 +2138,79 @@ return (
               {/* HISTÓRICO DE NEGOCIAÇÃO COMPLETO DENTRO DO CHAT DE RESPOSTA */}
               {doc.configApresentacao?.negotiations && doc.configApresentacao.negotiations.length > 0 && (
                 <div className="space-y-3 max-h-[220px] overflow-y-auto pr-2 border-b border-slate-100 pb-4 mb-2 scrollbar-thin">
-                  <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest text-left">Conversas Anteriores:</span>
-                  {doc.configApresentacao.negotiations.map((item: any) => (
-                    <div key={item.id} className="space-y-2 text-left bg-slate-50 border border-slate-150 p-3 rounded-xl">
-                      <div className="flex justify-between items-center text-[8px] font-bold text-slate-400">
-                        <span className="uppercase">{item.tipo === 'recusa' ? `Recusa por ${item.nomeCliente || 'Cliente'}` : `Ajuste por ${item.nomeCliente || 'Cliente'}`}</span>
-                        <span>{new Date(item.data).toLocaleString('pt-BR')}</span>
-                      </div>
-                      <p className="text-[11px] font-semibold text-slate-700 leading-relaxed whitespace-pre-line">{item.mensagem}</p>
-                      {item.respondida && (
-                        <div className="border-t border-slate-200 pt-2 mt-2 pl-3 border-l-2 border-emerald-500 space-y-1">
-                          <div className="flex justify-between items-center text-[8px] font-bold text-emerald-700 uppercase tracking-wider">
-                            <span>✓ Resposta de {item.nomeVendedor || 'Consultor'}</span>
-                            <span>{new Date(item.dataResposta).toLocaleString('pt-BR')}</span>
+                  <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest text-left mb-2">Conversas Anteriores:</span>
+                  {doc.configApresentacao.negotiations.map((item: any) => {
+                    const clientInitials = (item.nomeCliente || 'Cliente')
+                      .split(' ')
+                      .map((n: string) => n[0])
+                      .join('')
+                      .substring(0, 2)
+                      .toUpperCase();
+
+                    const sellerAvatar = doc.proposta?.user?.avatarUrl;
+                    const sellerInitials = (item.nomeVendedor || doc.proposta?.user?.nome || 'Consultor')
+                      .split(' ')
+                      .map((n: string) => n[0])
+                      .join('')
+                      .substring(0, 2)
+                      .toUpperCase();
+
+                    return (
+                      <div key={item.id} className="space-y-3 text-left bg-slate-50 border border-slate-150 p-4 rounded-2xl">
+                        
+                        {/* Cliente Avatar Header */}
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center font-black text-xs uppercase border border-blue-200 shrink-0">
+                              {clientInitials}
+                            </div>
+                            <div>
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block leading-none">CLIENTE</span>
+                              <span className="text-[11px] font-bold text-slate-800 mt-1 block leading-tight">{item.nomeCliente || 'Cliente'}</span>
+                            </div>
                           </div>
-                          <p className="text-[11px] font-medium text-slate-650 leading-relaxed whitespace-pre-line">{item.resposta}</p>
+                          <span className="text-[9px] font-bold text-slate-400 font-mono tracking-wider shrink-0">
+                            {new Date(item.data).toLocaleString('pt-BR')}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  ))}
+                        <div className="pl-10">
+                          <p className="text-[11px] font-semibold text-slate-700 leading-relaxed whitespace-pre-line bg-white border border-slate-100 p-3 rounded-xl shadow-inner">{item.mensagem}</p>
+                        </div>
+
+                        {/* Consultor Avatar Header */}
+                        {item.respondida && (
+                          <div className="border-t border-slate-100 pt-3 mt-3 space-y-2">
+                            <div className="flex justify-between items-start gap-2">
+                              <div className="flex items-center gap-2">
+                                {sellerAvatar ? (
+                                  <img 
+                                    src={sellerAvatar} 
+                                    alt={item.nomeVendedor || 'Consultor'} 
+                                    className="w-8 h-8 rounded-full object-cover border border-emerald-200 shrink-0 shadow-sm"
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center font-black text-xs uppercase border border-emerald-200 shrink-0">
+                                    {sellerInitials}
+                                  </div>
+                                )}
+                                <div>
+                                  <span className="text-[8px] font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded uppercase tracking-wider leading-none font-bold">✓ CONSULTOR COMERCIAL</span>
+                                  <span className="text-[11px] font-bold text-slate-800 mt-1 block leading-tight">{item.nomeVendedor || 'Consultor'}</span>
+                                </div>
+                              </div>
+                              <span className="text-[9px] font-bold text-slate-450 font-mono tracking-wider shrink-0">
+                                {new Date(item.dataResposta).toLocaleString('pt-BR')}
+                              </span>
+                            </div>
+                            <div className="pl-10">
+                              <p className="text-[11px] font-medium text-slate-650 leading-relaxed whitespace-pre-line bg-emerald-50/20 border border-emerald-100 p-3 rounded-xl shadow-sm">{item.resposta}</p>
+                            </div>
+                          </div>
+                        )}
+
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
