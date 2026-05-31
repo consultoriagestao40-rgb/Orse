@@ -607,7 +607,7 @@ function ProposalsDashboard() {
                   {/* Container Sticky Unificado: Título + Cabeçalhos */}
                   <div 
                     className="sticky top-0 z-20 bg-[#F8FAFC] pt-8 pb-1"
-                    style={{ top: '0px' }}
+                    style={{ top: '-32px' }}
                   >
                     <div className="flex items-center gap-2 mb-4">
                       <LayoutGrid size={16} className="text-[#1B4D3E]" />
@@ -699,7 +699,7 @@ function ProposalsDashboard() {
                   {/* Container Sticky Unificado: Título + Cabeçalhos */}
                   <div 
                     className="sticky top-0 z-20 bg-[#F8FAFC] pt-8 pb-1"
-                    style={{ top: '0px' }}
+                    style={{ top: '-32px' }}
                   >
                     <div className="flex items-center gap-2 mb-4">
                       <UserSquare2 size={16} className="text-[#1B4D3E]" />
