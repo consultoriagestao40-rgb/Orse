@@ -728,17 +728,9 @@ const Sidebar = () => {
           </div>
         ) : (
           <div className="w-full flex flex-col items-center gap-3">
-            {/* Fallback Collapsed Default Logo */}
-            <div className="sidebar-default-logo w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-base font-black shadow-lg shadow-emerald-200 transition-all shrink-0">S</div>
-
-            {/* Dynamic Collapsed Tenant Logo */}
-            <div className="sidebar-tenant-logo w-10 h-10 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 shadow-md" style={{ display: 'none' }}>
-              <img 
-                src={user?.tenantLogoUrl || getInitialLogoUrl()} 
-                alt="Logo" 
-                suppressHydrationWarning={true}
-                className="w-full h-full object-cover"
-              />
+            {/* SBH Acronym Badge (Always clean and premium when collapsed) */}
+            <div className="w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-[11px] font-black shadow-md transition-all shrink-0 tracking-wider">
+              SBH
             </div>
           </div>
         )}

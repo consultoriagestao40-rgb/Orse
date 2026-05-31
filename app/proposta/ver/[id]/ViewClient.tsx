@@ -740,7 +740,7 @@ return (
       `}} />
         
         {/* SIDEBAR DE TABS DE NAVEGAÇÃO (ESTILO SEGUNDA FOTO - PREMIUM WHITE) */}
-        <aside className={`shrink-0 bg-white border border-slate-200 shadow-xl flex flex-col justify-between text-slate-800 print:hidden font-sans transition-all duration-300 relative ${
+        <aside className={`shrink-0 bg-[#F4F6F9] border border-slate-200 shadow-xl flex flex-col justify-between text-slate-800 print:hidden font-sans transition-all duration-300 relative ${
           mobileMenuOpen ? 'block' : 'hidden'
         } md:block ${
           sidebarCollapsed 
@@ -760,7 +760,7 @@ return (
             <div className="flex flex-col items-center justify-between h-full w-full">
               <div className="flex flex-col items-center w-full">
                 {/* Header Collapsed */}
-                <div className="flex flex-col items-center pb-4 border-b border-slate-100 w-full pt-2">
+                <div className="flex flex-col items-center pb-4 border-b border-slate-200/60 w-full pt-2">
                   <span className="text-[8px] bg-emerald-50 text-emerald-800 border border-emerald-250 font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md text-center shrink-0">
                     V{versao?.versao || 1}
                   </span>
@@ -778,8 +778,8 @@ return (
                       title={item.label}
                       className={`p-3.5 rounded-2xl transition-all flex items-center justify-center active:scale-[0.98] cursor-pointer border ${
                         activeClientTab === item.id
-                          ? 'bg-slate-100 border-slate-200 text-[#1B4D3E] shadow-xs'
-                          : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                          ? 'bg-white border-[#1B4D3E] border-[1.5px] text-[#1B4D3E] shadow-sm'
+                          : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-white/50'
                       }`}
                     >
                       <item.icon size={18} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : 'text-slate-400'} />
@@ -789,7 +789,7 @@ return (
               </div>
 
               {/* Actions Collapsed */}
-              <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col gap-3 items-center w-full">
+              <div className="mt-8 pt-6 border-t border-slate-200/60 flex flex-col gap-3 items-center w-full">
                 {approved ? (
                   <div className="bg-emerald-50 border border-emerald-100 p-2.5 rounded-2xl flex items-center justify-center text-center" title="Proposta Aprovada!">
                     <CheckCircle2 size={18} className="text-[#1B4D3E]" />
@@ -809,7 +809,7 @@ return (
                         setNegotiationType('decline');
                         setShowNegotiationModal(true);
                       }}
-                      className="w-10 h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/50 rounded-2xl flex items-center justify-center cursor-pointer transition-all active:scale-95 text-xs font-bold"
+                      className="w-10 h-10 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl flex items-center justify-center cursor-pointer transition-all active:scale-95 text-xs font-bold shadow-xs"
                       title="Declinar Proposta"
                     >
                       👎
@@ -820,7 +820,7 @@ return (
                         setNegotiationType('comment');
                         setShowNegotiationModal(true);
                       }}
-                      className="w-10 h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/50 rounded-2xl flex items-center justify-center cursor-pointer transition-all active:scale-95 text-xs font-bold"
+                      className="w-10 h-10 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl flex items-center justify-center cursor-pointer transition-all active:scale-95 text-xs font-bold shadow-xs"
                       title="Comentar"
                     >
                       💬
@@ -833,14 +833,15 @@ return (
             /* EXPANDED VIEW */
             <div className="flex flex-col justify-between h-full w-full">
               <div>
-                {/* Top Padding for direct navigation list */}
-                <div className="pt-2">
+                {/* Top Padding / Menu Title */}
+                <div className="pt-2 pb-4 border-b border-slate-200/60 mb-2">
+                  <span className="text-[11px] text-slate-700 font-extrabold uppercase tracking-wider block">
+                    Menu da Proposta
+                  </span>
                 </div>
 
-
-
                 {/* Menu de Navegação */}
-                <div className="flex flex-col gap-1.5 mt-6">
+                <div className="flex flex-col gap-1.5 mt-4">
                   {navItems.map((item) => (
                     <button
                       key={item.id}
@@ -850,12 +851,12 @@ return (
                       }}
                       className={`w-full text-left px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-between active:scale-[0.98] cursor-pointer border ${
                         activeClientTab === item.id
-                          ? 'bg-slate-100 border-slate-200 text-[#1B4D3E] shadow-xs'
-                          : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                          ? 'bg-white border-[#1B4D3E] border-[1.5px] text-[#1B4D3E] shadow-sm'
+                          : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-white/50'
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <item.icon size={16} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+                        <item.icon size={16} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : 'text-slate-450'} />
                         <span>{item.label}</span>
                       </div>
                       <ChevronRight size={14} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : 'text-slate-350'} />
@@ -865,7 +866,7 @@ return (
               </div>
 
               {/* Rodapé da Sidebar - Botões de Ação Dinâmicos */}
-              <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col gap-2.5">
+              <div className="mt-8 pt-6 border-t border-slate-200/60 flex flex-col gap-2.5">
                 {approved ? (
                   <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
                     <CheckCircle2 size={24} className="text-[#1B4D3E] mb-1" />
@@ -886,7 +887,7 @@ return (
                         setNegotiationType('decline');
                         setShowNegotiationModal(true);
                       }}
-                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-slate-200/50"
+                      className="w-full bg-white hover:bg-slate-50 text-slate-700 font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-slate-200"
                     >
                       <span className="text-[14px]">👎</span> Declinar Proposta
                     </button>
@@ -896,7 +897,7 @@ return (
                         setNegotiationType('comment');
                         setShowNegotiationModal(true);
                       }}
-                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-slate-200/50"
+                      className="w-full bg-white hover:bg-slate-50 text-slate-700 font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-slate-200"
                     >
                       <span className="text-[14px]">💬</span> Comentar
                     </button>
