@@ -354,7 +354,7 @@ export default function TenantManagerDashboard() {
             <div>
               <button
                 onClick={handleOpenCreateModal}
-                className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
+                className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 shadow-sm transition-colors cursor-pointer bell-header-spacing"
               >
                 <Plus size={18} /> Nova Empresa SaaS
               </button>
