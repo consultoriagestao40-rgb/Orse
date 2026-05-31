@@ -41,14 +41,49 @@ export async function getLoggedUser() {
   try {
     const { cookies } = await import('next/headers');
     const cookieStore = await cookies();
-    const sbUser = cookieStore.get('sb_user')?.value;
-    if (sbUser) {
-      const data = JSON.parse(sbUser);
+    
+    // Tenta primeiro sb_session que é o email (100% confiável)
+    const sessionEmail = cookieStore.get('sb_session')?.value;
+    if (sessionEmail) {
+      const emailNormal = sessionEmail.toLowerCase().trim();
       const user = await prisma.user.findFirst({
-        where: { nome: data.nome },
+        where: { email: emailNormal },
         include: { tenant: true }
       });
-      return user;
+      if (user) return user;
+    }
+
+    // Fallback para o sb_user se sb_session não existir
+    const sbUser = cookieStore.get('sb_user')?.value;
+    if (sbUser) {
+      let data: any = null;
+      let cleaned = sbUser.trim();
+      if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+        cleaned = cleaned.slice(1, -1);
+      }
+      
+      try {
+        data = JSON.parse(decodeURIComponent(cleaned));
+      } catch {
+        data = JSON.parse(sbUser);
+      }
+      
+      if (data) {
+        if (data.email) {
+          const user = await prisma.user.findFirst({
+            where: { email: data.email.toLowerCase().trim() },
+            include: { tenant: true }
+          });
+          if (user) return user;
+        }
+        if (data.nome) {
+          const user = await prisma.user.findFirst({
+            where: { nome: data.nome },
+            include: { tenant: true }
+          });
+          if (user) return user;
+        }
+      }
     }
   } catch (error) {
     console.error('Erro ao obter usuario logado:', error);

@@ -452,6 +452,29 @@ const Sidebar = () => {
     { icon: Settings, label: 'Configurações', href: '/admin/settings', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas', roles: ['SUPER_ADMIN'] },
   ];
+
+  const isSaaSArea = pathname.startsWith('/admin/empresas');
+
+  const renderedMenuItems = isSaaSArea
+    ? [
+        { icon: Home, label: 'Voltar ao CRM', href: '/' },
+        { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
+      ]
+    : menuItems.filter(item => {
+        const isPlatformAccount = user?.email === 'admin@smartbidhub.com.br';
+        const isSuperAdminUser = user?.email === 'admin@smartbidhub.com.br' || user?.email === 'cristiano@grupojvsserv.com.br';
+        
+        if (isPlatformAccount) {
+          // Conta de Operador do SaaS: vê apenas gestão de empresas
+          return item.href === '/admin/empresas';
+        } else {
+          // Contas de Clientes: não veem o painel de gestão de SaaS, a menos que seja o Cristiano (Super Admin)
+          if (item.href === '/admin/empresas' || item.roles.includes('SUPER_ADMIN')) {
+            return isSuperAdminUser;
+          }
+          return item.roles.includes(user?.role || 'USER');
+        }
+      });
  
   return (
     <>
@@ -485,21 +508,7 @@ const Sidebar = () => {
       
       {/* Menu de Navegação */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        {menuItems.filter(item => {
-          const isPlatformAccount = user?.email === 'admin@smartbidhub.com.br';
-          const isSuperAdminUser = user?.email === 'admin@smartbidhub.com.br' || user?.email === 'cristiano@grupojvsserv.com.br';
-          
-          if (isPlatformAccount) {
-            // Conta de Operador do SaaS: vê apenas gestão de empresas
-            return item.href === '/admin/empresas';
-          } else {
-            // Contas de Clientes: não veem o painel de gestão de SaaS, a menos que seja o Cristiano (Super Admin)
-            if (item.href === '/admin/empresas' || item.roles.includes('SUPER_ADMIN')) {
-              return isSuperAdminUser;
-            }
-            return item.roles.includes(user?.role || 'USER');
-          }
-        }).map((item) => {
+        {renderedMenuItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link

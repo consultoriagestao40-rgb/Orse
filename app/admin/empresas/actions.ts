@@ -16,22 +16,43 @@ import { revalidatePath } from 'next/cache';
 export async function checkIsSuperAdmin() {
   try {
     const cookieStore = await cookies();
+    
+    // Tenta primeiro sb_session que é o email (100% confiável)
+    const sessionEmail = cookieStore.get('sb_session')?.value;
+    if (sessionEmail) {
+      const emailNormal = sessionEmail.toLowerCase().trim();
+      if (emailNormal === 'cristiano@grupojvsserv.com.br' || emailNormal === 'admin@smartbidhub.com.br') {
+        return true;
+      }
+      
+      const user = await prisma.user.findFirst({
+        where: { email: emailNormal },
+        include: { tenant: true }
+      });
+      
+      if (user) {
+        return (
+          user.email === 'admin@smartbidhub.com.br' || 
+          user.email === 'cristiano@grupojvsserv.com.br' || 
+          (user.tenant?.cnpj === '40.180.983/0001-00' && user.role === 'ADMIN')
+        );
+      }
+    }
+
+    // Fallback para o sb_user antigo se sb_session por algum motivo não existir
     const sbUser = cookieStore.get('sb_user')?.value;
     if (!sbUser) return false;
 
     let data: any = null;
     let cleaned = sbUser.trim();
-    // Remove aspas duplas extras que o Next.js às vezes insere ao ler cookies
     if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
       cleaned = cleaned.slice(1, -1);
     }
 
     try {
-      // Tenta decodificar caso esteja URL-encoded
       data = JSON.parse(decodeURIComponent(cleaned));
     } catch {
       try {
-        // Tenta fazer o parse direto
         data = JSON.parse(cleaned);
       } catch (err) {
         try {
@@ -45,13 +66,11 @@ export async function checkIsSuperAdmin() {
     
     if (!data) return false;
 
-    // Validação imediata por email com normalização case-insensitive para segurança absoluta
     const emailNormal = (data.email || '').toLowerCase().trim();
     if (emailNormal === 'cristiano@grupojvsserv.com.br' || emailNormal === 'admin@smartbidhub.com.br') {
       return true;
     }
 
-    // Busca o usuário no banco por e-mail ou nome para máxima precisão e segurança
     const user = await prisma.user.findFirst({
       where: {
         OR: [
@@ -65,13 +84,11 @@ export async function checkIsSuperAdmin() {
 
     if (!user) return false;
 
-    // Condição de liberação master do proprietário do SaaS
-    const isPlatformAdmin = 
+    return (
       user.email === 'admin@smartbidhub.com.br' || 
       user.email === 'cristiano@grupojvsserv.com.br' || 
-      (user.tenant?.cnpj === '40.180.983/0001-00' && user.role === 'ADMIN');
-
-    return isPlatformAdmin;
+      (user.tenant?.cnpj === '40.180.983/0001-00' && user.role === 'ADMIN')
+    );
   } catch (error) {
     console.error('Erro na checagem de Super Admin:', error);
     return false;
