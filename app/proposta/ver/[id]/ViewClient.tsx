@@ -614,10 +614,10 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   }, [activeClientTab]);
 
 return (
-    <div className="bg-[#FAFBFD] w-full h-screen text-slate-800 font-sans flex flex-col overflow-hidden select-none pt-16 animate-fadeIn">
+    <div className="bg-[#FAFBFD] w-full h-screen text-slate-800 font-sans flex flex-col overflow-hidden select-none pt-20 animate-fadeIn">
       
       {/* Real-time Countdown Timer fixed at the top (ALWAYS ACTIVE FOR CONSISTENCY) */}
-      <div className="fixed top-0 left-0 right-0 h-16 bg-[#1B4D3E] text-white flex items-center justify-between px-6 z-[9999] shadow-md print:hidden font-sans">
+      <div className="fixed top-0 left-0 right-0 h-20 bg-[#1B4D3E] text-white flex items-center justify-between px-6 z-[9999] shadow-md print:hidden font-sans">
         {/* Left: Voltar button (mobile only) & Validade Title or Info */}
         <div className="flex items-center gap-3">
           {!mobileMenuOpen && (
@@ -629,13 +629,13 @@ return (
             </button>
           )}
           <Clock size={16} className="text-white/80 animate-pulse hidden sm:block animate-duration-1000" />
-          <div className="flex flex-col text-left">
-            <span className="text-[10px] font-black uppercase tracking-widest text-white leading-none">
-              Proposta para {doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Empresa'}
-            </span>
-            <span className="text-[8px] text-white/70 font-black uppercase tracking-wider mt-1">
+          <div className="flex flex-col text-left justify-center py-1">
+            <h1 className="text-xs sm:text-sm md:text-base font-bold text-white leading-tight">
+              Proposta Comercial para - <span className="uppercase font-black">{(doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Empresa').toUpperCase()}</span>
+            </h1>
+            <p className="text-[10px] sm:text-xs text-white/80 font-bold tracking-wide mt-1">
               FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')} • Revisão R{String(versao?.versao || 1).padStart(2, '0')}
-            </span>
+            </p>
           </div>
         </div>
         
