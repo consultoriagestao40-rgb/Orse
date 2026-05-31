@@ -219,10 +219,46 @@ export default function PropostasComerciaisDashboard() {
         totalColor: 'text-white'
       };
     }
-    if (lower.includes('purple') || lower.includes('indigo') || lower.includes('violet')) {
+    if (lower.includes('purple') || lower.includes('violet')) {
       return {
         bg: 'bg-gradient-to-br from-purple-600 to-indigo-600',
         border: 'border-purple-700',
+        text: 'text-white',
+        badge: 'bg-white/20 text-white border border-white/10',
+        totalColor: 'text-white'
+      };
+    }
+    if (lower.includes('yellow')) {
+      return {
+        bg: 'bg-gradient-to-br from-yellow-500 to-amber-500',
+        border: 'border-yellow-600',
+        text: 'text-white',
+        badge: 'bg-white/20 text-white border border-white/10',
+        totalColor: 'text-white'
+      };
+    }
+    if (lower.includes('indigo')) {
+      return {
+        bg: 'bg-gradient-to-br from-indigo-600 to-blue-700',
+        border: 'border-indigo-700',
+        text: 'text-white',
+        badge: 'bg-white/20 text-white border border-white/10',
+        totalColor: 'text-white'
+      };
+    }
+    if (lower.includes('pink')) {
+      return {
+        bg: 'bg-gradient-to-br from-pink-600 to-rose-500',
+        border: 'border-pink-700',
+        text: 'text-white',
+        badge: 'bg-white/20 text-white border border-white/10',
+        totalColor: 'text-white'
+      };
+    }
+    if (lower.includes('teal')) {
+      return {
+        bg: 'bg-gradient-to-br from-teal-600 to-emerald-600',
+        border: 'border-teal-700',
         text: 'text-white',
         badge: 'bg-white/20 text-white border border-white/10',
         totalColor: 'text-white'
@@ -264,7 +300,7 @@ export default function PropostasComerciaisDashboard() {
     return (
       <div className="flex-shrink-0 w-72 shrink-0">
         {isStatus ? (
-          <div className={`border rounded-xl p-4 shadow-md text-left ${hStyle.bg} ${hStyle.text} ${hStyle.border}`}>
+          <div className={`border border-b-0 rounded-t-2xl rounded-b-none p-4 shadow-md text-left ${hStyle.bg} ${hStyle.text} ${hStyle.border}`}>
             <div className="flex items-center justify-between mb-2">
               <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-sm ${hStyle.badge}`}>
                 {label}
@@ -277,7 +313,7 @@ export default function PropostasComerciaisDashboard() {
             <p className="text-[10px] opacity-75 font-medium mt-0.5">Volume total da coluna</p>
           </div>
         ) : (
-          <div className={`rounded-xl p-4 shadow-md text-left border ${hStyle.bg} ${hStyle.text} ${hStyle.border}`}>
+          <div className={`rounded-t-2xl rounded-b-none p-4 shadow-md text-left border border-b-0 ${hStyle.bg} ${hStyle.text} ${hStyle.border}`}>
             <div className="flex items-center gap-3 mb-2">
               {colAvatarUrl ? (
                 <img 
@@ -311,21 +347,33 @@ export default function PropostasComerciaisDashboard() {
     }
     const lower = (colorClass || '').toLowerCase();
     if (lower.includes('sky') || lower.includes('blue')) {
-      return 'bg-blue-50/60 border border-blue-100/40';
+      return 'bg-blue-100/40 border border-blue-200/50';
     }
     if (lower.includes('orange') || lower.includes('amber')) {
-      return 'bg-amber-50/60 border border-amber-100/40';
+      return 'bg-amber-100/40 border border-amber-200/50';
     }
     if (lower.includes('green') || lower.includes('emerald')) {
-      return 'bg-emerald-50/60 border border-emerald-100/40';
+      return 'bg-emerald-100/40 border border-emerald-200/50';
     }
     if (lower.includes('red') || lower.includes('rose')) {
-      return 'bg-rose-50/60 border border-rose-100/40';
+      return 'bg-rose-100/40 border border-rose-200/50';
     }
-    if (lower.includes('purple') || lower.includes('indigo') || lower.includes('violet')) {
-      return 'bg-purple-50/60 border border-purple-100/40';
+    if (lower.includes('purple') || lower.includes('violet')) {
+      return 'bg-purple-100/40 border border-purple-200/50';
     }
-    return 'bg-slate-50/70 border border-slate-100/50';
+    if (lower.includes('yellow')) {
+      return 'bg-yellow-100/40 border border-yellow-200/50';
+    }
+    if (lower.includes('indigo')) {
+      return 'bg-indigo-100/40 border border-indigo-200/50';
+    }
+    if (lower.includes('pink')) {
+      return 'bg-pink-100/40 border border-pink-200/50';
+    }
+    if (lower.includes('teal')) {
+      return 'bg-teal-100/40 border border-teal-200/50';
+    }
+    return 'bg-slate-100/50 border border-slate-200/50';
   };
 
   const KanbanColumnCards = ({ label, cards, color, type = 'status', onDropProp }: {
@@ -334,7 +382,7 @@ export default function PropostasComerciaisDashboard() {
     const suaveBg = getSuaveBgClass(color, type);
     return (
       <div 
-        className={`flex-shrink-0 w-72 flex flex-col min-h-[600px] p-3 rounded-2xl ${suaveBg}`}
+        className={`flex-shrink-0 w-72 flex flex-col min-h-[600px] p-3 pt-4 rounded-b-2xl rounded-t-none border-t-0 ${suaveBg}`}
         onDragOver={(e) => {
           e.preventDefault();
           e.currentTarget.classList.add('opacity-80');
@@ -651,7 +699,7 @@ export default function PropostasComerciaisDashboard() {
                     className="overflow-x-auto pb-6"
                     onScroll={() => syncScroll('kanban-cards-status', 'kanban-headers-status')}
                   >
-                    <div className="flex gap-5 min-w-max pt-2">
+                    <div className="flex gap-5 min-w-max pt-0">
                       {kanbanStatusCols.map(col => (
                         <KanbanColumnCards
                           key={col.id}
@@ -744,7 +792,7 @@ export default function PropostasComerciaisDashboard() {
                     className="overflow-x-auto pb-6"
                     onScroll={() => syncScroll('kanban-cards-vendedor', 'kanban-headers-vendedor')}
                   >
-                    <div className="flex gap-5 min-w-max pt-2">
+                    <div className="flex gap-5 min-w-max pt-0">
                       {kanbanVendedorCols.map(col => (
                         <KanbanColumnCards
                           key={col.id}

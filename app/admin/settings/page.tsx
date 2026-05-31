@@ -67,6 +67,120 @@ const menuGroups = [
   }
 ];
 
+const getHighlightedColorClassLocal = (colorClass: string = '') => {
+  const lower = colorClass.toLowerCase();
+  if (lower.includes('sky') || lower.includes('blue')) {
+    return {
+      bg: 'bg-gradient-to-br from-blue-600 to-sky-600',
+      border: 'border-blue-700',
+      text: 'text-white',
+      badge: 'bg-white/20 text-white border border-white/10'
+    };
+  }
+  if (lower.includes('orange') || lower.includes('amber')) {
+    return {
+      bg: 'bg-gradient-to-br from-amber-500 to-orange-500',
+      border: 'border-orange-600',
+      text: 'text-white',
+      badge: 'bg-white/20 text-white border border-white/10'
+    };
+  }
+  if (lower.includes('green') || lower.includes('emerald')) {
+    return {
+      bg: 'bg-gradient-to-br from-emerald-600 to-green-600',
+      border: 'border-emerald-700',
+      text: 'text-white',
+      badge: 'bg-white/20 text-white border border-white/10'
+    };
+  }
+  if (lower.includes('red') || lower.includes('rose')) {
+    return {
+      bg: 'bg-gradient-to-br from-red-600 to-rose-600',
+      border: 'border-rose-700',
+      text: 'text-white',
+      badge: 'bg-white/20 text-white border border-white/10'
+    };
+  }
+  if (lower.includes('purple') || lower.includes('violet')) {
+    return {
+      bg: 'bg-gradient-to-br from-purple-600 to-indigo-600',
+      border: 'border-purple-700',
+      text: 'text-white',
+      badge: 'bg-white/20 text-white border border-white/10'
+    };
+  }
+  if (lower.includes('yellow')) {
+    return {
+      bg: 'bg-gradient-to-br from-yellow-500 to-amber-500',
+      border: 'border-yellow-600',
+      text: 'text-white',
+      badge: 'bg-white/20 text-white border border-white/10'
+    };
+  }
+  if (lower.includes('indigo')) {
+    return {
+      bg: 'bg-gradient-to-br from-indigo-600 to-blue-700',
+      border: 'border-indigo-700',
+      text: 'text-white',
+      badge: 'bg-white/20 text-white border border-white/10'
+    };
+  }
+  if (lower.includes('pink')) {
+    return {
+      bg: 'bg-gradient-to-br from-pink-600 to-rose-500',
+      border: 'border-pink-700',
+      text: 'text-white',
+      badge: 'bg-white/20 text-white border border-white/10'
+    };
+  }
+  if (lower.includes('teal')) {
+    return {
+      bg: 'bg-gradient-to-br from-teal-600 to-emerald-600',
+      border: 'border-teal-700',
+      text: 'text-white',
+      badge: 'bg-white/20 text-white border border-white/10'
+    };
+  }
+  return {
+    bg: 'bg-gradient-to-br from-slate-600 to-slate-500',
+    border: 'border-slate-700',
+    text: 'text-white',
+    badge: 'bg-white/20 text-white border border-white/10'
+  };
+};
+
+const getSuaveBgClassLocal = (colorClass: string = '') => {
+  const lower = (colorClass || '').toLowerCase();
+  if (lower.includes('sky') || lower.includes('blue')) {
+    return 'bg-blue-100/40 border border-blue-200/50';
+  }
+  if (lower.includes('orange') || lower.includes('amber')) {
+    return 'bg-amber-100/40 border border-amber-200/50';
+  }
+  if (lower.includes('green') || lower.includes('emerald')) {
+    return 'bg-emerald-100/40 border border-emerald-200/50';
+  }
+  if (lower.includes('red') || lower.includes('rose')) {
+    return 'bg-rose-100/40 border border-rose-200/50';
+  }
+  if (lower.includes('purple') || lower.includes('violet')) {
+    return 'bg-purple-100/40 border border-purple-200/50';
+  }
+  if (lower.includes('yellow')) {
+    return 'bg-yellow-100/40 border border-yellow-200/50';
+  }
+  if (lower.includes('indigo')) {
+    return 'bg-indigo-100/40 border border-indigo-200/50';
+  }
+  if (lower.includes('pink')) {
+    return 'bg-pink-100/40 border border-pink-200/50';
+  }
+  if (lower.includes('teal')) {
+    return 'bg-teal-100/40 border border-teal-200/50';
+  }
+  return 'bg-slate-100/50 border border-slate-200/50';
+};
+
 export default function SettingsPage() {
   // ── Estado principal ─────────────────────────────────────────────────────────
   const [userRole, setUserRole] = useState<string>('USER');
@@ -2198,40 +2312,90 @@ export default function SettingsPage() {
                 </div>
 
                 {editingItem.type === 'status' && (
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block text-left">
-                      Selecione a Cor do Badge
-                    </label>
-                    <div className="grid grid-cols-2 gap-2 max-h-[160px] overflow-y-auto p-2 border border-slate-100 rounded">
-                      {[
-                        { label: 'Céu (Azul)', value: 'bg-sky-100 text-sky-800 border border-sky-200' },
-                        { label: 'Laranja', value: 'bg-orange-100 text-orange-800 border border-orange-200' },
-                        { label: 'Esmeralda (Verde)', value: 'bg-green-100 text-green-800 border border-green-200' },
-                        { label: 'Vermelho', value: 'bg-red-100 text-red-800 border border-red-200' },
-                        { label: 'Roxo', value: 'bg-purple-100 text-purple-800 border border-purple-200' },
-                        { label: 'Ardósia (Cinza)', value: 'bg-slate-100 text-slate-800 border border-slate-200' },
-                        { label: 'Amarelo', value: 'bg-yellow-100 text-yellow-800 border border-yellow-200' },
-                        { label: 'Indigo', value: 'bg-indigo-100 text-indigo-800 border border-indigo-200' },
-                        { label: 'Pink', value: 'bg-pink-100 text-pink-800 border border-pink-200' },
-                        { label: 'Teal', value: 'bg-teal-100 text-teal-800 border border-teal-200' },
-                      ].map(colorOpt => (
-                        <button
-                          key={colorOpt.value}
-                          type="button"
-                          onClick={() => setEditingItem({ ...editingItem, color: colorOpt.value })}
-                          className={`p-2 rounded text-left border text-[10px] font-bold uppercase transition-all flex items-center justify-center ${
-                            editingItem.color === colorOpt.value 
-                              ? 'border-[#1B4D3E] ring-1 ring-[#1B4D3E] bg-slate-50' 
-                              : 'border-slate-200 hover:bg-slate-50'
-                          }`}
-                        >
-                          <span className={`px-2 py-0.5 rounded tracking-wider text-center ${colorOpt.value}`}>
-                            {colorOpt.label}
-                          </span>
-                        </button>
-                      ))}
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block text-left">
+                        Selecione a Cor do Badge e Coluna
+                      </label>
+                      <div className="grid grid-cols-2 gap-2 max-h-[160px] overflow-y-auto p-2 border border-slate-100 rounded">
+                        {[
+                          { label: 'Céu (Azul)', value: 'bg-sky-100 text-sky-800 border border-sky-200' },
+                          { label: 'Laranja', value: 'bg-orange-100 text-orange-800 border border-orange-200' },
+                          { label: 'Esmeralda (Verde)', value: 'bg-green-100 text-green-800 border border-green-200' },
+                          { label: 'Vermelho', value: 'bg-red-100 text-red-800 border border-red-200' },
+                          { label: 'Roxo', value: 'bg-purple-100 text-purple-800 border border-purple-200' },
+                          { label: 'Ardósia (Cinza)', value: 'bg-slate-100 text-slate-800 border border-slate-200' },
+                          { label: 'Amarelo', value: 'bg-yellow-100 text-yellow-800 border border-yellow-200' },
+                          { label: 'Indigo', value: 'bg-indigo-100 text-indigo-800 border border-indigo-200' },
+                          { label: 'Pink', value: 'bg-pink-100 text-pink-800 border border-pink-200' },
+                          { label: 'Teal', value: 'bg-teal-100 text-teal-800 border border-teal-200' },
+                        ].map(colorOpt => (
+                          <button
+                            key={colorOpt.value}
+                            type="button"
+                            onClick={() => setEditingItem({ ...editingItem, color: colorOpt.value })}
+                            className={`p-2 rounded text-left border text-[10px] font-bold uppercase transition-all flex items-center justify-center ${
+                              editingItem.color === colorOpt.value 
+                                ? 'border-[#1B4D3E] ring-1 ring-[#1B4D3E] bg-slate-50' 
+                                : 'border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span className={`px-2 py-0.5 rounded tracking-wider text-center ${colorOpt.value}`}>
+                              {colorOpt.label}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+
+                    {/* Preview visual do Kanban */}
+                    <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3 text-left">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+                        Preview Visual no Kanban
+                      </span>
+                      
+                      <div className="flex gap-4">
+                        {/* Simulação do Cabeçalho e da Coluna */}
+                        <div className="w-full flex flex-col gap-2 scale-95 origin-top">
+                          {/* Cabeçalho */}
+                          {(() => {
+                            const hStyle = getHighlightedColorClassLocal(editingItem.color || '');
+                            return (
+                              <div className={`border rounded-xl p-3 shadow-sm ${hStyle.bg} ${hStyle.text} ${hStyle.border}`}>
+                                <div className="flex items-center justify-between">
+                                  <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-sm ${hStyle.badge}`}>
+                                    {editingItem.nome || 'Status'}
+                                  </span>
+                                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-sm ${hStyle.badge}`}>
+                                    1
+                                  </span>
+                                </div>
+                                <p className="text-xs font-black mt-2">R$ 15.000</p>
+                              </div>
+                            );
+                          })()}
+
+                          {/* Fundo da Coluna */}
+                          <div className={`w-full p-2.5 rounded-xl min-h-[140px] flex flex-col gap-2 ${getSuaveBgClassLocal(editingItem.color || '')}`}>
+                            {/* Card simulado */}
+                            <div className="bg-white border border-slate-200 rounded-lg p-2.5 shadow-sm text-left space-y-1.5">
+                              <div className="flex justify-between items-center text-[9px] font-bold text-slate-400">
+                                <span>FPV-001</span>
+                                <span>v1</span>
+                              </div>
+                              <p className="text-xs font-bold text-slate-800 line-clamp-1">Cliente Exemplo Ltda</p>
+                              <div className="flex justify-between items-center pt-1 border-t border-slate-100">
+                                <span className="text-xs font-black text-[#1B4D3E]">R$ 15.000</span>
+                                <span className={`text-[8px] font-black px-1.5 py-0.2 rounded uppercase ${editingItem.color}`}>
+                                  {editingItem.nome || 'Status'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
                 )}
 
                 <button 
