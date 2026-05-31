@@ -154,14 +154,14 @@ const Sidebar = () => {
       
       const res = await changeMyAvatar(dataUrl);
       if (res.success && res.avatarUrl) {
-        setUser(prev => prev ? { ...prev, avatarUrl: res.avatarUrl } : null);
+        setUser(prev => prev ? { ...prev, avatarUrl: '/api/user/avatar' } : null);
         
         const cookiesList = document.cookie.split(';');
         const userCookie = cookiesList.find(c => c.trim().startsWith('sb_user='));
         if (userCookie) {
           try {
             const decoded = JSON.parse(decodeURIComponent(userCookie.split('=')[1]));
-            decoded.avatarUrl = res.avatarUrl;
+            decoded.avatarUrl = '/api/user/avatar';
             const encoded = encodeURIComponent(JSON.stringify(decoded));
             document.cookie = `sb_user=${encoded}; path=/; max-age=${60 * 60 * 24 * 7}; Secure; SameSite=Lax`;
           } catch (err) {
@@ -376,8 +376,8 @@ const Sidebar = () => {
               role: freshUser.role,
               email: freshUser.email,
               tenantId: freshUser.tenantId,
-              avatarUrl: freshUser.avatarUrl || undefined,
-              tenantLogoUrl: (freshUser as any).tenant?.logoUrl || undefined,
+              avatarUrl: freshUser.avatarUrl ? '/api/user/avatar' : undefined,
+              tenantLogoUrl: (freshUser as any).tenant?.logoUrl ? '/api/tenant/logo' : undefined,
               tenantNome: (freshUser as any).tenant?.nomeFantasia || undefined,
               primaryColor: (freshUser as any).tenant?.primaryColor || undefined,
               iniciais: freshUser.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase()

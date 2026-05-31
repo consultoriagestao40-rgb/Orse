@@ -117,7 +117,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     if (typeof window !== 'undefined' && doc?.tenant) {
       try {
         const userObj = {
-          tenantLogoUrl: doc.tenant.logoUrl || undefined,
+          tenantLogoUrl: doc.tenant.logoUrl ? `/api/tenant/logo?tenantId=${doc.tenant.id}` : undefined,
           tenantNome: doc.tenant.nomeFantasia || undefined
         };
         const encoded = encodeURIComponent(JSON.stringify(userObj));

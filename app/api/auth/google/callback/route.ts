@@ -108,8 +108,8 @@ export async function GET(request: Request) {
       role: user.role,
       email: user.email,
       tenantId: user.tenantId,
-      avatarUrl: user.avatarUrl || undefined,
-      tenantLogoUrl: userTenant?.logoUrl || undefined,
+      avatarUrl: user.avatarUrl ? '/api/user/avatar' : undefined,
+      tenantLogoUrl: userTenant?.logoUrl ? '/api/tenant/logo' : undefined,
       tenantNome: userTenant?.nomeFantasia || undefined,
       iniciais: user.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase()
     }), {

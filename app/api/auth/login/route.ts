@@ -26,8 +26,8 @@ export async function POST(request: Request) {
       email: user.email,
       tenantId: user.tenantId,
       iniciais: user.nome.split(' ').filter(Boolean).map((n: string) => n[0]).join('').toUpperCase().substring(0, 2),
-      ...(user.avatarUrl ? { avatarUrl: user.avatarUrl } : {}),
-      ...(user.tenant?.logoUrl ? { tenantLogoUrl: user.tenant.logoUrl } : {}),
+      ...(user.avatarUrl ? { avatarUrl: '/api/user/avatar' } : {}),
+      ...(user.tenant?.logoUrl ? { tenantLogoUrl: '/api/tenant/logo' } : {}),
       ...(user.tenant?.nomeFantasia ? { tenantNome: user.tenant.nomeFantasia } : {}),
     }
 
