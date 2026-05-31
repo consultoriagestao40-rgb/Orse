@@ -834,7 +834,7 @@ return (
             <div className="flex flex-col justify-between h-full w-full">
               <div>
                 {/* Top Padding / Menu Title Block (colored top block, conforming to rounded corner) */}
-                <div className="bg-[#F4F6F9] px-6 pt-6 pb-4 border-b border-slate-200/60 rounded-t-3xl mb-4">
+                <div className="bg-[#E2E8F0] px-6 pt-6 pb-4 border-b border-slate-300/80 rounded-t-3xl mb-4">
                   <span className="text-[11px] text-[#1B4D3E] font-black uppercase tracking-wider block">
                     Menu da Proposta
                   </span>
