@@ -747,7 +747,7 @@ const Sidebar = () => {
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {renderedMenuItems.map((item) => {
           const isActive = item.href === '/' 
-            ? (pathname === '/' || (pathname.startsWith('/propostas') && !pathname.startsWith('/propostas-comerciais')) || pathname.startsWith('/proposta'))
+            ? (pathname === '/' || ((pathname.startsWith('/propostas') || pathname.startsWith('/proposta')) && !pathname.startsWith('/propostas-comerciais')))
             : pathname === item.href;
           return (
             <Link
