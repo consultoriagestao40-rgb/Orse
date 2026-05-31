@@ -2,6 +2,131 @@ import React, { useState, useEffect, useRef } from 'react';
 import numeroPorExtenso from '@/lib/numeroPorExtenso';
 
 export default function DocumentoA4({ proposta, resultado, empresaEmissora, templates, onUpdateClausulas, onUpdateCliente, onUpdateItens, isPublicView = false }: { proposta: any, resultado: any, empresaEmissora: any, templates?: any[], onUpdateClausulas?: (c: any[]) => void, onUpdateCliente?: (c: any) => void, onUpdateItens?: (i: any[]) => void, isPublicView?: boolean }) {
+  const color = proposta.tenant?.primaryColor || '#1B4D3E';
+  
+  const getThemeColors = (hex: string) => {
+    let c = hex.replace('#', '').trim();
+    if (c.length === 3) {
+      c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
+    }
+    if (c.length !== 6) {
+      c = '1B4D3E';
+    }
+
+    const r = parseInt(c.substring(0, 2), 16);
+    const g = parseInt(c.substring(2, 4), 16);
+    const b = parseInt(c.substring(4, 6), 16);
+
+    const darken = (val: number, amt: number) => Math.max(0, val - amt);
+    const rHover = darken(r, 20);
+    const gHover = darken(g, 20);
+    const bHover = darken(b, 20);
+    const hexHover = '#' + ((1 << 24) + (rHover << 16) + (gHover << 8) + bHover).toString(16).slice(1);
+
+    const hexLight = `rgba(${r}, ${g}, ${b}, 0.08)`;
+    
+    const rDark = darken(r, 45);
+    const gDark = darken(g, 45);
+    const bDark = darken(b, 45);
+    const hexDark = '#' + ((1 << 24) + (rDark << 16) + (gDark << 8) + bDark).toString(16).slice(1);
+
+    return {
+      primary: '#' + c,
+      rgb: `${r}, ${g}, ${b}`,
+      hover: hexHover,
+      light: hexLight,
+      dark: hexDark,
+    };
+  };
+
+  const theme = getThemeColors(color);
+
+  const themeStyleHtml = `
+    :root {
+      --primary-color: ${theme.primary};
+      --primary-color-rgb: ${theme.rgb};
+      --primary-color-hover: ${theme.hover};
+      --primary-color-light: ${theme.light};
+      --primary-color-dark: ${theme.dark};
+    }
+    
+    /* Override classes Tailwind do verde padrão */
+    .bg-\\[\\#1B4D3E\\], .bg-\\[\\#1b4d3e\\] {
+      background-color: var(--primary-color) !important;
+    }
+    .hover\\:bg-\\[\\#13382D\\]:hover, .hover\\:bg-\\[\\#13382d\\]:hover, .hover\\:bg-\\[\\#143d31\\]:hover {
+      background-color: var(--primary-color-hover) !important;
+    }
+    .text-\\[\\#1B4D3E\\], .text-\\[\\#1b4d3e\\] {
+      color: var(--primary-color) !important;
+    }
+    .border-\\[\\#1B4D3E\\], .border-\\[\\#1b4d3e\\] {
+      border-color: var(--primary-color) !important;
+    }
+    .focus\\:border-\\[\\#1B4D3E\\]:focus, .focus\\:border-\\[\\#1b4d3e\\]:focus {
+      border-color: var(--primary-color) !important;
+    }
+    .focus\\:ring-\\[\\#1B4D3E\\]:focus, .focus\\:ring-\\[\\#1b4d3e\\]:focus {
+      --tw-ring-color: var(--primary-color) !important;
+    }
+    .hover\\:text-\\[\\#1B4D3E\\]:hover, .hover\\:text-\\[\\#1b4d3e\\]:hover {
+      color: var(--primary-color) !important;
+    }
+    .hover\\:border-\\[\\#1B4D3E\\]:hover, .hover\\:border-\\[\\#1b4d3e\\]:hover {
+      border-color: var(--primary-color) !important;
+    }
+    .bg-\\[\\#0B2E24\\], .bg-\\[\\#0b2e24\\] {
+      background-color: var(--primary-color-hover) !important;
+    }
+    
+    /* FPV Specific Green Rows (Lighter & Darker shades) */
+    .bg-\\[\\#3b8026\\], .bg-\\[\\#3B8026\\] {
+      background-color: var(--primary-color-hover) !important;
+    }
+    .border-\\[\\#2d631d\\], .border-\\[\\#2D631D\\] {
+      border-color: var(--primary-color-dark) !important;
+    }
+    .bg-\\[\\#599e41\\], .bg-\\[\\#599E41\\] {
+      background-color: var(--primary-color) !important;
+    }
+    .border-\\[\\#488234\\], .border-\\[\\#488234\\] {
+      border-color: var(--primary-color-hover) !important;
+    }
+    .bg-\\[\\#8ec277\\], .bg-\\[\\#8EC277\\] {
+      background-color: rgba(${theme.rgb}, 0.25) !important;
+    }
+    
+    /* Standard Emerald Overrides */
+    .text-emerald-400 { color: var(--primary-color) !important; }
+    .text-emerald-550 { color: var(--primary-color) !important; }
+    .text-emerald-500 { color: var(--primary-color) !important; }
+    .text-emerald-600 { color: var(--primary-color-hover) !important; }
+    .text-emerald-700 { color: var(--primary-color-hover) !important; }
+    .text-emerald-750 { color: var(--primary-color-hover) !important; }
+    .text-emerald-800 { color: var(--primary-color-dark) !important; }
+    .text-emerald-900 { color: var(--primary-color-dark) !important; }
+    
+    .bg-emerald-50 { background-color: var(--primary-color-light) !important; }
+    .bg-emerald-55\\/30 { background-color: var(--primary-color-light) !important; }
+    .bg-emerald-50\\/30 { background-color: var(--primary-color-light) !important; }
+    .bg-emerald-100 { background-color: var(--primary-color-light) !important; }
+    .bg-emerald-100\\/50 { background-color: var(--primary-color-light) !important; }
+    .bg-emerald-200 { background-color: var(--primary-color-light) !important; }
+    .bg-emerald-400 { background-color: var(--primary-color) !important; }
+    .bg-emerald-500 { background-color: var(--primary-color) !important; }
+    .bg-emerald-600 { background-color: var(--primary-color-hover) !important; }
+    .bg-emerald-800 { background-color: var(--primary-color-dark) !important; }
+    .bg-emerald-900 { background-color: var(--primary-color-dark) !important; }
+    .bg-emerald-950 { background-color: var(--primary-color-dark) !important; }
+    
+    .border-emerald-100 { border-color: var(--primary-color-light) !important; }
+    .border-emerald-200 { border-color: var(--primary-color-light) !important; }
+    .border-emerald-300 { border-color: var(--primary-color-light) !important; }
+    .border-emerald-400 { border-color: var(--primary-color) !important; }
+    .border-emerald-500 { border-color: var(--primary-color) !important; }
+    .border-emerald-600 { border-color: var(--primary-color-hover) !important; }
+  `;
+
   const [companyLogo, setCompanyLogo] = useState<string>(
     proposta.tenant?.logoUrl || 'https://via.placeholder.com/300x80?text=Silva+Consultoria'
   );
@@ -855,6 +980,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
 
   return (
     <div className="bg-slate-200 min-h-screen py-8 flex flex-col items-center overflow-x-hidden overflow-y-auto print:bg-white print:py-0 w-full">
+      <style dangerouslySetInnerHTML={{ __html: themeStyleHtml }} />
       
       {/* Botão de Voltar para não bugar o fluxo - Só aparece na tela, não na impressão */}
       <div className="w-full max-w-[210mm] px-4 mb-4 flex justify-between items-center no-print">
