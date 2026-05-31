@@ -1063,7 +1063,7 @@ const Sidebar = () => {
 
       {/* CENTRAL DE NOTIFICAÇÕES FLUTUANTE NO CANTO SUPERIOR DIREITO */}
       {user && (
-        <div className={`${trialStatus?.isTrialActive && !trialStatus?.trialExpired && trialStatus?.hasContact && countdownTime ? 'fixed top-3 right-[180px]' : 'fixed top-[18px] right-6'} z-[100] font-sans`}>
+        <div className={`${trialStatus?.isTrialActive && !trialStatus?.trialExpired && trialStatus?.hasContact && countdownTime ? 'fixed top-[74px] right-6' : 'fixed top-[18px] right-6'} z-[100] font-sans`}>
           {/* Ícone de Sino Flutuante */}
           <button
             onClick={() => setShowNotifications(!showNotifications)}
