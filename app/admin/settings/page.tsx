@@ -7,7 +7,7 @@ import {
   Save, X, Tag, Edit2, Target, Briefcase, MessageSquare, CreditCard, CheckCircle2, Lock, Smartphone, RefreshCw, Palette, Image
 } from 'lucide-react';
 import { 
-  getPropostaStatuses, createPropostaStatus, deletePropostaStatus 
+  getPropostaStatuses, createPropostaStatus, deletePropostaStatus, getLoggedUser 
 } from '@/app/propostas/actions';
 import { 
   getEscalas, createEscala, updateEscala, deleteEscala 
@@ -501,18 +501,68 @@ export default function SettingsPage() {
   // ── Verificação de acesso (deve ficar ANTES de qualquer return) ───────────────
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
-      if (cookie) {
-        try {
-          const parsed = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
-          setUserRole(parsed.role || 'USER');
-          setHasAccess(true);
-        } catch {
-          window.location.href = '/';
+      const checkAccess = async () => {
+        // Tenta primeiro parsear o cookie localmente com estratégias robustas
+        const getParsedUser = () => {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; sb_user=`);
+          if (parts.length !== 2) return null;
+          
+          const rawValue = parts.pop()?.split(';').shift();
+          if (!rawValue) return null;
+
+          const cleanAndParse = (val: string) => {
+            let s = val.trim();
+            while ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+              s = s.slice(1, -1);
+            }
+            return JSON.parse(s);
+          };
+
+          const strategies = [
+            () => cleanAndParse(decodeURIComponent(rawValue)),
+            () => cleanAndParse(rawValue),
+            () => {
+              let s = rawValue.trim();
+              if (s.startsWith('"') && s.endsWith('"')) s = s.slice(1, -1);
+              if (s.startsWith("'") && s.endsWith("'")) s = s.slice(1, -1);
+              const decoded = decodeURIComponent(s);
+              return cleanAndParse(decoded);
+            }
+          ];
+
+          for (const strategy of strategies) {
+            try {
+              const data = strategy();
+              if (data && typeof data === 'object') {
+                return data;
+              }
+            } catch {}
+          }
+          return null;
+        };
+
+        let user = getParsedUser();
+
+        // Se falhar no parse local, tenta obter do banco de dados (Server Action 100% confiável)
+        if (!user) {
+          try {
+            user = await getLoggedUser();
+          } catch (e) {
+            console.error("Erro ao obter usuário logado via Server Action:", e);
+          }
         }
-      } else {
-        window.location.href = '/login';
-      }
+
+        if (user) {
+          setUserRole(user.role || 'USER');
+          setHasAccess(true);
+        } else {
+          // Sem usuário logado → login
+          window.location.href = '/login';
+        }
+      };
+
+      checkAccess();
     }
   }, []);
 

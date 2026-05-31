@@ -468,9 +468,9 @@ const Sidebar = () => {
           // Conta de Operador do SaaS: vê apenas gestão de empresas
           return item.href === '/admin/empresas';
         } else {
-          // Contas de Clientes: não veem o painel de gestão de SaaS, a menos que seja o Cristiano (Super Admin)
+          // Contas de Clientes (como JVS): nunca veem o painel de gestão de SaaS no CRM
           if (item.href === '/admin/empresas' || item.roles.includes('SUPER_ADMIN')) {
-            return isSuperAdminUser;
+            return false;
           }
           return item.roles.includes(user?.role || 'USER');
         }

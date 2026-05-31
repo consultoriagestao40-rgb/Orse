@@ -123,7 +123,7 @@ export default function EpisPage() {
             </div>
             <button 
               onClick={() => openModal()}
-              className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold py-2.5 px-6 rounded text-sm flex items-center gap-2 shadow-sm transition-colors"
+              className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold py-2.5 px-6 rounded text-sm flex items-center gap-2 shadow-sm transition-colors bell-header-spacing"
             >
               <Plus size={18} /> Novo EPI/Uniforme
             </button>

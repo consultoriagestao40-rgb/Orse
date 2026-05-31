@@ -111,7 +111,7 @@ export default function CalendarPage() {
             </div>
             <button 
               onClick={() => setShowNewModal(true)}
-              className="flex items-center gap-2 bg-[#1B4D3E] text-white px-4 py-2.5 rounded-xl font-bold hover:bg-[#13382d] transition-all"
+              className="flex items-center gap-2 bg-[#1B4D3E] text-white px-4 py-2.5 rounded-xl font-bold hover:bg-[#13382d] transition-all bell-header-spacing"
             >
               <Plus size={18} /> Novo Evento
             </button>

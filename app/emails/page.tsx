@@ -417,7 +417,7 @@ function EmailCenterContent() {
           <p className="text-xs md:text-sm text-slate-500 font-bold uppercase tracking-tight">Histórico unificado de correspondências de leads</p>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 bell-header-spacing">
           <button 
             onClick={() => setShowSmtpModal(true)}
             className="flex items-center gap-2 px-4 py-2.5 text-xs md:text-sm bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-xl font-bold transition-all shadow-sm flex-shrink-0"

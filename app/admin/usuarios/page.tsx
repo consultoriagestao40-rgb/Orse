@@ -256,7 +256,7 @@ export default function UsuariosPage() {
 
           <button 
             onClick={handleAddNewClick}
-            className="bg-[#1B4D3E] hover:bg-[#13382D] text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-[#1B4D3E]/10 transition-all active:scale-[0.98] flex items-center gap-2"
+            className="bg-[#1B4D3E] hover:bg-[#13382D] text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-[#1B4D3E]/10 transition-all active:scale-[0.98] flex items-center gap-2 bell-header-spacing"
           >
             <UserPlus size={16} />
             Novo Usuário

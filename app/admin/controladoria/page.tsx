@@ -7,7 +7,7 @@ import {
   ArrowUpRight, Award, Briefcase, Activity, Percent, Filter, 
   Calendar, CheckCircle, Edit2, Check, Target
 } from 'lucide-react';
-import { getKPIs } from '@/app/propostas/actions';
+import { getKPIs, getLoggedUser } from '@/app/propostas/actions';
 
 export default function ControladoriaPage() {
   const [isAdmin, setIsAdmin] = useState<boolean>(true);
@@ -27,20 +27,78 @@ export default function ControladoriaPage() {
   // Verificação de Perfil Administrador (bloqueia acesso direto via URL)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
-      if (cookie) {
-        try {
-          const parsed = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
-          if (parsed.role !== 'ADMIN') {
+      const checkAccess = async () => {
+        // Tenta primeiro parsear o cookie localmente com estratégias robustas
+        const getParsedUser = () => {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; sb_user=`);
+          if (parts.length !== 2) return null;
+          
+          const rawValue = parts.pop()?.split(';').shift();
+          if (!rawValue) return null;
+
+          const cleanAndParse = (val: string) => {
+            let s = val.trim();
+            while ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+              s = s.slice(1, -1);
+            }
+            return JSON.parse(s);
+          };
+
+          const strategies = [
+            () => cleanAndParse(decodeURIComponent(rawValue)),
+            () => cleanAndParse(rawValue),
+            () => {
+              let s = rawValue.trim();
+              if (s.startsWith('"') && s.endsWith('"')) s = s.slice(1, -1);
+              if (s.startsWith("'") && s.endsWith("'")) s = s.slice(1, -1);
+              const decoded = decodeURIComponent(s);
+              return cleanAndParse(decoded);
+            }
+          ];
+
+          for (const strategy of strategies) {
+            try {
+              const data = strategy();
+              if (data && typeof data === 'object') {
+                return data;
+              }
+            } catch {}
+          }
+          return null;
+        };
+
+        let user = getParsedUser();
+
+        // Se falhar no parse local, tenta obter do banco de dados (Server Action 100% confiável)
+        if (!user) {
+          try {
+            user = await getLoggedUser();
+          } catch (e) {
+            console.error("Erro ao obter usuário logado via Server Action:", e);
+          }
+        }
+
+        if (user) {
+          const isAllowed = 
+            user.role === 'ADMIN' || 
+            user.role === 'SUPER_ADMIN' || 
+            user.email?.toLowerCase().trim() === 'cristiano@grupojvsserv.com.br' ||
+            user.email?.toLowerCase().trim() === 'admin@smartbidhub.com.br';
+
+          if (!isAllowed) {
             setIsAdmin(false);
             window.location.href = '/'; // Redireciona para o CRM
+          } else {
+            setIsAdmin(true); // Garante liberação
           }
-        } catch (e) {
-          window.location.href = '/';
+        } else {
+          // Sem usuário logado → login
+          window.location.href = '/login';
         }
-      } else {
-        window.location.href = '/login';
-      }
+      };
+
+      checkAccess();
     }
   }, []);
 

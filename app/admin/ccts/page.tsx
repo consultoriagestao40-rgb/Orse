@@ -30,7 +30,7 @@ export default async function AdminCCTPage() {
           </div>
           <Link 
             href="/admin/ccts/new/edit"
-            className="bg-[#00A36C] hover:bg-[#008f5e] text-white px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all shadow-xl shadow-emerald-200 active:scale-95"
+            className="bg-[#00A36C] hover:bg-[#008f5e] text-white px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all shadow-xl shadow-emerald-200 active:scale-95 bell-header-spacing"
           >
             <Plus size={18} strokeWidth={3} /> Nova Regra
           </Link>

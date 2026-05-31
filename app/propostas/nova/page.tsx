@@ -1210,7 +1210,7 @@ function PropostaEditor() {
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 bell-header-spacing">
                {id && versions.length <= 1 && (
                  <span className="text-xs text-slate-500 bg-slate-200 px-3 py-1 rounded-full font-medium">Revisão {proposta.versao}</span>
                )}
