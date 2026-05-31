@@ -389,13 +389,19 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
           
           const fileName = `audio_${Date.now()}.wav`;
           
-          const res = await sendWhatsAppMedia(leadId, base64, fileName, 'audio/wav');
-          if (res.success) {
-            fetchMessages();
-          } else {
-            alert('Erro ao enviar mensagem de voz: ' + res.error);
+          try {
+            const res = await sendWhatsAppMedia(leadId, base64, fileName, 'audio/wav');
+            if (res.success) {
+              fetchMessages();
+            } else {
+              alert('Erro ao enviar mensagem de voz: ' + res.error);
+            }
+          } catch (err: any) {
+            console.error("Audio recording send error:", err);
+            alert("Falha ao enviar mensagem de voz.");
+          } finally {
+            setSending(false);
           }
-          setSending(false);
         };
         reader.readAsDataURL(audioBlob);
       } catch (err) {
@@ -519,8 +525,9 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
     const file = e.target.files?.[0];
     if (!file || !leadPhone) return;
 
-    if (file.size > 15 * 1024 * 1024) {
-      alert("O arquivo excede o limite de 15MB para envio via WhatsApp.");
+    // Vercel server action size limit is 4.5MB. Enforce a strict 3MB limit to prevent unhandled 413 Payload Too Large errors.
+    if (file.size > 3 * 1024 * 1024) {
+      alert("O arquivo excede o limite de 3MB para envio direto. Por favor, envie arquivos ou fotos com no máximo 3MB.");
       return;
     }
 
@@ -528,15 +535,28 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
 
     const reader = new FileReader();
     reader.onload = async () => {
-      const base64 = reader.result as string;
-      const res = await sendWhatsAppMedia(leadId, base64, file.name, file.type);
-      if (res.success) {
-        fetchMessages();
-      } else {
-        alert("Erro ao enviar arquivo: " + res.error);
+      try {
+        const base64 = reader.result as string;
+        const res = await sendWhatsAppMedia(leadId, base64, file.name, file.type);
+        if (res.success) {
+          fetchMessages();
+        } else {
+          alert("Erro ao enviar arquivo: " + res.error);
+        }
+      } catch (err: any) {
+        console.error("Error sending media:", err);
+        alert("Falha ao enviar arquivo. O arquivo pode ser muito grande para o servidor.");
+      } finally {
+        setSending(false);
+        if (e.target) e.target.value = '';
       }
+    };
+    
+    reader.onerror = () => {
+      alert("Erro ao ler o arquivo local.");
       setSending(false);
     };
+
     reader.readAsDataURL(file);
   };
 
