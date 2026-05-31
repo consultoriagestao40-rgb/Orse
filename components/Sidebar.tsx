@@ -13,7 +13,7 @@ const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTenantBlocked, setIsTenantBlocked] = useState(false);
   
-  const [user, setUser] = useState<{ nome: string; role: string; email?: string; tenantId?: string | null; iniciais: string; avatarUrl?: string } | null>(null);
+  const [user, setUser] = useState<{ nome: string; role: string; email?: string; tenantId?: string | null; iniciais: string; avatarUrl?: string; tenantLogoUrl?: string; tenantNome?: string } | null>(null);
 
   // Estados para o Enquadramento / Ajuste de Posição da Foto
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -484,16 +484,39 @@ const Sidebar = () => {
         {!isCollapsed ? (
           <div className="flex-1 flex items-center justify-between min-w-0">
             <div>
-              <h1 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                <div className="w-8 h-8 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-sm font-black shadow-lg shadow-emerald-200 shrink-0">S</div>
-                SmartBidHub
-              </h1>
-              <p className="text-[9px] text-slate-400 mt-2 font-black uppercase tracking-[0.2em] whitespace-nowrap">Enterprise FM System</p>
+              {user?.tenantLogoUrl ? (
+                <div className="flex flex-col gap-1.5 animate-fadeIn">
+                  <img 
+                    src={user.tenantLogoUrl} 
+                    alt={user.tenantNome || 'Logo'} 
+                    className="max-h-11 max-w-[180px] object-contain rounded"
+                  />
+                  <p className="text-[8px] text-slate-400 font-extrabold uppercase tracking-[0.2em] whitespace-nowrap">Powered by SmartBidHub</p>
+                </div>
+              ) : (
+                <>
+                  <h1 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                    <div className="w-8 h-8 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-sm font-black shadow-lg shadow-emerald-200 shrink-0">S</div>
+                    SmartBidHub
+                  </h1>
+                  <p className="text-[9px] text-slate-400 mt-2 font-black uppercase tracking-[0.2em] whitespace-nowrap">Enterprise FM System</p>
+                </>
+              )}
             </div>
           </div>
         ) : (
           <div className="w-full flex flex-col items-center gap-3">
-            <div className="w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-base font-black shadow-lg shadow-emerald-200 transition-all shrink-0">S</div>
+            {user?.tenantLogoUrl ? (
+              <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 shadow-md">
+                <img 
+                  src={user.tenantLogoUrl} 
+                  alt="Logo" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-base font-black shadow-lg shadow-emerald-200 transition-all shrink-0">S</div>
+            )}
           </div>
         )}
         

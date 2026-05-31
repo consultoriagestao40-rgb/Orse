@@ -204,6 +204,7 @@ export default function SettingsPage() {
         setLogoCropOpen(false);
         setRawLogoSrc(null);
         alert('Logotipo da empresa atualizado com sucesso!');
+        window.location.reload();
       } else {
         alert('Erro ao salvar logotipo: ' + res.error);
       }
