@@ -433,18 +433,22 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
 
     if (texto.includes('📷 Foto:')) {
       const lines = texto.split('\n');
-      const caption = lines[0].replace('📷 Foto:', '').trim();
+      const photoLine = lines.find(l => l.includes('📷 Foto:')) || '';
+      const caption = photoLine.replace('📷 Foto:', '').trim();
+      
       const urlMatch = texto.match(/https?:\/\/[^\s]+/);
-      if (urlMatch) {
-        const url = urlMatch[0];
+      const base64Match = texto.match(/data:[^;]+;base64,[^\s]+/);
+      const src = urlMatch ? urlMatch[0] : (base64Match ? base64Match[0] : null);
+      
+      if (src) {
         return (
           <div className="flex flex-col gap-2">
             <div className="relative group overflow-hidden rounded-lg border border-slate-200 bg-black/5 max-w-sm">
               <img 
-                src={url} 
+                src={src} 
                 alt="WhatsApp Photo" 
                 className="max-w-full max-h-64 object-contain rounded-lg hover:scale-[1.02] transition-transform duration-200 cursor-pointer"
-                onClick={() => window.open(url, '_blank')}
+                onClick={() => window.open(src, '_blank')}
               />
             </div>
             {caption && <span className="text-slate-800 font-medium block">{caption}</span>}
@@ -455,13 +459,17 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
 
     if (texto.includes('🎥 Vídeo:')) {
       const lines = texto.split('\n');
-      const caption = lines[0].replace('🎥 Vídeo:', '').trim();
+      const videoLine = lines.find(l => l.includes('🎥 Vídeo:')) || '';
+      const caption = videoLine.replace('🎥 Vídeo:', '').trim();
+      
       const urlMatch = texto.match(/https?:\/\/[^\s]+/);
-      if (urlMatch) {
-        const url = urlMatch[0];
+      const base64Match = texto.match(/data:[^;]+;base64,[^\s]+/);
+      const src = urlMatch ? urlMatch[0] : (base64Match ? base64Match[0] : null);
+      
+      if (src) {
         return (
           <div className="flex flex-col gap-2 w-full max-w-sm">
-            <video src={url} controls className="w-full max-h-64 object-contain rounded-lg bg-black" />
+            <video src={src} controls className="w-full max-h-64 object-contain rounded-lg bg-black" />
             {caption && <span className="text-slate-800 font-medium block">{caption}</span>}
           </div>
         );
@@ -483,10 +491,14 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
 
     if (texto.includes('📄 Documento:')) {
       const lines = texto.split('\n');
-      const docName = lines[0].replace('📄 Documento:', '').trim() || 'Documento';
+      const docLine = lines.find(l => l.includes('📄 Documento:')) || '';
+      const docName = docLine.replace('📄 Documento:', '').trim() || 'Documento';
+      
       const urlMatch = texto.match(/https?:\/\/[^\s]+/);
-      if (urlMatch) {
-        const url = urlMatch[0];
+      const base64Match = texto.match(/data:[^;]+;base64,[^\s]+/);
+      const src = urlMatch ? urlMatch[0] : (base64Match ? base64Match[0] : null);
+      
+      if (src) {
         return (
           <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 flex items-center justify-between gap-3 max-w-sm">
             <div className="flex items-center gap-2 truncate">
@@ -498,7 +510,7 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                 <p className="text-[9px] text-slate-400">Documento PDF/Office</p>
               </div>
             </div>
-            <a href={url} download target="_blank" rel="noreferrer" className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[9px] font-bold px-2 py-1 rounded-md shrink-0">
+            <a href={src} download={docName} target="_blank" rel="noreferrer" className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[9px] font-bold px-2 py-1 rounded-md shrink-0">
               Baixar
             </a>
           </div>

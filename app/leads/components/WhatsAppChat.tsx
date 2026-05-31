@@ -128,25 +128,28 @@ function renderMessageContent(texto: string) {
   // Check if it's a photo message
   if (texto.includes('📷 Foto:')) {
     const lines = texto.split('\n');
-    const header = lines[0]; // e.g. "📷 Foto:" or "📷 Foto: legenda"
-    const caption = header.replace('📷 Foto:', '').trim();
-    // Find any URL in the text
+    const photoLine = lines.find(l => l.includes('📷 Foto:')) || '';
+    const caption = photoLine.replace('📷 Foto:', '').trim();
+    
+    // Find any URL or Base64 in the text
     const urlMatch = texto.match(/https?:\/\/[^\s]+/);
-    if (urlMatch) {
-      const url = urlMatch[0];
+    const base64Match = texto.match(/data:[^;]+;base64,[^\s]+/);
+    const src = urlMatch ? urlMatch[0] : (base64Match ? base64Match[0] : null);
+    
+    if (src) {
       return (
         <div className="flex flex-col gap-2">
           <div className="relative group overflow-hidden rounded-lg border border-slate-200 bg-black/5 max-w-sm">
             <img 
-              src={url} 
+              src={src} 
               alt="WhatsApp Photo" 
               className="max-w-full max-h-64 object-contain rounded-lg hover:scale-[1.02] transition-transform duration-200 cursor-pointer"
-              onClick={() => window.open(url, '_blank')}
+              onClick={() => window.open(src, '_blank')}
             />
           </div>
           {caption && <span className="text-slate-800 font-medium block">{caption}</span>}
           <a 
-            href={url} 
+            href={src} 
             download 
             target="_blank" 
             rel="noreferrer"
@@ -163,21 +166,24 @@ function renderMessageContent(texto: string) {
   // Check if it's a video message
   if (texto.includes('🎥 Vídeo:')) {
     const lines = texto.split('\n');
-    const header = lines[0];
-    const caption = header.replace('🎥 Vídeo:', '').trim();
+    const videoLine = lines.find(l => l.includes('🎥 Vídeo:')) || '';
+    const caption = videoLine.replace('🎥 Vídeo:', '').trim();
+    
     const urlMatch = texto.match(/https?:\/\/[^\s]+/);
-    if (urlMatch) {
-      const url = urlMatch[0];
+    const base64Match = texto.match(/data:[^;]+;base64,[^\s]+/);
+    const src = urlMatch ? urlMatch[0] : (base64Match ? base64Match[0] : null);
+    
+    if (src) {
       return (
         <div className="flex flex-col gap-2 w-full max-w-sm">
           <video 
-            src={url} 
+            src={src} 
             controls 
             className="w-full max-h-64 object-contain rounded-lg bg-black"
           />
           {caption && <span className="text-slate-800 font-medium block">{caption}</span>}
           <a 
-            href={url} 
+            href={src} 
             download 
             target="_blank" 
             rel="noreferrer"
@@ -218,11 +224,14 @@ function renderMessageContent(texto: string) {
   // Check if it's a document message
   if (texto.includes('📄 Documento:')) {
     const lines = texto.split('\n');
-    const header = lines[0];
-    const docName = header.replace('📄 Documento:', '').trim() || 'Documento';
+    const docLine = lines.find(l => l.includes('📄 Documento:')) || '';
+    const docName = docLine.replace('📄 Documento:', '').trim() || 'Documento';
+    
     const urlMatch = texto.match(/https?:\/\/[^\s]+/);
-    if (urlMatch) {
-      const url = urlMatch[0];
+    const base64Match = texto.match(/data:[^;]+;base64,[^\s]+/);
+    const src = urlMatch ? urlMatch[0] : (base64Match ? base64Match[0] : null);
+    
+    if (src) {
       return (
         <div className="flex flex-col gap-1">
           <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex items-center gap-3">
@@ -234,8 +243,8 @@ function renderMessageContent(texto: string) {
               <div className="text-[10px] text-slate-400">Documento PDF/Office</div>
             </div>
             <a 
-              href={url} 
-              download 
+              href={src} 
+              download={docName}
               target="_blank" 
               rel="noreferrer"
               className="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 shrink-0"

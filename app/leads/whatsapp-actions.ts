@@ -157,12 +157,16 @@ export async function sendWhatsAppMedia(
   if (!instanceId || !token || !clientToken) {
     console.warn('Z-API credentials or client-token missing for media. Mocking success.');
     let displayText = '';
-    if (mimeType.startsWith('audio/')) {
-      displayText = `*${user.nome}*: 🎵 Áudio:\n${fileBase64}`;
+    if (mimeType.startsWith('image/')) {
+      const cap = caption ? ` ${caption}` : '';
+      displayText = `*${user.nome}*:\n📷 Foto:${cap}\n${fileBase64}`;
+    } else if (mimeType.startsWith('video/')) {
+      const cap = caption ? ` ${caption}` : '';
+      displayText = `*${user.nome}*:\n🎥 Vídeo:${cap}\n${fileBase64}`;
+    } else if (mimeType.startsWith('audio/')) {
+      displayText = `*${user.nome}*:\n🎵 Áudio:\n${fileBase64}`;
     } else {
-      displayText = caption 
-        ? `*${user.nome}*: [Mídia: ${fileName}] ${caption}` 
-        : `*${user.nome}*: [Arquivo: ${fileName}]`;
+      displayText = `*${user.nome}*:\n📄 Documento: ${fileName}\n${fileBase64}`;
     }
     try {
       const msg = await prisma.whatsAppMessage.create({
@@ -239,12 +243,16 @@ export async function sendWhatsAppMedia(
 
     if (response.ok) {
       let displayText = '';
-      if (mimeType.startsWith('audio/')) {
-        displayText = `*${user.nome}*: 🎵 Áudio:\n${fileBase64}`;
+      if (mimeType.startsWith('image/')) {
+        const cap = caption ? ` ${caption}` : '';
+        displayText = `*${user.nome}*:\n📷 Foto:${cap}\n${fileBase64}`;
+      } else if (mimeType.startsWith('video/')) {
+        const cap = caption ? ` ${caption}` : '';
+        displayText = `*${user.nome}*:\n🎥 Vídeo:${cap}\n${fileBase64}`;
+      } else if (mimeType.startsWith('audio/')) {
+        displayText = `*${user.nome}*:\n🎵 Áudio:\n${fileBase64}`;
       } else {
-        displayText = caption 
-          ? `*${user.nome}*: [Mídia: ${fileName}] ${caption}` 
-          : `*${user.nome}*: [Arquivo: ${fileName}]`;
+        displayText = `*${user.nome}*:\n📄 Documento: ${fileName}\n${fileBase64}`;
       }
 
       const msg = await prisma.whatsAppMessage.create({
