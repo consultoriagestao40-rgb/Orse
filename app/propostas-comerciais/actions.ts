@@ -823,3 +823,52 @@ export async function responderAjusteAction(documentoId: string, negotiationId: 
   }
 }
 
+export async function uploadClientFileAction(base64Data: string, fileName: string) {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+
+    // Split base64 prefix
+    const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+      if (base64Data.startsWith('http') || base64Data.startsWith('/uploads/')) {
+        return { success: true, fileUrl: base64Data };
+      }
+      return { success: false, error: 'Formato de arquivo inválido' };
+    }
+
+    const fileType = matches[1];
+    const buffer = Buffer.from(matches[2], 'base64');
+    
+    // Validate size (less than 15MB)
+    if (buffer.length > 15 * 1024 * 1024) {
+      return { success: false, error: 'Arquivo muito grande (máximo 15MB)' };
+    }
+
+    // Determine extension
+    let ext = '.png';
+    if (fileType.includes('jpeg') || fileType.includes('jpg')) ext = '.jpg';
+    else if (fileType.includes('webp')) ext = '.webp';
+    else if (fileType.includes('gif')) ext = '.gif';
+    else if (fileType.includes('pdf')) ext = '.pdf';
+    else if (fileType.includes('sheet') || fileType.includes('excel') || fileType.includes('ms-excel')) ext = '.xlsx';
+    else if (fileType.includes('word') || fileType.includes('officedocument')) ext = '.docx';
+
+    const cleanFileName = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}${ext}`;
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+    
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const filePath = path.join(uploadDir, cleanFileName);
+    fs.writeFileSync(filePath, buffer);
+
+    const fileUrl = `/uploads/${cleanFileName}`;
+    return { success: true, fileUrl };
+  } catch (err: any) {
+    console.error('Erro no upload do arquivo:', err);
+    return { success: true, fileUrl: base64Data };
+  }
+}
+

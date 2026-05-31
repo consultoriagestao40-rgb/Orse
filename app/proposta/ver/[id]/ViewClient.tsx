@@ -7,7 +7,8 @@ import { aprovarPropostaAction, recusarPropostaAction, trackDocumentoView, getMi
 import { 
   CheckCircle, Edit, FileText, X, Printer, CheckCircle2, ShieldCheck, Mail, MapPin, 
   Smartphone, User, Presentation, Calculator, BookOpen, ChevronRight, ChevronLeft, Menu, TrendingUp,
-  UserCheck, ClipboardList, Package, Layers, Info, Download, Clock, AlertTriangle
+  UserCheck, ClipboardList, Package, Layers, Info, Download, Clock, AlertTriangle,
+  Video, Image, Paperclip, ExternalLink, Eye
 } from 'lucide-react';
 
 const PropostaApresentacaoPrint = dynamic(
@@ -549,7 +550,10 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     apresentacao: true,
     proposta: true,
     fpv: true,
-    minuta: false
+    minuta: false,
+    video: false,
+    fotos: false,
+    documentos: false
   };
 
   const isSlide = !!doc.templateOrigem?.nome?.toLowerCase()?.includes('apresenta') || doc.tipo === 'SLIDE_DECK';
@@ -579,12 +583,19 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     : rawCanvaUrl;
   const hasCanva = !!canvaUrl;
 
+  const videoUrl = doc.configApresentacao?.videoUrl || '';
+  const fotosList = doc.configApresentacao?.fotosList || [];
+  const documentosList = doc.configApresentacao?.documentosList || [];
+
   const navItems = [
     { id: 'apresentacao', label: '1. Apresentação Slides', icon: Presentation, show: tabsConfig.apresentacao && hasCanva },
     { id: 'proposta', label: '2. Proposta Comercial (A4)', icon: FileText, show: tabsConfig.proposta },
     { id: 'fpv', label: '3. Planilhas FPV Detalhada', icon: Calculator, show: tabsConfig.fpv && !!fullProposta },
     { id: 'minuta', label: '4. Minuta de Contrato', icon: BookOpen, show: tabsConfig.minuta && !!doc.configApresentacao?.clientTabs?.minutaTemplateId },
-    { id: 'historico', label: '5. Histórico e Ajustes', icon: Clock, show: !!doc.configApresentacao?.negotiations && doc.configApresentacao.negotiations.length > 0 }
+    { id: 'video', label: '5. Vídeo Apresentação', icon: Video, show: tabsConfig.video && !!doc.configApresentacao?.videoUrl },
+    { id: 'fotos', label: '6. Fotos da Visita Técnica', icon: Image, show: tabsConfig.fotos && !!doc.configApresentacao?.fotosList?.length },
+    { id: 'documentos', label: '7. Documentos & Certidões', icon: Paperclip, show: tabsConfig.documentos && !!doc.configApresentacao?.documentosList?.length },
+    { id: 'historico', label: '8. Histórico e Ajustes', icon: Clock, show: !!doc.configApresentacao?.negotiations && doc.configApresentacao.negotiations.length > 0 }
   ].filter(item => item.show);
 
   // Define a aba ativa padrão inicial
@@ -593,10 +604,14 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     if (tabsConfig.proposta) return 'proposta';
     if (tabsConfig.fpv && fullProposta) return 'fpv';
     if (tabsConfig.minuta && doc.configApresentacao?.clientTabs?.minutaTemplateId) return 'minuta';
+    if (tabsConfig.video && doc.configApresentacao?.videoUrl) return 'video';
+    if (tabsConfig.fotos && doc.configApresentacao?.fotosList?.length) return 'fotos';
+    if (tabsConfig.documentos && doc.configApresentacao?.documentosList?.length) return 'documentos';
     return 'proposta';
   };
 
   const [activeClientTab, setActiveClientTab] = useState<string>('proposta');
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
     setActiveClientTab(getFirstActiveTab());
@@ -2057,7 +2072,175 @@ return (
             </div>
           )}
 
-          {/* 5. ABA: HISTÓRICO E AJUSTES */}
+          {/* 5. ABA: VÍDEO DE APRESENTAÇÃO */}
+          {activeClientTab === 'video' && videoUrl && (
+            <div className="max-w-[960px] mx-auto bg-white rounded-3xl p-6 md:p-10 shadow-2xl shadow-slate-950/20 text-slate-800 animate-fadeIn relative">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center print:hidden flex items-center justify-center gap-2 border-b border-slate-100 pb-3">
+                🎥 Vídeo de Apresentação da Proposta
+              </h3>
+              
+              <div className="w-full aspect-[16/9] bg-slate-950 overflow-hidden relative rounded-2xl border border-slate-100 shadow-lg">
+                {videoUrl.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i) ? (
+                  <video src={videoUrl} controls className="absolute inset-0 w-full h-full object-contain" />
+                ) : (
+                  <iframe
+                    src={(() => {
+                      if (!videoUrl) return '';
+                      if (videoUrl.includes('youtube.com/watch')) {
+                        const urlObj = new URL(videoUrl);
+                        const v = urlObj.searchParams.get('v');
+                        if (v) return `https://www.youtube.com/embed/${v}`;
+                      }
+                      if (videoUrl.includes('youtu.be/')) {
+                        const parts = videoUrl.split('youtu.be/');
+                        if (parts[1]) {
+                          const id = parts[1].split('?')[0];
+                          return `https://www.youtube.com/embed/${id}`;
+                        }
+                      }
+                      if (videoUrl.includes('vimeo.com/')) {
+                        const parts = videoUrl.split('vimeo.com/');
+                        if (parts[1]) {
+                          const id = parts[1].split('?')[0].split('#')[0];
+                          if (/^\d+$/.test(id)) {
+                            return `https://player.vimeo.com/video/${id}`;
+                          }
+                        }
+                      }
+                      return videoUrl;
+                    })()}
+                    className="absolute inset-0 w-full h-full border-none"
+                    allowFullScreen
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 6. ABA: FOTOS DA VISITA TÉCNICA */}
+          {activeClientTab === 'fotos' && fotosList.length > 0 && (
+            <div className="max-w-[960px] mx-auto bg-white rounded-3xl p-6 md:p-10 shadow-2xl shadow-slate-950/20 text-slate-800 animate-fadeIn relative">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center print:hidden flex items-center justify-center gap-2 border-b border-slate-100 pb-3">
+                📸 Galeria de Fotos da Visita Técnica
+              </h3>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {fotosList.map((url: string, idx: number) => (
+                  <div 
+                    key={idx} 
+                    onClick={() => setLightboxIndex(idx)}
+                    className="group cursor-pointer aspect-square rounded-2xl overflow-hidden bg-slate-50 border border-slate-150 hover:border-slate-300 shadow-sm hover:shadow-md transition-all relative"
+                  >
+                    <img 
+                      src={url} 
+                      alt={`Visita técnica ${idx + 1}`} 
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                    />
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="text-white text-xs font-black uppercase tracking-widest bg-black/60 px-3 py-1.5 rounded-xl flex items-center gap-1.5 backdrop-blur-sm">
+                        <Eye size={12} /> Ampliar
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Lightbox Modal */}
+              {lightboxIndex !== null && (
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/90 backdrop-blur-md animate-fadeIn p-4">
+                  <button 
+                    onClick={() => setLightboxIndex(null)}
+                    className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition-colors cursor-pointer"
+                  >
+                    <X size={20} />
+                  </button>
+
+                  <button 
+                    disabled={lightboxIndex === 0}
+                    onClick={() => setLightboxIndex(prev => prev !== null && prev > 0 ? prev - 1 : prev)}
+                    className={`absolute left-4 text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition-colors cursor-pointer ${lightboxIndex === 0 ? 'opacity-20 cursor-not-allowed' : ''}`}
+                  >
+                    <ChevronLeft size={24} />
+                  </button>
+
+                  <div className="max-w-4xl max-h-[80vh] flex items-center justify-center">
+                    <img 
+                      src={fotosList[lightboxIndex]} 
+                      alt={`Zoom visita técnica ${lightboxIndex + 1}`}
+                      className="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl border border-white/10" 
+                    />
+                  </div>
+
+                  <button 
+                    disabled={lightboxIndex === fotosList.length - 1}
+                    onClick={() => setLightboxIndex(prev => prev !== null && prev < fotosList.length - 1 ? prev + 1 : prev)}
+                    className={`absolute right-4 text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition-colors cursor-pointer ${lightboxIndex === fotosList.length - 1 ? 'opacity-20 cursor-not-allowed' : ''}`}
+                  >
+                    <ChevronRight size={24} />
+                  </button>
+
+                  <div className="absolute bottom-4 text-white/50 text-xs font-black uppercase tracking-widest font-mono">
+                    Foto {lightboxIndex + 1} de {fotosList.length}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 7. ABA: DOCUMENTOS E CERTIDÕES */}
+          {activeClientTab === 'documentos' && documentosList.length > 0 && (
+            <div className="max-w-[960px] mx-auto bg-white rounded-3xl p-6 md:p-10 shadow-2xl shadow-slate-950/20 text-slate-800 animate-fadeIn relative">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center print:hidden flex items-center justify-center gap-2 border-b border-slate-100 pb-3">
+                📋 Documentos e Certidões Complementares
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {documentosList.map((docItem: { name: string; url: string }, idx: number) => (
+                  <div 
+                    key={idx} 
+                    className="flex items-center justify-between bg-slate-50 border border-slate-200 hover:border-slate-300 p-4 rounded-2xl shadow-sm hover:shadow transition-all group"
+                  >
+                    <div className="flex items-center gap-3 max-w-[70%]">
+                      <div className="bg-red-50 text-red-650 p-3 rounded-xl border border-red-100 group-hover:scale-105 transition-transform">
+                        <FileText size={20} />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-extrabold text-xs text-slate-800 truncate" title={docItem.name}>
+                          {docItem.name}
+                        </p>
+                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 bg-slate-200/50 px-1.5 py-0.5 rounded-md mt-1 inline-block">
+                          Documento PDF
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 shrink-0">
+                      <a 
+                        href={docItem.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="bg-white hover:bg-slate-100 border border-slate-300 p-2 rounded-xl text-slate-600 hover:text-slate-900 transition-colors flex items-center justify-center"
+                        title="Visualizar no Navegador"
+                      >
+                        <ExternalLink size={14} />
+                      </a>
+                      <a 
+                        href={docItem.url} 
+                        download={docItem.name}
+                        className="bg-emerald-650 hover:bg-emerald-700 text-white p-2 rounded-xl transition-colors flex items-center justify-center shadow shadow-emerald-500/10 active:scale-95"
+                        title="Baixar Arquivo"
+                      >
+                        <Download size={14} />
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 8. ABA: HISTÓRICO E AJUSTES */}
           {activeClientTab === 'historico' && (
             <div className="max-w-[960px] mx-auto bg-white rounded-3xl p-6 md:p-10 shadow-2xl shadow-slate-950/20 text-slate-800 animate-fadeIn relative">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center print:hidden flex items-center justify-center gap-2 border-b border-slate-100 pb-3">

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Copy, Check, Share2, FileText, Calculator, BookOpen, Presentation, Clock, Calendar } from 'lucide-react';
+import { X, Copy, Check, Share2, FileText, Calculator, BookOpen, Presentation, Clock, Calendar, Video, Image, Paperclip, Trash2, Plus, Loader2 } from 'lucide-react';
 import { getTemplates } from '@/app/contratos/actions';
-import { updateConfigApresentacao } from '@/app/propostas-comerciais/actions';
+import { updateConfigApresentacao, uploadClientFileAction } from '@/app/propostas-comerciais/actions';
 
 interface ClientLinkModalProps {
   documentoId: string;
@@ -36,7 +36,33 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
   const [canvaEmbedUrl, setCanvaEmbedUrl] = useState(
     configApresentacao?.canvaEmbedUrl || ''
   );
-  const [validadeDays, setValidadeDays] = useState<number | ''>('');
+
+  // Novos Estados
+  const [video, setVideo] = useState(
+    configApresentacao?.clientTabs?.video === true
+  );
+  const [videoUrl, setVideoUrl] = useState(
+    configApresentacao?.videoUrl || ''
+  );
+  const [fotos, setFotos] = useState(
+    configApresentacao?.clientTabs?.fotos === true
+  );
+  const [fotosList, setFotosList] = useState<string[]>(
+    configApresentacao?.fotosList || []
+  );
+  const [uploadingFotos, setUploadingFotos] = useState(false);
+
+  const [documentos, setDocumentos] = useState(
+    configApresentacao?.clientTabs?.documentos === true
+  );
+  const [documentosList, setDocumentosList] = useState<{ name: string; url: string }[]>(
+    configApresentacao?.documentosList || []
+  );
+  const [uploadingDocs, setUploadingDocs] = useState(false);
+
+  const [validadeDays, setValidadeDays] = useState<number | ''>(
+    configApresentacao?.validadeDays || ''
+  );
 
   // Carregar as minutas disponíveis no sistema
   useEffect(() => {
@@ -57,6 +83,70 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
     loadTemplates();
   }, [minutaTemplateId]);
 
+  const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploadingFotos(true);
+    try {
+      const urls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        const base64Data = await base64Promise;
+        const res = await uploadClientFileAction(base64Data, file.name);
+        if (res.success && res.fileUrl) {
+          urls.push(res.fileUrl);
+        } else {
+          alert(`Erro ao subir foto: ${res.error || 'Erro desconhecido'}`);
+        }
+      }
+      setFotosList(prev => [...prev, ...urls]);
+    } catch (err: any) {
+      console.error(err);
+      alert('Erro ao carregar arquivos: ' + err.message);
+    } finally {
+      setUploadingFotos(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploadingDocs(true);
+    try {
+      const docs: { name: string; url: string }[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        const base64Data = await base64Promise;
+        const res = await uploadClientFileAction(base64Data, file.name);
+        if (res.success && res.fileUrl) {
+          docs.push({ name: file.name, url: res.fileUrl });
+        } else {
+          alert(`Erro ao subir documento: ${res.error || 'Erro desconhecido'}`);
+        }
+      }
+      setDocumentosList(prev => [...prev, ...docs]);
+    } catch (err: any) {
+      console.error(err);
+      alert('Erro ao carregar arquivos: ' + err.message);
+    } finally {
+      setUploadingDocs(false);
+      e.target.value = '';
+    }
+  };
+
   const handleSaveAndCopy = async () => {
     const days = Number(validadeDays);
     if (!validadeDays || isNaN(days) || days <= 0) {
@@ -75,8 +165,14 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
           proposta,
           fpv,
           minuta,
-          minutaTemplateId
+          minutaTemplateId,
+          video,
+          fotos,
+          documentos
         },
+        videoUrl: videoUrl.trim(),
+        fotosList,
+        documentosList,
         validadeDays: days,
         linkCreatedAt: new Date().toISOString(),
         linkExpiresAt: new Date(new Date().getTime() + days * 24 * 60 * 60 * 1000).toISOString()
@@ -260,8 +356,187 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                 </div>
               )}
             </div>
+ 
+            {/* 5. VÍDEO APRESENTATIVO */}
+            <div className={`p-4 border rounded-2xl transition-all ${video ? 'border-red-500/30 bg-red-50/5' : 'border-slate-200 bg-white'}`}>
+              <label className="flex items-start gap-4 cursor-pointer select-none">
+                <input 
+                  type="checkbox" 
+                  className="mt-1 w-4 h-4 text-red-650 focus:ring-red-500 border-slate-300 rounded cursor-pointer"
+                  checked={video}
+                  onChange={(e) => setVideo(e.target.checked)}
+                />
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center gap-1.5 font-black text-xs uppercase tracking-wider text-slate-800">
+                    <Video size={14} className="text-red-600" />
+                    5. Vídeo de Apresentação da Proposta
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
+                    Insira o link de um vídeo de apresentação ou explicação da proposta para engajar o cliente.
+                  </p>
+                </div>
+              </label>
 
-            {/* 5. PRAZO DE VALIDADE DO LINK */}
+              {video && (
+                <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+                    Link do Vídeo (YouTube, Vimeo ou link direto MP4)
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder="Cole o link (ex: https://www.youtube.com/watch?v=... ou Vimeo)..."
+                    value={videoUrl}
+                    onChange={(e) => setVideoUrl(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-red-500"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* 6. FOTOS DA VISITA TÉCNICA */}
+            <div className={`p-4 border rounded-2xl transition-all ${fotos ? 'border-purple-500/30 bg-purple-50/5' : 'border-slate-200 bg-white'}`}>
+              <label className="flex items-start gap-4 cursor-pointer select-none">
+                <input 
+                  type="checkbox" 
+                  className="mt-1 w-4 h-4 text-purple-600 focus:ring-purple-500 border-slate-300 rounded cursor-pointer"
+                  checked={fotos}
+                  onChange={(e) => setFotos(e.target.checked)}
+                />
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center gap-1.5 font-black text-xs uppercase tracking-wider text-slate-800">
+                    <Image size={14} className="text-purple-600" />
+                    6. Fotos da Visita Técnica
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
+                    Disponibilize uma galeria de fotos da visita técnica ou vistoria para validação visual pelo cliente.
+                  </p>
+                </div>
+              </label>
+
+              {fotos && (
+                <div className="mt-4 pt-4 border-t border-slate-100 space-y-4">
+                  
+                  {/* Grid de Fotos já enviadas */}
+                  {fotosList.length > 0 && (
+                    <div className="grid grid-cols-4 gap-2">
+                      {fotosList.map((url, idx) => (
+                        <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden bg-slate-100 border border-slate-200">
+                          <img 
+                            src={url} 
+                            alt={`Foto da visita ${idx + 1}`} 
+                            className="w-full h-full object-cover" 
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFotosList(prev => prev.filter((_, i) => i !== idx))}
+                            className="absolute top-1 right-1 bg-red-650 hover:bg-red-700 text-white p-1 rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Upload Dropzone */}
+                  <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 hover:border-purple-500/50 rounded-xl p-4 cursor-pointer hover:bg-slate-50 transition-all text-center">
+                    <input 
+                      type="file" 
+                      multiple 
+                      accept="image/*"
+                      onChange={handleFotoUpload}
+                      disabled={uploadingFotos}
+                      className="hidden"
+                    />
+                    {uploadingFotos ? (
+                      <div className="flex flex-col items-center gap-1.5 text-slate-500 font-bold uppercase tracking-widest text-[9px]">
+                        <Loader2 size={20} className="animate-spin text-purple-600" />
+                        Fazendo upload das fotos...
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1 text-slate-500">
+                        <Plus size={16} className="text-purple-600 mb-1" />
+                        <span className="text-[10px] font-black uppercase tracking-wider">Clique para adicionar fotos</span>
+                        <span className="text-[9px] text-slate-400 font-bold">Imagens PNG, JPG, WEBP (Máx. 15MB)</span>
+                      </div>
+                    )}
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* 7. DOCUMENTOS E CERTIDÕES (PDF) */}
+            <div className={`p-4 border rounded-2xl transition-all ${documentos ? 'border-blue-500/30 bg-blue-50/5' : 'border-slate-200 bg-white'}`}>
+              <label className="flex items-start gap-4 cursor-pointer select-none">
+                <input 
+                  type="checkbox" 
+                  className="mt-1 w-4 h-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded cursor-pointer"
+                  checked={documentos}
+                  onChange={(e) => setDocumentos(e.target.checked)}
+                />
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center gap-1.5 font-black text-xs uppercase tracking-wider text-slate-800">
+                    <Paperclip size={14} className="text-blue-600" />
+                    7. Documentos e Certidões (PDF)
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
+                    Anexe certidões negativas, comprovantes de regularidade fiscal ou arquivos complementares em PDF.
+                  </p>
+                </div>
+              </label>
+
+              {documentos && (
+                <div className="mt-4 pt-4 border-t border-slate-100 space-y-4">
+                  
+                  {/* Lista de documentos já enviados */}
+                  {documentosList.length > 0 && (
+                    <div className="space-y-1.5">
+                      {documentosList.map((docItem, idx) => (
+                        <div key={idx} className="flex justify-between items-center bg-slate-50 border border-slate-200 p-2 rounded-xl text-xs">
+                          <div className="flex items-center gap-2 text-slate-700 font-bold max-w-[80%]">
+                            <FileText size={14} className="text-slate-400 shrink-0" />
+                            <span className="truncate">{docItem.name}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setDocumentosList(prev => prev.filter((_, i) => i !== idx))}
+                            className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Upload Dropzone */}
+                  <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 hover:border-blue-500/50 rounded-xl p-4 cursor-pointer hover:bg-slate-50 transition-all text-center">
+                    <input 
+                      type="file" 
+                      multiple 
+                      accept=".pdf"
+                      onChange={handleDocUpload}
+                      disabled={uploadingDocs}
+                      className="hidden"
+                    />
+                    {uploadingDocs ? (
+                      <div className="flex flex-col items-center gap-1.5 text-slate-500 font-bold uppercase tracking-widest text-[9px]">
+                        <Loader2 size={20} className="animate-spin text-blue-600" />
+                        Fazendo upload dos documentos...
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1 text-slate-500">
+                        <Plus size={16} className="text-blue-600 mb-1" />
+                        <span className="text-[10px] font-black uppercase tracking-wider">Clique para adicionar PDFs</span>
+                        <span className="text-[9px] text-slate-400 font-bold">Apenas arquivos no formato PDF (Máx. 15MB)</span>
+                      </div>
+                    )}
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* 8. PRAZO DE VALIDADE DO LINK */}
             <div className="p-4 border rounded-2xl border-slate-200 bg-white space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 font-black text-xs uppercase tracking-wider text-slate-800">
