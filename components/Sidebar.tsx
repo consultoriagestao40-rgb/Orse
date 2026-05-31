@@ -746,7 +746,9 @@ const Sidebar = () => {
       {/* Menu de Navegação */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {renderedMenuItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = item.href === '/' 
+            ? (pathname === '/' || pathname.startsWith('/propostas/nova'))
+            : pathname === item.href;
           return (
             <Link
               key={item.label}
