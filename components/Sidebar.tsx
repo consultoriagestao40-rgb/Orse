@@ -454,6 +454,7 @@ const Sidebar = () => {
   ];
 
   const isSaaSArea = pathname.startsWith('/admin/empresas');
+  const showTenantLogo = user?.tenantLogoUrl && !isSaaSArea && user.email !== 'admin@smartbidhub.com.br';
 
   const renderedMenuItems = isSaaSArea
     ? [
@@ -484,7 +485,7 @@ const Sidebar = () => {
         {!isCollapsed ? (
           <div className="flex-1 flex items-center justify-between min-w-0">
             <div>
-              {user?.tenantLogoUrl ? (
+              {showTenantLogo ? (
                 <div className="flex flex-col gap-1.5 animate-fadeIn">
                   <img 
                     src={user.tenantLogoUrl} 
@@ -506,7 +507,7 @@ const Sidebar = () => {
           </div>
         ) : (
           <div className="w-full flex flex-col items-center gap-3">
-            {user?.tenantLogoUrl ? (
+            {showTenantLogo ? (
               <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 shadow-md">
                 <img 
                   src={user.tenantLogoUrl} 
