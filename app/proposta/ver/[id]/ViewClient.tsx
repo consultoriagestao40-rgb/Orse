@@ -613,6 +613,68 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   const [activeClientTab, setActiveClientTab] = useState<string>('proposta');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
+  const handleDocumentOpen = (url: string) => {
+    if (!url) return;
+    if (url.startsWith('data:')) {
+      try {
+        const parts = url.split(';base64,');
+        const contentType = parts[0].split(':')[1];
+        const raw = window.atob(parts[1]);
+        const rawLength = raw.length;
+        const uInt8Array = new Uint8Array(rawLength);
+        for (let i = 0; i < rawLength; ++i) {
+          uInt8Array[i] = raw.charCodeAt(i);
+        }
+        const blob = new Blob([uInt8Array], { type: contentType });
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+      } catch (e) {
+        console.error('Erro ao abrir data URL:', e);
+        alert('Erro ao abrir o documento.');
+      }
+    } else {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const handleDocumentDownload = (e: React.MouseEvent, url: string, name: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!url) return;
+    if (url.startsWith('data:')) {
+      try {
+        const parts = url.split(';base64,');
+        const contentType = parts[0].split(':')[1];
+        const raw = window.atob(parts[1]);
+        const rawLength = raw.length;
+        const uInt8Array = new Uint8Array(rawLength);
+        for (let i = 0; i < rawLength; ++i) {
+          uInt8Array[i] = raw.charCodeAt(i);
+        }
+        const blob = new Blob([uInt8Array], { type: contentType });
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      } catch (e) {
+        console.error('Erro ao baixar data URL:', e);
+        alert('Erro ao baixar o documento.');
+      }
+    } else {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
+
   useEffect(() => {
     setActiveClientTab(getFirstActiveTab());
   }, [doc]);
@@ -2208,7 +2270,7 @@ return (
                     {documentosList.map((docItem: { name: string; url: string }, idx: number) => (
                       <tr 
                         key={idx}
-                        onClick={() => window.open(docItem.url, '_blank', 'noopener,noreferrer')}
+                        onClick={() => handleDocumentOpen(docItem.url)}
                         className="hover:bg-slate-50/80 transition-colors cursor-pointer group animate-in fade-in duration-200"
                       >
                         {/* Nome do Documento */}
@@ -2233,23 +2295,22 @@ return (
                         {/* Ações */}
                         <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-2">
-                            <a 
-                              href={docItem.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="bg-white hover:bg-slate-100 border border-slate-300 p-2 rounded-xl text-slate-600 hover:text-slate-900 transition-colors flex items-center justify-center shadow-sm"
+                            <button 
+                              type="button"
+                              onClick={() => handleDocumentOpen(docItem.url)}
+                              className="bg-white hover:bg-slate-100 border border-slate-300 p-2 rounded-xl text-slate-600 hover:text-slate-900 transition-colors flex items-center justify-center shadow-sm cursor-pointer"
                               title="Visualizar no Navegador"
                             >
                               <ExternalLink size={14} />
-                            </a>
-                            <a 
-                              href={docItem.url} 
-                              download={docItem.name}
-                              className="bg-emerald-650 hover:bg-emerald-700 text-white p-2 rounded-xl transition-colors flex items-center justify-center shadow shadow-emerald-500/10 active:scale-95"
+                            </button>
+                            <button 
+                              type="button"
+                              onClick={(e) => handleDocumentDownload(e, docItem.url, docItem.name)}
+                              className="bg-emerald-650 hover:bg-emerald-700 text-white p-2 rounded-xl transition-colors flex items-center justify-center shadow shadow-emerald-500/10 active:scale-95 cursor-pointer"
                               title="Baixar Arquivo"
                             >
                               <Download size={14} />
-                            </a>
+                            </button>
                           </div>
                         </td>
                       </tr>
