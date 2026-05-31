@@ -434,12 +434,12 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   }, [activeClientTab]);
 
 return (
-    <div className="bg-[#FAFBFD] w-full h-screen text-slate-800 font-sans flex flex-col overflow-hidden select-none pt-20 animate-fadeIn">
+    <div className="bg-[#FAFBFD] w-full h-screen text-slate-800 font-sans flex flex-col overflow-hidden select-none pt-24 animate-fadeIn">
       
       {/* Real-time Countdown Timer fixed at the top (ALWAYS ACTIVE FOR CONSISTENCY) */}
-      <div className="fixed top-0 left-0 right-0 h-20 bg-[#1B4D3E] text-white flex items-center justify-between px-6 md:px-8 z-[9999] shadow-md print:hidden font-sans">
+      <div className="fixed top-0 left-0 right-0 h-24 bg-[#1B4D3E] text-white flex items-center justify-between px-6 md:px-8 z-[9999] shadow-md print:hidden font-sans">
         {/* Left: Voltar button (mobile only) & Validade Title or Info */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {!mobileMenuOpen && (
             <button 
               onClick={() => setMobileMenuOpen(true)}
@@ -448,24 +448,35 @@ return (
               <ChevronLeft size={16} /> Voltar
             </button>
           )}
-          <Clock size={20} className="text-emerald-300 animate-pulse hidden sm:block animate-duration-1000 shrink-0" />
-          <div className="flex flex-col">
-            <span className="text-xs md:text-sm font-extrabold uppercase tracking-widest text-emerald-100 leading-snug">
-              Validade da Proposta
-            </span>
-            <span className="text-[10px] md:text-xs text-emerald-250 font-bold uppercase tracking-wider mt-0.5">
-              FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')} • Versão v{versao?.versao || 1}
-            </span>
+          <Clock size={24} className="text-emerald-300 animate-pulse hidden sm:block animate-duration-1000 shrink-0" />
+          <div className="flex flex-col text-left justify-center">
+            {/* Row 1: FPV, Version and Creation date in a highly refined layout */}
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <span className="text-[10px] md:text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
+                FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')}
+              </span>
+              <span className="text-[10px] md:text-xs bg-white/15 text-white/90 border border-white/10 font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
+                Versão v{versao?.versao || 1}
+              </span>
+              <span className="text-[9px] md:text-[10px] text-emerald-250 font-bold uppercase tracking-wider hidden sm:inline-block ml-1">
+                Criada em {doc.data || new Date().toLocaleDateString('pt-BR')} por {doc.vendedorResponsavel || 'Novos Negócios'}
+              </span>
+            </div>
+            
+            {/* Row 2: Large proposal title */}
+            <h1 className="text-sm sm:text-lg md:text-2xl font-black text-white tracking-tight leading-none uppercase">
+              Proposta para {doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Empresa'}
+            </h1>
           </div>
         </div>
         
         {/* Right: Expiration date with much larger size, accompanied by Countdown digits if active */}
         <div className="flex items-center gap-3 md:gap-6">
           <div className="flex flex-col items-end text-right">
-            <span className="text-[9px] md:text-[10px] font-extrabold uppercase tracking-widest text-emerald-200 leading-none">
-              Limite de Validade
+            <span className="text-[9px] md:text-[10px] font-extrabold uppercase tracking-widest text-emerald-250 leading-none">
+              Validade da Proposta
             </span>
-            <span className="text-xs sm:text-base md:text-xl font-black text-white mt-1 uppercase tracking-wider">
+            <span className="text-xs sm:text-base md:text-lg font-black text-white mt-1 uppercase tracking-wider">
               Válida até {doc.configApresentacao?.linkExpiresAt 
                 ? new Date(doc.configApresentacao.linkExpiresAt).toLocaleDateString('pt-BR')
                 : (doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR'))
@@ -475,7 +486,7 @@ return (
 
           {timeLeft && !timeLeft.isExpired && (
             <div className="flex gap-1 md:gap-2 items-center font-mono">
-              <div className="h-8 w-px bg-white/10 hidden sm:block mr-1 md:mr-2" />
+              <div className="h-10 w-px bg-white/10 hidden sm:block mr-1 md:mr-2" />
               {timeLeft.days > 0 && (
                 <>
                   <div className="flex flex-col items-center min-w-[36px] md:min-w-[48px] bg-white/10 border border-white/20 rounded-lg md:rounded-xl p-1 shadow-inner">
@@ -646,33 +657,15 @@ return (
             /* EXPANDED VIEW */
             <div className="flex flex-col justify-between h-full w-full">
               <div>
-                {/* Header da Proposta com FPV e Versão em Destaque */}
-                <div className="space-y-1.5 text-left pb-4 border-b border-slate-100 font-sans">
-                  <div className="flex justify-between items-center gap-2">
-                    <div className="flex gap-1.5">
-                      <span className="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-250 font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
-                        FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')}
-                      </span>
-                      <span className="text-[10px] bg-slate-50 text-slate-500 border border-slate-200 font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
-                        Versão v{versao?.versao || 1}
-                      </span>
-                    </div>
-                    <button 
-                      onClick={() => setSidebarCollapsed(true)} 
-                      className="p-1.5 hover:bg-slate-50 text-slate-400 hover:text-[#1B4D3E] rounded-xl transition-all cursor-pointer hidden md:flex items-center justify-center shrink-0 border border-transparent hover:border-slate-200/60"
-                      title="Recolher Menu"
-                    >
-                      <ChevronLeft size={16} />
-                    </button>
-                  </div>
-                  <h2 className="text-sm font-black text-slate-800 tracking-tight leading-snug mt-2">
-                    Proposta para {doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Empresa'}
-                  </h2>
-                  <p className="text-[9.5px] text-slate-400 font-bold uppercase tracking-wider">
-                    Criada em {doc.data || new Date().toLocaleDateString('pt-BR')} por {doc.vendedorResponsavel || 'Novos Negócios'}
-                  </p>
-
-
+                {/* Sleek Minimal Header for Collapse Button */}
+                <div className="flex justify-end pb-3 border-b border-slate-100 font-sans">
+                  <button 
+                    onClick={() => setSidebarCollapsed(true)} 
+                    className="p-1.5 hover:bg-slate-50 text-slate-400 hover:text-[#1B4D3E] rounded-xl transition-all cursor-pointer hidden md:flex items-center justify-center shrink-0 border border-transparent hover:border-slate-200/60"
+                    title="Recolher Menu"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
                 </div>
 
                 {/* Card Cliente */}
