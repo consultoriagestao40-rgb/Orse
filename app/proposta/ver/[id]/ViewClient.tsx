@@ -1452,8 +1452,8 @@ return (
                           
                           {/* Total Montante A */}
                           <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white text-[9.5px]">
-                            <td colSpan={3} className="py-2 px-6 text-right uppercase tracking-wider">Total do Montante "A" (Bloco A)</td>
-                            <td className="py-2 px-6 text-right border-l border-emerald-950">
+                            <td colSpan={3} className="py-2 px-6 text-right uppercase tracking-wider text-white !text-white">Total do Montante "A" (Bloco A)</td>
+                            <td className="py-2 px-6 text-right border-l border-emerald-950 text-emerald-400 !text-emerald-400 font-extrabold">
                               {formatCurrency(versao?.resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.blocoA || 0) * i.quantidade), 0) || 0)}
                             </td>
                           </tr>
@@ -1501,8 +1501,8 @@ return (
                                 ))}
                                 {/* Total Montante B */}
                                 <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white text-[9.5px]">
-                                  <td colSpan={3} className="py-2 px-6 text-right uppercase tracking-wider">Total do Montante "B"</td>
-                                  <td className="py-2 px-6 text-right border-l border-emerald-950">
+                                  <td colSpan={3} className="py-2 px-6 text-right uppercase tracking-wider text-white !text-white">Total do Montante "B"</td>
+                                  <td className="py-2 px-6 text-right border-l border-emerald-950 text-emerald-400 !text-emerald-400 font-extrabold">
                                     {formatCurrency(totalB)}
                                   </td>
                                 </tr>
@@ -1570,8 +1570,8 @@ return (
                                 ))}
                                 {/* Total Montante C */}
                                 <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white text-[9.5px]">
-                                  <td colSpan={3} className="py-2 px-6 text-right uppercase tracking-wider">Total do Montante "C"</td>
-                                  <td className="py-2 px-6 text-right border-l border-emerald-950">
+                                  <td colSpan={3} className="py-2 px-6 text-right uppercase tracking-wider text-white !text-white">Total do Montante "C"</td>
+                                  <td className="py-2 px-6 text-right border-l border-emerald-950 text-emerald-400 !text-emerald-400 font-extrabold">
                                     {formatCurrency(totalC)}
                                   </td>
                                 </tr>
@@ -1605,8 +1605,8 @@ return (
                             </td>
                           </tr>
                           <tr className="bg-[#599e41] text-white font-bold border-y border-[#488234] text-[9.5px]">
-                            <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total dos Montantes "A+B+C+D"</td>
-                            <td className="py-2.5 px-6 text-right border-l border-[#3a692a]">
+                            <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider text-white !text-white">Total dos Montantes "A+B+C+D"</td>
+                            <td className="py-2.5 px-6 text-right border-l border-[#3a692a] text-emerald-200 !text-emerald-200 font-bold">
                               {formatCurrency((versao?.resultado?.custoDiretoTotal || 0) + (versao?.resultado?.taxaAdm || 0) + (versao?.resultado?.margemLucro || 0) + (versao?.resultado?.comissaoVendedor || 0))}
                             </td>
                           </tr>
@@ -1617,15 +1617,15 @@ return (
                             return (
                               <>
                                 <tr className="bg-[#8ec277] text-slate-900 border-b border-white text-[9.5px]">
-                                  <td className="py-2 px-6 font-bold uppercase">Impostos</td>
-                                  <td colSpan={2} className="py-2 px-6 text-center font-bold bg-slate-50/50">{totalTributos.toFixed(2)}%</td>
-                                  <td className="py-2 px-6 text-right font-bold border-l border-[#7bb363]">{formatCurrency(versao?.resultado?.impostosTotais || 0)}</td>
+                                  <td className="py-2 px-6 font-bold uppercase text-slate-900 !text-slate-900">Impostos</td>
+                                  <td colSpan={2} className="py-2 px-6 text-center font-bold bg-slate-50/50 text-slate-900 !text-slate-900">{totalTributos.toFixed(2)}%</td>
+                                  <td className="py-2 px-6 text-right font-bold border-l border-[#7bb363] text-slate-900 !text-slate-900">{formatCurrency(versao?.resultado?.impostosTotais || 0)}</td>
                                 </tr>
                                 {(fullProposta.premissas?.tributos || []).map((t: any, i: number) => (
                                   <tr key={i} className="border-b border-slate-200 border-dotted bg-white">
-                                    <td className="py-1 px-6 font-bold">{t.nome}</td>
-                                    <td colSpan={2} className="py-1 px-6 text-center font-bold bg-slate-50">{t.percent.toFixed(2)}%</td>
-                                    <td className="py-1 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100">
+                                    <td className="py-1 px-6 font-bold text-slate-800 !text-slate-800">{t.nome}</td>
+                                    <td colSpan={2} className="py-1 px-6 text-center font-bold bg-slate-50 text-slate-800 !text-slate-800">{t.percent.toFixed(2)}%</td>
+                                    <td className="py-1 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100 text-emerald-800 !text-emerald-800">
                                       {formatCurrency((versao?.resultado?.faturamentoBruto || 0) * (t.percent / 100))}
                                     </td>
                                   </tr>
@@ -1636,8 +1636,8 @@ return (
 
                           {/* TOTAIS FINAIS */}
                           <tr className="bg-[#1B4D3E] text-white font-black border-t-4 border-white text-xs tracking-widest uppercase">
-                            <td colSpan={3} className="py-4 px-6 text-right">Total dos Montantes "A+B+C+D" + Impostos</td>
-                            <td className="py-4 px-6 text-right text-emerald-400 border-l border-emerald-950 font-black text-sm">
+                            <td colSpan={3} className="py-4 px-6 text-right text-white !text-white">Total dos Montantes "A+B+C+D" + Impostos</td>
+                            <td className="py-4 px-6 text-right text-emerald-400 !text-emerald-400 border-l border-emerald-950 font-black text-sm">
                               {formatCurrency(versao?.resultado?.faturamentoBruto || doc.valorTotal || 0)}
                             </td>
                           </tr>
@@ -1646,8 +1646,8 @@ return (
                             if (isSpot) return null;
                             return (
                               <tr className="bg-black text-white font-black border-t border-slate-800 text-[10px] tracking-widest uppercase">
-                                <td colSpan={3} className="py-3 px-6 text-right">Valor Total Anual do Contrato</td>
-                                <td className="py-3 px-6 text-right text-emerald-500 border-l border-slate-900 font-bold">
+                                <td colSpan={3} className="py-3 px-6 text-right text-white !text-white">Valor Total Anual do Contrato</td>
+                                <td className="py-3 px-6 text-right text-emerald-400 !text-emerald-400 border-l border-slate-900 font-black">
                                   {formatCurrency((versao?.resultado?.faturamentoBruto || 0) * 12)}
                                 </td>
                               </tr>
