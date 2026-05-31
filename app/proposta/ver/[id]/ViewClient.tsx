@@ -2083,8 +2083,34 @@ return (
               </button>
             </div>
 
-            <div className="p-8 space-y-4">
-              <p className="text-[10px] text-slate-500 font-semibold uppercase leading-relaxed">
+            <div className="p-8 space-y-4 max-h-[85vh] overflow-y-auto flex flex-col scrollbar-thin">
+              
+              {/* HISTÓRICO DE NEGOCIAÇÃO COMPLETO DENTRO DO CHAT DE RESPOSTA */}
+              {doc.configApresentacao?.negotiations && doc.configApresentacao.negotiations.length > 0 && (
+                <div className="space-y-3 max-h-[220px] overflow-y-auto pr-2 border-b border-slate-100 pb-4 mb-2 scrollbar-thin">
+                  <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest text-left">Conversas Anteriores:</span>
+                  {doc.configApresentacao.negotiations.map((item: any) => (
+                    <div key={item.id} className="space-y-2 text-left bg-slate-50 border border-slate-150 p-3 rounded-xl">
+                      <div className="flex justify-between items-center text-[8px] font-bold text-slate-400">
+                        <span className="uppercase">{item.tipo === 'recusa' ? `Recusa por ${item.nomeCliente || 'Cliente'}` : `Ajuste por ${item.nomeCliente || 'Cliente'}`}</span>
+                        <span>{new Date(item.data).toLocaleString('pt-BR')}</span>
+                      </div>
+                      <p className="text-[11px] font-semibold text-slate-700 leading-relaxed whitespace-pre-line">{item.mensagem}</p>
+                      {item.respondida && (
+                        <div className="border-t border-slate-200 pt-2 mt-2 pl-3 border-l-2 border-emerald-500 space-y-1">
+                          <div className="flex justify-between items-center text-[8px] font-bold text-emerald-700 uppercase tracking-wider">
+                            <span>✓ Resposta de {item.nomeVendedor || 'Consultor'}</span>
+                            <span>{new Date(item.dataResposta).toLocaleString('pt-BR')}</span>
+                          </div>
+                          <p className="text-[11px] font-medium text-slate-650 leading-relaxed whitespace-pre-line">{item.resposta}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <p className="text-[10px] text-slate-500 font-semibold uppercase leading-relaxed text-left">
                 {negotiationType === 'decline' 
                   ? 'Descreva a justificativa para recusar/declinar esta proposta comercial. O consultor responsável receberá sua resposta instantaneamente via WhatsApp.'
                   : 'Descreva as alterações, ajustes de premissas ou dúvidas que você possui sobre a proposta. O consultor responsável receberá sua mensagem instantaneamente.'

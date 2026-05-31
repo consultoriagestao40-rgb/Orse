@@ -13,6 +13,7 @@ export async function getDocumentoPropostaById(id: string) {
         tenant: true,
         proposta: {
           include: {
+            user: true,
             versoes: {
               include: {
                 items: true
