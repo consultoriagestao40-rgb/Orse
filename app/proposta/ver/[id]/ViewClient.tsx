@@ -434,10 +434,10 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   }, [activeClientTab]);
 
 return (
-    <div className="bg-[#FAFBFD] w-full h-screen text-slate-800 font-sans flex flex-col overflow-hidden select-none pt-16 animate-fadeIn">
+    <div className="bg-[#FAFBFD] w-full h-screen text-slate-800 font-sans flex flex-col overflow-hidden select-none pt-20 animate-fadeIn">
       
       {/* Real-time Countdown Timer fixed at the top (ALWAYS ACTIVE FOR CONSISTENCY) */}
-      <div className="fixed top-0 left-0 right-0 h-16 bg-[#1B4D3E] text-white flex items-center justify-between px-6 z-[9999] shadow-md print:hidden font-sans">
+      <div className="fixed top-0 left-0 right-0 h-20 bg-[#1B4D3E] text-white flex items-center justify-between px-6 md:px-8 z-[9999] shadow-md print:hidden font-sans">
         {/* Left: Voltar button (mobile only) & Validade Title or Info */}
         <div className="flex items-center gap-3">
           {!mobileMenuOpen && (
@@ -448,49 +448,60 @@ return (
               <ChevronLeft size={16} /> Voltar
             </button>
           )}
-          <Clock size={16} className="text-emerald-305 animate-pulse hidden sm:block animate-duration-1000" />
+          <Clock size={20} className="text-emerald-300 animate-pulse hidden sm:block animate-duration-1000 shrink-0" />
           <div className="flex flex-col">
-            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-100">
+            <span className="text-xs md:text-sm font-extrabold uppercase tracking-widest text-emerald-100 leading-snug">
               Validade da Proposta
             </span>
-            <span className="text-[8px] text-emerald-250 font-bold uppercase">
+            <span className="text-[10px] md:text-xs text-emerald-250 font-bold uppercase tracking-wider mt-0.5">
               FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')} • Versão v{versao?.versao || 1}
             </span>
           </div>
         </div>
         
-        {/* Right: Larger Countdown Timer digits if active, otherwise static badge */}
-        {timeLeft && !timeLeft.isExpired ? (
-          <div className="flex gap-2 items-center font-mono">
-            {timeLeft.days > 0 && (
-              <>
-                <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
-                  <span className="text-sm font-black text-white leading-none">{timeLeft.days}</span>
-                  <span className="text-[6.5px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">dias</span>
-                </div>
-                <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
-              </>
-            )}
-            <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
-              <span className="text-sm font-black text-white leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
-              <span className="text-[6.5px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">horas</span>
-            </div>
-            <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
-            <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
-              <span className="text-sm font-black text-white leading-none">{String(timeLeft.minutes).padStart(2, '0')}</span>
-              <span className="text-[6.5px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">min</span>
-            </div>
-            <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
-            <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
-              <span className="text-sm font-black text-emerald-300 animate-pulse leading-none">{String(timeLeft.seconds).padStart(2, '0')}</span>
-              <span className="text-[6.5px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">seg</span>
-            </div>
+        {/* Right: Expiration date with much larger size, accompanied by Countdown digits if active */}
+        <div className="flex items-center gap-3 md:gap-6">
+          <div className="flex flex-col items-end text-right">
+            <span className="text-[9px] md:text-[10px] font-extrabold uppercase tracking-widest text-emerald-200 leading-none">
+              Limite de Validade
+            </span>
+            <span className="text-xs sm:text-base md:text-xl font-black text-white mt-1 uppercase tracking-wider">
+              Válida até {doc.configApresentacao?.linkExpiresAt 
+                ? new Date(doc.configApresentacao.linkExpiresAt).toLocaleDateString('pt-BR')
+                : (doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR'))
+              }
+            </span>
           </div>
-        ) : (
-          <div className="text-[9px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/25 font-black uppercase tracking-wider px-3 py-1.5 rounded-xl">
-            Válida até {doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR')}
-          </div>
-        )}
+
+          {timeLeft && !timeLeft.isExpired && (
+            <div className="flex gap-1 md:gap-2 items-center font-mono">
+              <div className="h-8 w-px bg-white/10 hidden sm:block mr-1 md:mr-2" />
+              {timeLeft.days > 0 && (
+                <>
+                  <div className="flex flex-col items-center min-w-[36px] md:min-w-[48px] bg-white/10 border border-white/20 rounded-lg md:rounded-xl p-1 shadow-inner">
+                    <span className="text-xs md:text-base font-black text-white leading-none">{timeLeft.days}</span>
+                    <span className="text-[6px] md:text-[8px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">dias</span>
+                  </div>
+                  <span className="text-xs md:text-base font-black text-white/50 animate-pulse leading-none">:</span>
+                </>
+              )}
+              <div className="flex flex-col items-center min-w-[36px] md:min-w-[48px] bg-white/10 border border-white/20 rounded-lg md:rounded-xl p-1 shadow-inner">
+                <span className="text-xs md:text-base font-black text-white leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
+                <span className="text-[6px] md:text-[8px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">horas</span>
+              </div>
+              <span className="text-xs md:text-base font-black text-white/50 animate-pulse leading-none">:</span>
+              <div className="flex flex-col items-center min-w-[36px] md:min-w-[48px] bg-white/10 border border-white/20 rounded-lg md:rounded-xl p-1 shadow-inner">
+                <span className="text-xs md:text-base font-black text-white leading-none">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                <span className="text-[6px] md:text-[8px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">min</span>
+              </div>
+              <span className="text-xs md:text-base font-black text-white/50 animate-pulse leading-none">:</span>
+              <div className="flex flex-col items-center min-w-[36px] md:min-w-[48px] bg-white/10 border border-white/20 rounded-lg md:rounded-xl p-1 shadow-inner bg-emerald-950/20 border-emerald-500/30">
+                <span className="text-xs md:text-base font-black text-emerald-300 animate-pulse leading-none">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                <span className="text-[6px] md:text-[8px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">seg</span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full">
@@ -660,15 +671,7 @@ return (
                   <p className="text-[9.5px] text-slate-400 font-bold uppercase tracking-wider">
                     Criada em {doc.data || new Date().toLocaleDateString('pt-BR')} por {doc.vendedorResponsavel || 'Novos Negócios'}
                   </p>
-                  {doc.configApresentacao?.linkExpiresAt ? (
-                    <div className="inline-block mt-1 bg-amber-50 text-amber-800 text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-xl border border-amber-250 animate-fadeIn">
-                      Válida até {new Date(doc.configApresentacao.linkExpiresAt).toLocaleDateString('pt-BR')}
-                    </div>
-                  ) : (
-                    <div className="inline-block mt-1 bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-xl border border-emerald-100/50">
-                      Válida até {doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR')}
-                    </div>
-                  )}
+
 
                 </div>
 
