@@ -1141,7 +1141,7 @@ const Sidebar = () => {
                           
                           <div className="flex items-center justify-between gap-2">
                             {/* Nome do usuário scoped (se for ADMIN) */}
-                            {user.role === 'ADMIN' && n.user?.nome && (
+                            {user?.role === 'ADMIN' && n.user?.nome && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded text-[8px] font-black bg-slate-100 text-slate-500 border border-slate-200 uppercase tracking-wider">
                                 Para: {n.user.nome}
                               </span>

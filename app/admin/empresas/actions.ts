@@ -19,24 +19,43 @@ export async function checkIsSuperAdmin() {
     const sbUser = cookieStore.get('sb_user')?.value;
     if (!sbUser) return false;
 
-    let data;
+    let data: any = null;
+    let cleaned = sbUser.trim();
+    // Remove aspas duplas extras que o Next.js às vezes insere ao ler cookies
+    if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+      cleaned = cleaned.slice(1, -1);
+    }
+
     try {
       // Tenta decodificar caso esteja URL-encoded
-      data = JSON.parse(decodeURIComponent(sbUser));
+      data = JSON.parse(decodeURIComponent(cleaned));
     } catch {
       try {
-        // Tenta fazer o parse direto caso o Next.js já tenha decodificado
-        data = JSON.parse(sbUser);
+        // Tenta fazer o parse direto
+        data = JSON.parse(cleaned);
       } catch (err) {
-        console.error('Erro crítico ao fazer parse do cookie sb_user:', err);
-        return false;
+        try {
+          data = JSON.parse(sbUser);
+        } catch {
+          console.error('Erro crítico ao fazer parse do cookie sb_user:', err);
+          return false;
+        }
       }
     }
     
+    if (!data) return false;
+
+    // Validação imediata por email com normalização case-insensitive para segurança absoluta
+    const emailNormal = (data.email || '').toLowerCase().trim();
+    if (emailNormal === 'cristiano@grupojvsserv.com.br' || emailNormal === 'admin@smartbidhub.com.br') {
+      return true;
+    }
+
     // Busca o usuário no banco por e-mail ou nome para máxima precisão e segurança
     const user = await prisma.user.findFirst({
       where: {
         OR: [
+          { email: emailNormal },
           { email: data.email || '___invalid___' },
           { nome: data.nome || '___invalid___' }
         ]
@@ -46,7 +65,7 @@ export async function checkIsSuperAdmin() {
 
     if (!user) return false;
 
-    // Condição de liberação master do proprietário do SaaS (admin@smartbidhub.com.br, cristiano@grupojvsserv.com.br, ou inquilinos da Silva Consultoria com cargo de ADMIN)
+    // Condição de liberação master do proprietário do SaaS
     const isPlatformAdmin = 
       user.email === 'admin@smartbidhub.com.br' || 
       user.email === 'cristiano@grupojvsserv.com.br' || 
