@@ -740,12 +740,12 @@ return (
       `}} />
         
         {/* SIDEBAR DE TABS DE NAVEGAÇÃO (ESTILO SEGUNDA FOTO - PREMIUM WHITE) */}
-        <aside className={`shrink-0 bg-[#F4F6F9] border border-slate-200 shadow-xl flex flex-col justify-between text-slate-800 print:hidden font-sans transition-all duration-300 relative ${
+        <aside className={`shrink-0 bg-white border border-slate-200 shadow-xl flex flex-col justify-between text-slate-800 print:hidden font-sans transition-all duration-300 relative ${
           mobileMenuOpen ? 'block' : 'hidden'
         } md:block ${
           sidebarCollapsed 
             ? 'w-full md:w-20 p-4 items-center rounded-2xl md:rounded-3xl' 
-            : 'w-full md:w-80 p-6 rounded-3xl'
+            : 'w-full md:w-80 p-0 rounded-3xl'
         }`}>
           {/* Botão de Recolher Flutuante (Estilo Premium) */}
           <button 
@@ -779,7 +779,7 @@ return (
                       className={`p-3.5 rounded-2xl transition-all flex items-center justify-center active:scale-[0.98] cursor-pointer border ${
                         activeClientTab === item.id
                           ? 'bg-white border-[#1B4D3E] border-[1.5px] text-[#1B4D3E] shadow-sm'
-                          : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-white/50'
+                          : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                       }`}
                     >
                       <item.icon size={18} className={activeClientTab === item.id ? 'text-[#1B4D3E]' : 'text-slate-400'} />
@@ -833,15 +833,15 @@ return (
             /* EXPANDED VIEW */
             <div className="flex flex-col justify-between h-full w-full">
               <div>
-                {/* Top Padding / Menu Title */}
-                <div className="pt-2 pb-4 border-b border-slate-200/60 mb-2">
-                  <span className="text-[11px] text-slate-700 font-extrabold uppercase tracking-wider block">
+                {/* Top Padding / Menu Title Block (colored top block, conforming to rounded corner) */}
+                <div className="bg-[#F4F6F9] px-6 pt-6 pb-4 border-b border-slate-200/60 rounded-t-3xl mb-4">
+                  <span className="text-[11px] text-[#1B4D3E] font-black uppercase tracking-wider block">
                     Menu da Proposta
                   </span>
                 </div>
 
                 {/* Menu de Navegação */}
-                <div className="flex flex-col gap-1.5 mt-4">
+                <div className="flex flex-col gap-1.5 px-6">
                   {navItems.map((item) => (
                     <button
                       key={item.id}
@@ -852,7 +852,7 @@ return (
                       className={`w-full text-left px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-between active:scale-[0.98] cursor-pointer border ${
                         activeClientTab === item.id
                           ? 'bg-white border-[#1B4D3E] border-[1.5px] text-[#1B4D3E] shadow-sm'
-                          : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-white/50'
+                          : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -866,7 +866,7 @@ return (
               </div>
 
               {/* Rodapé da Sidebar - Botões de Ação Dinâmicos */}
-              <div className="mt-8 pt-6 border-t border-slate-200/60 flex flex-col gap-2.5">
+              <div className="px-6 pb-6 mt-8 pt-6 border-t border-slate-200/60 flex flex-col gap-2.5">
                 {approved ? (
                   <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
                     <CheckCircle2 size={24} className="text-[#1B4D3E] mb-1" />
