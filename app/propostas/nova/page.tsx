@@ -1256,10 +1256,10 @@ function PropostaEditor() {
                              whitespace-nowrap py-3 px-1 border-b-2 font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all duration-200
                              ${activeTab === tab.id 
                                 ? 'border-[#1B4D3E] text-[#1B4D3E] scale-105 opacity-100' 
-                                : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 opacity-80'}
+                                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 opacity-100'}
                           `}
                        >
-                          <tab.icon size={14} className={activeTab === tab.id ? 'text-[#10B981]' : 'text-slate-400'} /> 
+                          <tab.icon size={14} className={activeTab === tab.id ? 'text-[#1B4D3E]' : 'text-slate-400'} /> 
                           {label}
                        </button>
                     );
@@ -3197,10 +3197,10 @@ function PropostaEditor() {
                                     whitespace-nowrap py-2 px-3 border-b-2 font-bold text-[11px] uppercase tracking-widest flex items-center gap-2 transition-all duration-200
                                     ${viewMode === 'document' 
                                        ? 'border-[#1B4D3E] text-[#1B4D3E] opacity-100' 
-                                       : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 opacity-80'}
+                                       : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 opacity-100'}
                                  `}
                               >
-                                 <FileText size={16} className={viewMode === 'document' ? 'text-[#10B981]' : 'text-slate-400'} />
+                                 <FileText size={16} className={viewMode === 'document' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
                                  Documento Simples (A4)
                               </button>
                               <button 
@@ -3209,10 +3209,10 @@ function PropostaEditor() {
                                     whitespace-nowrap py-2 px-3 border-b-2 font-bold text-[11px] uppercase tracking-widest flex items-center gap-2 transition-all duration-200
                                     ${viewMode === 'slide' 
                                        ? 'border-[#1B4D3E] text-[#1B4D3E] opacity-100' 
-                                       : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 opacity-80'}
+                                       : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 opacity-100'}
                                  `}
                               >
-                                 <Presentation size={16} className={viewMode === 'slide' ? 'text-[#10B981]' : 'text-slate-400'} />
+                                 <Presentation size={16} className={viewMode === 'slide' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
                                  Slide Deck (Apresentação)
                               </button>
                            </nav>

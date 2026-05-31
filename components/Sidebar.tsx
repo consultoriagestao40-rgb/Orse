@@ -565,7 +565,7 @@ const Sidebar = () => {
         --tw-gradient-to: var(--primary-color-dark) !important;
       }
       .bg-\\[\\#0B2E24\\], .bg-\\[\\#0b2e24\\] {
-        background-color: var(--primary-color-dark) !important;
+        background-color: var(--primary-color-hover) !important;
       }
       
       /* FPV Specific Green Rows (Lighter & Darker shades) */
