@@ -8,7 +8,7 @@ import {
   Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer, Share2, Eye
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { getPropostas } from '@/app/propostas/actions';
+import { getPropostas, getCurrentUserRole, getUsersList, transferirProposta } from '@/app/propostas/actions';
 import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
 import ClientLinkModal from '@/components/ClientLinkModal';
 import ClientTrackingModal from '@/components/ClientTrackingModal';
@@ -20,7 +20,7 @@ import {
   deleteDocumentoProposta 
 } from './actions';
 
-type ViewMode = 'lista' | 'kanban';
+type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor';
 
 const STATUSES = [
   { nome: 'Rascunho', color: 'bg-slate-100 text-slate-600' },
@@ -46,6 +46,9 @@ export default function PropostasComerciaisDashboard() {
   const [templates, setTemplates] = useState<any[]>([]);
   const [empresas, setEmpresas] = useState<any[]>([]);
 
+  const [userRole, setUserRole] = useState<string>('USER');
+  const [usersList, setUsersList] = useState<any[]>([]);
+
   const [createModal, setCreateModal] = useState({
     isOpen: false,
     fpvId: '',
@@ -56,16 +59,20 @@ export default function PropostasComerciaisDashboard() {
 
   const loadData = async () => {
     setLoading(true);
-    const [dataDocs, dataFpvs, dataTemplates, dataEmpresas] = await Promise.all([
+    const [dataDocs, dataFpvs, dataTemplates, dataEmpresas, role, usersData] = await Promise.all([
       getDocumentosProposta(),
       getPropostas(),
       getTemplatesProposta(),
-      getEmpresasEmissoras()
+      getEmpresasEmissoras(),
+      getCurrentUserRole(),
+      getUsersList()
     ]);
     setDocs(dataDocs);
     setFpvs(dataFpvs);
     setTemplates(dataTemplates);
     setEmpresas(dataEmpresas);
+    setUserRole(role);
+    setUsersList(usersData);
     setLoading(false);
   };
 
@@ -78,8 +85,168 @@ export default function PropostasComerciaisDashboard() {
 
   const filteredDocs = docs.filter(d =>
     String(d.numeroFPV).includes(searchTerm.toLowerCase()) ||
-    d.cliente.toLowerCase().includes(searchTerm.toLowerCase())
+    d.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (d.usuario || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // ── Dados para Kanban por Status ────────────────────────────────────────────
+  const kanbanStatusCols = STATUSES.map(s => {
+    const cards = filteredDocs.filter(d => d.status === s.nome);
+    return {
+      id: s.nome,
+      label: s.nome,
+      color: s.color || 'bg-slate-100 text-slate-600',
+      cards,
+      total: cards.reduce((a, c) => a + (c.valor || 0), 0),
+    };
+  });
+
+  // ── Dados para Kanban por Vendedor ──────────────────────────────────────────
+  const vendedoresMap = new Map<string, any[]>();
+  filteredDocs.forEach(d => {
+    const v = d.usuario || 'Sem Vendedor';
+    if (!vendedoresMap.has(v)) vendedoresMap.set(v, []);
+    vendedoresMap.get(v)!.push(d);
+  });
+  const kanbanVendedorCols = Array.from(vendedoresMap.entries()).map(([nome, cards]) => ({
+    id: nome,
+    label: nome,
+    cards,
+    total: cards.reduce((a, c) => a + (c.valor || 0), 0),
+  }));
+
+  const ProposalCard = ({ doc }: { doc: any }) => (
+    <div
+      draggable
+      onDragStart={(e) => {
+        if (doc.propostaId) {
+          e.dataTransfer.setData('text/plain', doc.propostaId);
+        }
+      }}
+      onClick={() => router.push(`/propostas-comerciais/${doc.id}`)}
+      className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing text-left"
+    >
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
+            <FileText size={13} className="text-[#1B4D3E]" />
+          </div>
+          <span className="text-xs font-black text-slate-700 tracking-wide">
+            {fmtRef(doc.numeroFPV, doc.versaoFPV || 1)}
+          </span>
+        </div>
+        <div className="flex items-center gap-1 text-slate-400 font-mono text-[9px] font-bold">
+          <span>v{doc.versaoFPV || 1}</span>
+        </div>
+      </div>
+
+      <p className="text-sm font-bold text-slate-800 leading-tight mb-1 line-clamp-2">{doc.cliente}</p>
+      <p className="text-[10px] text-slate-400 font-medium mb-3">📅 {doc.data}</p>
+
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-black text-[#1B4D3E]">{fmt(doc.valor)}</span>
+        <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider ${getStatusStyle(doc.status)}`}>
+          {doc.status || '—'}
+        </span>
+      </div>
+
+      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          {doc.avatarUrl ? (
+            <img 
+              src={doc.avatarUrl} 
+              alt={doc.usuario} 
+              className="w-5 h-5 rounded-full object-cover border border-slate-200"
+            />
+          ) : (
+            <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
+              {(doc.usuario || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+            </div>
+          )}
+          <span className="text-[11px] font-medium text-slate-600 truncate max-w-[120px]">{doc.usuario || 'Sistema'}</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  const KanbanColumn = ({ label, color, cards, total, type = 'status', onDropProp }: {
+    label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor'; onDropProp?: (propId: string) => void;
+  }) => {
+    const userObj = usersList.find(u => u.nome === label);
+    const colAvatarUrl = userObj?.avatarUrl;
+
+    return (
+      <div 
+        className="flex-shrink-0 w-72 flex flex-col"
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.currentTarget.classList.add('bg-slate-200/50', 'rounded-xl');
+        }}
+        onDragLeave={(e) => {
+          e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl');
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl');
+          const propId = e.dataTransfer.getData('text/plain');
+          if (propId && onDropProp) onDropProp(propId);
+        }}
+      >
+        {/* Cabeçalho da coluna */}
+        <div className="bg-white border border-slate-200 rounded-xl mb-3 p-4 shadow-sm text-left">
+          {type === 'status' ? (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${color || 'bg-slate-100 text-slate-600'}`}>
+                  {label}
+                </span>
+                <span className="text-xs font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
+                  {cards.length}
+                </span>
+              </div>
+              <p className="text-sm font-black text-[#1B4D3E]">{fmt(total)}</p>
+              <p className="text-[10px] text-slate-400 font-medium mt-0.5">Volume total da coluna</p>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 mb-2">
+                {colAvatarUrl ? (
+                  <img 
+                    src={colAvatarUrl} 
+                    alt={label} 
+                    className="w-9 h-9 rounded-xl object-cover border border-slate-200"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-xl bg-[#1B4D3E]/10 flex items-center justify-center text-[#1B4D3E] font-black text-sm uppercase border border-slate-200">
+                    {label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-black text-slate-800 truncate">{label}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[10px] text-slate-400 font-medium">{cards.length} proposta{cards.length !== 1 ? 's' : ''}</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-base font-black text-[#1B4D3E]">{fmt(total)}</p>
+              <p className="text-[10px] text-slate-400 font-medium mt-0.5">Volume total</p>
+            </>
+          )}
+        </div>
+
+        {/* Cards */}
+        <div className="flex flex-col gap-3 flex-1">
+          {cards.length === 0 ? (
+            <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
+              <p className="text-xs text-slate-300 font-medium">Sem propostas</p>
+            </div>
+          ) : (
+            cards.map(doc => <ProposalCard key={doc.id} doc={doc} />)
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const fmtRef = (num: number, versao: number) =>
     `FPV-${String(num).padStart(3, '0')}-REV-${String(versao).padStart(2, '0')}`;
@@ -122,6 +289,7 @@ export default function PropostasComerciaisDashboard() {
               <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm gap-1">
                 <button
                   onClick={() => setViewMode('lista')}
+                  title="Visualização em Lista"
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
                     viewMode === 'lista' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
                   }`}
@@ -129,12 +297,22 @@ export default function PropostasComerciaisDashboard() {
                   <LayoutList size={14} /> Lista
                 </button>
                 <button
-                  onClick={() => setViewMode('kanban')}
+                  onClick={() => setViewMode('kanban-status')}
+                  title="Kanban por Status"
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                    viewMode === 'kanban' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
+                    viewMode === 'kanban-status' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
                   }`}
                 >
-                  <LayoutGrid size={14} /> Kanban
+                  <LayoutGrid size={14} /> Por Status
+                </button>
+                <button
+                  onClick={() => setViewMode('kanban-vendedor')}
+                  title="Kanban por Vendedor"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                    viewMode === 'kanban-vendedor' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
+                  }`}
+                >
+                  <UserSquare2 size={14} /> Por Vendedor
                 </button>
               </div>
 
@@ -298,48 +476,92 @@ export default function PropostasComerciaisDashboard() {
             </div>
           )}
 
-          {/* KANBAN */}
-          {viewMode === 'kanban' && (
-            <div className="flex gap-5 min-w-max overflow-x-auto pb-6">
-              {STATUSES.map(col => {
-                const cards = filteredDocs.filter(d => d.status === col.nome);
-                return (
-                  <div key={col.nome} className="flex-shrink-0 w-72 bg-slate-50 border border-slate-200 rounded-xl p-3">
-                    <h3 className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider mb-3 w-fit ${col.color}`}>
-                      {col.nome} ({cards.length})
-                    </h3>
-                    <div className="space-y-3">
-                      {cards.map(doc => (
-                        <div key={doc.id} onClick={() => router.push(`/propostas-comerciais/${doc.id}`)} className="bg-white p-3 rounded-lg shadow-sm border border-slate-200 cursor-pointer hover:border-amber-400">
-                          <p className="font-bold text-slate-800 text-sm mb-1">{doc.cliente}</p>
-                          <div className="flex justify-between items-center text-xs text-slate-500 mb-2">
-                            <span>FPV #{doc.numeroFPV}</span>
-                            <div className="flex items-center gap-1">
-                              {doc.avatarUrl ? (
-                                <img 
-                                  src={doc.avatarUrl} 
-                                  alt={doc.usuario} 
-                                  className="w-4 h-4 rounded-full object-cover border border-slate-200"
-                                />
-                              ) : (
-                                <div className="w-4 h-4 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[7px] font-black text-[#1B4D3E] uppercase border border-slate-200">
-                                  {(doc.usuario || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                                </div>
-                              )}
-                              <span className="font-medium text-slate-400">{doc.usuario || 'Sistema'}</span>
-                            </div>
-                          </div>
-                          <p className="font-black text-[#1B4D3E]">{fmt(doc.valor)}</p>
-                          <div className="mt-2 text-[10px] text-slate-400 font-medium flex justify-between items-center border-t border-slate-50 pt-2">
-                            <span>Gerado em:</span>
-                            <span>{doc.data}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+          {/* ── KANBAN POR STATUS ───────────────────────────────────────────── */}
+          {viewMode === 'kanban-status' && (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <LayoutGrid size={16} className="text-[#1B4D3E]" />
+                <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
+                <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                  {kanbanStatusCols.length} status
+                </span>
+              </div>
+              {loading ? (
+                <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
+              ) : (
+                <div className="overflow-x-auto pb-6">
+                  <div className="flex gap-5 min-w-max">
+                    {kanbanStatusCols.map(col => (
+                      <KanbanColumn
+                        key={col.id}
+                        label={col.label}
+                        color={col.color}
+                        cards={col.cards}
+                        total={col.total}
+                        onDropProp={async (propId) => {
+                          const doc = docs.find(d => d.propostaId === propId);
+                          if (doc && doc.status !== col.label) {
+                            setDocs(prev => prev.map(d => d.propostaId === propId ? { ...d, status: col.label } : d));
+                            await updateDocumentoStatus(doc.id, col.label);
+                          }
+                        }}
+                      />
+                    ))}
                   </div>
-                );
-              })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── KANBAN POR VENDEDOR ───────────────────────────────────────────── */}
+          {viewMode === 'kanban-vendedor' && (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <UserSquare2 size={16} className="text-[#1B4D3E]" />
+                <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
+                <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                  {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
+                </span>
+              </div>
+              {loading ? (
+                <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
+              ) : kanbanVendedorCols.length === 0 ? (
+                <div className="flex items-center justify-center py-20 text-slate-400 text-sm">
+                  Nenhuma proposta encontrada.
+                </div>
+              ) : (
+                <div className="overflow-x-auto pb-6">
+                  <div className="flex gap-5 min-w-max">
+                    {kanbanVendedorCols.map(col => (
+                      <KanbanColumn
+                        key={col.id}
+                        label={col.label}
+                        type="vendedor"
+                        cards={col.cards}
+                        total={col.total}
+                        onDropProp={async (propId) => {
+                          const doc = docs.find(d => d.propostaId === propId);
+                          if (doc && doc.usuario !== col.label) {
+                            if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
+                              alert('Apenas gestores e administradores podem transferir propostas.');
+                              return;
+                            }
+                            const newUser = usersList.find(u => u.nome === col.label);
+                            if (newUser) {
+                              setDocs(prev => prev.map(d => d.propostaId === propId ? { ...d, usuario: newUser.nome, avatarUrl: newUser.avatarUrl } : d));
+                              const res = await transferirProposta(propId, newUser.id);
+                              if (!res.success) {
+                                alert(res.error);
+                                loadData();
+                              }
+                            }
+                          }
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

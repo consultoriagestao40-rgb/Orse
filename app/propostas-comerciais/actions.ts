@@ -30,6 +30,7 @@ export async function getDocumentosProposta() {
       const lastVersao = sortedVersoes[0];
       return {
         id: d.id,
+        propostaId: d.propostaId,
         numeroFPV: d.proposta?.numero,
         cliente: d.client?.nomeFantasia || 'Sem Cliente',
         empresa: d.empresaEmissora?.nomeFantasia,
