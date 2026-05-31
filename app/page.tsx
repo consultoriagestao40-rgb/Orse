@@ -589,22 +589,6 @@ function ProposalsDashboard() {
             </div>
           )}
           {/* ── KANBAN POR STATUS ─────────────────────────────────────────────── */}
-          {/* ── KANBAN POR STATUS ─────────────────────────────────────────────── */}
-          {viewMode === 'kanban-status' && (
-            <div>
-              {loading ? (
-                <>
-                  <div className="flex items-center gap-2 mb-4">
-                    <LayoutGrid size={16} className="text-[#1B4D3E]" />
-                    <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
-                    <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                      {kanbanStatusCols.length} coluna{kanbanStatusCols.length !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
-                </>
-              ) : (
-          {/* ── KANBAN POR STATUS ─────────────────────────────────────────────── */}
           {viewMode === 'kanban-status' && (
             <div>
               {loading ? (
