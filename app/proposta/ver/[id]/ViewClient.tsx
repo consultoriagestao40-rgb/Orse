@@ -634,7 +634,7 @@ return (
               Proposta para {doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Empresa'}
             </span>
             <span className="text-[8px] text-white/70 font-black uppercase tracking-wider mt-1">
-              FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')} • Versão v{versao?.versao || 1}
+              FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')} • Revisão R{String(versao?.versao || 1).padStart(2, '0')}
             </span>
           </div>
         </div>
@@ -829,16 +829,7 @@ return (
                   </button>
                 </div>
 
-                {/* Card Cliente */}
-                <div className="mt-5 bg-slate-50 border border-slate-200/50 rounded-2xl p-4 text-left animate-fadeIn">
-                  <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-widest block">Cliente</span>
-                  <h4 className="text-xs font-black text-[#1B4D3E] uppercase mt-1 leading-snug">
-                    {doc.client?.razaoSocial || doc.client?.nomeFantasia || 'Cliente'}
-                  </h4>
-                  <p className="text-[9px] text-slate-500 font-bold mt-1">
-                    {doc.client?.cnpj || 'CNPJ não informado'}
-                  </p>
-                </div>
+
 
                 {/* Menu de Navegação */}
                 <div className="flex flex-col gap-1.5 mt-6">
