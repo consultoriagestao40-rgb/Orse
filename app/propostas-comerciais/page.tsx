@@ -448,13 +448,13 @@ export default function PropostasComerciaisDashboard() {
                            >
                              <Eye size={16} />
                              {doc.configApresentacao?.viewTracking?.history?.length > 0 && (
-                               <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                               <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
                              )}
                            </button>
                            <button
                              onClick={() => setActiveShareDoc(doc)}
                              title="Configurar e Copiar Link"
-                             className="text-emerald-500 hover:text-emerald-700 p-1 transition-colors cursor-pointer"
+                             className="text-green-500 hover:text-green-700 p-1 transition-colors cursor-pointer"
                            >
                              <Share2 size={16} />
                            </button>

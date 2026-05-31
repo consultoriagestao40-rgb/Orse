@@ -1220,7 +1220,7 @@ function PropostaEditor() {
                <button 
                  onClick={handleCalcularProposta}
                  disabled={loading}
-                 className="bg-[#2A4365] hover:bg-[#1E3A8A] text-white text-sm font-semibold py-2 px-4 rounded shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50"
+                 className="border border-[#1B4D3E] text-[#1B4D3E] hover:bg-emerald-50/30 bg-white text-sm font-semibold py-2 px-4 rounded shadow-sm transition-all duration-200 flex items-center gap-2 disabled:opacity-50"
                >
                   <Calculator size={16} /> Calcular Proposta
                </button>

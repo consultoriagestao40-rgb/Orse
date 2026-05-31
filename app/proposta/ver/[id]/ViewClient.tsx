@@ -631,52 +631,63 @@ return (
               <ChevronLeft size={16} /> Voltar
             </button>
           )}
-          <Clock size={16} className="text-white/80 animate-pulse hidden sm:block animate-duration-1000" />
+          <Clock size={20} className="text-white/80 animate-pulse hidden sm:block animate-duration-1000" />
           <div className="flex flex-col text-left justify-center py-1">
-            <h1 className="text-xs sm:text-sm md:text-base font-bold text-white leading-tight">
+            <h1 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-white leading-tight">
               Proposta Comercial para - <span className="uppercase font-black">{(doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Empresa').toUpperCase()}</span>
             </h1>
-            <p className="text-[10px] sm:text-xs text-white/80 font-bold tracking-wide mt-1">
+            <p className="text-[10px] sm:text-xs text-white/85 font-bold tracking-wide mt-1">
               FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')} • Revisão R{String(versao?.versao || 1).padStart(2, '0')}
             </p>
           </div>
         </div>
         
         {/* Right: Larger Countdown Timer digits if active, otherwise static badge */}
-        {timeLeft && !timeLeft.isExpired ? (
-          <div className="flex gap-2 items-center font-mono">
-            {timeLeft.days > 0 && (
-              <>
-                <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
-                  <span className="text-sm font-black text-white leading-none">{timeLeft.days}</span>
-                  <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">dias</span>
+        {(() => {
+          const expirationDateStr = doc.configApresentacao?.linkExpiresAt 
+            ? new Date(doc.configApresentacao.linkExpiresAt).toLocaleDateString('pt-BR')
+            : (doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR'));
+
+          return (
+            <div className="flex items-center gap-4">
+              <div className="hidden md:flex flex-col text-right justify-center">
+                <span className="text-[9px] text-white/70 font-black uppercase tracking-widest leading-none">Validade da Proposta</span>
+                <span className="text-xs font-black text-white mt-1">{expirationDateStr}</span>
+              </div>
+              {timeLeft && !timeLeft.isExpired ? (
+                <div className="flex gap-2 items-center font-mono">
+                  {timeLeft.days > 0 && (
+                    <>
+                      <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
+                        <span className="text-sm font-black text-white leading-none">{timeLeft.days}</span>
+                        <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">dias</span>
+                      </div>
+                      <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
+                    </>
+                  )}
+                  <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
+                    <span className="text-sm font-black text-white leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
+                    <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">horas</span>
+                  </div>
+                  <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
+                  <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
+                    <span className="text-sm font-black text-white leading-none">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                    <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">min</span>
+                  </div>
+                  <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
+                  <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
+                    <span className="text-sm font-black text-white animate-pulse leading-none">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                    <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">seg</span>
+                  </div>
                 </div>
-                <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
-              </>
-            )}
-            <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
-              <span className="text-sm font-black text-white leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
-              <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">horas</span>
+              ) : (
+                <div className="text-[9px] bg-white/10 text-white border border-white/20 font-black uppercase tracking-wider px-3.5 py-2 rounded-xl">
+                  Válida até {expirationDateStr}
+                </div>
+              )}
             </div>
-            <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
-            <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
-              <span className="text-sm font-black text-white leading-none">{String(timeLeft.minutes).padStart(2, '0')}</span>
-              <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">min</span>
-            </div>
-            <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
-            <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
-              <span className="text-sm font-black text-white animate-pulse leading-none">{String(timeLeft.seconds).padStart(2, '0')}</span>
-              <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">seg</span>
-            </div>
-          </div>
-        ) : (
-          <div className="text-[9px] bg-white/10 text-white border border-white/20 font-black uppercase tracking-wider px-3.5 py-2 rounded-xl">
-            Válida até {doc.configApresentacao?.linkExpiresAt 
-              ? new Date(doc.configApresentacao.linkExpiresAt).toLocaleDateString('pt-BR')
-              : (doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR'))
-            }
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full">
