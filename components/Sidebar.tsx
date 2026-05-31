@@ -536,9 +536,6 @@ const Sidebar = () => {
       }
       
       /* Standard Emerald Overrides */
-      .text-emerald-100 { color: var(--primary-color-light) !important; }
-      .text-emerald-250 { color: var(--primary-color-light) !important; }
-      .text-emerald-300 { color: var(--primary-color-light) !important; }
       .text-emerald-400 { color: var(--primary-color) !important; }
       .text-emerald-500 { color: var(--primary-color) !important; }
       .text-emerald-600 { color: var(--primary-color-hover) !important; }
@@ -1060,21 +1057,21 @@ const Sidebar = () => {
       {trialStatus?.isTrialActive && !trialStatus?.trialExpired && trialStatus?.hasContact && countdownTime && (
         <div className={`fixed top-0 right-0 z-[48] bg-gradient-to-r from-[#1B4D3E] via-[#2A6D5A] to-[#1B4D3E] border-b border-emerald-500/20 text-white flex items-center justify-between px-6 py-2 h-14 shadow-lg transition-all duration-300 ${isCollapsed ? 'left-20' : 'left-64'}`}>
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/10 border border-white/20 text-white/95">
               <Clock size={12} className="animate-pulse" />
             </span>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400">Modo de Teste:</span>
-              <p className="text-xs font-bold flex items-center">
+              <span className="text-[10px] font-black uppercase tracking-wider text-white">Modo de Teste:</span>
+              <p className="text-xs font-bold flex items-center text-white/95">
                 Seu período de teste grátis expira em: 
-                <span className="ml-2 font-mono text-emerald-300 font-extrabold bg-[#0B2E24] px-2 py-1 rounded tracking-wider whitespace-nowrap">
+                <span className="ml-2 font-mono text-white font-extrabold bg-black/25 px-2 py-1 rounded tracking-wider whitespace-nowrap">
                   {countdownTime.days}d {countdownTime.hours}h {countdownTime.minutes}m {countdownTime.seconds}s
                 </span>
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-[10px] text-emerald-200/70 font-semibold hidden md:inline">Gostando da experiência?</span>
+            <span className="text-[10px] text-white/80 font-semibold hidden md:inline">Gostando da experiência?</span>
             <button 
               onClick={() => {
                 setTrialAlert({

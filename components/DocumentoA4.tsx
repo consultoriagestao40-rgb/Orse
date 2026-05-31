@@ -124,9 +124,6 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
       }
       
       /* Standard Emerald Overrides */
-      .text-emerald-100 { color: var(--primary-color-light) !important; }
-      .text-emerald-250 { color: var(--primary-color-light) !important; }
-      .text-emerald-300 { color: var(--primary-color-light) !important; }
       .text-emerald-400 { color: var(--primary-color) !important; }
       .text-emerald-500 { color: var(--primary-color) !important; }
       .text-emerald-600 { color: var(--primary-color-hover) !important; }

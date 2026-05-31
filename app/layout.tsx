@@ -70,8 +70,12 @@ export default function RootLayout({
               var bDark = darken(b, 45);
               var hexDark = '#' + ((1 << 24) + (rDark << 16) + (gDark << 8) + bDark).toString(16).slice(1);
               
-              var style = document.createElement('style');
-              style.id = 'dynamic-theme-style';
+              var style = document.getElementById('dynamic-theme-style');
+              if (!style) {
+                style = document.createElement('style');
+                style.id = 'dynamic-theme-style';
+                document.head.appendChild(style);
+              }
               style.innerHTML = [
                 ':root {',
                 '  --primary-color: #' + c + ';',
@@ -97,10 +101,12 @@ export default function RootLayout({
                 '.bg-\\\\[\\\\#599e41\\\\], .bg-\\\\[\\\\#599E41\\\\] { background-color: var(--primary-color) !important; }',
                 '.border-\\\\[\\\\#488234\\\\], .border-\\\\[\\\\#488234\\\\] { border-color: var(--primary-color-hover) !important; }',
                 '.bg-\\\\[\\\\#8ec277\\\\], .bg-\\\\[\\\\#8EC277\\\\] { background-color: rgba(' + r + ',' + g + ',' + b + ', 0.25) !important; }',
-                '.text-emerald-100 { color: var(--primary-color-light) !important; }',
-                '.text-emerald-200 { color: var(--primary-color-light) !important; }',
-                '.text-emerald-250 { color: var(--primary-color-light) !important; }',
-                '.text-emerald-300 { color: var(--primary-color-light) !important; }',
+                
+                /* Standard Emerald Text Overrides to guarantee white readability on dark bg headers */
+                '.text-emerald-100 { color: rgba(255, 255, 255, 0.95) !important; }',
+                '.text-emerald-200 { color: rgba(255, 255, 255, 0.9) !important; }',
+                '.text-emerald-250 { color: rgba(255, 255, 255, 0.9) !important; }',
+                '.text-emerald-300 { color: rgba(255, 255, 255, 0.85) !important; }',
                 '.text-emerald-400 { color: var(--primary-color) !important; }',
                 '.text-emerald-500 { color: var(--primary-color) !important; }',
                 '.text-emerald-600 { color: var(--primary-color-hover) !important; }',
@@ -122,9 +128,13 @@ export default function RootLayout({
                 '.border-emerald-300 { border-color: var(--primary-color-light) !important; }',
                 '.border-emerald-400 { border-color: var(--primary-color) !important; }',
                 '.border-emerald-500 { border-color: var(--primary-color) !important; }',
-                '.border-emerald-600 { border-color: var(--primary-color-hover) !important; }'
+                '.border-emerald-600 { border-color: var(--primary-color-hover) !important; }',
+                
+                /* Specific banner contrast styling overrides */
+                '[class*="fixed top-0"][class*="bg-gradient-to-r"] { color: #ffffff !important; }',
+                '[class*="fixed top-0"][class*="bg-gradient-to-r"] span, [class*="fixed top-0"][class*="bg-gradient-to-r"] p, [class*="fixed top-0"][class*="bg-gradient-to-r"] div, [class*="fixed top-0"][class*="bg-gradient-to-r"] svg { color: #ffffff !important; }',
+                '[class*="fixed top-0"][class*="bg-gradient-to-r"] span.font-mono { color: #ffffff !important; background-color: rgba(0, 0, 0, 0.25) !important; }'
               ].join('\\n');
-              document.head.appendChild(style);
             } catch(e) {}
           })();
         ` }} />
