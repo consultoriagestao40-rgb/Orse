@@ -769,17 +769,29 @@ export default function Page() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
-    if (cookie) {
-      try {
-        const userData = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
-        setIsLoggedIn(true);
-        if (userData.email === 'admin@smartbidhub.com.br' || userData.email === 'cristiano@grupojvsserv.com.br') {
-          router.push('/admin/empresas');
-        }
-      } catch (err) {
-        console.error('Erro ao ler cookie do usuario:', err);
-        setIsLoggedIn(false);
+    const parseSbUser = (): any | null => {
+      const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
+      if (!cookie) return null;
+      // Use slice(1).join('=') to handle values that contain '=' characters
+      const raw = cookie.split('=').slice(1).join('=');
+      // Try three strategies: URL-decode then parse, direct parse, or parse raw
+      const attempts = [
+        () => JSON.parse(decodeURIComponent(raw)),
+        () => JSON.parse(raw),
+        () => { let s = raw.trim(); if (s.startsWith('"') && s.endsWith('"')) s = s.slice(1, -1); return JSON.parse(s); }
+      ];
+      for (const attempt of attempts) {
+        try { return attempt(); } catch {}
+      }
+      return null;
+    };
+
+    const userData = parseSbUser();
+    if (userData) {
+      setIsLoggedIn(true);
+      const email = (userData.email || '').toLowerCase().trim();
+      if (email === 'admin@smartbidhub.com.br' || email === 'cristiano@grupojvsserv.com.br') {
+        router.push('/admin/empresas');
       }
     } else {
       setIsLoggedIn(false);

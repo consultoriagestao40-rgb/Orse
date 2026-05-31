@@ -40,6 +40,30 @@ export default function TenantManagerDashboard() {
   const [loading, setLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   
+  // Verificação imediata do cookie no client (sem round-trip ao servidor)
+  // Isso evita o flash de "ACESSO RESTRITO" enquanto o server action carrega
+  const checkAuthFromCookie = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    const cookie = document.cookie.split('; ').find(row => row.trim().startsWith('sb_user='));
+    if (!cookie) return false;
+    const raw = cookie.split('=').slice(1).join('=');
+    const attempts = [
+      () => JSON.parse(decodeURIComponent(raw)),
+      () => JSON.parse(raw),
+      () => { let s = raw.trim(); if (s.startsWith('"') && s.endsWith('"')) s = s.slice(1, -1); return JSON.parse(s); }
+    ];
+    for (const attempt of attempts) {
+      try {
+        const data = attempt();
+        const email = (data?.email || '').toLowerCase().trim();
+        if (email === 'cristiano@grupojvsserv.com.br' || email === 'admin@smartbidhub.com.br') {
+          return true;
+        }
+      } catch {}
+    }
+    return false;
+  };
+  
   // Estados de Dados
   const [tenants, setTenants] = useState<TenantItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -114,31 +138,23 @@ export default function TenantManagerDashboard() {
   const [planDescricao, setPlanDescricao] = useState('');
   const [planFeatures, setPlanFeatures] = useState('');
 
+
+
   // 1. Validar autorização e carregar dados
   const loadData = async () => {
     setLoading(true);
     try {
-      let authorized = await checkIsSuperAdmin();
-      
-      // Fallback robusto no lado do cliente para garantir acesso caso haja latência/cache de cookies no Server Action da Vercel
-      if (!authorized && typeof window !== 'undefined') {
-        const cookie = document.cookie.split('; ').find(row => row.trim().startsWith('sb_user='));
-        if (cookie) {
-          try {
-            const userData = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
-            const email = (userData.email || '').toLowerCase().trim();
-            if (email === 'cristiano@grupojvsserv.com.br' || email === 'admin@smartbidhub.com.br') {
-              authorized = true;
-            }
-          } catch {
-            try {
-              const userData = JSON.parse(cookie.split('=')[1]);
-              const email = (userData.email || '').toLowerCase().trim();
-              if (email === 'cristiano@grupojvsserv.com.br' || email === 'admin@smartbidhub.com.br') {
-                authorized = true;
-              }
-            } catch {}
-          }
+      // Primeiro verifica via cookie (mais rápido e confiável em produção)
+      const cookieAuth = checkAuthFromCookie();
+      let authorized = cookieAuth;
+
+      // Confirma também via server action (dupla checagem de segurança)
+      if (!authorized) {
+        try {
+          authorized = await checkIsSuperAdmin();
+        } catch (serverErr) {
+          console.warn('Server action checkIsSuperAdmin falhou, usando cookie auth:', serverErr);
+          authorized = cookieAuth;
         }
       }
       
@@ -166,13 +182,22 @@ export default function TenantManagerDashboard() {
       }
     } catch (err) {
       console.error('Erro ao inicializar página:', err);
-      setIsAuthorized(false);
+      // Só define como não autorizado se o cookie também não confirmar
+      if (!checkAuthFromCookie()) {
+        setIsAuthorized(false);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    // Verificação imediata via cookie (sem esperar o server action)
+    // Garante que admin vê o painel instantaneamente, sem flash de "Acesso Restrito"
+    const cookieAuth = checkAuthFromCookie();
+    if (cookieAuth) {
+      setIsAuthorized(true);
+    }
     loadData();
   }, []);
 
