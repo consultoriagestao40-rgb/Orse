@@ -777,14 +777,14 @@ return (
               {/* Actions Collapsed */}
               <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col gap-3 items-center w-full">
                 {approved ? (
-                  <div className="bg-emerald-50 border border-emerald-150 p-2.5 rounded-2xl flex items-center justify-center text-center" title="Proposta Aprovada!">
-                    <CheckCircle2 size={18} className="text-emerald-600" />
+                  <div className="bg-emerald-50 border border-emerald-100 p-2.5 rounded-2xl flex items-center justify-center text-center" title="Proposta Aprovada!">
+                    <CheckCircle2 size={18} className="text-[#1B4D3E]" />
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2 items-center w-full">
                     <button
                       onClick={() => setShowApprovalModal(true)}
-                      className="w-10 h-10 bg-[#10B981] hover:bg-[#0da673] text-white rounded-2xl flex items-center justify-center shadow-md cursor-pointer transition-all active:scale-95 text-xs font-bold"
+                      className="w-10 h-10 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-2xl flex items-center justify-center shadow-md cursor-pointer transition-all active:scale-95 text-xs font-bold"
                       title="Aceitar Proposta"
                     >
                       👍
@@ -853,16 +853,16 @@ return (
               {/* Rodapé da Sidebar - Botões de Ação Dinâmicos */}
               <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col gap-2.5">
                 {approved ? (
-                  <div className="bg-emerald-50 border border-emerald-150 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-                    <CheckCircle2 size={24} className="text-emerald-600 mb-1" />
-                    <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Proposta Aprovada</span>
-                    <span className="text-[8.5px] text-emerald-600 font-bold uppercase mt-0.5">Assinatura Registrada</span>
+                  <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+                    <CheckCircle2 size={24} className="text-[#1B4D3E] mb-1" />
+                    <span className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest">Proposta Aprovada</span>
+                    <span className="text-[8.5px] text-[#1B4D3E]/80 font-bold uppercase mt-0.5">Assinatura Registrada</span>
                   </div>
                 ) : (
                   <>
                     <button
                       onClick={() => setShowApprovalModal(true)}
-                      className="w-full bg-[#10B981] hover:bg-[#0da673] text-white font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl shadow-lg shadow-emerald-500/10 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl shadow-lg shadow-[#1B4D3E]/10 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
                     >
                       <span className="text-[14px]">👍</span> Aceitar Proposta
                     </button>
@@ -1453,7 +1453,7 @@ return (
                           {/* Total Montante A */}
                           <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white text-[9.5px]">
                             <td colSpan={3} className="py-2 px-6 text-right uppercase tracking-wider text-white !text-white">Total do Montante "A" (Bloco A)</td>
-                            <td className="py-2 px-6 text-right border-l border-emerald-950 text-emerald-400 !text-emerald-400 font-extrabold">
+                            <td className="py-2 px-6 text-right border-l border-emerald-950 text-white !text-white font-extrabold">
                               {formatCurrency(versao?.resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.blocoA || 0) * i.quantidade), 0) || 0)}
                             </td>
                           </tr>
@@ -1502,7 +1502,7 @@ return (
                                 {/* Total Montante B */}
                                 <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white text-[9.5px]">
                                   <td colSpan={3} className="py-2 px-6 text-right uppercase tracking-wider text-white !text-white">Total do Montante "B"</td>
-                                  <td className="py-2 px-6 text-right border-l border-emerald-950 text-emerald-400 !text-emerald-400 font-extrabold">
+                                  <td className="py-2 px-6 text-right border-l border-emerald-950 text-white !text-white font-extrabold">
                                     {formatCurrency(totalB)}
                                   </td>
                                 </tr>
@@ -1571,7 +1571,7 @@ return (
                                 {/* Total Montante C */}
                                 <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white text-[9.5px]">
                                   <td colSpan={3} className="py-2 px-6 text-right uppercase tracking-wider text-white !text-white">Total do Montante "C"</td>
-                                  <td className="py-2 px-6 text-right border-l border-emerald-950 text-emerald-400 !text-emerald-400 font-extrabold">
+                                  <td className="py-2 px-6 text-right border-l border-emerald-950 text-white !text-white font-extrabold">
                                     {formatCurrency(totalC)}
                                   </td>
                                 </tr>
@@ -1606,7 +1606,7 @@ return (
                           </tr>
                           <tr className="bg-[#599e41] text-white font-bold border-y border-[#488234] text-[9.5px]">
                             <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider text-white !text-white">Total dos Montantes "A+B+C+D"</td>
-                            <td className="py-2.5 px-6 text-right border-l border-[#3a692a] text-emerald-200 !text-emerald-200 font-bold">
+                            <td className="py-2.5 px-6 text-right border-l border-[#3a692a] text-white !text-white font-bold">
                               {formatCurrency((versao?.resultado?.custoDiretoTotal || 0) + (versao?.resultado?.taxaAdm || 0) + (versao?.resultado?.margemLucro || 0) + (versao?.resultado?.comissaoVendedor || 0))}
                             </td>
                           </tr>
@@ -1637,7 +1637,7 @@ return (
                           {/* TOTAIS FINAIS */}
                           <tr className="bg-[#1B4D3E] text-white font-black border-t-4 border-white text-xs tracking-widest uppercase">
                             <td colSpan={3} className="py-4 px-6 text-right text-white !text-white">Total dos Montantes "A+B+C+D" + Impostos</td>
-                            <td className="py-4 px-6 text-right text-emerald-400 !text-emerald-400 border-l border-emerald-950 font-black text-sm">
+                            <td className="py-4 px-6 text-right text-white !text-white border-l border-emerald-950 font-black text-sm">
                               {formatCurrency(versao?.resultado?.faturamentoBruto || doc.valorTotal || 0)}
                             </td>
                           </tr>
@@ -1647,7 +1647,7 @@ return (
                             return (
                               <tr className="bg-black text-white font-black border-t border-slate-800 text-[10px] tracking-widest uppercase">
                                 <td colSpan={3} className="py-3 px-6 text-right text-white !text-white">Valor Total Anual do Contrato</td>
-                                <td className="py-3 px-6 text-right text-emerald-400 !text-emerald-400 border-l border-slate-900 font-black">
+                                <td className="py-3 px-6 text-right text-white !text-white border-l border-slate-900 font-black">
                                   {formatCurrency((versao?.resultado?.faturamentoBruto || 0) * 12)}
                                 </td>
                               </tr>
@@ -1748,7 +1748,7 @@ return (
                             <tfoot>
                               <tr className="bg-[#1B4D3E] text-white font-black text-[9.5px]">
                                 <td colSpan={4} className="px-6 py-3.5 text-right uppercase tracking-wider">Subtotal Mão de Obra (Preço de Venda Final)</td>
-                                <td className="px-6 py-3.5 text-right text-emerald-400 border-l border-emerald-950 font-black">
+                                <td className="px-6 py-3.5 text-right text-white !text-white border-l border-emerald-950 font-black">
                                   {fc(versao?.resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0)}
                                 </td>
                               </tr>
@@ -1801,7 +1801,7 @@ return (
                             <tfoot>
                               <tr className="bg-slate-700 text-white font-black text-[9.5px]">
                                 <td colSpan={2} className="px-6 py-3.5 text-right uppercase tracking-wider">Subtotal Materiais e Insumos (Preço de Venda Final)</td>
-                                <td className="px-6 py-3.5 text-right text-emerald-400 border-l border-slate-800 font-black">
+                                <td className="px-6 py-3.5 text-right text-white !text-white border-l border-slate-800 font-black">
                                   {fc(applyCascata(
                                     Number(fullProposta.insumos?.materiais || 0) + 
                                     Number(isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : fullProposta.insumos?.maquinas || 0) + 
@@ -1821,7 +1821,7 @@ return (
                           <h3 className="text-sm font-black uppercase tracking-widest text-emerald-300 mb-1">Total Geral da Proposta</h3>
                           <p className="text-[10px] font-bold text-emerald-100/60 uppercase">Mão de Obra + Insumos Globais — Valor Final de Venda</p>
                         </div>
-                        <div className="text-4xl md:text-5xl font-black text-emerald-400 tracking-tighter">
+                        <div className="text-4xl md:text-5xl font-black text-white !text-white tracking-tighter">
                           {fc(versao?.resultado?.faturamentoBruto || doc.valorTotal || 0)}
                         </div>
                       </div>

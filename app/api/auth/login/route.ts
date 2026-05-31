@@ -29,6 +29,7 @@ export async function POST(request: Request) {
       ...(user.avatarUrl ? { avatarUrl: '/api/user/avatar' } : {}),
       ...(user.tenant?.logoUrl ? { tenantLogoUrl: '/api/tenant/logo' } : {}),
       ...(user.tenant?.nomeFantasia ? { tenantNome: user.tenant.nomeFantasia } : {}),
+      ...(user.tenant?.primaryColor ? { primaryColor: user.tenant.primaryColor } : {}),
     }
 
     const response = NextResponse.json({

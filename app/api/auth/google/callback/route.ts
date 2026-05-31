@@ -111,6 +111,7 @@ export async function GET(request: Request) {
       avatarUrl: user.avatarUrl ? '/api/user/avatar' : undefined,
       tenantLogoUrl: userTenant?.logoUrl ? '/api/tenant/logo' : undefined,
       tenantNome: userTenant?.nomeFantasia || undefined,
+      primaryColor: userTenant?.primaryColor || undefined,
       iniciais: user.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase()
     }), {
       maxAge: 60 * 60 * 24 * 7

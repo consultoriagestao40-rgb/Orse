@@ -338,8 +338,8 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
 
         {/* VALOR TOTAL */}
         <div className="w-full mt-8 p-5 bg-[#1B4D3E] total-premium-card text-white flex justify-between items-center text-center font-black text-base mb-2 uppercase tracking-wide rounded-none border border-emerald-950 shadow-md">
-          <span className="text-emerald-300 tracking-wider">VALOR TOTAL DA PROPOSTA:</span>
-          <span className="text-2xl text-emerald-400 font-black tracking-tight">{fmt(totalGeral)} {isSpot ? '' : 'Mensal'}</span>
+          <span className="text-white !text-white tracking-wider">VALOR TOTAL DA PROPOSTA:</span>
+          <span className="text-2xl text-white !text-white font-black tracking-tight">{fmt(totalGeral)} {isSpot ? '' : 'Mensal'}</span>
         </div>
         {totalGeral > 0 && (
           <div className="text-center text-[#1B4D3E] font-bold text-[10px] uppercase mb-12 tracking-wider">

@@ -2248,14 +2248,14 @@ function PropostaEditor() {
                         {/* TOTAIS FINAIS */}
                         <tr className="bg-[#1B4D3E] text-white font-black border-t-4 border-white text-sm tracking-widest">
                            <td colSpan={3} className="py-5 px-6 text-right uppercase">Total dos Montantes "A+B+C+D" + Impostos</td>
-                           <td className="py-5 px-6 text-right text-emerald-400">
+                           <td className="py-5 px-6 text-right text-white !text-white">
                               {formatCurrency(resultado?.faturamentoBruto || 0)}
                            </td>
                         </tr>
                         {!isSpot && (
                            <tr className="bg-black text-white font-black border-t border-slate-800 text-xs tracking-widest uppercase">
                               <td colSpan={3} className="py-4 px-6 text-right">Valor Total Anual do Contrato</td>
-                              <td className="py-4 px-6 text-right text-emerald-500">
+                              <td className="py-4 px-6 text-right text-white !text-white">
                                  {formatCurrency((resultado?.faturamentoBruto || 0) * 12)}
                               </td>
                            </tr>
@@ -2325,7 +2325,7 @@ function PropostaEditor() {
                         <tfoot>
                           <tr className="bg-[#1B4D3E] text-white font-black">
                             <td colSpan={4} className="px-4 py-2.5 text-right uppercase tracking-wider text-xs">Subtotal Mão de Obra (Preço de Venda Final)</td>
-                            <td className="px-4 py-2.5 text-right text-emerald-300">
+                            <td className="px-4 py-2.5 text-right text-white !text-white">
                                {fc(resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0)}
                             </td>
                           </tr>
@@ -2384,7 +2384,7 @@ function PropostaEditor() {
                         <tfoot>
                           <tr className="bg-slate-700 text-white font-black">
                             <td colSpan={2} className="px-6 py-2.5 text-right uppercase tracking-wider text-xs">Subtotal Materiais e Insumos (Preço de Venda Final)</td>
-                            <td className="px-6 py-2.5 text-right text-emerald-300">
+                            <td className="px-6 py-2.5 text-right text-white !text-white">
                               {fc(applyCascata(
                                 Number(proposta.insumos.materiais || 0) + 
                                 Number(isSpot ? (totalMaquinasNaoLocadas + totalMaquinasLocadas) : proposta.insumos.maquinas || 0) + 
@@ -2404,7 +2404,7 @@ function PropostaEditor() {
                       <h3 className="text-sm font-black uppercase tracking-widest text-emerald-300 mb-1">Total Geral da Proposta</h3>
                       <p className="text-[10px] font-bold text-emerald-100/60 uppercase">Mão de Obra + Insumos Globais — Valor Final de Venda</p>
                     </div>
-                    <div className="text-5xl font-black text-emerald-400 tracking-tighter">
+                    <div className="text-5xl font-black text-white !text-white tracking-tighter">
                       {fc(resultado?.faturamentoBruto || 0)}
                     </div>
                   </div>

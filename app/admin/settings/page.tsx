@@ -133,6 +133,20 @@ export default function SettingsPage() {
     try {
       const res = await changeTenantTheme(themeColor);
       if (res.success) {
+        // Update the cookie immediately on client side
+        if (typeof window !== 'undefined') {
+          const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
+          if (cookie) {
+            try {
+              const decoded = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+              decoded.primaryColor = themeColor;
+              const encoded = encodeURIComponent(JSON.stringify(decoded));
+              document.cookie = `sb_user=${encoded}; path=/; max-age=${60 * 60 * 24 * 7}; Secure; SameSite=Lax`;
+            } catch (e) {
+              console.error('Erro ao atualizar cookie local de cor:', e);
+            }
+          }
+        }
         alert('Paleta de cores da empresa atualizada com sucesso!');
         window.location.reload();
       } else {
