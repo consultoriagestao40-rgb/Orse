@@ -25,7 +25,7 @@ type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor';
 const STATUSES = [
   { nome: 'Rascunho', color: 'bg-slate-100 text-slate-600' },
   { nome: 'Enviada', color: 'bg-blue-100 text-blue-600' },
-  { nome: 'Aprovada', color: 'bg-emerald-100 text-emerald-600' },
+  { nome: 'Aprovada', color: 'bg-green-100 text-green-600' },
   { nome: 'Recusada', color: 'bg-red-100 text-red-600' }
 ];
 
@@ -79,7 +79,8 @@ export default function PropostasComerciaisDashboard() {
   useEffect(() => { loadData(); }, []);
 
   const getStatusStyle = (statusNome: string) => {
-    const found = STATUSES.find(s => s.nome === statusNome);
+    if (!statusNome) return 'bg-slate-100 text-slate-600';
+    const found = STATUSES.find(s => s.nome.toLowerCase() === statusNome.toLowerCase());
     return found?.color || 'bg-slate-100 text-slate-600';
   };
 

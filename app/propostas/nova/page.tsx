@@ -2336,7 +2336,7 @@ function PropostaEditor() {
 
                   {/* BLOCO 2: INSUMOS */}
                   <div className="bg-white border border-slate-300 rounded-md shadow-sm overflow-hidden">
-                    <div className="bg-slate-700 px-6 py-3 flex items-center gap-2">
+                    <div className="bg-[#0B2E24] px-6 py-3 flex items-center gap-2">
                       <ClipboardList size={16} className="text-slate-300" />
                       <h2 className="text-xs font-black text-white uppercase tracking-widest">2) Materiais, Equipamentos e Insumos</h2>
                     </div>
@@ -2382,7 +2382,7 @@ function PropostaEditor() {
                           </tr>
                         </tbody>
                         <tfoot>
-                          <tr className="bg-slate-700 text-white font-black">
+                          <tr className="bg-[#0B2E24] text-white font-black">
                             <td colSpan={2} className="px-6 py-2.5 text-right uppercase tracking-wider text-xs">Subtotal Materiais e Insumos (Preço de Venda Final)</td>
                             <td className="px-6 py-2.5 text-right text-white !text-white">
                               {fc(applyCascata(
@@ -2526,7 +2526,7 @@ function PropostaEditor() {
                return (
                   <div className="w-full bg-white border border-slate-100 shadow-[0_20px_50px_rgba(27,77,62,0.06)] rounded-2xl overflow-hidden flex flex-col">
                      {/* Cabeçalho da DRE */}
-                     <div className="bg-gradient-to-r from-[#1B4D3E] via-[#215E4C] to-[#12362b] text-white p-5 flex items-center justify-between border-b border-emerald-500/20">
+                     <div className="bg-gradient-to-r from-[#1B4D3E] via-[#2A6D5A] to-[#12362b] text-white p-5 flex items-center justify-between border-b border-emerald-500/20">
                         <div className="flex items-center gap-3">
                            <div className="bg-white/10 p-2.5 rounded-xl border border-white/10 shadow-inner">
                               <PieChart className="text-emerald-400" size={18} />
@@ -5265,7 +5265,7 @@ function PropostaEditor() {
                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 transition-all duration-300">
                   <div className="bg-white/95 rounded-2xl border border-slate-100 shadow-[0_25px_60px_-15px_rgba(27,77,62,0.18)] max-w-2xl w-full flex flex-col max-h-[90vh] overflow-hidden animate-modal-in">
                      {/* Cabeçalho */}
-                     <div className="bg-gradient-to-r from-[#1B4D3E] via-[#215E4C] to-[#12362b] text-white p-5 flex items-center justify-between border-b-2 border-emerald-500/20">
+                     <div className="bg-gradient-to-r from-[#1B4D3E] via-[#2A6D5A] to-[#12362b] text-white p-5 flex items-center justify-between border-b-2 border-emerald-500/20">
                         <div className="flex items-center gap-3">
                            <div className="bg-white/10 p-2 rounded-xl border border-white/10">
                               <span className="text-lg">⚙️</span>
@@ -5456,7 +5456,7 @@ function PropostaEditor() {
                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 transition-all duration-300">
                   <div className="bg-white/95 rounded-2xl border border-slate-100 shadow-[0_25px_60px_-15px_rgba(27,77,62,0.18)] max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden animate-modal-in">
                      {/* Cabeçalho */}
-                     <div className="bg-gradient-to-r from-[#1B4D3E] via-[#215E4C] to-[#12362b] text-white p-5 flex items-center justify-between border-b-2 border-emerald-500/20">
+                     <div className="bg-gradient-to-r from-[#1B4D3E] via-[#2A6D5A] to-[#12362b] text-white p-5 flex items-center justify-between border-b-2 border-emerald-500/20">
                         <div className="flex items-center gap-3">
                            <div className="bg-white/10 p-2 rounded-xl border border-white/10">
                               <span className="text-lg">🛡️</span>

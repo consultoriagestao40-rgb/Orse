@@ -561,6 +561,9 @@ const Sidebar = () => {
       .to-\\[\\#1B4D3E\\], .to-\\[\\#1b4d3e\\] {
         --tw-gradient-to: var(--primary-color) !important;
       }
+      .to-\\[\\#12362b\\], .to-\\[\\#12362B\\] {
+        --tw-gradient-to: var(--primary-color-dark) !important;
+      }
       .bg-\\[\\#0B2E24\\], .bg-\\[\\#0b2e24\\] {
         background-color: var(--primary-color-dark) !important;
       }

@@ -110,6 +110,18 @@ export async function deleteProposta(id: string) {
 // Ações para gerenciar os Status das Propostas
 export async function getPropostaStatuses() {
   try {
+    // Correção automática de cores legadas de status no banco de dados
+    await prisma.propostaStatus.updateMany({
+      where: {
+        color: {
+          contains: 'bg-emerald-100'
+        }
+      },
+      data: {
+        color: 'bg-green-100 text-green-800 border border-green-200'
+      }
+    });
+
     const statuses = await prisma.propostaStatus.findMany({ orderBy: { nome: 'asc' } });
     if (statuses.length === 0) {
       // Popula com defaults se a tabela estiver vazia
@@ -117,7 +129,7 @@ export async function getPropostaStatuses() {
         data: [
           { nome: 'ATIVO', color: 'bg-sky-100 text-sky-800 border border-sky-200' },
           { nome: 'EM REVISÃO', color: 'bg-orange-100 text-orange-800 border border-orange-200' },
-          { nome: 'APROVADA', color: 'bg-emerald-100 text-emerald-800 border border-emerald-200' },
+          { nome: 'APROVADA', color: 'bg-green-100 text-green-800 border border-green-200' },
           { nome: 'REJEITADA', color: 'bg-red-100 text-red-800 border border-red-200' },
           { nome: 'AGUARDANDO CLIENTE', color: 'bg-purple-100 text-purple-800 border border-purple-200' },
         ],

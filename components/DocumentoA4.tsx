@@ -106,6 +106,9 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
       .hover\\:border-\\[\\#1B4D3E\\]:hover, .hover\\:border-\\[\\#1b4d3e\\]:hover {
         border-color: var(--primary-color) !important;
       }
+      .bg-\\[\\#0B2E24\\], .bg-\\[\\#0b2e24\\] {
+        background-color: var(--primary-color-dark) !important;
+      }
       
       /* FPV Specific Green Rows (Lighter & Darker shades) */
       .bg-\\[\\#3b8026\\], .bg-\\[\\#3B8026\\] {

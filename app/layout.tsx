@@ -103,6 +103,7 @@ export default function RootLayout({
                 '.from-\\\\[\\\\#1B4D3E\\\\], .from-\\\\[\\\\#1b4d3e\\\\] { --tw-gradient-from: var(--primary-color) !important; --tw-gradient-to: var(--primary-color-hover) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }',
                 '.via-\\\\[\\\\#2A6D5A\\\\], .via-\\\\[\\\\#2a6d5a\\\\] { --tw-gradient-to: var(--primary-color-hover) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--primary-color-hover), var(--tw-gradient-to) !important; }',
                 '.to-\\\\[\\\\#1B4D3E\\\\], .to-\\\\[\\\\#1b4d3e\\\\] { --tw-gradient-to: var(--primary-color) !important; }',
+                '.to-\\\\[\\\\#12362b\\\\], .to-\\\\[\\\\#12362B\\\\] { --tw-gradient-to: var(--primary-color-dark) !important; }',
                 '.bg-\\\\[\\\\#0B2E24\\\\], .bg-\\\\[\\\\#0b2e24\\\\] { background-color: var(--primary-color-dark) !important; }',
                 '.bg-\\\\[\\\\#3b8026\\\\], .bg-\\\\[\\\\#3B8026\\\\] { background-color: var(--primary-color-hover) !important; }',
                 '.border-\\\\[\\\\#2d631d\\\\], .border-\\\\[\\\\#2D631D\\\\] { border-color: var(--primary-color-dark) !important; }',

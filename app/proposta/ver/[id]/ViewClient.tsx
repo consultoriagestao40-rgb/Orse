@@ -208,6 +208,9 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
       .hover\\:border-\\[\\#1B4D3E\\]:hover, .hover\\:border-\\[\\#1b4d3e\\]:hover {
         border-color: var(--primary-color) !important;
       }
+      .bg-\\[\\#0B2E24\\], .bg-\\[\\#0b2e24\\] {
+        background-color: var(--primary-color-dark) !important;
+      }
       
       /* FPV Specific Green Rows (Lighter & Darker shades) */
       .bg-\\[\\#3b8026\\], .bg-\\[\\#3B8026\\] {
@@ -1759,7 +1762,7 @@ return (
 
                       {/* BLOCO 2: INSUMOS */}
                       <div className="bg-white border border-slate-200 rounded-none shadow-sm overflow-hidden">
-                        <div className="bg-slate-700 px-6 py-3.5 flex items-center gap-2">
+                        <div className="bg-[#0B2E24] px-6 py-3.5 flex items-center gap-2">
                           <ClipboardList size={16} className="text-slate-350" />
                           <h2 className="text-[10px] font-black text-white uppercase tracking-widest">2) Materiais, Equipamentos e Insumos</h2>
                         </div>
@@ -1799,7 +1802,7 @@ return (
                               </tr>
                             </tbody>
                             <tfoot>
-                              <tr className="bg-slate-700 text-white font-black text-[9.5px]">
+                              <tr className="bg-[#0B2E24] text-white font-black text-[9.5px]">
                                 <td colSpan={2} className="px-6 py-3.5 text-right uppercase tracking-wider">Subtotal Materiais e Insumos (Preço de Venda Final)</td>
                                 <td className="px-6 py-3.5 text-right text-white !text-white border-l border-slate-800 font-black">
                                   {fc(applyCascata(

@@ -57,7 +57,8 @@ function ProposalsDashboard() {
   useEffect(() => { loadData(); }, []);
 
   const getStatusStyle = (statusNome: string) => {
-    const found = statuses.find(s => s.nome === statusNome);
+    if (!statusNome) return 'bg-slate-100 text-slate-600 border border-slate-200';
+    const found = statuses.find(s => s.nome.toLowerCase() === statusNome.toLowerCase());
     return found?.color || 'bg-slate-100 text-slate-600 border border-slate-200';
   };
 
@@ -74,7 +75,7 @@ function ProposalsDashboard() {
 
   // ── Dados para Kanban por Status ────────────────────────────────────────────
   const kanbanStatusCols = statuses.map(s => {
-    const cards = filteredProposals.filter(p => p.status === s.nome);
+    const cards = filteredProposals.filter(p => (p.status || '').toLowerCase() === s.nome.toLowerCase());
     return {
       id: s.id,
       label: s.nome,
@@ -84,7 +85,7 @@ function ProposalsDashboard() {
     };
   });
   // Propostas sem status mapeado
-  const semStatus = filteredProposals.filter(p => !statuses.find(s => s.nome === p.status));
+  const semStatus = filteredProposals.filter(p => !p.status || !statuses.find(s => s.nome.toLowerCase() === p.status.toLowerCase()));
   if (semStatus.length > 0) {
     kanbanStatusCols.push({
       id: 'sem-status',
