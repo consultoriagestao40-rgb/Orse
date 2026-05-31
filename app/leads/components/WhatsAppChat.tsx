@@ -122,6 +122,54 @@ class WavAudioRecorder {
   }
 }
 
+const compressImage = (base64Str: string, mimeType: string): Promise<string> => {
+  return new Promise((resolve) => {
+    // Only compress images, keep others as is (excluding gifs)
+    if (!mimeType.startsWith('image/') || mimeType === 'image/gif') {
+      resolve(base64Str);
+      return;
+    }
+
+    const img = new Image();
+    img.src = base64Str;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 1200;
+      const MAX_HEIGHT = 1200;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(base64Str);
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, width, height);
+      // Export as jpeg with 0.8 quality to ensure very small payload but super high quality
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+      resolve(compressedBase64);
+    };
+    img.onerror = () => {
+      resolve(base64Str);
+    };
+  });
+};
+
 function DynamicWhatsAppMedia({ fileId, messageText }: { fileId: string; messageText: string }) {
   const [file, setFile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -181,7 +229,11 @@ function DynamicWhatsAppMedia({ fileId, messageText }: { fileId: string; message
 
   const { base64Data: src, nome: docName, tipo: mimeType } = file;
 
-  if (mimeType.startsWith('image/')) {
+  const isImage = mimeType.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|heic)$/i.test(docName);
+  const isVideo = mimeType.startsWith('video/') || /\.(mp4|webm|ogg|mov)$/i.test(docName);
+  const isAudio = mimeType.startsWith('audio/') || /\.(mp3|wav|ogg|m4a|webm)$/i.test(docName);
+
+  if (isImage) {
     const lines = messageText.split('\n');
     const photoLine = lines.find(l => l.includes('📷 Foto:')) || '';
     const caption = photoLine.replace('📷 Foto:', '').trim();
@@ -211,7 +263,7 @@ function DynamicWhatsAppMedia({ fileId, messageText }: { fileId: string; message
     );
   }
 
-  if (mimeType.startsWith('video/')) {
+  if (isVideo) {
     const lines = messageText.split('\n');
     const videoLine = lines.find(l => l.includes('🎥 Vídeo:')) || '';
     const caption = videoLine.replace('🎥 Vídeo:', '').trim();
@@ -238,7 +290,7 @@ function DynamicWhatsAppMedia({ fileId, messageText }: { fileId: string; message
     );
   }
 
-  if (mimeType.startsWith('audio/')) {
+  if (isAudio) {
     return (
       <div className="flex flex-col gap-1.5 min-w-[200px]">
         <div className="text-[11px] text-slate-400 font-bold flex items-center gap-1">🎵 Mensagem de Voz</div>
@@ -704,9 +756,10 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
     const file = e.target.files?.[0];
     if (!file || !leadPhone) return;
 
-    // Vercel server action size limit is 4.5MB. Enforce a strict 3MB limit to prevent unhandled 413 Payload Too Large errors.
-    if (file.size > 3 * 1024 * 1024) {
-      alert("O arquivo excede o limite de 3MB para envio direto. Por favor, envie arquivos ou fotos com no máximo 3MB.");
+    // Vercel server action size limit is 4.5MB. Enforce a strict 3MB limit for non-image files.
+    // Images will be compressed on the client side, so they bypass this check.
+    if (!file.type.startsWith('image/') && file.size > 3 * 1024 * 1024) {
+      alert("O arquivo excede o limite de 3MB para envio direto. Por favor, envie arquivos com no máximo 3MB.");
       return;
     }
 
@@ -715,7 +768,13 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
     const reader = new FileReader();
     reader.onload = async () => {
       try {
-        const base64 = reader.result as string;
+        let base64 = reader.result as string;
+
+        // Compress image client-side to ensure it is extremely light and sends instantly
+        if (file.type.startsWith('image/')) {
+          base64 = await compressImage(base64, file.type);
+        }
+
         const res = await sendWhatsAppMedia(leadId, base64, file.name, file.type);
         if (res.success) {
           fetchMessages();

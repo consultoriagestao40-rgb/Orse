@@ -73,7 +73,11 @@ function DynamicWhatsAppMediaFeed({ fileId, messageText }: { fileId: string; mes
 
   const { base64Data: src, nome: docName, tipo: mimeType } = file;
 
-  if (mimeType.startsWith('image/')) {
+  const isImage = mimeType.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|heic)$/i.test(docName);
+  const isVideo = mimeType.startsWith('video/') || /\.(mp4|webm|ogg|mov)$/i.test(docName);
+  const isAudio = mimeType.startsWith('audio/') || /\.(mp3|wav|ogg|m4a|webm)$/i.test(docName);
+
+  if (isImage) {
     const lines = messageText.split('\n');
     const photoLine = lines.find(l => l.includes('📷 Foto:')) || '';
     const caption = photoLine.replace('📷 Foto:', '').trim();
@@ -93,7 +97,7 @@ function DynamicWhatsAppMediaFeed({ fileId, messageText }: { fileId: string; mes
     );
   }
 
-  if (mimeType.startsWith('video/')) {
+  if (isVideo) {
     const lines = messageText.split('\n');
     const videoLine = lines.find(l => l.includes('🎥 Vídeo:')) || '';
     const caption = videoLine.replace('🎥 Vídeo:', '').trim();
@@ -110,7 +114,7 @@ function DynamicWhatsAppMediaFeed({ fileId, messageText }: { fileId: string; mes
     );
   }
 
-  if (mimeType.startsWith('audio/')) {
+  if (isAudio) {
     return (
       <div className="flex flex-col gap-1.5 min-w-[200px] max-w-sm">
         <div className="text-[10px] text-slate-400 font-bold">🎵 Mensagem de Voz</div>
