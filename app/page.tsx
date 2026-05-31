@@ -295,7 +295,7 @@ function ProposalsDashboard() {
 
     return (
       <div 
-        className="flex-shrink-0 w-72 flex flex-col h-full"
+        className="flex-shrink-0 w-72 flex flex-col h-fit"
         onDragOver={(e) => {
           e.preventDefault(); // Necessário para permitir o drop
           e.currentTarget.classList.add('bg-slate-200/50', 'rounded-xl');
@@ -311,7 +311,7 @@ function ProposalsDashboard() {
         }}
       >
         {/* Cabeçalho da coluna */}
-        <div className="pt-2 pb-3 shrink-0">
+        <div className="sticky top-[-32px] bg-[#F8FAFC] pt-2 pb-3 z-20">
           {isStatus ? (
             <div className={`border rounded-xl p-4 shadow-md text-left ${hStyle.bg} ${hStyle.text} ${hStyle.border}`}>
               <div className="flex items-center justify-between mb-2">
@@ -353,7 +353,7 @@ function ProposalsDashboard() {
         </div>
 
         {/* Cards */}
-        <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-1 pb-4 scrollbar-thin">
+        <div className="flex flex-col gap-3 flex-1 pb-4">
           {cards.length === 0 ? (
             <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
               <p className="text-xs text-slate-300 font-medium">Sem propostas</p>
@@ -584,8 +584,8 @@ function ProposalsDashboard() {
               {loading ? (
                 <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
               ) : (
-                <div className="overflow-x-auto pb-6 overflow-y-visible">
-                  <div className="flex gap-5 min-w-max h-[calc(100vh-360px)] min-h-[450px]">
+                <div className="overflow-x-auto pb-6" style={{ overflowY: 'clip' }}>
+                  <div className="flex gap-5 min-w-max">
                     {kanbanStatusCols.map(col => (
                       <KanbanColumn
                         key={col.id}
@@ -631,8 +631,8 @@ function ProposalsDashboard() {
                   Nenhuma proposta encontrada.
                 </div>
               ) : (
-                <div className="overflow-x-auto pb-6 overflow-y-visible">
-                  <div className="flex gap-5 min-w-max h-[calc(100vh-360px)] min-h-[450px]">
+                <div className="overflow-x-auto pb-6" style={{ overflowY: 'clip' }}>
+                  <div className="flex gap-5 min-w-max">
                     {kanbanVendedorCols.map(col => (
                       <KanbanColumn
                         key={col.id}
