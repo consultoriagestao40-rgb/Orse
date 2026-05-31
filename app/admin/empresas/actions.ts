@@ -376,22 +376,39 @@ export async function checkCurrentTenantActive() {
 export async function getTenantTrialStatus() {
   try {
     const cookieStore = await cookies();
-    const sbUser = cookieStore.get('sb_user')?.value;
-    if (!sbUser) return { success: false, error: 'Usuário não autenticado.' };
-
-    let data;
-    try {
-      data = JSON.parse(decodeURIComponent(sbUser));
-    } catch {
-      try {
-        data = JSON.parse(sbUser);
-      } catch {
-        return { success: false, error: 'Formato de sessão inválido.' };
+    
+    // Tenta primeiro sb_session que é o email (100% confiável)
+    const sessionEmail = cookieStore.get('sb_session')?.value;
+    let emailNormal = '';
+    
+    if (sessionEmail) {
+      emailNormal = sessionEmail.toLowerCase().trim();
+    } else {
+      // Fallback para o sb_user antigo se sb_session por algum motivo não existir
+      const sbUser = cookieStore.get('sb_user')?.value;
+      if (sbUser) {
+        let data;
+        try {
+          data = JSON.parse(decodeURIComponent(sbUser));
+        } catch {
+          try {
+            data = JSON.parse(sbUser);
+          } catch {
+            return { success: false, error: 'Formato de sessão inválido.' };
+          }
+        }
+        if (data && data.email) {
+          emailNormal = data.email.toLowerCase().trim();
+        }
       }
     }
 
-    // O Super Admin da plataforma é imune a bloqueios e testes
-    if (data.email === 'admin@smartbidhub.com.br' || data.email === 'cristiano@grupojvsserv.com.br') {
+    if (!emailNormal) {
+      return { success: false, error: 'Usuário não autenticado.' };
+    }
+
+    // Apenas o Super Admin da plataforma master (admin@smartbidhub.com.br) é 100% imune a bloqueios e testes
+    if (emailNormal === 'admin@smartbidhub.com.br') {
       return { 
         success: true, 
         isSuperAdmin: true, 
@@ -404,7 +421,7 @@ export async function getTenantTrialStatus() {
 
     // Busca o usuário no banco incluindo a relação com o Tenant
     const user = await prisma.user.findFirst({
-      where: { nome: data.nome || '' },
+      where: { email: emailNormal },
       include: { tenant: true }
     });
 
@@ -438,7 +455,7 @@ export async function getTenantTrialStatus() {
 
     return {
       success: true,
-      isSuperAdmin: false,
+      isSuperAdmin: emailNormal === 'cristiano@grupojvsserv.com.br', // Cristiano é Super Admin, mas vê o trial da sua empresa
       isTrialActive,
       trialExpired,
       hasContact,
