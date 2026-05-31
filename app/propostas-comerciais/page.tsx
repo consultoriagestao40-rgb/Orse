@@ -659,62 +659,38 @@ export default function PropostasComerciaisDashboard() {
                 </>
               ) : (
                 <div className="space-y-4">
-                  {/* Container Sticky Unificado: Título + Cabeçalhos */}
-                  <div 
-                    className="sticky top-0 z-20 bg-[#F8FAFC] pt-8 pb-1"
-                    style={{ top: '-32px' }}
-                  >
-                    <div className="flex items-center gap-2 mb-4">
-                      <LayoutGrid size={16} className="text-[#1B4D3E]" />
-                      <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
-                      <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                        {kanbanStatusCols.length} status
-                      </span>
-                    </div>
-
-                    {/* Cabeçalhos Fixos */}
-                    <div 
-                      id="kanban-headers-status"
-                      className="overflow-x-auto no-scrollbar pb-1"
-                      onScroll={() => syncScroll('kanban-headers-status', 'kanban-cards-status')}
-                      style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
-                    >
-                      <div className="flex gap-5 min-w-max">
-                        {kanbanStatusCols.map(col => (
-                          <KanbanColumnHeader
-                            key={col.id}
+                  {/* Kanban Único Rolável Horizontalmente */}
+                  <div className="overflow-x-auto pb-6">
+                    <div className="flex gap-5 min-w-max pt-8">
+                      {kanbanStatusCols.map(col => (
+                        <div key={col.id} className="flex flex-col w-72 shrink-0">
+                          {/* Cabeçalho Sticky de Coluna com Máscara Opaca */}
+                          <div 
+                            className="sticky z-20 bg-[#F8FAFC] pt-8 pb-0"
+                            style={{ top: '-32px' }}
+                          >
+                            <KanbanColumnHeader
+                              label={col.label}
+                              color={col.color}
+                              cards={col.cards}
+                              total={col.total}
+                            />
+                          </div>
+                          {/* Cards da Coluna */}
+                          <KanbanColumnCards
                             label={col.label}
                             color={col.color}
+                            type="status"
                             cards={col.cards}
-                            total={col.total}
+                            onDropProp={async (propId) => {
+                              const doc = docs.find(d => d.propostaId === propId);
+                              if (doc && doc.status !== col.label) {
+                                setDocs(prev => prev.map(d => d.propostaId === propId ? { ...d, status: col.label } : d));
+                                await updateDocumentoStatus(doc.id, col.label);
+                              }
+                            }}
                           />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Cards Roláveis */}
-                  <div 
-                    id="kanban-cards-status"
-                    className="overflow-x-auto pb-6"
-                    onScroll={() => syncScroll('kanban-cards-status', 'kanban-headers-status')}
-                  >
-                    <div className="flex gap-5 min-w-max pt-0">
-                      {kanbanStatusCols.map(col => (
-                        <KanbanColumnCards
-                          key={col.id}
-                          label={col.label}
-                          color={col.color}
-                          type="status"
-                          cards={col.cards}
-                          onDropProp={async (propId) => {
-                            const doc = docs.find(d => d.propostaId === propId);
-                            if (doc && doc.status !== col.label) {
-                              setDocs(prev => prev.map(d => d.propostaId === propId ? { ...d, status: col.label } : d));
-                              await updateDocumentoStatus(doc.id, col.label);
-                            }
-                          }}
-                        />
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -752,72 +728,48 @@ export default function PropostasComerciaisDashboard() {
                 </>
               ) : (
                 <div className="space-y-4">
-                  {/* Container Sticky Unificado: Título + Cabeçalhos */}
-                  <div 
-                    className="sticky top-0 z-20 bg-[#F8FAFC] pt-8 pb-1"
-                    style={{ top: '-32px' }}
-                  >
-                    <div className="flex items-center gap-2 mb-4">
-                      <UserSquare2 size={16} className="text-[#1B4D3E]" />
-                      <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
-                      <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                        {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
-                      </span>
-                    </div>
-
-                    {/* Cabeçalhos Fixos */}
-                    <div 
-                      id="kanban-headers-vendedor"
-                      className="overflow-x-auto no-scrollbar pb-1"
-                      onScroll={() => syncScroll('kanban-headers-vendedor', 'kanban-cards-vendedor')}
-                      style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
-                    >
-                      <div className="flex gap-5 min-w-max">
-                        {kanbanVendedorCols.map(col => (
-                          <KanbanColumnHeader
-                            key={col.id}
+                  {/* Kanban Único Rolável Horizontalmente */}
+                  <div className="overflow-x-auto pb-6">
+                    <div className="flex gap-5 min-w-max pt-8">
+                      {kanbanVendedorCols.map(col => (
+                        <div key={col.id} className="flex flex-col w-72 shrink-0">
+                          {/* Cabeçalho Sticky de Coluna com Máscara Opaca */}
+                          <div 
+                            className="sticky z-20 bg-[#F8FAFC] pt-8 pb-0"
+                            style={{ top: '-32px' }}
+                          >
+                            <KanbanColumnHeader
+                              label={col.label}
+                              type="vendedor"
+                              cards={col.cards}
+                              total={col.total}
+                            />
+                          </div>
+                          {/* Cards da Coluna */}
+                          <KanbanColumnCards
                             label={col.label}
                             type="vendedor"
                             cards={col.cards}
-                            total={col.total}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Cards Roláveis */}
-                  <div 
-                    id="kanban-cards-vendedor"
-                    className="overflow-x-auto pb-6"
-                    onScroll={() => syncScroll('kanban-cards-vendedor', 'kanban-headers-vendedor')}
-                  >
-                    <div className="flex gap-5 min-w-max pt-0">
-                      {kanbanVendedorCols.map(col => (
-                        <KanbanColumnCards
-                          key={col.id}
-                          label={col.label}
-                          type="vendedor"
-                          cards={col.cards}
-                          onDropProp={async (propId) => {
-                            const doc = docs.find(d => d.propostaId === propId);
-                            if (doc && doc.usuario !== col.label) {
-                              if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
-                                alert('Apenas gestores e administradores podem transferir propostas.');
-                                return;
-                              }
-                              const newUser = usersList.find(u => u.nome === col.label);
-                              if (newUser) {
-                                setDocs(prev => prev.map(d => d.propostaId === propId ? { ...d, usuario: newUser.nome, avatarUrl: newUser.avatarUrl } : d));
-                                const res = await transferirProposta(propId, newUser.id);
-                                if (!res.success) {
-                                  alert(res.error);
-                                  loadData();
+                            onDropProp={async (propId) => {
+                              const doc = docs.find(d => d.propostaId === propId);
+                              if (doc && doc.usuario !== col.label) {
+                                if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
+                                  alert('Apenas gestores e administradores podem transferir propostas.');
+                                  return;
+                                }
+                                const newUser = usersList.find(u => u.nome === col.label);
+                                if (newUser) {
+                                  setDocs(prev => prev.map(d => d.propostaId === propId ? { ...d, usuario: newUser.nome, avatarUrl: newUser.avatarUrl } : d));
+                                  const res = await transferirProposta(propId, newUser.id);
+                                  if (!res.success) {
+                                    alert(res.error);
+                                    loadData();
+                                  }
                                 }
                               }
-                            }
-                          }}
-                        />
+                            }}
+                          />
+                        </div>
                       ))}
                     </div>
                   </div>
