@@ -5,17 +5,25 @@ export function middleware(request: NextRequest) {
   const session = request.cookies.get('sb_session')
   const { pathname } = request.nextUrl
 
-  // Se estiver tentando acessar o login já logado (com sessão válida E cookie de usuário), vai para a home
-  // IMPORTANTE: só redireciona se AMBOS os cookies existirem para evitar loop infinito
-  const sbUser = request.cookies.get('sb_user')
-  if (pathname === '/login' && session && sbUser) {
+  // sb_session agora contém o email do usuário (ou 'active' para sessões antigas)
+  // Considera logado se o cookie existe e tem valor
+  const isLoggedIn = !!(session?.value)
+
+  // Se já está logado e tenta acessar o login → redireciona para home
+  if (pathname === '/login' && isLoggedIn) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // Lista de rotas públicas
-  const isPublicRoute = pathname === '/' || pathname === '/login' || pathname.startsWith('/proposta/ver/') || pathname.startsWith('/api/setup') || pathname.startsWith('/_next') || pathname.includes('favicon')
+  // Lista de rotas públicas (não requerem autenticação)
+  const isPublicRoute = 
+    pathname === '/' || 
+    pathname === '/login' || 
+    pathname.startsWith('/proposta/ver/') || 
+    pathname.startsWith('/api/setup') || 
+    pathname.startsWith('/_next') || 
+    pathname.includes('favicon')
 
-  if (!session && !isPublicRoute) {
+  if (!isLoggedIn && !isPublicRoute) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 

@@ -6,32 +6,13 @@ const SUPER_ADMIN_EMAILS = [
   'admin@smartbidhub.com.br',
 ];
 
-function parseCookieValue(raw: string): any | null {
-  const strategies = [
-    () => JSON.parse(decodeURIComponent(raw)),
-    () => JSON.parse(raw),
-    () => {
-      let s = raw.trim();
-      if (s.startsWith('"') && s.endsWith('"')) s = s.slice(1, -1);
-      return JSON.parse(s);
-    },
-  ];
-  for (const strategy of strategies) {
-    try {
-      const result = strategy();
-      if (result && typeof result === 'object') return result;
-    } catch {}
-  }
-  return null;
-}
-
 /**
  * Layout Server Component para /admin/empresas
- * Verifica autenticação no servidor durante SSR.
- * - Sem sb_session → redirect /login
- * - Sem sb_user → redirect /login (limpar e refazer login)
- * - Não é admin → acesso negado inline (sem redirect para evitar loops)
- * - É admin → renderiza o dashboard
+ * 
+ * SOLUÇÃO DEFINITIVA: lê o email do cookie sb_session (httpOnly, servidor confiável)
+ * em vez de tentar parsear o sb_user (que tinha problemas em produção).
+ * 
+ * O sb_session agora armazena o email do usuário diretamente.
  */
 export default async function AdminEmpresasLayout({
   children,
@@ -39,26 +20,24 @@ export default async function AdminEmpresasLayout({
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
-  const sbSession = cookieStore.get('sb_session')?.value;
-  const sbUserRaw = cookieStore.get('sb_user')?.value;
+  
+  // sb_session contém o email do usuário (definido no login)
+  const sessionEmail = cookieStore.get('sb_session')?.value;
 
-  // Sem sessão ou sem cookie de usuário → vai para login
-  if (!sbSession || !sbUserRaw) {
+  // Sem sessão → vai para login
+  if (!sessionEmail) {
     redirect('/login');
   }
 
-  // Tenta fazer parse do cookie do usuário
-  const userData = parseCookieValue(sbUserRaw);
+  const emailNorm = sessionEmail.toLowerCase().trim();
+  const isAdmin = SUPER_ADMIN_EMAILS.some(e => e === emailNorm);
 
-  if (userData) {
-    const email = (userData.email || '').toLowerCase().trim();
-    if (SUPER_ADMIN_EMAILS.some(adminEmail => email === adminEmail)) {
-      // ✅ É admin verificado no servidor → renderiza o painel
-      return <>{children}</>;
-    }
+  if (isAdmin) {
+    // ✅ Admin verificado no servidor via cookie httpOnly
+    return <>{children}</>;
   }
 
-  // ❌ Não é admin → mostra acesso negado inline (sem redirect para evitar loops)
+  // ❌ Logado mas não é admin → mostra acesso negado inline
   return (
     <div style={{
       minHeight: '100vh',
@@ -85,8 +64,8 @@ export default async function AdminEmpresasLayout({
         <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '8px', lineHeight: '1.6' }}>
           Esta área é exclusiva para administradores master.
         </p>
-        <p style={{ color: '#475569', fontSize: '11px', marginBottom: '24px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
-          Email detectado: {userData?.email || 'não identificado'}
+        <p style={{ color: '#475569', fontSize: '11px', marginBottom: '24px', fontFamily: 'monospace' }}>
+          Logado como: {emailNorm}
         </p>
         <a
           href="/api/auth/logout"

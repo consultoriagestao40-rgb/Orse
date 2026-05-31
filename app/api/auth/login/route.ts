@@ -40,23 +40,24 @@ export async function POST(request: Request) {
       }
     })
 
-    const cookieOptions = {
+    const baseOpts = {
       secure: isProduction,
       sameSite: 'lax' as const,
-      maxAge: 60 * 60 * 24 * 7, // 7 dias
+      maxAge: 60 * 60 * 24 * 7,
       path: '/',
     }
 
-    // Cookie de sessão - HttpOnly (servidor apenas)
-    response.cookies.set('sb_session', 'active', {
-      ...cookieOptions,
+    // sb_session: armazena o email diretamente (httpOnly - lido apenas pelo servidor)
+    // Isso permite que o layout.tsx valide admin sem depender de sb_user
+    response.cookies.set('sb_session', user.email, {
+      ...baseOpts,
       httpOnly: true,
     })
 
-    // Cookie de dados do usuário - legível pelo browser (para personalização do UI)
+    // sb_user: dados completos para o frontend (não httpOnly - lido pelo browser)
     response.cookies.set('sb_user', JSON.stringify(userData), {
-      ...cookieOptions,
-      httpOnly: false, // precisa ser lido pelo JS do browser
+      ...baseOpts,
+      httpOnly: false,
     })
 
     return response
