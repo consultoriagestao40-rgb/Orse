@@ -549,18 +549,18 @@ export default function ControladoriaPage() {
               {/* TARGETS BANNER (Meta Global da Empresa) */}
               <div className="bg-gradient-to-r from-[#1B4D3E] to-[#12362B] rounded-3xl p-6 text-white shadow-[0_8px_30px_rgb(27,77,62,0.15)] border border-emerald-950 flex flex-col md:flex-row justify-between items-center gap-6">
                 <div className="space-y-1.5 text-center md:text-left flex-1">
-                  <span className="text-[10px] font-black uppercase text-emerald-400 tracking-widest flex items-center justify-center md:justify-start gap-1">
+                  <span className="text-[10px] font-black uppercase tracking-widest flex items-center justify-center md:justify-start gap-1" style={{ color: '#34D399' }}>
                     <Target size={12} /> Meta Geral da Empresa (Mês)
                   </span>
                   <h2 className="text-xl font-black tracking-tight">Desempenho Comercial Corporativo - {formatMonthYear(activeMonthKey)}</h2>
-                  <p className="text-xs text-slate-300 font-medium">
+                  <p className="text-xs text-slate-200 font-medium">
                     Soma de todas as metas individuais vs. Volume convertido nesta consulta.
                   </p>
                 </div>
                 
                 <div className="flex flex-col md:flex-row items-center gap-6 md:gap-12 w-full md:w-auto">
                   <div className="text-center md:text-right shrink-0">
-                    <p className="text-[9px] font-black uppercase text-emerald-400 tracking-wider">Aceito / Meta Geral</p>
+                    <p className="text-[9px] font-black uppercase tracking-wider" style={{ color: '#34D399' }}>Aceito / Meta Geral</p>
                     <p className="text-2xl font-black mt-1">
                       {formatCurrency(totalAceito)} <span className="text-xs font-bold text-emerald-300">/ {formatCurrency(totalMetasEmpresa)}</span>
                     </p>
@@ -613,7 +613,7 @@ export default function ControladoriaPage() {
                       <span className="text-xl font-extrabold text-white leading-none block">
                         {atingidoGeralPct.toFixed(1)}%
                       </span>
-                      <p className="text-[7px] text-emerald-400 uppercase tracking-widest font-black mt-1">Meta Atingida</p>
+                      <p className="text-[7px] uppercase tracking-widest font-black mt-1" style={{ color: '#34D399' }}>Meta Atingida</p>
                     </div>
                   </div>
                 </div>
