@@ -384,6 +384,18 @@ export async function syncEmailsFromImap() {
                 }
               });
 
+              // Criar notificação para o usuário responsável pelo Lead
+              const recipientId = lead.assignedToId || (await prisma.user.findFirst({ where: { role: 'ADMIN' } }))?.id;
+              if (recipientId) {
+                await prisma.notification.create({
+                  data: {
+                    userId: recipientId,
+                    texto: `📧 Novo E-mail: ${lead.nomeFantasia || 'Lead'} enviou um e-mail: "${subject.substring(0, 30)}..."`,
+                    link: `/leads?id=${lead.id}`
+                  }
+                });
+              }
+
               importedCount++;
             }
           }

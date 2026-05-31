@@ -440,6 +440,15 @@ export async function aprovarPropostaAction(documentoId: string, payload: { nome
       }
     });
 
+    // Criar notificação para o vendedor responsável pela proposta
+    await prisma.notification.create({
+      data: {
+        userId: doc.proposta.userId,
+        texto: `🎉 Proposta Aprovada: O cliente ${doc.client.nomeFantasia || 'Cliente'} assinou e aprovou a proposta FPV-${String(doc.proposta.numero).padStart(3, '0')}.`,
+        link: `/propostas-comerciais/${doc.id}`
+      }
+    });
+
     // 2. Tentar atualizar também o status da FPV de origem para manter a sincronia
     await prisma.proposta.update({
       where: { id: doc.propostaId },
@@ -592,6 +601,15 @@ export async function recusarPropostaAction(documentoId: string, motivo: string)
       }
     });
 
+    // Criar notificação para o vendedor responsável pela proposta
+    await prisma.notification.create({
+      data: {
+        userId: doc.proposta.userId,
+        texto: `⚠️ Proposta Recusada: O cliente ${doc.client.nomeFantasia || 'Cliente'} recusou a proposta FPV-${String(doc.proposta.numero).padStart(3, '0')}. Justificativa: "${motivo.substring(0, 30)}..."`,
+        link: `/propostas-comerciais/${doc.id}`
+      }
+    });
+
     // 2. Atualizar status da FPV
     await prisma.proposta.update({
       where: { id: doc.propostaId },
@@ -670,7 +688,14 @@ export async function trackDocumentoView(documentoId: string, tabId: string) {
   try {
     const doc = await prisma.documentoProposta.findUnique({
       where: { id: documentoId },
-      select: { configApresentacao: true }
+      include: {
+        proposta: {
+          include: {
+            user: true
+          }
+        },
+        client: true
+      }
     });
 
     if (!doc) return { success: false, error: 'Documento não encontrado' };
@@ -703,6 +728,21 @@ export async function trackDocumentoView(documentoId: string, tabId: string) {
       tracking.history.push({
         tab: tabId,
         viewedAt: now.toISOString()
+      });
+
+      // Criar notificação para o vendedor dono da proposta
+      const numProposta = String(doc.proposta.numero).padStart(3, '0');
+      const clienteNome = doc.client.nomeFantasia || 'Cliente';
+      const isFirstAccess = tracking.history.length === 1;
+
+      await prisma.notification.create({
+        data: {
+          userId: doc.proposta.userId,
+          texto: isFirstAccess
+            ? `👀 Primeiro Acesso: O cliente ${clienteNome} acessou a sua proposta FPV-${numProposta} pela primeira vez!`
+            : `👀 Proposta Visualizada: O cliente ${clienteNome} visualizou a aba "${tabId.toUpperCase()}" da proposta FPV-${numProposta}.`,
+          link: `/propostas-comerciais/${documentoId}`
+        }
       });
     }
 

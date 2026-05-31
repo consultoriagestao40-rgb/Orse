@@ -213,6 +213,18 @@ export async function POST(req: Request) {
             messageId: messageId
           }
         });
+
+        // Criar notificação para o usuário responsável pelo Lead
+        const recipientId = lead.assignedToId || (await prisma.user.findFirst({ where: { role: 'ADMIN' } }))?.id;
+        if (recipientId) {
+          await prisma.notification.create({
+            data: {
+              userId: recipientId,
+              texto: `💬 WhatsApp: Nova mensagem de ${lead.nomeFantasia}: "${text.substring(0, 30)}..."`,
+              link: `/leads?id=${lead.id}`
+            }
+          });
+        }
  
         // Limpa estado de "digitando" ao receber a mensagem
         await prisma.lead.update({
