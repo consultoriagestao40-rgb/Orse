@@ -22,6 +22,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   const [showNegotiationModal, setShowNegotiationModal] = useState(false);
   const [negotiationType, setNegotiationType] = useState<'comment' | 'decline'>('comment');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(true);
 
   // Real-time Countdown Timer for link validity expiration
   const [timeLeft, setTimeLeft] = useState<{
@@ -484,6 +485,8 @@ return (
         
         {/* SIDEBAR DE TABS DE NAVEGAÇÃO (ESTILO SEGUNDA FOTO - PREMIUM WHITE) */}
         <aside className={`shrink-0 bg-white border border-slate-200 shadow-xl flex flex-col justify-between text-slate-800 print:hidden font-sans transition-all duration-300 ${
+          mobileMenuOpen ? 'block' : 'hidden'
+        } md:block ${
           sidebarCollapsed 
             ? 'w-full md:w-20 p-4 items-center rounded-2xl md:rounded-3xl' 
             : 'w-full md:w-80 p-6 rounded-3xl'
@@ -511,7 +514,10 @@ return (
                   {navItems.map((item) => (
                     <button
                       key={item.id}
-                      onClick={() => setActiveClientTab(item.id)}
+                      onClick={() => {
+                        setActiveClientTab(item.id);
+                        setMobileMenuOpen(false);
+                      }}
                       title={item.label}
                       className={`p-3.5 rounded-2xl transition-all flex items-center justify-center active:scale-[0.98] cursor-pointer border ${
                         activeClientTab === item.id
@@ -659,7 +665,10 @@ return (
                   {navItems.map((item) => (
                     <button
                       key={item.id}
-                      onClick={() => setActiveClientTab(item.id)}
+                      onClick={() => {
+                        setActiveClientTab(item.id);
+                        setMobileMenuOpen(false);
+                      }}
                       className={`w-full text-left px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-between active:scale-[0.98] cursor-pointer border ${
                         activeClientTab === item.id
                           ? 'bg-slate-100 border-slate-200 text-[#1B4D3E] shadow-xs'
@@ -720,7 +729,24 @@ return (
         </aside>
 
         {/* CONTAINER PRINCIPAL DE CONTEÚDO (CANVAS) */}
-        <main className="flex-1 h-full overflow-y-auto p-4 md:p-8 bg-[#FAFBFD] print:w-full print:p-0 print:m-0">
+        <main className={`flex-1 h-full overflow-y-auto p-4 md:p-8 bg-[#FAFBFD] print:w-full print:p-0 print:m-0 ${
+          mobileMenuOpen ? 'hidden' : 'block'
+        } md:block`}>
+
+          {/* Mobile Back Header */}
+          <div className="flex md:hidden items-center justify-between bg-white border-b border-slate-100 p-4 mb-4 -mx-4 -mt-4 sticky top-0 z-20 shadow-xs">
+            <button 
+              onClick={() => setMobileMenuOpen(true)}
+              className="flex items-center gap-1.5 text-xs font-black text-[#1B4D3E] bg-[#1B4D3E]/5 px-3 py-2 rounded-xl active:scale-95"
+            >
+              <ChevronLeft size={16} /> Voltar ao Menu
+            </button>
+            <div className="text-right">
+              <span className="text-[8px] bg-slate-100 text-slate-500 border border-slate-200 font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md">
+                FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')}
+              </span>
+            </div>
+          </div>
 
           {/* 1. ABA: APRESENTAÇÃO CANVA */}
           {activeClientTab === 'apresentacao' && hasCanva && (
