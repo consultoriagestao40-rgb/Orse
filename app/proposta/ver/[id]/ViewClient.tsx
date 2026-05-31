@@ -434,7 +434,66 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   }, [activeClientTab]);
 
 return (
-    <div className="bg-[#FAFBFD] w-full h-screen text-slate-800 font-sans flex flex-col md:flex-row overflow-hidden select-none">
+    <div className="bg-[#FAFBFD] w-full h-screen text-slate-800 font-sans flex flex-col overflow-hidden select-none pt-16 animate-fadeIn">
+      
+      {/* Real-time Countdown Timer fixed at the top (ALWAYS ACTIVE FOR CONSISTENCY) */}
+      <div className="fixed top-0 left-0 right-0 h-16 bg-[#1B4D3E] text-white flex items-center justify-between px-6 z-[9999] shadow-md print:hidden font-sans">
+        {/* Left: Voltar button (mobile only) & Validade Title or Info */}
+        <div className="flex items-center gap-3">
+          {!mobileMenuOpen && (
+            <button 
+              onClick={() => setMobileMenuOpen(true)}
+              className="flex md:hidden items-center gap-1.5 text-xs font-black text-white bg-white/10 border border-white/15 px-3 py-2 rounded-xl active:scale-95 mr-1"
+            >
+              <ChevronLeft size={16} /> Voltar
+            </button>
+          )}
+          <Clock size={16} className="text-emerald-305 animate-pulse hidden sm:block animate-duration-1000" />
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-100">
+              Validade da Proposta
+            </span>
+            <span className="text-[8px] text-emerald-250 font-bold uppercase">
+              FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')} • Versão v{versao?.versao || 1}
+            </span>
+          </div>
+        </div>
+        
+        {/* Right: Larger Countdown Timer digits if active, otherwise static badge */}
+        {timeLeft && !timeLeft.isExpired ? (
+          <div className="flex gap-2 items-center font-mono">
+            {timeLeft.days > 0 && (
+              <>
+                <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
+                  <span className="text-sm font-black text-white leading-none">{timeLeft.days}</span>
+                  <span className="text-[6.5px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">dias</span>
+                </div>
+                <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
+              </>
+            )}
+            <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
+              <span className="text-sm font-black text-white leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
+              <span className="text-[6.5px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">horas</span>
+            </div>
+            <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
+            <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
+              <span className="text-sm font-black text-white leading-none">{String(timeLeft.minutes).padStart(2, '0')}</span>
+              <span className="text-[6.5px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">min</span>
+            </div>
+            <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
+            <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
+              <span className="text-sm font-black text-emerald-300 animate-pulse leading-none">{String(timeLeft.seconds).padStart(2, '0')}</span>
+              <span className="text-[6.5px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">seg</span>
+            </div>
+          </div>
+        ) : (
+          <div className="text-[9px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/25 font-black uppercase tracking-wider px-3 py-1.5 rounded-xl">
+            Válida até {doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR')}
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full">
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
           @page { margin: 0 !important; size: auto; }
@@ -611,42 +670,6 @@ return (
                     </div>
                   )}
 
-                  {/* Real-time Countdown Timer Widget */}
-                  {timeLeft && !timeLeft.isExpired && (
-                    <div className="mt-3.5 bg-amber-500/[0.04] border border-amber-500/10 rounded-2xl p-3 text-left animate-fadeIn">
-                      <div className="flex items-center gap-1.5 mb-1.5">
-                        <Clock size={11} className="text-amber-500 animate-pulse" />
-                        <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest block">
-                          Link Expira em:
-                        </span>
-                      </div>
-                      <div className="flex gap-1 items-center font-mono">
-                        {timeLeft.days > 0 && (
-                          <>
-                            <div className="flex flex-col items-center min-w-[34px] bg-white border border-slate-200/60 rounded-xl p-1 shadow-xs">
-                              <span className="text-[11px] font-black text-slate-800">{timeLeft.days}</span>
-                              <span className="text-[6.5px] text-slate-400 font-black uppercase tracking-wider">dias</span>
-                            </div>
-                            <span className="text-[10px] font-black text-slate-350 -mt-2">:</span>
-                          </>
-                        )}
-                        <div className="flex flex-col items-center min-w-[34px] bg-white border border-slate-200/60 rounded-xl p-1 shadow-xs">
-                          <span className="text-[11px] font-black text-slate-800">{String(timeLeft.hours).padStart(2, '0')}</span>
-                          <span className="text-[6.5px] text-slate-400 font-black uppercase tracking-wider">horas</span>
-                        </div>
-                        <span className="text-[10px] font-black text-slate-350 -mt-2">:</span>
-                        <div className="flex flex-col items-center min-w-[34px] bg-white border border-slate-200/60 rounded-xl p-1 shadow-xs">
-                          <span className="text-[11px] font-black text-slate-800">{String(timeLeft.minutes).padStart(2, '0')}</span>
-                          <span className="text-[6.5px] text-slate-400 font-black uppercase tracking-wider">min</span>
-                        </div>
-                        <span className="text-[10px] font-black text-slate-350 -mt-2">:</span>
-                        <div className="flex flex-col items-center min-w-[34px] bg-white border border-slate-200/60 rounded-xl p-1 shadow-xs">
-                          <span className="text-[11px] font-black text-amber-600 animate-pulse">{String(timeLeft.seconds).padStart(2, '0')}</span>
-                          <span className="text-[6.5px] text-slate-400 font-black uppercase tracking-wider">seg</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Card Cliente */}
@@ -732,21 +755,6 @@ return (
         <main className={`flex-1 h-full overflow-y-auto p-4 md:p-8 bg-[#FAFBFD] print:w-full print:p-0 print:m-0 ${
           mobileMenuOpen ? 'hidden' : 'block'
         } md:block`}>
-
-          {/* Mobile Back Header */}
-          <div className="flex md:hidden items-center justify-between bg-white border-b border-slate-100 p-4 mb-4 -mx-4 -mt-4 sticky top-0 z-20 shadow-xs">
-            <button 
-              onClick={() => setMobileMenuOpen(true)}
-              className="flex items-center gap-1.5 text-xs font-black text-[#1B4D3E] bg-[#1B4D3E]/5 px-3 py-2 rounded-xl active:scale-95"
-            >
-              <ChevronLeft size={16} /> Voltar ao Menu
-            </button>
-            <div className="text-right">
-              <span className="text-[8px] bg-slate-100 text-slate-500 border border-slate-200 font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md">
-                FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')}
-              </span>
-            </div>
-          </div>
 
           {/* 1. ABA: APRESENTAÇÃO CANVA */}
           {activeClientTab === 'apresentacao' && hasCanva && (
@@ -1999,5 +2007,6 @@ return (
       )}
 
     </div>
+  </div>
   );
 }
