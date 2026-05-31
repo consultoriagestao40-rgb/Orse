@@ -133,5 +133,108 @@ export default async function PublicPropostaView(props: { params: Promise<{ id: 
   const serializedDoc = JSON.parse(JSON.stringify(docWithTemplate));
   const serializedFullProposta = fullProposta ? JSON.parse(JSON.stringify(fullProposta)) : null;
 
-  return <ViewClient doc={serializedDoc} fullProposta={serializedFullProposta} />;
+  const color = res.tenant?.primaryColor || '#1B4D3E';
+  const getThemeStyleHtml = (colorHex: string) => {
+    let c = colorHex.replace('#', '').trim();
+    if (c.length === 3) {
+      c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
+    }
+    if (c.length !== 6) {
+      c = '1B4D3E';
+    }
+
+    const r = parseInt(c.substring(0, 2), 16);
+    const g = parseInt(c.substring(2, 4), 16);
+    const b = parseInt(c.substring(4, 6), 16);
+
+    const darken = (val: number, amt: number) => Math.max(0, val - amt);
+    const rHover = darken(r, 20);
+    const gHover = darken(g, 20);
+    const bHover = darken(b, 20);
+    const hexHover = '#' + ((1 << 24) + (rHover << 16) + (gHover << 8) + bHover).toString(16).slice(1);
+    const hexLight = `rgba(${r}, ${g}, ${b}, 0.08)`;
+    const rDark = darken(r, 45);
+    const gDark = darken(g, 45);
+    const bDark = darken(b, 45);
+    const hexDark = '#' + ((1 << 24) + (rDark << 16) + (gDark << 8) + bDark).toString(16).slice(1);
+
+    return `
+      :root {
+        --primary-color: #${c};
+        --primary-color-rgb: ${r}, ${g}, ${b};
+        --primary-color-hover: ${hexHover};
+        --primary-color-light: ${hexLight};
+        --primary-color-dark: ${hexDark};
+      }
+      /* Override classes Tailwind do verde padrão */
+      .bg-\\[\\#1B4D3E\\], .bg-\\[\\#1b4d3e\\] {
+        background-color: #${c} !important;
+      }
+      .hover\\:bg-\\[\\#13382D\\\]:hover, .hover\\:bg-\\[\\#13382d\\]:hover, .hover\\:bg-\\[\\#143d31\\]:hover {
+        background-color: ${hexHover} !important;
+      }
+      .text-\\[\\#1B4D3E\\], .text-\\[\\#1b4d3e\\] {
+        color: #${c} !important;
+      }
+      .border-\\[\\#1B4D3E\\], .border-\\[\\#1b4d3e\\] {
+        border-color: #${c} !important;
+      }
+      .focus\\:border-\\[\\#1B4D3E\\\]:focus, .focus\\:border-\\[\\#1b4d3e\\]:focus {
+        border-color: #${c} !important;
+      }
+      .focus\\:ring-\\[\\#1B4D3E\\\]:focus, .focus\\:ring-\\[\\#1b4d3e\\]:focus {
+        --tw-ring-color: #${c} !important;
+      }
+      .hover\\:text-\\[\\#1B4D3E\\\]:hover, .hover\\:text-\\[\\#1b4d3e\\]:hover {
+        color: #${c} !important;
+      }
+      .hover\\:border-\\[\\#1B4D3E\\\]:hover, .hover\\:border-\\[\\#1b4d3e\\]:hover {
+        border-color: #${c} !important;
+      }
+      .bg-\\[\\#0B2E24\\], .bg-\\[\\#0b2e24\\] {
+        background-color: ${hexHover} !important;
+      }
+      
+      /* FPV Specific Green Rows (Lighter & Darker shades) */
+      .bg-\\[\\#3b8026\\], .bg-\\[\\#3B8026\\] {
+        background-color: ${hexHover} !important;
+      }
+      .border-\\[\\#2d631d\\], .border-\\[\\#2D631D\\] {
+        border-color: ${hexDark} !important;
+      }
+      .bg-\\[\\#599e41\\], .bg-\\[\\#599E41\\] {
+        background-color: #${c} !important;
+      }
+      .border-\\[\\#488234\\], .border-\\[\\#488234\\] {
+        border-color: ${hexHover} !important;
+      }
+      .bg-\\[\\#8ec277\\], .bg-\\[\\#8EC277\\] {
+        background-color: rgba(${r}, ${g}, ${b}, 0.25) !important;
+      }
+      .border-\\[\\#72ae58\\], .border-\\[\\#72AE58\\] {
+        border-color: ${hexHover} !important;
+      }
+      .bg-\\[\\#cbf5bc\\], .bg-\\[\\#CBF5BC\\] {
+        background-color: rgba(${r}, ${g}, ${b}, 0.1) !important;
+      }
+      .border-\\[\\#9ed38c\\], .border-\\[\\#9ED38C\\] {
+        border-color: rgba(${r}, ${g}, ${b}, 0.3) !important;
+      }
+      .text-\\[\\#275419\\], .text-\\[\\#275419\\] {
+        color: ${hexDark} !important;
+      }
+      .bg-\\[\\#eefce8\\], .bg-\\[\\#EEFCE8\\] {
+        background-color: rgba(${r}, ${g}, ${b}, 0.04) !important;
+      }
+    `;
+  };
+
+  const themeStyleHtml = getThemeStyleHtml(color);
+
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: themeStyleHtml }} />
+      <ViewClient doc={serializedDoc} fullProposta={serializedFullProposta} />
+    </>
+  );
 }
