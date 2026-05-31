@@ -345,31 +345,55 @@ function ProposalsDashboard() {
     );
   };
 
+  const getSuaveBgClass = (colorClass: string = '', type: 'status' | 'vendedor' = 'status') => {
+    if (type !== 'status') {
+      return 'bg-slate-50/70 border border-slate-100/50';
+    }
+    const lower = (colorClass || '').toLowerCase();
+    if (lower.includes('sky') || lower.includes('blue')) {
+      return 'bg-blue-50/60 border border-blue-100/40';
+    }
+    if (lower.includes('orange') || lower.includes('amber')) {
+      return 'bg-amber-50/60 border border-amber-100/40';
+    }
+    if (lower.includes('green') || lower.includes('emerald')) {
+      return 'bg-emerald-50/60 border border-emerald-100/40';
+    }
+    if (lower.includes('red') || lower.includes('rose')) {
+      return 'bg-rose-50/60 border border-rose-100/40';
+    }
+    if (lower.includes('purple') || lower.includes('indigo') || lower.includes('violet')) {
+      return 'bg-purple-50/60 border border-purple-100/40';
+    }
+    return 'bg-slate-50/70 border border-slate-100/50';
+  };
+
   // ── Lista de cards da coluna ───────────────────────────────────────────────
-  const KanbanColumnCards = ({ label, cards, onDropProp }: {
-    label: string; cards: any[]; onDropProp?: (propId: string) => void;
+  const KanbanColumnCards = ({ label, cards, color, type = 'status', onDropProp }: {
+    label: string; cards: any[]; color?: string; type?: 'status' | 'vendedor'; onDropProp?: (propId: string) => void;
   }) => {
+    const suaveBg = getSuaveBgClass(color, type);
     return (
       <div 
-        className="flex-shrink-0 w-72 flex flex-col min-h-[150px] pb-4"
+        className={`flex-shrink-0 w-72 flex flex-col min-h-[600px] p-3 rounded-2xl ${suaveBg}`}
         onDragOver={(e) => {
           e.preventDefault();
-          e.currentTarget.classList.add('bg-slate-200/50', 'rounded-xl');
+          e.currentTarget.classList.add('opacity-80');
         }}
         onDragLeave={(e) => {
-          e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl');
+          e.currentTarget.classList.remove('opacity-80');
         }}
         onDrop={(e) => {
           e.preventDefault();
-          e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl');
+          e.currentTarget.classList.remove('opacity-80');
           const propId = e.dataTransfer.getData('text/plain');
           if (propId && onDropProp) onDropProp(propId);
         }}
       >
         <div className="flex flex-col gap-3 flex-1">
           {cards.length === 0 ? (
-            <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
-              <p className="text-xs text-slate-300 font-medium">Sem propostas</p>
+            <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem propostas</p>
             </div>
           ) : (
             cards.map(prop => <ProposalCard key={prop.id} prop={prop} />)
@@ -649,6 +673,8 @@ function ProposalsDashboard() {
                         <KanbanColumnCards
                           key={col.id}
                           label={col.label}
+                          color={col.color}
+                          type="status"
                           cards={col.cards}
                           onDropProp={async (propId) => {
                             const prop = proposals.find(p => p.id === propId);
@@ -741,6 +767,7 @@ function ProposalsDashboard() {
                         <KanbanColumnCards
                           key={col.id}
                           label={col.label}
+                          type="vendedor"
                           cards={col.cards}
                           onDropProp={async (propId) => {
                             const prop = proposals.find(p => p.id === propId);
