@@ -46,3 +46,9 @@ body.has-trial-banner main {
   padding-top: 3.5rem !important;
 }
 
+@media (min-width: 768px) {
+  main {
+    padding-right: 5.5rem !important;
+  }
+}
+
