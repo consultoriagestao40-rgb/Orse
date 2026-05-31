@@ -107,6 +107,7 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
 
       return {
         primary: '#' + c,
+        rgb: `${r}, ${g}, ${b}`,
         hover: hexHover,
         light: hexLight,
         dark: hexDark,
@@ -123,6 +124,7 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
     style.innerHTML = `
       :root {
         --primary-color: ${theme.primary};
+        --primary-color-rgb: ${theme.rgb};
         --primary-color-hover: ${theme.hover};
         --primary-color-light: ${theme.light};
         --primary-color-dark: ${theme.dark};
@@ -152,38 +154,54 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
       .hover\\:border-\\[\\#1B4D3E\\]:hover, .hover\\:border-\\[\\#1b4d3e\\]:hover {
         border-color: var(--primary-color) !important;
       }
-      .hover\\:bg-emerald-50\\/30:hover {
-        background-color: var(--primary-color-light) !important;
-      }
-      .bg-emerald-50 {
-        background-color: var(--primary-color-light) !important;
-      }
-      .bg-emerald-50\\/30 {
-        background-color: var(--primary-color-light) !important;
-      }
-      .text-emerald-800 {
-        color: var(--primary-color-dark) !important;
-      }
-      .bg-emerald-100\\/50 {
-        background-color: var(--primary-color-light) !important;
-      }
-      .border-emerald-200 {
-        border-color: var(--primary-color-light) !important;
-      }
       
-      /* Elementos adicionais para refinar a experiência White-Label */
-      .bg-emerald-500 {
+      /* FPV Specific Green Rows (Lighter & Darker shades) */
+      .bg-\\[\\#3b8026\\], .bg-\\[\\#3B8026\\] {
+        background-color: var(--primary-color-hover) !important;
+      }
+      .border-\\[\\#2d631d\\], .border-\\[\\#2D631D\\] {
+        border-color: var(--primary-color-dark) !important;
+      }
+      .bg-\\[\\#599e41\\], .bg-\\[\\#599E41\\] {
         background-color: var(--primary-color) !important;
       }
-      .text-emerald-500 {
-        color: var(--primary-color) !important;
+      .border-\\[\\#488234\\], .border-\\[\\#488234\\] {
+        border-color: var(--primary-color-hover) !important;
       }
-      .text-emerald-600 {
-        color: var(--primary-color-hover) !important;
+      .bg-\\[\\#8ec277\\], .bg-\\[\\#8EC277\\] {
+        background-color: rgba(${theme.rgb}, 0.25) !important;
       }
-      .border-emerald-500 {
-        border-color: var(--primary-color) !important;
-      }
+      
+      /* Standard Emerald Overrides */
+      .text-emerald-100 { color: var(--primary-color-light) !important; }
+      .text-emerald-250 { color: var(--primary-color-light) !important; }
+      .text-emerald-300 { color: var(--primary-color-light) !important; }
+      .text-emerald-400 { color: var(--primary-color) !important; }
+      .text-emerald-500 { color: var(--primary-color) !important; }
+      .text-emerald-600 { color: var(--primary-color-hover) !important; }
+      .text-emerald-700 { color: var(--primary-color-hover) !important; }
+      .text-emerald-750 { color: var(--primary-color-hover) !important; }
+      .text-emerald-800 { color: var(--primary-color-dark) !important; }
+      .text-emerald-900 { color: var(--primary-color-dark) !important; }
+      
+      .bg-emerald-50 { background-color: var(--primary-color-light) !important; }
+      .bg-emerald-50\\/30 { background-color: var(--primary-color-light) !important; }
+      .bg-emerald-100 { background-color: var(--primary-color-light) !important; }
+      .bg-emerald-100\\/50 { background-color: var(--primary-color-light) !important; }
+      .bg-emerald-200 { background-color: var(--primary-color-light) !important; }
+      .bg-emerald-400 { background-color: var(--primary-color) !important; }
+      .bg-emerald-500 { background-color: var(--primary-color) !important; }
+      .bg-emerald-600 { background-color: var(--primary-color-hover) !important; }
+      .bg-emerald-800 { background-color: var(--primary-color-dark) !important; }
+      .bg-emerald-900 { background-color: var(--primary-color-dark) !important; }
+      .bg-emerald-950 { background-color: var(--primary-color-dark) !important; }
+      
+      .border-emerald-100 { border-color: var(--primary-color-light) !important; }
+      .border-emerald-200 { border-color: var(--primary-color-light) !important; }
+      .border-emerald-300 { border-color: var(--primary-color-light) !important; }
+      .border-emerald-400 { border-color: var(--primary-color) !important; }
+      .border-emerald-500 { border-color: var(--primary-color) !important; }
+      .border-emerald-600 { border-color: var(--primary-color-hover) !important; }
     `;
     document.head.appendChild(style);
   }, [doc.tenant?.primaryColor]);

@@ -13,7 +13,20 @@ const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTenantBlocked, setIsTenantBlocked] = useState(false);
   
-  const [user, setUser] = useState<{ nome: string; role: string; email?: string; tenantId?: string | null; iniciais: string; avatarUrl?: string; tenantLogoUrl?: string; tenantNome?: string; primaryColor?: string } | null>(null);
+  const [user, setUser] = useState<{ nome: string; role: string; email?: string; tenantId?: string | null; iniciais: string; avatarUrl?: string; tenantLogoUrl?: string; tenantNome?: string; primaryColor?: string } | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
+        if (cookie) {
+          const parsed = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+          return parsed;
+        }
+      } catch (e) {
+        console.error('Erro ao ler cookie sb_user no estado inicial:', e);
+      }
+    }
+    return null;
+  });
 
   // Estados para o Enquadramento / Ajuste de Posição da Foto
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -406,7 +419,10 @@ const Sidebar = () => {
 
   // Efeito dinâmico para gerar e injetar o CSS da cor do tema do cliente inquilino
   useEffect(() => {
-    const color = user?.primaryColor || '#1B4D3E';
+    const isSaaSArea = pathname.startsWith('/admin/empresas');
+    const color = (isSaaSArea || user?.email === 'admin@smartbidhub.com.br') 
+      ? '#1B4D3E' 
+      : (user?.primaryColor || '#1B4D3E');
     
     // Função auxiliar para derivar cores variantes (hover, light bg, text dark)
     const getThemeColors = (hex: string) => {
@@ -437,6 +453,7 @@ const Sidebar = () => {
 
       return {
         primary: '#' + c,
+        rgb: `${r}, ${g}, ${b}`,
         hover: hexHover,
         light: hexLight,
         dark: hexDark,
@@ -453,70 +470,104 @@ const Sidebar = () => {
     style.innerHTML = `
       :root {
         --primary-color: ${theme.primary};
+        --primary-color-rgb: ${theme.rgb};
         --primary-color-hover: ${theme.hover};
         --primary-color-light: ${theme.light};
         --primary-color-dark: ${theme.dark};
       }
       /* Override classes Tailwind do verde padrão */
-      .bg-\\[\\#1B4D3E\\] {
+      .bg-\\[\\#1B4D3E\\], .bg-\\[\\#1b4d3e\\] {
         background-color: var(--primary-color) !important;
       }
-      .hover\\:bg-\\[\\#13382D\\]:hover, .hover\\:bg-\\[\\#13382d\\]:hover {
+      .hover\\:bg-\\[\\#13382D\\]:hover, .hover\\:bg-\\[\\#13382d\\]:hover, .hover\\:bg-\\[\\#143d31\\]:hover {
         background-color: var(--primary-color-hover) !important;
       }
-      .text-\\[\\#1B4D3E\\] {
+      .text-\\[\\#1B4D3E\\], .text-\\[\\#1b4d3e\\] {
         color: var(--primary-color) !important;
       }
-      .border-\\[\\#1B4D3E\\] {
+      .border-\\[\\#1B4D3E\\], .border-\\[\\#1b4d3e\\] {
         border-color: var(--primary-color) !important;
       }
-      .focus\\:border-\\[\\#1B4D3E\\]:focus {
+      .focus\\:border-\\[\\#1B4D3E\\]:focus, .focus\\:border-\\[\\#1b4d3e\\]:focus {
         border-color: var(--primary-color) !important;
       }
-      .focus\\:ring-\\[\\#1B4D3E\\]:focus {
+      .focus\\:ring-\\[\\#1B4D3E\\]:focus, .focus\\:ring-\\[\\#1b4d3e\\]:focus {
         --tw-ring-color: var(--primary-color) !important;
       }
-      .hover\\:text-\\[\\#1B4D3E\\]:hover {
+      .hover\\:text-\\[\\#1B4D3E\\]:hover, .hover\\:text-\\[\\#1b4d3e\\]:hover {
         color: var(--primary-color) !important;
       }
-      .hover\\:border-\\[\\#1B4D3E\\]:hover {
+      .hover\\:border-\\[\\#1B4D3E\\]:hover, .hover\\:border-\\[\\#1b4d3e\\]:hover {
         border-color: var(--primary-color) !important;
-      }
-      .hover\\:bg-emerald-50\\/30:hover {
-        background-color: var(--primary-color-light) !important;
-      }
-      .bg-emerald-50 {
-        background-color: var(--primary-color-light) !important;
-      }
-      .bg-emerald-50\\/30 {
-        background-color: var(--primary-color-light) !important;
-      }
-      .text-emerald-800 {
-        color: var(--primary-color-dark) !important;
-      }
-      .bg-emerald-100\\/50 {
-        background-color: var(--primary-color-light) !important;
-      }
-      .border-emerald-200 {
-        border-color: var(--primary-color-light) !important;
       }
       
-      /* Elementos adicionais para refinar a experiência White-Label */
-      .bg-emerald-500 {
+      /* Gradients Overrides (Top Banner) */
+      .from-\\[\\#1B4D3E\\], .from-\\[\\#1b4d3e\\] {
+        --tw-gradient-from: var(--primary-color) !important;
+        --tw-gradient-to: var(--primary-color-hover) !important;
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+      }
+      .via-\\[\\#2A6D5A\\], .via-\\[\\#2a6d5a\\] {
+        --tw-gradient-to: var(--primary-color-hover) !important;
+        --tw-gradient-stops: var(--tw-gradient-from), var(--primary-color-light), var(--tw-gradient-to) !important;
+      }
+      .to-\\[\\#1B4D3E\\], .to-\\[\\#1b4d3e\\] {
+        --tw-gradient-to: var(--primary-color) !important;
+      }
+      .bg-\\[\\#0B2E24\\], .bg-\\[\\#0b2e24\\] {
+        background-color: var(--primary-color-dark) !important;
+      }
+      
+      /* FPV Specific Green Rows (Lighter & Darker shades) */
+      .bg-\\[\\#3b8026\\], .bg-\\[\\#3B8026\\] {
+        background-color: var(--primary-color-hover) !important;
+      }
+      .border-\\[\\#2d631d\\], .border-\\[\\#2D631D\\] {
+        border-color: var(--primary-color-dark) !important;
+      }
+      .bg-\\[\\#599e41\\], .bg-\\[\\#599E41\\] {
         background-color: var(--primary-color) !important;
       }
-      .text-emerald-500 {
-        color: var(--primary-color) !important;
+      .border-\\[\\#488234\\], .border-\\[\\#488234\\] {
+        border-color: var(--primary-color-hover) !important;
       }
-      .text-emerald-600 {
-        color: var(--primary-color-hover) !important;
+      .bg-\\[\\#8ec277\\], .bg-\\[\\#8EC277\\] {
+        background-color: rgba(${theme.rgb}, 0.25) !important;
       }
-      .border-emerald-500 {
-        border-color: var(--primary-color) !important;
-      }
+      
+      /* Standard Emerald Overrides */
+      .text-emerald-100 { color: var(--primary-color-light) !important; }
+      .text-emerald-250 { color: var(--primary-color-light) !important; }
+      .text-emerald-300 { color: var(--primary-color-light) !important; }
+      .text-emerald-400 { color: var(--primary-color) !important; }
+      .text-emerald-500 { color: var(--primary-color) !important; }
+      .text-emerald-600 { color: var(--primary-color-hover) !important; }
+      .text-emerald-700 { color: var(--primary-color-hover) !important; }
+      .text-emerald-750 { color: var(--primary-color-hover) !important; }
+      .text-emerald-800 { color: var(--primary-color-dark) !important; }
+      .text-emerald-900 { color: var(--primary-color-dark) !important; }
+      
+      .bg-emerald-50 { background-color: var(--primary-color-light) !important; }
+      .bg-emerald-50\\/30 { background-color: var(--primary-color-light) !important; }
+      .bg-emerald-100 { background-color: var(--primary-color-light) !important; }
+      .bg-emerald-100\\/50 { background-color: var(--primary-color-light) !important; }
+      .bg-emerald-200 { background-color: var(--primary-color-light) !important; }
+      .bg-emerald-400 { background-color: var(--primary-color) !important; }
+      .bg-emerald-500 { background-color: var(--primary-color) !important; }
+      .bg-emerald-600 { background-color: var(--primary-color-hover) !important; }
+      .bg-emerald-800 { background-color: var(--primary-color-dark) !important; }
+      .bg-emerald-900 { background-color: var(--primary-color-dark) !important; }
+      .bg-emerald-950 { background-color: var(--primary-color-dark) !important; }
+      
+      .border-emerald-100 { border-color: var(--primary-color-light) !important; }
+      .border-emerald-200 { border-color: var(--primary-color-light) !important; }
+      .border-emerald-300 { border-color: var(--primary-color-light) !important; }
+      .border-emerald-400 { border-color: var(--primary-color) !important; }
+      .border-emerald-500 { border-color: var(--primary-color) !important; }
+      .border-emerald-600 { border-color: var(--primary-color-hover) !important; }
     `;
     document.head.appendChild(style);
-  }, [user?.primaryColor]);
+  }, [user?.primaryColor, pathname]);
 
   const handleMarkAsRead = async (id: string, link?: string | null) => {
     try {
