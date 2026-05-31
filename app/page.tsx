@@ -388,12 +388,33 @@ function ProposalsDashboard() {
     }
     const lower = (colorClass || '').toLowerCase();
     if (lower.includes('sky') || lower.includes('blue')) {
-      return 'bg-pink-50/60 border border-pink-100/40';
+      return 'bg-blue-100/40 border border-blue-200/50';
+    }
+    if (lower.includes('orange') || lower.includes('amber')) {
+      return 'bg-amber-100/40 border border-amber-200/50';
+    }
+    if (lower.includes('green') || lower.includes('emerald')) {
+      return 'bg-emerald-100/40 border border-emerald-200/50';
+    }
+    if (lower.includes('red') || lower.includes('rose')) {
+      return 'bg-rose-100/40 border border-rose-200/50';
+    }
+    if (lower.includes('purple') || lower.includes('violet')) {
+      return 'bg-purple-100/40 border border-purple-200/50';
+    }
+    if (lower.includes('yellow')) {
+      return 'bg-yellow-100/40 border border-yellow-200/50';
+    }
+    if (lower.includes('indigo')) {
+      return 'bg-indigo-100/40 border border-indigo-200/50';
+    }
+    if (lower.includes('pink')) {
+      return 'bg-pink-100/40 border border-pink-200/50';
     }
     if (lower.includes('teal')) {
-      return 'bg-teal-50/60 border border-teal-100/40';
+      return 'bg-teal-100/40 border border-teal-200/50';
     }
-    return 'bg-slate-50/60 border border-slate-100/40';
+    return 'bg-slate-100/50 border border-slate-200/50';
   };
 
   // ── Lista de cards da coluna ───────────────────────────────────────────────
@@ -656,39 +677,63 @@ function ProposalsDashboard() {
                 </>
               ) : (
                 <div className="space-y-4">
-                  {/* Kanban Único Rolável Horizontalmente */}
-                  <div className="overflow-x-auto pb-6">
-                    <div className="flex gap-5 min-w-max pt-8">
-                      {kanbanStatusCols.map(col => (
-                        <div key={col.id} className="flex flex-col w-72 shrink-0">
-                          {/* Cabeçalho Sticky de Coluna com Máscara Opaca */}
-                          <div 
-                            className="sticky z-20 bg-[#F8FAFC] pt-8 pb-0"
-                            style={{ top: '-32px' }}
-                          >
-                            <KanbanColumnHeader
-                              label={col.label}
-                              color={col.color}
-                              cards={col.cards}
-                              total={col.total}
-                            />
-                          </div>
-                          {/* Cards da Coluna (Encostados perfeitamente no cabeçalho) */}
-                          <KanbanColumnCards
+                  {/* Container Sticky Unificado: Título + Cabeçalhos */}
+                  <div 
+                    className="sticky top-0 z-20 bg-[#F8FAFC] pt-8 pb-0 mb-0"
+                    style={{ top: '-32px' }}
+                  >
+                    <div className="flex items-center gap-2 mb-4">
+                      <LayoutGrid size={16} className="text-[#1B4D3E]" />
+                      <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
+                      <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                        {kanbanStatusCols.length} coluna{kanbanStatusCols.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+
+                    {/* Cabeçalhos Fixos */}
+                    <div 
+                      id="kanban-headers-status"
+                      className="overflow-x-auto no-scrollbar pb-0 mb-0 animate-in fade-in duration-200"
+                      onScroll={() => syncScroll('kanban-headers-status', 'kanban-cards-status')}
+                      style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+                    >
+                      <div className="flex gap-5 min-w-max pb-0 mb-0">
+                        {kanbanStatusCols.map(col => (
+                          <KanbanColumnHeader
+                            key={col.id}
                             label={col.label}
                             color={col.color}
-                            type="status"
                             cards={col.cards}
-                            onDropProp={async (propId) => {
-                              const prop = proposals.find(p => p.id === propId);
-                              if (prop && prop.status !== col.label) {
-                                setProposals(prev => prev.map(p => p.id === propId ? { ...p, status: col.label } : p));
-                                const res = await updatePropostaStatus(propId, col.label);
-                                if (!res.success) alert(res.error);
-                              }
-                            }}
+                            total={col.total}
                           />
-                        </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Cards Roláveis (Sem qualquer pt ou mt para encostar fisicamente nos cabeçalhos sticky) */}
+                  <div 
+                    id="kanban-cards-status"
+                    className="overflow-x-auto pb-6 pt-0 mt-0"
+                    onScroll={() => syncScroll('kanban-cards-status', 'kanban-headers-status')}
+                  >
+                    <div className="flex gap-5 min-w-max pt-0 mt-0">
+                      {kanbanStatusCols.map(col => (
+                        <KanbanColumnCards
+                          key={col.id}
+                          label={col.label}
+                          color={col.color}
+                          type="status"
+                          cards={col.cards}
+                          onDropProp={async (propId) => {
+                            const prop = proposals.find(p => p.id === propId);
+                            if (prop && prop.status !== col.label) {
+                              setProposals(prev => prev.map(p => p.id === propId ? { ...p, status: col.label } : p));
+                              const res = await updatePropostaStatus(propId, col.label);
+                              if (!res.success) alert(res.error);
+                            }
+                          }}
+                        />
                       ))}
                     </div>
                   </div>
@@ -726,45 +771,69 @@ function ProposalsDashboard() {
                 </>
               ) : (
                 <div className="space-y-4">
-                  {/* Kanban Único Rolável Horizontalmente */}
-                  <div className="overflow-x-auto pb-6">
-                    <div className="flex gap-5 min-w-max pt-8">
-                      {kanbanVendedorCols.map(col => (
-                        <div key={col.id} className="flex flex-col w-72 shrink-0">
-                          {/* Cabeçalho Sticky de Coluna com Máscara Opaca */}
-                          <div 
-                            className="sticky z-20 bg-[#F8FAFC] pt-8 pb-0"
-                            style={{ top: '-32px' }}
-                          >
-                            <KanbanColumnHeader
-                              label={col.label}
-                              type="vendedor"
-                              cards={col.cards}
-                              total={col.total}
-                            />
-                          </div>
-                          {/* Cards da Coluna */}
-                          <KanbanColumnCards
+                  {/* Container Sticky Unificado: Título + Cabeçalhos */}
+                  <div 
+                    className="sticky top-0 z-20 bg-[#F8FAFC] pt-8 pb-0 mb-0"
+                    style={{ top: '-32px' }}
+                  >
+                    <div className="flex items-center gap-2 mb-4">
+                      <UserSquare2 size={16} className="text-[#1B4D3E]" />
+                      <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
+                      <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                        {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
+                      </span>
+                    </div>
+
+                    {/* Cabeçalhos Fixos */}
+                    <div 
+                      id="kanban-headers-vendedor"
+                      className="overflow-x-auto no-scrollbar pb-0 mb-0 animate-in fade-in duration-200"
+                      onScroll={() => syncScroll('kanban-headers-vendedor', 'kanban-cards-vendedor')}
+                      style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+                    >
+                      <div className="flex gap-5 min-w-max pb-0 mb-0">
+                        {kanbanVendedorCols.map(col => (
+                          <KanbanColumnHeader
+                            key={col.id}
                             label={col.label}
                             type="vendedor"
                             cards={col.cards}
-                            onDropProp={async (propId) => {
-                              const prop = proposals.find(p => p.id === propId);
-                              if (prop && prop.usuario !== col.label) {
-                                if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
-                                  alert('Apenas gestores e administradores podem transferir propostas.');
-                                  return;
-                                }
-                                const newUser = usersList.find(u => u.nome === col.label);
-                                if (newUser) {
-                                  setProposals(prev => prev.map(p => p.id === propId ? { ...p, usuario: newUser.nome } : p));
-                                  const res = await transferirProposta(propId, newUser.id);
-                                  if (!res.success) alert(res.error);
-                                }
-                              }
-                            }}
+                            total={col.total}
                           />
-                        </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Cards Roláveis (Sem qualquer pt ou mt para encostar fisicamente nos cabeçalhos sticky) */}
+                  <div 
+                    id="kanban-cards-vendedor"
+                    className="overflow-x-auto pb-6 pt-0 mt-0"
+                    onScroll={() => syncScroll('kanban-cards-vendedor', 'kanban-headers-vendedor')}
+                  >
+                    <div className="flex gap-5 min-w-max pt-0 mt-0">
+                      {kanbanVendedorCols.map(col => (
+                        <KanbanColumnCards
+                          key={col.id}
+                          label={col.label}
+                          type="vendedor"
+                          cards={col.cards}
+                          onDropProp={async (propId) => {
+                            const prop = proposals.find(p => p.id === propId);
+                            if (prop && prop.usuario !== col.label) {
+                              if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
+                                alert('Apenas gestores e administradores podem transferir propostas.');
+                                return;
+                              }
+                              const newUser = usersList.find(u => u.nome === col.label);
+                              if (newUser) {
+                                setProposals(prev => prev.map(p => p.id === propId ? { ...p, usuario: newUser.nome } : p));
+                                const res = await transferirProposta(propId, newUser.id);
+                                if (!res.success) alert(res.error);
+                              }
+                            }
+                          }}
+                        />
                       ))}
                     </div>
                   </div>
