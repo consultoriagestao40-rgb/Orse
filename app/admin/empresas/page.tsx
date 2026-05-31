@@ -10,7 +10,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { 
   getTenantsWithStats, createTenantAction, 
-  updateTenantAction, deleteTenantAction, checkIsSuperAdmin,
+  updateTenantAction, deleteTenantAction,
   toggleTenantActiveAction, getSaaSFinancialMetrics,
   getAllCobrancasAction, manuallyConfirmPaymentAction,
   manuallyCreateInvoiceAction, getPlanConfigs, updatePlanConfigAction
@@ -144,18 +144,22 @@ export default function TenantManagerDashboard() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Primeiro verifica via cookie (mais rápido e confiável em produção)
-      const cookieAuth = checkAuthFromCookie();
-      let authorized = cookieAuth;
-
-      // Confirma também via server action (dupla checagem de segurança)
-      if (!authorized) {
-        try {
-          authorized = await checkIsSuperAdmin();
-        } catch (serverErr) {
-          console.warn('Server action checkIsSuperAdmin falhou, usando cookie auth:', serverErr);
-          authorized = cookieAuth;
+      // Verifica via API route (mais confiável que Server Action na Vercel)
+      let authorized = false;
+      try {
+        const res = await fetch('/api/auth/check-admin', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          authorized = data.isAdmin === true;
+          console.log('[admin] check-admin API:', data);
         }
+      } catch (apiErr) {
+        console.warn('[admin] API check-admin falhou, usando cookie auth:', apiErr);
+      }
+
+      // Fallback: verifica via cookie local se a API falhar
+      if (!authorized) {
+        authorized = checkAuthFromCookie();
       }
       
       setIsAuthorized(authorized);
@@ -182,7 +186,7 @@ export default function TenantManagerDashboard() {
       }
     } catch (err) {
       console.error('Erro ao inicializar página:', err);
-      // Só define como não autorizado se o cookie também não confirmar
+      // Só bloqueia se cookie também não confirmar
       if (!checkAuthFromCookie()) {
         setIsAuthorized(false);
       }
@@ -192,14 +196,14 @@ export default function TenantManagerDashboard() {
   };
 
   useEffect(() => {
-    // Verificação imediata via cookie (sem esperar o server action)
-    // Garante que admin vê o painel instantaneamente, sem flash de "Acesso Restrito"
+    // Verificação imediata via cookie (sem round-trip) para evitar flash de "Acesso Restrito"
     const cookieAuth = checkAuthFromCookie();
     if (cookieAuth) {
       setIsAuthorized(true);
     }
     loadData();
   }, []);
+
 
   // 2. Ações de CRUD
   const handleOpenCreateModal = () => {
