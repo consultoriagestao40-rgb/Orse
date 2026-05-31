@@ -999,15 +999,15 @@ const Sidebar = () => {
                         <img 
                           src={user.avatarUrl} 
                           alt="Preview Profile" 
-                          className="w-24 h-24 rounded-3xl object-cover border-2 border-[#1B4D3E] shadow-lg group-hover:opacity-85 transition-all"
+                          className="w-24 h-24 rounded-full object-cover border-2 border-[#1B4D3E] shadow-lg group-hover:opacity-85 transition-all"
                         />
                       ) : (
-                        <div className="w-24 h-24 rounded-3xl bg-slate-100 border border-slate-200 flex flex-col items-center justify-center text-slate-400 group-hover:bg-slate-200 transition-all">
+                        <div className="w-24 h-24 rounded-full bg-slate-100 border border-slate-200 flex flex-col items-center justify-center text-slate-400 group-hover:bg-slate-200 transition-all">
                           <PlusCircle size={20} className="text-[#1B4D3E]" />
                           <span className="text-[9px] font-black uppercase tracking-wider mt-1">Foto</span>
                         </div>
                       )}
-                      <div className="absolute inset-0 flex items-center justify-center bg-[#1B4D3E]/60 text-white rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute inset-0 flex items-center justify-center bg-[#1B4D3E]/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                         <PlusCircle size={16} />
                       </div>
                     </label>
