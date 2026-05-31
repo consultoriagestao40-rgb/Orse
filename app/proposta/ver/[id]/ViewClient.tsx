@@ -744,8 +744,8 @@ return (
           mobileMenuOpen ? 'block' : 'hidden'
         } md:block ${
           sidebarCollapsed 
-            ? 'w-full md:w-20 p-4 items-center rounded-2xl md:rounded-3xl' 
-            : 'w-full md:w-80 p-0 rounded-3xl'
+            ? 'w-full md:w-20 p-4 items-center rounded-r-2xl md:rounded-r-3xl rounded-l-none' 
+            : 'w-full md:w-80 p-0 rounded-r-3xl rounded-l-none'
         }`}>
           {/* Botão de Recolher Flutuante (Estilo Premium) */}
           <button 
@@ -834,7 +834,7 @@ return (
             <div className="flex flex-col justify-between h-full w-full">
               <div>
                 {/* Top Padding / Menu Title Block (colored top block, conforming to rounded corner) */}
-                <div className="bg-[#E2E8F0] px-6 pt-6 pb-4 border-b border-slate-300/80 rounded-t-3xl mb-4">
+                <div className="bg-[#CCD3DC] px-6 pt-6 pb-4 border-b border-slate-300/80 rounded-tr-3xl rounded-tl-none mb-4">
                   <span className="text-[11px] text-[#1B4D3E] font-black uppercase tracking-wider block">
                     Menu da Proposta
                   </span>
