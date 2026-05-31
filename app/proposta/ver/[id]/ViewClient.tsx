@@ -1836,7 +1836,10 @@ return (
                           <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
                             item.tipo === 'recusa' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
                           }`}>
-                            {item.tipo === 'recusa' ? 'Recusa / Declínio' : 'Ajuste / Contraproposta'}
+                            {item.tipo === 'recusa' 
+                              ? `Recusa por ${item.nomeCliente || 'Cliente'}` 
+                              : `Ajuste por ${item.nomeCliente || 'Cliente'}`
+                            }
                           </span>
                           <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider font-mono">
                             {new Date(item.data).toLocaleString('pt-BR')}
@@ -1851,7 +1854,7 @@ return (
                         {item.respondida ? (
                           <div className="border-t border-slate-200 pt-3 mt-3 pl-4 border-l-2 border-emerald-500 space-y-1">
                             <div className="flex items-center justify-between text-[9px] font-bold text-emerald-700 uppercase tracking-wider">
-                              <span>✓ Resposta do Consultor</span>
+                              <span>✓ Resposta de {item.nomeVendedor || 'Consultor'}</span>
                               <span className="font-mono text-slate-400">{new Date(item.dataResposta).toLocaleString('pt-BR')}</span>
                             </div>
                             <p className="text-xs font-medium text-slate-600 leading-relaxed whitespace-pre-line">

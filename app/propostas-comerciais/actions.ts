@@ -747,13 +747,16 @@ export async function responderAjusteAction(documentoId: string, negotiationId: 
     const config = (doc.configApresentacao as any) || {};
     const negotiations = config.negotiations || [];
     
+    const vendedorNome = doc.proposta?.user?.nome || 'Consultor';
+    
     const updatedNegotiations = negotiations.map((n: any) => {
       if (n.id === negotiationId) {
         return {
           ...n,
           respondida: true,
           resposta: resposta,
-          dataResposta: new Date().toISOString()
+          dataResposta: new Date().toISOString(),
+          nomeVendedor: vendedorNome
         };
       }
       return n;

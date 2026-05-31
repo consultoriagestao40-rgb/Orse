@@ -47,7 +47,9 @@ function NegotiationItem({ item, docId, onRefresh }: { item: any; docId: string;
       </div>
 
       <div className="space-y-1">
-        <span className="block text-[8px] font-black text-slate-400 uppercase tracking-wider">MENSAGEM DO CLIENTE:</span>
+        <span className="block text-[8px] font-black text-slate-400 uppercase tracking-wider">
+          MENSAGEM DE {item.nomeCliente?.toUpperCase() || 'CLIENTE'}:
+        </span>
         <p className="text-xs font-bold text-slate-700 leading-relaxed whitespace-pre-line bg-white border border-slate-150 p-3.5 rounded-xl">
           {item.mensagem}
         </p>
@@ -56,7 +58,7 @@ function NegotiationItem({ item, docId, onRefresh }: { item: any; docId: string;
       {item.respondida ? (
         <div className="border-t border-slate-200 pt-3 pl-4 border-l-2 border-emerald-500 space-y-2 bg-emerald-50/20 p-3 rounded-xl">
           <div className="flex justify-between items-center text-[9px] font-black text-emerald-700 uppercase tracking-wider">
-            <span>✓ Resposta do Consultor</span>
+            <span>✓ Resposta de {item.nomeVendedor || 'Consultor'}</span>
             <span className="font-mono text-slate-450">{new Date(item.dataResposta).toLocaleString('pt-BR')}</span>
           </div>
           <p className="text-xs font-semibold text-slate-650 leading-relaxed whitespace-pre-line">

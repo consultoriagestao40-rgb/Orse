@@ -143,7 +143,10 @@ export async function recusarPropostaAction(documentoId: string, motivo: string)
       include: {
         proposta: {
           include: {
-            user: true
+            user: true,
+            versoes: {
+              orderBy: { versao: 'desc' }
+            }
           }
         },
         client: true
@@ -154,6 +157,10 @@ export async function recusarPropostaAction(documentoId: string, motivo: string)
       return { success: false, error: 'Documento não encontrado.' };
     }
 
+    const lastVersion = doc.proposta.versoes?.[0];
+    const meta = (lastVersion?.metadados as any) || {};
+    const contatoNome = meta.contato || doc.client.nomeFantasia || 'Cliente';
+
     // 1. Atualizar o documento no banco de dados com a recusa
     const config = (doc.configApresentacao as any) || {};
     const negotiations = config.negotiations || [];
@@ -162,6 +169,7 @@ export async function recusarPropostaAction(documentoId: string, motivo: string)
       tipo: 'recusa',
       mensagem: motivo,
       data: new Date().toISOString(),
+      nomeCliente: contatoNome,
       respondida: false
     });
 
@@ -319,7 +327,10 @@ export async function registrarAjusteAction(documentoId: string, mensagem: strin
       include: {
         proposta: {
           include: {
-            user: true
+            user: true,
+            versoes: {
+              orderBy: { versao: 'desc' }
+            }
           }
         },
         client: true
@@ -330,6 +341,10 @@ export async function registrarAjusteAction(documentoId: string, mensagem: strin
       return { success: false, error: 'Documento não encontrado.' };
     }
 
+    const lastVersion = doc.proposta.versoes?.[0];
+    const meta = (lastVersion?.metadados as any) || {};
+    const contatoNome = meta.contato || doc.client.nomeFantasia || 'Cliente';
+
     const config = (doc.configApresentacao as any) || {};
     const negotiations = config.negotiations || [];
     negotiations.push({
@@ -337,6 +352,7 @@ export async function registrarAjusteAction(documentoId: string, mensagem: strin
       tipo: 'ajuste',
       mensagem: mensagem,
       data: new Date().toISOString(),
+      nomeCliente: contatoNome,
       respondida: false
     });
 
