@@ -604,11 +604,26 @@ function ProposalsDashboard() {
                   <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
                 </>
               ) : (
+          {/* ── KANBAN POR STATUS ─────────────────────────────────────────────── */}
+          {viewMode === 'kanban-status' && (
+            <div>
+              {loading ? (
+                <>
+                  <div className="flex items-center gap-2 mb-4">
+                    <LayoutGrid size={16} className="text-[#1B4D3E]" />
+                    <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
+                    <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                      {kanbanStatusCols.length} coluna{kanbanStatusCols.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
+                </>
+              ) : (
                 <div className="space-y-4">
                   {/* Container Sticky Unificado: Título + Cabeçalhos */}
                   <div 
                     className="sticky top-0 z-20 bg-[#F8FAFC] pt-8 pb-1"
-                    style={{ top: '-32px' }}
+                    style={{ top: '0px' }}
                   >
                     <div className="flex items-center gap-2 mb-4">
                       <LayoutGrid size={16} className="text-[#1B4D3E]" />
@@ -700,7 +715,7 @@ function ProposalsDashboard() {
                   {/* Container Sticky Unificado: Título + Cabeçalhos */}
                   <div 
                     className="sticky top-0 z-20 bg-[#F8FAFC] pt-8 pb-1"
-                    style={{ top: '-32px' }}
+                    style={{ top: '0px' }}
                   >
                     <div className="flex items-center gap-2 mb-4">
                       <UserSquare2 size={16} className="text-[#1B4D3E]" />
