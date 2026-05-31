@@ -780,16 +780,24 @@ const Sidebar = () => {
             setShowPasswordModal(true);
           }}
           title="Alterar minha senha"
-          className={`flex items-center gap-3 p-3 bg-slate-50 rounded-[1.5rem] border border-slate-100 group relative cursor-pointer hover:bg-slate-100 hover:border-slate-200 transition-all ${isCollapsed ? 'justify-center' : ''}`}
+          className={`flex items-center gap-3 bg-slate-50 border border-slate-100 group relative cursor-pointer hover:bg-slate-100 hover:border-slate-200 transition-all ${
+            isCollapsed 
+              ? 'justify-center w-12 h-12 rounded-full mx-auto p-0' 
+              : 'p-3 rounded-[1.5rem] w-full'
+          }`}
         >
           {user?.avatarUrl ? (
             <img 
               src={user.avatarUrl} 
               alt={user.nome} 
-              className="w-10 h-10 rounded-xl object-cover border border-slate-100 shadow-md shrink-0 animate-fadeIn"
+              className={`object-cover border border-slate-100 shadow-md shrink-0 animate-fadeIn ${
+                isCollapsed ? 'w-9 h-9 rounded-full' : 'w-10 h-10 rounded-full'
+              }`}
             />
           ) : (
-            <div className="w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white font-black text-xs shadow-md shrink-0">
+            <div className={`bg-[#1B4D3E] flex items-center justify-center text-white font-black text-xs shadow-md shrink-0 ${
+              isCollapsed ? 'w-9 h-9 rounded-full' : 'w-10 h-10 rounded-full'
+            }`}>
               {user?.iniciais || 'US'}
             </div>
           )}
