@@ -1,5 +1,7 @@
 'use server';
 
+import fs from 'fs';
+import path from 'path';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { getLoggedUser } from '@/app/propostas/actions';
@@ -525,8 +527,6 @@ export async function aprovarPropostaAction(documentoId: string, payload: { nome
 
 export async function uploadSlideImageAction(base64Data: string, fileName: string) {
   try {
-    const fs = require('fs');
-    const path = require('path');
 
     // Split base64 prefix
     const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
@@ -566,8 +566,7 @@ export async function uploadSlideImageAction(base64Data: string, fileName: strin
     return { success: true, fileUrl };
   } catch (err: any) {
     console.error('Erro no upload da imagem do slide:', err);
-    // If saving locally fails (e.g. serverless environment), return base64 back as backup
-    return { success: true, fileUrl: base64Data };
+    return { success: false, error: err.message || 'Erro ao salvar a imagem do slide no servidor' };
   }
 }
 
@@ -825,8 +824,6 @@ export async function responderAjusteAction(documentoId: string, negotiationId: 
 
 export async function uploadClientFileAction(base64Data: string, fileName: string) {
   try {
-    const fs = require('fs');
-    const path = require('path');
 
     // Split base64 prefix
     const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
@@ -868,7 +865,7 @@ export async function uploadClientFileAction(base64Data: string, fileName: strin
     return { success: true, fileUrl };
   } catch (err: any) {
     console.error('Erro no upload do arquivo:', err);
-    return { success: true, fileUrl: base64Data };
+    return { success: false, error: err.message || 'Erro ao gravar arquivo no servidor' };
   }
 }
 
