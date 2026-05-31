@@ -2195,47 +2195,67 @@ return (
                 📋 Documentos e Certidões Complementares
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {documentosList.map((docItem: { name: string; url: string }, idx: number) => (
-                  <div 
-                    key={idx} 
-                    className="flex items-center justify-between bg-slate-50 border border-slate-200 hover:border-slate-300 p-4 rounded-2xl shadow-sm hover:shadow transition-all group"
-                  >
-                    <div className="flex items-center gap-3 max-w-[70%]">
-                      <div className="bg-red-50 text-red-650 p-3 rounded-xl border border-red-100 group-hover:scale-105 transition-transform">
-                        <FileText size={20} />
-                      </div>
-                      <div className="text-left">
-                        <p className="font-extrabold text-xs text-slate-800 truncate" title={docItem.name}>
-                          {docItem.name}
-                        </p>
-                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 bg-slate-200/50 px-1.5 py-0.5 rounded-md mt-1 inline-block">
-                          Documento PDF
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 shrink-0">
-                      <a 
-                        href={docItem.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="bg-white hover:bg-slate-100 border border-slate-300 p-2 rounded-xl text-slate-600 hover:text-slate-900 transition-colors flex items-center justify-center"
-                        title="Visualizar no Navegador"
+              <div className="overflow-x-auto border border-slate-150 rounded-2xl shadow-sm">
+                <table className="w-full text-left border-collapse font-sans text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                      <th className="px-6 py-4">Nome do Documento</th>
+                      <th className="px-6 py-4 text-center">Formato</th>
+                      <th className="px-6 py-4 text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {documentosList.map((docItem: { name: string; url: string }, idx: number) => (
+                      <tr 
+                        key={idx}
+                        onClick={() => window.open(docItem.url, '_blank', 'noopener,noreferrer')}
+                        className="hover:bg-slate-50/80 transition-colors cursor-pointer group animate-in fade-in duration-200"
                       >
-                        <ExternalLink size={14} />
-                      </a>
-                      <a 
-                        href={docItem.url} 
-                        download={docItem.name}
-                        className="bg-emerald-650 hover:bg-emerald-700 text-white p-2 rounded-xl transition-colors flex items-center justify-center shadow shadow-emerald-500/10 active:scale-95"
-                        title="Baixar Arquivo"
-                      >
-                        <Download size={14} />
-                      </a>
-                    </div>
-                  </div>
-                ))}
+                        {/* Nome do Documento */}
+                        <td className="px-6 py-4 max-w-[400px]">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-red-50 text-red-650 p-2.5 rounded-xl border border-red-100 group-hover:scale-105 transition-transform shrink-0">
+                              <FileText size={18} />
+                            </div>
+                            <span className="font-extrabold text-slate-800 group-hover:text-[#1B4D3E] transition-colors truncate block" title={docItem.name}>
+                              {docItem.name}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Formato */}
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-[9px] font-black uppercase tracking-wider text-red-650 bg-red-50 border border-red-100 px-2 py-0.5 rounded-md inline-block">
+                            PDF
+                          </span>
+                        </td>
+
+                        {/* Ações */}
+                        <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end gap-2">
+                            <a 
+                              href={docItem.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="bg-white hover:bg-slate-100 border border-slate-300 p-2 rounded-xl text-slate-600 hover:text-slate-900 transition-colors flex items-center justify-center shadow-sm"
+                              title="Visualizar no Navegador"
+                            >
+                              <ExternalLink size={14} />
+                            </a>
+                            <a 
+                              href={docItem.url} 
+                              download={docItem.name}
+                              className="bg-emerald-650 hover:bg-emerald-700 text-white p-2 rounded-xl transition-colors flex items-center justify-center shadow shadow-emerald-500/10 active:scale-95"
+                              title="Baixar Arquivo"
+                            >
+                              <Download size={14} />
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
