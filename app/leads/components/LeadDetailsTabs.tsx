@@ -15,6 +15,135 @@ const safeDate = (val: any, time = false) => {
   return isNaN(d.getTime()) ? 'Data Inválida' : (time ? d.toLocaleString() : d.toLocaleDateString());
 };
 
+function DynamicWhatsAppMediaFeed({ fileId, messageText }: { fileId: string; messageText: string }) {
+  const [file, setFile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchMedia = async () => {
+      try {
+        const res = await downloadFile(fileId);
+        if (res.success && res.file && isMounted) {
+          setFile(res.file);
+        } else if (isMounted) {
+          setError(true);
+        }
+      } catch (err) {
+        console.error('Error fetching dynamic media in feed:', err);
+        if (isMounted) setError(true);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchMedia();
+    return () => { isMounted = false; };
+  }, [fileId]);
+
+  if (loading) {
+    if (messageText.includes('📷 Foto:') || messageText.includes('🎥 Vídeo:')) {
+      return (
+        <div className="w-[280px] h-[180px] bg-slate-100/80 border border-slate-200 rounded-lg flex flex-col items-center justify-center gap-2 animate-pulse">
+          <RefreshCw size={20} className="animate-spin text-[#1B4D3E]" />
+          <span className="text-[10px] text-slate-400 font-medium">Carregando mídia...</span>
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-lg p-2 animate-pulse max-w-sm">
+        <div className="w-8 h-8 bg-slate-200 rounded-lg flex items-center justify-center shrink-0">
+          <RefreshCw size={14} className="animate-spin text-[#1B4D3E]" />
+        </div>
+        <div className="flex-1">
+          <div className="h-2.5 bg-slate-200 rounded w-20 mb-1"></div>
+          <div className="h-2 bg-slate-200 rounded w-12"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !file) {
+    return (
+      <div className="text-[11px] text-red-500 flex items-center gap-1 p-2 bg-red-50 border border-red-100 rounded-lg max-w-sm">
+        <span>⚠️ Erro ao carregar arquivo.</span>
+      </div>
+    );
+  }
+
+  const { base64Data: src, nome: docName, tipo: mimeType } = file;
+
+  if (mimeType.startsWith('image/')) {
+    const lines = messageText.split('\n');
+    const photoLine = lines.find(l => l.includes('📷 Foto:')) || '';
+    const caption = photoLine.replace('📷 Foto:', '').trim();
+
+    return (
+      <div className="flex flex-col gap-2">
+        <div className="relative group overflow-hidden rounded-lg border border-slate-200 bg-black/5 max-w-sm">
+          <img 
+            src={src} 
+            alt="WhatsApp Photo" 
+            className="max-w-full max-h-64 object-contain rounded-lg hover:scale-[1.02] transition-transform duration-200 cursor-pointer"
+            onClick={() => window.open(src, '_blank')}
+          />
+        </div>
+        {caption && <span className="text-slate-800 font-medium block text-xs">{caption}</span>}
+      </div>
+    );
+  }
+
+  if (mimeType.startsWith('video/')) {
+    const lines = messageText.split('\n');
+    const videoLine = lines.find(l => l.includes('🎥 Vídeo:')) || '';
+    const caption = videoLine.replace('🎥 Vídeo:', '').trim();
+
+    return (
+      <div className="flex flex-col gap-2 w-full max-w-sm">
+        <video 
+          src={src} 
+          controls 
+          className="w-full max-h-64 object-contain rounded-lg bg-black"
+        />
+        {caption && <span className="text-slate-800 font-medium block text-xs">{caption}</span>}
+      </div>
+    );
+  }
+
+  if (mimeType.startsWith('audio/')) {
+    return (
+      <div className="flex flex-col gap-1.5 min-w-[200px] max-w-sm">
+        <div className="text-[10px] text-slate-400 font-bold">🎵 Mensagem de Voz</div>
+        <audio src={src} controls className="w-full h-8" />
+      </div>
+    );
+  }
+
+  // Document/General File
+  return (
+    <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 flex items-center justify-between gap-3 max-w-sm">
+      <div className="flex items-center gap-2 truncate">
+        <div className="bg-emerald-100 text-emerald-700 p-1.5 rounded-lg shrink-0">
+          <FileText size={16} />
+        </div>
+        <div className="truncate">
+          <p className="text-xs font-bold text-slate-700 truncate" title={docName}>{docName}</p>
+          <p className="text-[9px] text-slate-400">Documento PDF/Office</p>
+        </div>
+      </div>
+      <a 
+        href={src} 
+        download={docName} 
+        target="_blank" 
+        rel="noreferrer" 
+        className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[9px] font-bold px-2 py-1 rounded-md shrink-0"
+      >
+        Baixar
+      </a>
+    </div>
+  );
+}
+
 export default function LeadDetailsTabs({ lead }: { lead: any }) {
   const [activeTab, setActiveTab] = useState('comentarios');
   
@@ -430,6 +559,24 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
   // Helper para formatar e renderizar mídias do WhatsApp no feed
   const renderWhatsAppMediaContent = (texto: string) => {
     if (!texto) return null;
+
+    // Check if text contains a file reference ID
+    const fileIdMatch = texto.match(/file-([a-zA-Z0-9-]+)/);
+    if (fileIdMatch) {
+      const fileId = fileIdMatch[1];
+      
+      // Parse user header if exists (e.g. *Cristiano Silva*:\n)
+      const headerMatch = texto.match(/^\*([^*]+)\*:\s*/);
+      const header = headerMatch ? headerMatch[0] : '';
+      const cleanText = texto.replace(header, '');
+      
+      return (
+        <div className="flex flex-col gap-1">
+          {header && <div className="font-bold text-xs text-slate-600 mb-1">{header.replace(/:$/, '').trim()}</div>}
+          <DynamicWhatsAppMediaFeed fileId={fileId} messageText={cleanText} />
+        </div>
+      );
+    }
 
     if (texto.includes('📷 Foto:')) {
       const lines = texto.split('\n');

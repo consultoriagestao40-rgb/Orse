@@ -134,6 +134,25 @@ export async function sendWhatsAppMedia(
   const user = await getLoggedUser();
   if (!user) return { success: false, error: 'Não autorizado.' };
 
+  // Save to FileAttachment table first to prevent huge base64 serialization issues in Next.js Server Actions
+  let fileAttachmentId = '';
+  try {
+    const file = await prisma.fileAttachment.create({
+      data: {
+        leadId,
+        userId: user.id,
+        nome: fileName,
+        tamanho: fileBase64.length,
+        tipo: mimeType,
+        base64Data: fileBase64
+      }
+    });
+    fileAttachmentId = file.id;
+  } catch (err: any) {
+    console.error('FileAttachment creation error:', err);
+    return { success: false, error: 'Falha ao salvar anexo no banco de dados: ' + err.message };
+  }
+
   let instanceId = process.env.ZAPI_INSTANCE_ID;
   let token = process.env.ZAPI_TOKEN;
   let clientToken = process.env.ZAPI_CLIENT_TOKEN;
@@ -159,14 +178,14 @@ export async function sendWhatsAppMedia(
     let displayText = '';
     if (mimeType.startsWith('image/')) {
       const cap = caption ? ` ${caption}` : '';
-      displayText = `*${user.nome}*:\n📷 Foto:${cap}\n${fileBase64}`;
+      displayText = `*${user.nome}*:\n📷 Foto:${cap}\nfile-${fileAttachmentId}`;
     } else if (mimeType.startsWith('video/')) {
       const cap = caption ? ` ${caption}` : '';
-      displayText = `*${user.nome}*:\n🎥 Vídeo:${cap}\n${fileBase64}`;
+      displayText = `*${user.nome}*:\n🎥 Vídeo:${cap}\nfile-${fileAttachmentId}`;
     } else if (mimeType.startsWith('audio/')) {
-      displayText = `*${user.nome}*:\n🎵 Áudio:\n${fileBase64}`;
+      displayText = `*${user.nome}*:\n🎵 Áudio:\nfile-${fileAttachmentId}`;
     } else {
-      displayText = `*${user.nome}*:\n📄 Documento: ${fileName}\n${fileBase64}`;
+      displayText = `*${user.nome}*:\n📄 Documento: ${fileName}\nfile-${fileAttachmentId}`;
     }
     try {
       const msg = await prisma.whatsAppMessage.create({
@@ -180,7 +199,7 @@ export async function sendWhatsAppMedia(
         }
       });
       revalidatePath('/leads');
-      return { success: true, message: msg };
+      return { success: true, message: { id: msg.id } }; // Only return tiny fields to prevent serialization issues
     } catch (dbErr: any) {
       console.error('sendWhatsAppMedia mock DB error:', dbErr);
       return { success: false, error: dbErr.message };
@@ -245,14 +264,14 @@ export async function sendWhatsAppMedia(
       let displayText = '';
       if (mimeType.startsWith('image/')) {
         const cap = caption ? ` ${caption}` : '';
-        displayText = `*${user.nome}*:\n📷 Foto:${cap}\n${fileBase64}`;
+        displayText = `*${user.nome}*:\n📷 Foto:${cap}\nfile-${fileAttachmentId}`;
       } else if (mimeType.startsWith('video/')) {
         const cap = caption ? ` ${caption}` : '';
-        displayText = `*${user.nome}*:\n🎥 Vídeo:${cap}\n${fileBase64}`;
+        displayText = `*${user.nome}*:\n🎥 Vídeo:${cap}\nfile-${fileAttachmentId}`;
       } else if (mimeType.startsWith('audio/')) {
-        displayText = `*${user.nome}*:\n🎵 Áudio:\n${fileBase64}`;
+        displayText = `*${user.nome}*:\n🎵 Áudio:\nfile-${fileAttachmentId}`;
       } else {
-        displayText = `*${user.nome}*:\n📄 Documento: ${fileName}\n${fileBase64}`;
+        displayText = `*${user.nome}*:\n📄 Documento: ${fileName}\nfile-${fileAttachmentId}`;
       }
 
       const msg = await prisma.whatsAppMessage.create({
@@ -267,7 +286,7 @@ export async function sendWhatsAppMedia(
       });
 
       revalidatePath('/leads');
-      return { success: true, message: msg };
+      return { success: true, message: { id: msg.id } }; // Only return tiny fields to prevent serialization issues
     } else {
       return { success: false, error: data.error || 'Erro retornado pela Z-API ao enviar arquivo.' };
     }
