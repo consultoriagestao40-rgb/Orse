@@ -1113,3 +1113,38 @@ export async function changeTenantLogo(base64Logo: string) {
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * Server Action para atualizar a cor principal da paleta da empresa (Tenant)
+ */
+export async function changeTenantTheme(hexColor: string) {
+  try {
+    const loggedUser = await getLoggedUser();
+    if (!loggedUser || !loggedUser.tenantId) {
+      return { success: false, error: 'Usuário ou empresa não autenticado.' };
+    }
+
+    if (loggedUser.role !== 'ADMIN' && loggedUser.role !== 'MANAGER') {
+      return { success: false, error: 'Apenas administradores e gestores podem atualizar a cor da empresa.' };
+    }
+
+    // Validação básica do formato de cor hexadecimal (ex: #1B4D3E ou #FFF)
+    const hexRegex = /^#([A-Fa-f0-9]{3}){1,2}$/;
+    if (!hexRegex.test(hexColor)) {
+      return { success: false, error: 'Código hexadecimal de cor inválido. Use o formato #RRGGBB ou #RGB.' };
+    }
+
+    await prisma.tenant.update({
+      where: { id: loggedUser.tenantId },
+      data: { primaryColor: hexColor }
+    });
+
+    revalidatePath('/admin/settings');
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao atualizar cor tema da empresa:', error);
+    return { success: false, error: error.message };
+  }
+}
+

@@ -27,7 +27,7 @@ import {
 import { 
   getTenantBillingInfo, paySubscriptionAction, getPlanConfigs,
   generatePixChargeAction, payWithCardAction, checkPixPaymentStatusAction,
-  changeTenantLogo
+  changeTenantLogo, changeTenantTheme
 } from '@/app/admin/empresas/actions';
 
 type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas' | 'whatsapp' | 'faturamento' | 'marca';
@@ -117,6 +117,33 @@ export default function SettingsPage() {
   const [logoPanY, setLogoPanY] = useState(0);
   const [logoPanning, setLogoPanning] = useState(false);
   const [logoPanStart, setLogoPanStart] = useState({ x: 0, y: 0 });
+
+  // Tenant Brand Color states
+  const [themeColor, setThemeColor] = useState('#1B4D3E');
+  const [themeColorSaveLoading, setThemeColorSaveLoading] = useState(false);
+
+  useEffect(() => {
+    if (billingInfo?.primaryColor) {
+      setThemeColor(billingInfo.primaryColor);
+    }
+  }, [billingInfo]);
+
+  const handleSaveThemeColor = async () => {
+    setThemeColorSaveLoading(true);
+    try {
+      const res = await changeTenantTheme(themeColor);
+      if (res.success) {
+        alert('Paleta de cores da empresa atualizada com sucesso!');
+        window.location.reload();
+      } else {
+        alert('Erro ao salvar paleta de cores: ' + res.error);
+      }
+    } catch (err: any) {
+      alert('Erro inesperado: ' + err.message);
+    } finally {
+      setThemeColorSaveLoading(false);
+    }
+  };
 
   const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1724,6 +1751,110 @@ export default function SettingsPage() {
                         className="hidden" 
                         onChange={handleLogoFileChange}
                       />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção Dinâmica de Cores do Tema White-Label */}
+                <div className="pt-8 border-t border-slate-100 space-y-6">
+                  <div>
+                    <h2 className="text-xl font-black text-slate-800 tracking-tight font-display">Paleta de Cores (Tema White-Label)</h2>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                      Defina a cor principal da sua marca para personalizar todo o sistema (botões, ícones, destaques)
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
+                    {/* Seletor de Cor */}
+                    <div className="space-y-4">
+                      <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider">Cor Principal</h3>
+                      
+                      <div className="flex items-center gap-4">
+                        {/* Seletor do input do tipo color */}
+                        <div className="relative w-14 h-14 rounded-2xl overflow-hidden border border-slate-200 shadow-sm cursor-pointer shrink-0">
+                          <input 
+                            type="color" 
+                            value={themeColor} 
+                            onChange={(e) => setThemeColor(e.target.value)}
+                            className="absolute inset-0 w-full h-full p-0 border-0 cursor-pointer"
+                            style={{ width: '150%', height: '150%', transform: 'translate(-15%, -15%)' }}
+                          />
+                        </div>
+
+                        {/* Código Hexadecimal */}
+                        <div className="flex-1 space-y-1">
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Código Hexadecimal</label>
+                          <div className="relative">
+                            <input 
+                              type="text" 
+                              placeholder="#1B4D3E"
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm font-bold uppercase outline-none focus:border-[#1B4D3E] transition-all"
+                              value={themeColor}
+                              onChange={(e) => setThemeColor(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Paleta de Cores Sugeridas */}
+                      <div className="space-y-2">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Cores Sugeridas</label>
+                        <div className="flex flex-wrap gap-2.5">
+                          {[
+                            { name: 'Verde SmartBid (Padrão)', hex: '#1B4D3E' },
+                            { name: 'Azul Corporativo', hex: '#2563EB' },
+                            { name: 'Azul Royal', hex: '#1E3A8A' },
+                            { name: 'Roxo Premium', hex: '#7C3AED' },
+                            { name: 'Vermelho Executivo', hex: '#DC2626' },
+                            { name: 'Laranja Vibrante', hex: '#EA580C' },
+                            { name: 'Slate Moderno', hex: '#475569' },
+                            { name: 'Preto Elegante', hex: '#0F172A' },
+                          ].map((c) => (
+                            <button
+                              key={c.hex}
+                              type="button"
+                              onClick={() => setThemeColor(c.hex)}
+                              title={c.name}
+                              className="w-8 h-8 rounded-full border border-slate-200 cursor-pointer shadow-2xs hover:scale-110 active:scale-95 transition-all"
+                              style={{ backgroundColor: c.hex }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pré-visualização da Marca */}
+                    <div className="flex flex-col justify-end space-y-4">
+                      <div className="bg-slate-50/50 border border-slate-200/80 rounded-2xl p-6 space-y-4">
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Pré-visualização do Botão</h4>
+                        
+                        <div className="flex gap-3">
+                          <button 
+                            type="button"
+                            className="text-white font-bold py-2.5 px-6 rounded-xl text-sm transition-all"
+                            style={{ backgroundColor: themeColor }}
+                          >
+                            Exemplo de Ação
+                          </button>
+                          
+                          <button 
+                            type="button"
+                            className="bg-white font-bold py-2.5 px-6 rounded-xl text-sm border transition-all"
+                            style={{ color: themeColor, borderColor: themeColor }}
+                          >
+                            Secundário
+                          </button>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleSaveThemeColor}
+                        disabled={themeColorSaveLoading}
+                        className="w-full bg-[#1B4D3E] hover:bg-emerald-950 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#1B4D3E]/20 transition-all cursor-pointer text-center disabled:opacity-50 active:scale-[0.98]"
+                      >
+                        {themeColorSaveLoading ? 'Salvando Paleta...' : 'Salvar Paleta de Cores'}
+                      </button>
                     </div>
                   </div>
                 </div>

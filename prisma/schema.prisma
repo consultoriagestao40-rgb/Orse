@@ -15,6 +15,7 @@ model Tenant {
   nomeFantasia        String
   cnpj                String                    @unique
   logoUrl             String?
+  primaryColor        String?                   @default("#1B4D3E")
   ativo               Boolean                   @default(true)
   createdAt           DateTime                  @default(now())
   updatedAt           DateTime                  @updatedAt
