@@ -400,7 +400,7 @@ export async function deleteTemplateProposta(id: string) {
 /**
  * Server Action para aprovar eletronicamente uma proposta comercial (FPV / Slide Deck)
  */
-export async function aprovarPropostaAction(documentoId: string, payload: { nome: string, cpf: string, assinatura: string, ip: string }) {
+export async function aprovarPropostaAction(documentoId: string, payload: { nome: string, cpf: string, assinatura: string, ip: string, email?: string }) {
   try {
     const doc = await prisma.documentoProposta.findUnique({
       where: { id: documentoId },
@@ -418,6 +418,8 @@ export async function aprovarPropostaAction(documentoId: string, payload: { nome
       return { success: false, error: 'Documento da proposta não encontrado.' };
     }
 
+    const currentConfig = (doc.configApresentacao as any) || {};
+
     // 1. Atualizar o documento no banco de dados com a assinatura
     const updatedDoc = await prisma.documentoProposta.update({
       where: { id: documentoId },
@@ -428,7 +430,11 @@ export async function aprovarPropostaAction(documentoId: string, payload: { nome
         assinaturaBase64: payload.assinatura,
         ipAssinante: payload.ip,
         nomeAssinante: payload.nome,
-        cpfAssinante: payload.cpf
+        cpfAssinante: payload.cpf,
+        configApresentacao: {
+          ...currentConfig,
+          emailAssinante: payload.email
+        }
       }
     });
 

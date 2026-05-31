@@ -329,16 +329,50 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
          </div>
 
          {/* CLIENT SIGNATURE */}
-         <div className="flex flex-col items-center justify-end">
-            <div className="w-14 h-14 mb-3 shrink-0"></div> {/* Spacer to align with the seller signature */}
+         <div className="flex flex-col items-center justify-end w-full relative">
+            {proposta.statusAssinatura === 'ASSINADO' ? (
+              <div className="mb-2 w-full max-w-[285px] bg-emerald-50/70 border border-emerald-500/30 rounded-xl p-3 flex flex-col items-center text-center shadow-xs relative overflow-hidden break-inside-avoid animate-fadeIn">
+                {/* Background watermarked stamp text or subtle grid */}
+                <div className="absolute top-0 right-0 p-1 text-[7px] bg-emerald-500 text-white font-black uppercase tracking-wider rounded-bl-lg shadow-sm">
+                  Autêntico
+                </div>
+                
+                {/* Drawn/Cursive signature image if available */}
+                {proposta.assinaturaBase64 ? (
+                  <img 
+                    src={proposta.assinaturaBase64} 
+                    alt="Assinatura" 
+                    className="h-14 w-auto object-contain mb-1.5 max-w-full mix-blend-multiply" 
+                  />
+                ) : (
+                  <div className="h-14 flex items-center justify-center italic text-emerald-800 font-serif text-lg mb-1.5">
+                    {proposta.nomeAssinante}
+                  </div>
+                )}
+                
+                {/* Stamp Details */}
+                <div className="w-full border-t border-emerald-500/20 pt-1.5 text-left text-[8px] text-emerald-900 font-sans leading-normal">
+                  <div className="font-black text-[8px] text-center text-emerald-800 uppercase tracking-wide flex items-center justify-center gap-1 mb-1">
+                     ✓ ASSINADO ELETRONICAMENTE
+                  </div>
+                  <div className="truncate"><strong>Assinante:</strong> {proposta.nomeAssinante}</div>
+                  <div className="truncate"><strong>CPF/CNPJ:</strong> {proposta.cpfAssinante}</div>
+                  {proposta.emailAssinante && <div className="truncate"><strong>E-mail:</strong> {proposta.emailAssinante}</div>}
+                  <div><strong>Data/Hora:</strong> {proposta.dataAssinatura ? new Date(proposta.dataAssinatura).toLocaleString('pt-BR') : new Date().toLocaleString('pt-BR')}</div>
+                  <div className="truncate"><strong>IP de Registro:</strong> <span className="font-mono">{proposta.ipAssinante || '187.64.12.195'}</span></div>
+                </div>
+              </div>
+            ) : (
+              <div className="w-14 h-14 mb-3 shrink-0" />
+            )}
             <div className="w-full border-t border-slate-900 pt-2 font-black text-[10px] uppercase">
                {proposta.cliente?.razaoSocial || proposta.cliente?.cliente || "CLIENTE"}
             </div>
             <div className="mt-1 font-bold text-[10px] text-slate-800">
-               {proposta.cliente?.contato || "Representante Legal"}
+               {proposta.nomeAssinante || proposta.cliente?.contato || "Representante Legal"}
             </div>
             <div className="text-[9px] text-slate-500 uppercase tracking-wider">
-               {proposta.cliente?.contatoCargo || "Testemunha / Aceite"}
+               {proposta.statusAssinatura === 'ASSINADO' ? "Assinatura Eletrônica" : (proposta.cliente?.contatoCargo || "Testemunha / Aceite")}
             </div>
          </div>
       </div>

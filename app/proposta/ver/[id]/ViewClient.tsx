@@ -71,6 +71,31 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   // Canvas Drawing States
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [signatureMode, setSignatureMode] = useState<'draw' | 'type'>('draw');
+
+  const drawCursiveSignature = (name: string) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw subtle digital baseline
+    ctx.strokeStyle = '#E2E8F0';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(35, 110);
+    ctx.lineTo(405, 110);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Cursive text styling (Authentique style)
+    ctx.font = "italic 34px 'Brush Script MT', 'Dancing Script', 'Caveat', 'Playball', cursive";
+    ctx.fillStyle = '#1B4D3E';
+    ctx.textAlign = 'center';
+    ctx.fillText(name || 'Assinatura Digital', canvas.width / 2, 75);
+  };
 
   // Negotiation/Notes
   const [negotiationText, setNegotiationText] = useState('');
@@ -103,6 +128,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
 
   // Signature Canvas Drawing Handlers
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (signatureMode === 'type') return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -139,6 +165,9 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (signatureMode === 'type') {
+      drawCursiveSignature(signerNome);
+    }
   };
 
   const handleApprove = async () => {
@@ -165,7 +194,8 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
         nome: signerNome,
         cpf: signerCpf,
         assinatura: signatureData,
-        ip: signerIp
+        ip: signerIp,
+        email: signerEmail
       });
 
       if (res.success) {
@@ -1827,7 +1857,12 @@ return (
                     type="text" 
                     placeholder="Nome do assinante" 
                     value={signerNome}
-                    onChange={(e) => setSignerNome(e.target.value)}
+                    onChange={(e) => {
+                      setSignerNome(e.target.value);
+                      if (signatureMode === 'type') {
+                        drawCursiveSignature(e.target.value);
+                      }
+                    }}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:border-[#1B4D3E] transition-all"
                   />
                 </div>
@@ -1857,14 +1892,49 @@ return (
 
               {/* Canvas Pad */}
               <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Assine com o mouse/dedo abaixo</label>
-                  <button 
-                    onClick={clearSignature}
-                    className="text-[9px] font-black text-red-500 uppercase tracking-widest hover:underline"
-                  >
-                    Limpar
-                  </button>
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2 bg-slate-100 p-1 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSignatureMode('draw');
+                        const canvas = canvasRef.current;
+                        if (canvas) {
+                          const ctx = canvas.getContext('2d');
+                          if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        }
+                      }}
+                      className={`flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all ${
+                        signatureMode === 'draw' ? 'bg-white text-[#1B4D3E] shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      ✍️ Desenhar com Mouse/Dedo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSignatureMode('type');
+                        drawCursiveSignature(signerNome);
+                      }}
+                      className={`flex-1 py-1.5 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all ${
+                        signatureMode === 'type' ? 'bg-white text-[#1B4D3E] shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      ⌨️ Simular Assinatura Digital
+                    </button>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+                      {signatureMode === 'draw' ? "Assine com o mouse/dedo abaixo" : "Assinatura digital simulada abaixo"}
+                    </label>
+                    <button 
+                      onClick={clearSignature}
+                      className="text-[9px] font-black text-red-500 uppercase tracking-widest hover:underline"
+                    >
+                      Limpar
+                    </button>
+                  </div>
                 </div>
                 
                 <canvas 
