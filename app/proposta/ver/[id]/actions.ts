@@ -155,11 +155,25 @@ export async function recusarPropostaAction(documentoId: string, motivo: string)
     }
 
     // 1. Atualizar o documento no banco de dados com a recusa
+    const config = (doc.configApresentacao as any) || {};
+    const negotiations = config.negotiations || [];
+    negotiations.push({
+      id: 'neg_' + Math.random().toString(36).substr(2, 9),
+      tipo: 'recusa',
+      mensagem: motivo,
+      data: new Date().toISOString(),
+      respondida: false
+    });
+
     await prisma.documentoProposta.update({
       where: { id: documentoId },
       data: {
         status: 'Recusada',
-        statusAssinatura: 'RECUSADO'
+        statusAssinatura: 'RECUSADO',
+        configApresentacao: {
+          ...config,
+          negotiations
+        }
       }
     });
 
@@ -291,6 +305,113 @@ export async function trackDocumentoView(documentoId: string, tabId: string) {
     return { success: true };
   } catch (error: any) {
     console.error('Erro ao registrar visualização:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Server Action para registrar solicitação de ajustes ou contraproposta pelo cliente
+ */
+export async function registrarAjusteAction(documentoId: string, mensagem: string) {
+  try {
+    const doc = await prisma.documentoProposta.findUnique({
+      where: { id: documentoId },
+      include: {
+        proposta: {
+          include: {
+            user: true
+          }
+        },
+        client: true
+      }
+    });
+
+    if (!doc) {
+      return { success: false, error: 'Documento não encontrado.' };
+    }
+
+    const config = (doc.configApresentacao as any) || {};
+    const negotiations = config.negotiations || [];
+    negotiations.push({
+      id: 'neg_' + Math.random().toString(36).substr(2, 9),
+      tipo: 'ajuste',
+      mensagem: mensagem,
+      data: new Date().toISOString(),
+      respondida: false
+    });
+
+    // 1. Atualizar o documento no banco de dados
+    await prisma.documentoProposta.update({
+      where: { id: documentoId },
+      data: {
+        configApresentacao: {
+          ...config,
+          negotiations
+        }
+      }
+    });
+
+    // 2. Disparar notificação no WhatsApp do Vendedor via Z-API se celular cadastrado
+    const vendedor = doc.proposta.user;
+    if (vendedor.celular) {
+      const cleanPhone = vendedor.celular.replace(/\D/g, '');
+      const tenantId = doc.tenantId;
+
+      let instanceId = process.env.ZAPI_INSTANCE_ID;
+      let token = process.env.ZAPI_TOKEN;
+      let clientToken = process.env.ZAPI_CLIENT_TOKEN;
+
+      if (tenantId) {
+        const tenant = await prisma.tenant.findUnique({
+          where: { id: tenantId },
+          select: {
+            whatsappInstanceId: true,
+            whatsappToken: true,
+            whatsappClientToken: true
+          }
+        });
+        if (tenant && tenant.whatsappInstanceId && tenant.whatsappToken && tenant.whatsappClientToken) {
+          instanceId = tenant.whatsappInstanceId;
+          token = tenant.whatsappToken;
+          clientToken = tenant.whatsappClientToken;
+        }
+      }
+
+      if (instanceId && token && clientToken) {
+        try {
+          const numProposta = String(doc.proposta.numero).padStart(3, '0');
+          const clienteNome = doc.client.nomeFantasia || doc.client.razaoSocial || '';
+          
+          const text = `💬 *SOLICITAÇÃO DE AJUSTES* 💬\n\n` +
+                       `Olá, *${vendedor.nome}*!\n\n` +
+                       `O cliente *${clienteNome}* visualizou a proposta comercial *FPV-${numProposta}* e solicitou ajustes/contraproposta.\n\n` +
+                       `💬 *Mensagem do cliente:* ${mensagem}\n` +
+                       `📅 *Data/Hora:* ${new Date().toLocaleString('pt-BR')}\n\n` +
+                       `Acesse a plataforma para responder ao cliente. 📈💼`;
+
+          const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`;
+          await fetch(url, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Client-Token': clientToken
+            },
+            body: JSON.stringify({
+              phone: cleanPhone,
+              message: text
+            })
+          });
+        } catch (zapiErr) {
+          console.error('Erro ao disparar WhatsApp de ajuste:', zapiErr);
+        }
+      }
+    }
+
+    revalidatePath('/propostas-comerciais');
+    revalidatePath(`/proposta/ver/${documentoId}`);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao registrar ajuste:', error);
     return { success: false, error: error.message };
   }
 }

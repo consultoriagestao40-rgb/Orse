@@ -723,3 +723,59 @@ export async function trackDocumentoView(documentoId: string, tabId: string) {
   }
 }
 
+/**
+ * Server Action para responder a uma solicitação de ajustes ou contraproposta do cliente
+ */
+export async function responderAjusteAction(documentoId: string, negotiationId: string, resposta: string) {
+  try {
+    const doc = await prisma.documentoProposta.findUnique({
+      where: { id: documentoId },
+      include: {
+        proposta: {
+          include: {
+            user: true
+          }
+        },
+        client: true
+      }
+    });
+
+    if (!doc) {
+      return { success: false, error: 'Documento não encontrado.' };
+    }
+
+    const config = (doc.configApresentacao as any) || {};
+    const negotiations = config.negotiations || [];
+    
+    const updatedNegotiations = negotiations.map((n: any) => {
+      if (n.id === negotiationId) {
+        return {
+          ...n,
+          respondida: true,
+          resposta: resposta,
+          dataResposta: new Date().toISOString()
+        };
+      }
+      return n;
+    });
+
+    // 1. Atualizar o documento no banco de dados com a resposta
+    await prisma.documentoProposta.update({
+      where: { id: documentoId },
+      data: {
+        configApresentacao: {
+          ...config,
+          negotiations: updatedNegotiations
+        }
+      }
+    });
+
+    revalidatePath('/propostas-comerciais');
+    revalidatePath(`/proposta/ver/${documentoId}`);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao responder ajuste:', error);
+    return { success: false, error: error.message };
+  }
+}
+

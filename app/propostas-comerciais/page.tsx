@@ -654,6 +654,14 @@ export default function PropostasComerciaisDashboard() {
         <ClientTrackingModal 
           doc={activeTrackingDoc}
           onClose={() => setActiveTrackingDoc(null)}
+          onRefresh={async () => {
+            const dataDocs = await getDocumentosProposta();
+            setDocs(dataDocs);
+            const updated = dataDocs.find(d => d.id === activeTrackingDoc.id);
+            if (updated) {
+              setActiveTrackingDoc(updated);
+            }
+          }}
         />
       )}
 

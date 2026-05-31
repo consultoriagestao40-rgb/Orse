@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DocumentoA4 from '@/components/DocumentoA4';
 import dynamic from 'next/dynamic';
-import { aprovarPropostaAction, recusarPropostaAction, trackDocumentoView, getMinutaTemplateById } from './actions';
+import { aprovarPropostaAction, recusarPropostaAction, trackDocumentoView, getMinutaTemplateById, registrarAjusteAction } from './actions';
 import { 
   CheckCircle, Edit, FileText, X, Printer, CheckCircle2, ShieldCheck, Mail, MapPin, 
   Smartphone, User, Presentation, Calculator, BookOpen, ChevronRight, ChevronLeft, Menu, TrendingUp,
@@ -227,9 +227,15 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
           alert('Erro ao recusar proposta: ' + res.error);
         }
       } else {
-        alert('Sua mensagem/contraproposta foi registrada e enviada para o vendedor. Em breve entraremos em contato!');
-        setShowNegotiationModal(false);
-        setNegotiationText('');
+        const res = await registrarAjusteAction(doc.id, negotiationText);
+        if (res.success) {
+          alert('Sua mensagem/contraproposta foi enviada com sucesso! O consultor responsável foi notificado.');
+          setShowNegotiationModal(false);
+          setNegotiationText('');
+          window.location.reload();
+        } else {
+          alert('Erro ao enviar contraproposta: ' + res.error);
+        }
       }
     } catch (e: any) {
       alert('Erro ao enviar mensagem: ' + e.message);
@@ -307,7 +313,8 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     { id: 'apresentacao', label: '1. Apresentação Slides', icon: Presentation, show: tabsConfig.apresentacao && hasCanva },
     { id: 'proposta', label: '2. Proposta Comercial (A4)', icon: FileText, show: tabsConfig.proposta },
     { id: 'fpv', label: '3. Planilhas FPV Detalhada', icon: Calculator, show: tabsConfig.fpv && !!fullProposta },
-    { id: 'minuta', label: '4. Minuta de Contrato', icon: BookOpen, show: tabsConfig.minuta && !!doc.configApresentacao?.clientTabs?.minutaTemplateId }
+    { id: 'minuta', label: '4. Minuta de Contrato', icon: BookOpen, show: tabsConfig.minuta && !!doc.configApresentacao?.clientTabs?.minutaTemplateId },
+    { id: 'historico', label: '5. Histórico e Ajustes', icon: Clock, show: !!doc.configApresentacao?.negotiations && doc.configApresentacao.negotiations.length > 0 }
   ].filter(item => item.show);
 
   // Define a aba ativa padrão inicial
@@ -1798,6 +1805,69 @@ return (
                 </div>
               )}
 
+            </div>
+          )}
+
+          {/* 5. ABA: HISTÓRICO E AJUSTES */}
+          {activeClientTab === 'historico' && (
+            <div className="max-w-[960px] mx-auto bg-white rounded-3xl p-6 md:p-10 shadow-2xl shadow-slate-950/20 text-slate-800 animate-fadeIn relative">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center print:hidden flex items-center justify-center gap-2 border-b border-slate-100 pb-3">
+                💬 Histórico de Negociações e Ajustes
+              </h3>
+              
+              {(!doc.configApresentacao?.negotiations || doc.configApresentacao.negotiations.length === 0) ? (
+                <div className="py-20 text-center text-slate-400 italic">
+                  Nenhum registro de ajustes ou negociação encontrado.
+                </div>
+              ) : (
+                <div className="relative pl-6 border-l-2 border-slate-100 space-y-8 ml-3 max-w-2xl mx-auto py-4 text-left">
+                  {doc.configApresentacao.negotiations.map((item: any) => (
+                    <div key={item.id} className="relative">
+                      {/* Circle Node Icon */}
+                      <div className={`absolute -left-[35px] top-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                        item.tipo === 'recusa' ? 'border-red-500 bg-red-500 text-white' : 'border-[#1e4480] bg-[#1e4480] text-white'
+                      }`}>
+                        {item.tipo === 'recusa' ? '👎' : '💬'}
+                      </div>
+
+                      {/* Content Container */}
+                      <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
+                            item.tipo === 'recusa' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {item.tipo === 'recusa' ? 'Recusa / Declínio' : 'Ajuste / Contraproposta'}
+                          </span>
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider font-mono">
+                            {new Date(item.data).toLocaleString('pt-BR')}
+                          </span>
+                        </div>
+
+                        <p className="text-xs font-semibold text-slate-700 leading-relaxed whitespace-pre-line">
+                          {item.mensagem}
+                        </p>
+
+                        {/* RESPOSTA DO VENDEDOR */}
+                        {item.respondida ? (
+                          <div className="border-t border-slate-200 pt-3 mt-3 pl-4 border-l-2 border-emerald-500 space-y-1">
+                            <div className="flex items-center justify-between text-[9px] font-bold text-emerald-700 uppercase tracking-wider">
+                              <span>✓ Resposta do Consultor</span>
+                              <span className="font-mono text-slate-400">{new Date(item.dataResposta).toLocaleString('pt-BR')}</span>
+                            </div>
+                            <p className="text-xs font-medium text-slate-600 leading-relaxed whitespace-pre-line">
+                              {item.resposta}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="text-[10px] text-slate-400 italic mt-2 font-medium">
+                            Aguardando retorno do consultor responsável...
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

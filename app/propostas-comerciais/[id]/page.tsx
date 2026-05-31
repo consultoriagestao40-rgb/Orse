@@ -3363,6 +3363,12 @@ export default function DocumentoPropostaDetail() {
         <ClientTrackingModal 
           doc={doc}
           onClose={() => setShowTrackingModal(false)}
+          onRefresh={async () => {
+            const updatedDoc = await getDocumentoPropostaById(doc.id);
+            if (updatedDoc) {
+              setDoc(updatedDoc);
+            }
+          }}
         />
       )}
     </>
