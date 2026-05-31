@@ -586,9 +586,12 @@ export default function PropostasComerciaisDashboard() {
                   <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
                 </>
               ) : (
-                <div className="flex flex-col">
+                <div className="space-y-4">
                   {/* Container Sticky Unificado: Título + Cabeçalhos */}
-                  <div className="sticky top-[-32px] z-20 bg-[#F8FAFC] pt-8 pb-1">
+                  <div 
+                    className="sticky top-0 z-20 bg-[#F8FAFC] pt-8 pb-1"
+                    style={{ top: '-32px' }}
+                  >
                     <div className="flex items-center gap-2 mb-4">
                       <LayoutGrid size={16} className="text-[#1B4D3E]" />
                       <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
@@ -674,9 +677,12 @@ export default function PropostasComerciaisDashboard() {
                   </div>
                 </>
               ) : (
-                <div className="flex flex-col">
+                <div className="space-y-4">
                   {/* Container Sticky Unificado: Título + Cabeçalhos */}
-                  <div className="sticky top-[-32px] z-20 bg-[#F8FAFC] pt-8 pb-1">
+                  <div 
+                    className="sticky top-0 z-20 bg-[#F8FAFC] pt-8 pb-1"
+                    style={{ top: '-32px' }}
+                  >
                     <div className="flex items-center gap-2 mb-4">
                       <UserSquare2 size={16} className="text-[#1B4D3E]" />
                       <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
