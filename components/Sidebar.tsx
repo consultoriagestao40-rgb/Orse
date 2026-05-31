@@ -13,6 +13,33 @@ const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTenantBlocked, setIsTenantBlocked] = useState(false);
   
+  // Helper para obter o logo do cookie de forma síncrona no primeiro render client-side
+  const getInitialLogoUrl = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
+        if (cookie) {
+          const parsed = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+          return parsed.tenantLogoUrl || '';
+        }
+      } catch (e) {}
+    }
+    return '';
+  };
+  
+  const getInitialLogoNome = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
+        if (cookie) {
+          const parsed = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+          return parsed.tenantNome || 'Logo';
+        }
+      } catch (e) {}
+    }
+    return 'Logo';
+  };
+  
   const [user, setUser] = useState<{ nome: string; role: string; email?: string; tenantId?: string | null; iniciais: string; avatarUrl?: string; tenantLogoUrl?: string; tenantNome?: string; primaryColor?: string } | null>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -687,8 +714,9 @@ const Sidebar = () => {
               {/* Dynamic Tenant Logo */}
               <div className="sidebar-tenant-logo flex flex-col gap-1.5 animate-fadeIn" style={{ display: 'none' }}>
                 <img 
-                  src={user?.tenantLogoUrl || ''} 
-                  alt={user?.tenantNome || 'Logo'} 
+                  src={user?.tenantLogoUrl || getInitialLogoUrl()} 
+                  alt={user?.tenantNome || getInitialLogoNome()} 
+                  suppressHydrationWarning={true}
                   className="max-h-11 max-w-[180px] object-contain rounded"
                 />
                 <p className="text-[8px] text-slate-400 font-extrabold uppercase tracking-[0.2em] whitespace-nowrap">Powered by SmartBidHub</p>
@@ -703,8 +731,9 @@ const Sidebar = () => {
             {/* Dynamic Collapsed Tenant Logo */}
             <div className="sidebar-tenant-logo w-10 h-10 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 shadow-md" style={{ display: 'none' }}>
               <img 
-                src={user?.tenantLogoUrl || ''} 
+                src={user?.tenantLogoUrl || getInitialLogoUrl()} 
                 alt="Logo" 
+                suppressHydrationWarning={true}
                 className="w-full h-full object-cover"
               />
             </div>
