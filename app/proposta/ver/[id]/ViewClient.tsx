@@ -7,7 +7,7 @@ import { aprovarPropostaAction, recusarPropostaAction, trackDocumentoView, getMi
 import { 
   CheckCircle, Edit, FileText, X, Printer, CheckCircle2, ShieldCheck, Mail, MapPin, 
   Smartphone, User, Presentation, Calculator, BookOpen, ChevronRight, ChevronLeft, Menu, TrendingUp,
-  UserCheck, ClipboardList, Package, Layers, Info, Download, Clock
+  UserCheck, ClipboardList, Package, Layers, Info, Download, Clock, AlertTriangle
 } from 'lucide-react';
 
 const PropostaApresentacaoPrint = dynamic(
@@ -23,6 +23,18 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   const [negotiationType, setNegotiationType] = useState<'comment' | 'decline'>('comment');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(true);
+  
+  // Custom Premium Alert Modal State
+  const [alertState, setAlertState] = useState<{
+    type: 'success' | 'error' | 'warning' | 'info';
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+  } | null>(null);
+
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success', onConfirm?: () => void) => {
+    setAlertState({ type, title, message, onConfirm });
+  };
 
   // Real-time Countdown Timer for link validity expiration
   const [timeLeft, setTimeLeft] = useState<{
@@ -172,7 +184,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
 
   const handleApprove = async () => {
     if (!signerNome.trim() || !signerCpf.trim() || !signerEmail.trim()) {
-      alert('Por favor, preencha todos os campos obrigatórios.');
+      showAlert('Campos Obrigatórios', 'Por favor, preencha todos os campos obrigatórios.', 'warning');
       return;
     }
     const canvas = canvasRef.current;
@@ -183,7 +195,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     blank.width = canvas.width;
     blank.height = canvas.height;
     if (canvas.toDataURL() === blank.toDataURL()) {
-      alert('Por favor, desenhe sua assinatura eletrônica no painel antes de aprovar.');
+      showAlert('Assinatura Necessária', 'Por favor, desenhe sua assinatura eletrônica no painel antes de aprovar.', 'warning');
       return;
     }
 
@@ -201,12 +213,12 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
       if (res.success) {
         setApproved(true);
         setShowApprovalModal(false);
-        alert('Proposta comercial aprovada e assinada com sucesso! Uma notificação foi enviada ao consultor.');
+        showAlert('Proposta Aprovada! 🎉', 'Proposta comercial aprovada e assinada com sucesso! Uma notificação foi enviada ao consultor.', 'success');
       } else {
-        alert('Erro ao aprovar proposta: ' + res.error);
+        showAlert('Erro ao Aprovar', 'Erro ao aprovar proposta: ' + res.error, 'error');
       }
     } catch (err: any) {
-      alert('Erro inesperado: ' + err.message);
+      showAlert('Erro Inesperado', 'Erro inesperado: ' + err.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -219,26 +231,28 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
       if (negotiationType === 'decline') {
         const res = await recusarPropostaAction(doc.id, negotiationText);
         if (res.success) {
-          alert('Proposta recusada com sucesso. O vendedor foi notificado via WhatsApp!');
-          setShowNegotiationModal(false);
-          setNegotiationText('');
-          window.location.reload();
+          showAlert('Proposta Recusada', 'Proposta recusada com sucesso. O vendedor foi notificado via WhatsApp!', 'success', () => {
+            setShowNegotiationModal(false);
+            setNegotiationText('');
+            window.location.reload();
+          });
         } else {
-          alert('Erro ao recusar proposta: ' + res.error);
+          showAlert('Erro ao Recusar', 'Erro ao recusar proposta: ' + res.error, 'error');
         }
       } else {
         const res = await registrarAjusteAction(doc.id, negotiationText);
         if (res.success) {
-          alert('Sua mensagem/contraproposta foi enviada com sucesso! O consultor responsável foi notificado.');
-          setShowNegotiationModal(false);
-          setNegotiationText('');
-          window.location.reload();
+          showAlert('Sucesso! 💬', 'Sua mensagem/contraproposta foi enviada com sucesso! O consultor responsável foi notificado.', 'success', () => {
+            setShowNegotiationModal(false);
+            setNegotiationText('');
+            window.location.reload();
+          });
         } else {
-          alert('Erro ao enviar contraproposta: ' + res.error);
+          showAlert('Erro ao Enviar', 'Erro ao enviar contraproposta: ' + res.error, 'error');
         }
       }
     } catch (e: any) {
-      alert('Erro ao enviar mensagem: ' + e.message);
+      showAlert('Erro Inesperado', 'Erro ao enviar mensagem: ' + e.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -2250,6 +2264,52 @@ return (
               </div>
 
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* PREMIUM CUSTOM ALERT DIALOG */}
+      {alertState && (
+        <div className="fixed inset-0 bg-black/60 z-[1000000] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white text-slate-800 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-150 p-6 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+            
+            {alertState.type === 'success' && (
+              <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-4 border border-emerald-100 shadow-sm shrink-0 animate-bounce">
+                <CheckCircle2 size={32} className="stroke-[3]" />
+              </div>
+            )}
+
+            {alertState.type === 'error' && (
+              <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-4 border border-red-100 shadow-sm shrink-0 animate-bounce">
+                <X size={32} className="stroke-[3]" />
+              </div>
+            )}
+
+            {(alertState.type === 'warning' || alertState.type === 'info') && (
+              <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mb-4 border border-amber-100 shadow-sm shrink-0">
+                <AlertTriangle size={32} className="stroke-[3]" />
+              </div>
+            )}
+
+            <h3 className="text-sm font-black text-slate-800 mb-2 uppercase tracking-wider">
+              {alertState.title}
+            </h3>
+            
+            <p className="text-xs font-bold text-slate-500 leading-relaxed max-w-[280px]">
+              {alertState.message}
+            </p>
+
+            <button
+              onClick={() => {
+                const onConfirm = alertState.onConfirm;
+                setAlertState(null);
+                if (onConfirm) onConfirm();
+              }}
+              className="w-full mt-6 py-3.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-md hover:shadow-lg transition-all active:translate-y-0.5 transform cursor-pointer text-center"
+            >
+              Entendi
+            </button>
+
           </div>
         </div>
       )}

@@ -12,6 +12,16 @@ interface ClientTrackingModalProps {
 function NegotiationItem({ item, doc, onRefresh }: { item: any; doc: any; onRefresh?: () => void }) {
   const [replyText, setReplyText] = React.useState('');
   const [submittingReply, setSubmittingReply] = React.useState(false);
+  const [alertState, setAlertState] = React.useState<{
+    type: 'success' | 'error' | 'warning';
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+  } | null>(null);
+
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' = 'success', onConfirm?: () => void) => {
+    setAlertState({ type, title, message, onConfirm });
+  };
 
   const handleSendReply = async () => {
     if (!replyText.trim()) return;
@@ -20,14 +30,15 @@ function NegotiationItem({ item, doc, onRefresh }: { item: any; doc: any; onRefr
       const { responderAjusteAction } = await import('@/app/propostas-comerciais/actions');
       const res = await responderAjusteAction(doc.id, item.id, replyText);
       if (res.success) {
-        alert('Resposta registrada com sucesso!');
-        setReplyText('');
-        if (onRefresh) onRefresh();
+        showAlert('Sucesso', 'Resposta registrada com sucesso!', 'success', () => {
+          setReplyText('');
+          if (onRefresh) onRefresh();
+        });
       } else {
-        alert('Erro ao responder: ' + res.error);
+        showAlert('Erro ao responder', res.error, 'error');
       }
     } catch (err: any) {
-      alert('Erro inesperado: ' + err.message);
+      showAlert('Erro Inesperado', err.message, 'error');
     } finally {
       setSubmittingReply(false);
     }
@@ -50,7 +61,7 @@ function NegotiationItem({ item, doc, onRefresh }: { item: any; doc: any; onRefr
     .toUpperCase();
 
   return (
-    <div className="bg-slate-50 border border-slate-200 rounded-3xl p-5 md:p-6 space-y-4 shadow-sm text-left">
+    <div className="bg-slate-50 border border-slate-200 rounded-3xl p-5 md:p-6 space-y-4 shadow-sm text-left relative">
       
       {/* CLIENT REQUEST HEADER WITH AVATAR */}
       <div className="flex justify-between items-start gap-2">
@@ -149,6 +160,52 @@ function NegotiationItem({ item, doc, onRefresh }: { item: any; doc: any; onRefr
             >
               {submittingReply ? 'Enviando...' : 'Enviar Resposta'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* PREMIUM CUSTOM ALERT DIALOG */}
+      {alertState && (
+        <div className="fixed inset-0 bg-black/60 z-[1000000] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white text-slate-800 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-150 p-6 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+            
+            {alertState.type === 'success' && (
+              <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-4 border border-emerald-100 shadow-sm shrink-0 animate-bounce">
+                <Check size={32} className="stroke-[3]" />
+              </div>
+            )}
+
+            {alertState.type === 'error' && (
+              <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-4 border border-red-100 shadow-sm shrink-0 animate-bounce">
+                <X size={32} className="stroke-[3]" />
+              </div>
+            )}
+
+            {alertState.type === 'warning' && (
+              <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mb-4 border border-amber-100 shadow-sm shrink-0">
+                <ShieldAlert size={32} className="stroke-[3]" />
+              </div>
+            )}
+
+            <h3 className="text-sm font-black text-slate-800 mb-2 uppercase tracking-wider">
+              {alertState.title}
+            </h3>
+            
+            <p className="text-xs font-bold text-slate-500 leading-relaxed max-w-[280px]">
+              {alertState.message}
+            </p>
+
+            <button
+              onClick={() => {
+                const onConfirm = alertState.onConfirm;
+                setAlertState(null);
+                if (onConfirm) onConfirm();
+              }}
+              className="w-full mt-6 py-3.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-md hover:shadow-lg transition-all active:translate-y-0.5 transform cursor-pointer text-center"
+            >
+              Entendi
+            </button>
+
           </div>
         </div>
       )}
