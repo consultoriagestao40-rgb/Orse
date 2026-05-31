@@ -246,9 +246,30 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   };
 
   const isSlide = !!doc.templateOrigem?.nome?.toLowerCase()?.includes('apresenta') || doc.tipo === 'SLIDE_DECK';
+  
+  // Real-time Canva URL normalization & sanitization on the client view
+  let rawCanvaUrl = doc.configApresentacao?.canvaEmbedUrl || doc.configApresentacao?.clientTabs?.canvaEmbedUrl || '';
+  if (rawCanvaUrl && rawCanvaUrl.includes('canva.com/design/')) {
+    if (rawCanvaUrl.includes('<iframe')) {
+      const match = rawCanvaUrl.match(/src="([^"]+)"/);
+      if (match && match[1]) {
+        rawCanvaUrl = match[1];
+      }
+    }
+    const baseUrl = rawCanvaUrl.split('?')[0].split('#')[0];
+    let cleanUrl = baseUrl;
+    if (cleanUrl.includes('/edit')) {
+      cleanUrl = cleanUrl.replace('/edit', '/view');
+    }
+    if (!cleanUrl.endsWith('/view')) {
+      cleanUrl = cleanUrl.endsWith('/') ? `${cleanUrl}view` : `${cleanUrl}/view`;
+    }
+    rawCanvaUrl = `${cleanUrl}?embed`;
+  }
+
   const canvaUrl = doc.id === 'cmpsloy27000004jlxvb5n9xo'
     ? 'https://www.canva.com/design/DAHCXKiLmiQ/v3lyl52DMCmsHRbgxx8uHQ/view?embed'
-    : (doc.configApresentacao?.canvaEmbedUrl || doc.configApresentacao?.clientTabs?.canvaEmbedUrl || '');
+    : rawCanvaUrl;
   const hasCanva = !!canvaUrl;
 
   const navItems = [
@@ -742,9 +763,6 @@ return (
           {/* 2. ABA: PROPOSTA COMERCIAL A4 */}
           {activeClientTab === 'proposta' && (
             <div className="max-w-[960px] mx-auto bg-white rounded-3xl p-6 md:p-10 shadow-2xl shadow-slate-950/20 print:p-0 print:shadow-none">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center print:hidden flex items-center justify-center gap-2 border-b border-slate-100 pb-3">
-                📄 Documento Comercial de Aceite (A4)
-              </h3>
               <div className="text-slate-800">
                 <DocumentoA4 
                   proposta={mergedProposta} 
