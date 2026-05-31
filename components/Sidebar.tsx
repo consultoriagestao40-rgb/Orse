@@ -506,6 +506,15 @@ const Sidebar = () => {
       .hover\\:text-\\[\\#1B4D3E\\]:hover, .hover\\:text-\\[\\#1b4d3e\\]:hover {
         color: var(--primary-color) !important;
       }
+      .hover\\:bg-\\[\\#1B4D3E\\]:hover, .hover\\:bg-\\[\\#1b4d3e\\]:hover {
+        background-color: var(--primary-color) !important;
+      }
+      .group:hover .group-hover\\:bg-\\[\\#1B4D3E\\], .group:hover .group-hover\\:bg-\\[\\#1b4d3e\\] {
+        background-color: var(--primary-color) !important;
+      }
+      .group:hover .group-hover\\:text-\\[\\#1B4D3E\\], .group:hover .group-hover\\:text-\\[\\#1b4d3e\\] {
+        color: var(--primary-color) !important;
+      }
       .hover\\:border-\\[\\#1B4D3E\\]:hover, .hover\\:border-\\[\\#1b4d3e\\]:hover {
         border-color: var(--primary-color) !important;
       }
