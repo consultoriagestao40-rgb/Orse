@@ -331,39 +331,24 @@ export async function toggleTenantActiveAction(id: string, active: boolean) {
  */
 export async function checkCurrentTenantActive() {
   try {
-    const cookieStore = await cookies();
-    const sbUser = cookieStore.get('sb_user')?.value;
-    if (!sbUser) return { success: true, active: true };
-
-    let data;
-    try {
-      data = JSON.parse(decodeURIComponent(sbUser));
-    } catch {
-      try {
-        data = JSON.parse(sbUser);
-      } catch {
-        return { success: true, active: true };
-      }
-    }
+    const user = await getLoggedUser();
+    if (!user) return { success: true, active: true };
 
     // O Super Admin da plataforma é imune a bloqueios
-    if (data.email === 'admin@smartbidhub.com.br' || data.email === 'cristiano@grupojvsserv.com.br') {
+    if (user.email === 'admin@smartbidhub.com.br' || user.email === 'cristiano@grupojvsserv.com.br') {
       return { success: true, active: true };
     }
 
-    // Busca o usuário no banco incluindo a relação com o Tenant
-    const user = await prisma.user.findFirst({
-      where: { nome: data.nome || '' },
-      include: { tenant: true }
+    // Se o usuário não tiver inquilino vinculado (raro), está liberado.
+    if (!user.tenantId) return { success: true, active: true };
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: user.tenantId }
     });
 
-    if (!user) return { success: true, active: true };
+    if (!tenant) return { success: true, active: true };
 
-    // Se o usuário não tiver inquilino vinculado (raro), está liberado.
-    // Se tiver, retorna o status ativo do inquilino.
-    if (!user.tenant) return { success: true, active: true };
-
-    return { success: true, active: user.tenant.ativo };
+    return { success: true, active: tenant.ativo };
   } catch (error) {
     console.error('Erro ao checar status ativo do Tenant:', error);
     return { success: true, active: true }; // Fail-safe: não bloqueia em caso de erro interno
@@ -476,28 +461,8 @@ export async function getTenantTrialStatus() {
  */
 export async function updateTenantContactAction(phone: string) {
   try {
-    const cookieStore = await cookies();
-    const sbUser = cookieStore.get('sb_user')?.value;
-    if (!sbUser) return { success: false, error: 'Usuário não autenticado.' };
-
-    let data;
-    try {
-      data = JSON.parse(decodeURIComponent(sbUser));
-    } catch {
-      try {
-        data = JSON.parse(sbUser);
-      } catch {
-        return { success: false, error: 'Sessão inválida.' };
-      }
-    }
-
-    const user = await prisma.user.findFirst({
-      where: { nome: data.nome || '' }
-    });
-
-    if (!user) {
-      return { success: false, error: 'Usuário não encontrado.' };
-    }
+    const user = await getLoggedUser();
+    if (!user) return { success: false, error: 'Usuário não autenticado.' };
 
     const cleanedPhone = phone.replace(/\D/g, '');
     if (cleanedPhone.length < 10) {
@@ -530,31 +495,21 @@ export async function updateTenantContactAction(phone: string) {
  */
 export async function getTenantBillingInfo() {
   try {
-    const cookieStore = await cookies();
-    const sbUser = cookieStore.get('sb_user')?.value;
-    if (!sbUser) return { success: false, error: 'Usuário não autenticado.' };
-
-    let data;
-    try {
-      data = JSON.parse(decodeURIComponent(sbUser));
-    } catch {
-      try {
-        data = JSON.parse(sbUser);
-      } catch {
-        return { success: false, error: 'Sessão inválida.' };
-      }
-    }
-
-    const user = await prisma.user.findFirst({
-      where: { nome: data.nome || '' },
-      include: { tenant: { include: { cobrancas: { orderBy: { createdAt: 'desc' } } } } }
-    });
-
-    if (!user || !user.tenant) {
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) {
       return { success: false, error: 'Usuário ou empresa não encontrada.' };
     }
 
-    const tenant = user.tenant;
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: user.tenantId },
+      include: { cobrancas: { orderBy: { createdAt: 'desc' } } }
+    });
+
+    if (!tenant) {
+      return { success: false, error: 'Empresa não encontrada.' };
+    }
+
+
     
     // Contagem de usuários ativos
     const activeUsersCount = await prisma.user.count({
@@ -611,25 +566,7 @@ export async function getTenantBillingInfo() {
  */
 export async function paySubscriptionAction(plano: string, metodo: string, valor: number) {
   try {
-    const cookieStore = await cookies();
-    const sbUser = cookieStore.get('sb_user')?.value;
-    if (!sbUser) return { success: false, error: 'Usuário não autenticado.' };
-
-    let data;
-    try {
-      data = JSON.parse(decodeURIComponent(sbUser));
-    } catch {
-      try {
-        data = JSON.parse(sbUser);
-      } catch {
-        return { success: false, error: 'Sessão inválida.' };
-      }
-    }
-
-    const user = await prisma.user.findFirst({
-      where: { nome: data.nome || '' }
-    });
-
+    const user = await getLoggedUser();
     if (!user || !user.tenantId) {
       return { success: false, error: 'Usuário ou empresa não vinculada.' };
     }
@@ -942,26 +879,7 @@ export async function updatePlanConfigAction(
  */
 export async function generatePixChargeAction(plano: string, valor: number) {
   try {
-    const cookieStore = await cookies();
-    const sbUser = cookieStore.get('sb_user')?.value;
-    if (!sbUser) return { success: false, error: 'Usuário não autenticado.' };
-
-    let data;
-    try {
-      data = JSON.parse(decodeURIComponent(sbUser));
-    } catch {
-      try {
-        data = JSON.parse(sbUser);
-      } catch {
-        return { success: false, error: 'Sessão inválida.' };
-      }
-    }
-
-    const user = await prisma.user.findFirst({
-      where: { nome: data.nome || '' },
-      include: { tenant: true }
-    });
-
+    const user = await getLoggedUser();
     if (!user || !user.tenantId || !user.tenant) {
       return { success: false, error: 'Usuário ou empresa não vinculada.' };
     }
@@ -1045,26 +963,7 @@ export async function payWithCardAction(
   }
 ) {
   try {
-    const cookieStore = await cookies();
-    const sbUser = cookieStore.get('sb_user')?.value;
-    if (!sbUser) return { success: false, error: 'Usuário não autenticado.' };
-
-    let data;
-    try {
-      data = JSON.parse(decodeURIComponent(sbUser));
-    } catch {
-      try {
-        data = JSON.parse(sbUser);
-      } catch {
-        return { success: false, error: 'Sessão inválida.' };
-      }
-    }
-
-    const user = await prisma.user.findFirst({
-      where: { nome: data.nome || '' },
-      include: { tenant: true }
-    });
-
+    const user = await getLoggedUser();
     if (!user || !user.tenantId || !user.tenant) {
       return { success: false, error: 'Usuário ou empresa não vinculada.' };
     }
