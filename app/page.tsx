@@ -467,7 +467,7 @@ function ProposalsDashboard() {
           {/* HEADER */}
           <header className="flex justify-between items-end border-b border-slate-300 pb-4">
             <div>
-              <h1 className="text-2xl font-bold text-[#1B4D3E] tracking-wider uppercase">Gestão de Propostas</h1>
+              <h1 className="text-2xl font-bold text-[#1B4D3E] tracking-wider uppercase">FPV - Gestão de Formação de Preço de Vendas</h1>
               <p className="text-slate-500 text-sm mt-1">Engenharia de Custos e Controladoria de Facilities</p>
             </div>
             <div className="flex items-center gap-3 bell-header-spacing">
