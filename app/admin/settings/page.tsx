@@ -1514,12 +1514,12 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  <div className="max-w-2xl overflow-x-auto">
+                  <div className="w-full overflow-x-auto">
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
                         <tr className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-200">
                           <th className="px-4 py-3">Vendedor</th>
-                          <th className="px-4 py-3 text-right">Meta Mensal (R$)</th>
+                          <th className="px-4 py-3 text-right pr-6">Meta Mensal (R$)</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -1544,7 +1544,7 @@ export default function SettingsPage() {
                                     <span className="text-xs font-bold text-slate-700">{nome}</span>
                                   </div>
                                 </td>
-                                <td className="px-4 py-3 text-right">
+                                <td className="px-4 py-3 text-right pr-6">
                                   <div className="flex items-center justify-end gap-2">
                                     <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">R$</span>
                                     <input
@@ -1554,7 +1554,7 @@ export default function SettingsPage() {
                                         const newVal = Number(e.target.value);
                                         handleSaveMeta(nome, newVal);
                                       }}
-                                      className="w-36 px-3 py-2 border border-slate-300 rounded text-xs font-extrabold text-slate-800 text-right outline-none focus:border-[#1B4D3E]"
+                                      className="w-40 px-3 py-2 border border-slate-300 rounded text-xs font-extrabold text-slate-800 text-right outline-none focus:border-[#1B4D3E] bg-slate-50 focus:bg-white transition-all"
                                     />
                                   </div>
                                 </td>
