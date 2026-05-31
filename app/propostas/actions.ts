@@ -166,6 +166,36 @@ export async function deletePropostaStatus(id: string) {
   }
 }
 
+export async function updatePropostaStatusParam(id: string, nome: string, color?: string) {
+  try {
+    const data: any = { nome: nome.toUpperCase().trim() };
+    if (color) {
+      data.color = color;
+    }
+    const s = await prisma.propostaStatus.update({
+      where: { id },
+      data
+    });
+    revalidatePath('/');
+    return { success: true, data: s };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function togglePropostaStatusParam(id: string, ativo: boolean) {
+  try {
+    const s = await prisma.propostaStatus.update({
+      where: { id },
+      data: { ativo }
+    });
+    revalidatePath('/');
+    return { success: true, data: s };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 // Helpers
 async function getDefaultUser() {
   let user = await prisma.user.findFirst();

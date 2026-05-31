@@ -178,3 +178,111 @@ export async function deleteSegmento(id: string) {
     return { success: false, error: error.message };
   }
 }
+
+// UPDATE E TOGGLE ACTIONS
+export async function updateUnidadeMedida(id: string, nome: string) {
+  try {
+    const res = await prisma.unidadeMedida.update({
+      where: { id },
+      data: { nome: nome.trim() }
+    });
+    revalidatePath('/admin/settings');
+    return { success: true, data: res };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function toggleUnidadeMedida(id: string, ativo: boolean) {
+  try {
+    const res = await prisma.unidadeMedida.update({
+      where: { id },
+      data: { ativo }
+    });
+    revalidatePath('/admin/settings');
+    return { success: true, data: res };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateCategoria(id: string, nome: string) {
+  try {
+    const res = await prisma.categoria.update({
+      where: { id },
+      data: { nome: nome.trim() }
+    });
+    revalidatePath('/admin/settings');
+    revalidatePath('/produtos');
+    return { success: true, data: res };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function toggleCategoria(id: string, ativo: boolean) {
+  try {
+    const res = await prisma.categoria.update({
+      where: { id },
+      data: { ativo }
+    });
+    revalidatePath('/admin/settings');
+    revalidatePath('/produtos');
+    return { success: true, data: res };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateTipoServico(id: string, nome: string) {
+  try {
+    const res = await prisma.tipoServico.update({
+      where: { id },
+      data: { nome: nome.trim() }
+    });
+    revalidatePath('/admin/settings');
+    return { success: true, data: res };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function toggleTipoServico(id: string, ativo: boolean) {
+  try {
+    const res = await prisma.tipoServico.update({
+      where: { id },
+      data: { ativo }
+    });
+    revalidatePath('/admin/settings');
+    return { success: true, data: res };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateSegmento(id: string, nome: string) {
+  try {
+    const res = await prisma.segmento.update({
+      where: { id },
+      data: { nome: nome.toUpperCase().trim() }
+    });
+    revalidatePath('/admin/settings');
+    return { success: true, data: res };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function toggleSegmento(id: string, ativo: boolean) {
+  try {
+    const res = await prisma.segmento.update({
+      where: { id },
+      data: { ativo }
+    });
+    revalidatePath('/admin/settings');
+    return { success: true, data: res };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+

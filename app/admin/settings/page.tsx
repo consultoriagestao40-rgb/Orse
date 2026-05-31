@@ -4,10 +4,12 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
   Settings as SettingsIcon, Layers, CalendarDays, Ruler, Plus, Trash2, 
-  Save, X, Tag, Edit2, Target, Briefcase, MessageSquare, CreditCard, CheckCircle2, Lock, Smartphone, RefreshCw, Palette, Image
+  Save, X, Tag, Edit2, Target, Briefcase, MessageSquare, CreditCard, CheckCircle2, Lock, Smartphone, RefreshCw, Palette, Image,
+  Eye, EyeOff
 } from 'lucide-react';
 import { 
-  getPropostaStatuses, createPropostaStatus, deletePropostaStatus, getLoggedUser 
+  getPropostaStatuses, createPropostaStatus, deletePropostaStatus, getLoggedUser,
+  updatePropostaStatusParam, togglePropostaStatusParam
 } from '@/app/propostas/actions';
 import { 
   getEscalas, createEscala, updateEscala, deleteEscala 
@@ -17,7 +19,11 @@ import {
   getCategorias, createCategoria, deleteCategoria,
   getTiposServico, createTipoServico, deleteTipoServico,
   getSegmentos, createSegmento, deleteSegmento,
-  getSellers
+  getSellers,
+  updateUnidadeMedida, toggleUnidadeMedida,
+  updateCategoria, toggleCategoria,
+  updateTipoServico, toggleTipoServico,
+  updateSegmento, toggleSegmento
 } from './actions';
 import { getEmpresasEmissoras, createEmpresaEmissora, updateEmpresaEmissora, deleteEmpresaEmissora } from './empresas-actions';
 import { 
@@ -533,6 +539,10 @@ export default function SettingsPage() {
   const [segmentos, setSegmentos] = useState<any[]>([]);
   const [newSegmentoNome, setNewSegmentoNome] = useState('');
 
+  // Estado para Edição de Itens de Parâmetros
+  const [editingItem, setEditingItem] = useState<{ id: string; type: 'status' | 'unidade' | 'categoria' | 'tipo' | 'segmento'; nome: string; color?: string } | null>(null);
+
+
   // Metas
   const [sellers, setSellers] = useState<string[]>([]);
   const [metas, setMetas] = useState<Record<string, number>>({});
@@ -754,6 +764,61 @@ export default function SettingsPage() {
     else alert('Erro ao excluir: ' + res.error);
   };
 
+  // Ações de Toggle de Ativo/Inativo e Edição de Parâmetros
+  const handleToggleAtivoParam = async (id: string, type: 'status' | 'unidade' | 'categoria' | 'tipo' | 'segmento', currentAtivo: boolean) => {
+    const nextAtivo = !currentAtivo;
+    let res: any;
+    
+    if (type === 'status') {
+      res = await togglePropostaStatusParam(id, nextAtivo);
+    } else if (type === 'unidade') {
+      res = await toggleUnidadeMedida(id, nextAtivo);
+    } else if (type === 'categoria') {
+      res = await toggleCategoria(id, nextAtivo);
+    } else if (type === 'tipo') {
+      res = await toggleTipoServico(id, nextAtivo);
+    } else if (type === 'segmento') {
+      res = await toggleSegmento(id, nextAtivo);
+    }
+    
+    if (res && res.success) {
+      loadData();
+    } else {
+      alert('Erro ao alterar status de ativação: ' + (res?.error || 'Erro desconhecido'));
+    }
+  };
+
+  const handleSaveEditedParam = async () => {
+    if (!editingItem) return;
+    if (!editingItem.nome.trim()) {
+      alert('O nome do parâmetro não pode ser vazio.');
+      return;
+    }
+    
+    let res: any;
+    const { id, type, nome, color } = editingItem;
+    
+    if (type === 'status') {
+      res = await updatePropostaStatusParam(id, nome, color);
+    } else if (type === 'unidade') {
+      res = await updateUnidadeMedida(id, nome);
+    } else if (type === 'categoria') {
+      res = await updateCategoria(id, nome);
+    } else if (type === 'tipo') {
+      res = await updateTipoServico(id, nome);
+    } else if (type === 'segmento') {
+      res = await updateSegmento(id, nome);
+    }
+    
+    if (res && res.success) {
+      setEditingItem(null);
+      loadData();
+    } else {
+      alert('Erro ao salvar alteração: ' + (res?.error || 'Erro desconhecido'));
+    }
+  };
+
+
   // Escalas
   const handleSaveEscala = async () => {
     if (!escalaForm.nome.trim()) return alert('O nome da escala é obrigatório.');
@@ -928,25 +993,66 @@ export default function SettingsPage() {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {statuses.map(s => (
-                      <div key={s.id} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded hover:bg-white hover:shadow-sm transition-all group">
-                        <span className={`text-[10px] font-black px-3 py-1 rounded uppercase tracking-wider ${s.color}`}>
-                          {s.nome}
-                        </span>
-                        <button 
-                          onClick={() => handleDeleteStatus(s.id)}
-                          className="text-slate-400 hover:text-red-600 transition-colors"
-                          title="Remover"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    ))}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-200">
+                          <th className="px-4 py-3">Nome do Status</th>
+                          <th className="px-4 py-3 text-center">Status</th>
+                          <th className="px-4 py-3 text-right">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {statuses.map(s => (
+                          <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-4 py-3 font-bold text-slate-700">
+                              <span className={`text-[10px] font-black px-3 py-1 rounded uppercase tracking-wider ${s.color}`}>
+                                {s.nome}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                s.ativo !== false 
+                                  ? 'bg-green-50 text-green-700 border border-green-200' 
+                                  : 'bg-slate-100 text-slate-500 border border-slate-200'
+                              }`}>
+                                {s.ativo !== false ? 'Ativo' : 'Inativo'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex justify-end gap-3">
+                                <button 
+                                  onClick={() => setEditingItem({ id: s.id, type: 'status', nome: s.nome, color: s.color })} 
+                                  className="text-amber-500 hover:text-amber-600 transition-colors"
+                                  title="Editar"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button 
+                                  onClick={() => handleToggleAtivoParam(s.id, 'status', s.ativo !== false)} 
+                                  className={`${s.ativo !== false ? 'text-emerald-600 hover:text-emerald-700' : 'text-slate-400 hover:text-slate-500'} transition-colors`}
+                                  title={s.ativo !== false ? "Inativar" : "Ativar"}
+                                >
+                                  {s.ativo !== false ? <Eye size={14} /> : <EyeOff size={14} />}
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteStatus(s.id)} 
+                                  className="text-slate-400 hover:text-red-600 transition-colors"
+                                  title="Remover"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
             )}
+
 
             {/* 2. ABA ESCALAS */}
             {activeTab === 'escalas' && (
@@ -1001,7 +1107,7 @@ export default function SettingsPage() {
                     <Ruler size={14} /> Unidades de Medida Disponíveis
                   </h2>
                 </div>
-
+ 
                 <div className="p-6 space-y-6">
                   <div className="flex gap-2">
                     <input
@@ -1019,23 +1125,63 @@ export default function SettingsPage() {
                       <Plus size={16} /> Adicionar
                     </button>
                   </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {unidades.map(u => (
-                      <div key={u.id} className="p-4 bg-slate-50 border border-slate-200 rounded relative group hover:bg-white hover:shadow-sm transition-all">
-                        <p className="text-lg font-black text-slate-800 uppercase">{u.nome}</p>
-                        <button 
-                          onClick={() => handleDeleteUnidade(u.id)}
-                          className="absolute top-2 right-2 p-1 text-slate-300 hover:text-red-600 transition-colors"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    ))}
+ 
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-200">
+                          <th className="px-4 py-3">Unidade de Medida</th>
+                          <th className="px-4 py-3 text-center">Status</th>
+                          <th className="px-4 py-3 text-right">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {unidades.map(u => (
+                          <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-4 py-3 font-bold text-slate-700 uppercase text-sm">{u.nome}</td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                u.ativo !== false 
+                                  ? 'bg-green-50 text-green-700 border border-green-200' 
+                                  : 'bg-slate-100 text-slate-500 border border-slate-200'
+                              }`}>
+                                {u.ativo !== false ? 'Ativo' : 'Inativo'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex justify-end gap-3">
+                                <button 
+                                  onClick={() => setEditingItem({ id: u.id, type: 'unidade', nome: u.nome })} 
+                                  className="text-amber-500 hover:text-amber-600 transition-colors"
+                                  title="Editar"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button 
+                                  onClick={() => handleToggleAtivoParam(u.id, 'unidade', u.ativo !== false)} 
+                                  className={`${u.ativo !== false ? 'text-emerald-600 hover:text-emerald-700' : 'text-slate-400 hover:text-slate-500'} transition-colors`}
+                                  title={u.ativo !== false ? "Inativar" : "Ativar"}
+                                >
+                                  {u.ativo !== false ? <Eye size={14} /> : <EyeOff size={14} />}
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteUnidade(u.id)} 
+                                  className="text-slate-400 hover:text-red-600 transition-colors"
+                                  title="Remover"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
             )}
+
 
             {/* 4. ABA CATEGORIAS */}
             {activeTab === 'categorias' && (
@@ -1064,23 +1210,62 @@ export default function SettingsPage() {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {categorias.map(c => (
-                      <div key={c.id} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded hover:bg-white hover:shadow-sm transition-all group">
-                        <span className="text-xs font-bold text-slate-700 uppercase">{c.nome}</span>
-                        <button 
-                          onClick={() => handleDeleteCategoria(c.id)}
-                          className="text-slate-400 hover:text-red-600 transition-colors"
-                          title="Remover"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    ))}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-200">
+                          <th className="px-4 py-3">Nome da Categoria</th>
+                          <th className="px-4 py-3 text-center">Status</th>
+                          <th className="px-4 py-3 text-right">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {categorias.map(c => (
+                          <tr key={c.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-4 py-3 font-bold text-slate-700 uppercase">{c.nome}</td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                c.ativo !== false 
+                                  ? 'bg-green-50 text-green-700 border border-green-200' 
+                                  : 'bg-slate-100 text-slate-500 border border-slate-200'
+                              }`}>
+                                {c.ativo !== false ? 'Ativo' : 'Inativo'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex justify-end gap-3">
+                                <button 
+                                  onClick={() => setEditingItem({ id: c.id, type: 'categoria', nome: c.nome })} 
+                                  className="text-amber-500 hover:text-amber-600 transition-colors"
+                                  title="Editar"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button 
+                                  onClick={() => handleToggleAtivoParam(c.id, 'categoria', c.ativo !== false)} 
+                                  className={`${c.ativo !== false ? 'text-emerald-600 hover:text-emerald-700' : 'text-slate-400 hover:text-slate-500'} transition-colors`}
+                                  title={c.ativo !== false ? "Inativar" : "Ativar"}
+                                >
+                                  {c.ativo !== false ? <Eye size={14} /> : <EyeOff size={14} />}
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteCategoria(c.id)} 
+                                  className="text-slate-400 hover:text-red-600 transition-colors"
+                                  title="Remover"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
             )}
+
 
             {/* 5. ABA TIPOS DE SERVIÇO */}
             {activeTab === 'tipos' && (
@@ -1109,23 +1294,62 @@ export default function SettingsPage() {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {tipos.map(t => (
-                      <div key={t.id} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded hover:bg-white hover:shadow-sm transition-all group">
-                        <span className="text-xs font-bold text-slate-700">{t.nome}</span>
-                        <button 
-                          onClick={() => handleDeleteTipo(t.id)}
-                          className="text-slate-400 hover:text-red-600 transition-colors"
-                          title="Remover"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    ))}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-200">
+                          <th className="px-4 py-3">Tipo de Serviço</th>
+                          <th className="px-4 py-3 text-center">Status</th>
+                          <th className="px-4 py-3 text-right">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {tipos.map(t => (
+                          <tr key={t.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-4 py-3 font-bold text-slate-700">{t.nome}</td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                t.ativo !== false 
+                                  ? 'bg-green-50 text-green-700 border border-green-200' 
+                                  : 'bg-slate-100 text-slate-500 border border-slate-200'
+                              }`}>
+                                {t.ativo !== false ? 'Ativo' : 'Inativo'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex justify-end gap-3">
+                                <button 
+                                  onClick={() => setEditingItem({ id: t.id, type: 'tipo', nome: t.nome })} 
+                                  className="text-amber-500 hover:text-amber-600 transition-colors"
+                                  title="Editar"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button 
+                                  onClick={() => handleToggleAtivoParam(t.id, 'tipo', t.ativo !== false)} 
+                                  className={`${t.ativo !== false ? 'text-emerald-600 hover:text-emerald-700' : 'text-slate-400 hover:text-slate-500'} transition-colors`}
+                                  title={t.ativo !== false ? "Inativar" : "Ativar"}
+                                >
+                                  {t.ativo !== false ? <Eye size={14} /> : <EyeOff size={14} />}
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteTipo(t.id)} 
+                                  className="text-slate-400 hover:text-red-600 transition-colors"
+                                  title="Remover"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
             )}
+
 
             {/* ABA SEGMENTOS */}
             {activeTab === 'segmentos' && (
@@ -1154,23 +1378,62 @@ export default function SettingsPage() {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {segmentos.map(s => (
-                      <div key={s.id} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded hover:bg-white hover:shadow-sm transition-all group">
-                        <span className="text-xs font-bold text-slate-700 uppercase">{s.nome}</span>
-                        <button 
-                          onClick={() => handleDeleteSegmento(s.id)}
-                          className="text-slate-400 hover:text-red-600 transition-colors"
-                          title="Remover"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    ))}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-200">
+                          <th className="px-4 py-3">Nome do Segmento</th>
+                          <th className="px-4 py-3 text-center">Status</th>
+                          <th className="px-4 py-3 text-right">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {segmentos.map(s => (
+                          <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-4 py-3 font-bold text-slate-700 uppercase">{s.nome}</td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                s.ativo !== false 
+                                  ? 'bg-green-50 text-green-700 border border-green-200' 
+                                  : 'bg-slate-100 text-slate-500 border border-slate-200'
+                              }`}>
+                                {s.ativo !== false ? 'Ativo' : 'Inativo'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex justify-end gap-3">
+                                <button 
+                                  onClick={() => setEditingItem({ id: s.id, type: 'segmento', nome: s.nome })} 
+                                  className="text-amber-500 hover:text-amber-600 transition-colors"
+                                  title="Editar"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button 
+                                  onClick={() => handleToggleAtivoParam(s.id, 'segmento', s.ativo !== false)} 
+                                  className={`${s.ativo !== false ? 'text-emerald-600 hover:text-emerald-700' : 'text-slate-400 hover:text-slate-500'} transition-colors`}
+                                  title={s.ativo !== false ? "Inativar" : "Ativar"}
+                                >
+                                  {s.ativo !== false ? <Eye size={14} /> : <EyeOff size={14} />}
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteSegmento(s.id)} 
+                                  className="text-slate-400 hover:text-red-600 transition-colors"
+                                  title="Remover"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
             )}
+
 
             
             {/* ABA EMPRESAS EMISSORAS */}
@@ -1887,8 +2150,87 @@ export default function SettingsPage() {
         </div>
       </div>
 
+        {/* MODAL DE EDIÇÃO DE PARÂMETROS */}
+        {editingItem && (
+          <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+            <div className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              <div className="bg-[#1B4D3E] px-6 py-3 border-b border-[#13382D] flex justify-between items-center">
+                <h2 className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                  <Edit2 size={14} /> Editar {
+                    editingItem.type === 'status' ? 'Status' :
+                    editingItem.type === 'unidade' ? 'Unidade de Medida' :
+                    editingItem.type === 'categoria' ? 'Categoria' :
+                    editingItem.type === 'tipo' ? 'Tipo de Serviço' : 'Segmento'
+                  }
+                </h2>
+                <button onClick={() => setEditingItem(null)} className="text-white/60 hover:text-white transition-colors">
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    Nome / Descrição
+                  </label>
+                  <input 
+                    type="text" 
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-sm font-bold text-slate-800 outline-none focus:border-[#1B4D3E] transition-all uppercase"
+                    value={editingItem.nome} 
+                    onChange={e => setEditingItem({ ...editingItem, nome: e.target.value })} 
+                  />
+                </div>
+
+                {editingItem.type === 'status' && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block text-left">
+                      Selecione a Cor do Badge
+                    </label>
+                    <div className="grid grid-cols-2 gap-2 max-h-[160px] overflow-y-auto p-2 border border-slate-100 rounded">
+                      {[
+                        { label: 'Céu (Azul)', value: 'bg-sky-100 text-sky-800 border border-sky-200' },
+                        { label: 'Laranja', value: 'bg-orange-100 text-orange-800 border border-orange-200' },
+                        { label: 'Esmeralda (Verde)', value: 'bg-green-100 text-green-800 border border-green-200' },
+                        { label: 'Vermelho', value: 'bg-red-100 text-red-800 border border-red-200' },
+                        { label: 'Roxo', value: 'bg-purple-100 text-purple-800 border border-purple-200' },
+                        { label: 'Ardósia (Cinza)', value: 'bg-slate-100 text-slate-800 border border-slate-200' },
+                        { label: 'Amarelo', value: 'bg-yellow-100 text-yellow-800 border border-yellow-200' },
+                        { label: 'Indigo', value: 'bg-indigo-100 text-indigo-800 border border-indigo-200' },
+                        { label: 'Pink', value: 'bg-pink-100 text-pink-800 border border-pink-200' },
+                        { label: 'Teal', value: 'bg-teal-100 text-teal-800 border border-teal-200' },
+                      ].map(colorOpt => (
+                        <button
+                          key={colorOpt.value}
+                          type="button"
+                          onClick={() => setEditingItem({ ...editingItem, color: colorOpt.value })}
+                          className={`p-2 rounded text-left border text-[10px] font-bold uppercase transition-all flex items-center justify-center ${
+                            editingItem.color === colorOpt.value 
+                              ? 'border-[#1B4D3E] ring-1 ring-[#1B4D3E] bg-slate-50' 
+                              : 'border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          <span className={`px-2 py-0.5 rounded tracking-wider text-center ${colorOpt.value}`}>
+                            {colorOpt.label}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <button 
+                  onClick={handleSaveEditedParam} 
+                  className="w-full bg-[#1B4D3E] hover:bg-emerald-900 text-white py-3 rounded text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] mt-4"
+                >
+                  <Save size={18} /> Salvar Alterações
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* MODAL ESCALA */}
         {showEscalaModal && (
+
           <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
             <div className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden">
               <div className="bg-[#1B4D3E] px-6 py-3 border-b border-[#13382D] flex justify-between items-center">

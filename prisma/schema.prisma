@@ -227,9 +227,10 @@ model Escala {
 }
 
 model PropostaStatus {
-  id    String @id @default(cuid())
-  nome  String @unique
-  color String @default("bg-slate-100 text-slate-600 border border-slate-200")
+  id    String  @id @default(cuid())
+  nome  String  @unique
+  color String  @default("bg-slate-100 text-slate-600 border border-slate-200")
+  ativo Boolean @default(true)
 }
 
 model Produto {
@@ -247,13 +248,15 @@ model Produto {
 }
 
 model Categoria {
-  id   String @id @default(cuid())
-  nome String @unique
+  id    String  @id @default(cuid())
+  nome  String  @unique
+  ativo Boolean @default(true)
 }
 
 model UnidadeMedida {
-  id   String @id @default(cuid())
-  nome String @unique
+  id    String  @id @default(cuid())
+  nome  String  @unique
+  ativo Boolean @default(true)
 }
 
 enum UserRole {
@@ -263,13 +266,15 @@ enum UserRole {
 }
 
 model TipoServico {
-  id   String @id @default(cuid())
-  nome String @unique
+  id    String  @id @default(cuid())
+  nome  String  @unique
+  ativo Boolean @default(true)
 }
 
 model Segmento {
-  id   String @id @default(cuid())
-  nome String @unique
+  id    String  @id @default(cuid())
+  nome  String  @unique
+  ativo Boolean @default(true)
 }
 
 model PropostaShare {
