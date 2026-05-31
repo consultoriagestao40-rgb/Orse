@@ -707,13 +707,13 @@ export default function AdminEquipesTecnicasPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-[#1E293B] text-white uppercase text-[10px] font-black tracking-widest">
+                <tr className="bg-[#1B4D3E] text-white uppercase text-[10px] font-black tracking-widest">
                   <th className="px-6 py-4">Nome da Equipe</th>
                   <th className="px-6 py-4 text-right">Mão de Obra (Mês)</th>
                   <th className="px-6 py-4 text-right">Logística (Veíc + Comb)</th>
-                  <th className="px-6 py-4 text-right bg-slate-800">Custo Total</th>
-                  <th className="px-6 py-4 text-right text-white bg-emerald-950">Sugerido Diária</th>
-                  <th className="px-6 py-4 text-right text-white bg-slate-900">Sugerido Hora</th>
+                  <th className="px-6 py-4 text-right">Custo Total</th>
+                  <th className="px-6 py-4 text-right">Sugerido Diária</th>
+                  <th className="px-6 py-4 text-right">Sugerido Hora</th>
                   <th className="px-6 py-4 text-right">Ações</th>
                 </tr>
               </thead>
