@@ -1938,7 +1938,12 @@ return (
                 💬 Histórico de Negociações e Ajustes
               </h3>
               
-              {(!doc.configApresentacao?.negotiations || doc.configApresentacao.ne                <div className="relative pl-8 border-l-2 border-slate-200 space-y-8 ml-4 max-w-2xl mx-auto py-4 text-left font-sans">
+              {(!doc.configApresentacao?.negotiations || doc.configApresentacao.negotiations.length === 0) ? (
+                <div className="py-20 text-center text-slate-400 italic">
+                  Nenhum registro de ajustes ou negociação encontrado.
+                </div>
+              ) : (
+                <div className="relative pl-8 border-l-2 border-slate-200 space-y-8 ml-4 max-w-2xl mx-auto py-4 text-left font-sans">
                   {doc.configApresentacao.negotiations.map((item: any) => {
                     const clientInitials = (item.nomeCliente || 'Cliente')
                       .split(' ')
