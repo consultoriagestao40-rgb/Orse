@@ -220,16 +220,82 @@ function ProposalsDashboard() {
     return 'border-[#1B4D3E]';
   };
 
+  const getHighlightedColorClass = (colorClass: string = '') => {
+    const lower = colorClass.toLowerCase();
+    if (lower.includes('sky') || lower.includes('blue')) {
+      return {
+        bg: 'bg-gradient-to-br from-blue-600 to-sky-600',
+        border: 'border-blue-700',
+        text: 'text-white',
+        badge: 'bg-white/20 text-white border border-white/10',
+        totalColor: 'text-white'
+      };
+    }
+    if (lower.includes('orange') || lower.includes('amber')) {
+      return {
+        bg: 'bg-gradient-to-br from-amber-500 to-orange-500',
+        border: 'border-orange-600',
+        text: 'text-white',
+        badge: 'bg-white/20 text-white border border-white/10',
+        totalColor: 'text-white'
+      };
+    }
+    if (lower.includes('green') || lower.includes('emerald')) {
+      return {
+        bg: 'bg-gradient-to-br from-emerald-600 to-green-600',
+        border: 'border-emerald-700',
+        text: 'text-white',
+        badge: 'bg-white/20 text-white border border-white/10',
+        totalColor: 'text-white'
+      };
+    }
+    if (lower.includes('red') || lower.includes('rose')) {
+      return {
+        bg: 'bg-gradient-to-br from-red-600 to-rose-600',
+        border: 'border-rose-700',
+        text: 'text-white',
+        badge: 'bg-white/20 text-white border border-white/10',
+        totalColor: 'text-white'
+      };
+    }
+    if (lower.includes('purple') || lower.includes('indigo') || lower.includes('violet')) {
+      return {
+        bg: 'bg-gradient-to-br from-purple-600 to-indigo-600',
+        border: 'border-purple-700',
+        text: 'text-white',
+        badge: 'bg-white/20 text-white border border-white/10',
+        totalColor: 'text-white'
+      };
+    }
+    return {
+      bg: 'bg-gradient-to-br from-slate-600 to-slate-500',
+      border: 'border-slate-700',
+      text: 'text-white',
+      badge: 'bg-white/20 text-white border border-white/10',
+      totalColor: 'text-white'
+    };
+  };
+
   // ── Coluna de Kanban reutilizável ───────────────────────────────────────────
   const KanbanColumn = ({ label, color, cards, total, type = 'status', onDropProp }: {
     label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor'; onDropProp?: (propId: string) => void;
   }) => {
     const userObj = usersList.find(u => u.nome === label);
     const colAvatarUrl = userObj?.avatarUrl;
+    const isStatus = type === 'status';
+    const hStyle = isStatus 
+      ? getHighlightedColorClass(color) 
+      : {
+          bg: 'bg-gradient-to-br from-[#1B4D3E] to-[#2E6B57]',
+          border: 'border-[#13382d]',
+          text: 'text-white',
+          badge: 'bg-white/20 text-white border border-white/10',
+          totalColor: 'text-white'
+        };
 
     return (
       <div 
-        className="flex-shrink-0 w-72 flex flex-col"
+        className="flex-shrink-0 w-72 flex flex-col h-full"
         onDragOver={(e) => {
           e.preventDefault(); // Necessário para permitir o drop
           e.currentTarget.classList.add('bg-slate-200/50', 'rounded-xl');
@@ -245,51 +311,49 @@ function ProposalsDashboard() {
         }}
       >
         {/* Cabeçalho da coluna */}
-        <div className="sticky top-[-32px] bg-[#F8FAFC] pt-2 pb-3 z-10">
-          <div className={`bg-white border-x border-b border-slate-200 border-t-4 ${type === 'vendedor' ? 'border-[#1B4D3E]' : getBorderColorClass(color)} rounded-xl p-4 shadow-sm`}>
-            {type === 'status' ? (
-              <>
-                <div className="flex items-center justify-between mb-2">
-                  <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${color || 'bg-slate-100 text-slate-600'}`}>
-                    {label}
-                  </span>
-                  <span className="text-xs font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
-                    {cards.length}
-                  </span>
-                </div>
-                <p className="text-sm font-black text-[#1B4D3E]">{fmt(total)}</p>
-                <p className="text-[10px] text-slate-400 font-medium mt-0.5">Volume total da coluna</p>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center gap-3 mb-2">
-                  {colAvatarUrl ? (
-                    <img 
-                      src={colAvatarUrl} 
-                      alt={label} 
-                      className="w-9 h-9 rounded-xl object-cover border border-slate-200"
-                    />
-                  ) : (
-                    <div className="w-9 h-9 rounded-xl bg-[#1B4D3E]/10 flex items-center justify-center text-[#1B4D3E] font-black text-sm uppercase border border-slate-200">
-                      {label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-black text-slate-800 truncate">{label}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] text-slate-400 font-medium">{cards.length} proposta{cards.length !== 1 ? 's' : ''}</span>
-                    </div>
+        <div className="pt-2 pb-3 shrink-0">
+          {isStatus ? (
+            <div className={`border rounded-xl p-4 shadow-md text-left ${hStyle.bg} ${hStyle.text} ${hStyle.border}`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-sm ${hStyle.badge}`}>
+                  {label}
+                </span>
+                <span className={`text-xs font-black px-2.5 py-0.5 rounded-full shadow-sm ${hStyle.badge}`}>
+                  {cards.length}
+                </span>
+              </div>
+              <p className="text-sm font-black mt-3">{fmt(total)}</p>
+              <p className="text-[10px] opacity-75 font-medium mt-0.5">Volume total da coluna</p>
+            </div>
+          ) : (
+            <div className={`rounded-xl p-4 shadow-md text-left border ${hStyle.bg} ${hStyle.text} ${hStyle.border}`}>
+              <div className="flex items-center gap-3 mb-2">
+                {colAvatarUrl ? (
+                  <img 
+                    src={colAvatarUrl} 
+                    alt={label} 
+                    className="w-9 h-9 rounded-xl object-cover border border-white/20 shadow-md"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-white font-black text-sm uppercase border border-white/20 shadow-md">
+                    {label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-black truncate text-white">{label}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[10px] text-white/90 font-bold bg-white/10 px-2 py-0.5 rounded">{cards.length} proposta{cards.length !== 1 ? 's' : ''}</span>
                   </div>
                 </div>
-                <p className="text-base font-black text-[#1B4D3E]">{fmt(total)}</p>
-                <p className="text-[10px] text-slate-400 font-medium mt-0.5">Volume total</p>
-              </>
-            )}
-          </div>
+              </div>
+              <p className="text-base font-black text-white mt-3">{fmt(total)}</p>
+              <p className="text-[10px] text-white/70 font-medium mt-0.5">Volume total</p>
+            </div>
+          )}
         </div>
 
         {/* Cards */}
-        <div className="flex flex-col gap-3 flex-1">
+        <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-1 pb-4 scrollbar-thin">
           {cards.length === 0 ? (
             <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
               <p className="text-xs text-slate-300 font-medium">Sem propostas</p>
@@ -520,8 +584,8 @@ function ProposalsDashboard() {
               {loading ? (
                 <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
               ) : (
-                <div className="overflow-x-auto pb-6">
-                  <div className="flex gap-5 min-w-max">
+                <div className="overflow-x-auto pb-6 overflow-y-visible">
+                  <div className="flex gap-5 min-w-max h-[calc(100vh-360px)] min-h-[450px]">
                     {kanbanStatusCols.map(col => (
                       <KanbanColumn
                         key={col.id}
@@ -567,8 +631,8 @@ function ProposalsDashboard() {
                   Nenhuma proposta encontrada.
                 </div>
               ) : (
-                <div className="overflow-x-auto pb-6">
-                  <div className="flex gap-5 min-w-max">
+                <div className="overflow-x-auto pb-6 overflow-y-visible">
+                  <div className="flex gap-5 min-w-max h-[calc(100vh-360px)] min-h-[450px]">
                     {kanbanVendedorCols.map(col => (
                       <KanbanColumn
                         key={col.id}
