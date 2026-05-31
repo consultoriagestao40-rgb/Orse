@@ -91,7 +91,7 @@ export default function EscalasPage() {
           </div>
           <button 
             onClick={() => openModal()}
-            className="bg-[#00A36C] hover:bg-[#008f5e] text-white px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all shadow-xl shadow-emerald-200 active:scale-95"
+            className="bg-[#1B4D3E] hover:bg-[#13382D] text-white px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all shadow-xl shadow-emerald-200 active:scale-95"
           >
             <Plus size={18} strokeWidth={3} /> Nova Escala
           </button>
@@ -225,7 +225,7 @@ export default function EscalasPage() {
                 <input
                   type="text"
                   placeholder="Ex: Escala 5x2 Comercial"
-                  className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-base font-bold text-slate-800 outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-[#00A36C] transition-all"
+                  className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-base font-bold text-slate-800 outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-[#1B4D3E] transition-all"
                   value={formData.nome}
                   onChange={(e) => setFormData({...formData, nome: e.target.value})}
                 />
@@ -238,7 +238,7 @@ export default function EscalasPage() {
                   </label>
                   <input
                     type="number"
-                    className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-base font-bold text-slate-800 outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-[#00A36C] transition-all"
+                    className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-base font-bold text-slate-800 outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-[#1B4D3E] transition-all"
                     value={formData.diasTrabalhadosMes}
                     onChange={(e) => setFormData({...formData, diasTrabalhadosMes: Number(e.target.value)})}
                   />
@@ -250,7 +250,7 @@ export default function EscalasPage() {
                   </label>
                   <input
                     type="number"
-                    className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-base font-bold text-slate-800 outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-[#00A36C] transition-all"
+                    className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-base font-bold text-slate-800 outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-[#1B4D3E] transition-all"
                     value={formData.horasMensais}
                     onChange={(e) => setFormData({...formData, horasMensais: Number(e.target.value)})}
                   />

@@ -419,6 +419,14 @@ const Sidebar = () => {
 
   // Efeito dinâmico para gerar e injetar o CSS da cor do tema do cliente inquilino
   useEffect(() => {
+    // Evita FOUC (flicker de verde para azul) durante a hidratação/transição
+    if (!user) {
+      const existingStyle = document.getElementById('dynamic-theme-style');
+      if (existingStyle && existingStyle.innerHTML.includes('--primary-color') && !existingStyle.innerHTML.includes('--primary-color: #1B4D3E')) {
+        return;
+      }
+    }
+
     const isSaaSArea = pathname.startsWith('/admin/empresas');
     const color = (isSaaSArea || user?.email === 'admin@smartbidhub.com.br') 
       ? '#1B4D3E' 

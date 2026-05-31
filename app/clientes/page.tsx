@@ -53,7 +53,7 @@ export default function ClientesPage() {
           </div>
           <button 
             onClick={() => router.push('/clientes/novo')}
-            className="bg-[#00A36C] hover:bg-[#008f5e] text-white px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all shadow-xl shadow-emerald-200 active:scale-95 bell-header-spacing"
+            className="bg-[#1B4D3E] hover:bg-[#13382D] text-white px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all shadow-xl shadow-emerald-200 active:scale-95 bell-header-spacing"
           >
             <Plus size={18} strokeWidth={3} /> Novo Cliente
           </button>

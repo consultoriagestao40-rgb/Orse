@@ -673,7 +673,7 @@ export default function AdminEquipesTecnicasPage() {
           </div>
           <button 
             onClick={handleOpenCreate}
-            className="bg-[#00A36C] hover:bg-[#008f5e] text-white px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all shadow-xl shadow-emerald-200 active:scale-95 animate-fade-in bell-header-spacing"
+            className="bg-[#1B4D3E] hover:bg-[#13382D] text-white px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all shadow-xl shadow-emerald-200 active:scale-95 animate-fade-in bell-header-spacing"
           >
             <Plus size={18} strokeWidth={3} /> Nova Equipe
           </button>
@@ -712,8 +712,8 @@ export default function AdminEquipesTecnicasPage() {
                   <th className="px-6 py-4 text-right">Mão de Obra (Mês)</th>
                   <th className="px-6 py-4 text-right">Logística (Veíc + Comb)</th>
                   <th className="px-6 py-4 text-right bg-slate-800">Custo Total</th>
-                  <th className="px-6 py-4 text-right text-emerald-400 bg-emerald-950">Sugerido Diária</th>
-                  <th className="px-6 py-4 text-right text-sky-400 bg-slate-900">Sugerido Hora</th>
+                  <th className="px-6 py-4 text-right text-white bg-emerald-950">Sugerido Diária</th>
+                  <th className="px-6 py-4 text-right text-white bg-slate-900">Sugerido Hora</th>
                   <th className="px-6 py-4 text-right">Ações</th>
                 </tr>
               </thead>
@@ -1048,7 +1048,7 @@ export default function AdminEquipesTecnicasPage() {
                           <p className="text-[10px] text-slate-400 font-medium">Soma de todos os grupos de encargos acima.</p>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-lg font-black text-emerald-400">{encargoEstimadoPct.toFixed(2)}%</span>
+                          <span className="text-lg font-black text-emerald-300">{encargoEstimadoPct.toFixed(2)}%</span>
                         </div>
                       </div>
                     </div>
@@ -1193,7 +1193,7 @@ export default function AdminEquipesTecnicasPage() {
 
                   {/* Diária Sugerida */}
                   <div className="border-r border-slate-800 px-6">
-                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-1">Diária Base Sugerida</span>
+                    <span className="text-[10px] font-black text-emerald-300 uppercase tracking-widest block mb-1">Diária Base Sugerida</span>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-slate-400">R$</span>
                       <input 
@@ -1201,7 +1201,7 @@ export default function AdminEquipesTecnicasPage() {
                         step="0.01"
                         value={valorDiaria}
                         onChange={(e) => setValorDiaria(Number(e.target.value))}
-                        className="w-28 bg-slate-800/40 border border-slate-700/50 rounded-lg px-2 py-1 text-base font-black text-emerald-400 focus:ring-1 focus:ring-emerald-500 outline-none text-center"
+                        className="w-28 bg-slate-800/40 border border-slate-700/50 rounded-lg px-2 py-1 text-base font-black text-emerald-300 focus:ring-1 focus:ring-emerald-400 outline-none text-center"
                       />
                     </div>
                     <p className="text-[9px] text-slate-500 font-medium mt-1">Valor base diário (Custo Total / 22 dias)</p>
@@ -1209,7 +1209,7 @@ export default function AdminEquipesTecnicasPage() {
 
                   {/* Hora Sugerida */}
                   <div className="pl-6">
-                    <span className="text-[10px] font-black text-sky-400 uppercase tracking-widest block mb-1">Hora Base Sugerida</span>
+                    <span className="text-[10px] font-black text-sky-300 uppercase tracking-widest block mb-1">Hora Base Sugerida</span>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-slate-400">R$</span>
                       <input 
@@ -1217,7 +1217,7 @@ export default function AdminEquipesTecnicasPage() {
                         step="0.01"
                         value={valorHora}
                         onChange={(e) => setValorHora(Number(e.target.value))}
-                        className="w-28 bg-slate-800/40 border border-slate-700/50 rounded-lg px-2 py-1 text-base font-black text-sky-400 focus:ring-1 focus:ring-sky-500 outline-none text-center"
+                        className="w-28 bg-slate-800/40 border border-slate-700/50 rounded-lg px-2 py-1 text-base font-black text-sky-300 focus:ring-1 focus:ring-sky-400 outline-none text-center"
                       />
                     </div>
                     <p className="text-[9px] text-slate-500 font-medium mt-1">Valor base de hora (Custo Total / 176 horas)</p>
@@ -1236,7 +1236,7 @@ export default function AdminEquipesTecnicasPage() {
                   <button 
                     type="submit"
                     disabled={saving}
-                    className="px-8 py-3 bg-[#00A36C] hover:bg-[#008f5e] disabled:bg-emerald-300 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-emerald-100 transition-all active:scale-95 cursor-pointer"
+                    className="px-8 py-3 bg-[#1B4D3E] hover:bg-[#13382D] disabled:bg-[#1B4D3E]/50 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-emerald-100 transition-all active:scale-95 cursor-pointer"
                   >
                     {saving ? (
                       <>
@@ -1265,9 +1265,9 @@ export default function AdminEquipesTecnicasPage() {
                 {/* Header Modal */}
                 <div className="bg-[#0F172A] text-white p-6 flex justify-between items-center border-b border-slate-800">
                   <div>
-                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-0.5">Módulo de Engenharia e Controladoria</span>
+                    <span className="text-[10px] font-black text-emerald-300 uppercase tracking-widest block mb-0.5">Módulo de Engenharia e Controladoria</span>
                     <h3 className="text-lg font-black uppercase tracking-wide flex items-center gap-2 text-slate-100">
-                      <FileText className="text-emerald-400" size={20} />
+                      <FileText className="text-emerald-300" size={20} />
                       Extrato Detalhado de Custos
                     </h3>
                     <p className="text-slate-400 text-xs mt-1 uppercase font-semibold">
@@ -1477,8 +1477,8 @@ export default function AdminEquipesTecnicasPage() {
                   </div>
 
                   <div className="text-right border-l border-slate-800 pl-6">
-                    <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest block mb-1">Custo Mensal Total da Linha</span>
-                    <h3 className="text-2xl font-black text-emerald-400">
+                    <span className="text-[9px] font-black text-emerald-300 uppercase tracking-widest block mb-1">Custo Mensal Total da Linha</span>
+                    <h3 className="text-2xl font-black text-emerald-300">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(detail.custoMensalTotal)}
                     </h3>
                     <p className="text-[9px] text-slate-500 font-medium mt-1">Multiplicado pela quantidade alocada.</p>
