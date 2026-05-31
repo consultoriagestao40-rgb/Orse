@@ -790,7 +790,7 @@ export default function Page() {
     if (userData) {
       setIsLoggedIn(true);
       const email = (userData.email || '').toLowerCase().trim();
-      if (email === 'admin@smartbidhub.com.br' || email === 'cristiano@grupojvsserv.com.br') {
+      if (email === 'admin@smartbidhub.com.br') {
         router.push('/admin/empresas');
       }
     } else {

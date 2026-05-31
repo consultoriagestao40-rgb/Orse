@@ -397,7 +397,7 @@ function PropostaEditor() {
         setEmpresasEmissoras(dataEmpresas || []);
         if (dataEmpresas && dataEmpresas.length > 0) setSelectedEmpresaId(dataEmpresas[0].id);
         setCurrentUser(loggedUser || null);
-        if (loggedUser && (loggedUser.email === 'admin@smartbidhub.com.br' || loggedUser.email === 'cristiano@grupojvsserv.com.br')) {
+        if (loggedUser && loggedUser.email === 'admin@smartbidhub.com.br') {
           router.push('/admin/empresas');
           return;
         }
