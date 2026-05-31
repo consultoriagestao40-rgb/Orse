@@ -726,26 +726,27 @@ return (
       `}} />
         
         {/* SIDEBAR DE TABS DE NAVEGAÇÃO (ESTILO SEGUNDA FOTO - PREMIUM WHITE) */}
-        <aside className={`shrink-0 bg-white border border-slate-200 shadow-xl flex flex-col justify-between text-slate-800 print:hidden font-sans transition-all duration-300 ${
+        <aside className={`shrink-0 bg-white border border-slate-200 shadow-xl flex flex-col justify-between text-slate-800 print:hidden font-sans transition-all duration-300 relative ${
           mobileMenuOpen ? 'block' : 'hidden'
         } md:block ${
           sidebarCollapsed 
             ? 'w-full md:w-20 p-4 items-center rounded-2xl md:rounded-3xl' 
             : 'w-full md:w-80 p-6 rounded-3xl'
         }`}>
+          {/* Botão de Recolher Flutuante (Estilo Premium) */}
+          <button 
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)} 
+            className="absolute -right-3 top-8 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-[#1B4D3E] hover:border-[#1B4D3E]/40 hover:shadow-md transition-all z-50 cursor-pointer shadow-sm hidden md:flex"
+            title={sidebarCollapsed ? "Expandir Menu" : "Recolher Menu"}
+          >
+            {sidebarCollapsed ? <ChevronRight size={12} className="stroke-[3]" /> : <ChevronLeft size={12} className="stroke-[3]" />}
+          </button>
           {sidebarCollapsed ? (
             /* COLLAPSED VIEW */
             <div className="flex flex-col items-center justify-between h-full w-full">
               <div className="flex flex-col items-center w-full">
                 {/* Header Collapsed */}
-                <div className="flex flex-col items-center gap-4 pb-4 border-b border-slate-100 w-full">
-                  <button 
-                    onClick={() => setSidebarCollapsed(false)} 
-                    className="p-2 hover:bg-slate-50 text-slate-400 hover:text-[#1B4D3E] rounded-xl transition-all cursor-pointer hidden md:flex items-center justify-center shrink-0 border border-slate-100 hover:border-[#1B4D3E]/20"
-                    title="Expandir Menu"
-                  >
-                    <Menu size={18} />
-                  </button>
+                <div className="flex flex-col items-center pb-4 border-b border-slate-100 w-full pt-2">
                   <span className="text-[8px] bg-emerald-50 text-emerald-800 border border-emerald-250 font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md text-center shrink-0">
                     V{versao?.versao || 1}
                   </span>
@@ -818,15 +819,8 @@ return (
             /* EXPANDED VIEW */
             <div className="flex flex-col justify-between h-full w-full">
               <div>
-                {/* Sleek Minimal Header for Collapse Button */}
-                <div className="flex justify-end pb-3 border-b border-slate-100 font-sans">
-                  <button 
-                    onClick={() => setSidebarCollapsed(true)} 
-                    className="p-1.5 hover:bg-slate-50 text-slate-400 hover:text-[#1B4D3E] rounded-xl transition-all cursor-pointer hidden md:flex items-center justify-center shrink-0 border border-transparent hover:border-slate-200/60"
-                    title="Recolher Menu"
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
+                {/* Top Padding for direct navigation list */}
+                <div className="pt-2">
                 </div>
 
 
