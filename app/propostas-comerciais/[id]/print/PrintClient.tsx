@@ -75,6 +75,119 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
     return () => clearTimeout(timer);
   }, [isSlide, countdown, useCanva]);
 
+  // Dynamic brand color theme overrides for print client view
+  useEffect(() => {
+    const color = doc.tenant?.primaryColor || '#1B4D3E';
+    
+    const getThemeColors = (hex: string) => {
+      let c = hex.replace('#', '').trim();
+      if (c.length === 3) {
+        c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
+      }
+      if (c.length !== 6) {
+        c = '1B4D3E';
+      }
+
+      const r = parseInt(c.substring(0, 2), 16);
+      const g = parseInt(c.substring(2, 4), 16);
+      const b = parseInt(c.substring(4, 6), 16);
+
+      const darken = (val: number, amt: number) => Math.max(0, val - amt);
+      const rHover = darken(r, 20);
+      const gHover = darken(g, 20);
+      const bHover = darken(b, 20);
+      const hexHover = '#' + ((1 << 24) + (rHover << 16) + (gHover << 8) + bHover).toString(16).slice(1);
+
+      const hexLight = `rgba(${r}, ${g}, ${b}, 0.08)`;
+      
+      const rDark = darken(r, 45);
+      const gDark = darken(g, 45);
+      const bDark = darken(b, 45);
+      const hexDark = '#' + ((1 << 24) + (rDark << 16) + (gDark << 8) + bDark).toString(16).slice(1);
+
+      return {
+        primary: '#' + c,
+        hover: hexHover,
+        light: hexLight,
+        dark: hexDark,
+      };
+    };
+
+    const theme = getThemeColors(color);
+    
+    const oldStyle = document.getElementById('dynamic-print-theme-style');
+    if (oldStyle) oldStyle.remove();
+
+    const style = document.createElement('style');
+    style.id = 'dynamic-print-theme-style';
+    style.innerHTML = `
+      :root {
+        --primary-color: ${theme.primary};
+        --primary-color-hover: ${theme.hover};
+        --primary-color-light: ${theme.light};
+        --primary-color-dark: ${theme.dark};
+      }
+      /* Override classes Tailwind do verde padrão */
+      .bg-\\[\\#1B4D3E\\], .bg-\\[\\#1b4d3e\\] {
+        background-color: var(--primary-color) !important;
+      }
+      .hover\\:bg-\\[\\#13382D\\]:hover, .hover\\:bg-\\[\\#13382d\\]:hover, .hover\\:bg-\\[\\#143d31\\]:hover {
+        background-color: var(--primary-color-hover) !important;
+      }
+      .text-\\[\\#1B4D3E\\], .text-\\[\\#1b4d3e\\] {
+        color: var(--primary-color) !important;
+      }
+      .border-\\[\\#1B4D3E\\], .border-\\[\\#1b4d3e\\] {
+        border-color: var(--primary-color) !important;
+      }
+      .focus\\:border-\\[\\#1B4D3E\\]:focus, .focus\\:border-\\[\\#1b4d3e\\]:focus {
+        border-color: var(--primary-color) !important;
+      }
+      .focus\\:ring-\\[\\#1B4D3E\\]:focus, .focus\\:ring-\\[\\#1b4d3e\\]:focus {
+        --tw-ring-color: var(--primary-color) !important;
+      }
+      .hover\\:text-\\[\\#1B4D3E\\]:hover, .hover\\:text-\\[\\#1b4d3e\\]:hover {
+        color: var(--primary-color) !important;
+      }
+      .hover\\:border-\\[\\#1B4D3E\\]:hover, .hover\\:border-\\[\\#1b4d3e\\]:hover {
+        border-color: var(--primary-color) !important;
+      }
+      .hover\\:bg-emerald-50\\/30:hover {
+        background-color: var(--primary-color-light) !important;
+      }
+      .bg-emerald-50 {
+        background-color: var(--primary-color-light) !important;
+      }
+      .bg-emerald-50\\/30 {
+        background-color: var(--primary-color-light) !important;
+      }
+      .text-emerald-800 {
+        color: var(--primary-color-dark) !important;
+      }
+      .bg-emerald-100\\/50 {
+        background-color: var(--primary-color-light) !important;
+      }
+      .border-emerald-200 {
+        border-color: var(--primary-color-light) !important;
+      }
+      
+      /* Elementos adicionais para refinar a experiência White-Label */
+      .bg-emerald-500 {
+        background-color: var(--primary-color) !important;
+      }
+      .text-emerald-500 {
+        color: var(--primary-color) !important;
+      }
+      .text-emerald-600 {
+        color: var(--primary-color-hover) !important;
+      }
+      .border-emerald-500 {
+        border-color: var(--primary-color) !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }, [doc.tenant?.primaryColor]);
+
   if (!isSlide) {
     return (
       <>
