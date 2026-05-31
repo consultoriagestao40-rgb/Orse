@@ -434,10 +434,10 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   }, [activeClientTab]);
 
 return (
-    <div className="bg-[#FAFBFD] w-full h-screen text-slate-800 font-sans flex flex-col overflow-hidden select-none pt-24 animate-fadeIn">
+    <div className="bg-[#FAFBFD] w-full h-screen text-slate-800 font-sans flex flex-col overflow-hidden select-none pt-[72px] animate-fadeIn">
       
       {/* Real-time Countdown Timer fixed at the top (ALWAYS ACTIVE FOR CONSISTENCY) */}
-      <div className="fixed top-0 left-0 right-0 h-24 bg-[#1B4D3E] text-white flex items-center justify-between px-6 md:px-8 z-[9999] shadow-md print:hidden font-sans">
+      <div className="fixed top-0 left-0 right-0 h-[72px] bg-[#1B4D3E] text-white flex items-center justify-between px-6 md:px-8 z-[9999] shadow-md print:hidden font-sans">
         {/* Left: Voltar button (mobile only) & Validade Title or Info */}
         <div className="flex items-center gap-4">
           {!mobileMenuOpen && (
@@ -448,35 +448,35 @@ return (
               <ChevronLeft size={16} /> Voltar
             </button>
           )}
-          <Clock size={24} className="text-emerald-300 animate-pulse hidden sm:block animate-duration-1000 shrink-0" />
+          <Clock size={18} className="text-emerald-300 animate-pulse hidden sm:block animate-duration-1000 shrink-0" />
           <div className="flex flex-col text-left justify-center">
             {/* Row 1: FPV, Version and Creation date in a highly refined layout */}
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-              <span className="text-[10px] md:text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
+            <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+              <span className="text-[9px] md:text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md animate-duration-1000">
                 FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')}
               </span>
-              <span className="text-[10px] md:text-xs bg-white/15 text-white/90 border border-white/10 font-black uppercase tracking-wider px-2 py-0.5 rounded-lg">
+              <span className="text-[9px] md:text-[10px] bg-white/15 text-white/90 border border-white/10 font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md">
                 Versão v{versao?.versao || 1}
               </span>
-              <span className="text-[9px] md:text-[10px] text-emerald-250 font-bold uppercase tracking-wider hidden sm:inline-block ml-1">
+              <span className="text-[8.5px] md:text-[9.5px] text-emerald-250 font-bold uppercase tracking-wider hidden sm:inline-block ml-1">
                 Criada em {doc.data || new Date().toLocaleDateString('pt-BR')} por {doc.vendedorResponsavel || 'Novos Negócios'}
               </span>
             </div>
             
             {/* Row 2: Large proposal title */}
-            <h1 className="text-sm sm:text-lg md:text-2xl font-black text-white tracking-tight leading-none uppercase">
+            <h1 className="text-xs sm:text-sm md:text-lg font-black text-white tracking-tight leading-none uppercase">
               Proposta para {doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Empresa'}
             </h1>
           </div>
         </div>
         
         {/* Right: Expiration date with much larger size, accompanied by Countdown digits if active */}
-        <div className="flex items-center gap-3 md:gap-6">
-          <div className="flex flex-col items-end text-right">
-            <span className="text-[9px] md:text-[10px] font-extrabold uppercase tracking-widest text-emerald-250 leading-none">
+        <div className="flex items-center gap-3 md:gap-5">
+          <div className="flex flex-col items-end text-right justify-center">
+            <span className="text-[8.5px] md:text-[9.5px] font-extrabold uppercase tracking-widest text-emerald-250 leading-none">
               Validade da Proposta
             </span>
-            <span className="text-xs sm:text-base md:text-lg font-black text-white mt-1 uppercase tracking-wider">
+            <span className="text-[10px] sm:text-xs md:text-base font-black text-white mt-0.5 uppercase tracking-wider">
               Válida até {doc.configApresentacao?.linkExpiresAt 
                 ? new Date(doc.configApresentacao.linkExpiresAt).toLocaleDateString('pt-BR')
                 : (doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR'))
@@ -485,30 +485,30 @@ return (
           </div>
 
           {timeLeft && !timeLeft.isExpired && (
-            <div className="flex gap-1 md:gap-2 items-center font-mono">
-              <div className="h-10 w-px bg-white/10 hidden sm:block mr-1 md:mr-2" />
+            <div className="flex gap-1 md:gap-1.5 items-center font-mono">
+              <div className="h-8 w-px bg-white/10 hidden sm:block mr-1 md:mr-1.5" />
               {timeLeft.days > 0 && (
                 <>
-                  <div className="flex flex-col items-center min-w-[36px] md:min-w-[48px] bg-white/10 border border-white/20 rounded-lg md:rounded-xl p-1 shadow-inner">
-                    <span className="text-xs md:text-base font-black text-white leading-none">{timeLeft.days}</span>
-                    <span className="text-[6px] md:text-[8px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">dias</span>
+                  <div className="flex flex-col items-center min-w-[32px] md:min-w-[40px] bg-white/10 border border-white/20 rounded-lg p-0.5 md:p-1 shadow-inner">
+                    <span className="text-[10px] sm:text-xs md:text-sm font-black text-white leading-none">{timeLeft.days}</span>
+                    <span className="text-[5.5px] md:text-[7px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">dias</span>
                   </div>
-                  <span className="text-xs md:text-base font-black text-white/50 animate-pulse leading-none">:</span>
+                  <span className="text-xs sm:text-sm font-black text-white/50 animate-pulse leading-none">:</span>
                 </>
               )}
-              <div className="flex flex-col items-center min-w-[36px] md:min-w-[48px] bg-white/10 border border-white/20 rounded-lg md:rounded-xl p-1 shadow-inner">
-                <span className="text-xs md:text-base font-black text-white leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
-                <span className="text-[6px] md:text-[8px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">horas</span>
+              <div className="flex flex-col items-center min-w-[32px] md:min-w-[40px] bg-white/10 border border-white/20 rounded-lg p-0.5 md:p-1 shadow-inner">
+                <span className="text-[10px] sm:text-xs md:text-sm font-black text-white leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
+                <span className="text-[5.5px] md:text-[7px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">horas</span>
               </div>
-              <span className="text-xs md:text-base font-black text-white/50 animate-pulse leading-none">:</span>
-              <div className="flex flex-col items-center min-w-[36px] md:min-w-[48px] bg-white/10 border border-white/20 rounded-lg md:rounded-xl p-1 shadow-inner">
-                <span className="text-xs md:text-base font-black text-white leading-none">{String(timeLeft.minutes).padStart(2, '0')}</span>
-                <span className="text-[6px] md:text-[8px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">min</span>
+              <span className="text-xs sm:text-sm font-black text-white/50 animate-pulse leading-none">:</span>
+              <div className="flex flex-col items-center min-w-[32px] md:min-w-[40px] bg-white/10 border border-white/20 rounded-lg p-0.5 md:p-1 shadow-inner">
+                <span className="text-[10px] sm:text-xs md:text-sm font-black text-white leading-none">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                <span className="text-[5.5px] md:text-[7px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">min</span>
               </div>
-              <span className="text-xs md:text-base font-black text-white/50 animate-pulse leading-none">:</span>
-              <div className="flex flex-col items-center min-w-[36px] md:min-w-[48px] bg-white/10 border border-white/20 rounded-lg md:rounded-xl p-1 shadow-inner bg-emerald-950/20 border-emerald-500/30">
-                <span className="text-xs md:text-base font-black text-emerald-300 animate-pulse leading-none">{String(timeLeft.seconds).padStart(2, '0')}</span>
-                <span className="text-[6px] md:text-[8px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">seg</span>
+              <span className="text-xs sm:text-sm font-black text-white/50 animate-pulse leading-none">:</span>
+              <div className="flex flex-col items-center min-w-[32px] md:min-w-[40px] bg-white/10 border border-white/20 rounded-lg p-0.5 md:p-1 shadow-inner bg-emerald-950/20 border-emerald-500/30">
+                <span className="text-[10px] sm:text-xs md:text-sm font-black text-emerald-300 animate-pulse leading-none">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                <span className="text-[5.5px] md:text-[7px] text-emerald-200 font-black uppercase tracking-wider mt-0.5">seg</span>
               </div>
             </div>
           )}
@@ -755,27 +755,6 @@ return (
           {/* 1. ABA: APRESENTAÇÃO CANVA */}
           {activeClientTab === 'apresentacao' && hasCanva && (
             <div className="space-y-6 animate-fadeIn print:hidden">
-              <div className="bg-[#1B4D3E]/30 border border-emerald-500/20 rounded-3xl p-4 flex flex-col sm:flex-row justify-between items-center gap-3 backdrop-blur-md">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center shrink-0">
-                    <CheckCircle size={16} />
-                  </div>
-                  <div>
-                    <h4 className="text-[11px] font-black uppercase tracking-wider text-emerald-200">Apresentação Canva Premium Ativa</h4>
-                    <p className="text-[9.5px] text-slate-400 font-bold uppercase mt-0.5">Navegue pelas lâminas de apresentação widescreen e transições originais.</p>
-                  </div>
-                </div>
-                <div className="flex gap-2 shrink-0 select-none">
-                  <a
-                    href={canvaUrl.replace('?embed', '')}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-[#10B981] hover:bg-[#0da673] text-white font-black text-[10px] uppercase tracking-wider px-6 py-2.5 rounded-xl transition-all border border-transparent shadow-md cursor-pointer whitespace-nowrap flex items-center gap-1.5 font-bold"
-                  >
-                    🖥️ Apresentar / Exportar PDF no Canva ↗
-                  </a>
-                </div>
-              </div>
 
               {/* Iframe 16:9 */}
               <div className="w-full aspect-[16/9] bg-slate-950 overflow-hidden relative rounded-3xl shadow-2xl border border-white/10 shadow-emerald-950/5">
