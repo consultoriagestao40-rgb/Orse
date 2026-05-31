@@ -47,8 +47,8 @@ body.has-trial-banner main {
 }
 
 @media (min-width: 768px) {
-  main {
-    padding-right: 5.5rem !important;
+  .bell-header-spacing {
+    margin-right: 4.5rem !important;
   }
 }
 

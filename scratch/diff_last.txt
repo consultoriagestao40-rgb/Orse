@@ -1,3 +1,9 @@
+commit 09afe95c2858dc82d50eb14c69dfe0143106bcc2
+Author: Cristiano Silva <cristianosilva@MacBook-Air-de-Cristiano.local>
+Date:   Sat May 30 17:27:21 2026 -0300
+
+    fix(client-view): optional chaining, global print overrides, custom borderless A4 tables, export button, and brand total color
+
 diff --git a/app/proposta/ver/[id]/ViewClient.tsx b/app/proposta/ver/[id]/ViewClient.tsx
 index 7ed4cf0..6f0c908 100644
 --- a/app/proposta/ver/[id]/ViewClient.tsx

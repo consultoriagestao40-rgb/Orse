@@ -301,7 +301,7 @@ function ProposalsDashboard() {
               <h1 className="text-2xl font-bold text-[#1B4D3E] tracking-wider uppercase">Gestão de Propostas</h1>
               <p className="text-slate-500 text-sm mt-1">Engenharia de Custos e Controladoria de Facilities</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 bell-header-spacing">
               {/* Alternador de visualização */}
               <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm gap-1">
                 <button

@@ -285,7 +285,7 @@ export default function PropostasComerciaisDashboard() {
               </h1>
               <p className="text-slate-500 text-sm mt-1">Gerador de documentos comerciais em PDF</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 bell-header-spacing">
               <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm gap-1">
                 <button
                   onClick={() => setViewMode('lista')}

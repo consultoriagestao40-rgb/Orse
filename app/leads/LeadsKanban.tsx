@@ -575,7 +575,7 @@ export default function LeadsKanban() {
           <h1 className="text-xl md:text-2xl font-black text-slate-800">Pipeline de Leads</h1>
           <p className="text-xs md:text-sm text-slate-500">Gerencie seus leads e prospectos</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-start lg:justify-end">
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-start lg:justify-end bell-header-spacing">
           {/* Real-time Search Input */}
           <div className="relative flex-1 min-w-[200px] md:flex-none md:w-80">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
