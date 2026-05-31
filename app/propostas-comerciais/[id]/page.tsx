@@ -548,13 +548,12 @@ export default function DocumentoPropostaDetail() {
       const payload = secoes.map((s, i) => ({ ...s, ordem: i + 1 }));
       await updateSecoesDocumento(id, payload);
       
-      if (doc.tipo === 'SLIDE_DECK') {
-        const updatedConfig = {
-          ...configApresentacao,
-          clausulasA4: clausulasA4
-        };
-        await updateConfigApresentacao(id, updatedConfig);
-      }
+      // Salva as configurações de apresentação (inclusive Canva) e cláusulas A4 de forma robusta para todos os tipos de propostas
+      const updatedConfig = {
+        ...configApresentacao,
+        clausulasA4: clausulasA4
+      };
+      await updateConfigApresentacao(id, updatedConfig);
       
       alert('Proposta Comercial atualizada com sucesso!');
     } catch (err: any) {
@@ -3194,6 +3193,63 @@ export default function DocumentoPropostaDetail() {
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Apresentação Canva Card */}
+                  <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                      <h3 className="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                        🎨 Apresentação Canva
+                      </h3>
+                      <label className="relative inline-flex items-center cursor-pointer select-none shrink-0 scale-90">
+                        <input
+                          type="checkbox"
+                          checked={!!configApresentacao.useCanva}
+                          onChange={(e) => setConfigApresentacao({ ...configApresentacao, useCanva: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#1B4D3E]"></div>
+                      </label>
+                    </div>
+
+                    <p className="text-[9.5px] text-slate-450 font-semibold leading-relaxed">
+                      Ative para incorporar uma apresentação de slides do Canva que será exibida ao seu cliente final no link.
+                    </p>
+
+                    {configApresentacao.useCanva && (
+                      <div className="space-y-3 pt-1 animate-fadeIn">
+                        <div className="space-y-1">
+                          <label className="text-[8.5px] font-black text-slate-400 uppercase tracking-wider block">
+                            Código de Incorporação ou Link do Canva
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="https://www.canva.com/design/.../view?embed"
+                            value={configApresentacao.canvaEmbedUrl || ''}
+                            onChange={(e) => {
+                              let val = e.target.value;
+                              if (val.includes('<iframe')) {
+                                const match = val.match(/src="([^"]+)"/);
+                                if (match && match[1]) {
+                                  val = match[1];
+                                }
+                              }
+                              setConfigApresentacao({ ...configApresentacao, canvaEmbedUrl: val });
+                            }}
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-250 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-[#1B4D3E] focus:border-[#1B4D3E]"
+                          />
+                        </div>
+
+                        <div className="bg-slate-50 border border-slate-150 rounded-xl p-2.5 text-[8.5px] text-slate-450 leading-relaxed font-semibold">
+                          <p className="font-bold text-slate-600 mb-0.5">🎨 Como obter o link correto no Canva:</p>
+                          <ol className="list-decimal pl-3 space-y-0.5 font-sans">
+                            <li>No Canva, clique em <strong>Compartilhar</strong>;</li>
+                            <li>Vá em <strong>Mais (...)</strong> e escolha <strong>Incorporar (&lt;/&gt;)</strong>;</li>
+                            <li>Copie o <strong>Link de incorporação inteligente</strong> e cole acima.</li>
+                          </ol>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
