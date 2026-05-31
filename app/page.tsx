@@ -375,6 +375,8 @@ function ProposalsDashboard() {
             cards.map(prop => <ProposalCard key={prop.id} prop={prop} />)
           )}
         </div>
+      </div>
+    );
   };
 
   return (
