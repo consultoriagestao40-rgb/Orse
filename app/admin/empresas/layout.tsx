@@ -25,6 +25,14 @@ function parseCookieValue(raw: string): any | null {
   return null;
 }
 
+/**
+ * Layout Server Component para /admin/empresas
+ * Verifica autenticação no servidor durante SSR.
+ * - Sem sb_session → redirect /login
+ * - Sem sb_user → redirect /login (limpar e refazer login)
+ * - Não é admin → acesso negado inline (sem redirect para evitar loops)
+ * - É admin → renderiza o dashboard
+ */
 export default async function AdminEmpresasLayout({
   children,
 }: {
@@ -32,24 +40,25 @@ export default async function AdminEmpresasLayout({
 }) {
   const cookieStore = await cookies();
   const sbSession = cookieStore.get('sb_session')?.value;
+  const sbUserRaw = cookieStore.get('sb_user')?.value;
 
-  if (!sbSession) {
+  // Sem sessão ou sem cookie de usuário → vai para login
+  if (!sbSession || !sbUserRaw) {
     redirect('/login');
   }
 
-  const sbUserRaw = cookieStore.get('sb_user')?.value;
+  // Tenta fazer parse do cookie do usuário
+  const userData = parseCookieValue(sbUserRaw);
 
-  if (sbUserRaw) {
-    const userData = parseCookieValue(sbUserRaw);
-    if (userData) {
-      const email = (userData.email || '').toLowerCase().trim();
-      if (SUPER_ADMIN_EMAILS.some(adminEmail => email === adminEmail)) {
-        return <>{children}</>;
-      }
+  if (userData) {
+    const email = (userData.email || '').toLowerCase().trim();
+    if (SUPER_ADMIN_EMAILS.some(adminEmail => email === adminEmail)) {
+      // ✅ É admin verificado no servidor → renderiza o painel
+      return <>{children}</>;
     }
   }
 
-  // Não é admin: mostra acesso negado inline (sem redirect para evitar loops)
+  // ❌ Não é admin → mostra acesso negado inline (sem redirect para evitar loops)
   return (
     <div style={{
       minHeight: '100vh',
@@ -70,14 +79,14 @@ export default async function AdminEmpresasLayout({
         textAlign: 'center',
       }}>
         <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
-        <h1 style={{ color: 'white', fontSize: '24px', fontWeight: 900, textTransform: 'uppercase', marginBottom: '8px' }}>
+        <h1 style={{ color: 'white', fontSize: '20px', fontWeight: 900, textTransform: 'uppercase', marginBottom: '8px' }}>
           Acesso Restrito
         </h1>
-        <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '24px', lineHeight: '1.6' }}>
-          Esta área é exclusiva para administradores master.<br/>
-          <small style={{ color: '#475569' }}>
-            Cookie: {sbUserRaw ? `${sbUserRaw.substring(0, 40)}...` : 'não encontrado'}
-          </small>
+        <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '8px', lineHeight: '1.6' }}>
+          Esta área é exclusiva para administradores master.
+        </p>
+        <p style={{ color: '#475569', fontSize: '11px', marginBottom: '24px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+          Email detectado: {userData?.email || 'não identificado'}
         </p>
         <a
           href="/api/auth/logout"

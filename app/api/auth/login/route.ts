@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: email.toLowerCase().trim() },
       include: { tenant: true }
     })
 
@@ -18,36 +18,45 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 })
     }
 
-    const response = NextResponse.json({ 
-      success: true, 
-      user: { 
-        nome: user.nome, 
-        role: user.role, 
-        email: user.email 
-      } 
-    })
+    const isProduction = process.env.NODE_ENV === 'production'
 
-    // Configurar cookie de sessão seguro
-    // Em produção, deve ser HttpOnly e Secure
-    response.cookies.set('sb_session', 'active', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7 // 7 dias
-    })
-
-    // Cookie de dados básicos (não sensíveis) para o frontend ler iniciais etc
-    response.cookies.set('sb_user', JSON.stringify({
+    const userData = {
       nome: user.nome,
       role: user.role,
       email: user.email,
       tenantId: user.tenantId,
-      avatarUrl: user.avatarUrl || undefined,
-      tenantLogoUrl: user.tenant?.logoUrl || undefined,
-      tenantNome: user.tenant?.nomeFantasia || undefined,
-      iniciais: user.nome.split(' ').map(n => n[0]).join('').toUpperCase()
-    }), {
-      maxAge: 60 * 60 * 24 * 7
+      iniciais: user.nome.split(' ').filter(Boolean).map((n: string) => n[0]).join('').toUpperCase().substring(0, 2),
+      ...(user.avatarUrl ? { avatarUrl: user.avatarUrl } : {}),
+      ...(user.tenant?.logoUrl ? { tenantLogoUrl: user.tenant.logoUrl } : {}),
+      ...(user.tenant?.nomeFantasia ? { tenantNome: user.tenant.nomeFantasia } : {}),
+    }
+
+    const response = NextResponse.json({
+      success: true,
+      user: {
+        nome: user.nome,
+        role: user.role,
+        email: user.email
+      }
+    })
+
+    const cookieOptions = {
+      secure: isProduction,
+      sameSite: 'lax' as const,
+      maxAge: 60 * 60 * 24 * 7, // 7 dias
+      path: '/',
+    }
+
+    // Cookie de sessão - HttpOnly (servidor apenas)
+    response.cookies.set('sb_session', 'active', {
+      ...cookieOptions,
+      httpOnly: true,
+    })
+
+    // Cookie de dados do usuário - legível pelo browser (para personalização do UI)
+    response.cookies.set('sb_user', JSON.stringify(userData), {
+      ...cookieOptions,
+      httpOnly: false, // precisa ser lido pelo JS do browser
     })
 
     return response
