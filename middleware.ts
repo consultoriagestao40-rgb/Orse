@@ -5,8 +5,10 @@ export function middleware(request: NextRequest) {
   const session = request.cookies.get('sb_session')
   const { pathname } = request.nextUrl
 
-  // Se estiver tentando acessar o login já logado, vai para a home
-  if (pathname === '/login' && session) {
+  // Se estiver tentando acessar o login já logado (com sessão válida E cookie de usuário), vai para a home
+  // IMPORTANTE: só redireciona se AMBOS os cookies existirem para evitar loop infinito
+  const sbUser = request.cookies.get('sb_user')
+  if (pathname === '/login' && session && sbUser) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 

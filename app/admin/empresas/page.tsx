@@ -36,34 +36,10 @@ interface TenantItem {
 
 export default function TenantManagerDashboard() {
   const router = useRouter();
-  // Estados de Segurança e Carga
+  // Auth é garantida pelo layout.tsx Server Component
+  // Se chegou aqui, o usuário já é Super Admin verificado no servidor
   const [loading, setLoading] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
-  
-  // Verificação imediata do cookie no client (sem round-trip ao servidor)
-  // Isso evita o flash de "ACESSO RESTRITO" enquanto o server action carrega
-  const checkAuthFromCookie = (): boolean => {
-    if (typeof window === 'undefined') return false;
-    const cookie = document.cookie.split('; ').find(row => row.trim().startsWith('sb_user='));
-    if (!cookie) return false;
-    const raw = cookie.split('=').slice(1).join('=');
-    const attempts = [
-      () => JSON.parse(decodeURIComponent(raw)),
-      () => JSON.parse(raw),
-      () => { let s = raw.trim(); if (s.startsWith('"') && s.endsWith('"')) s = s.slice(1, -1); return JSON.parse(s); }
-    ];
-    for (const attempt of attempts) {
-      try {
-        const data = attempt();
-        const email = (data?.email || '').toLowerCase().trim();
-        if (email === 'cristiano@grupojvsserv.com.br' || email === 'admin@smartbidhub.com.br') {
-          return true;
-        }
-      } catch {}
-    }
-    return false;
-  };
-  
+
   // Estados de Dados
   const [tenants, setTenants] = useState<TenantItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -137,70 +113,36 @@ export default function TenantManagerDashboard() {
   const [planLabel, setPlanLabel] = useState('');
   const [planDescricao, setPlanDescricao] = useState('');
   const [planFeatures, setPlanFeatures] = useState('');
-
-
-
-  // 1. Validar autorização e carregar dados
+  // 1. Carregar dados (auth já garantida pelo layout.tsx server component)
   const loadData = async () => {
     setLoading(true);
     try {
-      // Verifica via API route (mais confiável que Server Action na Vercel)
-      let authorized = false;
-      try {
-        const res = await fetch('/api/auth/check-admin', { credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          authorized = data.isAdmin === true;
-          console.log('[admin] check-admin API:', data);
-        }
-      } catch (apiErr) {
-        console.warn('[admin] API check-admin falhou, usando cookie auth:', apiErr);
-      }
+      const data = await getTenantsWithStats();
+      setTenants(data);
 
-      // Fallback: verifica via cookie local se a API falhar
-      if (!authorized) {
-        authorized = checkAuthFromCookie();
+      // Carrega faturamento geral do SaaS
+      const metricsRes = await getSaaSFinancialMetrics();
+      if (metricsRes.success) {
+        setFinancialMetrics(metricsRes.metrics);
       }
       
-      setIsAuthorized(authorized);
-      
-      if (authorized) {
-        const data = await getTenantsWithStats();
-        setTenants(data);
+      const cobrancasRes = await getAllCobrancasAction();
+      if (cobrancasRes.success) {
+        setAllCobrancas(cobrancasRes.cobrancas || []);
+      }
 
-        // Carrega faturamento geral do SaaS
-        const metricsRes = await getSaaSFinancialMetrics();
-        if (metricsRes.success) {
-          setFinancialMetrics(metricsRes.metrics);
-        }
-        
-        const cobrancasRes = await getAllCobrancasAction();
-        if (cobrancasRes.success) {
-          setAllCobrancas(cobrancasRes.cobrancas || []);
-        }
-
-        const plansRes = await getPlanConfigs();
-        if (plansRes.success) {
-          setPlans(plansRes.configs || []);
-        }
+      const plansRes = await getPlanConfigs();
+      if (plansRes.success) {
+        setPlans(plansRes.configs || []);
       }
     } catch (err) {
-      console.error('Erro ao inicializar página:', err);
-      // Só bloqueia se cookie também não confirmar
-      if (!checkAuthFromCookie()) {
-        setIsAuthorized(false);
-      }
+      console.error('Erro ao carregar dados:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Verificação imediata via cookie (sem round-trip) para evitar flash de "Acesso Restrito"
-    const cookieAuth = checkAuthFromCookie();
-    if (cookieAuth) {
-      setIsAuthorized(true);
-    }
     loadData();
   }, []);
 
@@ -379,43 +321,16 @@ export default function TenantManagerDashboard() {
     totalContratos: tenants.reduce((acc, t) => acc + t.stats.contratos, 0)
   };
 
-  // Tela de carregamento inicial
-  if (loading && isAuthorized === null) {
+
+  // Tela de carregamento
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#0F172A] flex items-center justify-center font-sans">
         <div className="flex flex-col items-center gap-4 text-center">
           <div className="w-12 h-12 bg-[#1B4D3E]/20 border border-[#10B981]/30 rounded-xl flex items-center justify-center animate-spin">
             <RefreshCw className="text-[#10B981]" size={24} />
           </div>
-          <span className="text-xs font-black uppercase tracking-[0.2em] text-[#10B981] animate-pulse">Autenticando Super Admin...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // Tela de Acesso Negado (Segurança estrita)
-  if (isAuthorized === false) {
-    return (
-      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-6 font-sans">
-        <div className="w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl text-center space-y-6">
-          <div className="w-16 h-16 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-rose-950/20">
-            <ShieldAlert size={32} />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-2xl font-black text-white uppercase tracking-tight">Acesso Restrito</h1>
-            <p className="text-sm text-slate-400 font-medium leading-relaxed">
-              Você não possui privilégios de Super Administrador. Esta área é restrita exclusivamente aos administradores master da plataforma SmartBidHub.
-            </p>
-          </div>
-          <div className="pt-2">
-            <button 
-              onClick={() => router.push('/')}
-              className="w-full py-4.5 bg-slate-900 border border-white/10 text-xs font-black uppercase tracking-widest text-slate-300 hover:text-white hover:bg-slate-800 rounded-2xl transition-all flex items-center justify-center gap-2"
-            >
-              <ArrowLeft size={14} />
-              Voltar ao Início
-            </button>
-          </div>
+          <span className="text-xs font-black uppercase tracking-[0.2em] text-[#10B981] animate-pulse">Carregando Painel Admin...</span>
         </div>
       </div>
     );
