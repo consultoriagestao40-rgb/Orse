@@ -35,15 +35,20 @@ export default function RootLayout({
                 return row.startsWith('sb_user=');
               });
               var color = '#1B4D3E';
+              var logoUrl = '';
               if (cookie) {
                 var parsed = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
                 if (parsed.primaryColor) {
                   color = parsed.primaryColor;
                 }
+                if (parsed.tenantLogoUrl) {
+                  logoUrl = parsed.tenantLogoUrl;
+                }
               }
               
               if (window.location.pathname.indexOf('/admin/empresas') !== -1) {
                 color = '#1B4D3E';
+                logoUrl = '';
               }
               
               var c = color.replace('#', '').trim();
@@ -136,7 +141,9 @@ export default function RootLayout({
                 /* Specific banner contrast styling overrides */
                 '[class*="fixed top-0"][class*="bg-gradient-to-r"] { color: #ffffff !important; }',
                 '[class*="fixed top-0"][class*="bg-gradient-to-r"] span, [class*="fixed top-0"][class*="bg-gradient-to-r"] p, [class*="fixed top-0"][class*="bg-gradient-to-r"] div, [class*="fixed top-0"][class*="bg-gradient-to-r"] svg { color: #ffffff !important; }',
-                '[class*="fixed top-0"][class*="bg-gradient-to-r"] span.font-mono { color: #ffffff !important; background-color: rgba(0, 0, 0, 0.25) !important; }'
+                '[class*="fixed top-0"][class*="bg-gradient-to-r"] span.font-mono { color: #ffffff !important; background-color: rgba(0, 0, 0, 0.25) !important; }',
+                logoUrl ? '.sidebar-tenant-logo { display: flex !important; }' : '.sidebar-tenant-logo { display: none !important; }',
+                logoUrl ? '.sidebar-default-logo { display: none !important; }' : '.sidebar-default-logo { display: block !important; }'
               ].join('\\n');
             } catch(e) {}
           })();

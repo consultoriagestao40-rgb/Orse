@@ -431,6 +431,8 @@ const Sidebar = () => {
     const color = (isSaaSArea || user?.email === 'admin@smartbidhub.com.br') 
       ? '#1B4D3E' 
       : (user?.primaryColor || '#1B4D3E');
+      
+    const hasTenantLogo = user?.tenantLogoUrl && !isSaaSArea && user.email !== 'admin@smartbidhub.com.br';
     
     // Função auxiliar para derivar cores variantes (hover, light bg, text dark)
     const getThemeColors = (hex: string) => {
@@ -580,9 +582,16 @@ const Sidebar = () => {
       .border-emerald-400 { border-color: var(--primary-color) !important; }
       .border-emerald-500 { border-color: var(--primary-color) !important; }
       .border-emerald-600 { border-color: var(--primary-color-hover) !important; }
+      ${hasTenantLogo ? `
+        .sidebar-tenant-logo { display: flex !important; }
+        .sidebar-default-logo { display: none !important; }
+      ` : `
+        .sidebar-tenant-logo { display: none !important; }
+        .sidebar-default-logo { display: block !important; }
+      `}
     `;
     document.head.appendChild(style);
-  }, [user?.primaryColor, pathname]);
+  }, [user?.primaryColor, user?.tenantLogoUrl, pathname]);
 
   const handleMarkAsRead = async (id: string, link?: string | null) => {
     try {
@@ -666,39 +675,39 @@ const Sidebar = () => {
         {!isCollapsed ? (
           <div className="flex-1 flex items-center justify-between min-w-0">
             <div>
-              {showTenantLogo ? (
-                <div className="flex flex-col gap-1.5 animate-fadeIn">
-                  <img 
-                    src={user.tenantLogoUrl} 
-                    alt={user.tenantNome || 'Logo'} 
-                    className="max-h-11 max-w-[180px] object-contain rounded"
-                  />
-                  <p className="text-[8px] text-slate-400 font-extrabold uppercase tracking-[0.2em] whitespace-nowrap">Powered by SmartBidHub</p>
-                </div>
-              ) : (
-                <>
-                  <h1 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                    <div className="w-8 h-8 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-sm font-black shadow-lg shadow-emerald-200 shrink-0">S</div>
-                    SmartBidHub
-                  </h1>
-                  <p className="text-[9px] text-slate-400 mt-2 font-black uppercase tracking-[0.2em] whitespace-nowrap">Enterprise FM System</p>
-                </>
-              )}
+              {/* Fallback Default Logo */}
+              <div className="sidebar-default-logo">
+                <h1 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                  <div className="w-8 h-8 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-sm font-black shadow-lg shadow-emerald-200 shrink-0">S</div>
+                  SmartBidHub
+                </h1>
+                <p className="text-[9px] text-slate-400 mt-2 font-black uppercase tracking-[0.2em] whitespace-nowrap">Enterprise FM System</p>
+              </div>
+
+              {/* Dynamic Tenant Logo */}
+              <div className="sidebar-tenant-logo flex flex-col gap-1.5 animate-fadeIn" style={{ display: 'none' }}>
+                <img 
+                  src={user?.tenantLogoUrl || ''} 
+                  alt={user?.tenantNome || 'Logo'} 
+                  className="max-h-11 max-w-[180px] object-contain rounded"
+                />
+                <p className="text-[8px] text-slate-400 font-extrabold uppercase tracking-[0.2em] whitespace-nowrap">Powered by SmartBidHub</p>
+              </div>
             </div>
           </div>
         ) : (
           <div className="w-full flex flex-col items-center gap-3">
-            {showTenantLogo ? (
-              <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 shadow-md">
-                <img 
-                  src={user.tenantLogoUrl} 
-                  alt="Logo" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ) : (
-              <div className="w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-base font-black shadow-lg shadow-emerald-200 transition-all shrink-0">S</div>
-            )}
+            {/* Fallback Collapsed Default Logo */}
+            <div className="sidebar-default-logo w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-base font-black shadow-lg shadow-emerald-200 transition-all shrink-0">S</div>
+
+            {/* Dynamic Collapsed Tenant Logo */}
+            <div className="sidebar-tenant-logo w-10 h-10 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 shadow-md" style={{ display: 'none' }}>
+              <img 
+                src={user?.tenantLogoUrl || ''} 
+                alt="Logo" 
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
         )}
         
