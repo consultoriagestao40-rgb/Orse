@@ -631,7 +631,7 @@ return (
           <Clock size={16} className="text-white/80 animate-pulse hidden sm:block animate-duration-1000" />
           <div className="flex flex-col text-left">
             <span className="text-[10px] font-black uppercase tracking-widest text-white leading-none">
-              Validade da Proposta
+              Proposta para {doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Empresa'}
             </span>
             <span className="text-[8px] text-white/70 font-black uppercase tracking-wider mt-1">
               FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')} • Versão v{versao?.versao || 1}
