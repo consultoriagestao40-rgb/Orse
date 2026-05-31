@@ -1938,12 +1938,7 @@ return (
                 💬 Histórico de Negociações e Ajustes
               </h3>
               
-              {(!doc.configApresentacao?.negotiations || doc.configApresentacao.negotiations.length === 0) ? (
-                <div className="py-20 text-center text-slate-400 italic">
-                  Nenhum registro de ajustes ou negociação encontrado.
-                </div>
-              ) : (
-                <div className="relative pl-6 border-l-2 border-slate-100 space-y-8 ml-3 max-w-2xl mx-auto py-4 text-left">
+              {(!doc.configApresentacao?.negotiations || doc.configApresentacao.ne                <div className="relative pl-8 border-l-2 border-slate-200 space-y-8 ml-4 max-w-2xl mx-auto py-4 text-left font-sans">
                   {doc.configApresentacao.negotiations.map((item: any) => {
                     const clientInitials = (item.nomeCliente || 'Cliente')
                       .split(' ')
@@ -1960,85 +1955,79 @@ return (
                       .substring(0, 2)
                       .toUpperCase();
 
-                    return (
-                      <div key={item.id} className="relative pb-2">
-                        {/* Circle Node Icon */}
-                        <div className={`absolute -left-[35px] top-1.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                          item.tipo === 'recusa' ? 'border-red-500 bg-red-500 text-white' : 'border-[#1e4480] bg-[#1e4480] text-white'
-                        }`}>
-                          {item.tipo === 'recusa' ? '👎' : '💬'}
-                        </div>
+                    const dateStr = new Date(item.data).toLocaleString('pt-BR');
+                    const responseDateStr = item.dataResposta ? new Date(item.dataResposta).toLocaleString('pt-BR') : '';
 
-                        {/* Content Container */}
-                        <div className="bg-slate-50 border border-slate-200 rounded-3xl p-5 md:p-6 space-y-4 shadow-sm">
+                    return (
+                      <div key={item.id} className="space-y-6">
+                        
+                        {/* Event 1: Client Message */}
+                        <div className="relative pl-4">
+                          {/* Dot / Avatar on the timeline */}
+                          <div className="absolute -left-[49px] top-0 w-8 h-8 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-extrabold text-xs uppercase border border-slate-200 shadow-xs">
+                            {clientInitials}
+                          </div>
                           
-                          {/* CLIENT REQUEST HEADER WITH AVATAR */}
-                          <div className="flex justify-between items-start gap-2">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center font-black text-sm uppercase border border-blue-200 shadow-sm shrink-0">
-                                {clientInitials}
-                              </div>
-                              <div>
-                                <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded leading-none ${
-                                  item.tipo === 'recusa' ? 'bg-red-105 text-red-700 font-bold border border-red-200' : 'bg-blue-50 text-blue-700 font-bold border border-blue-200'
-                                }`}>
-                                  {item.tipo === 'recusa' ? 'Recusa / Declínio' : 'Ajuste / Contraproposta'}
-                                </span>
-                                <span className="text-xs font-black text-slate-800 block mt-1.5 leading-tight">{item.nomeCliente || 'Cliente'}</span>
-                              </div>
-                            </div>
-                            <span className="text-[9px] font-bold text-slate-400 font-mono tracking-wider shrink-0">
-                              {new Date(item.data).toLocaleString('pt-BR')}
+                          {/* Message Header */}
+                          <div className="flex items-center flex-wrap gap-2 text-xs">
+                            <span className="font-extrabold text-slate-800">{item.nomeCliente || 'Cliente'}</span>
+                            <span className="text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full border border-slate-200">
+                              {item.tipo === 'recusa' ? '👎 Recusa' : '💬 Contraproposta'}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono font-medium ml-auto">
+                              {dateStr}
                             </span>
                           </div>
+                          
+                          {/* Message Bubble */}
+                          <div className="mt-1.5 max-w-xl text-xs font-semibold text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50 border border-slate-150 p-3.5 rounded-2xl rounded-tl-none">
+                            {item.mensagem}
+                          </div>
+                        </div>
 
-                          <div className="pl-13">
-                            <div className="text-xs font-bold text-slate-700 leading-relaxed whitespace-pre-line bg-white border border-slate-150 p-4 rounded-2xl rounded-tl-none shadow-inner">
-                              {item.mensagem}
+                        {/* Event 2: Consultant Response or Awaiting message */}
+                        {item.respondida ? (
+                          <div className="relative pl-4">
+                            {/* Dot / Avatar on the timeline */}
+                            {sellerAvatar ? (
+                              <img 
+                                src={sellerAvatar} 
+                                alt={item.nomeVendedor || 'Consultor'} 
+                                className="absolute -left-[49px] top-0 w-8 h-8 rounded-full object-cover border border-slate-200 shadow-xs"
+                              />
+                            ) : (
+                              <div className="absolute -left-[49px] top-0 w-8 h-8 rounded-full bg-[#1B4D3E]/10 text-[#1B4D3E] flex items-center justify-center font-extrabold text-xs uppercase border border-[#1B4D3E]/20 shadow-xs">
+                                {sellerInitials}
+                              </div>
+                            )}
+
+                            {/* Message Header */}
+                            <div className="flex items-center flex-wrap gap-2 text-xs">
+                              <span className="font-extrabold text-slate-800">{item.nomeVendedor || 'Consultor'}</span>
+                              <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
+                                ✓ Resposta
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-mono font-medium ml-auto">
+                                {responseDateStr}
+                              </span>
+                            </div>
+
+                            {/* Message Bubble */}
+                            <div className="mt-1.5 max-w-xl text-xs font-medium text-slate-600 leading-relaxed whitespace-pre-line bg-[#1B4D3E]/5 border border-[#1B4D3E]/10 p-3.5 rounded-2xl rounded-tl-none">
+                              {item.resposta}
                             </div>
                           </div>
-
-                          {/* SELLER RESPONSE WITH ACTUAL AVATAR PICTURE */}
-                          {item.respondida ? (
-                            <div className="border-t border-slate-100 pt-4 mt-4 space-y-3">
-                              <div className="flex justify-between items-start gap-2">
-                                <div className="flex items-center gap-3">
-                                  {sellerAvatar ? (
-                                    <img 
-                                      src={sellerAvatar} 
-                                      alt={item.nomeVendedor || 'Consultor'} 
-                                      className="w-10 h-10 rounded-full object-cover border border-emerald-205 shadow-sm shrink-0 animate-fadeIn"
-                                    />
-                                  ) : (
-                                    <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center font-black text-sm uppercase border border-emerald-200 shadow-sm shrink-0">
-                                      {sellerInitials}
-                                    </div>
-                                  )}
-                                  <div>
-                                    <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-wider leading-none font-bold border border-emerald-200">
-                                      ✓ Resposta do Consultor
-                                    </span>
-                                    <span className="text-xs font-black text-slate-800 block mt-1.5 leading-tight">{item.nomeVendedor || 'Consultor'}</span>
-                                  </div>
-                                </div>
-                                <span className="text-[9px] font-bold text-slate-450 font-mono tracking-wider shrink-0">
-                                  {new Date(item.dataResposta).toLocaleString('pt-BR')}
-                                </span>
-                              </div>
-
-                              <div className="pl-13">
-                                <div className="text-xs font-medium text-slate-600 leading-relaxed whitespace-pre-line bg-emerald-50/20 border border-emerald-100 p-4 rounded-2xl rounded-tl-none shadow-sm">
-                                  {item.resposta}
-                                </div>
-                              </div>
+                        ) : (
+                          <div className="relative pl-4">
+                            <div className="absolute -left-[49px] top-1 w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center text-xs font-bold border border-amber-200 shadow-xs">
+                              ⌛
                             </div>
-                          ) : (
-                            <div className="text-[10px] text-slate-400 italic mt-2 font-medium pl-13 text-left">
+                            <div className="text-[11px] text-slate-400 italic font-medium leading-relaxed">
                               Aguardando retorno do consultor responsável...
                             </div>
-                          )}
+                          </div>
+                        )}
 
-                        </div>
                       </div>
                     );
                   })}
