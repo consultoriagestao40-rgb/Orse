@@ -209,6 +209,17 @@ function ProposalsDashboard() {
     </div>
   );
 
+  const getBorderColorClass = (colorClass?: string) => {
+    if (!colorClass) return 'border-[#1B4D3E]';
+    if (colorClass.includes('slate')) return 'border-slate-400';
+    if (colorClass.includes('blue')) return 'border-blue-500';
+    if (colorClass.includes('green') || colorClass.includes('emerald')) return 'border-emerald-500';
+    if (colorClass.includes('red') || colorClass.includes('rose')) return 'border-red-500';
+    if (colorClass.includes('amber') || colorClass.includes('yellow')) return 'border-amber-500';
+    if (colorClass.includes('purple')) return 'border-purple-500';
+    return 'border-[#1B4D3E]';
+  };
+
   // ── Coluna de Kanban reutilizável ───────────────────────────────────────────
   const KanbanColumn = ({ label, color, cards, total, type = 'status', onDropProp }: {
     label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor'; onDropProp?: (propId: string) => void;
@@ -234,45 +245,47 @@ function ProposalsDashboard() {
         }}
       >
         {/* Cabeçalho da coluna */}
-        <div className="bg-white border border-slate-200 rounded-xl mb-3 p-4 shadow-sm">
-          {type === 'status' ? (
-            <>
-              <div className="flex items-center justify-between mb-2">
-                <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${color || 'bg-slate-100 text-slate-600'}`}>
-                  {label}
-                </span>
-                <span className="text-xs font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
-                  {cards.length}
-                </span>
-              </div>
-              <p className="text-sm font-black text-[#1B4D3E]">{fmt(total)}</p>
-              <p className="text-[10px] text-slate-400 font-medium mt-0.5">Volume total da coluna</p>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-3 mb-2">
-                {colAvatarUrl ? (
-                  <img 
-                    src={colAvatarUrl} 
-                    alt={label} 
-                    className="w-9 h-9 rounded-xl object-cover border border-slate-200"
-                  />
-                ) : (
-                  <div className="w-9 h-9 rounded-xl bg-[#1B4D3E]/10 flex items-center justify-center text-[#1B4D3E] font-black text-sm uppercase border border-slate-200">
-                    {label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-black text-slate-800 truncate">{label}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[10px] text-slate-400 font-medium">{cards.length} proposta{cards.length !== 1 ? 's' : ''}</span>
+        <div className="sticky top-[-32px] bg-[#F8FAFC] pt-2 pb-3 z-10">
+          <div className={`bg-white border-x border-b border-slate-200 border-t-4 ${type === 'vendedor' ? 'border-[#1B4D3E]' : getBorderColorClass(color)} rounded-xl p-4 shadow-sm`}>
+            {type === 'status' ? (
+              <>
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider ${color || 'bg-slate-100 text-slate-600'}`}>
+                    {label}
+                  </span>
+                  <span className="text-xs font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
+                    {cards.length}
+                  </span>
+                </div>
+                <p className="text-sm font-black text-[#1B4D3E]">{fmt(total)}</p>
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5">Volume total da coluna</p>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 mb-2">
+                  {colAvatarUrl ? (
+                    <img 
+                      src={colAvatarUrl} 
+                      alt={label} 
+                      className="w-9 h-9 rounded-xl object-cover border border-slate-200"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-xl bg-[#1B4D3E]/10 flex items-center justify-center text-[#1B4D3E] font-black text-sm uppercase border border-slate-200">
+                      {label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-black text-slate-800 truncate">{label}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] text-slate-400 font-medium">{cards.length} proposta{cards.length !== 1 ? 's' : ''}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <p className="text-base font-black text-[#1B4D3E]">{fmt(total)}</p>
-              <p className="text-[10px] text-slate-400 font-medium mt-0.5">Volume total</p>
-            </>
-          )}
+                <p className="text-base font-black text-[#1B4D3E]">{fmt(total)}</p>
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5">Volume total</p>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Cards */}
