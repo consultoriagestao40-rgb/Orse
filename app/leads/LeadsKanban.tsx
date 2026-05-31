@@ -682,15 +682,17 @@ export default function LeadsKanban() {
           {stages.map((stage, idx) => {
             const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
             const isFirst = idx === 0;
+            const normalizedStageColor = stage.color === 'bg-emerald-100' ? 'bg-green-100' : (stage.color || 'bg-slate-100');
             const colorMap: Record<string, string> = {
               'bg-slate-100': 'text-slate-400',
               'bg-blue-100': 'text-blue-400',
-              'bg-emerald-100': 'text-emerald-400',
+              'bg-green-100': 'text-green-400',
+              'bg-emerald-100': 'text-green-400',
               'bg-amber-100': 'text-amber-400',
               'bg-rose-100': 'text-rose-400',
               'bg-purple-100': 'text-purple-400',
             };
-            const headerTextColorClass = colorMap[stage.color || 'bg-slate-100'] || 'text-slate-400';
+            const headerTextColorClass = colorMap[normalizedStageColor] || 'text-slate-400';
             
             const points = isFirst ? "0,0 320,0 336,32 320,64 0,64" : "0,0 320,0 336,32 320,64 0,64 16,32";
 
@@ -751,14 +753,17 @@ export default function LeadsKanban() {
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
                         </button>
                         <div className="absolute top-8 left-0 bg-white p-3 rounded-xl shadow-xl border border-slate-200 hidden group-hover/picker:flex flex-wrap gap-2 z-10 w-32">
-                          {['bg-slate-100', 'bg-blue-100', 'bg-emerald-100', 'bg-amber-100', 'bg-rose-100', 'bg-purple-100'].map(c => (
-                            <div 
-                              key={c} 
-                              onClick={async () => { await updateLeadStageColor(stage.id, c); fetchData(); }} 
-                              className={`w-8 h-8 rounded-full cursor-pointer hover:scale-110 hover:ring-2 ring-offset-2 ring-slate-400 transition-all ${c}`}
-                              title="Selecionar esta cor"
-                            />
-                          ))}
+                          {['bg-slate-100', 'bg-blue-100', 'bg-green-100', 'bg-amber-100', 'bg-rose-100', 'bg-purple-100'].map(c => {
+                            const saveVal = c === 'bg-green-100' ? 'bg-emerald-100' : c;
+                            return (
+                              <div 
+                                key={c} 
+                                onClick={async () => { await updateLeadStageColor(stage.id, saveVal); fetchData(); }} 
+                                className={`w-8 h-8 rounded-full cursor-pointer hover:scale-110 hover:ring-2 ring-offset-2 ring-slate-400 transition-all ${c}`}
+                                title="Selecionar esta cor"
+                              />
+                            );
+                          })}
                         </div>
                       </div>
                       <button 
@@ -782,7 +787,7 @@ export default function LeadsKanban() {
                   </div>
                 </div>
                 
-                <div className={`flex-1 flex flex-col p-3 overflow-y-auto space-y-3 ${stage.color || 'bg-slate-100'} border-x border-b border-slate-200 rounded-b-2xl -mt-[1px] z-0`}>
+                <div className={`flex-1 flex flex-col p-3 overflow-y-auto space-y-3 ${normalizedStageColor} border-x border-b border-slate-200 rounded-b-2xl -mt-[1px] z-0`}>
                   {stageLeads.map(lead => (
                     <div
                       key={lead.id}
@@ -790,7 +795,7 @@ export default function LeadsKanban() {
                       onDragStart={(e) => handleDragStart(e, lead.id)}
                       onDragEnd={handleDragEnd}
                       onClick={() => setSelectedLead(lead)}
-                      className="bg-white p-3 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-emerald-200 transition-all group"
+                      className="bg-white p-3 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-green-200 transition-all group"
                     >
                       <div className="flex items-center justify-between gap-1.5 mb-1">
                         <div className="font-bold text-xs text-slate-800 truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</div>
@@ -800,7 +805,7 @@ export default function LeadsKanban() {
                           ).length || 0;
                           if (unreadCount > 0) {
                             return (
-                              <span className="bg-emerald-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 animate-pulse shadow-sm shadow-emerald-500/30" title={`${unreadCount} mensagens não lidas`}>
+                              <span className="bg-green-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 animate-pulse shadow-sm shadow-green-500/30" title={`${unreadCount} mensagens não lidas`}>
                                 <MessageSquare size={8} fill="white" /> {unreadCount}
                               </span>
                             );
@@ -978,7 +983,7 @@ export default function LeadsKanban() {
                 const darkerColorMap: Record<string, string> = {
                   'bg-slate-100': 'bg-slate-500',
                   'bg-blue-100': 'bg-blue-500',
-                  'bg-emerald-100': 'bg-emerald-500',
+                  'bg-emerald-100': 'bg-green-500',
                   'bg-amber-100': 'bg-amber-500',
                   'bg-rose-100': 'bg-rose-500',
                   'bg-purple-100': 'bg-purple-500',

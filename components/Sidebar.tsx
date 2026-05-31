@@ -462,11 +462,12 @@ const Sidebar = () => {
 
     const theme = getThemeColors(color);
     
-    const oldStyle = document.getElementById('dynamic-theme-style');
-    if (oldStyle) oldStyle.remove();
-
-    const style = document.createElement('style');
-    style.id = 'dynamic-theme-style';
+    let style = document.getElementById('dynamic-theme-style') as HTMLStyleElement | null;
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'dynamic-theme-style';
+      document.head.appendChild(style);
+    }
     style.innerHTML = `
       :root {
         --primary-color: ${theme.primary};
@@ -509,7 +510,7 @@ const Sidebar = () => {
       }
       .via-\\[\\#2A6D5A\\], .via-\\[\\#2a6d5a\\] {
         --tw-gradient-to: var(--primary-color-hover) !important;
-        --tw-gradient-stops: var(--tw-gradient-from), var(--primary-color-light), var(--tw-gradient-to) !important;
+        --tw-gradient-stops: var(--tw-gradient-from), var(--primary-color-hover), var(--tw-gradient-to) !important;
       }
       .to-\\[\\#1B4D3E\\], .to-\\[\\#1b4d3e\\] {
         --tw-gradient-to: var(--primary-color) !important;

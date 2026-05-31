@@ -169,11 +169,12 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
 
     const theme = getThemeColors(color);
     
-    const oldStyle = document.getElementById('dynamic-client-theme-style');
-    if (oldStyle) oldStyle.remove();
-
-    const style = document.createElement('style');
-    style.id = 'dynamic-client-theme-style';
+    let style = document.getElementById('dynamic-client-theme-style') as HTMLStyleElement | null;
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'dynamic-client-theme-style';
+      document.head.appendChild(style);
+    }
     style.innerHTML = `
       :root {
         --primary-color: ${theme.primary};

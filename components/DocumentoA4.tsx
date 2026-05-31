@@ -66,11 +66,12 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
     const theme = getThemeColors(color);
     
     // Inject or update unique style sheet for proposal view/print
-    const oldStyle = document.getElementById('dynamic-document-theme-style');
-    if (oldStyle) oldStyle.remove();
-
-    const style = document.createElement('style');
-    style.id = 'dynamic-document-theme-style';
+    let style = document.getElementById('dynamic-document-theme-style') as HTMLStyleElement | null;
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'dynamic-document-theme-style';
+      document.head.appendChild(style);
+    }
     style.innerHTML = `
       :root {
         --primary-color: ${theme.primary};

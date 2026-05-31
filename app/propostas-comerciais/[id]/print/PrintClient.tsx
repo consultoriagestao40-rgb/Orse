@@ -116,11 +116,12 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
 
     const theme = getThemeColors(color);
     
-    const oldStyle = document.getElementById('dynamic-print-theme-style');
-    if (oldStyle) oldStyle.remove();
-
-    const style = document.createElement('style');
-    style.id = 'dynamic-print-theme-style';
+    let style = document.getElementById('dynamic-print-theme-style') as HTMLStyleElement | null;
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'dynamic-print-theme-style';
+      document.head.appendChild(style);
+    }
     style.innerHTML = `
       :root {
         --primary-color: ${theme.primary};
