@@ -811,7 +811,13 @@ export async function getUsersList() {
     const loggedUser = await getLoggedUser();
     if (!loggedUser) return [];
 
+    const whereClause: any = {};
+    if (loggedUser.tenantId) {
+      whereClause.tenantId = loggedUser.tenantId;
+    }
+
     const users = await prisma.user.findMany({
+      where: whereClause,
       orderBy: { nome: 'asc' },
       select: { id: true, nome: true, role: true, avatarUrl: true }
     });
