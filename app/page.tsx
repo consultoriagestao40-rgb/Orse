@@ -380,7 +380,7 @@ function ProposalsDashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
+    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <style dangerouslySetInnerHTML={{__html: `
         .no-scrollbar::-webkit-scrollbar {
           display: none;
@@ -388,7 +388,7 @@ function ProposalsDashboard() {
       `}} />
       <Sidebar />
 
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-8 overflow-y-auto h-full">
         <div className="max-w-full mx-auto space-y-6">
 
           {/* HEADER */}
