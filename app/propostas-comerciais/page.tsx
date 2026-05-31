@@ -574,34 +574,47 @@ export default function PropostasComerciaisDashboard() {
           {/* ── KANBAN POR STATUS ───────────────────────────────────────────── */}
           {viewMode === 'kanban-status' && (
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <LayoutGrid size={16} className="text-[#1B4D3E]" />
-                <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
-                <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                  {kanbanStatusCols.length} status
-                </span>
-              </div>
               {loading ? (
-                <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
+                <>
+                  <div className="flex items-center gap-2 mb-4">
+                    <LayoutGrid size={16} className="text-[#1B4D3E]" />
+                    <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
+                    <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                      {kanbanStatusCols.length} status
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
+                </>
               ) : (
                 <div className="flex flex-col">
-                  {/* Cabeçalhos Fixos */}
-                  <div 
-                    id="kanban-headers-status"
-                    className="overflow-x-auto no-scrollbar sticky top-[-32px] z-20 bg-[#F8FAFC] pb-1"
-                    onScroll={() => syncScroll('kanban-headers-status', 'kanban-cards-status')}
-                    style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
-                  >
-                    <div className="flex gap-5 min-w-max">
-                      {kanbanStatusCols.map(col => (
-                        <KanbanColumnHeader
-                          key={col.id}
-                          label={col.label}
-                          color={col.color}
-                          cards={col.cards}
-                          total={col.total}
-                        />
-                      ))}
+                  {/* Container Sticky Unificado: Título + Cabeçalhos */}
+                  <div className="sticky top-[-32px] z-20 bg-[#F8FAFC] pt-8 pb-1">
+                    <div className="flex items-center gap-2 mb-4">
+                      <LayoutGrid size={16} className="text-[#1B4D3E]" />
+                      <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
+                      <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                        {kanbanStatusCols.length} status
+                      </span>
+                    </div>
+
+                    {/* Cabeçalhos Fixos */}
+                    <div 
+                      id="kanban-headers-status"
+                      className="overflow-x-auto no-scrollbar pb-1"
+                      onScroll={() => syncScroll('kanban-headers-status', 'kanban-cards-status')}
+                      style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+                    >
+                      <div className="flex gap-5 min-w-max">
+                        {kanbanStatusCols.map(col => (
+                          <KanbanColumnHeader
+                            key={col.id}
+                            label={col.label}
+                            color={col.color}
+                            cards={col.cards}
+                            total={col.total}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
 
@@ -636,38 +649,60 @@ export default function PropostasComerciaisDashboard() {
           {/* ── KANBAN POR VENDEDOR ───────────────────────────────────────────── */}
           {viewMode === 'kanban-vendedor' && (
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <UserSquare2 size={16} className="text-[#1B4D3E]" />
-                <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
-                <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                  {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
-                </span>
-              </div>
               {loading ? (
-                <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
+                <>
+                  <div className="flex items-center gap-2 mb-4">
+                    <UserSquare2 size={16} className="text-[#1B4D3E]" />
+                    <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
+                    <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                      {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
+                </>
               ) : kanbanVendedorCols.length === 0 ? (
-                <div className="flex items-center justify-center py-20 text-slate-400 text-sm">
-                  Nenhuma proposta encontrada.
-                </div>
+                <>
+                  <div className="flex items-center gap-2 mb-4">
+                    <UserSquare2 size={16} className="text-[#1B4D3E]" />
+                    <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
+                    <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                      {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-center py-20 text-slate-400 text-sm">
+                    Nenhuma proposta encontrada.
+                  </div>
+                </>
               ) : (
                 <div className="flex flex-col">
-                  {/* Cabeçalhos Fixos */}
-                  <div 
-                    id="kanban-headers-vendedor"
-                    className="overflow-x-auto no-scrollbar sticky top-[-32px] z-20 bg-[#F8FAFC] pb-1"
-                    onScroll={() => syncScroll('kanban-headers-vendedor', 'kanban-cards-vendedor')}
-                    style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
-                  >
-                    <div className="flex gap-5 min-w-max">
-                      {kanbanVendedorCols.map(col => (
-                        <KanbanColumnHeader
-                          key={col.id}
-                          label={col.label}
-                          type="vendedor"
-                          cards={col.cards}
-                          total={col.total}
-                        />
-                      ))}
+                  {/* Container Sticky Unificado: Título + Cabeçalhos */}
+                  <div className="sticky top-[-32px] z-20 bg-[#F8FAFC] pt-8 pb-1">
+                    <div className="flex items-center gap-2 mb-4">
+                      <UserSquare2 size={16} className="text-[#1B4D3E]" />
+                      <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
+                      <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                        {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
+                      </span>
+                    </div>
+
+                    {/* Cabeçalhos Fixos */}
+                    <div 
+                      id="kanban-headers-vendedor"
+                      className="overflow-x-auto no-scrollbar pb-1"
+                      onScroll={() => syncScroll('kanban-headers-vendedor', 'kanban-cards-vendedor')}
+                      style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+                    >
+                      <div className="flex gap-5 min-w-max">
+                        {kanbanVendedorCols.map(col => (
+                          <KanbanColumnHeader
+                            key={col.id}
+                            label={col.label}
+                            type="vendedor"
+                            cards={col.cards}
+                            total={col.total}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
 
