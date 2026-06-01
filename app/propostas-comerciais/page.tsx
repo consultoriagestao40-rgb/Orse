@@ -8,7 +8,7 @@ import {
   Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer, Share2, Eye
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { getPropostas, getCurrentUserRole, getUsersList, transferirProposta } from '@/app/propostas/actions';
+import { getPropostas, getCurrentUserRole, getUsersList, transferirProposta, getPropostaStatuses, updatePropostaStatusParam } from '@/app/propostas/actions';
 import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
 import ClientLinkModal from '@/components/ClientLinkModal';
 import ClientTrackingModal from '@/components/ClientTrackingModal';
@@ -21,13 +21,6 @@ import {
 } from './actions';
 
 type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor';
-
-const STATUSES = [
-  { nome: 'Rascunho', color: 'bg-slate-100 text-slate-600' },
-  { nome: 'Enviada', color: 'bg-blue-100 text-blue-600' },
-  { nome: 'Aprovada', color: 'bg-green-100 text-green-600' },
-  { nome: 'Recusada', color: 'bg-red-100 text-red-600' }
-];
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v);
@@ -57,15 +50,18 @@ export default function PropostasComerciaisDashboard() {
     saving: false
   });
 
+  const [statuses, setStatuses] = useState<any[]>([]);
+
   const loadData = async () => {
     setLoading(true);
-    const [dataDocs, dataFpvs, dataTemplates, dataEmpresas, role, usersData] = await Promise.all([
+    const [dataDocs, dataFpvs, dataTemplates, dataEmpresas, role, usersData, statusData] = await Promise.all([
       getDocumentosProposta(),
       getPropostas(),
       getTemplatesProposta(),
       getEmpresasEmissoras(),
       getCurrentUserRole(),
-      getUsersList()
+      getUsersList(),
+      getPropostaStatuses()
     ]);
     setDocs(dataDocs);
     setFpvs(dataFpvs);
@@ -73,6 +69,7 @@ export default function PropostasComerciaisDashboard() {
     setEmpresas(dataEmpresas);
     setUserRole(role);
     setUsersList(usersData);
+    setStatuses(statusData || []);
     setLoading(false);
   };
 
@@ -80,8 +77,12 @@ export default function PropostasComerciaisDashboard() {
 
   const getStatusStyle = (statusNome: string) => {
     if (!statusNome) return 'bg-slate-100 text-slate-600';
-    const found = STATUSES.find(s => s.nome.toLowerCase() === statusNome.toLowerCase());
-    return found?.color || 'bg-slate-100 text-slate-600';
+    const found = statuses.find(s => s.nome.toLowerCase() === statusNome.toLowerCase());
+    if (found) {
+      const hStyle = getHighlightedColorClass(found.color || '');
+      return `${hStyle.bg} ${hStyle.text} border ${hStyle.border}`;
+    }
+    return 'bg-slate-100 text-slate-600';
   };
 
   const filteredDocs = docs.filter(d =>
@@ -91,12 +92,12 @@ export default function PropostasComerciaisDashboard() {
   );
 
   // ── Dados para Kanban por Status ────────────────────────────────────────────
-  const kanbanStatusCols = STATUSES.map(s => {
-    const cards = filteredDocs.filter(d => d.status === s.nome);
+  const kanbanStatusCols = statuses.map(s => {
+    const cards = filteredDocs.filter(d => d.status.toLowerCase() === s.nome.toLowerCase());
     return {
-      id: s.nome,
+      id: s.id,
       label: s.nome,
-      color: s.color || 'bg-slate-100 text-slate-600',
+      color: s.color,
       cards,
       total: cards.reduce((a, c) => a + (c.valor || 0), 0),
     };
@@ -281,9 +282,11 @@ export default function PropostasComerciaisDashboard() {
     }
   };
 
-  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status' }: {
-    label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor';
+  // ── Cabeçalho da coluna ────────────────────────────────────────────────────
+  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange }: {
+    label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor'; statusId?: string; onColorChange?: (newColor: string) => void;
   }) => {
+    const [showColorPicker, setShowColorPicker] = useState(false);
     const userObj = usersList.find(u => u.nome === label);
     const colAvatarUrl = userObj?.avatarUrl;
     const isStatus = type === 'status';
@@ -297,17 +300,76 @@ export default function PropostasComerciaisDashboard() {
           totalColor: 'text-white'
         };
 
+    // Opções de cores do sistema
+    const colorOptions = [
+      { name: 'Céu', value: 'sky' },
+      { name: 'Laranja', value: 'orange' },
+      { name: 'Esmeralda', value: 'emerald' },
+      { name: 'Vermelho', value: 'red' },
+      { name: 'Roxo', value: 'purple' },
+      { name: 'Ardósia', value: 'slate' },
+      { name: 'Amarelo', value: 'yellow' },
+      { name: 'Indigo', value: 'indigo' },
+      { name: 'Pink', value: 'pink' },
+      { name: 'Teal', value: 'teal' }
+    ];
+
     return (
-      <div className="flex-shrink-0 w-72 shrink-0">
+      <div className="flex-shrink-0 w-72 shrink-0 relative">
         {isStatus ? (
-          <div className={`border border-b-0 rounded-t-2xl rounded-b-none p-4 shadow-md text-left ${hStyle.bg} ${hStyle.text} ${hStyle.border}`}>
+          <div className={`border border-b-0 rounded-t-2xl rounded-b-none p-4 shadow-md text-left ${hStyle.bg} ${hStyle.text} ${hStyle.border} relative group`}>
             <div className="flex items-center justify-between mb-2">
               <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-sm ${hStyle.badge}`}>
                 {label}
               </span>
-              <span className={`text-xs font-black px-2.5 py-0.5 rounded-full shadow-sm ${hStyle.badge}`}>
-                {cards.length}
-              </span>
+              
+              <div className="flex items-center gap-2">
+                {/* Ícone de Paleta de Cores 🎨 */}
+                {statusId && onColorChange && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowColorPicker(!showColorPicker)}
+                      className={`p-1 rounded hover:bg-white/20 transition-all ${showColorPicker ? 'bg-white/20' : 'opacity-60 group-hover:opacity-100'}`}
+                      title="Customizar Cor da Coluna"
+                    >
+                      <Palette size={14} className="text-white" />
+                    </button>
+
+                    {/* Popover Color Picker */}
+                    {showColorPicker && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-30" 
+                          onClick={() => setShowColorPicker(false)}
+                        />
+                        <div className="absolute right-0 top-6 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-2.5 min-w-[160px] animate-in fade-in slide-in-from-top-2 duration-150 flex flex-col gap-2">
+                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 px-1">Selecione a Cor</p>
+                          <div className="grid grid-cols-5 gap-1.5">
+                            {colorOptions.map(opt => {
+                              const previewStyle = getHighlightedColorClass(opt.value);
+                              return (
+                                <button
+                                  key={opt.value}
+                                  onClick={async () => {
+                                    setShowColorPicker(false);
+                                    await onColorChange(opt.value);
+                                  }}
+                                  className={`w-6 h-6 rounded-full border border-slate-200 shadow-sm transition-all hover:scale-115 active:scale-95 ${previewStyle.bg}`}
+                                  title={opt.name}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                <span className={`text-xs font-black px-2.5 py-0.5 rounded-full shadow-sm ${hStyle.badge}`}>
+                  {cards.length}
+                </span>
+              </div>
             </div>
             <p className="text-sm font-black mt-3">{fmt(total)}</p>
             <p className="text-[10px] opacity-75 font-medium mt-0.5">Volume total da coluna</p>
@@ -588,7 +650,7 @@ export default function PropostasComerciaisDashboard() {
                           }}
                           className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border outline-none cursor-pointer ${getStatusStyle(doc.status)}`}
                         >
-                          {STATUSES.map(s => <option key={s.nome} value={s.nome}>{s.nome}</option>)}
+                          {statuses.map(s => <option key={s.nome} value={s.nome}>{s.nome}</option>)}
                         </select>
                       </td>
                       <td className="px-6 py-3 text-center">
@@ -687,6 +749,11 @@ export default function PropostasComerciaisDashboard() {
                             color={col.color}
                             cards={col.cards}
                             total={col.total}
+                            statusId={col.id}
+                            onColorChange={async (newColor) => {
+                              await updatePropostaStatusParam(col.id, col.label, newColor);
+                              setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));
+                            }}
                           />
                         ))}
                       </div>

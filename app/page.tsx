@@ -8,14 +8,15 @@ import {
   Users, TrendingUp, Clock,
   LayoutList, LayoutGrid, UserSquare2,
   Edit2, Trash2, FileStack, Filter,
-  MoreVertical, Share2, ArrowRightLeft, History, X
+  MoreVertical, Share2, ArrowRightLeft, History, X, Palette
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { 
   getPropostas, updatePropostaStatus,
   getPropostaStatuses, createPropostaStatus, deletePropostaStatus,
   deleteProposta, getCurrentUserRole,
-  getUsersList, transferirProposta, compartilharProposta, getAuditLogs
+  getUsersList, transferirProposta, compartilharProposta, getAuditLogs,
+  updatePropostaStatusParam
 } from '@/app/propostas/actions';
 
 type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor';
@@ -322,9 +323,10 @@ function ProposalsDashboard() {
 
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
-  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status' }: {
-    label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor';
+  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange }: {
+    label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor'; statusId?: string; onColorChange?: (newColor: string) => void;
   }) => {
+    const [showColorPicker, setShowColorPicker] = useState(false);
     const userObj = usersList.find(u => u.nome === label);
     const colAvatarUrl = userObj?.avatarUrl;
     const isStatus = type === 'status';
@@ -338,17 +340,76 @@ function ProposalsDashboard() {
           totalColor: 'text-white'
         };
 
+    // Opções de cores do sistema
+    const colorOptions = [
+      { name: 'Céu', value: 'sky' },
+      { name: 'Laranja', value: 'orange' },
+      { name: 'Esmeralda', value: 'emerald' },
+      { name: 'Vermelho', value: 'red' },
+      { name: 'Roxo', value: 'purple' },
+      { name: 'Ardósia', value: 'slate' },
+      { name: 'Amarelo', value: 'yellow' },
+      { name: 'Indigo', value: 'indigo' },
+      { name: 'Pink', value: 'pink' },
+      { name: 'Teal', value: 'teal' }
+    ];
+
     return (
-      <div className="flex-shrink-0 w-72 shrink-0">
+      <div className="flex-shrink-0 w-72 shrink-0 relative">
         {isStatus ? (
-          <div className={`border border-b-0 rounded-t-2xl rounded-b-none p-4 shadow-md text-left ${hStyle.bg} ${hStyle.text} ${hStyle.border}`}>
+          <div className={`border border-b-0 rounded-t-2xl rounded-b-none p-4 shadow-md text-left ${hStyle.bg} ${hStyle.text} ${hStyle.border} relative group`}>
             <div className="flex items-center justify-between mb-2">
               <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-sm ${hStyle.badge}`}>
                 {label}
               </span>
-              <span className={`text-xs font-black px-2.5 py-0.5 rounded-full shadow-sm ${hStyle.badge}`}>
-                {cards.length}
-              </span>
+              
+              <div className="flex items-center gap-2">
+                {/* Ícone de Paleta de Cores 🎨 */}
+                {statusId && onColorChange && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowColorPicker(!showColorPicker)}
+                      className={`p-1 rounded hover:bg-white/20 transition-all ${showColorPicker ? 'bg-white/20' : 'opacity-60 group-hover:opacity-100'}`}
+                      title="Customizar Cor da Coluna"
+                    >
+                      <Palette size={14} className="text-white" />
+                    </button>
+
+                    {/* Popover Color Picker */}
+                    {showColorPicker && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-30" 
+                          onClick={() => setShowColorPicker(false)}
+                        />
+                        <div className="absolute right-0 top-6 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-2.5 min-w-[160px] animate-in fade-in slide-in-from-top-2 duration-150 flex flex-col gap-2">
+                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 px-1">Selecione a Cor</p>
+                          <div className="grid grid-cols-5 gap-1.5">
+                            {colorOptions.map(opt => {
+                              const previewStyle = getHighlightedColorClass(opt.value);
+                              return (
+                                <button
+                                  key={opt.value}
+                                  onClick={async () => {
+                                    setShowColorPicker(false);
+                                    await onColorChange(opt.value);
+                                  }}
+                                  className={`w-6 h-6 rounded-full border border-slate-200 shadow-sm transition-all hover:scale-115 active:scale-95 ${previewStyle.bg}`}
+                                  title={opt.name}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                <span className={`text-xs font-black px-2.5 py-0.5 rounded-full shadow-sm ${hStyle.badge}`}>
+                  {cards.length}
+                </span>
+              </div>
             </div>
             <p className="text-sm font-black mt-3">{fmt(total)}</p>
             <p className="text-[10px] opacity-75 font-medium mt-0.5">Volume total da coluna</p>
@@ -705,6 +766,11 @@ function ProposalsDashboard() {
                             color={col.color}
                             cards={col.cards}
                             total={col.total}
+                            statusId={col.id}
+                            onColorChange={async (newColor) => {
+                              await updatePropostaStatusParam(col.id, col.label, newColor);
+                              setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));
+                            }}
                           />
                         ))}
                       </div>
