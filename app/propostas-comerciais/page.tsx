@@ -945,7 +945,8 @@ export default function PropostasComerciaisDashboard() {
                             }
                           }}
                         />
-                      ))}
+                      );
+                    })}
                     </div>
                   </div>
                 </div>
