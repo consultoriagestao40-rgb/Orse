@@ -788,9 +788,11 @@ function ProposalsDashboard() {
                 <div className="space-y-4">
                   {/* Container Sticky Unificado: Título + Cabeçalhos */}
                   <div 
-                    className="sticky top-0 z-20 bg-[#F8FAFC] pt-8 pb-0 mb-0"
+                    className="sticky top-0 z-20 pt-8 pb-0 mb-0 bg-transparent"
                     style={{ top: '-32px' }}
                   >
+                    {/* Opaque background mask only for title + headers (excludes the pb-28/112px popover scroll space) */}
+                    <div className="absolute inset-x-0 top-0 bottom-28 bg-[#F8FAFC] -z-10" />
                     <div className="flex items-center gap-2 mb-4">
                       <LayoutGrid size={16} className="text-[#1B4D3E]" />
                       <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
@@ -828,7 +830,7 @@ function ProposalsDashboard() {
                   {/* Cards Roláveis (Sem qualquer pt ou mt para encostar fisicamente nos cabeçalhos sticky) */}
                   <div 
                     id="kanban-cards-status"
-                    className="overflow-x-auto pb-6 pt-0 mt-0"
+                    className="overflow-x-auto pb-6 pt-0 mt-[-112px]"
                     onScroll={() => syncScroll('kanban-cards-status', 'kanban-headers-status')}
                   >
                     <div className="flex gap-5 min-w-max pt-0 mt-0">
@@ -887,9 +889,11 @@ function ProposalsDashboard() {
                 <div className="space-y-4">
                   {/* Container Sticky Unificado: Título + Cabeçalhos */}
                   <div 
-                    className="sticky top-0 z-20 bg-[#F8FAFC] pt-8 pb-0 mb-0"
+                    className="sticky top-0 z-20 pt-8 pb-0 mb-0 bg-transparent"
                     style={{ top: '-32px' }}
                   >
+                    {/* Opaque background mask only for title + headers (excludes the pb-28/112px popover scroll space) */}
+                    <div className="absolute inset-x-0 top-0 bottom-28 bg-[#F8FAFC] -z-10" />
                     <div className="flex items-center gap-2 mb-4">
                       <UserSquare2 size={16} className="text-[#1B4D3E]" />
                       <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
@@ -931,7 +935,7 @@ function ProposalsDashboard() {
                   {/* Cards Roláveis (Sem qualquer pt ou mt para encostar fisicamente nos cabeçalhos sticky) */}
                   <div 
                     id="kanban-cards-vendedor"
-                    className="overflow-x-auto pb-6 pt-0 mt-0"
+                    className="overflow-x-auto pb-6 pt-0 mt-[-112px]"
                     onScroll={() => syncScroll('kanban-cards-vendedor', 'kanban-headers-vendedor')}
                   >
                     <div className="flex gap-5 min-w-max pt-0 mt-0">
