@@ -737,7 +737,7 @@ export default function PropostasComerciaisDashboard() {
                     {/* Cabeçalhos Fixos */}
                     <div 
                       id="kanban-headers-status"
-                      className="overflow-x-auto no-scrollbar pb-0 mb-0 animate-in fade-in duration-200"
+                      className="overflow-x-auto no-scrollbar pb-28 mb-[-112px] animate-in fade-in duration-200"
                       onScroll={() => syncScroll('kanban-headers-status', 'kanban-cards-status')}
                       style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
                     >
@@ -835,7 +835,7 @@ export default function PropostasComerciaisDashboard() {
                     {/* Cabeçalhos Fixos */}
                     <div 
                       id="kanban-headers-vendedor"
-                      className="overflow-x-auto no-scrollbar pb-0 mb-0 animate-in fade-in duration-200"
+                      className="overflow-x-auto no-scrollbar pb-28 mb-[-112px] animate-in fade-in duration-200"
                       onScroll={() => syncScroll('kanban-headers-vendedor', 'kanban-cards-vendedor')}
                       style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
                     >
