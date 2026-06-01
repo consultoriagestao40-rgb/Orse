@@ -52,6 +52,62 @@ export default function PropostasComerciaisDashboard() {
 
   const [statuses, setStatuses] = useState<any[]>([]);
   const [vendedorColors, setVendedorColors] = useState<Record<string, string>>({});
+  const [statusOrder, setStatusOrder] = useState<string[]>([]);
+  const [vendedorOrder, setVendedorOrder] = useState<string[]>([]);
+
+  const handleDragColumnStart = (e: React.DragEvent, columnLabel: string, type: 'status' | 'vendedor') => {
+    e.dataTransfer.setData('text/column-id', columnLabel);
+    e.dataTransfer.setData('text/column-type', type);
+    e.currentTarget.classList.add('opacity-40');
+  };
+
+  const handleDragColumnEnd = (e: React.DragEvent) => {
+    e.currentTarget.classList.remove('opacity-40');
+  };
+
+  const handleDropColumn = (e: React.DragEvent, targetLabel: string, type: 'status' | 'vendedor') => {
+    e.preventDefault();
+    const sourceLabel = e.dataTransfer.getData('text/column-id');
+    const sourceType = e.dataTransfer.getData('text/column-type');
+    
+    if (sourceType !== type || sourceLabel === targetLabel) return;
+
+    if (type === 'status') {
+      const currentCols = statuses.map(s => s.nome);
+      let order = statusOrder.length > 0 ? [...statusOrder] : [...currentCols];
+      currentCols.forEach(c => {
+        if (!order.includes(c)) order.push(c);
+      });
+
+      const sourceIdx = order.indexOf(sourceLabel);
+      const targetIdx = order.indexOf(targetLabel);
+
+      if (sourceIdx !== -1 && targetIdx !== -1) {
+        const newOrder = [...order];
+        newOrder.splice(sourceIdx, 1);
+        newOrder.splice(targetIdx, 0, sourceLabel);
+        setStatusOrder(newOrder);
+        localStorage.setItem('proposta-status-order', JSON.stringify(newOrder));
+      }
+    } else {
+      const currentCols = Array.from(new Set(docs.map(d => d.usuario || 'Sem Vendedor')));
+      let order = vendedorOrder.length > 0 ? [...vendedorOrder] : [...currentCols];
+      currentCols.forEach(c => {
+        if (!order.includes(c)) order.push(c);
+      });
+
+      const sourceIdx = order.indexOf(sourceLabel);
+      const targetIdx = order.indexOf(targetLabel);
+
+      if (sourceIdx !== -1 && targetIdx !== -1) {
+        const newOrder = [...order];
+        newOrder.splice(sourceIdx, 1);
+        newOrder.splice(targetIdx, 0, sourceLabel);
+        setVendedorOrder(newOrder);
+        localStorage.setItem('proposta-vendedor-order', JSON.stringify(newOrder));
+      }
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -87,6 +143,24 @@ export default function PropostasComerciaisDashboard() {
         }
       }
       setVendedorColors(colors);
+
+      // Load column order
+      const storedStatusOrder = localStorage.getItem('proposta-status-order');
+      if (storedStatusOrder) {
+        try {
+          setStatusOrder(JSON.parse(storedStatusOrder));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      const storedVendedorOrder = localStorage.getItem('proposta-vendedor-order');
+      if (storedVendedorOrder) {
+        try {
+          setVendedorOrder(JSON.parse(storedVendedorOrder));
+        } catch (e) {
+          console.error(e);
+        }
+      }
     }
   }, []);
 

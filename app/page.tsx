@@ -129,6 +129,24 @@ function ProposalsDashboard() {
         }
       }
       setVendedorColors(colors);
+
+      // Load column order
+      const storedStatusOrder = localStorage.getItem('kanban-status-order');
+      if (storedStatusOrder) {
+        try {
+          setStatusOrder(JSON.parse(storedStatusOrder));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      const storedVendedorOrder = localStorage.getItem('kanban-vendedor-order');
+      if (storedVendedorOrder) {
+        try {
+          setVendedorOrder(JSON.parse(storedVendedorOrder));
+        } catch (e) {
+          console.error(e);
+        }
+      }
     }
   }, []);
 
