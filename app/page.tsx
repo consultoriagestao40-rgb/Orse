@@ -1,4 +1,5 @@
 'use client';
+// Force redeploy with database color column present
 
 import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
