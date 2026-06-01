@@ -33,6 +33,66 @@ function ProposalsDashboard() {
   const [userRole, setUserRole] = useState<string>('USER');
   const [viewMode, setViewMode] = useState<ViewMode>('lista');
   const [vendedorColors, setVendedorColors] = useState<Record<string, string>>({});
+  const [statusOrder, setStatusOrder] = useState<string[]>([]);
+  const [vendedorOrder, setVendedorOrder] = useState<string[]>([]);
+
+  const handleDragColumnStart = (e: React.DragEvent, columnLabel: string, type: 'status' | 'vendedor') => {
+    e.dataTransfer.setData('text/column-id', columnLabel);
+    e.dataTransfer.setData('text/column-type', type);
+    e.currentTarget.classList.add('opacity-40');
+  };
+
+  const handleDragColumnEnd = (e: React.DragEvent) => {
+    e.currentTarget.classList.remove('opacity-40');
+  };
+
+  const handleDropColumn = (e: React.DragEvent, targetLabel: string, type: 'status' | 'vendedor') => {
+    e.preventDefault();
+    const sourceLabel = e.dataTransfer.getData('text/column-id');
+    const sourceType = e.dataTransfer.getData('text/column-type');
+    
+    if (sourceType !== type || sourceLabel === targetLabel) return;
+
+    if (type === 'status') {
+      const currentCols = statuses.map(s => s.nome);
+      if (proposals.some(p => !p.status || !statuses.find(s => s.nome.toLowerCase() === p.status.toLowerCase()))) {
+        currentCols.push('Sem Status');
+      }
+      
+      let order = statusOrder.length > 0 ? [...statusOrder] : [...currentCols];
+      currentCols.forEach(c => {
+        if (!order.includes(c)) order.push(c);
+      });
+
+      const sourceIdx = order.indexOf(sourceLabel);
+      const targetIdx = order.indexOf(targetLabel);
+
+      if (sourceIdx !== -1 && targetIdx !== -1) {
+        const newOrder = [...order];
+        newOrder.splice(sourceIdx, 1);
+        newOrder.splice(targetIdx, 0, sourceLabel);
+        setStatusOrder(newOrder);
+        localStorage.setItem('kanban-status-order', JSON.stringify(newOrder));
+      }
+    } else {
+      const currentCols = Array.from(new Set(proposals.map(p => p.usuario || 'Sem Vendedor')));
+      let order = vendedorOrder.length > 0 ? [...vendedorOrder] : [...currentCols];
+      currentCols.forEach(c => {
+        if (!order.includes(c)) order.push(c);
+      });
+
+      const sourceIdx = order.indexOf(sourceLabel);
+      const targetIdx = order.indexOf(targetLabel);
+
+      if (sourceIdx !== -1 && targetIdx !== -1) {
+        const newOrder = [...order];
+        newOrder.splice(sourceIdx, 1);
+        newOrder.splice(targetIdx, 0, sourceLabel);
+        setVendedorOrder(newOrder);
+        localStorage.setItem('kanban-vendedor-order', JSON.stringify(newOrder));
+      }
+    }
+  };
 
   // Modais e dados auxiliares
   const [usersList, setUsersList] = useState<any[]>([]);
@@ -338,8 +398,11 @@ function ProposalsDashboard() {
 
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
-  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange }: {
+  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onDragColumnStart, onDragColumnEnd, onDropColumn }: {
     label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor'; statusId?: string; onColorChange?: (newColor: string) => void;
+    onDragColumnStart?: (e: React.DragEvent, label: string) => void;
+    onDragColumnEnd?: (e: React.DragEvent) => void;
+    onDropColumn?: (e: React.DragEvent, label: string) => void;
   }) => {
     const [showColorPicker, setShowColorPicker] = useState(false);
     const userObj = usersList.find(u => u.nome === label);
@@ -364,7 +427,23 @@ function ProposalsDashboard() {
     ];
 
     return (
-      <div className="flex-shrink-0 w-72 shrink-0 relative">
+      <div 
+        className="flex-shrink-0 w-72 shrink-0 relative cursor-grab active:cursor-grabbing transition-all select-none duration-200 hover:scale-[1.01]"
+        draggable="true"
+        onDragStart={(e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest('button') || target.closest('select') || target.closest('input')) {
+            e.preventDefault();
+            return;
+          }
+          if (onDragColumnStart) onDragColumnStart(e, label);
+        }}
+        onDragEnd={onDragColumnEnd}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          if (onDropColumn) onDropColumn(e, label);
+        }}
+      >
         {isStatus ? (
           <div className={`border border-b-0 rounded-t-2xl rounded-b-none p-4 shadow-md text-left ${hStyle.bg} ${hStyle.text} ${hStyle.border} relative group`}>
             <div className="flex items-center justify-between mb-2">
@@ -770,208 +849,245 @@ function ProposalsDashboard() {
               </div>
             </div>
           )}
-          {/* ── KANBAN POR STATUS ─────────────────────────────────────────────── */}
-          {viewMode === 'kanban-status' && (
-            <div>
-              {loading ? (
-                <>
-                  <div className="flex items-center gap-2 mb-4">
-                    <LayoutGrid size={16} className="text-[#1B4D3E]" />
-                    <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
-                    <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                      {kanbanStatusCols.length} coluna{kanbanStatusCols.length !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
-                </>
-              ) : (
-                <div className="space-y-4">
-                  {/* Container Sticky Unificado: Título + Cabeçalhos */}
-                  <div 
-                    className="sticky top-0 z-20 pt-8 pb-0 mb-0 bg-transparent"
-                    style={{ top: '-32px' }}
-                  >
-                    {/* Opaque background mask only for title + headers (excludes the pb-28/112px popover scroll space) */}
-                    <div className="absolute inset-x-0 top-0 bottom-28 bg-[#F8FAFC] -z-10" />
-                    <div className="flex items-center gap-2 mb-4">
-                      <LayoutGrid size={16} className="text-[#1B4D3E]" />
-                      <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
-                      <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                        {kanbanStatusCols.length} coluna{kanbanStatusCols.length !== 1 ? 's' : ''}
-                      </span>
-                    </div>
 
-                    {/* Cabeçalhos Fixos */}
-                    <div 
-                      id="kanban-headers-status"
-                      className="overflow-x-auto no-scrollbar pb-28 mb-[-112px] animate-in fade-in duration-200"
-                      onScroll={() => syncScroll('kanban-headers-status', 'kanban-cards-status')}
-                      style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
-                    >
-                      <div className="flex gap-5 min-w-max pb-0 mb-0">
-                        {kanbanStatusCols.map(col => (
-                          <KanbanColumnHeader
-                            key={col.id}
-                            label={col.label}
-                            color={col.color}
-                            cards={col.cards}
-                            total={col.total}
-                            statusId={col.id}
-                            onColorChange={async (newColor) => {
-                              await updatePropostaStatusParam(col.id, col.label, newColor);
-                              setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));
-                            }}
-                          />
-                        ))}
+          {/* Reordenação de status baseada no localStorage */}
+          {(() => {
+            const orderedStatusCols = [...kanbanStatusCols];
+            if (statusOrder.length > 0) {
+              orderedStatusCols.sort((a, b) => {
+                let idxA = statusOrder.indexOf(a.label);
+                let idxB = statusOrder.indexOf(b.label);
+                if (idxA === -1) idxA = 999;
+                if (idxB === -1) idxB = 999;
+                return idxA - idxB;
+              });
+            }
+
+            const orderedVendedorCols = [...kanbanVendedorCols];
+            if (vendedorOrder.length > 0) {
+              orderedVendedorCols.sort((a, b) => {
+                let idxA = vendedorOrder.indexOf(a.label);
+                let idxB = vendedorOrder.indexOf(b.label);
+                if (idxA === -1) idxA = 999;
+                if (idxB === -1) idxB = 999;
+                return idxA - idxB;
+              });
+            }
+
+            return (
+              <>
+                {/* ── KANBAN POR STATUS ─────────────────────────────────────────────── */}
+                {viewMode === 'kanban-status' && (
+                  <div>
+                    {loading ? (
+                      <>
+                        <div className="flex items-center gap-2 mb-4">
+                          <LayoutGrid size={16} className="text-[#1B4D3E]" />
+                          <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
+                          <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                            {kanbanStatusCols.length} coluna{kanbanStatusCols.length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
+                      </>
+                    ) : (
+                      <div className="space-y-4">
+                        {/* Container Sticky Unificado: Título + Cabeçalhos */}
+                        <div 
+                          className="sticky top-0 z-20 pt-8 pb-0 mb-0 bg-transparent"
+                          style={{ top: '-32px' }}
+                        >
+                          {/* Opaque background mask only for title + headers (excludes the pb-28/112px popover scroll space) */}
+                          <div className="absolute inset-x-0 top-0 bottom-28 bg-[#F8FAFC] -z-10" />
+                          <div className="flex items-center gap-2 mb-4">
+                            <LayoutGrid size={16} className="text-[#1B4D3E]" />
+                            <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
+                            <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                              {kanbanStatusCols.length} coluna{kanbanStatusCols.length !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+
+                          {/* Cabeçalhos Fixos */}
+                          <div 
+                            id="kanban-headers-status"
+                            className="overflow-x-auto no-scrollbar pb-28 mb-[-112px] animate-in fade-in duration-200"
+                            onScroll={() => syncScroll('kanban-headers-status', 'kanban-cards-status')}
+                            style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+                          >
+                            <div className="flex gap-5 min-w-max pb-0 mb-0">
+                              {orderedStatusCols.map(col => (
+                                <KanbanColumnHeader
+                                  key={col.id}
+                                  label={col.label}
+                                  color={col.color}
+                                  cards={col.cards}
+                                  total={col.total}
+                                  statusId={col.id}
+                                  onColorChange={async (newColor) => {
+                                    await updatePropostaStatusParam(col.id, col.label, newColor);
+                                    setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));
+                                  }}
+                                  onDragColumnStart={(e, l) => handleDragColumnStart(e, l, 'status')}
+                                  onDragColumnEnd={handleDragColumnEnd}
+                                  onDropColumn={(e, l) => handleDropColumn(e, l, 'status')}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Cards Roláveis (Sem qualquer pt ou mt para encostar fisicamente nos cabeçalhos sticky) */}
+                        <div 
+                          id="kanban-cards-status"
+                          className="overflow-x-auto pb-6 pt-0 mt-[-112px]"
+                          onScroll={() => syncScroll('kanban-cards-status', 'kanban-headers-status')}
+                        >
+                          <div className="flex gap-5 min-w-max pt-0 mt-0">
+                            {orderedStatusCols.map(col => (
+                              <KanbanColumnCards
+                                key={col.id}
+                                label={col.label}
+                                color={col.color}
+                                type="status"
+                                cards={col.cards}
+                                onDropProp={async (propId) => {
+                                  const prop = proposals.find(p => p.id === propId);
+                                  if (prop && prop.status !== col.label) {
+                                    setProposals(prev => prev.map(p => p.id === propId ? { ...p, status: col.label } : p));
+                                    const res = await updatePropostaStatus(propId, col.label);
+                                    if (!res.success) alert(res.error);
+                                  }
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
+                )}
 
-                  {/* Cards Roláveis (Sem qualquer pt ou mt para encostar fisicamente nos cabeçalhos sticky) */}
-                  <div 
-                    id="kanban-cards-status"
-                    className="overflow-x-auto pb-6 pt-0 mt-[-112px]"
-                    onScroll={() => syncScroll('kanban-cards-status', 'kanban-headers-status')}
-                  >
-                    <div className="flex gap-5 min-w-max pt-0 mt-0">
-                      {kanbanStatusCols.map(col => (
-                        <KanbanColumnCards
-                          key={col.id}
-                          label={col.label}
-                          color={col.color}
-                          type="status"
-                          cards={col.cards}
-                          onDropProp={async (propId) => {
-                            const prop = proposals.find(p => p.id === propId);
-                            if (prop && prop.status !== col.label) {
-                              setProposals(prev => prev.map(p => p.id === propId ? { ...p, status: col.label } : p));
-                              const res = await updatePropostaStatus(propId, col.label);
-                              if (!res.success) alert(res.error);
-                            }
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
 
-          {/* ── KANBAN POR VENDEDOR ───────────────────────────────────────────── */}
-          {viewMode === 'kanban-vendedor' && (
-            <div>
-              {loading ? (
-                <>
-                  <div className="flex items-center gap-2 mb-4">
-                    <UserSquare2 size={16} className="text-[#1B4D3E]" />
-                    <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
-                    <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                      {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
-                </>
-              ) : kanbanVendedorCols.length === 0 ? (
-                <>
-                  <div className="flex items-center gap-2 mb-4">
-                    <UserSquare2 size={16} className="text-[#1B4D3E]" />
-                    <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
-                    <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                      {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-center py-20 text-slate-400 text-sm">
-                    Nenhuma proposta encontrada.
-                  </div>
-                </>
-              ) : (
-                <div className="space-y-4">
-                  {/* Container Sticky Unificado: Título + Cabeçalhos */}
-                  <div 
-                    className="sticky top-0 z-20 pt-8 pb-0 mb-0 bg-transparent"
-                    style={{ top: '-32px' }}
-                  >
-                    {/* Opaque background mask only for title + headers (excludes the pb-28/112px popover scroll space) */}
-                    <div className="absolute inset-x-0 top-0 bottom-28 bg-[#F8FAFC] -z-10" />
-                    <div className="flex items-center gap-2 mb-4">
-                      <UserSquare2 size={16} className="text-[#1B4D3E]" />
-                      <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
-                      <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                        {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
-                      </span>
-                    </div>
+                {/* ── KANBAN POR VENDEDOR ───────────────────────────────────────────── */}
+                {viewMode === 'kanban-vendedor' && (
+                  <div>
+                    {loading ? (
+                      <>
+                        <div className="flex items-center gap-2 mb-4">
+                          <UserSquare2 size={16} className="text-[#1B4D3E]" />
+                          <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
+                          <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                            {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
+                      </>
+                    ) : kanbanVendedorCols.length === 0 ? (
+                      <>
+                        <div className="flex items-center gap-2 mb-4">
+                          <UserSquare2 size={16} className="text-[#1B4D3E]" />
+                          <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
+                          <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                            {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center py-20 text-slate-400 text-sm">
+                          Nenhuma proposta encontrada.
+                        </div>
+                      </>
+                    ) : (
+                      <div className="space-y-4">
+                        {/* Container Sticky Unificado: Título + Cabeçalhos */}
+                        <div 
+                          className="sticky top-0 z-20 pt-8 pb-0 mb-0 bg-transparent"
+                          style={{ top: '-32px' }}
+                        >
+                          {/* Opaque background mask only for title + headers (excludes the pb-28/112px popover scroll space) */}
+                          <div className="absolute inset-x-0 top-0 bottom-28 bg-[#F8FAFC] -z-10" />
+                          <div className="flex items-center gap-2 mb-4">
+                            <UserSquare2 size={16} className="text-[#1B4D3E]" />
+                            <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
+                            <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                              {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
+                            </span>
+                          </div>
 
-                    {/* Cabeçalhos Fixos */}
-                    <div 
-                      id="kanban-headers-vendedor"
-                      className="overflow-x-auto no-scrollbar pb-28 mb-[-112px] animate-in fade-in duration-200"
-                      onScroll={() => syncScroll('kanban-headers-vendedor', 'kanban-cards-vendedor')}
-                      style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
-                    >
-                      <div className="flex gap-5 min-w-max pb-0 mb-0">
-                        {kanbanVendedorCols.map(col => {
-                          const vColor = vendedorColors[col.label] || 'emerald';
-                          return (
-                            <KanbanColumnHeader
-                              key={col.id}
-                              label={col.label}
-                              type="vendedor"
-                              color={vColor}
-                              cards={col.cards}
-                              total={col.total}
-                              statusId={col.id}
-                              onColorChange={async (newColor) => {
-                                localStorage.setItem(`kanban-vendedor-color-${col.label}`, newColor);
-                                setVendedorColors(prev => ({ ...prev, [col.label]: newColor }));
-                              }}
-                            />
-                          );
-                        })}
+                          {/* Cabeçalhos Fixos */}
+                          <div 
+                            id="kanban-headers-vendedor"
+                            className="overflow-x-auto no-scrollbar pb-28 mb-[-112px] animate-in fade-in duration-200"
+                            onScroll={() => syncScroll('kanban-headers-vendedor', 'kanban-cards-vendedor')}
+                            style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+                          >
+                            <div className="flex gap-5 min-w-max pb-0 mb-0">
+                              {orderedVendedorCols.map(col => {
+                                const vColor = vendedorColors[col.label] || 'emerald';
+                                return (
+                                  <KanbanColumnHeader
+                                    key={col.id}
+                                    label={col.label}
+                                    type="vendedor"
+                                    color={vColor}
+                                    cards={col.cards}
+                                    total={col.total}
+                                    statusId={col.id}
+                                    onColorChange={async (newColor) => {
+                                      localStorage.setItem(`kanban-vendedor-color-${col.label}`, newColor);
+                                      setVendedorColors(prev => ({ ...prev, [col.label]: newColor }));
+                                    }}
+                                    onDragColumnStart={(e, l) => handleDragColumnStart(e, l, 'vendedor')}
+                                    onDragColumnEnd={handleDragColumnEnd}
+                                    onDropColumn={(e, l) => handleDropColumn(e, l, 'vendedor')}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Cards Roláveis (Sem qualquer pt ou mt para encostar fisicamente nos cabeçalhos sticky) */}
+                        <div 
+                          id="kanban-cards-vendedor"
+                          className="overflow-x-auto pb-6 pt-0 mt-[-112px]"
+                          onScroll={() => syncScroll('kanban-cards-vendedor', 'kanban-headers-vendedor')}
+                        >
+                          <div className="flex gap-5 min-w-max pt-0 mt-0">
+                            {orderedVendedorCols.map(col => {
+                              const vColor = vendedorColors[col.label] || 'emerald';
+                              return (
+                                <KanbanColumnCards
+                                  key={col.id}
+                                  label={col.label}
+                                  type="vendedor"
+                                  color={vColor}
+                                  cards={col.cards}
+                                  onDropProp={async (propId) => {
+                                    const prop = proposals.find(p => p.id === propId);
+                                    if (prop && prop.usuario !== col.label) {
+                                      if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
+                                        alert('Apenas gestores e administradores podem transferir propostas.');
+                                        return;
+                                      }
+                                      const newUser = usersList.find(u => u.nome === col.label);
+                                      if (newUser) {
+                                        setProposals(prev => prev.map(p => p.id === propId ? { ...p, usuario: newUser.nome } : p));
+                                        const res = await transferirProposta(propId, newUser.id);
+                                        if (!res.success) alert(res.error);
+                                      }
+                                    }
+                                  }}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
-
-                  {/* Cards Roláveis (Sem qualquer pt ou mt para encostar fisicamente nos cabeçalhos sticky) */}
-                  <div 
-                    id="kanban-cards-vendedor"
-                    className="overflow-x-auto pb-6 pt-0 mt-[-112px]"
-                    onScroll={() => syncScroll('kanban-cards-vendedor', 'kanban-headers-vendedor')}
-                  >
-                    <div className="flex gap-5 min-w-max pt-0 mt-0">
-                      {kanbanVendedorCols.map(col => {
-                        const vColor = vendedorColors[col.label] || 'emerald';
-                        return (
-                          <KanbanColumnCards
-                            key={col.id}
-                            label={col.label}
-                            type="vendedor"
-                            color={vColor}
-                            cards={col.cards}
-                            onDropProp={async (propId) => {
-                              const prop = proposals.find(p => p.id === propId);
-                              if (prop && prop.usuario !== col.label) {
-                                if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
-                                  alert('Apenas gestores e administradores podem transferir propostas.');
-                                  return;
-                                }
-                                const newUser = usersList.find(u => u.nome === col.label);
-                                if (newUser) {
-                                  setProposals(prev => prev.map(p => p.id === propId ? { ...p, usuario: newUser.nome } : p));
-                                  const res = await transferirProposta(propId, newUser.id);
-                                  if (!res.success) alert(res.error);
-                                }
-                              }
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </>
+            );
+          })()}
 
         </div>
       </main>

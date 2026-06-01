@@ -85,6 +85,7 @@ model User {
   notifications  Notification[]
   smtpAccounts   SmtpAccount[]
   avatarUrl      String?
+  color          String?         @default("slate")
   tenantId       String?
   tenant         Tenant?         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
