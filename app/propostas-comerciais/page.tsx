@@ -715,18 +715,18 @@ export default function PropostasComerciaisDashboard() {
 
           {/* LISTA */}
           {viewMode === 'lista' && (
-            <div className="bg-white rounded-md shadow-sm border border-slate-300 overflow-x-auto w-full">
-              <table className="w-full text-left border-collapse min-w-[1100px]">
+            <div className="bg-white rounded-md shadow-sm border border-slate-300 overflow-hidden w-full">
+              <table className="w-full text-left border-collapse table-auto">
                 <thead>
                   <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
-                    <th className="px-6 py-3">FPV Referência</th>
-                    <th className="px-6 py-3">Cliente</th>
-                    <th className="px-6 py-3">Empresa Emissora</th>
-                    <th className="px-6 py-3">Criado Por</th>
-                    <th className="px-6 py-3">Data/Hora</th>
-                    <th className="px-6 py-3 text-right">Valor Total</th>
-                    <th className="px-6 py-3 text-center">Status</th>
-                    <th className="px-6 py-3 text-center w-[180px] min-w-[180px]">Ações</th>
+                    <th className="px-2.5 py-3 lg:px-4">FPV Referência</th>
+                    <th className="px-2.5 py-3 lg:px-4">Cliente</th>
+                    <th className="px-2.5 py-3 lg:px-4">Empresa Emissora</th>
+                    <th className="px-2.5 py-3 lg:px-4">Criado Por</th>
+                    <th className="px-2.5 py-3 lg:px-4">Data/Hora</th>
+                    <th className="px-2.5 py-3 lg:px-4 text-right">Valor Total</th>
+                    <th className="px-2.5 py-3 lg:px-4 text-center">Status</th>
+                    <th className="px-2.5 py-3 lg:px-4 text-center w-[170px] min-w-[170px]">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
@@ -736,15 +736,15 @@ export default function PropostasComerciaisDashboard() {
                     <tr><td colSpan={8} className="px-6 py-12 text-center text-slate-400">Nenhuma proposta encontrada.</td></tr>
                   ) : filteredDocs.map((doc) => (
                     <tr key={doc.id} className="border-b border-slate-200 hover:bg-slate-50">
-                      <td className="px-6 py-3">
+                      <td className="px-2.5 py-3 lg:px-4">
                         <div className="flex items-center gap-2">
                           <Tag size={14} className="text-slate-400" />
                           <span className="font-mono font-bold text-slate-800 text-xs">{fmtRef(doc.numeroFPV, doc.versaoFPV || 1)}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-3 font-semibold text-slate-700">{doc.cliente}</td>
-                      <td className="px-6 py-3 text-slate-500">{doc.empresa}</td>
-                      <td className="px-6 py-3">
+                      <td className="px-2.5 py-3 lg:px-4 font-semibold text-slate-700 max-w-[140px] truncate" title={doc.cliente}>{doc.cliente}</td>
+                      <td className="px-2.5 py-3 lg:px-4 text-slate-500 max-w-[130px] truncate" title={doc.empresa}>{doc.empresa}</td>
+                      <td className="px-2.5 py-3 lg:px-4">
                         <div className="flex items-center gap-1.5">
                           {doc.avatarUrl ? (
                             <img 
@@ -757,12 +757,12 @@ export default function PropostasComerciaisDashboard() {
                               {(doc.usuario || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                             </div>
                           )}
-                          <span className="text-slate-600 font-medium">{doc.usuario || 'Sistema'}</span>
+                          <span className="text-slate-600 font-medium max-w-[110px] truncate" title={doc.usuario || 'Sistema'}>{doc.usuario || 'Sistema'}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-3 text-slate-500 font-mono text-xs">{doc.data}</td>
-                      <td className="px-6 py-3 font-bold text-[#1B4D3E] text-right">{fmt(doc.valor)}</td>
-                      <td className="px-6 py-3 text-center">
+                      <td className="px-2.5 py-3 lg:px-4 text-slate-500 font-mono text-xs">{doc.data}</td>
+                      <td className="px-2.5 py-3 lg:px-4 font-bold text-[#1B4D3E] text-right">{fmt(doc.valor)}</td>
+                      <td className="px-2.5 py-3 lg:px-4 text-center">
                         <select
                           value={doc.status}
                           onChange={async (e) => {
@@ -775,7 +775,7 @@ export default function PropostasComerciaisDashboard() {
                           {statuses.map(s => <option key={s.nome} value={s.nome}>{s.nome}</option>)}
                         </select>
                       </td>
-                      <td className="px-6 py-3 text-center w-[180px] min-w-[180px]">
+                      <td className="px-2.5 py-3 lg:px-4 text-center w-[170px] min-w-[170px]">
                         <div className="flex justify-center gap-2 flex-nowrap whitespace-nowrap">
                           <button
                             onClick={() => router.push(`/propostas-comerciais/${doc.id}`)}
