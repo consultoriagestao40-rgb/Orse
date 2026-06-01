@@ -726,7 +726,7 @@ export default function PropostasComerciaisDashboard() {
                     <th className="px-6 py-3">Data/Hora</th>
                     <th className="px-6 py-3 text-right">Valor Total</th>
                     <th className="px-6 py-3 text-center">Status</th>
-                    <th className="px-6 py-3 text-center">Ações</th>
+                    <th className="px-6 py-3 text-center w-[180px] min-w-[180px]">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
@@ -775,8 +775,8 @@ export default function PropostasComerciaisDashboard() {
                           {statuses.map(s => <option key={s.nome} value={s.nome}>{s.nome}</option>)}
                         </select>
                       </td>
-                      <td className="px-6 py-3 text-center">
-                        <div className="flex justify-center gap-2">
+                      <td className="px-6 py-3 text-center w-[180px] min-w-[180px]">
+                        <div className="flex justify-center gap-2 flex-nowrap whitespace-nowrap">
                           <button
                             onClick={() => router.push(`/propostas-comerciais/${doc.id}`)}
                             title="Editar proposta"

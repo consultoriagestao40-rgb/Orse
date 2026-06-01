@@ -773,7 +773,7 @@ function ProposalsDashboard() {
                       <th className="px-6 py-3 text-right">Valor Total</th>
                       <th className="px-6 py-3 text-center">Status</th>
                       <th className="px-6 py-3 text-center">Versão</th>
-                      <th className="px-6 py-3 text-center">Ações</th>
+                      <th className="px-6 py-3 text-center w-[120px] min-w-[120px]">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="text-sm">
@@ -838,8 +838,8 @@ function ProposalsDashboard() {
                             <span className="text-xs font-bold">v{prop.versao}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-3 text-center">
-                          <div className="flex items-center justify-center gap-2 relative">
+                        <td className="px-6 py-3 text-center w-[120px] min-w-[120px]">
+                          <div className="flex items-center justify-center gap-2 relative flex-nowrap whitespace-nowrap">
                             <button
                               onClick={() => router.push(`/propostas/nova?id=${prop.id}`)}
                               className="text-amber-500 hover:text-amber-600 transition-colors p-1"
