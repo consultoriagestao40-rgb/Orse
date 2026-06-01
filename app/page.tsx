@@ -233,17 +233,6 @@ function ProposalsDashboard() {
                 <History size={14} /> Auditoria
               </button>
             )}
-            {userRole === 'ADMIN' && (
-              <button onClick={async () => {
-                setOpen(false);
-                if (!confirm(`Excluir a proposta ${prop.numero}?`)) return;
-                const res = await deleteProposta(prop.id);
-                if (res.success) loadData();
-                else alert('Erro: ' + res.error);
-              }} className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-slate-100 mt-1 pt-1">
-                <Trash2 size={14} /> Excluir
-              </button>
-            )}
           </div>
         )}
         {open && <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />}
@@ -774,7 +763,7 @@ function ProposalsDashboard() {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse min-w-[1100px]">
                   <thead>
                     <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
                       <th className="px-6 py-3 w-1/5">ID / Proposta</th>
@@ -857,6 +846,25 @@ function ProposalsDashboard() {
                             >
                               <Edit2 size={16} />
                             </button>
+                            {userRole === 'ADMIN' && (
+                              <button
+                                onClick={async () => {
+                                  if (!confirm(`Excluir a proposta ${prop.numero} de "${prop.cliente}"? Esta ação não pode ser desfeita.`)) return;
+                                  setLoading(true);
+                                  const res = await deleteProposta(prop.id);
+                                  if (res.success) {
+                                    loadData();
+                                  } else {
+                                    alert('Erro ao excluir: ' + res.error);
+                                    setLoading(false);
+                                  }
+                                }}
+                                className="text-red-400 hover:text-red-600 transition-colors p-1"
+                                title="Excluir Proposta"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
                             <ActionMenu prop={prop} />
                           </div>
                         </td>
