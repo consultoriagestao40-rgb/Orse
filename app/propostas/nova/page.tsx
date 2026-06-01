@@ -17,7 +17,7 @@ import { saveProposta, getPropostaCompleta, getLoggedUser } from '@/app/proposta
 import { getTiposServico, getSegmentos, createTipoServico, createSegmento } from '@/app/admin/settings/actions';
 import { getEquipesTecnicas } from '@/app/admin/equipes-tecnicas/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, ChevronLeft, Factory, Store, Bus, Building, Hospital, ShoppingBag, GraduationCap, Share2, Clock, Smartphone, Cpu, CreditCard } from 'lucide-react';
+import { Box, Drill, Trash, Presentation, Award, Sparkles, Users, Trophy, Lightbulb, Wrench, Trees, HardHat, ConciergeBell, ChevronLeft, Factory, Store, Bus, Building, Hospital, ShoppingBag, GraduationCap, Share2, Clock, Smartphone, Cpu, CreditCard, AlertTriangle } from 'lucide-react';
 import BrazilMap from '@/components/BrazilMap';
 import DocumentoA4 from '@/components/DocumentoA4';
 import TemplateEditorModal from '@/components/TemplateEditorModal';
@@ -186,6 +186,10 @@ function PropostaEditor() {
 
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [presentationMode, setPresentationMode] = useState(false);
+
+  const [initialPropostaJson, setInitialPropostaJson] = useState<string | null>(null);
+  const [showConfirmDiscardModal, setShowConfirmDiscardModal] = useState(false);
+  const [goBackAfterSave, setGoBackAfterSave] = useState(false);
 
   const [proposta, setProposta] = useState<any>({
     id: null,
@@ -422,7 +426,7 @@ function PropostaEditor() {
                savedSindicatoId = (fullData.equipe[0] as any).cargo.cctId;
             }
             
-            setProposta({
+            const loadedProposta = {
                ...proposta,
                id: fullData.id,
                cliente: { 
@@ -501,7 +505,9 @@ function PropostaEditor() {
                   { id: '5', descricao: 'Descartaveis', incluso: false }
                ],
                dreTaxPercent: (fullData as any).dreTaxPercent
-            });
+            };
+            setProposta(loadedProposta);
+            setInitialPropostaJson(JSON.stringify(loadedProposta));
             setVersions(fullData.availableVersions || []);
             console.log('Estado da proposta atualizado.');
           } else {
@@ -511,16 +517,18 @@ function PropostaEditor() {
           }
         } else if (loggedUser) {
            console.log('Nova proposta: inicializando com o perfil do vendedor logado...');
-           setProposta((prev: any) => ({
-              ...prev,
+           const defaultNewProposta = {
+              ...proposta,
               cliente: {
-                 ...prev.cliente,
+                 ...proposta.cliente,
                  vendedorNome: loggedUser.nome,
                  vendedorCargo: loggedUser.cargo || (loggedUser.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios'),
                  vendedorTelefone: loggedUser.celular || '(41) 9 9737-0880',
                  vendedorEmail: loggedUser.email
               }
-           }));
+           };
+           setProposta(defaultNewProposta);
+           setInitialPropostaJson(JSON.stringify(defaultNewProposta));
         }
       } catch (err) {
         console.error('CRITICAL ERROR no Editor FPV:', err);
@@ -857,6 +865,15 @@ function PropostaEditor() {
     }
   };
 
+  const handleVoltar = () => {
+    const currentJson = JSON.stringify(proposta);
+    if (initialPropostaJson && initialPropostaJson !== currentJson) {
+      setShowConfirmDiscardModal(true);
+    } else {
+      router.push('/');
+    }
+  };
+
   const handleSave = async () => {
     if (!proposta.cliente.cliente) return alert('Por favor, selecione ou informe o cliente.');
     if (proposta.equipe.length === 0) return alert('Adicione ao menos um posto no quadro de equipe.');
@@ -891,7 +908,7 @@ function PropostaEditor() {
         alert(msg);
         const novoNumero = res.numeroProposta || proposta.cliente.numeroProposta;
         const novaRevisao = `R${String(res.versao).padStart(2, '0')}`;
-        setProposta({ 
+        const savedProposta = { 
           ...proposta, 
           id: res.propostaId, 
           versao: res.versao,
@@ -902,13 +919,17 @@ function PropostaEditor() {
           },
           dreTaxPercent,
           dreEncargos
-        });
+        };
+        setProposta(savedProposta);
+        setInitialPropostaJson(JSON.stringify(savedProposta));
         const updatedData = await getPropostaCompleta(res.propostaId);
         if (updatedData) setVersions(updatedData.availableVersions || []);
         setShowChangelogModal(false);
         setShowSaveChoiceModal(false);
         setChangelogText('');
-        if (!proposta.id) {
+        if (goBackAfterSave) {
+          router.push('/');
+        } else if (!proposta.id) {
            router.push(`/propostas/nova?id=${res.propostaId}`);
         }
       } else {
@@ -1181,8 +1202,16 @@ function PropostaEditor() {
         <header className="w-full max-w-7xl flex justify-between items-end mb-6 border-b border-slate-300 pb-4">
             <div className="flex flex-col">
               <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleVoltar}
+                  className="p-2 rounded-full hover:bg-slate-200 text-slate-700 transition-all active:scale-90 bg-white border border-slate-200 shadow-xs flex items-center justify-center shrink-0 cursor-pointer mr-1"
+                  title="Voltar ao Dashboard"
+                >
+                  <ChevronLeft size={20} className="stroke-[3]" />
+                </button>
                 <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
-                   FPV - Formação de Preço de Vendas
+                   FPV - Gestão de Formação de Preço de Vendas
                 </h1>
                 {id && versions.length > 1 && (
                   <div className="flex flex-col ml-4">
@@ -5753,6 +5782,67 @@ function PropostaEditor() {
             </div>
          )}
 
+         {/* MODAL DE DETECÇÃO DE ALTERAÇÕES E DESCARTE */}
+         {showConfirmDiscardModal && (
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+               {/* Backdrop Blur */}
+               <div 
+                  className="fixed inset-0 bg-slate-900/60 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
+                  onClick={() => setShowConfirmDiscardModal(false)}
+               />
+               
+               {/* Modal Content */}
+               <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 relative z-10 animate-in fade-in zoom-in-95 duration-200 text-left">
+                  <div className="flex items-center gap-4 mb-5">
+                     <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
+                        <AlertTriangle size={24} className="stroke-[2.5]" />
+                     </div>
+                     <div>
+                        <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Alterações não Salvas</h3>
+                        <p className="text-xs text-slate-500 font-semibold mt-0.5">O que você deseja fazer com as alterações desta FPV?</p>
+                     </div>
+                  </div>
+                  
+                  <p className="text-sm text-slate-600 leading-relaxed mb-6 font-medium">
+                     Você realizou alterações nas tabelas e premissas de formação de preços. Se voltar agora sem salvar, essas modificações serão perdidas definitivamente.
+                  </p>
+                  
+                  <div className="flex flex-col gap-2.5">
+                     <button
+                        type="button"
+                        onClick={() => {
+                           setShowConfirmDiscardModal(false);
+                           setGoBackAfterSave(true);
+                           handleSave();
+                        }}
+                        className="w-full bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-extrabold uppercase tracking-widest py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                     >
+                        <span>💾</span> Salvar Alterações e Sair
+                     </button>
+                     
+                     <button
+                        type="button"
+                        onClick={() => {
+                           setShowConfirmDiscardModal(false);
+                           router.push('/');
+                        }}
+                        className="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-extrabold uppercase tracking-widest py-3.5 px-4 rounded-xl transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                     >
+                        <span>🗑️</span> Descartar e Sair
+                     </button>
+                     
+                     <button
+                        type="button"
+                        onClick={() => setShowConfirmDiscardModal(false)}
+                        className="w-full bg-slate-50 hover:bg-slate-100 text-slate-500 border border-slate-200 text-xs font-extrabold uppercase tracking-widest py-3.5 px-4 rounded-xl transition-all active:scale-98 cursor-pointer text-center font-bold"
+                     >
+                        Voltar e Continuar Editando
+                     </button>
+                  </div>
+               </div>
+            </div>
+         )}
+
 
          {/* MODAL DE ESCOLHA DE SALVAMENTO (EDIÇÃO) */}
       {showSaveChoiceModal && (
@@ -5800,7 +5890,10 @@ function PropostaEditor() {
             </div>
 
             <button 
-              onClick={() => setShowSaveChoiceModal(false)}
+              onClick={() => {
+                setShowSaveChoiceModal(false);
+                setGoBackAfterSave(false);
+              }}
               className="mt-8 w-full py-3 px-4 font-bold text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all tracking-wider"
             >
               CANCELAR
@@ -5844,6 +5937,7 @@ function PropostaEditor() {
                 onClick={() => {
                   setShowChangelogModal(false);
                   setChangelogText('');
+                  setGoBackAfterSave(false);
                 }}
                 disabled={saving}
                 className="flex-1 py-3.5 bg-slate-50 hover:bg-slate-100 text-slate-500 font-extrabold rounded-2xl text-xs uppercase tracking-wider transition-colors border border-slate-200/60 active:scale-[0.98] cursor-pointer"

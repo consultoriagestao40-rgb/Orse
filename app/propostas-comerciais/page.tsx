@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import { 
   FileText, Plus, Search, 
   LayoutList, LayoutGrid, UserSquare2,
-  Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer, Share2, Eye
+  Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer, Share2, Eye, Palette
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getPropostas, getCurrentUserRole, getUsersList, transferirProposta, getPropostaStatuses, updatePropostaStatusParam } from '@/app/propostas/actions';
@@ -51,6 +51,7 @@ export default function PropostasComerciaisDashboard() {
   });
 
   const [statuses, setStatuses] = useState<any[]>([]);
+  const [vendedorColors, setVendedorColors] = useState<Record<string, string>>({});
 
   const loadData = async () => {
     setLoading(true);
@@ -74,6 +75,20 @@ export default function PropostasComerciaisDashboard() {
   };
 
   useEffect(() => { loadData(); }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const colors: Record<string, string> = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('kanban-vendedor-color-')) {
+          const seller = key.replace('kanban-vendedor-color-', '');
+          colors[seller] = localStorage.getItem(key) || 'emerald';
+        }
+      }
+      setVendedorColors(colors);
+    }
+  }, []);
 
   const getStatusStyle = (statusNome: string) => {
     if (!statusNome) return 'bg-slate-100 text-slate-600';
@@ -182,8 +197,8 @@ export default function PropostasComerciaisDashboard() {
     return 'border-[#1B4D3E]';
   };
 
-  const getHighlightedColorClass = (colorClass: string = '') => {
-    const lower = colorClass.toLowerCase();
+  const getHighlightedColorClass = (colorClass: any = '') => {
+    const lower = (colorClass || '').toLowerCase();
     if (lower.includes('sky') || lower.includes('blue')) {
       return {
         bg: 'bg-gradient-to-br from-blue-600 to-sky-600',
@@ -292,13 +307,7 @@ export default function PropostasComerciaisDashboard() {
     const isStatus = type === 'status';
     const hStyle = isStatus 
       ? getHighlightedColorClass(color) 
-      : {
-          bg: 'bg-gradient-to-br from-[#1B4D3E] to-[#2E6B57]',
-          border: 'border-[#13382d]',
-          text: 'text-white',
-          badge: 'bg-white/20 text-white border border-white/10',
-          totalColor: 'text-white'
-        };
+      : getHighlightedColorClass(color || 'emerald');
 
     // Opções de cores do sistema
     const colorOptions = [
@@ -375,7 +384,7 @@ export default function PropostasComerciaisDashboard() {
             <p className="text-[10px] opacity-75 font-medium mt-0.5">Volume total da coluna</p>
           </div>
         ) : (
-          <div className={`rounded-t-2xl rounded-b-none p-4 shadow-md text-left border border-b-0 ${hStyle.bg} ${hStyle.text} ${hStyle.border}`}>
+          <div className={`rounded-t-2xl rounded-b-none p-4 shadow-md text-left border border-b-0 ${hStyle.bg} ${hStyle.text} ${hStyle.border} relative group`}>
             <div className="flex items-center gap-3 mb-2">
               {colAvatarUrl ? (
                 <img 
@@ -394,6 +403,48 @@ export default function PropostasComerciaisDashboard() {
                   <span className="text-[10px] text-white/90 font-bold bg-white/10 px-2 py-0.5 rounded">{cards.length} proposta{cards.length !== 1 ? 's' : ''}</span>
                 </div>
               </div>
+
+              {/* Paletinha de Cores para o Vendedor 🎨 */}
+              {onColorChange && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowColorPicker(!showColorPicker)}
+                    className={`p-1 rounded hover:bg-white/20 transition-all ${showColorPicker ? 'bg-white/20' : 'opacity-60 group-hover:opacity-100'}`}
+                    title="Customizar Cor da Coluna"
+                  >
+                    <Palette size={14} className="text-white" />
+                  </button>
+
+                  {/* Popover Color Picker */}
+                  {showColorPicker && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-30" 
+                        onClick={() => setShowColorPicker(false)}
+                      />
+                      <div className="absolute right-0 top-6 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-2.5 min-w-[160px] animate-in fade-in slide-in-from-top-2 duration-150 flex flex-col gap-2">
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 px-1">Selecione a Cor</p>
+                        <div className="grid grid-cols-5 gap-1.5">
+                          {colorOptions.map(opt => {
+                            const previewStyle = getHighlightedColorClass(opt.value);
+                            return (
+                              <button
+                                key={opt.value}
+                                onClick={async () => {
+                                  setShowColorPicker(false);
+                                  await onColorChange(opt.value);
+                                }}
+                                className={`w-6 h-6 rounded-full border border-slate-200 shadow-sm transition-all hover:scale-115 active:scale-95 ${previewStyle.bg}`}
+                                title={opt.name}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
             <p className="text-base font-black text-white mt-3">{fmt(total)}</p>
             <p className="text-[10px] text-white/70 font-medium mt-0.5">Volume total</p>
@@ -404,9 +455,6 @@ export default function PropostasComerciaisDashboard() {
   };
 
   const getSuaveBgClass = (colorClass: string = '', type: 'status' | 'vendedor' = 'status') => {
-    if (type !== 'status') {
-      return 'bg-slate-50/70 border border-slate-100/50';
-    }
     const lower = (colorClass || '').toLowerCase();
     if (lower.includes('sky') || lower.includes('blue')) {
       return 'bg-blue-100/40 border border-blue-200/50';
@@ -840,15 +888,24 @@ export default function PropostasComerciaisDashboard() {
                       style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
                     >
                       <div className="flex gap-5 min-w-max pb-0 mb-0">
-                        {kanbanVendedorCols.map(col => (
-                          <KanbanColumnHeader
-                            key={col.id}
-                            label={col.label}
-                            type="vendedor"
-                            cards={col.cards}
-                            total={col.total}
-                          />
-                        ))}
+                        {kanbanVendedorCols.map(col => {
+                          const vColor = vendedorColors[col.label] || 'emerald';
+                          return (
+                            <KanbanColumnHeader
+                              key={col.id}
+                              label={col.label}
+                              type="vendedor"
+                              color={vColor}
+                              cards={col.cards}
+                              total={col.total}
+                              statusId={col.id}
+                              onColorChange={async (newColor) => {
+                                localStorage.setItem(`kanban-vendedor-color-${col.label}`, newColor);
+                                setVendedorColors(prev => ({ ...prev, [col.label]: newColor }));
+                              }}
+                            />
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
@@ -860,12 +917,15 @@ export default function PropostasComerciaisDashboard() {
                     onScroll={() => syncScroll('kanban-cards-vendedor', 'kanban-headers-vendedor')}
                   >
                     <div className="flex gap-5 min-w-max pt-0 mt-0">
-                      {kanbanVendedorCols.map(col => (
-                        <KanbanColumnCards
-                          key={col.id}
-                          label={col.label}
-                          type="vendedor"
-                          cards={col.cards}
+                      {kanbanVendedorCols.map(col => {
+                        const vColor = vendedorColors[col.label] || 'emerald';
+                        return (
+                          <KanbanColumnCards
+                            key={col.id}
+                            label={col.label}
+                            type="vendedor"
+                            color={vColor}
+                            cards={col.cards}
                           onDropProp={async (propId) => {
                             const doc = docs.find(d => d.propostaId === propId);
                             if (doc && doc.usuario !== col.label) {
