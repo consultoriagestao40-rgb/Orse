@@ -768,7 +768,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                       <p><strong>Cliente:</strong> {proposta.cliente?.cliente || proposta.cliente?.razaoSocial}</p>
                       <p><strong>Código:</strong> {proposta.cliente?.codigo ? `CLI-${String(proposta.cliente.codigo).padStart(4, '0')}` : 'Não cadastrado'}</p>
                       <p><strong>CNPJ/CPF:</strong> {proposta.cliente?.cnpj}</p>
-                      <p><strong>Endereço:</strong> {proposta.cliente?.endereco || proposta.cliente?.logradouro ? `${proposta.cliente?.logradouro || proposta.cliente?.endereco}${proposta.cliente?.numero ? `, ${proposta.cliente?.numero}` : ''}${proposta.cliente?.bairro ? `, ${proposta.cliente?.bairro}` : ''}${proposta.cliente?.cidade ? `, ${proposta.cliente?.cidade} - ${proposta.cliente?.uf}` : ''}` : proposta.cliente?.cidade}</p>
+                      <p><strong>Endereço:</strong> {proposta.cliente?.endereco || proposta.cliente?.logradouro ? `${proposta.cliente?.logradouro || proposta.cliente?.endereco}${proposta.cliente?.numero ? `, ${proposta.cliente?.numero}` : ''}${proposta.cliente?.bairro ? `, ${proposta.cliente?.bairro}` : ''}${proposta.cliente?.cidade ? `, ${proposta.cliente?.cidade}${proposta.cliente?.uf && proposta.cliente?.uf !== 'undefined' ? ` - ${proposta.cliente?.uf}` : ''}` : ''}` : proposta.cliente?.cidade}</p>
                       <p><strong>Cidade:</strong> {proposta.cliente?.cidade || ''}</p>
                       <p><strong>Telefone:</strong> {proposta.cliente?.celular || proposta.cliente?.telefone}</p>
                       <p><strong>Email:</strong> {proposta.cliente?.email}</p>
@@ -1153,7 +1153,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
             <p><strong>Cliente:</strong> {proposta.cliente?.cliente || proposta.cliente?.razaoSocial}</p>
             <p><strong>Código:</strong> {proposta.cliente?.codigo ? `CLI-${String(proposta.cliente.codigo).padStart(4, '0')}` : 'Não cadastrado'}</p>
             <p><strong>CNPJ/CPF:</strong> {proposta.cliente?.cnpj}</p>
-            <p><strong>Endereço:</strong> {proposta.cliente?.endereco || proposta.cliente?.logradouro ? `${proposta.cliente?.logradouro || proposta.cliente?.endereco}${proposta.cliente?.numero ? `, ${proposta.cliente?.numero}` : ''}${proposta.cliente?.bairro ? `, ${proposta.cliente?.bairro}` : ''}${proposta.cliente?.cidade ? `, ${proposta.cliente?.cidade} - ${proposta.cliente?.uf}` : ''}` : proposta.cliente?.cidade}</p>
+            <p><strong>Endereço:</strong> {proposta.cliente?.endereco || proposta.cliente?.logradouro ? `${proposta.cliente?.logradouro || proposta.cliente?.endereco}${proposta.cliente?.numero ? `, ${proposta.cliente?.numero}` : ''}${proposta.cliente?.bairro ? `, ${proposta.cliente?.bairro}` : ''}${proposta.cliente?.cidade ? `, ${proposta.cliente?.cidade}${proposta.cliente?.uf && proposta.cliente?.uf !== 'undefined' ? ` - ${proposta.cliente?.uf}` : ''}` : ''}` : proposta.cliente?.cidade}</p>
             <p><strong>Cidade:</strong> {proposta.cliente?.cidade || ''}</p>
             <p><strong>Telefone:</strong> {proposta.cliente?.celular || proposta.cliente?.telefone}</p>
             <p><strong>Email:</strong> {proposta.cliente?.email}</p>
