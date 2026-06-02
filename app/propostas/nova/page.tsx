@@ -517,10 +517,19 @@ function PropostaEditor() {
           }
         } else if (loggedUser) {
            console.log('Nova proposta: inicializando com o perfil do vendedor logado...');
+           const searchClientId = searchParams.get('clientId');
+           const foundClient = searchClientId ? (clientesData || []).find((c: any) => c.id === searchClientId) : null;
+           
            const defaultNewProposta = {
               ...proposta,
               cliente: {
                  ...proposta.cliente,
+                 cliente: foundClient?.nomeFantasia || '',
+                 razaoSocial: foundClient?.razaoSocial || '',
+                 cnpj: foundClient?.cnpj || '',
+                 contato: foundClient?.contato || '',
+                 email: foundClient?.email || '',
+                 celular: foundClient?.whatsapp || '',
                  vendedorNome: loggedUser.nome,
                  vendedorCargo: loggedUser.cargo || (loggedUser.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios'),
                  vendedorTelefone: loggedUser.celular || '(41) 9 9737-0880',

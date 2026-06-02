@@ -101,7 +101,53 @@ export async function createDocumentoProposta(propostaId: string, templateId: st
     });
 
     if (!fpv) throw new Error('FPV não encontrada');
-    if (!fpv.clientId) throw new Error('FPV sem cliente vinculado');
+
+    let clientId = fpv.clientId;
+
+    if (!clientId) {
+      // Tenta buscar o nome do cliente nos metadados da última versão
+      const sortedVersoes = [...fpv.versoes].sort((a: any, b: any) => b.versao - a.versao);
+      const lastVersao = sortedVersoes[0];
+      const meta = (lastVersao?.metadados as any) || {};
+      const clienteNome = meta.clienteNome;
+
+      if (clienteNome) {
+        // Tenta buscar o cliente pelo nomeFantasia (relação case-insensitive)
+        let dbClient = await prisma.client.findFirst({
+          where: {
+            nomeFantasia: {
+              equals: clienteNome.trim(),
+              mode: 'insensitive'
+            }
+          }
+        });
+
+        // Se não encontrar, tenta fazer busca por aproximação
+        if (!dbClient) {
+          dbClient = await prisma.client.findFirst({
+            where: {
+              nomeFantasia: {
+                contains: clienteNome.trim(),
+                mode: 'insensitive'
+              }
+            }
+          });
+        }
+
+        if (dbClient) {
+          // Atualiza a proposta com o ID do cliente encontrado para curar os dados
+          await prisma.proposta.update({
+            where: { id: propostaId },
+            data: { clientId: dbClient.id }
+          });
+          clientId = dbClient.id;
+          (fpv as any).clientId = dbClient.id;
+          (fpv as any).client = dbClient;
+        }
+      }
+    }
+
+    if (!clientId) throw new Error('FPV sem cliente cadastrado no sistema. Por favor, cadastre o cliente em "Clientes" primeiro.');
 
     const sortedVersoes = [...fpv.versoes].sort((a: any, b: any) => b.versao - a.versao);
     const valorTotal = sortedVersoes[0]?.precoVenda || 0;

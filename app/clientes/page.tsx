@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { 
   Plus, Edit2, Building2, Search, 
-  Filter, MoreVertical, FileText
+  Filter, MoreVertical, FileText, Trash2
 } from 'lucide-react';
 import { getClientes, deleteCliente } from './actions';
 import { useRouter } from 'next/navigation';
@@ -14,6 +14,7 @@ export default function ClientesPage() {
   const [clientes, setClientes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -135,17 +136,80 @@ export default function ClientesPage() {
                       <td className="px-6 py-4 text-center text-xs font-bold text-slate-500">
                         {new Date(cliente.createdAt).toLocaleDateString('pt-BR')}
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-right relative">
                         <div className="flex items-center justify-end gap-1">
                           <button 
                             onClick={() => router.push(`/clientes/${cliente.id}/edit`)}
                             className="p-2 text-amber-500 hover:text-amber-600 transition-colors"
+                            title="Editar Cliente"
                           >
                             <Edit2 size={16} />
                           </button>
-                          <button className="p-2 text-slate-300 hover:text-slate-600 transition-colors">
-                            <MoreVertical size={18} />
-                          </button>
+                          <div className="relative inline-block text-left">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenu(activeMenu === cliente.id ? null : cliente.id);
+                              }}
+                              className="p-2 text-slate-400 hover:text-slate-600 transition-colors rounded-lg hover:bg-slate-100/50"
+                              title="Mais Ações"
+                            >
+                              <MoreVertical size={18} />
+                            </button>
+                            
+                            {activeMenu === cliente.id && (
+                              <>
+                                <div 
+                                  className="fixed inset-0 z-10" 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveMenu(null);
+                                  }}
+                                />
+                                <div className="absolute right-0 mt-1 w-52 bg-white border border-slate-200 shadow-xl rounded-xl py-1.5 z-20 text-left animate-in fade-in slide-in-from-top-1 duration-150">
+                                  <div className="px-3 py-1.5 border-b border-slate-100">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ações do Cliente</p>
+                                  </div>
+                                  
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveMenu(null);
+                                      router.push(`/propostas/nova?clientId=${cliente.id}`);
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 flex items-center gap-2 font-medium transition-colors"
+                                  >
+                                    <Plus size={14} className="text-emerald-600" />
+                                    Nova Proposta FPV
+                                  </button>
+                                  
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveMenu(null);
+                                      router.push(`/clientes/${cliente.id}/edit`);
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium transition-colors"
+                                  >
+                                    <Edit2 size={14} className="text-slate-500" />
+                                    Editar Cliente
+                                  </button>
+                                  
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveMenu(null);
+                                      handleDelete(cliente.id);
+                                    }}
+                                    className="w-full text-left px-3 py-2.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2 font-medium border-t border-slate-100 transition-colors"
+                                  >
+                                    <Trash2 size={14} className="text-red-500" />
+                                    Excluir Cliente
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </td>
                     </tr>

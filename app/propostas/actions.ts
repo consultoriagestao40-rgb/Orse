@@ -215,6 +215,27 @@ export async function saveProposta(data: any) {
   try {
     let propostaId = id;
 
+    // Encontra o cliente de forma case-insensitive e limpa espaços
+    let dbClient = await prisma.client.findFirst({
+      where: {
+        nomeFantasia: {
+          equals: cliente.cliente.trim(),
+          mode: 'insensitive'
+        }
+      }
+    });
+
+    if (!dbClient) {
+      dbClient = await prisma.client.findFirst({
+        where: {
+          nomeFantasia: {
+            contains: cliente.cliente.trim(),
+            mode: 'insensitive'
+          }
+        }
+      });
+    }
+
     if (propostaId) {
       // Editar proposta existente - verifica se tem acesso
       const existingProposta = await prisma.proposta.findUnique({
@@ -237,16 +258,18 @@ export async function saveProposta(data: any) {
           }
         }
       }
+
+      // Sincroniza/atualiza o clientId no banco se mudou ou se agora o cliente existe
+      await prisma.proposta.update({
+        where: { id: propostaId },
+        data: { clientId: dbClient?.id || null }
+      });
     } else {
       // Criar nova proposta
-      const dbClient = await prisma.client.findFirst({
-        where: { nomeFantasia: cliente.cliente }
-      });
-
       const newProposta = await prisma.proposta.create({
         data: {
           userId: user.id,
-          clientId: dbClient?.id,
+          clientId: dbClient?.id || null,
           status: 'ATIVO',
           tenantId: user.tenantId
         }
