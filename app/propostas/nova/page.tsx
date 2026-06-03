@@ -190,6 +190,7 @@ function PropostaEditor() {
   const [initialPropostaJson, setInitialPropostaJson] = useState<string | null>(null);
   const [showConfirmDiscardModal, setShowConfirmDiscardModal] = useState(false);
   const [goBackAfterSave, setGoBackAfterSave] = useState(false);
+  const [pendingNavigationUrl, setPendingNavigationUrl] = useState<string | null>(null);
 
   const [proposta, setProposta] = useState<any>({
     id: null,
@@ -549,6 +550,73 @@ function PropostaEditor() {
     load();
   }, [id]);
 
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const currentJson = JSON.stringify(proposta);
+      const hasChanges = initialPropostaJson !== null && initialPropostaJson !== currentJson;
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [initialPropostaJson, proposta]);
+
+  useEffect(() => {
+    const currentJson = JSON.stringify(proposta);
+    const hasChanges = initialPropostaJson !== null && initialPropostaJson !== currentJson;
+
+    if (!hasChanges) return;
+
+    const handleAnchorClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const anchor = target.closest('a');
+      
+      if (anchor) {
+        const href = anchor.getAttribute('href');
+        if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
+          e.preventDefault();
+          e.stopPropagation();
+          setPendingNavigationUrl(href);
+          setGoBackAfterSave(true);
+          setShowConfirmDiscardModal(true);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleAnchorClick, true);
+    return () => {
+      document.removeEventListener('click', handleAnchorClick, true);
+    };
+  }, [initialPropostaJson, proposta]);
+
+  useEffect(() => {
+    const currentJson = JSON.stringify(proposta);
+    const hasChanges = initialPropostaJson !== null && initialPropostaJson !== currentJson;
+
+    if (!hasChanges) return;
+
+    // Push dummy state to capture popstate back transition
+    window.history.pushState(null, '', window.location.href);
+
+    const handlePopState = (e: PopStateEvent) => {
+      window.history.pushState(null, '', window.location.href);
+      setPendingNavigationUrl('BACK');
+      setGoBackAfterSave(true);
+      setShowConfirmDiscardModal(true);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [initialPropostaJson, proposta]);
+
   const totalTributos = (proposta.premissas.tributos || []).reduce((acc: any, t: any) => acc + (t.percent || 0), 0);
 
   useEffect(() => {
@@ -877,6 +945,8 @@ function PropostaEditor() {
   const handleVoltar = () => {
     const currentJson = JSON.stringify(proposta);
     if (initialPropostaJson && initialPropostaJson !== currentJson) {
+      setPendingNavigationUrl('/');
+      setGoBackAfterSave(true);
       setShowConfirmDiscardModal(true);
     } else {
       router.push('/');
@@ -937,7 +1007,11 @@ function PropostaEditor() {
         setShowSaveChoiceModal(false);
         setChangelogText('');
         if (goBackAfterSave) {
-          router.push('/');
+          if (pendingNavigationUrl && pendingNavigationUrl !== 'BACK') {
+             router.push(pendingNavigationUrl);
+          } else {
+             router.push('/');
+          }
         } else if (!proposta.id) {
            router.push(`/propostas/nova?id=${res.propostaId}`);
         }
@@ -5797,7 +5871,11 @@ function PropostaEditor() {
                {/* Backdrop Blur */}
                <div 
                   className="fixed inset-0 bg-slate-900/60 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
-                  onClick={() => setShowConfirmDiscardModal(false)}
+                  onClick={() => {
+                     setShowConfirmDiscardModal(false);
+                     setPendingNavigationUrl(null);
+                     setGoBackAfterSave(false);
+                  }}
                />
                
                {/* Modal Content */}
@@ -5807,13 +5885,13 @@ function PropostaEditor() {
                         <AlertTriangle size={24} className="stroke-[2.5]" />
                      </div>
                      <div>
-                        <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Alterações não Salvas</h3>
-                        <p className="text-xs text-slate-500 font-semibold mt-0.5">O que você deseja fazer com as alterações desta FPV?</p>
+                        <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Deseja salvar as alterações realizadas?</h3>
+                        <p className="text-xs text-slate-500 font-semibold mt-0.5">Detectamos modificações pendentes nesta FPV.</p>
                      </div>
                   </div>
                   
                   <p className="text-sm text-slate-600 leading-relaxed mb-6 font-medium">
-                     Você realizou alterações nas tabelas e premissas de formação de preços. Se voltar agora sem salvar, essas modificações serão perdidas definitivamente.
+                     Você realizou alterações nas tabelas ou premissas de formação de preços. Se sair sem salvar, essas modificações serão perdidas definitivamente.
                   </p>
                   
                   <div className="flex flex-col gap-2.5">
@@ -5826,14 +5904,19 @@ function PropostaEditor() {
                         }}
                         className="w-full bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-extrabold uppercase tracking-widest py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2"
                      >
-                        <span>💾</span> Salvar Alterações e Sair
+                        <span>💾</span> Salvar e Sair
                      </button>
                      
                      <button
                         type="button"
                         onClick={() => {
+                           setInitialPropostaJson(JSON.stringify(proposta)); // Marca como salvas localmente para pular interceptação
                            setShowConfirmDiscardModal(false);
-                           router.push('/');
+                           if (pendingNavigationUrl && pendingNavigationUrl !== 'BACK') {
+                              router.push(pendingNavigationUrl);
+                           } else {
+                              router.push('/');
+                           }
                         }}
                         className="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-extrabold uppercase tracking-widest py-3.5 px-4 rounded-xl transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2"
                      >
@@ -5842,7 +5925,11 @@ function PropostaEditor() {
                      
                      <button
                         type="button"
-                        onClick={() => setShowConfirmDiscardModal(false)}
+                        onClick={() => {
+                           setShowConfirmDiscardModal(false);
+                           setPendingNavigationUrl(null);
+                           setGoBackAfterSave(false);
+                        }}
                         className="w-full bg-slate-50 hover:bg-slate-100 text-slate-500 border border-slate-200 text-xs font-extrabold uppercase tracking-widest py-3.5 px-4 rounded-xl transition-all active:scale-98 cursor-pointer text-center font-bold"
                      >
                         Voltar e Continuar Editando
