@@ -2108,11 +2108,12 @@ function PropostaEditor() {
                     <thead>
                        {/* MONTANTE A */}
                        <tr className="bg-[#1B4D3E] text-white border-b border-white/20">
-                          <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "A" - Mão-de-obra</th>
+                          <th colSpan={isSpot ? 5 : 4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "A" - Mão-de-obra</th>
                        </tr>
                        <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-300 text-[10px] uppercase tracking-wider">
                           <th className="py-2 px-6 w-[50%]">1) Função</th>
                           <th className="py-2 px-6 text-center">Qtd.</th>
+                          {isSpot && <th className="py-2 px-6 text-center">Unidade</th>}
                           <th className="py-2 px-6 text-right">Custo Unit</th>
                           <th className="py-2 px-6 text-right">Total</th>
                        </tr>
@@ -2129,6 +2130,7 @@ function PropostaEditor() {
                              <tr key={idx} className="border-b border-slate-200 border-dotted hover:bg-slate-50">
                                 <td className="py-1.5 px-6 font-semibold text-slate-800">{p.nomeCargo}</td>
                                 <td className="py-1.5 px-6 text-center font-bold">{qty}</td>
+                                {isSpot && <td className="py-1.5 px-6 text-center uppercase font-bold text-slate-600">{p.unidadeMedida || 'DIA'}</td>}
                                 <td className="py-1.5 px-6 text-right">{formatCurrency(custoUnitario)}</td>
                                 <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">{formatCurrency(totalLinha)}</td>
                              </tr>
@@ -2137,7 +2139,7 @@ function PropostaEditor() {
                        
                        {/* Total Função */}
                        <tr className="bg-[#3b8026] text-white font-bold border-y border-[#2d631d]">
-                          <td colSpan={3} className="py-1.5 px-6 text-right">Total Função</td>
+                          <td colSpan={isSpot ? 4 : 3} className="py-1.5 px-6 text-right">Total Função</td>
                           <td className="py-1.5 px-6 text-right">
                              {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.remuneracao || 0) * i.quantidade), 0) || 0)}
                           </td>
@@ -2165,7 +2167,7 @@ function PropostaEditor() {
                        
                        {/* Total Montante A */}
                        <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
-                          <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "A" (Bloco A)</td>
+                          <td colSpan={isSpot ? 4 : 3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "A" (Bloco A)</td>
                           <td className="py-2.5 px-6 text-right">
                              {formatCurrency(resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.blocoA || 0) * i.quantidade), 0) || 0)}
                           </td>
@@ -2173,7 +2175,7 @@ function PropostaEditor() {
 
                         {/* MONTANTE B */}
                         <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
-                           <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "B" - Insumos</th>
+                           <th colSpan={isSpot ? 5 : 4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "B" - Insumos</th>
                         </tr>
                         {(() => {
                            const b = resultado?.items?.reduce((acc: any, i: any) => {
@@ -2207,14 +2209,14 @@ function PropostaEditor() {
 
                            return rows.map((row, i) => (
                               <tr key={i} className="border-b border-slate-200 border-dotted">
-                                 <td colSpan={3} className="py-1 px-6 font-bold">{row.label}</td>
+                                 <td colSpan={isSpot ? 4 : 3} className="py-1 px-6 font-bold">{row.label}</td>
                                  <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">{formatCurrency(row.val)}</td>
                               </tr>
                            ));
                         })()}
 
                         <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white">
-                           <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "B"</td>
+                           <td colSpan={isSpot ? 4 : 3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total do Montante "B"</td>
                            <td className="py-2.5 px-6 text-right">
                               {formatCurrency(
                                  resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.ativos || 0) * i.quantidade), 0) + 
@@ -2309,33 +2311,33 @@ function PropostaEditor() {
                         })()}
                            </>
                         )}
-                                                {/* MONTANTE D - BDI */}
+                        {/* MONTANTE D - BDI */}
                         <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
-                           <th colSpan={4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "D" - BDI</th>
+                           <th colSpan={isSpot ? 5 : 4} className="py-2 text-center uppercase tracking-widest font-bold">Montante "D" - BDI</th>
                         </tr>
                         <tr className="border-b border-slate-200 border-dotted">
                            <td className="py-1.5 px-6 font-bold w-[50%]">Administração</td>
-                           <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{proposta.premissas.taxaAdm.toFixed(2)}%</td>
+                           <td colSpan={isSpot ? 3 : 2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{proposta.premissas.taxaAdm.toFixed(2)}%</td>
                            <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
                               {formatCurrency(resultado?.taxaAdm || 0)}
                            </td>
                         </tr>
                         <tr className="border-b border-slate-200 border-dotted">
                             <td className="py-1.5 px-6 font-bold">Lucro</td>
-                            <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{proposta.premissas.margemLucro.toFixed(2)}%</td>
+                            <td colSpan={isSpot ? 3 : 2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{proposta.premissas.margemLucro.toFixed(2)}%</td>
                             <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
                                {formatCurrency(resultado?.margemLucro || 0)}
                             </td>
                          </tr>
                          <tr className="border-b border-slate-200 border-dotted">
                             <td className="py-1.5 px-6 font-bold">Comissão do Vendedor</td>
-                            <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{(proposta.premissas.comissaoVendedor ?? 0).toFixed(2)}%</td>
+                            <td colSpan={isSpot ? 3 : 2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{(proposta.premissas.comissaoVendedor ?? 0).toFixed(2)}%</td>
                             <td className="py-1.5 px-6 text-right bg-emerald-100/50 font-semibold">
                                {formatCurrency(resultado?.comissaoVendedor || 0)}
                             </td>
                          </tr>
                         <tr className="bg-[#599e41] text-white font-bold border-y border-[#488234]">
-                           <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total dos Montantes "A+B+C+D"</td>
+                           <td colSpan={isSpot ? 4 : 3} className="py-2.5 px-6 text-right uppercase tracking-wider">Total dos Montantes "A+B+C+D"</td>
                            <td className="py-2.5 px-6 text-right">
                               {formatCurrency((resultado?.custoDiretoTotal || 0) + (resultado?.taxaAdm || 0) + (resultado?.margemLucro || 0) + (resultado?.comissaoVendedor || 0))}
                            </td>
@@ -2344,13 +2346,13 @@ function PropostaEditor() {
                         {/* IMPOSTOS */}
                         <tr className="bg-[#8ec277] text-slate-900 border-b border-white">
                            <td className="py-2 px-6 font-bold uppercase">Impostos</td>
-                           <td colSpan={2} className="py-2 px-6 text-center font-bold">{totalTributos.toFixed(2)}%</td>
+                           <td colSpan={isSpot ? 3 : 2} className="py-2 px-6 text-center font-bold">{totalTributos.toFixed(2)}%</td>
                            <td className="py-2 px-6 text-right font-bold">{formatCurrency(resultado?.impostosTotais || 0)}</td>
                         </tr>
                         {proposta.premissas.tributos.map((t: any, i: number) => (
                            <tr key={i} className="border-b border-slate-200 border-dotted">
                               <td className="py-1 px-6 font-bold">{t.nome}</td>
-                              <td colSpan={2} className="py-1 px-6 text-center font-bold bg-slate-50">{t.percent.toFixed(2)}%</td>
+                              <td colSpan={isSpot ? 3 : 2} className="py-1 px-6 text-center font-bold bg-slate-50">{t.percent.toFixed(2)}%</td>
                               <td className="py-1 px-6 text-right bg-emerald-100/50 font-semibold">
                                  {formatCurrency((resultado?.faturamentoBruto || 0) * (t.percent / 100))}
                               </td>
@@ -2359,14 +2361,14 @@ function PropostaEditor() {
 
                         {/* TOTAIS FINAIS */}
                         <tr className="bg-[#1B4D3E] text-white font-black border-t-4 border-white text-sm tracking-widest">
-                           <td colSpan={3} className="py-5 px-6 text-right uppercase">Total dos Montantes "A+B+C+D" + Impostos</td>
+                           <td colSpan={isSpot ? 4 : 3} className="py-5 px-6 text-right uppercase">Total dos Montantes "A+B+C+D" + Impostos</td>
                            <td className="py-5 px-6 text-right text-white !text-white">
                               {formatCurrency(resultado?.faturamentoBruto || 0)}
                            </td>
                         </tr>
                         {!isSpot && (
                            <tr className="bg-black text-white font-black border-t border-slate-800 text-xs tracking-widest uppercase">
-                              <td colSpan={3} className="py-4 px-6 text-right">Valor Total Anual do Contrato</td>
+                              <td colSpan={isSpot ? 4 : 3} className="py-4 px-6 text-right">Valor Total Anual do Contrato</td>
                               <td className="py-4 px-6 text-right text-white !text-white">
                                  {formatCurrency((resultado?.faturamentoBruto || 0) * 12)}
                               </td>
@@ -2408,13 +2410,14 @@ function PropostaEditor() {
                             <th className="px-4 py-2 w-10 text-center">Item</th>
                             <th className="px-4 py-2">Descrição — Mão de Obra</th>
                             <th className="px-4 py-2 text-center">Qtd.</th>
+                            {isSpot && <th className="px-4 py-2 text-center">Unidade</th>}
                             <th className="px-4 py-2 text-right">Preço Unit. Venda</th>
                             <th className="px-4 py-2 text-right">Total</th>
                           </tr>
                         </thead>
                         <tbody>
                           {proposta.equipe.length === 0 ? (
-                            <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-400 italic">Nenhum colaborador no Quadro de Equipe (Aba 4).</td></tr>
+                            <tr><td colSpan={isSpot ? 6 : 5} className="px-6 py-8 text-center text-slate-400 italic">Nenhum colaborador no Quadro de Equipe (Aba 4).</td></tr>
                           ) : (
                             proposta.equipe.map((p: any, idx: number) => {
                               const itemRes = resultado?.items?.find((x: any) => x.id === p.id);
@@ -2427,6 +2430,7 @@ function PropostaEditor() {
                                   <td className="px-4 py-2 text-center font-bold text-slate-500">{idx + 1}</td>
                                   <td className="px-4 py-2 font-semibold text-slate-800">{p.nomeCargo}</td>
                                   <td className="px-4 py-2 text-center font-bold text-slate-800">{qty}</td>
+                                  {isSpot && <td className="px-4 py-2 text-center uppercase font-bold text-slate-600">{p.unidadeMedida || 'DIA'}</td>}
                                   <td className="px-4 py-2 text-right text-slate-700">{fc(precoUnitario)}</td>
                                   <td className="px-4 py-2 text-right font-semibold bg-emerald-50 text-emerald-800">{fc(precoVendaItem)}</td>
                                 </tr>
@@ -2436,7 +2440,7 @@ function PropostaEditor() {
                         </tbody>
                         <tfoot>
                           <tr className="bg-[#1B4D3E] text-white font-black">
-                            <td colSpan={4} className="px-4 py-2.5 text-right uppercase tracking-wider text-xs">Subtotal Mão de Obra (Preço de Venda Final)</td>
+                            <td colSpan={isSpot ? 5 : 4} className="px-4 py-2.5 text-right uppercase tracking-wider text-xs">Subtotal Mão de Obra (Preço de Venda Final)</td>
                             <td className="px-4 py-2.5 text-right text-white !text-white">
                                {fc(resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0)}
                             </td>

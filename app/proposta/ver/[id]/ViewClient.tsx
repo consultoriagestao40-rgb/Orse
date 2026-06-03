@@ -517,6 +517,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
 
   // Merge fullProposta com as seções do documento e valores
   const versao = fullProposta?.availableVersions?.[0];
+  const isSpot = fullProposta.cliente?.tipoProposta === 'SPOT' || fullProposta.tipoItem === 'SPOT' || versao?.resultado?.items?.some((i: any) => i.tipoItem === 'SPOT') || fullProposta.equipe?.some((i: any) => i.tipoItem === 'SPOT');
   const mergedProposta = {
     ...fullProposta,
     tenant: doc.tenant,
@@ -1607,11 +1608,12 @@ return (
                         <thead>
                           {/* MONTANTE A */}
                           <tr className="bg-[#1B4D3E] text-white border-b border-white/20">
-                            <th colSpan={4} className="py-2.5 px-6 text-center uppercase tracking-widest font-black text-[9.5px]">Montante "A" - Mão-de-obra</th>
+                            <th colSpan={isSpot ? 5 : 4} className="py-2.5 px-6 text-center uppercase tracking-widest font-black text-[9.5px]">Montante "A" - Mão-de-obra</th>
                           </tr>
                           <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-300 text-[10px] uppercase tracking-wider">
                             <th className="py-2 px-6 w-[50%]">1) Função</th>
                             <th className="py-2 px-6 text-center">Qtd.</th>
+                            {isSpot && <th className="py-2 px-6 text-center">Unidade</th>}
                             <th className="py-2 px-6 text-right">Custo Unit</th>
                             <th className="py-2 px-6 text-right">Total</th>
                           </tr>
@@ -1629,6 +1631,7 @@ return (
                               <tr key={idx} className="border-b border-slate-200 border-dotted hover:bg-slate-50 bg-white">
                                 <td className="py-1.5 px-6 font-semibold text-slate-800">{p.nomeCargo}</td>
                                 <td className="py-1.5 px-6 text-center font-bold">{qty}</td>
+                                {isSpot && <td className="py-1.5 px-6 text-center uppercase font-bold text-slate-600">{p.unidadeMedida || 'DIA'}</td>}
                                 <td className="py-1.5 px-6 text-right">{formatCurrency(custoUnitario)}</td>
                                 <td className="py-1.5 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100">{formatCurrency(totalLinha)}</td>
                               </tr>
@@ -1637,7 +1640,7 @@ return (
                           
                           {/* Total Função */}
                           <tr className="bg-[#3b8026] text-white font-bold border-y border-[#2d631d] text-[9.5px]">
-                            <td colSpan={3} className="py-1.5 px-6 text-right uppercase">Total Função</td>
+                            <td colSpan={isSpot ? 4 : 3} className="py-1.5 px-6 text-right uppercase">Total Função</td>
                             <td className="py-1.5 px-6 text-right border-l border-emerald-800">
                               {formatCurrency(versao?.resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.remuneracao || 0) * i.quantidade), 0) || 0)}
                             </td>
@@ -1645,7 +1648,6 @@ return (
 
                           {/* Encargos e Outros */}
                           {(() => {
-                            const isSpot = fullProposta.cliente?.tipoProposta === 'SPOT' || fullProposta.tipoItem === 'SPOT' || versao?.resultado?.items?.some((i: any) => i.tipoItem === 'SPOT');
                             if (isSpot) return null;
                             return (
                               <>
@@ -1669,7 +1671,7 @@ return (
                           
                           {/* Total Montante A */}
                           <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white text-[9.5px]">
-                            <td colSpan={3} className="py-2 px-6 text-right uppercase tracking-wider text-white !text-white">Total do Montante "A" (Bloco A)</td>
+                            <td colSpan={isSpot ? 4 : 3} className="py-2 px-6 text-right uppercase tracking-wider text-white !text-white">Total do Montante "A" (Bloco A)</td>
                             <td className="py-2 px-6 text-right border-l border-emerald-950 text-white !text-white font-extrabold">
                               {formatCurrency(versao?.resultado?.items?.reduce((acc: any, i: any) => acc + ((i.detalhes?.blocoA || 0) * i.quantidade), 0) || 0)}
                             </td>
@@ -1677,11 +1679,9 @@ return (
 
                           {/* MONTANTE B */}
                           <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
-                            <th colSpan={4} className="py-2 px-6 text-center uppercase tracking-widest font-black text-[9.5px]">Montante "B" - Insumos</th>
+                            <th colSpan={isSpot ? 5 : 4} className="py-2 px-6 text-center uppercase tracking-widest font-black text-[9.5px]">Montante "B" - Insumos</th>
                           </tr>
                           {(() => {
-                            const isSpot = fullProposta.cliente?.tipoProposta === 'SPOT' || fullProposta.tipoItem === 'SPOT' || versao?.resultado?.items?.some((i: any) => i.tipoItem === 'SPOT');
-                            
                             const b = versao?.resultado?.items?.reduce((acc: any, i: any) => {
                               const d = i.detalhes?.detalheBlocoB;
                               return {
@@ -1712,13 +1712,13 @@ return (
                               <>
                                 {rows.map((row, i) => (
                                   <tr key={i} className="border-b border-slate-200 border-dotted bg-white">
-                                    <td colSpan={3} className="py-1.5 px-6 font-bold">{row.label}</td>
+                                    <td colSpan={isSpot ? 4 : 3} className="py-1.5 px-6 font-bold">{row.label}</td>
                                     <td className="py-1.5 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100">{formatCurrency(row.val)}</td>
                                   </tr>
                                 ))}
                                 {/* Total Montante B */}
                                 <tr className="bg-[#1B4D3E] text-white font-bold border-y border-white text-[9.5px]">
-                                  <td colSpan={3} className="py-2 px-6 text-right uppercase tracking-wider text-white !text-white">Total do Montante "B"</td>
+                                  <td colSpan={isSpot ? 4 : 3} className="py-2 px-6 text-right uppercase tracking-wider text-white !text-white">Total do Montante "B"</td>
                                   <td className="py-2 px-6 text-right border-l border-emerald-950 text-white !text-white font-extrabold">
                                     {formatCurrency(totalB)}
                                   </td>
@@ -1729,7 +1729,6 @@ return (
 
                           {/* MONTANTE C */}
                           {(() => {
-                            const isSpot = fullProposta.cliente?.tipoProposta === 'SPOT' || fullProposta.tipoItem === 'SPOT' || versao?.resultado?.items?.some((i: any) => i.tipoItem === 'SPOT');
                             if (isSpot) return null;
 
                             const bC = versao?.resultado?.items?.reduce((acc: any, i: any) => {
@@ -1798,31 +1797,31 @@ return (
 
                           {/* MONTANTE D - BDI */}
                           <tr className="bg-[#1B4D3E] text-white border-y-2 border-white/20">
-                            <th colSpan={4} className="py-2 px-6 text-center uppercase tracking-widest font-black text-[9.5px]">Montante "D" - BDI</th>
+                            <th colSpan={isSpot ? 5 : 4} className="py-2 px-6 text-center uppercase tracking-widest font-black text-[9.5px]">Montante "D" - BDI</th>
                           </tr>
                           <tr className="border-b border-slate-200 border-dotted bg-white">
                             <td className="py-1.5 px-6 font-bold w-[50%]">Administração</td>
-                            <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{(fullProposta.premissas?.taxaAdm || 0).toFixed(2)}%</td>
+                            <td colSpan={isSpot ? 3 : 2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{(fullProposta.premissas?.taxaAdm || 0).toFixed(2)}%</td>
                             <td className="py-1.5 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100">
                               {formatCurrency(versao?.resultado?.taxaAdm || 0)}
                             </td>
                           </tr>
                           <tr className="border-b border-slate-200 border-dotted bg-white">
                             <td className="py-1.5 px-6 font-bold">Lucro</td>
-                            <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{(fullProposta.premissas?.margemLucro || 0).toFixed(2)}%</td>
+                            <td colSpan={isSpot ? 3 : 2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{(fullProposta.premissas?.margemLucro || 0).toFixed(2)}%</td>
                             <td className="py-1.5 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100">
                               {formatCurrency(versao?.resultado?.margemLucro || 0)}
                             </td>
                           </tr>
                           <tr className="border-b border-slate-200 border-dotted bg-white">
                             <td className="py-1.5 px-6 font-bold">Comissão do Vendedor</td>
-                            <td colSpan={2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{(fullProposta.premissas?.comissaoVendedor || 0).toFixed(2)}%</td>
+                            <td colSpan={isSpot ? 3 : 2} className="py-1.5 px-6 text-center font-bold bg-slate-50">{(fullProposta.premissas?.comissaoVendedor || 0).toFixed(2)}%</td>
                             <td className="py-1.5 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100">
                               {formatCurrency(versao?.resultado?.comissaoVendedor || 0)}
                             </td>
                           </tr>
                           <tr className="bg-[#599e41] text-white font-bold border-y border-[#488234] text-[9.5px]">
-                            <td colSpan={3} className="py-2.5 px-6 text-right uppercase tracking-wider text-white !text-white">Total dos Montantes "A+B+C+D"</td>
+                            <td colSpan={isSpot ? 4 : 3} className="py-2.5 px-6 text-right uppercase tracking-wider text-white !text-white">Total dos Montantes "A+B+C+D"</td>
                             <td className="py-2.5 px-6 text-right border-l border-[#3a692a] text-white !text-white font-bold">
                               {formatCurrency((versao?.resultado?.custoDiretoTotal || 0) + (versao?.resultado?.taxaAdm || 0) + (versao?.resultado?.margemLucro || 0) + (versao?.resultado?.comissaoVendedor || 0))}
                             </td>
@@ -1835,13 +1834,13 @@ return (
                               <>
                                 <tr className="bg-[#8ec277] text-slate-900 border-b border-white text-[9.5px]">
                                   <td className="py-2 px-6 font-bold uppercase text-slate-900 !text-slate-900">Impostos</td>
-                                  <td colSpan={2} className="py-2 px-6 text-center font-bold bg-slate-50/50 text-slate-900 !text-slate-900">{totalTributos.toFixed(2)}%</td>
+                                  <td colSpan={isSpot ? 3 : 2} className="py-2 px-6 text-center font-bold bg-slate-50/50 text-slate-900 !text-slate-900">{totalTributos.toFixed(2)}%</td>
                                   <td className="py-2 px-6 text-right font-bold border-l border-[#7bb363] text-slate-900 !text-slate-900">{formatCurrency(versao?.resultado?.impostosTotais || 0)}</td>
                                 </tr>
                                 {(fullProposta.premissas?.tributos || []).map((t: any, i: number) => (
                                   <tr key={i} className="border-b border-slate-200 border-dotted bg-white">
                                     <td className="py-1 px-6 font-bold text-slate-800 !text-slate-800">{t.nome}</td>
-                                    <td colSpan={2} className="py-1 px-6 text-center font-bold bg-slate-50 text-slate-800 !text-slate-800">{t.percent.toFixed(2)}%</td>
+                                    <td colSpan={isSpot ? 3 : 2} className="py-1 px-6 text-center font-bold bg-slate-50 text-slate-800 !text-slate-800">{t.percent.toFixed(2)}%</td>
                                     <td className="py-1 px-6 text-right bg-emerald-100/30 font-semibold border-l border-slate-100 text-emerald-800 !text-emerald-800">
                                       {formatCurrency((versao?.resultado?.faturamentoBruto || 0) * (t.percent / 100))}
                                     </td>
@@ -1853,17 +1852,16 @@ return (
 
                           {/* TOTAIS FINAIS */}
                           <tr className="bg-[#1B4D3E] text-white font-black border-t-4 border-white text-xs tracking-widest uppercase">
-                            <td colSpan={3} className="py-4 px-6 text-right text-white !text-white">Total dos Montantes "A+B+C+D" + Impostos</td>
+                            <td colSpan={isSpot ? 4 : 3} className="py-4 px-6 text-right text-white !text-white">Total dos Montantes "A+B+C+D" + Impostos</td>
                             <td className="py-4 px-6 text-right text-white !text-white border-l border-emerald-950 font-black text-sm">
                               {formatCurrency(versao?.resultado?.faturamentoBruto || doc.valorTotal || 0)}
                             </td>
                           </tr>
                           {(() => {
-                            const isSpot = fullProposta.cliente?.tipoProposta === 'SPOT' || fullProposta.tipoItem === 'SPOT' || versao?.resultado?.items?.some((i: any) => i.tipoItem === 'SPOT');
                             if (isSpot) return null;
                             return (
                               <tr className="bg-black text-white font-black border-t border-slate-800 text-[10px] tracking-widest uppercase">
-                                <td colSpan={3} className="py-3 px-6 text-right text-white !text-white">Valor Total Anual do Contrato</td>
+                                <td colSpan={isSpot ? 4 : 3} className="py-3 px-6 text-right text-white !text-white">Valor Total Anual do Contrato</td>
                                 <td className="py-3 px-6 text-right text-white !text-white border-l border-slate-900 font-black">
                                   {formatCurrency((versao?.resultado?.faturamentoBruto || 0) * 12)}
                                 </td>
@@ -1932,6 +1930,7 @@ return (
                                 <th className="px-6 py-2.5 w-16 text-center">Item</th>
                                 <th className="px-6 py-2.5">Descrição — Mão de Obra</th>
                                 <th className="px-6 py-2.5 text-center w-24">Qtd.</th>
+                                {isSpot && <th className="px-6 py-2.5 text-center w-24">Unidade</th>}
                                 <th className="px-6 py-2.5 text-right w-36">Preço Unit. Venda</th>
                                 <th className="px-6 py-2.5 text-right w-40">Total</th>
                               </tr>
@@ -1939,7 +1938,7 @@ return (
                             <tbody>
                               {fullProposta.equipe.length === 0 ? (
                                 <tr>
-                                  <td colSpan={5} className="px-6 py-8 text-center text-slate-400 italic bg-white">
+                                  <td colSpan={isSpot ? 6 : 5} className="px-6 py-8 text-center text-slate-400 italic bg-white">
                                     Nenhum colaborador cadastrado nesta proposta.
                                   </td>
                                 </tr>
@@ -1955,6 +1954,7 @@ return (
                                       <td className="px-6 py-2 text-center font-bold text-slate-455">{idx + 1}</td>
                                       <td className="px-6 py-2 font-bold text-slate-700">{p.nomeCargo}</td>
                                       <td className="px-6 py-2 text-center font-black text-slate-800">{qty}</td>
+                                      {isSpot && <td className="px-6 py-2 text-center uppercase font-bold text-slate-600">{p.unidadeMedida || 'DIA'}</td>}
                                       <td className="px-6 py-2 text-right font-medium text-slate-600">{fc(precoUnitario)}</td>
                                       <td className="px-6 py-2 text-right font-black bg-emerald-50/30 text-[#1B4D3E] border-l border-slate-100">{fc(precoVendaItem)}</td>
                                     </tr>
@@ -1964,7 +1964,7 @@ return (
                             </tbody>
                             <tfoot>
                               <tr className="bg-[#1B4D3E] text-white font-black text-[9.5px]">
-                                <td colSpan={4} className="px-6 py-3.5 text-right uppercase tracking-wider">Subtotal Mão de Obra (Preço de Venda Final)</td>
+                                <td colSpan={isSpot ? 5 : 4} className="px-6 py-3.5 text-right uppercase tracking-wider">Subtotal Mão de Obra (Preço de Venda Final)</td>
                                 <td className="px-6 py-3.5 text-right text-white !text-white border-l border-emerald-950 font-black">
                                   {fc(versao?.resultado?.items?.reduce((acc: any, i: any) => acc + (i.precoVenda || 0), 0) || 0)}
                                 </td>

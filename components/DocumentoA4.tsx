@@ -391,6 +391,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
               <th className="p-2 border border-slate-300">Cargo / Função</th>
               <th className="p-2 border border-slate-300 text-center">Escala</th>
               <th className="p-2 border border-slate-300 text-center">Qtd</th>
+              {isSpot && <th className="p-2 border border-slate-300 text-center">Unidade</th>}
               <th className="p-2 border border-slate-300 text-right">Valor Unit.</th>
               <th className="p-2 border border-slate-300 text-right">{isSpot ? 'Valor' : 'Valor Mensal'}</th>
             </tr>
@@ -407,18 +408,19 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                   <td className="p-2 border border-slate-300 font-bold text-slate-800">{item.nomeCargo}</td>
                   <td className="p-2 border border-slate-300 text-center text-slate-600">{item.escala}</td>
                   <td className="p-2 border border-slate-300 text-center text-slate-600">{qty}</td>
+                  {isSpot && <td className="p-2 border border-slate-300 text-center uppercase font-bold text-slate-600">{item.unidadeMedida || 'DIA'}</td>}
                   <td className="p-2 border border-slate-300 text-right text-slate-600">{fmt(precoUnitario)}</td>
                   <td className="p-2 border border-slate-300 text-right font-bold text-slate-800">{fmt(precoVendaTotal)}</td>
                 </tr>
               );
             })}
             {equipe.length === 0 && (
-              <tr><td colSpan={5} className="p-4 text-center text-slate-500 italic">Nenhum posto de serviço adicionado.</td></tr>
+              <tr><td colSpan={isSpot ? 6 : 5} className="p-4 text-center text-slate-500 italic">Nenhum posto de serviço adicionado.</td></tr>
             )}
           </tbody>
           <tfoot>
             <tr className="bg-slate-200 font-black text-slate-900">
-              <td colSpan={4} className="p-2 border border-slate-300 text-right uppercase">Total dos Serviços:</td>
+              <td colSpan={isSpot ? 5 : 4} className="p-2 border border-slate-300 text-right uppercase">Total dos Serviços:</td>
               <td className="p-2 border border-slate-300 text-right">{fmt(totalEquipe)}</td>
             </tr>
           </tfoot>
