@@ -293,6 +293,7 @@ function PropostaEditor() {
   const [dreTaxPercent, setDreTaxPercent] = useState<number | ''>(12.5);
   const [showChangelogModal, setShowChangelogModal] = useState(false);
   const [showSaveChoiceModal, setShowSaveChoiceModal] = useState(false);
+  const [showFirstSaveModal, setShowFirstSaveModal] = useState(false);
   const [changelogText, setChangelogText] = useState('');
   const [dreEncargos, setDreEncargos] = useState({
      fgts: 8.00,
@@ -957,13 +958,14 @@ function PropostaEditor() {
     if (!proposta.cliente.cliente) return alert('Por favor, selecione ou informe o cliente.');
     if (proposta.equipe.length === 0) return alert('Adicione ao menos um posto no quadro de equipe.');
 
-    // Se for nova proposta, salva direto sem escolha de versão
+    // Se for nova proposta, abre o modal de escolha de primeiro salvamento
     if (!proposta.id) {
-      await executeSave('Criação inicial da proposta', false);
+      setShowFirstSaveModal(true);
       return;
     }
 
-    // Se for edição, abre modal de escolha: mesma versão ou nova versão
+    // Se for edição, sempre fecha e volta após salvar
+    setGoBackAfterSave(true);
     setShowSaveChoiceModal(true);
   };
 
@@ -5945,6 +5947,69 @@ function PropostaEditor() {
 
 
          {/* MODAL DE ESCOLHA DE SALVAMENTO (EDIÇÃO) */}
+          {/* MODAL DE PRIMEIRO SALVAMENTO (NOVA PROPOSTA) */}
+          {showFirstSaveModal && (
+             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+                <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 transform scale-100 transition-all duration-300">
+                   <div className="flex flex-col items-center text-center">
+                      <div className="w-16 h-16 bg-[#1B4D3E]/5 border border-[#1B4D3E]/10 rounded-2xl flex items-center justify-center text-[#1B4D3E] mb-6 shadow-sm">
+                         <Save size={32} />
+                      </div>
+                      <h3 className="text-xl font-black text-slate-800 mb-2">Salvar Proposta</h3>
+                      <p className="text-sm text-slate-500 mb-8 px-2 font-medium">
+                         Esta é a primeira vez que você está salvando esta proposta. Como deseja prosseguir?
+                      </p>
+                   </div>
+                   
+                   <div className="space-y-4">
+                      <button
+                         onClick={async () => {
+                            setShowFirstSaveModal(false);
+                            setGoBackAfterSave(false);
+                            await executeSave('Criação inicial da proposta', false);
+                         }}
+                         className="w-full text-left p-4 rounded-2xl border border-slate-200 hover:border-[#1B4D3E]/30 hover:bg-[#1B4D3E]/5 hover:shadow-md transition-all group flex items-start gap-4 cursor-pointer"
+                      >
+                         <div className="w-10 h-10 bg-slate-100 group-hover:bg-white rounded-xl flex items-center justify-center text-slate-500 group-hover:text-[#1B4D3E] shadow-sm">
+                            <Clock size={20} />
+                         </div>
+                         <div>
+                            <h4 className="font-bold text-slate-800 group-hover:text-[#1B4D3E] mb-0.5">Salvar e Continuar Editando</h4>
+                            <p className="text-xs text-slate-500">Salva a proposta e permanece na tela de edição</p>
+                         </div>
+                      </button>
+
+                      <button
+                         onClick={async () => {
+                            setShowFirstSaveModal(false);
+                            setGoBackAfterSave(true);
+                            await executeSave('Criação inicial da proposta', false);
+                         }}
+                         className="w-full text-left p-4 rounded-2xl border border-[#1B4D3E]/10 bg-[#1B4D3E]/5 hover:border-[#1B4D3E]/30 hover:bg-[#1B4D3E]/10 hover:shadow-md transition-all group flex items-start gap-4 cursor-pointer"
+                      >
+                         <div className="w-10 h-10 bg-white/50 group-hover:bg-white rounded-xl flex items-center justify-center text-[#1B4D3E] shadow-sm">
+                            <CheckCircle2 size={20} />
+                         </div>
+                         <div>
+                            <h4 className="font-bold text-[#1B4D3E] mb-0.5">Salvar e Fechar</h4>
+                            <p className="text-xs text-[#1B4D3E]/70">Salva a proposta e retorna para a tela inicial (Pipeline)</p>
+                         </div>
+                      </button>
+                   </div>
+
+                   <button 
+                      onClick={() => {
+                         setShowFirstSaveModal(false);
+                         setGoBackAfterSave(false);
+                      }}
+                      className="mt-8 w-full py-3 px-4 font-bold text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all tracking-wider cursor-pointer"
+                   >
+                      CANCELAR
+                   </button>
+                </div>
+             </div>
+          )}
+
       {showSaveChoiceModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
           <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 transform scale-100 transition-all duration-300">
