@@ -155,7 +155,7 @@ function PropostaEditor() {
       }
     } catch (err) {
       console.error('Erro ao trocar versão:', err);
-      alert('Erro ao carregar versão selecionada.');
+      showAlert('Erro ao carregar versão selecionada.', 'error', 'Erro');
     } finally {
       setLoading(false);
     }
@@ -294,6 +294,21 @@ function PropostaEditor() {
   const [showChangelogModal, setShowChangelogModal] = useState(false);
   const [showSaveChoiceModal, setShowSaveChoiceModal] = useState(false);
   const [showFirstSaveModal, setShowFirstSaveModal] = useState(false);
+  const [customAlert, setCustomAlert] = useState<{
+     title: string;
+     message: string;
+     type: 'success' | 'error' | 'warning' | 'info';
+     onClose?: () => void;
+  } | null>(null);
+
+  const showAlert = (
+     message: string,
+     type: 'success' | 'error' | 'warning' | 'info' = 'info',
+     title: string = 'Aviso',
+     onClose?: () => void
+  ) => {
+     setCustomAlert({ title, message, type, onClose });
+  };
   const [changelogText, setChangelogText] = useState('');
   const [dreEncargos, setDreEncargos] = useState({
      fgts: 8.00,
@@ -514,8 +529,7 @@ function PropostaEditor() {
             console.log('Estado da proposta atualizado.');
           } else {
              console.warn('Proposta não encontrada no banco.');
-             alert('Você não tem permissão para visualizar esta proposta ou ela não existe.');
-             router.push('/');
+             showAlert('Você não tem permissão para visualizar esta proposta ou ela não existe.', 'error', 'Erro', () => router.push('/'));
           }
         } else if (loggedUser) {
            console.log('Nova proposta: inicializando com o perfil do vendedor logado...');
@@ -543,7 +557,7 @@ function PropostaEditor() {
         }
       } catch (err) {
         console.error('CRITICAL ERROR no Editor FPV:', err);
-        alert('Erro ao carregar editor. Verifique o console ou contate o suporte.');
+        showAlert('Erro ao carregar editor. Verifique o console ou contate o suporte.', 'error', 'Erro');
       } finally {
         setLoading(false);
       }
@@ -779,10 +793,10 @@ function PropostaEditor() {
         insumos: newInsumos
       }));
 
-      alert("Custos recalculados com sucesso com os valores atualizados do banco de dados!");
+      showAlert("Custos recalculados com sucesso com os valores atualizados do banco de dados!", 'success', 'Sucesso');
     } catch (error) {
       console.error(error);
-      alert("Erro ao recalcular proposta.");
+      showAlert("Erro ao recalcular proposta.", 'error', 'Erro');
     } finally {
       setLoading(false);
     }
@@ -857,10 +871,10 @@ function PropostaEditor() {
         setShowNewTipoModal(false);
         setNewTipoName('');
       } else {
-        alert("Erro ao criar tipo de serviço: " + res.error);
+        showAlert("Erro ao criar tipo de serviço: " + res.error, 'error', 'Erro');
       }
     } catch (e) {
-      alert("Erro ao criar tipo de serviço");
+      showAlert("Erro ao criar tipo de serviço", 'error', 'Erro');
     } finally {
       setIsSavingTipo(false);
     }
@@ -877,17 +891,17 @@ function PropostaEditor() {
         setShowNewSegmentoModal(false);
         setNewSegmentoName('');
       } else {
-        alert("Erro ao criar segmento: " + res.error);
+        showAlert("Erro ao criar segmento: " + res.error, 'error', 'Erro');
       }
     } catch (e) {
-      alert("Erro ao criar segmento");
+      showAlert("Erro ao criar segmento", 'error', 'Erro');
     } finally {
       setIsSavingSegmento(false);
     }
   };
 
   const handleSaveNewClient = async () => {
-    if (!newClientForm.nomeFantasia.trim()) return alert('Nome Fantasia é obrigatório');
+    if (!newClientForm.nomeFantasia.trim()) return showAlert('Nome Fantasia é obrigatório', 'warning', 'Atenção');
     setSavingClient(true);
     try {
       const res = await createCliente(newClientForm);
@@ -911,17 +925,17 @@ function PropostaEditor() {
         setShowNewClientModal(false);
         setNewClientForm({ nomeFantasia: '', razaoSocial: '', cnpj: '', email: '', whatsapp: '', endereco: '', contato: '', segmento: '' });
       } else {
-        alert(res.error);
+        showAlert(res.error, 'error', 'Erro');
       }
     } catch (err: any) {
-      alert(err.message);
+      showAlert(err.message, 'error', 'Erro');
     } finally {
       setSavingClient(false);
     }
   };
 
   const handleSaveNewProduct = async () => {
-    if (!newProductForm.descricao.trim()) return alert('Descrição é obrigatória');
+    if (!newProductForm.descricao.trim()) return showAlert('Descrição é obrigatória', 'warning', 'Atenção');
     setSavingProduct(true);
     try {
       const res = await createProduto(newProductForm);
@@ -934,10 +948,10 @@ function PropostaEditor() {
         setShowNewProductModal(false);
         setNewProductForm({ descricao: '', precoUnitario: 0, unidade: 'UN', categoria: 'Geral' });
       } else {
-        alert(res.error);
+        showAlert(res.error, 'error', 'Erro');
       }
     } catch (err: any) {
-      alert(err.message);
+      showAlert(err.message, 'error', 'Erro');
     } finally {
       setSavingProduct(false);
     }
@@ -955,8 +969,8 @@ function PropostaEditor() {
   };
 
   const handleSave = async () => {
-    if (!proposta.cliente.cliente) return alert('Por favor, selecione ou informe o cliente.');
-    if (proposta.equipe.length === 0) return alert('Adicione ao menos um posto no quadro de equipe.');
+    if (!proposta.cliente.cliente) return showAlert('Por favor, selecione ou informe o cliente.', 'warning', 'Atenção');
+    if (proposta.equipe.length === 0) return showAlert('Adicione ao menos um posto no quadro de equipe.', 'warning', 'Atenção');
 
     // Se for nova proposta, abre o modal de escolha de primeiro salvamento
     if (!proposta.id) {
@@ -986,7 +1000,21 @@ function PropostaEditor() {
         const msg = novaVersao
           ? `Nova Revisão R${String(res.versao).padStart(2, '0')} salva com sucesso!`
           : `Proposta salva na mesma versão R${String(res.versao).padStart(2, '0')}.`;
-        alert(msg);
+        
+        const onSaveConfirm = () => {
+          if (goBackAfterSave) {
+            if (pendingNavigationUrl && pendingNavigationUrl !== 'BACK') {
+               router.push(pendingNavigationUrl);
+            } else {
+               router.push('/');
+            }
+          } else if (!proposta.id) {
+             router.push(`/propostas/nova?id=${res.propostaId}`);
+          }
+        };
+
+        showAlert(msg, 'success', 'Sucesso!', onSaveConfirm);
+
         const novoNumero = res.numeroProposta || proposta.cliente.numeroProposta;
         const novaRevisao = `R${String(res.versao).padStart(2, '0')}`;
         const savedProposta = { 
@@ -1003,25 +1031,19 @@ function PropostaEditor() {
         };
         setProposta(savedProposta);
         setInitialPropostaJson(JSON.stringify(savedProposta));
-        const updatedData = await getPropostaCompleta(res.propostaId);
-        if (updatedData) setVersions(updatedData.availableVersions || []);
+        
+        getPropostaCompleta(res.propostaId).then(updatedData => {
+           if (updatedData) setVersions(updatedData.availableVersions || []);
+        });
+
         setShowChangelogModal(false);
         setShowSaveChoiceModal(false);
         setChangelogText('');
-        if (goBackAfterSave) {
-          if (pendingNavigationUrl && pendingNavigationUrl !== 'BACK') {
-             router.push(pendingNavigationUrl);
-          } else {
-             router.push('/');
-          }
-        } else if (!proposta.id) {
-           router.push(`/propostas/nova?id=${res.propostaId}`);
-        }
       } else {
-        alert('Erro ao salvar: ' + res.error);
+        showAlert('Erro ao salvar: ' + res.error, 'error', 'Erro');
       }
     } catch (e: any) {
-      alert('Erro inesperado: ' + e.message);
+      showAlert('Erro inesperado: ' + e.message, 'error', 'Erro');
     } finally {
       setSaving(false);
     }
@@ -6005,6 +6027,47 @@ function PropostaEditor() {
                       className="mt-8 w-full py-3 px-4 font-bold text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all tracking-wider cursor-pointer"
                    >
                       CANCELAR
+                   </button>
+                </div>
+             </div>
+          )}
+
+          {/* CUSTOM ALERT DIALOG MODAL */}
+          {customAlert && (
+             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100000] p-4 animate-in fade-in duration-200">
+                <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 transform scale-100 transition-all duration-300">
+                   <div className="flex flex-col items-center text-center">
+                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-sm border ${
+                         customAlert.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' :
+                         customAlert.type === 'error' ? 'bg-rose-50 border-rose-200 text-rose-600' :
+                         customAlert.type === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-600' :
+                         'bg-blue-50 border-blue-200 text-blue-600'
+                      }`}>
+                         {customAlert.type === 'success' && <CheckCircle2 size={32} />}
+                         {customAlert.type === 'error' && <AlertTriangle size={32} />}
+                         {customAlert.type === 'warning' && <AlertTriangle size={32} />}
+                         {customAlert.type === 'info' && <Info size={32} />}
+                      </div>
+                      <h3 className="text-xl font-black text-slate-800 mb-2">{customAlert.title}</h3>
+                      <p className="text-sm text-slate-500 mb-8 px-2 font-medium leading-relaxed text-center">
+                         {customAlert.message}
+                      </p>
+                   </div>
+                   
+                   <button
+                      onClick={() => {
+                         const onClose = customAlert.onClose;
+                         setCustomAlert(null);
+                         if (onClose) onClose();
+                      }}
+                      className={`w-full text-xs font-extrabold uppercase tracking-widest py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-98 cursor-pointer text-center text-white ${
+                         customAlert.type === 'success' ? 'bg-[#1B4D3E] hover:bg-[#13382D]' :
+                         customAlert.type === 'error' ? 'bg-rose-600 hover:bg-rose-700' :
+                         customAlert.type === 'warning' ? 'bg-amber-500 hover:bg-amber-600' :
+                         'bg-blue-600 hover:bg-blue-700'
+                      }`}
+                   >
+                      OK
                    </button>
                 </div>
              </div>
