@@ -55,7 +55,7 @@ body.has-trial-banner main {
 /* Custom scrollbar and spacing overrides */
 main {
   padding-left: 0.5rem !important;
-  padding-right: 0.5rem !important;
+  padding-right: 4px !important;
 }
 
 /* Custom premium scrollbars, always visible */

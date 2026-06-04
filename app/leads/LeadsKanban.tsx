@@ -570,7 +570,7 @@ export default function LeadsKanban() {
 
   return (
     <div className="flex flex-col h-screen bg-slate-50 overflow-y-auto scrollbar-thin">
-      <div className="p-4 md:p-6 bg-white border-b border-slate-200 flex flex-col lg:flex-row justify-between lg:items-center gap-4 shrink-0">
+      <div className="p-4 md:py-6 md:pl-4 md:pr-1 bg-white border-b border-slate-200 flex flex-col lg:flex-row justify-between lg:items-center gap-4 shrink-0">
         <div>
           <h1 className="text-xl md:text-2xl font-black text-slate-800">Pipeline de Leads</h1>
           <p className="text-xs md:text-sm text-slate-500">Gerencie seus leads e prospectos</p>
@@ -675,10 +675,10 @@ export default function LeadsKanban() {
         </div>
       </div>
 
-      <div className="flex flex-col flex-1 p-6 bg-slate-50">
+      <div className="flex flex-col flex-1 py-6 pl-2 pr-1 bg-slate-50">
         {showMetrics && <PipelineMetrics leads={filteredLeads} stages={stages} />}
         <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
-          <div className="flex gap-4 h-[calc(100vh-70px)] shrink-0 pr-6">
+          <div className="flex gap-4 h-[calc(100vh-70px)] shrink-0 pr-1">
           {stages.map((stage, idx) => {
             const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
             const isFirst = idx === 0;
