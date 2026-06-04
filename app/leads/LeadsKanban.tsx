@@ -1297,10 +1297,6 @@ export default function LeadsKanban() {
               <thead>
                 <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
                   <th className="px-3.5 py-3 lg:px-5">Lead/Empresa</th>
-                  <th className="px-3.5 py-3 lg:px-5">Segmento</th>
-                  <th className="px-3.5 py-3 lg:px-5">Contato</th>
-                  <th className="px-3.5 py-3 lg:px-5">Telefone</th>
-                  <th className="px-3.5 py-3 lg:px-5">E-mail</th>
                   <th className="px-3.5 py-3 lg:px-5">Responsável</th>
                   <th className="px-3.5 py-3 lg:px-5 text-right">Valor Est.</th>
                   <th className="px-3.5 py-3 lg:px-5 text-center">Etapa</th>
@@ -1309,14 +1305,10 @@ export default function LeadsKanban() {
               </thead>
               <tbody className="text-sm">
                 {filteredLeads.length === 0 ? (
-                  <tr><td colSpan={9} className="px-6 py-12 text-center text-slate-400">Nenhum lead encontrado.</td></tr>
+                  <tr><td colSpan={5} className="px-6 py-12 text-center text-slate-400">Nenhum lead encontrado.</td></tr>
                 ) : filteredLeads.map((lead) => (
                   <tr key={lead.id} className="border-b border-slate-200 hover:bg-slate-50">
-                    <td className="px-3.5 py-3.5 lg:px-5 font-semibold text-slate-700 max-w-[145px] truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</td>
-                    <td className="px-3.5 py-3.5 lg:px-5 text-slate-500 max-w-[130px] truncate" title={lead.segmento}>{lead.segmento || '-'}</td>
-                    <td className="px-3.5 py-3.5 lg:px-5 text-slate-500 truncate" title={lead.contatoNome}>{lead.contatoNome || '-'}</td>
-                    <td className="px-3.5 py-3.5 lg:px-5 text-slate-500 font-mono text-xs">{lead.telefone || '-'}</td>
-                    <td className="px-3.5 py-3.5 lg:px-5 text-slate-500 font-mono text-xs">{lead.email || '-'}</td>
+                    <td className="px-3.5 py-3.5 lg:px-5 font-semibold text-slate-700 max-w-[200px] truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</td>
                     <td className="px-3.5 py-3.5 lg:px-5">
                       <div className="flex items-center gap-1.5">
                         {lead.assignedTo?.avatarUrl ? (
@@ -1330,7 +1322,7 @@ export default function LeadsKanban() {
                             {(lead.assignedTo?.nome || 'LD').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                           </div>
                         )}
-                        <span className="text-slate-600 font-medium max-w-[110px] truncate" title={lead.assignedTo?.nome || 'Não atribuído'}>{lead.assignedTo?.nome || 'Não atribuído'}</span>
+                        <span className="text-slate-600 font-medium max-w-[150px] truncate" title={lead.assignedTo?.nome || 'Não atribuído'}>{lead.assignedTo?.nome || 'Não atribuído'}</span>
                       </div>
                     </td>
                     <td className="px-3.5 py-3.5 lg:px-5 font-bold text-[#1B4D3E] text-right">{fmt(lead.valorEst || 0)}</td>
