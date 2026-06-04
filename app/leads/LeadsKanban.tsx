@@ -2149,9 +2149,11 @@ export default function LeadsKanban() {
                           </div>
 
                           {/* Info */}
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 space-y-1">
                             <div className="flex justify-between items-baseline mb-0.5">
-                              <h4 className="text-xs md:text-sm font-bold text-slate-800 truncate">{lead.nomeFantasia}</h4>
+                              <h4 className="text-xs md:text-sm font-bold text-slate-800 truncate" title={lead.nomeFantasia}>
+                                {lead.nomeFantasia}
+                              </h4>
                               {lead.latestMsg && (() => {
                                 const msgDate = new Date(lead.latestMsg.createdAt);
                                 if (isNaN(msgDate.getTime())) return null;
@@ -2166,11 +2168,31 @@ export default function LeadsKanban() {
                                 );
                               })()}
                             </div>
-                            <p className="text-xs text-slate-400 font-bold truncate">{lead.telefone}</p>
-                            
+
+                            <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                              <Building size={10} className="shrink-0 text-slate-400" />
+                              <span className="truncate">{lead.segmento || 'Sem segmento'}</span>
+                            </div>
+
+                            {lead.telefone && (
+                              <div className="text-[10px] text-slate-400 flex items-center gap-1 font-bold">
+                                <Phone size={10} className="text-slate-400 shrink-0" />
+                                <span className="truncate">{lead.telefone}</span>
+                              </div>
+                            )}
+
+                            <div className="text-[9px] text-slate-400 font-sans flex items-center gap-1">
+                              <span className="font-bold text-slate-500">Etapa:</span>
+                              <span className="font-semibold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                                {lead.stage?.nome || 'Sem Etapa'}
+                              </span>
+                            </div>
+
                             {lead.latestMsg && (
-                              <p className="text-xs text-slate-500 truncate mt-1">
-                                {lead.latestMsg.direction === 'OUTBOUND' ? 'Você: ' : ''}
+                              <p className="text-xs text-slate-500 truncate mt-1 bg-slate-50 p-1.5 rounded-lg border border-slate-100 italic">
+                                {lead.latestMsg.direction === 'OUTBOUND' ? (
+                                  <span className="font-semibold text-slate-600 not-italic">Você: </span>
+                                ) : ''}
                                 {lead.latestMsg.texto}
                               </p>
                             )}
