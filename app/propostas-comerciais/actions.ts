@@ -600,16 +600,20 @@ export async function uploadSlideImageAction(base64Data: string, fileName: strin
     const cleanFileName = `slide_${Date.now()}_${Math.random().toString(36).substring(2, 8)}${ext}`;
     const uploadDir = path.join(process.cwd(), 'public', 'uploads');
     
-    // Create dir if not exists
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    try {
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      const filePath = path.join(uploadDir, cleanFileName);
+      fs.writeFileSync(filePath, buffer);
+
+      const fileUrl = `/uploads/${cleanFileName}`;
+      return { success: true, fileUrl };
+    } catch (fsErr) {
+      console.warn('Filesystem read-only. Usando fallback Base64 Data URL:', fsErr);
+      return { success: true, fileUrl: base64Data };
     }
-
-    const filePath = path.join(uploadDir, cleanFileName);
-    fs.writeFileSync(filePath, buffer);
-
-    const fileUrl = `/uploads/${cleanFileName}`;
-    return { success: true, fileUrl };
   } catch (err: any) {
     console.error('Erro no upload da imagem do slide:', err);
     return { success: false, error: err.message || 'Erro ao salvar a imagem do slide no servidor' };
@@ -900,15 +904,20 @@ export async function uploadClientFileAction(base64Data: string, fileName: strin
     const cleanFileName = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}${ext}`;
     const uploadDir = path.join(process.cwd(), 'public', 'uploads');
     
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    try {
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      const filePath = path.join(uploadDir, cleanFileName);
+      fs.writeFileSync(filePath, buffer);
+
+      const fileUrl = `/uploads/${cleanFileName}`;
+      return { success: true, fileUrl };
+    } catch (fsErr) {
+      console.warn('Filesystem read-only. Usando fallback Base64 Data URL:', fsErr);
+      return { success: true, fileUrl: base64Data };
     }
-
-    const filePath = path.join(uploadDir, cleanFileName);
-    fs.writeFileSync(filePath, buffer);
-
-    const fileUrl = `/uploads/${cleanFileName}`;
-    return { success: true, fileUrl };
   } catch (err: any) {
     console.error('Erro no upload do arquivo:', err);
     return { success: false, error: err.message || 'Erro ao gravar arquivo no servidor' };
