@@ -1389,7 +1389,6 @@ export default function LeadsKanban() {
           </div>
         )}
       </div>
-      </div>
 
       {/* Dropzones (Aparecem apenas quando arrastando) */}
       {isDragging && (
