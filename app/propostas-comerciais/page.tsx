@@ -247,15 +247,6 @@ export default function PropostasComerciaisDashboard() {
   // ── Dados para Kanban por Segmento ──────────────────────────────────────────
   const kanbanSegmentoCols = React.useMemo(() => {
     const cols: { id: string; label: string; cards: any[]; total: number }[] = [];
-    
-    // Column for Sem Segmento
-    const unassigned = filteredDocs.filter(d => !d.segmento || d.segmento === 'Sem Segmento');
-    cols.push({
-      id: 'unassigned',
-      label: 'Sem Segmento',
-      cards: unassigned,
-      total: unassigned.reduce((acc, d) => acc + (d.valor || 0), 0)
-    });
 
     // Columns for each segment
     segmentos.forEach(seg => {

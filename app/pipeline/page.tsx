@@ -235,15 +235,6 @@ function ProposalsDashboard() {
   // ── Dados para Kanban por Segmento ──────────────────────────────────────────
   const kanbanSegmentoCols = React.useMemo(() => {
     const cols: { id: string; label: string; cards: any[]; total: number }[] = [];
-    
-    // Column for Sem Segmento
-    const unassigned = filteredProposals.filter(p => !p.segmento || p.segmento === 'Sem Segmento');
-    cols.push({
-      id: 'unassigned',
-      label: 'Sem Segmento',
-      cards: unassigned,
-      total: unassigned.reduce((acc, p) => acc + (p.valor || 0), 0)
-    });
 
     // Columns for each segment
     segmentos.forEach(seg => {

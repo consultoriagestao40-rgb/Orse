@@ -994,6 +994,9 @@ function PropostaEditor() {
 
   const handleSave = async () => {
     if (!proposta.cliente.cliente) return showAlert('Por favor, selecione ou informe o cliente.', 'warning', 'Atenção');
+    if (!proposta.cliente.segmento || proposta.cliente.segmento === 'Sem Segmento') {
+      return showAlert('Por favor, selecione o Segmento do Cliente.', 'warning', 'Atenção');
+    }
     if (proposta.equipe.length === 0) return showAlert('Adicione ao menos um posto no quadro de equipe.', 'warning', 'Atenção');
 
     // Se for nova proposta, abre o modal de escolha de primeiro salvamento
@@ -1418,7 +1421,13 @@ function PropostaEditor() {
                     return (
                        <button 
                           key={tab.id} 
-                          onClick={() => setActiveTab(tab.id)} 
+                          onClick={() => {
+                             if (tab.id !== 'dados' && (!proposta.cliente.segmento || proposta.cliente.segmento === 'Sem Segmento')) {
+                                showAlert('Por favor, selecione o Segmento do Cliente antes de avançar.', 'warning', 'Atenção');
+                                return;
+                             }
+                             setActiveTab(tab.id);
+                          }} 
                           className={`
                              whitespace-nowrap py-3 px-1 border-b-2 font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all duration-200
                              ${activeTab === tab.id 

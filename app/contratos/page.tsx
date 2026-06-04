@@ -142,15 +142,6 @@ export default function ContratosDashboard() {
 
   const kanbanSegmentoCols = React.useMemo(() => {
     const cols: { id: string; label: string; cards: any[]; total: number }[] = [];
-    
-    // Column for Sem Segmento
-    const unassigned = filteredContratos.filter(c => !c.client?.segmento || c.client?.segmento === 'Sem Segmento');
-    cols.push({
-      id: 'unassigned',
-      label: 'Sem Segmento',
-      cards: unassigned,
-      total: unassigned.reduce((acc, c) => acc + (c.valorMensal || 0), 0)
-    });
 
     // Columns for each segment
     segmentos.forEach(seg => {
