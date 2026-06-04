@@ -1838,7 +1838,7 @@ const Sidebar = () => {
 
           {/* WIDGET FLUTUANTE DE WHATSAPP (CANTO INFERIOR DIREITO) */}
           {showWhatsAppWidget && (
-            <div className={`fixed top-0 right-12 bottom-0 bg-white shadow-2xl z-[160] flex flex-col transition-all duration-300 animate-in slide-in-from-right duration-300 font-sans border-l border-slate-200 ${
+            <div className={`fixed top-3 right-14 bottom-0 bg-white shadow-2xl z-[160] flex flex-col transition-all duration-300 animate-in slide-in-from-right duration-300 font-sans border-t border-l border-slate-200 rounded-t-3xl ${
               isCollapsed ? 'left-20' : 'left-64'
             }`}>
               {/* External Close Button Tab on the Left Edge */}
@@ -1854,7 +1854,7 @@ const Sidebar = () => {
               </button>
 
               {/* Cabeçalho Único do Widget */}
-              <div className="p-4 bg-gradient-to-r from-slate-900 to-slate-950 text-white flex justify-between items-center shrink-0 border-b border-slate-800 select-none">
+              <div className="p-4 bg-gradient-to-r from-slate-900 to-slate-950 text-white flex justify-between items-center shrink-0 border-b border-slate-800 select-none rounded-t-3xl">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg border border-emerald-500/30">
                     <MessageCircle size={16} className="fill-emerald-400" />
