@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Copy, Check, Share2, FileText, Calculator, BookOpen, Presentation, Clock, Calendar, Video, Image, Paperclip, Trash2, Plus, Loader2 } from 'lucide-react';
+import { X, Copy, Check, Share2, FileText, Calculator, BookOpen, Presentation, Clock, Calendar, Video, Image, Paperclip, Trash2, Plus, Loader2, HelpCircle } from 'lucide-react';
 import { getTemplates } from '@/app/contratos/actions';
 import { updateConfigApresentacao, uploadClientFileAction } from '@/app/propostas-comerciais/actions';
+import { getFaqsPadrao } from '@/app/admin/settings/actions';
 
 interface ClientLinkModalProps {
   documentoId: string;
@@ -63,6 +64,31 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
   const [validadeDays, setValidadeDays] = useState<number | ''>(
     configApresentacao?.validadeDays || ''
   );
+
+  // FAQ States
+  const [faq, setFaq] = useState(
+    configApresentacao?.clientTabs?.faq === true
+  );
+  const [faqList, setFaqList] = useState<any[]>(
+    configApresentacao?.faqList || []
+  );
+  const [loadingFaqs, setLoadingFaqs] = useState(false);
+  const [newFaqQuestion, setNewFaqQuestion] = useState('');
+  const [newFaqAnswer, setNewFaqAnswer] = useState('');
+
+  useEffect(() => {
+    if (faq && faqList.length === 0) {
+      setLoadingFaqs(true);
+      getFaqsPadrao()
+        .then(res => {
+          if (res && res.length > 0) {
+            setFaqList(res.map(item => ({ pergunta: item.pergunta, resposta: item.resposta })));
+          }
+        })
+        .catch(err => console.error('Erro ao carregar FAQs padrão:', err))
+        .finally(() => setLoadingFaqs(false));
+    }
+  }, [faq]);
 
   // Carregar as minutas disponíveis no sistema
   useEffect(() => {
@@ -168,11 +194,13 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
           minutaTemplateId,
           video,
           fotos,
-          documentos
+          documentos,
+          faq
         },
         videoUrl: videoUrl.trim(),
         fotosList,
         documentosList,
+        faqList,
         validadeDays: days,
         linkCreatedAt: new Date().toISOString(),
         linkExpiresAt: new Date(new Date().getTime() + days * 24 * 60 * 60 * 1000).toISOString()
@@ -532,6 +560,123 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                       </div>
                     )}
                   </label>
+                </div>
+              )}
+            </div>
+
+            {/* 9. PERGUNTAS FREQUENTES (FAQ) */}
+            <div className={`p-4 border rounded-2xl transition-all ${faq ? 'border-teal-500/30 bg-teal-50/5' : 'border-slate-200 bg-white'}`}>
+              <label className="flex items-start gap-4 cursor-pointer select-none">
+                <input 
+                  type="checkbox" 
+                  className="mt-1 w-4 h-4 text-teal-600 focus:ring-teal-500 border-slate-300 rounded cursor-pointer"
+                  checked={faq}
+                  onChange={(e) => setFaq(e.target.checked)}
+                />
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center gap-1.5 font-black text-xs uppercase tracking-wider text-slate-800">
+                    <HelpCircle size={14} className="text-teal-600" />
+                    9. Perguntas Frequentes (FAQ)
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
+                    Inclua uma aba de Perguntas Frequentes para sanar as principais dúvidas do cliente.
+                  </p>
+                </div>
+              </label>
+
+              {faq && (
+                <div className="mt-4 pt-4 border-t border-slate-100 space-y-4">
+                  {loadingFaqs ? (
+                    <div className="flex items-center justify-center py-4 text-slate-400 text-xs font-bold gap-2">
+                      <Loader2 size={16} className="animate-spin text-teal-600" />
+                      Carregando FAQs padrões...
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {/* Lista de FAQs customizáveis */}
+                      {faqList.length > 0 && (
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black text-slate-450 uppercase tracking-widest block">
+                            Lista de FAQs desta proposta (você pode editar ou remover)
+                          </label>
+                          <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
+                            {faqList.map((item, idx) => (
+                              <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs relative group">
+                                <div className="space-y-1">
+                                  <input 
+                                    type="text"
+                                    value={item.pergunta}
+                                    onChange={(e) => {
+                                      const updated = [...faqList];
+                                      updated[idx].pergunta = e.target.value;
+                                      setFaqList(updated);
+                                    }}
+                                    placeholder="Pergunta"
+                                    className="w-full px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 outline-none focus:ring-1 focus:ring-teal-500"
+                                  />
+                                  <textarea 
+                                    value={item.resposta}
+                                    onChange={(e) => {
+                                      const updated = [...faqList];
+                                      updated[idx].resposta = e.target.value;
+                                      setFaqList(updated);
+                                    }}
+                                    placeholder="Resposta"
+                                    rows={2}
+                                    className="w-full px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs text-slate-650 outline-none focus:ring-1 focus:ring-teal-500"
+                                  />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setFaqList(prev => prev.filter((_, i) => i !== idx))}
+                                  className="absolute top-2 right-2 text-red-500 hover:text-red-700 p-1 rounded-lg hover:bg-red-50 transition-colors"
+                                  title="Remover pergunta"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Adicionar nova FAQ na hora */}
+                      <div className="bg-slate-50 p-3 rounded-2xl border border-slate-150 space-y-2">
+                        <span className="text-[9px] font-black text-slate-450 uppercase tracking-widest block">
+                          Adicionar nova pergunta ao link
+                        </span>
+                        <div className="space-y-2">
+                          <input 
+                            type="text"
+                            placeholder="Pergunta (ex: Como funciona a rescisão?)"
+                            value={newFaqQuestion}
+                            onChange={(e) => setNewFaqQuestion(e.target.value)}
+                            className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-1 focus:ring-teal-500"
+                          />
+                          <textarea 
+                            placeholder="Resposta..."
+                            value={newFaqAnswer}
+                            onChange={(e) => setNewFaqAnswer(e.target.value)}
+                            rows={2}
+                            className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-600 outline-none focus:ring-1 focus:ring-teal-500"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!newFaqQuestion.trim() || !newFaqAnswer.trim()) return;
+                            setFaqList(prev => [...prev, { pergunta: newFaqQuestion.trim(), resposta: newFaqAnswer.trim() }]);
+                            setNewFaqQuestion('');
+                            setNewFaqAnswer('');
+                          }}
+                          disabled={!newFaqQuestion.trim() || !newFaqAnswer.trim()}
+                          className="w-full bg-teal-600 hover:bg-teal-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed text-white py-1.5 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <Plus size={12} /> Adicionar Pergunta
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

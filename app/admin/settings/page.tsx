@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import { 
   Settings as SettingsIcon, Layers, CalendarDays, Ruler, Plus, Trash2, 
   Save, X, Tag, Edit2, Target, Briefcase, MessageSquare, CreditCard, CheckCircle2, Lock, Smartphone, RefreshCw, Palette, Image,
-  Eye, EyeOff
+  Eye, EyeOff, HelpCircle
 } from 'lucide-react';
 import { 
   getPropostaStatuses, createPropostaStatus, deletePropostaStatus, getLoggedUser,
@@ -23,7 +23,8 @@ import {
   updateUnidadeMedida, toggleUnidadeMedida,
   updateCategoria, toggleCategoria,
   updateTipoServico, toggleTipoServico,
-  updateSegmento, toggleSegmento
+  updateSegmento, toggleSegmento,
+  getFaqsPadrao, createFaqPadrao, updateFaqPadrao, deleteFaqPadrao
 } from './actions';
 import { getEmpresasEmissoras, createEmpresaEmissora, updateEmpresaEmissora, deleteEmpresaEmissora } from './empresas-actions';
 import { 
@@ -36,7 +37,7 @@ import {
   changeTenantLogo, changeTenantTheme
 } from '@/app/admin/empresas/actions';
 
-type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas' | 'whatsapp' | 'faturamento' | 'marca';
+type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas' | 'whatsapp' | 'faturamento' | 'marca' | 'faq';
 
 const menuGroups = [
   {
@@ -48,6 +49,7 @@ const menuGroups = [
       { id: 'categorias', label: 'Categorias', icon: Tag, roles: ['ADMIN', 'MANAGER', 'USER'] },
       { id: 'tipos', label: 'Tipos de Serviço', icon: SettingsIcon, roles: ['ADMIN', 'MANAGER', 'USER'] },
       { id: 'segmentos', label: 'Segmentos de Cliente', icon: Target, roles: ['ADMIN', 'MANAGER', 'USER'] },
+      { id: 'faq', label: 'Perguntas Frequentes (FAQ)', icon: HelpCircle, roles: ['ADMIN', 'MANAGER', 'USER'] },
     ]
   },
   {
@@ -191,6 +193,11 @@ export default function SettingsPage() {
   // Status
   const [statuses, setStatuses] = useState<any[]>([]);
   const [newStatusName, setNewStatusName] = useState('');
+
+  // FAQ
+  const [faqs, setFaqs] = useState<any[]>([]);
+  const [showFaqModal, setShowFaqModal] = useState(false);
+  const [faqForm, setFaqForm] = useState({ id: '', pergunta: '', resposta: '', ordem: 0 });
 
   // Empresas Emissoras
   const [empresas, setEmpresas] = useState<any[]>([]);
@@ -805,6 +812,9 @@ export default function SettingsPage() {
         await loadBillingData();
       } else if (activeTab === 'marca') {
         await loadBillingData();
+      } else if (activeTab === 'faq') {
+        const data = await getFaqsPadrao();
+        setFaqs(data || []);
       }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -857,6 +867,49 @@ export default function SettingsPage() {
     const res = await deleteSegmento(id);
     if (res.success) loadData();
     else alert('Erro ao excluir: ' + res.error);
+  };
+
+  // FAQ Handlers
+  const handleSaveFaq = async () => {
+    if (!faqForm.pergunta.trim() || !faqForm.resposta.trim()) {
+      alert('Pergunta e Resposta são obrigatórias.');
+      return;
+    }
+    setLoading(true);
+    let res;
+    if (faqForm.id) {
+      res = await updateFaqPadrao(faqForm.id, faqForm.pergunta, faqForm.resposta, faqForm.ordem);
+    } else {
+      res = await createFaqPadrao(faqForm.pergunta, faqForm.resposta, faqForm.ordem);
+    }
+    if (res.success) {
+      setShowFaqModal(false);
+      loadData();
+    } else {
+      alert('Erro: ' + res.error);
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteFaq = async (id: string) => {
+    if (!confirm('Deseja realmente remover esta pergunta frequente?')) return;
+    setLoading(true);
+    const res = await deleteFaqPadrao(id);
+    if (res.success) {
+      loadData();
+    } else {
+      alert('Erro ao excluir: ' + res.error);
+      setLoading(false);
+    }
+  };
+
+  const openFaqModal = (faq?: any) => {
+    if (faq && faq.id) {
+      setFaqForm({ id: faq.id, pergunta: faq.pergunta, resposta: faq.resposta, ordem: faq.ordem || 0 });
+    } else {
+      setFaqForm({ id: '', pergunta: '', resposta: '', ordem: 0 });
+    }
+    setShowFaqModal(true);
   };
 
   // Status
@@ -1549,6 +1602,69 @@ export default function SettingsPage() {
             )}
 
 
+            {/* ABA FAQ */}
+            {activeTab === 'faq' && (
+              <div>
+                <div className="bg-[#1B4D3E] px-6 py-3 border-b border-[#13382D] flex justify-between items-center text-white">
+                  <h2 className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                    <HelpCircle size={14} /> Perguntas Frequentes Padrão (FAQ)
+                  </h2>
+                  <button 
+                    onClick={() => openFaqModal()}
+                    className="bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
+                  >
+                    <Plus size={12} /> Nova Pergunta
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                      Defina as perguntas e respostas padrões. Elas serão pré-carregadas sempre que for gerar um novo link de cliente.
+                    </p>
+                  </div>
+
+                  {faqs.length === 0 ? (
+                    <div className="text-center py-12 bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
+                      <HelpCircle size={32} className="text-slate-350 mx-auto mb-2" />
+                      <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Nenhuma FAQ cadastrada.</p>
+                      <p className="text-[10px] text-slate-400 mt-1">Clique em "Nova Pergunta" para começar.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {faqs.map((f, idx) => (
+                        <div key={f.id} className="p-4 bg-white border border-slate-200 rounded-2xl hover:border-emerald-500/20 hover:shadow-sm transition-all space-y-2">
+                          <div className="flex justify-between items-start gap-4">
+                            <h4 className="text-xs font-black text-slate-800 uppercase tracking-wide">
+                              {idx + 1}. {f.pergunta}
+                            </h4>
+                            <div className="flex gap-2">
+                              <button 
+                                onClick={() => openFaqModal(f)} 
+                                className="text-amber-500 hover:text-amber-600 p-1 rounded hover:bg-amber-50 transition-all"
+                                title="Editar"
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteFaq(f.id)} 
+                                className="text-slate-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition-all"
+                                title="Remover"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-xs text-slate-500 whitespace-pre-line bg-slate-50 p-3 rounded-xl leading-relaxed">
+                            {f.resposta}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             
             {/* ABA EMPRESAS EMISSORAS */}
             {activeTab === 'empresas' && (
@@ -2437,6 +2553,55 @@ export default function SettingsPage() {
                 </div>
                 <button onClick={handleSaveEscala} className="w-full bg-[#1B4D3E] hover:bg-emerald-900 text-white py-3 rounded text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98] mt-4">
                   <Save size={18} /> Salvar Escala
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* MODAL FAQ */}
+        {showFaqModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-250">
+              <div className="bg-[#1B4D3E] px-6 py-4 border-b border-[#13382D] flex justify-between items-center text-white">
+                <h2 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                  <HelpCircle size={16} /> {faqForm.id ? 'Editar' : 'Nova'} Pergunta Frequente
+                </h2>
+                <button onClick={() => setShowFaqModal(false)} className="text-white/60 hover:text-white transition-colors cursor-pointer">
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pergunta</label>
+                  <input 
+                    type="text" 
+                    placeholder="Ex: Qual o prazo de início dos serviços?"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-250 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-[#1B4D3E] focus:border-[#1B4D3E] transition-all" 
+                    value={faqForm.pergunta} 
+                    onChange={e => setFaqForm({...faqForm, pergunta: e.target.value})} 
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Resposta</label>
+                  <textarea 
+                    rows={4}
+                    placeholder="Ex: O início das atividades ocorre em até 5 dias úteis após a assinatura do contrato..."
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-250 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-[#1B4D3E] focus:border-[#1B4D3E] transition-all" 
+                    value={faqForm.resposta} 
+                    onChange={e => setFaqForm({...faqForm, resposta: e.target.value})} 
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ordem de Exibição</label>
+                  <input 
+                    type="number" 
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-250 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-[#1B4D3E] focus:border-[#1B4D3E] transition-all" 
+                    value={faqForm.ordem} 
+                    onChange={e => setFaqForm({...faqForm, ordem: parseInt(e.target.value) || 0})} 
+                  />
+                </div>
+                <button onClick={handleSaveFaq} className="w-full bg-[#1B4D3E] hover:bg-emerald-800 text-white py-3 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98] mt-4">
+                  <Save size={14} /> Salvar Pergunta
                 </button>
               </div>
             </div>

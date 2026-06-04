@@ -286,3 +286,72 @@ export async function toggleSegmento(id: string, ativo: boolean) {
   }
 }
 
+// PERGUNTAS FREQUENTES (FAQ)
+export async function getFaqsPadrao() {
+  try {
+    const { getLoggedUser } = await import('@/app/propostas/actions');
+    const user = await getLoggedUser();
+    const whereClause: any = {};
+    if (user?.tenantId) {
+      whereClause.tenantId = user.tenantId;
+    } else {
+      whereClause.tenantId = null;
+    }
+    return await prisma.faqPadrao.findMany({
+      where: whereClause,
+      orderBy: { ordem: 'asc' }
+    });
+  } catch (error) {
+    console.error('Erro ao buscar FAQs padrões:', error);
+    return [];
+  }
+}
+
+export async function createFaqPadrao(pergunta: string, resposta: string, ordem: number = 0) {
+  try {
+    const { getLoggedUser } = await import('@/app/propostas/actions');
+    const user = await getLoggedUser();
+    const tenantId = user?.tenantId || null;
+    const res = await prisma.faqPadrao.create({
+      data: {
+        pergunta: pergunta.trim(),
+        resposta: resposta.trim(),
+        ordem,
+        tenantId
+      }
+    });
+    revalidatePath('/admin/settings');
+    return { success: true, data: res };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateFaqPadrao(id: string, pergunta: string, resposta: string, ordem: number = 0) {
+  try {
+    const res = await prisma.faqPadrao.update({
+      where: { id },
+      data: {
+        pergunta: pergunta.trim(),
+        resposta: resposta.trim(),
+        ordem
+      }
+    });
+    revalidatePath('/admin/settings');
+    return { success: true, data: res };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteFaqPadrao(id: string) {
+  try {
+    await prisma.faqPadrao.delete({ where: { id } });
+    revalidatePath('/admin/settings');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+

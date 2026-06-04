@@ -8,7 +8,7 @@ import {
   CheckCircle, Edit, FileText, X, Printer, CheckCircle2, ShieldCheck, Mail, MapPin, 
   Smartphone, User, Presentation, Calculator, BookOpen, ChevronRight, ChevronLeft, Menu, TrendingUp,
   UserCheck, ClipboardList, Package, Layers, Info, Download, Clock, AlertTriangle,
-  Video, Image, Paperclip, ExternalLink, Eye
+  Video, Image, Paperclip, ExternalLink, Eye, HelpCircle
 } from 'lucide-react';
 
 const PropostaApresentacaoPrint = dynamic(
@@ -554,7 +554,8 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     minuta: false,
     video: false,
     fotos: false,
-    documentos: false
+    documentos: false,
+    faq: false
   };
 
   const isSlide = !!doc.templateOrigem?.nome?.toLowerCase()?.includes('apresenta') || doc.tipo === 'SLIDE_DECK';
@@ -587,6 +588,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
   const videoUrl = doc.configApresentacao?.videoUrl || '';
   const fotosList = doc.configApresentacao?.fotosList || [];
   const documentosList = doc.configApresentacao?.documentosList || [];
+  const faqList = doc.configApresentacao?.faqList || [];
 
   const navItems = [
     { id: 'apresentacao', label: '1. Apresentação Slides', icon: Presentation, show: tabsConfig.apresentacao && hasCanva },
@@ -596,7 +598,8 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     { id: 'video', label: '5. Vídeo Apresentação', icon: Video, show: tabsConfig.video && !!doc.configApresentacao?.videoUrl },
     { id: 'fotos', label: '6. Fotos da Visita Técnica', icon: Image, show: tabsConfig.fotos && !!doc.configApresentacao?.fotosList?.length },
     { id: 'documentos', label: '7. Documentos & Certidões', icon: Paperclip, show: tabsConfig.documentos && !!doc.configApresentacao?.documentosList?.length },
-    { id: 'historico', label: '8. Histórico e Ajustes', icon: Clock, show: !!doc.configApresentacao?.negotiations && doc.configApresentacao.negotiations.length > 0 }
+    { id: 'faq', label: '8. Perguntas Frequentes (FAQ)', icon: HelpCircle, show: tabsConfig.faq && !!faqList.length },
+    { id: 'historico', label: '9. Histórico e Ajustes', icon: Clock, show: !!doc.configApresentacao?.negotiations && doc.configApresentacao.negotiations.length > 0 }
   ].filter(item => item.show);
 
   // Define a aba ativa padrão inicial
@@ -608,11 +611,13 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     if (tabsConfig.video && doc.configApresentacao?.videoUrl) return 'video';
     if (tabsConfig.fotos && doc.configApresentacao?.fotosList?.length) return 'fotos';
     if (tabsConfig.documentos && doc.configApresentacao?.documentosList?.length) return 'documentos';
+    if (tabsConfig.faq && faqList.length) return 'faq';
     return 'proposta';
   };
 
   const [activeClientTab, setActiveClientTab] = useState<string>('proposta');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   const handleDocumentOpen = (url: string) => {
     if (!url) return;
@@ -2321,7 +2326,55 @@ return (
             </div>
           )}
 
-          {/* 8. ABA: HISTÓRICO E AJUSTES */}
+          {/* 8. ABA: PERGUNTAS FREQUENTES (FAQ) */}
+          {activeClientTab === 'faq' && faqList.length > 0 && (
+            <div className="max-w-[960px] mx-auto bg-white rounded-3xl p-6 md:p-10 shadow-2xl shadow-slate-950/20 text-slate-800 animate-fadeIn relative">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center print:hidden flex items-center justify-center gap-2 border-b border-slate-100 pb-3">
+                ❓ Perguntas Frequentes (FAQ)
+              </h3>
+
+              <div className="space-y-4 max-w-3xl mx-auto py-2">
+                {faqList.map((item: { pergunta: string; resposta: string }, idx: number) => {
+                  const isOpen = openFaqIndex === idx;
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`border rounded-2xl transition-all duration-200 ${
+                        isOpen 
+                          ? 'border-emerald-500/30 bg-emerald-50/5 shadow-md shadow-emerald-500/5' 
+                          : 'border-slate-200 bg-white hover:border-slate-350 hover:bg-slate-50/30'
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                        className="w-full text-left px-5 py-4 flex justify-between items-center gap-4 cursor-pointer focus:outline-none"
+                      >
+                        <span className="text-xs font-black text-slate-800 uppercase tracking-wide">
+                          {idx + 1}. {item.pergunta}
+                        </span>
+                        <div className={`p-1.5 rounded-full transition-all duration-200 ${
+                          isOpen ? 'bg-emerald-100/50 text-[#1B4D3E] rotate-90' : 'bg-slate-100 text-slate-400'
+                        }`}>
+                          <ChevronRight size={14} />
+                        </div>
+                      </button>
+
+                      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                        isOpen ? 'max-h-[500px] border-t border-slate-100' : 'max-h-0'
+                      }`}>
+                        <div className="px-5 py-4 text-xs text-slate-650 leading-relaxed whitespace-pre-line font-medium font-sans">
+                          {item.resposta}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 9. ABA: HISTÓRICO E AJUSTES */}
           {activeClientTab === 'historico' && (
             <div className="max-w-[960px] mx-auto bg-white rounded-3xl p-6 md:p-10 shadow-2xl shadow-slate-950/20 text-slate-800 animate-fadeIn relative">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center print:hidden flex items-center justify-center gap-2 border-b border-slate-100 pb-3">
