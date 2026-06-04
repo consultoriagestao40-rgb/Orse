@@ -700,6 +700,7 @@ const Sidebar = () => {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [recentlyDroppedId, setRecentlyDroppedId] = useState<string | null>(null);
+  const [notificationSearch, setNotificationSearch] = useState('');
 
   // Sincroniza e ordena os itens do menu
   useEffect(() => {
@@ -1441,7 +1442,7 @@ const Sidebar = () => {
         </div>
       )}
 
-      {/* CENTRAL DE NOTIFICAÇÕES FLUTUANTE NO CANTO SUPERIOR DIREITO */}
+      {/* CENTRAL DE NOTIFICAÇÕES DESLIZANTE DA DIREITA (ESTILO BITRIX) */}
       {user && (
         <div className={`${trialStatus?.isTrialActive && !trialStatus?.trialExpired && trialStatus?.hasContact && countdownTime ? 'fixed top-[74px] right-6' : 'fixed top-[18px] right-6'} z-[100] font-sans`}>
           {/* Ícone de Sino Flutuante */}
@@ -1457,97 +1458,184 @@ const Sidebar = () => {
             )}
           </button>
 
-          {/* Popover de Notificações - Premium e Espaçoso */}
+          {/* Central de Notificações - Drawer Lateral Deslizante */}
           {showNotifications && (
             <>
-              {/* Overlay invisível para fechar ao clicar fora */}
+              {/* Backdrop Escurecido com Blur */}
               <div 
-                className="fixed inset-0 z-40 bg-transparent"
-                onClick={() => setShowNotifications(false)}
+                className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-[150] transition-opacity duration-300 animate-in fade-in"
+                onClick={() => {
+                  setShowNotifications(false);
+                  setNotificationSearch('');
+                }}
               />
               
-              <div className="absolute right-0 mt-3 w-[420px] bg-white border border-slate-200 shadow-2xl rounded-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col">
-                {/* Header */}
-                <div className="bg-[#1B4D3E] text-white p-5 flex items-center justify-between border-b border-[#1B4D3E]/10 shrink-0">
-                  <div>
-                    <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-2">
-                      🔔 Central de Notificações
-                    </h3>
-                    <p className="text-[9px] text-emerald-100/60 font-semibold uppercase mt-0.5">
-                      {unreadCount} pendente{unreadCount !== 1 ? 's' : ''} para leitura
-                    </p>
-                  </div>
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={handleMarkAllAsRead}
-                      className="text-[9px] font-black uppercase tracking-wider text-emerald-300 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-all cursor-pointer"
-                    >
-                      Ler todas
-                    </button>
-                  )}
-                </div>
-
-                {/* Body - Lista de Notificações */}
-                <div className="max-h-[350px] overflow-y-auto divide-y divide-slate-100 py-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-                  {notifications.length === 0 ? (
-                    <div className="p-10 text-center flex flex-col items-center justify-center gap-3">
-                      <div className="w-12 h-12 bg-slate-50 border border-slate-200 text-slate-400 rounded-2xl flex items-center justify-center">
-                        <Bell size={20} className="opacity-40" />
+              {/* Painel Lateral */}
+              <div className="fixed top-0 right-0 h-screen w-full max-w-[480px] bg-slate-50 shadow-[0_0_50px_rgba(0,0,0,0.18)] z-[160] flex flex-col animate-in slide-in-from-right duration-300 font-sans border-l border-slate-200">
+                {/* Header do Drawer */}
+                <div className="bg-white p-6 border-b border-slate-200/80 flex flex-col gap-4 shrink-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[#1B4D3E]">
+                        <Bell size={20} />
                       </div>
                       <div>
-                        <p className="text-xs font-black text-slate-700 uppercase tracking-wide">Tudo limpo por aqui!</p>
-                        <p className="text-[10px] text-slate-400 font-semibold mt-1">Você não possui novas notificações no momento.</p>
+                        <h3 className="text-base font-black text-slate-800 tracking-tight">Notificações</h3>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Central de Mensagens</p>
                       </div>
                     </div>
-                  ) : (
-                    notifications.map((n) => (
-                      <div
-                        key={n.id}
-                        onClick={() => handleMarkAsRead(n.id, n.link)}
-                        className={`p-4 hover:bg-slate-50 transition-colors cursor-pointer flex gap-3.5 relative group ${
-                          !n.read ? 'bg-emerald-50/10' : ''
-                        }`}
+                    
+                    <div className="flex items-center gap-2">
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={handleMarkAllAsRead}
+                          className="text-[9px] font-black uppercase tracking-wider bg-[#1B4D3E]/10 hover:bg-[#1B4D3E]/20 text-[#1B4D3E] px-3 py-2 rounded-xl transition-all cursor-pointer"
+                        >
+                          Ler todas ({unreadCount})
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          setShowNotifications(false);
+                          setNotificationSearch('');
+                        }}
+                        className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+                        title="Fechar Notificações"
                       >
-                        {/* Ponto indicador de não lido */}
-                        {!n.read && (
-                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-[#1B4D3E] rounded-full" />
-                        )}
-                        
-                        {/* Ícone contextual da notificação */}
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
-                          !n.read 
-                            ? 'bg-[#1B4D3E]/10 border-[#1B4D3E]/20 text-[#1B4D3E]' 
-                            : 'bg-slate-50 border-slate-200 text-slate-400'
-                        }`}>
-                          <Bell size={15} />
-                        </div>
+                        <X size={18} />
+                      </button>
+                    </div>
+                  </div>
 
-                        {/* Conteúdo */}
-                        <div className="space-y-1.5 flex-1 min-w-0 pl-1">
-                          <p className={`text-xs text-slate-700 leading-relaxed font-semibold ${!n.read ? 'font-black text-slate-800' : ''}`}>
-                            {n.texto}
-                          </p>
-                          
-                          <div className="flex items-center justify-between gap-2">
-                            {/* Nome do usuário scoped (se for ADMIN) */}
-                            {user?.role === 'ADMIN' && n.user?.nome && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[8px] font-black bg-slate-100 text-slate-500 border border-slate-200 uppercase tracking-wider">
-                                Para: {n.user.nome}
-                              </span>
-                            )}
-                            
-                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tight flex items-center gap-1">
-                              🕒 {new Date(n.createdAt).toLocaleDateString('pt-BR')} • {new Date(n.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
+                  {/* Barra de Pesquisa */}
+                  <div className="relative w-full">
+                    <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Filtrar notificações..."
+                      value={notificationSearch}
+                      onChange={(e) => setNotificationSearch(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 outline-none focus:border-[#1B4D3E] focus:bg-white transition-all text-xs font-semibold text-slate-700 placeholder-slate-400 shadow-inner"
+                    />
+                    {notificationSearch && (
+                      <button
+                        onClick={() => setNotificationSearch('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
                 </div>
+
+                {/* Subtítulo e Lista de Cards */}
+                {(() => {
+                  const filtered = notifications.filter(n => 
+                    n.texto.toLowerCase().includes(notificationSearch.toLowerCase())
+                  );
+                  const unreadFilteredCount = filtered.filter(n => !n.read).length;
+
+                  return (
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                          {notificationSearch ? `Resultados da busca (${filtered.length})` : `Sua reação é necessária (${unreadFilteredCount})`}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-4">
+                        {filtered.length === 0 ? (
+                          <div className="p-10 text-center flex flex-col items-center justify-center gap-3 bg-white border border-slate-200/50 rounded-2xl shadow-xs">
+                            <div className="w-12 h-12 bg-slate-50 border border-slate-200 text-slate-400 rounded-2xl flex items-center justify-center">
+                              <Bell size={20} className="opacity-40" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-black text-slate-700 uppercase tracking-wide">Tudo limpo por aqui!</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-1">Nenhuma notificação atende aos critérios.</p>
+                            </div>
+                          </div>
+                        ) : (
+                          filtered.map((n) => {
+                            const getNotificationMeta = (text: string) => {
+                              const lower = text.toLowerCase();
+                              if (lower.includes('visualizou') || lower.includes('visualizada')) {
+                                return {
+                                  bg: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+                                  emoji: '👀',
+                                  title: 'Visualização de Proposta'
+                                };
+                              }
+                              if (lower.includes('e-mail') || lower.includes('email')) {
+                                return {
+                                  bg: 'bg-blue-50 text-blue-600 border-blue-100',
+                                  emoji: '✉️',
+                                  title: 'Ação de E-mail'
+                                };
+                              }
+                              return {
+                                  bg: 'bg-[#1B4D3E]/8 text-[#1B4D3E] border-[#1B4D3E]/10',
+                                  emoji: '🔔',
+                                  title: 'Alerta do Sistema'
+                              };
+                            };
+                            const meta = getNotificationMeta(n.texto);
+
+                            return (
+                              <div
+                                key={n.id}
+                                onClick={() => handleMarkAsRead(n.id, n.link)}
+                                className={`bg-white p-5 rounded-2xl border border-slate-200/50 shadow-xs hover:shadow-md transition-all cursor-pointer flex gap-4 relative group ${
+                                  !n.read ? 'border-l-4 border-l-emerald-500' : ''
+                                }`}
+                              >
+                                {!n.read && (
+                                  <span className="absolute top-4 right-4 w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-sm" />
+                                )}
+
+                                <div className={`w-10 h-10 rounded-full border flex items-center justify-center text-lg shrink-0 ${meta.bg}`}>
+                                  {meta.emoji}
+                                </div>
+
+                                <div className="space-y-2 flex-1 min-w-0">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200/50">
+                                      {meta.title}
+                                    </span>
+                                    {user?.role === 'ADMIN' && n.user?.nome && (
+                                      <span className="text-[9px] font-black uppercase tracking-wider text-[#1B4D3E] bg-[#1B4D3E]/8 px-2 py-0.5 rounded border border-[#1B4D3E]/10">
+                                        Vendedor: {n.user.nome}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <p className={`text-xs text-slate-700 leading-relaxed ${!n.read ? 'font-black text-slate-800' : 'font-medium'}`}>
+                                    {n.texto}
+                                  </p>
+
+                                  <div className="pt-2 flex items-center justify-between border-t border-slate-100 flex-wrap gap-2">
+                                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tight flex items-center gap-1">
+                                      🕒 {new Date(n.createdAt).toLocaleDateString('pt-BR')} • {new Date(n.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                    {n.link && (
+                                      <span className="text-[9px] text-[#1B4D3E] hover:underline font-black uppercase tracking-wider flex items-center gap-0.5 transition-all group-hover:translate-x-0.5">
+                                        Acessar orçamento →
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </>
           )}
+        </div>
+      )}
         </div>
       )}
     </>
