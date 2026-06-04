@@ -81,6 +81,32 @@ export default function ContratosDashboard() {
   });
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
 
+  const [isAddingStatus, setIsAddingStatus] = useState(false);
+  const [newStatusInput, setNewStatusInput] = useState('');
+
+  const handleCreateNewStatus = () => {
+    const name = newStatusInput.trim();
+    if (!name) {
+      setIsAddingStatus(false);
+      return;
+    }
+    if (statusesList.includes(name)) {
+      alert('Já existe um status com este nome.');
+      return;
+    }
+    const newStatusesList = [...statusesList, name];
+    setStatusesList(newStatusesList);
+    localStorage.setItem('orse_contrato_statuses', JSON.stringify(newStatusesList));
+    
+    // Default color
+    const newColors = { ...statusColors, [name]: '#3b82f6' };
+    setStatusColors(newColors);
+    localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
+    
+    setNewStatusInput('');
+    setIsAddingStatus(false);
+  };
+
   useEffect(() => {
     const saved = localStorage.getItem('orse_contrato_view_mode');
     if (saved) setViewMode(saved as any);
@@ -269,15 +295,42 @@ export default function ContratosDashboard() {
     '#38BDF8', '#0D9488', '#10B981', '#84CC16', '#FACC15', '#FB923C', '#F43F5E', '#EC4899', '#8B5CF6', '#64748B',
     '#0EA5E9', '#00B4D8', '#00F5D4', '#39FF14', '#FFD000', '#FF9F1C', '#FF007F', '#D000FF', '#7000FF', '#48CAE4',
     '#0369A1', '#0B6623', '#065F46', '#3F6212', '#A16207', '#C2410C', '#B91C1C', '#9D174D', '#581C87', '#334155',
-  ];
-
-  const KanbanColumn = ({ status, isFirst = false }: { status: string; isFirst?: boolean }) => {
+   const KanbanColumn = ({ status, isFirst = false }: { status: string; isFirst?: boolean }) => {
     const cards = filteredContratos.filter(c => c.status === status);
     const total = cards.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
 
     const resolvedHex = resolveStatusColorToHex(status);
     const contrast = getContrastYIQ(resolvedHex);
     const badgeClass = contrast === 'white' ? 'bg-white/20 text-white' : 'bg-black/10 text-slate-800';
+
+    const [localName, setLocalName] = useState(status);
+    useEffect(() => {
+      setLocalName(status);
+    }, [status]);
+
+    const handleSaveName = async (newName: string) => {
+      const trimmed = newName.trim();
+      if (trimmed && trimmed !== status) {
+        const res = await renameContratoStatus(status, trimmed);
+        if (res.success) {
+          setContratos(prev => prev.map(c => c.status === status ? { ...c, status: trimmed } : c));
+          const newStatusesList = statusesList.map(s => s === status ? trimmed : s);
+          setStatusesList(newStatusesList);
+          localStorage.setItem('orse_contrato_statuses', JSON.stringify(newStatusesList));
+          
+          const newColors = { ...statusColors };
+          const oldColor = newColors[status];
+          if (oldColor) {
+            newColors[trimmed] = oldColor;
+            delete newColors[status];
+            setStatusColors(newColors);
+            localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
+          }
+        } else {
+          alert(res.error || 'Erro ao renomear status no banco de dados');
+        }
+      }
+    };
 
     return (
       <div 
@@ -377,31 +430,13 @@ export default function ContratosDashboard() {
                       <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Nome do Status</label>
                       <input
                         type="text"
-                        defaultValue={status}
-                        className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-slate-300 outline-none w-full bg-slate-50 font-medium"
+                        value={localName}
+                        onChange={(e) => setLocalName(e.target.value)}
+                        className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-slate-300 outline-none w-full bg-slate-50 font-medium text-slate-800"
                         placeholder="Nome do status"
                         onKeyDown={async (e) => {
                           if (e.key === 'Enter') {
-                            const newName = e.currentTarget.value.trim();
-                            if (newName && newName !== status) {
-                              const res = await renameContratoStatus(status, newName);
-                              if (res.success) {
-                                setContratos(prev => prev.map(c => c.status === status ? { ...c, status: newName } : c));
-                                const newStatusesList = statusesList.map(s => s === status ? newName : s);
-                                setStatusesList(newStatusesList);
-                                localStorage.setItem('orse_contrato_statuses', JSON.stringify(newStatusesList));
-                                
-                                const newColors = { ...statusColors };
-                                if (newColors[status]) {
-                                  newColors[newName] = newColors[status];
-                                  delete newColors[status];
-                                  setStatusColors(newColors);
-                                  localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
-                                }
-                              } else {
-                                alert(res.error || 'Erro ao renomear status no banco de dados');
-                              }
-                            }
+                            await handleSaveName(localName);
                             setEditingStatusId(null);
                           }
                         }}
@@ -421,7 +456,7 @@ export default function ContratosDashboard() {
                                 setStatusColors(newColors);
                                 localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
                               }}
-                              className="w-4 h-4 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center"
+                              className="w-4 h-4 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer"
                               style={{
                                 backgroundColor: c,
                                 borderColor: isSelected ? '#0f172a' : 'rgba(0,0,0,0.1)',
@@ -455,17 +490,48 @@ export default function ContratosDashboard() {
                           }}
                           className="w-8 h-5 border-0 p-0 cursor-pointer rounded bg-transparent"
                         />
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cor personalizada</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider text-slate-500">Cor personalizada</span>
                       </label>
                     </div>
 
-                    <button
-                      onClick={() => setEditingStatusId(null)}
-                      className="w-full py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-colors text-center cursor-pointer mt-1"
-                      type="button"
-                    >
-                      Concluir
-                    </button>
+                    <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100 mt-1">
+                      <button
+                        onClick={async () => {
+                          if (cards.length > 0) {
+                            alert(`Esta coluna possui ${cards.length} contrato(s). Por favor, mova todos os contratos para outra coluna antes de excluí-la.`);
+                            return;
+                          }
+                          if (window.confirm(`Tem certeza que deseja excluir a coluna "${status}"?`)) {
+                            const newStatusesList = statusesList.filter(s => s !== status);
+                            setStatusesList(newStatusesList);
+                            localStorage.setItem('orse_contrato_statuses', JSON.stringify(newStatusesList));
+                            
+                            const newColors = { ...statusColors };
+                            delete newColors[status];
+                            setStatusColors(newColors);
+                            localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
+                            
+                            setEditingStatusId(null);
+                          }
+                        }}
+                        className="w-full py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold transition-colors text-center cursor-pointer flex items-center justify-center gap-1.5"
+                        type="button"
+                      >
+                        <Trash2 size={12} />
+                        Excluir Coluna
+                      </button>
+                      
+                      <button
+                        onClick={async () => {
+                          await handleSaveName(localName);
+                          setEditingStatusId(null);
+                        }}
+                        className="w-full py-1.5 bg-[#1B4D3E] hover:bg-[#1B4D3E]/90 text-white rounded-lg text-xs font-bold transition-colors text-center cursor-pointer"
+                        type="button"
+                      >
+                        Concluir
+                      </button>
+                    </div>
                   </div>
                 </>
               )}
@@ -1063,6 +1129,53 @@ export default function ContratosDashboard() {
                 {statusList.map((status, index) => (
                   <KanbanColumn key={status} status={status} isFirst={index === 0} />
                 ))}
+
+                {/* Botão de Adicionar Nova Coluna */}
+                {isAddingStatus ? (
+                  <div className="flex-shrink-0 w-80 bg-[#1B4D3E]/5 border border-[#1B4D3E]/20 rounded-2xl p-4 flex flex-col gap-3 h-fit text-slate-800">
+                    <span className="text-[10px] font-bold text-[#1B4D3E] uppercase tracking-wider">Novo Status de Contrato</span>
+                    <input
+                      type="text"
+                      autoFocus
+                      value={newStatusInput}
+                      onChange={(e) => setNewStatusInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleCreateNewStatus();
+                        if (e.key === 'Escape') {
+                          setIsAddingStatus(false);
+                          setNewStatusInput('');
+                        }
+                      }}
+                      placeholder="Digite o nome..."
+                      className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-slate-300 outline-none w-full bg-white font-medium"
+                    />
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        onClick={() => {
+                          setIsAddingStatus(false);
+                          setNewStatusInput('');
+                        }}
+                        className="px-2.5 py-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleCreateNewStatus}
+                        className="px-3 py-1.5 bg-[#1B4D3E] hover:bg-[#1B4D3E]/80 text-white rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
+                      >
+                        Adicionar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setIsAddingStatus(true)}
+                    className="flex-shrink-0 w-80 h-36 border-2 border-dashed border-slate-200 hover:border-[#1B4D3E]/30 rounded-2xl flex flex-col items-center justify-center gap-2 group transition-colors text-slate-400 hover:text-[#1B4D3E] cursor-pointer bg-white"
+                  >
+                    <Plus size={20} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-bold uppercase tracking-wider">Adicionar Coluna</span>
+                  </button>
+                )}
               </div>
             </div>
           )}
