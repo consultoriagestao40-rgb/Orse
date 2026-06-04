@@ -36,19 +36,26 @@ function ProposalsDashboard() {
   const [vendedorColors, setVendedorColors] = useState<Record<string, string>>({});
   const [statusOrder, setStatusOrder] = useState<string[]>([]);
   const [vendedorOrder, setVendedorOrder] = useState<string[]>([]);
+  const [draggedColumn, setDraggedColumn] = useState<{ label: string; type: 'status' | 'vendedor' } | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<{ label: string; type: 'status' | 'vendedor' } | null>(null);
 
   const handleDragColumnStart = (e: React.DragEvent, columnLabel: string, type: 'status' | 'vendedor') => {
     e.dataTransfer.setData('text/column-id', columnLabel);
     e.dataTransfer.setData('text/column-type', type);
+    setDraggedColumn({ label: columnLabel, type });
     e.currentTarget.classList.add('opacity-40');
   };
 
   const handleDragColumnEnd = (e: React.DragEvent) => {
     e.currentTarget.classList.remove('opacity-40');
+    setDraggedColumn(null);
+    setDragOverColumn(null);
   };
 
   const handleDropColumn = (e: React.DragEvent, targetLabel: string, type: 'status' | 'vendedor') => {
     e.preventDefault();
+    setDraggedColumn(null);
+    setDragOverColumn(null);
     const sourceLabel = e.dataTransfer.getData('text/column-id');
     const sourceType = e.dataTransfer.getData('text/column-type');
     
@@ -405,7 +412,6 @@ function ProposalsDashboard() {
   };
 
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
-  // ── Cabeçalho da coluna ────────────────────────────────────────────────────
   const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onDragColumnStart, onDragColumnEnd, onDropColumn }: {
     label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor'; statusId?: string; onColorChange?: (newColor: string) => void;
     onDragColumnStart?: (e: React.DragEvent, label: string) => void;
@@ -434,6 +440,38 @@ function ProposalsDashboard() {
       { name: 'Teal', value: 'teal' }
     ];
 
+    const getDragPosition = () => {
+      if (!draggedColumn || !dragOverColumn || draggedColumn.type !== type || dragOverColumn.label !== label) {
+        return null;
+      }
+      
+      const defaultCols = type === 'status' 
+        ? kanbanStatusCols.map(c => c.label)
+        : kanbanVendedorCols.map(c => c.label);
+        
+      const order = type === 'status' ? statusOrder : vendedorOrder;
+      
+      const sortedLabels = [...defaultCols];
+      if (order.length > 0) {
+        sortedLabels.sort((a, b) => {
+          let idxA = order.indexOf(a);
+          let idxB = order.indexOf(b);
+          if (idxA === -1) idxA = 999;
+          if (idxB === -1) idxB = 999;
+          return idxA - idxB;
+        });
+      }
+      
+      const draggedIdx = sortedLabels.indexOf(draggedColumn.label);
+      const targetIdx = sortedLabels.indexOf(label);
+      
+      if (draggedIdx === -1 || targetIdx === -1) return null;
+      
+      return draggedIdx > targetIdx ? 'left' : 'right';
+    };
+
+    const dragPos = getDragPosition();
+
     return (
       <div 
         className="flex-shrink-0 w-72 shrink-0 relative cursor-grab active:cursor-grabbing transition-all select-none duration-200 hover:scale-[1.01]"
@@ -447,11 +485,35 @@ function ProposalsDashboard() {
           if (onDragColumnStart) onDragColumnStart(e, label);
         }}
         onDragEnd={onDragColumnEnd}
-        onDragOver={(e) => e.preventDefault()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (draggedColumn && draggedColumn.type === type && draggedColumn.label !== label) {
+            if (dragOverColumn?.label !== label) {
+              setDragOverColumn({ label, type });
+            }
+          }
+        }}
+        onDragLeave={() => {
+          if (dragOverColumn?.label === label) {
+            setDragOverColumn(null);
+          }
+        }}
         onDrop={(e) => {
           if (onDropColumn) onDropColumn(e, label);
         }}
       >
+        {dragPos === 'left' && (
+          <div className="absolute left-[-12px] top-0 bottom-0 w-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)] z-30 pointer-events-none animate-pulse flex items-center justify-center">
+            <div className="absolute top-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+            <div className="absolute bottom-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+          </div>
+        )}
+        {dragPos === 'right' && (
+          <div className="absolute right-[-12px] top-0 bottom-0 w-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)] z-30 pointer-events-none animate-pulse flex items-center justify-center">
+            <div className="absolute top-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+            <div className="absolute bottom-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+          </div>
+        )}
         {isStatus ? (
           <div className={`border border-b-0 rounded-t-2xl rounded-b-none p-4 shadow-md text-left ${hStyle.bg} ${hStyle.text} ${hStyle.border} relative group`}>
             <div className="flex items-center justify-between mb-2">
