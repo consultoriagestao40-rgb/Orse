@@ -1750,91 +1750,45 @@ const Sidebar = () => {
                             );
                           })
                         )}
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            </>
-          )}
-
-          {/* WIDGET FLUTUANTE DE WHATSAPP (CANTO INFERIOR DIREITO) */}
+                 {/* WIDGET FLUTUANTE DE WHATSAPP (CANTO INFERIOR DIREITO) */}
           {showWhatsAppWidget && (
-            <div className="fixed bottom-4 right-16 w-[380px] h-[550px] bg-white border border-slate-200/80 shadow-2xl rounded-2xl z-[160] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300 font-sans border border-slate-200">
-              {activeWidgetLead ? (
-                /* MODO CHAT ATIVO */
-                <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50">
-                  {/* Cabeçalho do Chat */}
-                  <div className="p-3.5 bg-[#1B4D3E] text-white flex justify-between items-center shrink-0 shadow-sm">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <button
-                        onClick={() => setActiveWidgetLead(null)}
-                        className="p-1.5 text-emerald-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer mr-1"
-                        title="Voltar para a lista"
-                      >
-                        <ChevronLeft size={16} />
-                      </button>
-                      
-                      <div className="w-8 h-8 bg-white/10 text-white font-extrabold text-[11px] rounded-lg flex items-center justify-center shrink-0 uppercase border border-white/10">
-                        {activeWidgetLead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
-                      </div>
-                      
-                      <div className="min-w-0">
-                        <h4 className="text-xs font-black truncate leading-tight">
-                          {activeWidgetLead.nomeFantasia}
-                        </h4>
-                        <span className="text-[10px] text-emerald-200/80 font-bold block mt-0.5">{activeWidgetLead.telefone}</span>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        setShowWhatsAppWidget(false);
-                        setActiveWidgetLead(null);
-                      }}
-                      className="text-emerald-100 hover:text-white p-1 rounded-full hover:bg-white/10"
-                    >
-                      <X size={18} />
-                    </button>
+            <div className="fixed bottom-4 right-16 w-[880px] h-[580px] bg-white border border-slate-200/80 shadow-2xl rounded-2xl z-[160] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300 font-sans border border-slate-200">
+              {/* Cabeçalho Único do Widget */}
+              <div className="p-4 bg-gradient-to-r from-slate-900 to-slate-950 text-white flex justify-between items-center shrink-0 border-b border-slate-800 select-none">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg border border-emerald-500/30">
+                    <MessageCircle size={16} className="fill-emerald-400" />
                   </div>
-
-                  {/* Corpo do WhatsAppChat */}
-                  <div className="flex-1 overflow-hidden relative">
-                    <WhatsAppChat leadId={activeWidgetLead.id} leadPhone={activeWidgetLead.telefone} />
+                  <div>
+                    <h3 className="text-xs font-black uppercase tracking-wider">Central de Atendimento WhatsApp</h3>
+                    <p className="text-[9px] text-slate-400 font-bold mt-0.5">Acompanhe e responda todas as conversas do funil em tempo real</p>
                   </div>
                 </div>
-              ) : (
-                /* MODO LISTA DE CONVERSAS */
-                <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50">
-                  {/* Cabeçalho do Widget */}
-                  <div className="p-4 bg-gradient-to-r from-slate-900 to-slate-950 text-white flex justify-between items-center shrink-0">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg border border-emerald-500/30">
-                        <MessageCircle size={16} className="fill-emerald-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-xs font-black uppercase tracking-wider">WhatsApp CRM</h3>
-                        <p className="text-[9px] text-slate-400 font-bold mt-0.5">Conversas do Funil em Tempo Real</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setShowWhatsAppWidget(false)}
-                      className="text-slate-400 hover:text-white p-1.5 rounded-full hover:bg-slate-800 transition-colors cursor-pointer"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
+                <button
+                  onClick={() => {
+                    setShowWhatsAppWidget(false);
+                    setActiveWidgetLead(null);
+                  }}
+                  className="text-slate-400 hover:text-white p-1.5 rounded-full hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
 
-                  {/* Campo de Busca de Contatos */}
+              {/* Corpo em Duas Colunas */}
+              <div className="flex-1 flex overflow-hidden bg-slate-50">
+                {/* Coluna da Esquerda: Lista de Conversas (w-[280px]) */}
+                <div className="w-[280px] border-r border-slate-200/80 flex flex-col bg-slate-50 shrink-0">
+                  {/* Busca */}
                   <div className="p-3 bg-white border-b border-slate-100 shrink-0">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
                       <input 
                         type="text"
-                        placeholder="Pesquisar conversas..."
+                        placeholder="Encontrar um bate-papo..."
                         value={widgetSearchTerm}
                         onChange={e => setWidgetSearchTerm(e.target.value)}
-                        className="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:border-[#1B4D3E] outline-none transition-all font-semibold text-slate-700"
+                        className="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:border-[#1B4D3E] outline-none transition-all font-semibold text-slate-700 placeholder-slate-400"
                       />
                       {widgetSearchTerm && (
                         <button 
@@ -1848,7 +1802,7 @@ const Sidebar = () => {
                     </div>
                   </div>
 
-                  {/* Lista de Contatos/Leads com conversas */}
+                  {/* Lista */}
                   <div className="flex-1 overflow-y-auto divide-y divide-slate-100 bg-white">
                     {(() => {
                       const whatsappLeads = widgetLeads.filter(l => l.telefone && (l.whatsappMessages?.length > 0 || l.latestMsg));
@@ -1860,35 +1814,57 @@ const Sidebar = () => {
                       if (filtered.length === 0) {
                         return (
                           <div className="p-8 text-center text-slate-400 text-xs font-semibold">
-                            Nenhuma conversa encontrada.
+                            Nenhum contato encontrado.
                           </div>
                         );
                       }
 
+                      // Função utilitária de formatação de data resiliente
+                      const formatWidgetDate = (dateStr?: string | Date) => {
+                        if (!dateStr) return '';
+                        const d = new Date(dateStr);
+                        if (isNaN(d.getTime())) return '';
+                        const today = new Date();
+                        const isToday = d.getDate() === today.getDate() && 
+                                        d.getMonth() === today.getMonth() && 
+                                        d.getFullYear() === today.getFullYear();
+                        if (isToday) {
+                          return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        }
+                        return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
+                      };
+
                       return filtered.map(lead => {
+                        const isSelected = activeWidgetLead?.id === lead.id;
                         const initials = lead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                        const dateText = formatWidgetDate(lead.latestMsg?.createdAt);
+
                         return (
                           <div
                             key={lead.id}
                             onClick={() => setActiveWidgetLead(lead)}
-                            className="p-3.5 flex items-center gap-3 cursor-pointer hover:bg-slate-50/50 transition-colors bg-white"
+                            className={`p-3 flex items-start gap-2.5 cursor-pointer transition-colors relative border-l-2 ${
+                              isSelected 
+                                ? 'bg-emerald-50/50 border-emerald-500 font-bold' 
+                                : 'hover:bg-slate-50/50 bg-white border-transparent'
+                            }`}
                           >
-                            <div className="w-9 h-9 bg-emerald-600/10 text-emerald-700 font-black text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-emerald-100">
+                            <div className="w-8 h-8 bg-emerald-600/10 text-emerald-700 font-black text-[10px] rounded-xl flex items-center justify-center shrink-0 uppercase border border-emerald-100 shadow-xs">
                               {initials}
                             </div>
                             
                             <div className="flex-1 min-w-0">
                               <div className="flex justify-between items-baseline mb-0.5">
-                                <h4 className="text-xs font-black text-slate-800 truncate">{lead.nomeFantasia}</h4>
-                                {lead.latestMsg && (
+                                <h4 className={`text-xs truncate ${isSelected ? 'font-black text-slate-900' : 'font-semibold text-slate-700'}`}>{lead.nomeFantasia}</h4>
+                                {dateText && (
                                   <span className="text-[9px] text-slate-400 shrink-0 font-medium ml-1">
-                                    {new Date(lead.latestMsg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    {dateText}
                                   </span>
                                 )}
                               </div>
-                              <p className="text-[10px] text-slate-400 font-bold tracking-tight mb-1">{lead.telefone}</p>
+                              <p className="text-[9px] text-slate-400 font-bold tracking-tight mb-0.5">{lead.telefone}</p>
                               {lead.latestMsg && (
-                                <p className="text-xs text-slate-500 truncate font-semibold">
+                                <p className="text-[11px] text-slate-500 truncate font-medium">
                                   {lead.latestMsg.direction === 'OUTBOUND' ? 'Você: ' : ''}
                                   {lead.latestMsg.texto}
                                 </p>
@@ -1896,7 +1872,7 @@ const Sidebar = () => {
                             </div>
 
                             {lead.unreadCount > 0 && (
-                              <span className="bg-emerald-500 text-white font-black text-[9px] w-4.5 h-4.5 rounded-full flex items-center justify-center shrink-0 animate-pulse">
+                              <span className="bg-emerald-500 text-white font-black text-[8px] w-4 h-4 rounded-full flex items-center justify-center shrink-0 animate-pulse">
                                 {lead.unreadCount}
                               </span>
                             )}
@@ -1906,7 +1882,57 @@ const Sidebar = () => {
                     })()}
                   </div>
                 </div>
-              )}
+
+                {/* Coluna da Direita: Chat Ativo (flex-1) */}
+                <div className="flex-1 flex flex-col overflow-hidden bg-slate-50 relative">
+                  {activeWidgetLead ? (
+                    <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-100">
+                      {/* Mini Cabeçalho do Chat */}
+                      <div className="p-3 bg-white border-b border-slate-200/80 flex justify-between items-center shrink-0 shadow-xs">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 bg-emerald-50 text-emerald-800 font-extrabold text-[10px] rounded-xl flex items-center justify-center shrink-0 uppercase border border-emerald-100">
+                            {activeWidgetLead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="text-xs font-black text-slate-800 truncate leading-none mb-0.5">
+                              {activeWidgetLead.nomeFantasia}
+                            </h4>
+                            <span className="text-[10px] text-slate-400 font-semibold">{activeWidgetLead.telefone}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {/* Botão de Ver no Funil */}
+                          <button
+                            onClick={() => {
+                              window.location.href = `/leads?leadId=${activeWidgetLead.id}`;
+                            }}
+                            className="bg-emerald-600 hover:bg-[#1B4D3E] text-white font-black text-[9px] px-2.5 py-1.5 rounded-lg transition-all shadow-xs cursor-pointer"
+                          >
+                            Ver no Funil
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Componente WhatsAppChat */}
+                      <div className="flex-1 overflow-hidden relative">
+                        <WhatsAppChat leadId={activeWidgetLead.id} leadPhone={activeWidgetLead.telefone} />
+                      </div>
+                    </div>
+                  ) : (
+                    /* Tela de instrução (Vazio) */
+                    <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8 text-center bg-slate-100/50 select-none">
+                      <div className="w-16 h-16 rounded-3xl bg-white border border-slate-200/60 shadow-md flex items-center justify-center text-[#1B4D3E]/30">
+                        <MessageCircle size={28} className="fill-[#1B4D3E]/5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-1">Central WhatsApp CRM</h4>
+                        <p className="text-[11px] text-slate-400 font-semibold max-w-[280px]">Selecione um contato na lista à esquerda para carregar a conversa e começar a responder.</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </>
