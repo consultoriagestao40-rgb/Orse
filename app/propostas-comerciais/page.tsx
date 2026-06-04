@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import { 
   FileText, Plus, Search, 
   LayoutList, LayoutGrid, UserSquare2,
-  Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer, Share2, Eye, Palette
+  Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer, Share2, Eye, Palette, Loader2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { transferirProposta, updateDocumentoStatusParam } from '@/app/propostas/actions';
@@ -15,7 +15,8 @@ import {
   createDocumentoProposta, 
   updateDocumentoStatus, 
   deleteDocumentoProposta,
-  getPropostasComerciaisPageData
+  getPropostasComerciaisPageData,
+  getCreateProposalModalData
 } from './actions';
 
 type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor';
@@ -39,6 +40,7 @@ export default function PropostasComerciaisDashboard() {
 
   const [userRole, setUserRole] = useState<string>('USER');
   const [usersList, setUsersList] = useState<any[]>([]);
+  const [loadingModalData, setLoadingModalData] = useState(false);
 
   const [createModal, setCreateModal] = useState({
     isOpen: false,
@@ -109,15 +111,29 @@ export default function PropostasComerciaisDashboard() {
 
   const loadData = async () => {
     setLoading(true);
-    const { docs, proposals, templates, empresas, role, usersList, statuses } = await getPropostasComerciaisPageData();
+    const { docs, role, usersList, statuses } = await getPropostasComerciaisPageData();
     setDocs(docs);
-    setFpvs(proposals);
-    setTemplates(templates);
-    setEmpresas(empresas);
     setUserRole(role);
     setUsersList(usersList);
     setStatuses(statuses || []);
     setLoading(false);
+  };
+
+  const handleOpenCreateModal = async () => {
+    setCreateModal({ isOpen: true, fpvId: '', templateId: '', empresaId: '', saving: false });
+    if (fpvs.length === 0 || templates.length === 0 || empresas.length === 0) {
+      setLoadingModalData(true);
+      try {
+        const res = await getCreateProposalModalData();
+        setFpvs(res.proposals || []);
+        setTemplates(res.templates || []);
+        setEmpresas(res.empresas || []);
+      } catch (err) {
+        console.error('Erro ao buscar dados do modal:', err);
+      } finally {
+        setLoadingModalData(false);
+      }
+    }
   };
 
   useEffect(() => { loadData(); }, []);
@@ -786,7 +802,7 @@ export default function PropostasComerciaisDashboard() {
                 <FileText size={16} /> Templates
               </button>
               <button
-                onClick={() => setCreateModal({ isOpen: true, fpvId: '', templateId: '', empresaId: '', saving: false })}
+                onClick={handleOpenCreateModal}
                 className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold py-2.5 px-6 rounded text-sm flex items-center gap-2 shadow-sm transition-colors whitespace-nowrap flex-shrink-0"
               >
                 <Plus size={18} /> Nova Proposta
@@ -1199,61 +1215,69 @@ export default function PropostasComerciaisDashboard() {
               </button>
             </div>
             <div className="p-5 space-y-4">
-              
-              <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Vincular a qual FPV?</label>
-                <select 
-                  className="w-full p-2 border border-slate-300 rounded focus:border-[#1B4D3E] text-sm"
-                  value={createModal.fpvId}
-                  onChange={e => setCreateModal({...createModal, fpvId: e.target.value})}
-                >
-                  <option value="">-- Selecione uma FPV --</option>
-                  {fpvs.map(f => (
-                    <option key={f.id} value={f.id}>
-                      #{f.numero}-R{String(f.versao || 1).padStart(2, '0')} - {f.cliente} ({fmt(f.valor)})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {loadingModalData ? (
+                <div className="flex flex-col items-center justify-center py-10 gap-3 text-slate-500">
+                  <Loader2 className="animate-spin text-[#1B4D3E]" size={32} />
+                  <span className="text-sm font-bold">Carregando dados...</span>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Vincular a qual FPV?</label>
+                    <select 
+                      className="w-full p-2 border border-slate-300 rounded focus:border-[#1B4D3E] text-sm"
+                      value={createModal.fpvId}
+                      onChange={e => setCreateModal({...createModal, fpvId: e.target.value})}
+                    >
+                      <option value="">-- Selecione uma FPV --</option>
+                      {fpvs.map(f => (
+                        <option key={f.id} value={f.id}>
+                          #{f.numero}-R{String(f.versao || 1).padStart(2, '0')} - {f.cliente} ({fmt(f.valor)})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Template Base</label>
-                <select 
-                  className="w-full p-2 border border-slate-300 rounded focus:border-[#1B4D3E] text-sm"
-                  value={createModal.templateId}
-                  onChange={e => setCreateModal({...createModal, templateId: e.target.value})}
-                >
-                  <option value="">-- Selecione o Template --</option>
-                  {templates.map(t => (
-                    <option key={t.id} value={t.id}>{t.nome} {t.tipo === 'SLIDE_DECK' ? '(Apresentação)' : '(A4)'}</option>
-                  ))}
-                </select>
-              </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Template Base</label>
+                    <select 
+                      className="w-full p-2 border border-slate-300 rounded focus:border-[#1B4D3E] text-sm"
+                      value={createModal.templateId}
+                      onChange={e => setCreateModal({...createModal, templateId: e.target.value})}
+                    >
+                      <option value="">-- Selecione o Template --</option>
+                      {templates.map(t => (
+                        <option key={t.id} value={t.id}>{t.nome} {t.tipo === 'SLIDE_DECK' ? '(Apresentação)' : '(A4)'}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Empresa do Grupo (Emissora)</label>
-                <select 
-                  className="w-full p-2 border border-slate-300 rounded focus:border-[#1B4D3E] text-sm"
-                  value={createModal.empresaId}
-                  onChange={e => setCreateModal({...createModal, empresaId: e.target.value})}
-                >
-                  <option value="">-- Selecione a Empresa --</option>
-                  {empresas.map(e => (
-                    <option key={e.id} value={e.id}>{e.nomeFantasia}</option>
-                  ))}
-                </select>
-              </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Empresa do Grupo (Emissora)</label>
+                    <select 
+                      className="w-full p-2 border border-slate-300 rounded focus:border-[#1B4D3E] text-sm"
+                      value={createModal.empresaId}
+                      onChange={e => setCreateModal({...createModal, empresaId: e.target.value})}
+                    >
+                      <option value="">-- Selecione a Empresa --</option>
+                      {empresas.map(e => (
+                        <option key={e.id} value={e.id}>{e.nomeFantasia}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div className="pt-4 flex gap-3 justify-end">
-                <button onClick={() => setCreateModal({...createModal, isOpen: false})} className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                <button 
-                  onClick={handleCreate}
-                  disabled={createModal.saving}
-                  className="px-4 py-2 text-sm font-bold bg-[#1B4D3E] text-white rounded-lg hover:bg-[#13382d] disabled:opacity-50"
-                >
-                  {createModal.saving ? 'Gerando...' : 'Gerar e Editar'}
-                </button>
-              </div>
+                  <div className="pt-4 flex gap-3 justify-end">
+                    <button onClick={() => setCreateModal({...createModal, isOpen: false})} className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
+                    <button 
+                      onClick={handleCreate}
+                      disabled={createModal.saving}
+                      className="px-4 py-2 text-sm font-bold bg-[#1B4D3E] text-white rounded-lg hover:bg-[#13382d] disabled:opacity-50"
+                    >
+                      {createModal.saving ? 'Gerando...' : 'Gerar e Editar'}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

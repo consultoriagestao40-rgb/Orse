@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Copy, Check, Share2, FileText, Calculator, BookOpen, Presentation, Clock, Calendar, Video, Image, Paperclip, Trash2, Plus, Loader2, HelpCircle } from 'lucide-react';
 import { getTemplates } from '@/app/contratos/actions';
-import { updateConfigApresentacao, uploadClientFileAction } from '@/app/propostas-comerciais/actions';
+import { updateConfigApresentacao, uploadClientFileAction, getDocumentoConfigApresentacao } from '@/app/propostas-comerciais/actions';
 import { getFaqsPadrao } from '@/app/admin/settings/actions';
 
 interface ClientLinkModalProps {
@@ -15,6 +15,7 @@ interface ClientLinkModalProps {
 
 export default function ClientLinkModal({ documentoId, configApresentacao, onClose, onSaveSuccess }: ClientLinkModalProps) {
   const [loading, setLoading] = useState(false);
+  const [loadingFullConfig, setLoadingFullConfig] = useState(true);
   const [copied, setCopied] = useState(false);
   const [templates, setTemplates] = useState<any[]>([]);
 
@@ -89,6 +90,42 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
         .finally(() => setLoadingFaqs(false));
     }
   }, [faq]);
+
+  // Carregar a configuração completa do documento de forma assíncrona
+  useEffect(() => {
+    async function loadFullConfig() {
+      try {
+        const res = await getDocumentoConfigApresentacao(documentoId);
+        if (res.success && res.configApresentacao) {
+          const config = res.configApresentacao;
+          setFotosList(config.fotosList || []);
+          setDocumentosList(config.documentosList || []);
+          setFaqList(config.faqList || []);
+          if (config.clientTabs) {
+            setApresentacao(config.clientTabs.apresentacao !== false);
+            setProposta(config.clientTabs.proposta !== false);
+            setFpv(config.clientTabs.fpv !== false);
+            setMinuta(config.clientTabs.minuta === true);
+            if (config.clientTabs.minutaTemplateId) {
+              setMinutaTemplateId(config.clientTabs.minutaTemplateId);
+            }
+            setVideo(config.clientTabs.video === true);
+            setFotos(config.clientTabs.fotos === true);
+            setDocumentos(config.clientTabs.documentos === true);
+            setFaq(config.clientTabs.faq === true);
+          }
+          if (config.videoUrl) setVideoUrl(config.videoUrl);
+          if (config.canvaEmbedUrl) setCanvaEmbedUrl(config.canvaEmbedUrl);
+          if (config.validadeDays) setValidadeDays(config.validadeDays);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar configuração completa:', err);
+      } finally {
+        setLoadingFullConfig(false);
+      }
+    }
+    loadFullConfig();
+  }, [documentoId]);
 
   // Carregar as minutas disponíveis no sistema
   useEffect(() => {
@@ -248,14 +285,21 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
 
         {/* BODY */}
         <div className="p-6 md:p-8 space-y-6 overflow-y-auto flex-1 scrollbar-thin">
-          <div className="space-y-1">
-            <h3 className="text-sm font-extrabold uppercase tracking-wide text-slate-800">
-              O que o cliente visualizará no link?
-            </h3>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-              Marque os itens que deseja disponibilizar no menu de navegação do cliente final.
-            </p>
-          </div>
+          {loadingFullConfig ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-500">
+              <Loader2 className="animate-spin text-[#1B4D3E]" size={32} />
+              <span className="text-sm font-bold uppercase tracking-wider">Carregando Configurações...</span>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-1">
+                <h3 className="text-sm font-extrabold uppercase tracking-wide text-slate-800">
+                  O que o cliente visualizará no link?
+                </h3>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  Marque os itens que deseja disponibilizar no menu de navegação do cliente final.
+                </p>
+              </div>
 
           {/* CHECKBOX LIST */}
           <div className="space-y-3">
@@ -748,6 +792,8 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
               </button>
             </div>
           </div>
+            </>
+          )}
         </div>
 
         {/* FOOTER */}

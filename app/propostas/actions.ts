@@ -524,10 +524,10 @@ export async function saveProposta(data: any) {
   }
 }
 
-export async function getPropostas() {
+export async function getPropostas(preFetchedUser?: any) {
   noStore();
   try {
-    const loggedUser = await getLoggedUser();
+    const loggedUser = preFetchedUser || await getLoggedUser();
     if (!loggedUser) return [];
 
     let whereClause: any = {};
@@ -930,9 +930,9 @@ export async function getKPIs() {
   }
 }
 
-export async function getUsersList() {
+export async function getUsersList(preFetchedUser?: any) {
   try {
-    const loggedUser = await getLoggedUser();
+    const loggedUser = preFetchedUser || await getLoggedUser();
     if (!loggedUser) return [];
 
     const whereClause: any = {};
@@ -1107,13 +1107,15 @@ export async function requestPasswordReset(email: string) {
 
 export async function getPipelinePageData() {
   try {
-    const [proposals, statuses, role, usersList] = await Promise.all([
-      getPropostas(),
+    const loggedUser = await getLoggedUser();
+    if (!loggedUser) return { proposals: [], statuses: [], role: 'USER', usersList: [] };
+
+    const [proposals, statuses, usersList] = await Promise.all([
+      getPropostas(loggedUser),
       getPropostaStatuses(),
-      getCurrentUserRole(),
-      getUsersList()
+      getUsersList(loggedUser)
     ]);
-    return { proposals, statuses, role, usersList };
+    return { proposals, statuses, role: loggedUser.role, usersList };
   } catch (error) {
     console.error('Error fetching pipeline page data:', error);
     return { proposals: [], statuses: [], role: 'USER', usersList: [] };

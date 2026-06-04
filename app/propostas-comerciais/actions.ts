@@ -13,31 +13,71 @@ import {
 } from '@/app/propostas/actions';
 import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
 
-export async function getDocumentosProposta() {
-  const user = await getLoggedUser();
+export async function getDocumentosProposta(preFetchedUser?: any) {
+  const user = preFetchedUser || await getLoggedUser();
   try {
     const whereClause: any = {};
     if (user?.tenantId) {
       whereClause.tenantId = user.tenantId;
     }
+
+    // Busca apenas as configurações leves (sem fotos e PDFs) em paralelo
+    let lightConfigs: any[] = [];
+    if (user?.tenantId) {
+      lightConfigs = await prisma.$queryRaw<Array<{ id: string, config: any }>>`
+        SELECT id, ("configApresentacao" - 'fotosList' - 'documentosList' - 'faqList') as config
+        FROM "DocumentoProposta"
+        WHERE "tenantId" = ${user.tenantId}
+      `;
+    } else {
+      lightConfigs = await prisma.$queryRaw<Array<{ id: string, config: any }>>`
+        SELECT id, ("configApresentacao" - 'fotosList' - 'documentosList' - 'faqList') as config
+        FROM "DocumentoProposta"
+      `;
+    }
+    const configMap = new Map(lightConfigs.map(c => [c.id, c.config]));
+
     const docs = await prisma.documentoProposta.findMany({
       where: whereClause,
-      include: {
-        client: true,
-        empresaEmissora: true,
+      select: {
+        id: true,
+        propostaId: true,
+        valorTotal: true,
+        status: true,
+        statusAssinatura: true,
+        nomeAssinante: true,
+        dataAssinatura: true,
+        createdAt: true,
+        client: {
+          select: {
+            nomeFantasia: true
+          }
+        },
+        empresaEmissora: {
+          select: {
+            nomeFantasia: true
+          }
+        },
         proposta: {
-          include: {
-            user: true,
+          select: {
+            numero: true,
+            user: {
+              select: {
+                nome: true,
+                avatarUrl: true
+              }
+            },
             versoes: {
               select: {
                 versao: true
               }
             }
           }
-        },
+        }
       },
       orderBy: { createdAt: 'desc' }
     });
+
     return docs.map((d: any) => {
       const sortedVersoes = [...(d.proposta?.versoes || [])].sort((a: any, b: any) => b.versao - a.versao);
       const lastVersao = sortedVersoes[0];
@@ -53,7 +93,7 @@ export async function getDocumentosProposta() {
         versaoFPV: lastVersao?.versao || 1,
         usuario: d.proposta?.user?.nome || 'Sistema',
         avatarUrl: d.proposta?.user?.avatarUrl || null,
-        configApresentacao: d.configApresentacao,
+        configApresentacao: configMap.get(d.id) || null,
         statusAssinatura: d.statusAssinatura,
         nomeAssinante: d.nomeAssinante,
         dataAssinatura: d.dataAssinatura,
@@ -327,8 +367,8 @@ export async function deleteDocumentoProposta(id: string) {
   }
 }
 
-export async function getTemplatesProposta() {
-  const user = await getLoggedUser();
+export async function getTemplatesProposta(preFetchedUser?: any) {
+  const user = preFetchedUser || await getLoggedUser();
   try {
     const whereClause: any = {};
     if (user?.tenantId) {
@@ -937,27 +977,56 @@ export async function uploadClientFileAction(base64Data: string, fileName: strin
 
 export async function getPropostasComerciaisPageData() {
   try {
-    const [docs, proposals, templates, empresas, role, usersList, statuses] = await Promise.all([
-      getDocumentosProposta(),
-      getPropostas(),
-      getTemplatesProposta(),
-      getEmpresasEmissoras(),
-      getCurrentUserRole(),
-      getUsersList(),
+    const loggedUser = await getLoggedUser();
+    if (!loggedUser) return { docs: [], proposals: [], templates: [], empresas: [], role: 'USER', usersList: [], statuses: [] };
+
+    const [docs, usersList, statuses] = await Promise.all([
+      getDocumentosProposta(loggedUser),
+      getUsersList(loggedUser),
       getDocumentoStatuses()
     ]);
     return { 
       docs, 
-      proposals, 
-      templates, 
-      empresas, 
-      role, 
+      proposals: [], // Vazio para carga rápida
+      templates: [],  // Vazio para carga rápida
+      empresas: [],   // Vazio para carga rápida
+      role: loggedUser.role, 
       usersList, 
       statuses 
     };
   } catch (error) {
     console.error('Error fetching propostas comerciais page data:', error);
     return { docs: [], proposals: [], templates: [], empresas: [], role: 'USER', usersList: [], statuses: [] };
+  }
+}
+
+export async function getCreateProposalModalData() {
+  try {
+    const loggedUser = await getLoggedUser();
+    if (!loggedUser) return { proposals: [], templates: [], empresas: [] };
+
+    const [proposals, templates, empresas] = await Promise.all([
+      getPropostas(loggedUser),
+      getTemplatesProposta(loggedUser),
+      getEmpresasEmissoras()
+    ]);
+    return { proposals, templates, empresas };
+  } catch (error) {
+    console.error('Error fetching create proposal modal data:', error);
+    return { proposals: [], templates: [], empresas: [] };
+  }
+}
+
+export async function getDocumentoConfigApresentacao(id: string) {
+  try {
+    const doc = await prisma.documentoProposta.findUnique({
+      where: { id },
+      select: { configApresentacao: true }
+    });
+    return { success: true, configApresentacao: doc?.configApresentacao || null };
+  } catch (error: any) {
+    console.error('Error fetching configApresentacao:', error);
+    return { success: false, error: error.message };
   }
 }
 
