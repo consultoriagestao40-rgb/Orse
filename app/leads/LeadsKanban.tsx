@@ -2152,11 +2152,19 @@ export default function LeadsKanban() {
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-baseline mb-0.5">
                               <h4 className="text-xs md:text-sm font-bold text-slate-800 truncate">{lead.nomeFantasia}</h4>
-                              {lead.latestMsg && (
-                                <span className="text-[10px] text-slate-400 shrink-0 font-medium ml-1">
-                                  {new Date(lead.latestMsg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                              )}
+                              {lead.latestMsg && (() => {
+                                const msgDate = new Date(lead.latestMsg.createdAt);
+                                if (isNaN(msgDate.getTime())) return null;
+                                const isToday = msgDate.toDateString() === new Date().toDateString();
+                                return (
+                                  <span className="text-[10px] text-slate-400 shrink-0 font-medium ml-1">
+                                    {isToday 
+                                      ? msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                      : msgDate.toLocaleDateString([], { day: '2-digit', month: '2-digit' })
+                                    }
+                                  </span>
+                                );
+                              })()}
                             </div>
                             <p className="text-xs text-slate-400 font-bold truncate">{lead.telefone}</p>
                             

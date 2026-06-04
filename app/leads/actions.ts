@@ -47,7 +47,9 @@ export async function getLeads(filters?: { startDate?: string; endDate?: string;
           select: {
             id: true,
             direction: true,
-            status: true
+            status: true,
+            texto: true,
+            createdAt: true
           }
         }
       },
