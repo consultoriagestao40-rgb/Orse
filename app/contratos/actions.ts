@@ -311,3 +311,16 @@ export async function deleteContrato(id: string) {
     return { success: false, error: error.message };
   }
 }
+
+export async function renameContratoStatus(oldStatus: string, newStatus: string) {
+  try {
+    await prisma.contrato.updateMany({
+      where: { status: oldStatus },
+      data: { status: newStatus }
+    });
+    revalidatePath('/contratos');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

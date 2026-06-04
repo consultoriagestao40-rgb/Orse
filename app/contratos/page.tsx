@@ -8,7 +8,7 @@ import {
   LayoutList, LayoutGrid, AlertCircle, Edit2, CheckCircle, Calendar, DollarSign, Trash2, Printer, Building, X
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { getContratos, updateContratoStatus, deleteContrato } from './actions';
+import { getContratos, updateContratoStatus, deleteContrato, renameContratoStatus } from './actions';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import { updateCliente } from '@/app/clientes/actions';
 
@@ -72,6 +72,15 @@ export default function ContratosDashboard() {
   const [editingSegmentoId, setEditingSegmentoId] = useState<string | null>(null);
   const [segmentos, setSegmentos] = useState<any[]>([]);
 
+  const [statusesList, setStatusesList] = useState<string[]>(['Pendente de Assinatura', 'Vigente', 'Reajuste Pendente', 'Encerrado']);
+  const [statusColors, setStatusColors] = useState<Record<string, string>>({
+    'Pendente de Assinatura': '#f59e0b',
+    'Vigente': '#10b981',
+    'Reajuste Pendente': '#f97316',
+    'Encerrado': '#64748b',
+  });
+  const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
+
   useEffect(() => {
     const saved = localStorage.getItem('orse_contrato_view_mode');
     if (saved) setViewMode(saved as any);
@@ -86,6 +95,24 @@ export default function ContratosDashboard() {
         }
       }
       setSegmentoColors(segColors);
+
+      const savedStatuses = localStorage.getItem('orse_contrato_statuses');
+      if (savedStatuses) {
+        try {
+          setStatusesList(JSON.parse(savedStatuses));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      const savedStatusColors = localStorage.getItem('orse_contrato_status_colors');
+      if (savedStatusColors) {
+        try {
+          setStatusColors(prev => ({ ...prev, ...JSON.parse(savedStatusColors) }));
+        } catch (e) {
+          console.error(e);
+        }
+      }
     }
   }, []);
 
@@ -158,23 +185,19 @@ export default function ContratosDashboard() {
     return cols;
   }, [filteredContratos, segmentos]);
 
-  const ativos = contratos.filter(c => c.status === 'Vigente');
-  const pendentesAssinatura = contratos.filter(c => c.status === 'Pendente de Assinatura');
-  const pendentesReajuste = contratos.filter(c => c.status === 'Reajuste Pendente');
-  const encerrados = contratos.filter(c => c.status === 'Encerrado');
+  const pendentesAssinatura = contratos.filter(c => c.status === statusesList[0]);
+  const ativos = contratos.filter(c => c.status === statusesList[1]);
+  const pendentesReajuste = contratos.filter(c => c.status === statusesList[2]);
+  const encerrados = contratos.filter(c => c.status === statusesList[3]);
   
-  const contratosValidosParaReceita = contratos.filter(c => c.status !== 'Encerrado');
+  const contratosValidosParaReceita = contratos.filter(c => c.status !== statusesList[3]);
   const valorMensalTotal = contratosValidosParaReceita.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
   const valorGlobalTotal = contratosValidosParaReceita.reduce((acc, c) => acc + (c.valorTotal || 0), 0);
 
-  const statusList = ['Pendente de Assinatura', 'Vigente', 'Reajuste Pendente', 'Encerrado'];
+  const statusList = statusesList;
 
   const resolveStatusColorToHex = (status: string): string => {
-    if (status === 'Pendente de Assinatura') return '#f59e0b'; // amber
-    if (status === 'Vigente') return '#10b981'; // emerald
-    if (status === 'Reajuste Pendente') return '#f97316'; // orange
-    if (status === 'Encerrado') return '#64748b'; // slate
-    return '#3b82f6'; // blue
+    return statusColors[status] || '#3b82f6';
   };
 
   const normalizeHex = (hex: string) => {
@@ -301,13 +324,151 @@ export default function ContratosDashboard() {
                 color: contrast === 'white' ? '#ffffff' : '#0f172a'
               }}
             >
-              <span className="text-xs font-black uppercase tracking-wider truncate max-w-[200px]">
+              <span className="text-xs font-black uppercase tracking-wider truncate max-w-[170px]">
                 {status}
               </span>
               
-              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm ${badgeClass}`}>
-                {cards.length}
-              </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm ${badgeClass}`}>
+                  {cards.length}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingStatusId(status);
+                  }}
+                  className={`p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
+                    contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
+                  }`}
+                  title="Editar Coluna"
+                >
+                  <Edit2 size={12} />
+                </button>
+              </div>
+
+              {editingStatusId === status && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-30 cursor-default" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingStatusId(null);
+                    }}
+                  />
+                  <div 
+                    className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        Editar Coluna
+                      </span>
+                      <button 
+                        onClick={() => setEditingStatusId(null)}
+                        className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Nome do Status</label>
+                      <input
+                        type="text"
+                        defaultValue={status}
+                        className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-slate-300 outline-none w-full bg-slate-50 font-medium"
+                        placeholder="Nome do status"
+                        onKeyDown={async (e) => {
+                          if (e.key === 'Enter') {
+                            const newName = e.currentTarget.value.trim();
+                            if (newName && newName !== status) {
+                              const res = await renameContratoStatus(status, newName);
+                              if (res.success) {
+                                setContratos(prev => prev.map(c => c.status === status ? { ...c, status: newName } : c));
+                                const newStatusesList = statusesList.map(s => s === status ? newName : s);
+                                setStatusesList(newStatusesList);
+                                localStorage.setItem('orse_contrato_statuses', JSON.stringify(newStatusesList));
+                                
+                                const newColors = { ...statusColors };
+                                if (newColors[status]) {
+                                  newColors[newName] = newColors[status];
+                                  delete newColors[status];
+                                  setStatusColors(newColors);
+                                  localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
+                                }
+                              } else {
+                                alert(res.error || 'Erro ao renomear status no banco de dados');
+                              }
+                            }
+                            setEditingStatusId(null);
+                          }
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Selecione a Cor</label>
+                      <div className="grid grid-cols-10 gap-1 mt-0.5">
+                        {PRESET_COLORS.map(c => {
+                          const isSelected = resolvedHex.toLowerCase() === c.toLowerCase();
+                          return (
+                            <button
+                              key={c}
+                              onClick={() => {
+                                const newColors = { ...statusColors, [status]: c };
+                                setStatusColors(newColors);
+                                localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
+                              }}
+                              className="w-4 h-4 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center"
+                              style={{
+                                backgroundColor: c,
+                                borderColor: isSelected ? '#0f172a' : 'rgba(0,0,0,0.1)',
+                                borderWidth: isSelected ? '2px' : '1px'
+                              }}
+                              title={c}
+                              type="button"
+                            >
+                              {isSelected && (
+                                <div 
+                                  className="w-1.5 h-1.5 rounded-full" 
+                                  style={{ backgroundColor: getContrastYIQ(c) === 'white' ? '#fff' : '#000' }} 
+                                />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1 pt-1 border-t border-slate-100">
+                      <label className="flex items-center gap-2 cursor-pointer border border-slate-200 rounded-lg px-2.5 py-1.5 hover:bg-slate-50 transition-colors w-full">
+                        <input 
+                          type="color" 
+                          value={resolvedHex}
+                          onChange={(e) => {
+                            const newColor = e.target.value;
+                            const newColors = { ...statusColors, [status]: newColor };
+                            setStatusColors(newColors);
+                            localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
+                          }}
+                          className="w-8 h-5 border-0 p-0 cursor-pointer rounded bg-transparent"
+                        />
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cor personalizada</span>
+                      </label>
+                    </div>
+
+                    <button
+                      onClick={() => setEditingStatusId(null)}
+                      className="w-full py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-colors text-center cursor-pointer mt-1"
+                      type="button"
+                    >
+                      Concluir
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -851,7 +1012,14 @@ export default function ContratosDashboard() {
                         </td>
                         <td className="px-6 py-3 text-right font-black text-[#1B4D3E]">{fmt(c.valorMensal)}</td>
                         <td className="px-6 py-3 text-center">
-                          <span className={`text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider border ${getStatusColor(c.status)}`}>
+                          <span 
+                            className="text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider border shadow-2xs"
+                            style={{
+                              backgroundColor: hexToRgba(resolveStatusColorToHex(c.status), 0.1),
+                              color: getDarkenedHexForText(resolveStatusColorToHex(c.status)),
+                              borderColor: hexToRgba(resolveStatusColorToHex(c.status), 0.25)
+                            }}
+                          >
                             {c.status}
                           </span>
                         </td>
