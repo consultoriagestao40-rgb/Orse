@@ -140,6 +140,18 @@ export default function LeadsKanban() {
   useEffect(() => {
     const saved = localStorage.getItem('orse_leads_view_mode');
     if (saved) setViewMode(saved as any);
+
+    if (typeof window !== 'undefined') {
+      const colors: Record<string, string> = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('kanban-vendedor-color-')) {
+          const seller = key.replace('kanban-vendedor-color-', '');
+          colors[seller] = localStorage.getItem(key) || '#3b82f6';
+        }
+      }
+      setVendedorColors(colors);
+    }
   }, []);
 
   const handleViewModeChange = (mode: ViewMode) => {
@@ -149,6 +161,8 @@ export default function LeadsKanban() {
 
   const [editingStageId, setEditingStageId] = useState<string | null>(null);
   const [editingStageName, setEditingStageName] = useState('');
+  const [editingVendedorId, setEditingVendedorId] = useState<string | null>(null);
+  const [vendedorColors, setVendedorColors] = useState<Record<string, string>>({});
   const [isDragging, setIsDragging] = useState(false);
 
   const knownUnreadMessageIdsRef = React.useRef<Set<string>>(new Set());
@@ -572,6 +586,52 @@ export default function LeadsKanban() {
 
   const PRESET_VENDEDOR_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6', '#f97316', '#64748b'];
 
+  const PRESET_COLORS = [
+    // Row 1: Soft Pastels
+    '#E0F2FE', '#E0F2F1', '#D1FAE5', '#ECFCCB', '#FEF9C3', '#FFEDD5', '#FFE4E6', '#FCE7F3', '#F3E8FF', '#F1F5F9',
+    // Row 2: Standard Vibrant
+    '#38BDF8', '#0D9488', '#10B981', '#84CC16', '#FACC15', '#FB923C', '#F43F5E', '#EC4899', '#8B5CF6', '#64748B',
+    // Row 3: Bright Neon / Vivid
+    '#0EA5E9', '#00B4D8', '#00F5D4', '#39FF14', '#FFD000', '#FF9F1C', '#FF007F', '#D000FF', '#7000FF', '#48CAE4',
+    // Row 4: Deep / Dark
+    '#0369A1', '#0B6623', '#065F46', '#3F6212', '#A16207', '#C2410C', '#B91C1C', '#9D174D', '#581C87', '#334155',
+  ];
+
+  const tailwindColorMap: { [key: string]: string } = {
+    sky: '#0284c7',
+    blue: '#2563eb',
+    orange: '#ea580c',
+    amber: '#d97706',
+    emerald: '#059669',
+    green: '#16a34a',
+    red: '#dc2626',
+    rose: '#e11d48',
+    purple: '#9333ea',
+    violet: '#7c3aed',
+    yellow: '#ca8a04',
+    indigo: '#4f46e5',
+    pink: '#db2777',
+    teal: '#0d9488',
+    slate: '#475569',
+    gray: '#4b5563',
+    'bg-slate-100': '#64748b',
+    'bg-blue-100': '#3b82f6',
+    'bg-green-100': '#10b981',
+    'bg-emerald-100': '#10b981',
+    'bg-amber-100': '#f59e0b',
+    'bg-rose-100': '#f43f5e',
+    'bg-purple-100': '#8b5cf6',
+  };
+
+  const resolveColorToHex = (color?: string): string => {
+    if (!color) return '#64748b';
+    const lower = color.toLowerCase().trim();
+    if (lower.startsWith('#')) return lower;
+    if (tailwindColorMap[lower]) return tailwindColorMap[lower];
+    const stripped = lower.replace('bg-', '').split('-')[0];
+    return tailwindColorMap[stripped] || '#64748b';
+  };
+
   const normalizeHex = (hex: string) => {
     let h = hex.replace('#', '');
     if (h.length === 3) {
@@ -843,50 +903,45 @@ export default function LeadsKanban() {
         {showMetrics && <PipelineMetrics leads={filteredLeads} stages={stages} />}
         {viewMode === 'kanban-status' && (
           <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
-            <div className="flex gap-4 h-[calc(100vh-70px)] shrink-0 pr-1">
+            <div className="flex gap-5 h-[calc(100vh-70px)] shrink-0 pr-1">
               {stages.map((stage, idx) => {
                 const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
                 const totalValorEst = stageLeads.reduce((acc, lead) => acc + (lead.valorEst || 0), 0);
                 const isFirst = idx === 0;
-                const normalizedStageColor = stage.color === 'bg-emerald-100' ? 'bg-green-100' : (stage.color || 'bg-slate-100');
-                const colorMap: Record<string, string> = {
-                  'bg-slate-100': 'text-slate-400',
-                  'bg-blue-100': 'text-blue-400',
-                  'bg-green-100': 'text-green-400',
-                  'bg-emerald-100': 'text-green-400',
-                  'bg-amber-100': 'text-amber-400',
-                  'bg-rose-100': 'text-rose-400',
-                  'bg-purple-100': 'text-purple-400',
-                };
-                const headerTextColorClass = colorMap[normalizedStageColor] || 'text-slate-400';
+                const resolvedHex = resolveColorToHex(stage.color);
+                const contrast = getContrastYIQ(resolvedHex);
+                const badgeClass = contrast === 'white' ? 'bg-white/20 text-white' : 'bg-black/10 text-slate-800';
 
                 return (
                   <div 
                     key={stage.id} 
-                    className="w-[270px] shrink-0 flex flex-col h-full rounded-2xl transition-colors duration-300 relative"
+                    className="w-72 shrink-0 flex flex-col h-full rounded-2xl relative"
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDrop(e, stage.id)}
                   >
-                    <div className="relative h-13 shrink-0 z-10 w-[calc(100%+16px)] ml-0 group/header text-slate-800">
+                    <div className="relative h-11 shrink-0 z-10 w-full group/header">
                       <svg 
-                        className={`absolute inset-0 w-full h-full drop-shadow-sm ${headerTextColorClass}`} 
+                        className="absolute inset-0 w-full h-full drop-shadow-sm" 
                         preserveAspectRatio="none" 
-                        viewBox="0 0 336 64"
+                        viewBox="0 0 288 44"
+                        style={{ color: resolvedHex }}
                       >
                         <path 
                           d={isFirst 
-                            ? "M 10,0 L 320,0 L 336,32 L 320,64 L 10,64 A 10,10 0 0,1 0,54 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                            : "M 0,0 L 320,0 L 336,32 L 320,64 L 0,64 L 16,32 Z"
+                            ? "M 10,0 L 274,0 L 288,22 L 274,44 L 10,44 A 10,10 0 0,1 0,34 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                            : "M 0,0 L 274,0 L 288,22 L 274,44 L 0,44 L 14,22 Z"
                           }
                           fill="currentColor" 
-                          stroke="#1e293b" 
-                          strokeWidth="2"
-                          vectorEffect="non-scaling-stroke"
+                          stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
+                          strokeWidth="1.5"
                         />
                       </svg>
-                      <div className={`relative z-10 flex justify-between items-center h-full ${isFirst ? 'pl-6 pr-9' : 'pl-9 pr-9'}`}>
+                      <div 
+                        className={`relative z-10 flex justify-between items-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                        style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
+                      >
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <h3 className="font-black text-slate-900 uppercase tracking-tight text-xs drop-shadow-sm truncate max-w-[130px]">
+                          <h3 className="font-black uppercase tracking-tight text-xs truncate max-w-[130px]">
                             {stage.nome}
                           </h3>
                           
@@ -897,14 +952,16 @@ export default function LeadsKanban() {
                               setEditingStageName(stage.nome);
                               setEditingStageId(stage.id);
                             }}
-                            className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 text-slate-700 hover:bg-black/10 flex items-center justify-center cursor-pointer"
+                            className={`p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
+                              contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
+                            }`}
                             title="Editar Etapa"
                           >
                             <Edit2 size={12} />
                           </button>
                         </div>
 
-                        <span className="bg-white/75 text-slate-800 text-xs font-black px-2.5 py-0.5 rounded-full shrink-0 shadow-sm">
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 shadow-sm ${badgeClass}`}>
                           {stageLeads.length}
                         </span>
 
@@ -959,9 +1016,9 @@ export default function LeadsKanban() {
 
                               <div className="flex flex-col gap-1">
                                 <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Selecione a Cor</label>
-                                <div className="grid grid-cols-6 gap-1.5 mt-0.5">
-                                  {['bg-slate-100', 'bg-blue-100', 'bg-emerald-100', 'bg-amber-100', 'bg-rose-100', 'bg-purple-100'].map(c => {
-                                    const isSelected = stage.color === c || (c === 'bg-emerald-100' && stage.color === 'bg-green-100');
+                                <div className="grid grid-cols-10 gap-1 mt-0.5">
+                                  {PRESET_COLORS.map(c => {
+                                    const isSelected = resolvedHex.toLowerCase() === c.toLowerCase();
                                     return (
                                       <button
                                         key={c}
@@ -973,17 +1030,45 @@ export default function LeadsKanban() {
                                             alert(res.error || 'Erro ao alterar cor');
                                           }
                                         }}
-                                        className={`w-7 h-7 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center ${c} ${
-                                          isSelected ? 'ring-2 ring-slate-800/30 border-slate-700 scale-105' : 'border-slate-200'
-                                        }`}
-                                        title="Mudar para esta cor"
+                                        className="w-4 h-4 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center"
+                                        style={{
+                                          backgroundColor: c,
+                                          borderColor: isSelected ? '#0f172a' : 'rgba(0,0,0,0.1)',
+                                          borderWidth: isSelected ? '2px' : '1px'
+                                        }}
+                                        title={c}
                                         type="button"
                                       >
-                                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-slate-800" />}
+                                        {isSelected && (
+                                          <div 
+                                            className="w-1.5 h-1.5 rounded-full" 
+                                            style={{ backgroundColor: getContrastYIQ(c) === 'white' ? '#fff' : '#000' }} 
+                                          />
+                                        )}
                                       </button>
                                     );
                                   })}
                                 </div>
+                              </div>
+
+                              <div className="flex flex-col gap-1 pt-1 border-t border-slate-100">
+                                <label className="flex items-center gap-2 cursor-pointer border border-slate-200 rounded-lg px-2.5 py-1.5 hover:bg-slate-50 transition-colors w-full">
+                                  <input 
+                                    type="color" 
+                                    value={resolvedHex}
+                                    onChange={async (e) => {
+                                      const newColor = e.target.value;
+                                      const res = await updateLeadStageColor(stage.id, newColor);
+                                      if (res.success) {
+                                        setStages(prev => prev.map(s => s.id === stage.id ? { ...s, color: newColor } : s));
+                                      } else {
+                                        alert(res.error || 'Erro ao alterar cor');
+                                      }
+                                    }}
+                                    className="w-8 h-5 border-0 p-0 cursor-pointer rounded bg-transparent"
+                                  />
+                                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cor personalizada</span>
+                                </label>
                               </div>
 
                               <div className="flex gap-2 pt-2 border-t border-slate-100">
@@ -1010,22 +1095,44 @@ export default function LeadsKanban() {
                                   Excluir
                                 </button>
                               </div>
+
+                              <button
+                                onClick={async () => {
+                                  if (editingStageName.trim() && editingStageName.trim().toUpperCase() !== stage.nome.toUpperCase()) {
+                                    const res = await updateLeadStageName(stage.id, editingStageName.trim());
+                                    if (res.success) {
+                                      setStages(prev => prev.map(s => s.id === stage.id ? { ...s, nome: editingStageName.trim() } : s));
+                                    } else {
+                                      alert(res.error || 'Erro ao renomear');
+                                    }
+                                  }
+                                  setEditingStageId(null);
+                                }}
+                                className="w-full py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-colors text-center cursor-pointer mt-1"
+                                type="button"
+                              >
+                                Concluir
+                              </button>
                             </div>
                           </>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex justify-center w-[calc(100%+16px)] my-1.5 shrink-0 z-10 pointer-events-auto">
+                    <div className="flex justify-center w-full my-1.5 shrink-0 z-10 pointer-events-auto">
                       <div 
                         className="px-3 py-0.5 rounded-full text-[11px] font-black shadow-sm select-none border"
-                        style={getLeadTotalizerStyle(stage.color)}
+                        style={{
+                          backgroundColor: hexToRgba(resolvedHex, 0.1),
+                          color: getDarkenedHexForText(resolvedHex),
+                          borderColor: hexToRgba(resolvedHex, 0.25)
+                        }}
                       >
                         {fmt(totalValorEst)}
                       </div>
                     </div>
                     
-                    <div className={`flex-1 flex flex-col p-3 overflow-y-auto space-y-3 ${normalizedStageColor} border-x border-b border-slate-200 rounded-b-2xl -mt-[1px] z-0`}>
+                    <div className="flex-1 flex flex-col p-3 overflow-y-auto space-y-3 bg-[#F8FAFC] border-x border-b border-slate-200 rounded-b-2xl -mt-[1px] z-0">
                       {stageLeads.map(lead => (
                         <div
                           key={lead.id}
@@ -1140,32 +1247,34 @@ export default function LeadsKanban() {
 
         {viewMode === 'kanban-vendedor' && (
           <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
-            <div className="flex gap-4 h-[calc(100vh-70px)] shrink-0 pr-1">
+            <div className="flex gap-5 h-[calc(100vh-70px)] shrink-0 pr-1">
               {kanbanVendedorCols.map((col, idx) => {
                 const colLeads = col.cards;
                 const isFirst = idx === 0;
-                const colColor = col.id === 'unassigned' ? '#64748b' : PRESET_VENDEDOR_COLORS[idx % PRESET_VENDEDOR_COLORS.length];
-                const contrast = getContrastYIQ(colColor);
+                const defaultColColor = col.id === 'unassigned' ? '#64748b' : PRESET_VENDEDOR_COLORS[idx % PRESET_VENDEDOR_COLORS.length];
+                const colColor = vendedorColors[col.label] || defaultColColor;
+                const resolvedHex = resolveColorToHex(colColor);
+                const contrast = getContrastYIQ(resolvedHex);
                 const badgeClass = contrast === 'white' ? 'bg-white/20 text-white' : 'bg-black/10 text-slate-800';
 
                 return (
                   <div 
                     key={col.id} 
-                    className="w-[270px] shrink-0 flex flex-col h-full rounded-2xl relative"
+                    className="w-72 shrink-0 flex flex-col h-full rounded-2xl relative"
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDropVendedor(e, col.id)}
                   >
-                    <div className="relative h-13 shrink-0 z-10 w-[calc(100%+16px)] ml-0 group/header text-slate-800">
+                    <div className="relative h-11 shrink-0 z-10 w-full group/header">
                       <svg 
                         className="absolute inset-0 w-full h-full drop-shadow-sm" 
                         preserveAspectRatio="none" 
-                        viewBox="0 0 336 64"
-                        style={{ color: colColor }}
+                        viewBox="0 0 288 44"
+                        style={{ color: resolvedHex }}
                       >
                         <path 
                           d={isFirst 
-                            ? "M 10,0 L 320,0 L 336,32 L 320,64 L 10,64 A 10,10 0 0,1 0,54 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                            : "M 0,0 L 320,0 L 336,32 L 320,64 L 0,64 L 16,32 Z"
+                            ? "M 10,0 L 274,0 L 288,22 L 274,44 L 10,44 A 10,10 0 0,1 0,34 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                            : "M 0,0 L 274,0 L 288,22 L 274,44 L 0,44 L 14,22 Z"
                           }
                           fill="currentColor" 
                           stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
@@ -1173,7 +1282,7 @@ export default function LeadsKanban() {
                         />
                       </svg>
                       <div 
-                        className={`relative z-10 flex justify-between items-center h-full ${isFirst ? 'pl-6 pr-9' : 'pl-9 pr-9'}`}
+                        className={`relative z-10 flex justify-between items-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
                         style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
                       >
                         <div className="flex items-center gap-1.5 min-w-0 flex-1">
@@ -1181,41 +1290,141 @@ export default function LeadsKanban() {
                             <img 
                               src={col.avatarUrl} 
                               alt={col.label} 
-                              className="w-5 h-5 rounded-full object-cover border border-white/20"
+                              className="w-5 h-5 rounded-full object-cover border border-white/20 shrink-0"
                             />
                           ) : col.id !== 'unassigned' ? (
-                            <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-white font-black text-[8px] uppercase border border-white/20">
+                            <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-white font-black text-[8px] uppercase border border-white/20 shrink-0">
                               {col.label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                             </div>
                           ) : (
-                            <User size={10} className="text-white/80" />
+                            <User size={10} className={contrast === 'white' ? 'text-white/80 shrink-0' : 'text-slate-900/80 shrink-0'} />
                           )}
                           <h3 className="font-black uppercase tracking-tight text-xs truncate">
                             {col.label}
                           </h3>
                         </div>
 
-                        <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full shrink-0 shadow-sm ${badgeClass}`}>
-                          {colLeads.length}
-                        </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm ${badgeClass}`}>
+                            {colLeads.length}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingVendedorId(col.id);
+                            }}
+                            className={`p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
+                              contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
+                            }`}
+                            title="Editar Cor"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+                        </div>
+
+                        {editingVendedorId === col.id && (
+                          <>
+                            <div 
+                              className="fixed inset-0 z-30 cursor-default" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingVendedorId(null);
+                              }}
+                            />
+                            <div 
+                              className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                  Editar Coluna
+                                </span>
+                                <button 
+                                  onClick={() => setEditingVendedorId(null)}
+                                  className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
+                                >
+                                  <X size={12} />
+                                </button>
+                              </div>
+
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Selecione a Cor</label>
+                                <div className="grid grid-cols-10 gap-1 mt-0.5">
+                                  {PRESET_COLORS.map(c => {
+                                    const isSelected = resolvedHex.toLowerCase() === c.toLowerCase();
+                                    return (
+                                      <button
+                                        key={c}
+                                        onClick={() => {
+                                          localStorage.setItem(`kanban-vendedor-color-${col.label}`, c);
+                                          setVendedorColors(prev => ({ ...prev, [col.label]: c }));
+                                        }}
+                                        className="w-4 h-4 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center"
+                                        style={{
+                                          backgroundColor: c,
+                                          borderColor: isSelected ? '#0f172a' : 'rgba(0,0,0,0.1)',
+                                          borderWidth: isSelected ? '2px' : '1px'
+                                        }}
+                                        title={c}
+                                        type="button"
+                                      >
+                                        {isSelected && (
+                                          <div 
+                                            className="w-1.5 h-1.5 rounded-full" 
+                                            style={{ backgroundColor: getContrastYIQ(c) === 'white' ? '#fff' : '#000' }} 
+                                          />
+                                        )}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col gap-1 pt-1 border-t border-slate-100">
+                                <label className="flex items-center gap-2 cursor-pointer border border-slate-200 rounded-lg px-2.5 py-1.5 hover:bg-slate-50 transition-colors w-full">
+                                  <input 
+                                    type="color" 
+                                    value={resolvedHex}
+                                    onChange={(e) => {
+                                      const newColor = e.target.value;
+                                      localStorage.setItem(`kanban-vendedor-color-${col.label}`, newColor);
+                                      setVendedorColors(prev => ({ ...prev, [col.label]: newColor }));
+                                    }}
+                                    className="w-8 h-5 border-0 p-0 cursor-pointer rounded bg-transparent"
+                                  />
+                                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cor personalizada</span>
+                                </label>
+                              </div>
+
+                              <button
+                                onClick={() => setEditingVendedorId(null)}
+                                className="w-full py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-colors text-center cursor-pointer mt-1"
+                                type="button"
+                              >
+                                Concluir
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
 
-                    {/* Totalizer Pill */}
-                    <div className="flex justify-center w-[calc(100%+16px)] my-1.5 shrink-0 z-10 pointer-events-auto">
+                    <div className="flex justify-center w-full my-1.5 shrink-0 z-10 pointer-events-auto">
                       <div 
                         className="px-3 py-0.5 rounded-full text-[11px] font-black shadow-sm select-none border"
                         style={{
-                          backgroundColor: hexToRgba(colColor, 0.1),
-                          color: getDarkenedHexForText(colColor),
-                          borderColor: hexToRgba(colColor, 0.25)
+                          backgroundColor: hexToRgba(resolvedHex, 0.1),
+                          color: getDarkenedHexForText(resolvedHex),
+                          borderColor: hexToRgba(resolvedHex, 0.25)
                         }}
                       >
                         {fmt(col.total)}
                       </div>
                     </div>
                     
-                    <div className="flex-1 flex flex-col p-3 overflow-y-auto space-y-3 bg-slate-50 border-x border-b border-slate-200 rounded-b-2xl -mt-[1px] z-0">
+                    <div className="flex-1 flex flex-col p-3 overflow-y-auto space-y-3 bg-[#F8FAFC] border-x border-b border-slate-200 rounded-b-2xl -mt-[1px] z-0">
                       {colLeads.map(lead => (
                         <div
                           key={lead.id}
