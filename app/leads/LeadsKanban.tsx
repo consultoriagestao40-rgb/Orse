@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact } from './actions';
-import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target } from 'lucide-react';
+import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
@@ -133,6 +133,19 @@ export default function LeadsKanban() {
   const [endDate, setEndDate] = useState('');
   const [userFilter, setUserFilter] = useState('all');
   const [filterUsers, setFilterUsers] = useState<any[]>([]);
+
+  type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor';
+  const [viewMode, setViewMode] = useState<ViewMode>('kanban-status');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('orse_leads_view_mode');
+    if (saved) setViewMode(saved as any);
+  }, []);
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem('orse_leads_view_mode', mode);
+  };
 
   const [editingStageId, setEditingStageId] = useState<string | null>(null);
   const [editingStageName, setEditingStageName] = useState('');
@@ -538,6 +551,95 @@ export default function LeadsKanban() {
     );
   });
 
+  const handleDropVendedor = async (e: React.DragEvent, userId: string) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const id = e.dataTransfer.getData('text/plain');
+    if (!id) return;
+
+    const assignedToId = userId === 'unassigned' ? null : userId;
+    const targetUser = filterUsers.find(u => u.id === assignedToId);
+
+    // Optimistic update
+    setLeads(prev => prev.map(l => l.id === id ? { 
+      ...l, 
+      assignedToId: assignedToId, 
+      assignedTo: targetUser || null 
+    } : l));
+
+    await changeLeadOwner(id, assignedToId as any);
+  };
+
+  const PRESET_VENDEDOR_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6', '#f97316', '#64748b'];
+
+  const normalizeHex = (hex: string) => {
+    let h = hex.replace('#', '');
+    if (h.length === 3) {
+      h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    }
+    return '#' + h;
+  };
+
+  const getContrastYIQ = (hex: string) => {
+    const normalized = normalizeHex(hex);
+    const r = parseInt(normalized.slice(1, 3), 16);
+    const g = parseInt(normalized.slice(3, 5), 16);
+    const b = parseInt(normalized.slice(5, 7), 16);
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return (yiq >= 140) ? 'black' : 'white';
+  };
+
+  const hexToRgba = (hex: string, alpha: number) => {
+    const normalized = normalizeHex(hex);
+    const r = parseInt(normalized.slice(1, 3), 16);
+    const g = parseInt(normalized.slice(3, 5), 16);
+    const b = parseInt(normalized.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  const getDarkenedHexForText = (hex: string) => {
+    const normalized = normalizeHex(hex);
+    let r = parseInt(normalized.slice(1, 3), 16);
+    let g = parseInt(normalized.slice(3, 5), 16);
+    let b = parseInt(normalized.slice(5, 7), 16);
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    if (yiq > 170) {
+      r = Math.max(0, Math.floor(r * 0.5));
+      g = Math.max(0, Math.floor(g * 0.5));
+      b = Math.max(0, Math.floor(b * 0.5));
+    }
+    const toHexStr = (val: number) => val.toString(16).padStart(2, '0');
+    return `#${toHexStr(r)}${toHexStr(g)}${toHexStr(b)}`;
+  };
+
+  const kanbanVendedorCols = React.useMemo(() => {
+    const cols: { id: string; label: string; avatarUrl?: string | null; cards: any[]; total: number }[] = [];
+    
+    // First, column for "Sem Vendedor / Não Atribuído"
+    const unassigned = filteredLeads.filter(l => !l.assignedToId);
+    cols.push({
+      id: 'unassigned',
+      label: 'Não Atribuído',
+      avatarUrl: null,
+      cards: unassigned,
+      total: unassigned.reduce((acc, l) => acc + (l.valorEst || 0), 0)
+    });
+
+    // Columns for each user in filterUsers
+    filterUsers.forEach(u => {
+      const userLeads = filteredLeads.filter(l => l.assignedToId === u.id);
+      cols.push({
+        id: u.id,
+        label: u.nome || 'Vendedor',
+        avatarUrl: u.avatarUrl,
+        cards: userLeads,
+        total: userLeads.reduce((acc, l) => acc + (l.valorEst || 0), 0)
+      });
+    });
+
+    return cols;
+  }, [filteredLeads, filterUsers]);
+
   // Get all leads with WhatsApp messages, sorted by the latest message date
   const chatLeads = leads
     .filter(lead => lead.telefone && (lead.whatsappMessages?.length > 0))
@@ -599,6 +701,45 @@ export default function LeadsKanban() {
           <p className="text-xs md:text-sm text-slate-500">Gerencie seus leads e prospectos</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-start lg:justify-end bell-header-spacing">
+          {/* Alternador de visualização */}
+          <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-sm gap-1 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => handleViewModeChange('lista')}
+              title="Visualização em Lista"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
+                viewMode === 'lista'
+                  ? 'bg-[#1B4D3E] text-white shadow-sm'
+                  : 'text-amber-500 hover:text-amber-600'
+              }`}
+            >
+              <LayoutList size={14} /> Lista
+            </button>
+            <button
+              type="button"
+              onClick={() => handleViewModeChange('kanban-status')}
+              title="Kanban por Status"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
+                viewMode === 'kanban-status'
+                  ? 'bg-[#1B4D3E] text-white shadow-sm'
+                  : 'text-amber-500 hover:text-amber-600'
+              }`}
+            >
+              <LayoutGrid size={14} /> Por Etapa
+            </button>
+            <button
+              type="button"
+              onClick={() => handleViewModeChange('kanban-vendedor')}
+              title="Kanban por Vendedor"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
+                viewMode === 'kanban-vendedor'
+                  ? 'bg-[#1B4D3E] text-white shadow-sm'
+                  : 'text-amber-500 hover:text-amber-600'
+              }`}
+            >
+              <Users size={14} /> Por Vendedor
+            </button>
+          </div>
           {/* Real-time Search Input */}
           <div className="relative flex-1 min-w-[200px] md:flex-none md:w-80">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -700,307 +841,553 @@ export default function LeadsKanban() {
 
       <div className="flex flex-col flex-1 py-6 pl-2 pr-1 bg-slate-50">
         {showMetrics && <PipelineMetrics leads={filteredLeads} stages={stages} />}
-        <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
-          <div className="flex gap-4 h-[calc(100vh-70px)] shrink-0 pr-1">
-          {stages.map((stage, idx) => {
-            const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
-            const totalValorEst = stageLeads.reduce((acc, lead) => acc + (lead.valorEst || 0), 0);
-            const isFirst = idx === 0;
-            const normalizedStageColor = stage.color === 'bg-emerald-100' ? 'bg-green-100' : (stage.color || 'bg-slate-100');
-            const colorMap: Record<string, string> = {
-              'bg-slate-100': 'text-slate-400',
-              'bg-blue-100': 'text-blue-400',
-              'bg-green-100': 'text-green-400',
-              'bg-emerald-100': 'text-green-400',
-              'bg-amber-100': 'text-amber-400',
-              'bg-rose-100': 'text-rose-400',
-              'bg-purple-100': 'text-purple-400',
-            };
-            const headerTextColorClass = colorMap[normalizedStageColor] || 'text-slate-400';
-            
-            const points = isFirst ? "0,0 320,0 336,32 320,64 0,64" : "0,0 320,0 336,32 320,64 0,64 16,32";
+        {viewMode === 'kanban-status' && (
+          <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
+            <div className="flex gap-4 h-[calc(100vh-70px)] shrink-0 pr-1">
+              {stages.map((stage, idx) => {
+                const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
+                const totalValorEst = stageLeads.reduce((acc, lead) => acc + (lead.valorEst || 0), 0);
+                const isFirst = idx === 0;
+                const normalizedStageColor = stage.color === 'bg-emerald-100' ? 'bg-green-100' : (stage.color || 'bg-slate-100');
+                const colorMap: Record<string, string> = {
+                  'bg-slate-100': 'text-slate-400',
+                  'bg-blue-100': 'text-blue-400',
+                  'bg-green-100': 'text-green-400',
+                  'bg-emerald-100': 'text-green-400',
+                  'bg-amber-100': 'text-amber-400',
+                  'bg-rose-100': 'text-rose-400',
+                  'bg-purple-100': 'text-purple-400',
+                };
+                const headerTextColorClass = colorMap[normalizedStageColor] || 'text-slate-400';
 
-            return (
-              <div 
-                key={stage.id} 
-                className={`w-[270px] shrink-0 flex flex-col h-full rounded-2xl transition-colors duration-300 relative`}
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, stage.id)}
-              >
-                <div 
-                  className={`relative h-13 shrink-0 z-10 w-[calc(100%+16px)] ml-0 group/header text-slate-800`}
-                >
-                  <svg 
-                    className={`absolute inset-0 w-full h-full drop-shadow-sm ${headerTextColorClass}`} 
-                    preserveAspectRatio="none" 
-                    viewBox="0 0 336 64"
+                return (
+                  <div 
+                    key={stage.id} 
+                    className="w-[270px] shrink-0 flex flex-col h-full rounded-2xl transition-colors duration-300 relative"
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, stage.id)}
                   >
-                    <path 
-                      d={isFirst 
-                        ? "M 10,0 L 320,0 L 336,32 L 320,64 L 10,64 A 10,10 0 0,1 0,54 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                        : "M 0,0 L 320,0 L 336,32 L 320,64 L 0,64 L 16,32 Z"
-                      }
-                      fill="currentColor" 
-                      stroke="#1e293b" 
-                      strokeWidth="2"
-                      vectorEffect="non-scaling-stroke"
-                    />
-                  </svg>
-                  <div className={`relative z-10 flex justify-between items-center h-full ${isFirst ? 'pl-6 pr-9' : 'pl-9 pr-9'}`}>
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <h3 className="font-black text-slate-900 uppercase tracking-tight text-xs drop-shadow-sm truncate max-w-[130px]">
-                        {stage.nome}
-                      </h3>
-                      
-                      {/* Pencil Icon visible on hover */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingStageName(stage.nome);
-                          setEditingStageId(stage.id);
-                        }}
-                        className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 text-slate-700 hover:bg-black/10 flex items-center justify-center cursor-pointer"
-                        title="Editar Etapa"
+                    <div className="relative h-13 shrink-0 z-10 w-[calc(100%+16px)] ml-0 group/header text-slate-800">
+                      <svg 
+                        className={`absolute inset-0 w-full h-full drop-shadow-sm ${headerTextColorClass}`} 
+                        preserveAspectRatio="none" 
+                        viewBox="0 0 336 64"
                       >
-                        <Edit2 size={12} />
-                      </button>
-                    </div>
-
-                    <span className="bg-white/75 text-slate-800 text-xs font-black px-2.5 py-0.5 rounded-full shrink-0 shadow-sm">
-                      {stageLeads.length}
-                    </span>
-
-                    {/* Popover de Edição Unificado de Etapa */}
-                    {editingStageId === stage.id && (
-                      <>
-                        <div 
-                          className="fixed inset-0 z-30 cursor-default" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingStageId(null);
-                          }}
+                        <path 
+                          d={isFirst 
+                            ? "M 10,0 L 320,0 L 336,32 L 320,64 L 10,64 A 10,10 0 0,1 0,54 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                            : "M 0,0 L 320,0 L 336,32 L 320,64 L 0,64 L 16,32 Z"
+                          }
+                          fill="currentColor" 
+                          stroke="#1e293b" 
+                          strokeWidth="2"
+                          vectorEffect="non-scaling-stroke"
                         />
-                        <div 
-                          className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3.5 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                              Editar Etapa CRM
-                            </span>
-                            <button 
-                              onClick={() => setEditingStageId(null)}
-                              className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
-                            >
-                              <X size={12} />
-                            </button>
-                          </div>
-
-                          {/* Renomear Etapa */}
-                          <div className="flex flex-col gap-1">
-                            <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Nome da Etapa</label>
-                            <input
-                              type="text"
-                              value={editingStageName}
-                              onChange={(e) => setEditingStageName(e.target.value)}
-                              className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-slate-300 outline-none w-full bg-slate-50 font-medium text-slate-900"
-                              placeholder="Nome da etapa"
-                              onKeyDown={async (e) => {
-                                if (e.key === 'Enter') {
-                                  await handleSaveStageName(stage.id);
-                                }
-                              }}
-                            />
-                          </div>
-
-                          {/* Cores da Etapa (Originais 6 do Lead CRM) */}
-                          <div className="flex flex-col gap-1">
-                            <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Cor da Etapa</label>
-                            <div className="grid grid-cols-6 gap-2 mt-1">
-                              {['bg-slate-100', 'bg-blue-100', 'bg-green-100', 'bg-amber-100', 'bg-rose-100', 'bg-purple-100'].map(c => {
-                                const saveVal = c === 'bg-green-100' ? 'bg-emerald-100' : c;
-                                const isSelected = stage.color === saveVal || (stage.color === 'bg-emerald-100' && saveVal === 'bg-emerald-100') || (!stage.color && saveVal === 'bg-slate-100');
-                                return (
-                                  <button
-                                    key={c}
-                                    onClick={async () => {
-                                      await updateLeadStageColor(stage.id, saveVal);
-                                      fetchData();
-                                    }}
-                                    className={`w-7 h-7 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center ${c} ${
-                                      isSelected ? 'ring-2 ring-slate-800/30 border-slate-700 scale-105' : 'border-slate-200'
-                                    }`}
-                                    title="Mudar para esta cor"
-                                    type="button"
-                                  >
-                                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-slate-800" />}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          {/* Ações Avançadas da Etapa */}
-                          <div className="flex gap-2 pt-2 border-t border-slate-100">
-                            <button
-                              onClick={() => {
-                                setEditingStageId(null);
-                                handleCreateStage(stage.id);
-                              }}
-                              className="flex-1 py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold transition-colors text-center flex items-center justify-center gap-1 cursor-pointer"
-                              type="button"
-                            >
-                              <Plus size={13} />
-                              Nova Etapa
-                            </button>
-                            <button
-                              onClick={() => {
-                                setEditingStageId(null);
-                                handleDeleteStage(stage.id);
-                              }}
-                              className="flex-1 py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition-colors text-center flex items-center justify-center gap-1 cursor-pointer"
-                              type="button"
-                            >
-                              <Trash2 size={13} />
-                              Excluir
-                            </button>
-                          </div>
-
+                      </svg>
+                      <div className={`relative z-10 flex justify-between items-center h-full ${isFirst ? 'pl-6 pr-9' : 'pl-9 pr-9'}`}>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <h3 className="font-black text-slate-900 uppercase tracking-tight text-xs drop-shadow-sm truncate max-w-[130px]">
+                            {stage.nome}
+                          </h3>
+                          
                           <button
-                            onClick={async () => {
-                              await handleSaveStageName(stage.id);
-                            }}
-                            className="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-colors text-center cursor-pointer"
                             type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingStageName(stage.nome);
+                              setEditingStageId(stage.id);
+                            }}
+                            className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 text-slate-700 hover:bg-black/10 flex items-center justify-center cursor-pointer"
+                            title="Editar Etapa"
                           >
-                            Concluir
+                            <Edit2 size={12} />
                           </button>
                         </div>
-                      </>
-                    )}
-                  </div>
-                </div>
 
-                {/* Totalizer Pill */}
-                <div className="flex justify-center w-[calc(100%+16px)] my-1.5 shrink-0 z-10 pointer-events-auto">
-                  <div 
-                    className="px-3 py-0.5 rounded-full text-[11px] font-black shadow-sm select-none border"
-                    style={getLeadTotalizerStyle(stage.color)}
-                  >
-                    {fmt(totalValorEst)}
-                  </div>
-                </div>
-                
-                <div className={`flex-1 flex flex-col p-3 overflow-y-auto space-y-3 ${normalizedStageColor} border-x border-b border-slate-200 rounded-b-2xl -mt-[1px] z-0`}>
-                  {stageLeads.map(lead => (
-                    <div
-                      key={lead.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, lead.id)}
-                      onDragEnd={handleDragEnd}
-                      onClick={() => setSelectedLead(lead)}
-                      className="bg-white p-3 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-green-200 transition-all group"
-                    >
-                      <div className="flex items-center justify-between gap-1.5 mb-1">
-                        <div className="font-bold text-xs text-slate-800 truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</div>
-                        {(() => {
-                          const unreadCount = lead.whatsappMessages?.filter(
-                            (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
-                          ).length || 0;
-                          if (unreadCount > 0) {
-                            return (
-                              <span className="bg-green-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 animate-pulse shadow-sm shadow-green-500/30" title={`${unreadCount} mensagens não lidas`}>
-                                <MessageSquare size={8} fill="white" /> {unreadCount}
-                              </span>
-                            );
-                          }
-                          return null;
-                        })()}
+                        <span className="bg-white/75 text-slate-800 text-xs font-black px-2.5 py-0.5 rounded-full shrink-0 shadow-sm">
+                          {stageLeads.length}
+                        </span>
+
+                        {editingStageId === stage.id && (
+                          <>
+                            <div 
+                              className="fixed inset-0 z-30 cursor-default" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingStageId(null);
+                              }}
+                            />
+                            <div 
+                              className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3.5 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                  Editar Etapa CRM
+                                </span>
+                                <button 
+                                  onClick={() => setEditingStageId(null)}
+                                  className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
+                                >
+                                  <X size={12} />
+                                </button>
+                              </div>
+
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Nome da Etapa</label>
+                                <input
+                                  type="text"
+                                  value={editingStageName}
+                                  onChange={(e) => setEditingStageName(e.target.value)}
+                                  className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-slate-300 outline-none w-full bg-slate-50 font-medium"
+                                  placeholder="Nome da etapa"
+                                  onKeyDown={async (e) => {
+                                    if (e.key === 'Enter') {
+                                      if (editingStageName.trim() && editingStageName.trim().toUpperCase() !== stage.nome.toUpperCase()) {
+                                        const res = await updateLeadStageName(stage.id, editingStageName.trim());
+                                        if (res.success) {
+                                          setStages(prev => prev.map(s => s.id === stage.id ? { ...s, nome: editingStageName.trim() } : s));
+                                        } else {
+                                          alert(res.error || 'Erro ao renomear');
+                                        }
+                                      }
+                                      setEditingStageId(null);
+                                    }
+                                  }}
+                                />
+                              </div>
+
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Selecione a Cor</label>
+                                <div className="grid grid-cols-6 gap-1.5 mt-0.5">
+                                  {['bg-slate-100', 'bg-blue-100', 'bg-emerald-100', 'bg-amber-100', 'bg-rose-100', 'bg-purple-100'].map(c => {
+                                    const isSelected = stage.color === c || (c === 'bg-emerald-100' && stage.color === 'bg-green-100');
+                                    return (
+                                      <button
+                                        key={c}
+                                        onClick={async () => {
+                                          const res = await updateLeadStageColor(stage.id, c);
+                                          if (res.success) {
+                                            setStages(prev => prev.map(s => s.id === stage.id ? { ...s, color: c } : s));
+                                          } else {
+                                            alert(res.error || 'Erro ao alterar cor');
+                                          }
+                                        }}
+                                        className={`w-7 h-7 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center ${c} ${
+                                          isSelected ? 'ring-2 ring-slate-800/30 border-slate-700 scale-105' : 'border-slate-200'
+                                        }`}
+                                        title="Mudar para esta cor"
+                                        type="button"
+                                      >
+                                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-slate-800" />}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              <div className="flex gap-2 pt-2 border-t border-slate-100">
+                                <button
+                                  onClick={() => {
+                                    setEditingStageId(null);
+                                    handleCreateStage(stage.id);
+                                  }}
+                                  className="flex-1 py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold transition-colors text-center flex items-center justify-center gap-1 cursor-pointer"
+                                  type="button"
+                                >
+                                  <Plus size={13} />
+                                  Nova Etapa
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setEditingStageId(null);
+                                    handleDeleteStage(stage.id);
+                                  }}
+                                  className="flex-1 py-1.5 px-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-bold transition-colors text-center flex items-center justify-center gap-1 cursor-pointer"
+                                  type="button"
+                                >
+                                  <Trash2 size={13} />
+                                  Excluir
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
-                      
-                      <div className="text-[10px] text-slate-500 flex items-center gap-1 mb-1.5">
-                        <Building size={10} className="shrink-0" /> <span className="truncate">{lead.segmento || 'Sem segmento'}</span>
-                      </div>
-                      
-                      {(lead.telefone || lead.email) && (
-                        <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
-                          {lead.telefone && (
-                            <span className="flex items-center gap-0.5 truncate max-w-[110px]" title={lead.telefone}>
-                              <Phone size={10} className="text-slate-400 shrink-0" /> {lead.telefone}
-                            </span>
-                          )}
-                          {lead.email && (
-                            <span className="flex items-center gap-0.5 truncate max-w-[120px]" title={lead.email}>
-                              <Mail size={10} className="text-slate-400 shrink-0" /> {lead.email}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {lead.endereco && (
-                        <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-2">
-                          <a 
-                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.endereco)}`} 
-                            target="_blank" 
-                            rel="noreferrer" 
-                            onClick={e => e.stopPropagation()} 
-                            className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[9px] font-black py-1 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-blue-100"
-                            title="Abrir no Google Maps"
-                          >
-                            <MapPin size={9} /> Maps
-                          </a>
-                          <a 
-                            href={`https://waze.com/ul?q=${encodeURIComponent(lead.endereco)}`} 
-                            target="_blank" 
-                            rel="noreferrer" 
-                            onClick={e => e.stopPropagation()} 
-                            className="flex-1 bg-cyan-50 hover:bg-cyan-100 text-cyan-600 text-[9px] font-black py-1 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-cyan-100"
-                            title="Abrir no Waze"
-                          >
-                            <Navigation size={9} /> Waze
-                          </a>
-                        </div>
-                      )}
-
-                      {lead.activities && lead.activities.length > 0 && (
-                        <div className="mt-2 bg-amber-50/70 border border-amber-100 p-1.5 rounded-lg text-[10px] flex items-center gap-1 text-amber-700">
-                          <CalendarDays size={11} className="text-amber-500 shrink-0" />
-                          <span className="font-semibold shrink-0">{lead.activities[0].tipo}:</span>
-                          <span className="truncate flex-1">{lead.activities[0].titulo}</span>
-                          <span className="text-[9px] text-amber-600 font-medium bg-amber-100/80 px-1 py-0.5 rounded shrink-0">
-                            {safeDate(lead.activities[0].dataInicio)}
-                          </span>
-                        </div>
-                      )}
-
-                      {lead.assignedTo && (
-                        <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 text-[9px] text-slate-400 font-sans">
-                           <div className="flex items-center gap-1.5">
-                             {lead.assignedTo.avatarUrl ? (
-                               <img 
-                                 src={lead.assignedTo.avatarUrl} 
-                                 alt={lead.assignedTo.nome} 
-                                 className="w-4.5 h-4.5 rounded-full object-cover border border-slate-100 shrink-0 shadow-xs"
-                               />
-                             ) : (
-                               <div className="w-4.5 h-4.5 rounded-full bg-emerald-600/15 text-emerald-700 border border-emerald-100/50 flex items-center justify-center text-[7px] font-black shrink-0 uppercase">
-                                 {lead.assignedTo.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
-                               </div>
-                             )}
-                             <span className="font-bold text-slate-700">{lead.assignedTo.nome.split(' ')[0]}</span>
-                           </div>
-                           <div className="font-semibold text-slate-400">
-                             {safeDate(lead.updatedAt)}
-                           </div>
-                        </div>
-                      )}
                     </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+
+                    <div className="flex justify-center w-[calc(100%+16px)] my-1.5 shrink-0 z-10 pointer-events-auto">
+                      <div 
+                        className="px-3 py-0.5 rounded-full text-[11px] font-black shadow-sm select-none border"
+                        style={getLeadTotalizerStyle(stage.color)}
+                      >
+                        {fmt(totalValorEst)}
+                      </div>
+                    </div>
+                    
+                    <div className={`flex-1 flex flex-col p-3 overflow-y-auto space-y-3 ${normalizedStageColor} border-x border-b border-slate-200 rounded-b-2xl -mt-[1px] z-0`}>
+                      {stageLeads.map(lead => (
+                        <div
+                          key={lead.id}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, lead.id)}
+                          onDragEnd={handleDragEnd}
+                          onClick={() => setSelectedLead(lead)}
+                          className="bg-white p-3 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-green-200 transition-all group"
+                        >
+                          <div className="flex items-center justify-between gap-1.5 mb-1">
+                            <div className="font-bold text-xs text-slate-800 truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</div>
+                            {(() => {
+                              const unreadCount = lead.whatsappMessages?.filter(
+                                (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
+                              ).length || 0;
+                              if (unreadCount > 0) {
+                                return (
+                                  <span className="bg-green-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 animate-pulse shadow-sm shadow-green-500/30" title={`${unreadCount} mensagens não lidas`}>
+                                    <MessageSquare size={8} fill="white" /> {unreadCount}
+                                  </span>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
+                          
+                          <div className="text-[10px] text-slate-500 flex items-center gap-1 mb-1.5">
+                            <Building size={10} className="shrink-0" /> <span className="truncate">{lead.segmento || 'Sem segmento'}</span>
+                          </div>
+                          
+                          {(lead.telefone || lead.email) && (
+                            <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
+                              {lead.telefone && (
+                                <span className="flex items-center gap-0.5 truncate max-w-[110px]" title={lead.telefone}>
+                                  <Phone size={10} className="text-slate-400 shrink-0" /> {lead.telefone}
+                                </span>
+                              )}
+                              {lead.email && (
+                                <span className="flex items-center gap-0.5 truncate max-w-[120px]" title={lead.email}>
+                                  <Mail size={10} className="text-slate-400 shrink-0" /> {lead.email}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {lead.endereco && (
+                            <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-2">
+                              <a 
+                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.endereco)}`} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                onClick={e => e.stopPropagation()} 
+                                className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[9px] font-black py-1 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-blue-100"
+                                title="Abrir no Google Maps"
+                              >
+                                <MapPin size={9} /> Maps
+                              </a>
+                              <a 
+                                href={`https://waze.com/ul?q=${encodeURIComponent(lead.endereco)}`} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                onClick={e => e.stopPropagation()} 
+                                className="flex-1 bg-cyan-50 hover:bg-cyan-100 text-cyan-600 text-[9px] font-black py-1 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-cyan-100"
+                                title="Abrir no Waze"
+                              >
+                                <Navigation size={9} /> Waze
+                              </a>
+                            </div>
+                          )}
+
+                          {lead.activities && lead.activities.length > 0 && (
+                            <div className="mt-2 bg-amber-50/70 border border-amber-100 p-1.5 rounded-lg text-[10px] flex items-center gap-1 text-amber-700">
+                              <CalendarDays size={11} className="text-amber-500 shrink-0" />
+                              <span className="font-semibold shrink-0">{lead.activities[0].tipo}:</span>
+                              <span className="truncate flex-1">{lead.activities[0].titulo}</span>
+                              <span className="text-[9px] text-amber-600 font-medium bg-amber-100/80 px-1 py-0.5 rounded shrink-0">
+                                {safeDate(lead.activities[0].dataInicio)}
+                              </span>
+                            </div>
+                          )}
+
+                          {lead.assignedTo && (
+                            <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 text-[9px] text-slate-400 font-sans">
+                               <div className="flex items-center gap-1.5">
+                                 {lead.assignedTo.avatarUrl ? (
+                                   <img 
+                                     src={lead.assignedTo.avatarUrl} 
+                                     alt={lead.assignedTo.nome} 
+                                     className="w-4.5 h-4.5 rounded-full object-cover border border-slate-100 shrink-0 shadow-xs"
+                                   />
+                                 ) : (
+                                   <div className="w-4.5 h-4.5 rounded-full bg-emerald-600/15 text-emerald-700 border border-emerald-100/50 flex items-center justify-center text-[7px] font-black shrink-0 uppercase">
+                                     {lead.assignedTo.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                                   </div>
+                                 )}
+                                 <span className="font-bold text-slate-700">{lead.assignedTo.nome.split(' ')[0]}</span>
+                               </div>
+                               <div className="font-semibold text-slate-400">
+                                 {safeDate(lead.updatedAt)}
+                               </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {viewMode === 'kanban-vendedor' && (
+          <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
+            <div className="flex gap-4 h-[calc(100vh-70px)] shrink-0 pr-1">
+              {kanbanVendedorCols.map((col, idx) => {
+                const colLeads = col.cards;
+                const isFirst = idx === 0;
+                const colColor = col.id === 'unassigned' ? '#64748b' : PRESET_VENDEDOR_COLORS[idx % PRESET_VENDEDOR_COLORS.length];
+                const contrast = getContrastYIQ(colColor);
+                const badgeClass = contrast === 'white' ? 'bg-white/20 text-white' : 'bg-black/10 text-slate-800';
+
+                return (
+                  <div 
+                    key={col.id} 
+                    className="w-[270px] shrink-0 flex flex-col h-full rounded-2xl relative"
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDropVendedor(e, col.id)}
+                  >
+                    <div className="relative h-13 shrink-0 z-10 w-[calc(100%+16px)] ml-0 group/header text-slate-800">
+                      <svg 
+                        className="absolute inset-0 w-full h-full drop-shadow-sm" 
+                        preserveAspectRatio="none" 
+                        viewBox="0 0 336 64"
+                        style={{ color: colColor }}
+                      >
+                        <path 
+                          d={isFirst 
+                            ? "M 10,0 L 320,0 L 336,32 L 320,64 L 10,64 A 10,10 0 0,1 0,54 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                            : "M 0,0 L 320,0 L 336,32 L 320,64 L 0,64 L 16,32 Z"
+                          }
+                          fill="currentColor" 
+                          stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
+                          strokeWidth="1.5"
+                        />
+                      </svg>
+                      <div 
+                        className={`relative z-10 flex justify-between items-center h-full ${isFirst ? 'pl-6 pr-9' : 'pl-9 pr-9'}`}
+                        style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          {col.avatarUrl ? (
+                            <img 
+                              src={col.avatarUrl} 
+                              alt={col.label} 
+                              className="w-5 h-5 rounded-full object-cover border border-white/20"
+                            />
+                          ) : col.id !== 'unassigned' ? (
+                            <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-white font-black text-[8px] uppercase border border-white/20">
+                              {col.label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                            </div>
+                          ) : (
+                            <User size={10} className="text-white/80" />
+                          )}
+                          <h3 className="font-black uppercase tracking-tight text-xs truncate">
+                            {col.label}
+                          </h3>
+                        </div>
+
+                        <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full shrink-0 shadow-sm ${badgeClass}`}>
+                          {colLeads.length}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Totalizer Pill */}
+                    <div className="flex justify-center w-[calc(100%+16px)] my-1.5 shrink-0 z-10 pointer-events-auto">
+                      <div 
+                        className="px-3 py-0.5 rounded-full text-[11px] font-black shadow-sm select-none border"
+                        style={{
+                          backgroundColor: hexToRgba(colColor, 0.1),
+                          color: getDarkenedHexForText(colColor),
+                          borderColor: hexToRgba(colColor, 0.25)
+                        }}
+                      >
+                        {fmt(col.total)}
+                      </div>
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col p-3 overflow-y-auto space-y-3 bg-slate-50 border-x border-b border-slate-200 rounded-b-2xl -mt-[1px] z-0">
+                      {colLeads.map(lead => (
+                        <div
+                          key={lead.id}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, lead.id)}
+                          onDragEnd={handleDragEnd}
+                          onClick={() => setSelectedLead(lead)}
+                          className="bg-white p-3 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-green-200 transition-all group"
+                        >
+                          <div className="flex items-center justify-between gap-1.5 mb-1">
+                            <div className="font-bold text-xs text-slate-800 truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</div>
+                            {(() => {
+                              const unreadCount = lead.whatsappMessages?.filter(
+                                (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
+                              ).length || 0;
+                              if (unreadCount > 0) {
+                                return (
+                                  <span className="bg-green-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 animate-pulse shadow-sm shadow-green-500/30" title={`${unreadCount} mensagens não lidas`}>
+                                    <MessageSquare size={8} fill="white" /> {unreadCount}
+                                  </span>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
+                          
+                          <div className="text-[10px] text-slate-500 flex items-center gap-1 mb-1.5">
+                            <Building size={10} className="shrink-0" /> <span className="truncate">{lead.segmento || 'Sem segmento'}</span>
+                          </div>
+                          
+                          {(lead.telefone || lead.email) && (
+                            <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
+                              {lead.telefone && (
+                                <span className="flex items-center gap-0.5 truncate max-w-[110px]" title={lead.telefone}>
+                                  <Phone size={10} className="text-slate-400 shrink-0" /> {lead.telefone}
+                                </span>
+                              )}
+                              {lead.email && (
+                                <span className="flex items-center gap-0.5 truncate max-w-[120px]" title={lead.email}>
+                                  <Mail size={10} className="text-slate-400 shrink-0" /> {lead.email}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {lead.activities && lead.activities.length > 0 && (
+                            <div className="mt-2 bg-amber-50/70 border border-amber-100 p-1.5 rounded-lg text-[10px] flex items-center gap-1 text-amber-700">
+                              <CalendarDays size={11} className="text-amber-500 shrink-0" />
+                              <span className="font-semibold shrink-0">{lead.activities[0].tipo}:</span>
+                              <span className="truncate flex-1">{lead.activities[0].titulo}</span>
+                              <span className="text-[9px] text-amber-600 font-medium bg-amber-100/80 px-1 py-0.5 rounded shrink-0">
+                                {safeDate(lead.activities[0].dataInicio)}
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 text-[9px] text-slate-400 font-sans">
+                             <div className="flex items-center gap-1">
+                               <span className="font-bold text-slate-500">Etapa:</span>
+                               <span className="font-semibold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-wide">{lead.stage?.nome || 'Sem Etapa'}</span>
+                             </div>
+                             <div className="font-semibold text-slate-400">
+                               {safeDate(lead.updatedAt)}
+                             </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {viewMode === 'lista' && (
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto w-full mb-6">
+            <table className="w-full text-left border-collapse table-auto">
+              <thead>
+                <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
+                  <th className="px-3.5 py-3 lg:px-5">Lead/Empresa</th>
+                  <th className="px-3.5 py-3 lg:px-5">Segmento</th>
+                  <th className="px-3.5 py-3 lg:px-5">Contato</th>
+                  <th className="px-3.5 py-3 lg:px-5">Telefone</th>
+                  <th className="px-3.5 py-3 lg:px-5">E-mail</th>
+                  <th className="px-3.5 py-3 lg:px-5">Responsável</th>
+                  <th className="px-3.5 py-3 lg:px-5 text-right">Valor Est.</th>
+                  <th className="px-3.5 py-3 lg:px-5 text-center">Etapa</th>
+                  <th className="px-3.5 py-3 lg:px-5 text-center w-[140px] min-w-[140px]">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm">
+                {filteredLeads.length === 0 ? (
+                  <tr><td colSpan={9} className="px-6 py-12 text-center text-slate-400">Nenhum lead encontrado.</td></tr>
+                ) : filteredLeads.map((lead) => (
+                  <tr key={lead.id} className="border-b border-slate-200 hover:bg-slate-50">
+                    <td className="px-3.5 py-3.5 lg:px-5 font-semibold text-slate-700 max-w-[145px] truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</td>
+                    <td className="px-3.5 py-3.5 lg:px-5 text-slate-500 max-w-[130px] truncate" title={lead.segmento}>{lead.segmento || '-'}</td>
+                    <td className="px-3.5 py-3.5 lg:px-5 text-slate-500 truncate" title={lead.contatoNome}>{lead.contatoNome || '-'}</td>
+                    <td className="px-3.5 py-3.5 lg:px-5 text-slate-500 font-mono text-xs">{lead.telefone || '-'}</td>
+                    <td className="px-3.5 py-3.5 lg:px-5 text-slate-500 font-mono text-xs">{lead.email || '-'}</td>
+                    <td className="px-3.5 py-3.5 lg:px-5">
+                      <div className="flex items-center gap-1.5">
+                        {lead.assignedTo?.avatarUrl ? (
+                          <img 
+                            src={lead.assignedTo.avatarUrl} 
+                            alt={lead.assignedTo.nome} 
+                            className="w-5 h-5 rounded-full object-cover border border-slate-200 shadow-xs"
+                          />
+                        ) : (
+                          <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200 shrink-0">
+                            {(lead.assignedTo?.nome || 'LD').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                          </div>
+                        )}
+                        <span className="text-slate-600 font-medium max-w-[110px] truncate" title={lead.assignedTo?.nome || 'Não atribuído'}>{lead.assignedTo?.nome || 'Não atribuído'}</span>
+                      </div>
+                    </td>
+                    <td className="px-3.5 py-3.5 lg:px-5 font-bold text-[#1B4D3E] text-right">{fmt(lead.valorEst || 0)}</td>
+                    <td className="px-3.5 py-3.5 lg:px-5 text-center">
+                      <span 
+                        className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase border shrink-0"
+                        style={getLeadTotalizerStyle(lead.stage?.color)}
+                      >
+                        {lead.stage?.nome || 'Sem Etapa'}
+                      </span>
+                    </td>
+                    <td className="px-3.5 py-3.5 lg:px-5 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedChatLeadId(lead.id);
+                            setShowChatCenter(true);
+                          }}
+                          className="text-emerald-500 hover:text-emerald-600 transition-colors p-1 bg-emerald-50 rounded"
+                          title="Chat WhatsApp"
+                        >
+                          <MessageCircle size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedLead(lead)}
+                          className="text-[#1B4D3E] hover:text-[#13382d] transition-colors p-1 bg-slate-100 rounded"
+                          title="Ver Detalhes"
+                        >
+                          <UserCog size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (confirm("Tem certeza que deseja excluir este lead?")) {
+                              const res = await deleteLead(lead.id);
+                              if (res.success) {
+                                setLeads(prev => prev.filter(l => l.id !== lead.id));
+                              } else {
+                                alert(res.error || "Erro ao excluir lead");
+                              }
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-600 transition-colors p-1 bg-red-50 rounded"
+                          title="Excluir Lead"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
       </div>
 

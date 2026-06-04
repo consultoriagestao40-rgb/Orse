@@ -30,6 +30,16 @@ export default function PropostasComerciaisDashboard() {
   const [docs, setDocs] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('lista');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('orse_proposta_view_mode');
+    if (saved) setViewMode(saved as any);
+  }, []);
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem('orse_proposta_view_mode', mode);
+  };
   const [activeShareDoc, setActiveShareDoc] = useState<any | null>(null);
   const [activeTrackingDoc, setActiveTrackingDoc] = useState<any | null>(null);
 
@@ -882,7 +892,7 @@ export default function PropostasComerciaisDashboard() {
             <div className="flex items-center gap-3 bell-header-spacing flex-shrink-0">
               <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm gap-1 flex-shrink-0">
                 <button
-                  onClick={() => setViewMode('lista')}
+                  onClick={() => handleViewModeChange('lista')}
                   title="Visualização em Lista"
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                     viewMode === 'lista' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
@@ -891,7 +901,7 @@ export default function PropostasComerciaisDashboard() {
                   <LayoutList size={14} /> Lista
                 </button>
                 <button
-                  onClick={() => setViewMode('kanban-status')}
+                  onClick={() => handleViewModeChange('kanban-status')}
                   title="Kanban por Status"
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                     viewMode === 'kanban-status' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
@@ -900,7 +910,7 @@ export default function PropostasComerciaisDashboard() {
                   <LayoutGrid size={14} /> Por Status
                 </button>
                 <button
-                  onClick={() => setViewMode('kanban-vendedor')}
+                  onClick={() => handleViewModeChange('kanban-vendedor')}
                   title="Kanban por Vendedor"
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                     viewMode === 'kanban-vendedor' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'

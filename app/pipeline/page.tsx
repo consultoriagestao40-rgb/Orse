@@ -33,6 +33,16 @@ function ProposalsDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [userRole, setUserRole] = useState<string>('USER');
   const [viewMode, setViewMode] = useState<ViewMode>('lista');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('orse_fpv_view_mode');
+    if (saved) setViewMode(saved as any);
+  }, []);
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem('orse_fpv_view_mode', mode);
+  };
   const [vendedorColors, setVendedorColors] = useState<Record<string, string>>({});
   const [statusOrder, setStatusOrder] = useState<string[]>([]);
   const [vendedorOrder, setVendedorOrder] = useState<string[]>([]);
@@ -882,7 +892,7 @@ function ProposalsDashboard() {
               {/* Alternador de visualização */}
               <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm gap-1 flex-shrink-0">
                 <button
-                  onClick={() => setViewMode('lista')}
+                  onClick={() => handleViewModeChange('lista')}
                   title="Visualização em Lista"
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                     viewMode === 'lista'
@@ -893,7 +903,7 @@ function ProposalsDashboard() {
                   <LayoutList size={14} /> Lista
                 </button>
                 <button
-                  onClick={() => setViewMode('kanban-status')}
+                  onClick={() => handleViewModeChange('kanban-status')}
                   title="Kanban por Status"
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                     viewMode === 'kanban-status'
@@ -904,7 +914,7 @@ function ProposalsDashboard() {
                   <LayoutGrid size={14} /> Por Status
                 </button>
                 <button
-                  onClick={() => setViewMode('kanban-vendedor')}
+                  onClick={() => handleViewModeChange('kanban-vendedor')}
                   title="Kanban por Vendedor"
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                     viewMode === 'kanban-vendedor'

@@ -67,6 +67,16 @@ export default function ContratosDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('lista');
 
+  useEffect(() => {
+    const saved = localStorage.getItem('orse_contrato_view_mode');
+    if (saved) setViewMode(saved as any);
+  }, []);
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem('orse_contrato_view_mode', mode);
+  };
+
   const loadData = async () => {
     setLoading(true);
     const res = await getContratos();
@@ -333,7 +343,7 @@ export default function ContratosDashboard() {
             <div className="flex items-center gap-3 bell-header-spacing">
               <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm gap-1">
                 <button
-                  onClick={() => setViewMode('lista')}
+                  onClick={() => handleViewModeChange('lista')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
                     viewMode === 'lista' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
                   }`}
@@ -341,7 +351,7 @@ export default function ContratosDashboard() {
                   <LayoutList size={14} /> Lista
                 </button>
                 <button
-                  onClick={() => setViewMode('kanban-status')}
+                  onClick={() => handleViewModeChange('kanban-status')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
                     viewMode === 'kanban-status' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
                   }`}
