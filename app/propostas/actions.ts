@@ -1105,3 +1105,18 @@ export async function requestPasswordReset(email: string) {
   }
 }
 
+export async function getPipelinePageData() {
+  try {
+    const [proposals, statuses, role, usersList] = await Promise.all([
+      getPropostas(),
+      getPropostaStatuses(),
+      getCurrentUserRole(),
+      getUsersList()
+    ]);
+    return { proposals, statuses, role, usersList };
+  } catch (error) {
+    console.error('Error fetching pipeline page data:', error);
+    return { proposals: [], statuses: [], role: 'USER', usersList: [] };
+  }
+}
+

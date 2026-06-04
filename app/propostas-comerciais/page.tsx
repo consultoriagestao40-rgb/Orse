@@ -8,16 +8,14 @@ import {
   Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer, Share2, Eye, Palette
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { getPropostas, getCurrentUserRole, getUsersList, transferirProposta, getDocumentoStatuses, updateDocumentoStatusParam } from '@/app/propostas/actions';
-import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
+import { transferirProposta, updateDocumentoStatusParam } from '@/app/propostas/actions';
 import ClientLinkModal from '@/components/ClientLinkModal';
 import ClientTrackingModal from '@/components/ClientTrackingModal';
 import { 
-  getDocumentosProposta, 
-  getTemplatesProposta, 
   createDocumentoProposta, 
   updateDocumentoStatus, 
-  deleteDocumentoProposta 
+  deleteDocumentoProposta,
+  getPropostasComerciaisPageData
 } from './actions';
 
 type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor';
@@ -111,22 +109,14 @@ export default function PropostasComerciaisDashboard() {
 
   const loadData = async () => {
     setLoading(true);
-    const [dataDocs, dataFpvs, dataTemplates, dataEmpresas, role, usersData, statusData] = await Promise.all([
-      getDocumentosProposta(),
-      getPropostas(),
-      getTemplatesProposta(),
-      getEmpresasEmissoras(),
-      getCurrentUserRole(),
-      getUsersList(),
-      getDocumentoStatuses()
-    ]);
-    setDocs(dataDocs);
-    setFpvs(dataFpvs);
-    setTemplates(dataTemplates);
-    setEmpresas(dataEmpresas);
+    const { docs, proposals, templates, empresas, role, usersList, statuses } = await getPropostasComerciaisPageData();
+    setDocs(docs);
+    setFpvs(proposals);
+    setTemplates(templates);
+    setEmpresas(empresas);
     setUserRole(role);
-    setUsersList(usersData);
-    setStatuses(statusData || []);
+    setUsersList(usersList);
+    setStatuses(statuses || []);
     setLoading(false);
   };
 

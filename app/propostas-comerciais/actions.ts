@@ -4,7 +4,14 @@ import fs from 'fs';
 import path from 'path';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { getLoggedUser } from '@/app/propostas/actions';
+import { 
+  getLoggedUser, 
+  getPropostas, 
+  getCurrentUserRole, 
+  getUsersList, 
+  getDocumentoStatuses 
+} from '@/app/propostas/actions';
+import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
 
 export async function getDocumentosProposta() {
   const user = await getLoggedUser();
@@ -925,6 +932,32 @@ export async function uploadClientFileAction(base64Data: string, fileName: strin
   } catch (err: any) {
     console.error('Erro no upload do arquivo:', err);
     return { success: false, error: err.message || 'Erro ao gravar arquivo no servidor' };
+  }
+}
+
+export async function getPropostasComerciaisPageData() {
+  try {
+    const [docs, proposals, templates, empresas, role, usersList, statuses] = await Promise.all([
+      getDocumentosProposta(),
+      getPropostas(),
+      getTemplatesProposta(),
+      getEmpresasEmissoras(),
+      getCurrentUserRole(),
+      getUsersList(),
+      getDocumentoStatuses()
+    ]);
+    return { 
+      docs, 
+      proposals, 
+      templates, 
+      empresas, 
+      role, 
+      usersList, 
+      statuses 
+    };
+  } catch (error) {
+    console.error('Error fetching propostas comerciais page data:', error);
+    return { docs: [], proposals: [], templates: [], empresas: [], role: 'USER', usersList: [], statuses: [] };
   }
 }
 

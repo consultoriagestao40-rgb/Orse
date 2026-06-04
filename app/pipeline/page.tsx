@@ -17,7 +17,7 @@ import {
   getPropostaStatuses, createPropostaStatus, deletePropostaStatus,
   deleteProposta, getCurrentUserRole,
   getUsersList, transferirProposta, compartilharProposta, getAuditLogs,
-  updatePropostaStatusParam
+  updatePropostaStatusParam, getPipelinePageData
 } from '@/app/propostas/actions';
 
 type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor';
@@ -104,16 +104,11 @@ function ProposalsDashboard() {
 
   const loadData = async () => {
     setLoading(true);
-    const [data, statusData, role, usersData] = await Promise.all([
-      getPropostas(),
-      getPropostaStatuses(),
-      getCurrentUserRole(),
-      getUsersList()
-    ]);
-    setProposals(data);
-    setStatuses(statusData);
+    const { proposals, statuses, role, usersList } = await getPipelinePageData();
+    setProposals(proposals);
+    setStatuses(statuses);
     setUserRole(role);
-    setUsersList(usersData);
+    setUsersList(usersList);
     setLoading(false);
   };
 
