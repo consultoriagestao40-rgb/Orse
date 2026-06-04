@@ -21,7 +21,11 @@ export async function getDocumentosProposta() {
         proposta: {
           include: {
             user: true,
-            versoes: {}
+            versoes: {
+              select: {
+                versao: true
+              }
+            }
           }
         },
       },

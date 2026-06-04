@@ -554,7 +554,11 @@ export async function getPropostas() {
         client: true,
         user: true,
         versoes: {
-          include: { items: true }
+          select: {
+            versao: true,
+            precoVenda: true,
+            metadados: true
+          }
         }
       },
       orderBy: { createdAt: 'desc' }
@@ -880,7 +884,12 @@ export async function getKPIs() {
         client: true,
         user: true,
         versoes: {
-          include: { items: true }
+          select: {
+            versao: true,
+            precoVenda: true,
+            metadados: true,
+            dataCriacao: true
+          }
         }
       }
     });
