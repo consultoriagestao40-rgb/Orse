@@ -318,6 +318,8 @@ export default function ContratosDashboard() {
     '#38BDF8', '#0D9488', '#10B981', '#84CC16', '#FACC15', '#FB923C', '#F43F5E', '#EC4899', '#8B5CF6', '#64748B',
     '#0EA5E9', '#00B4D8', '#00F5D4', '#39FF14', '#FFD000', '#FF9F1C', '#FF007F', '#D000FF', '#7000FF', '#48CAE4',
     '#0369A1', '#0B6623', '#065F46', '#3F6212', '#A16207', '#C2410C', '#B91C1C', '#9D174D', '#581C87', '#334155',
+  ];
+
   const KanbanColumn = ({ status, isFirst = false }: { status: string; isFirst?: boolean }) => {
     const cards = filteredContratos.filter(c => c.status === status);
     const total = cards.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
