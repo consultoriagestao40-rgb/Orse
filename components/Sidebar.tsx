@@ -2,11 +2,13 @@
  
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone, MessageCircle, MessageSquare } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
 import { changeMyPassword, changeMyAvatar, getLoggedUser } from '@/app/propostas/actions';
+import { getLeads, getAllUsers } from '@/app/leads/actions';
+import WhatsAppChat from '@/app/leads/components/WhatsAppChat';
  
 const Sidebar = () => {
   const pathname = usePathname();
@@ -425,6 +427,50 @@ const Sidebar = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  // Estados da Barra Utilitária Direita e Widget de WhatsApp
+  const [showWhatsAppWidget, setShowWhatsAppWidget] = useState(false);
+  const [activeWidgetLead, setActiveWidgetLead] = useState<any | null>(null);
+  const [systemUsers, setSystemUsers] = useState<any[]>([]);
+  const [widgetLeads, setWidgetLeads] = useState<any[]>([]);
+  const [widgetSearchTerm, setWidgetSearchTerm] = useState('');
+
+  // Efeito para carregar a equipe de usuários
+  useEffect(() => {
+    if (user) {
+      const loadSystemUsers = async () => {
+        try {
+          const res = await getAllUsers();
+          if (res.success && res.users) {
+            setSystemUsers(res.users);
+          }
+        } catch (err) {
+          console.error('Erro ao carregar equipe:', err);
+        }
+      };
+      loadSystemUsers();
+    }
+  }, [user]);
+
+  // Efeito para carregar leads do WhatsApp com polling de 5 segundos
+  useEffect(() => {
+    if (user) {
+      const loadLeadsForWidget = async () => {
+        try {
+          const res = await getLeads();
+          if (res.success && res.leads) {
+            setWidgetLeads(res.leads);
+          }
+        } catch (err) {
+          console.error('Erro ao carregar leads para o widget:', err);
+        }
+      };
+      
+      loadLeadsForWidget();
+      const interval = setInterval(loadLeadsForWidget, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
   const loadNotifications = async () => {
     try {
@@ -1442,21 +1488,98 @@ const Sidebar = () => {
         </div>
       )}
 
-      {/* CENTRAL DE NOTIFICAÇÕES DESLIZANTE DA DIREITA (ESTILO BITRIX) */}
+      {/* BARRA UTILIÁRIA DIREITA E CENTRAIS DE ATENDIMENTO (ESTILO BITRIX) */}
       {user && (
-        <div className={`${trialStatus?.isTrialActive && !trialStatus?.trialExpired && trialStatus?.hasContact && countdownTime ? 'fixed top-[74px] right-6' : 'fixed top-[18px] right-6'} z-[100] font-sans`}>
-          {/* Ícone de Sino Flutuante */}
-          <button
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="w-11 h-11 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center text-slate-600 hover:text-[#1B4D3E] shadow-sm hover:shadow transition-all relative cursor-pointer group"
-          >
-            <Bell size={20} className={`transition-transform duration-200 group-hover:scale-110 group-hover:rotate-12 ${unreadCount > 0 ? "text-[#1B4D3E]" : ""}`} />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-xs">
-                {unreadCount}
-              </span>
-            )}
-          </button>
+        <>
+          {/* Barra Vertical de Atalhos (Extrema Direita) */}
+          <div className="fixed top-0 right-0 h-screen w-12 bg-[#0A0D14] border-l border-slate-800/60 z-[170] flex flex-col justify-between py-5 items-center font-sans shadow-lg select-none">
+            {/* Atalhos Superiores */}
+            <div className="flex flex-col items-center gap-4 w-full">
+              {/* Sino de Notificações */}
+              <button
+                onClick={() => {
+                  setShowNotifications(!showNotifications);
+                  setShowWhatsAppWidget(false);
+                }}
+                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all relative cursor-pointer group ${
+                  showNotifications 
+                    ? 'bg-[#1B4D3E] text-white shadow-md' 
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+                title="Central de Notificações"
+              >
+                <Bell size={18} className="transition-transform group-hover:scale-105" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[8px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-[#0A0D14] shadow-xs">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* WhatsApp Widget Toggle */}
+              <button
+                onClick={() => {
+                  setShowWhatsAppWidget(!showWhatsAppWidget);
+                  setShowNotifications(false);
+                }}
+                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all relative cursor-pointer group ${
+                  showWhatsAppWidget 
+                    ? 'bg-emerald-600 text-white shadow-md' 
+                    : 'text-slate-400 hover:text-emerald-400 hover:bg-slate-800/50'
+                }`}
+                title="Central WhatsApp CRM"
+              >
+                <MessageCircle size={18} className="transition-transform group-hover:scale-105" />
+                {(() => {
+                  const whatsappLeads = widgetLeads.filter(l => l.telefone);
+                  const totalUnread = whatsappLeads.reduce((acc, lead) => acc + (lead.unreadCount || 0), 0);
+                  return totalUnread > 0 ? (
+                    <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[8px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-[#0A0D14] shadow-xs">
+                      {totalUnread}
+                    </span>
+                  ) : null;
+                })()}
+              </button>
+
+              {/* Chat Interno (Inativo por enquanto) */}
+              <button
+                onClick={() => alert("O Chat Interno está sendo preparado e estará disponível em breve! 🚀")}
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 hover:text-blue-400 hover:bg-slate-800/50 transition-all relative cursor-pointer group"
+                title="Chat Interno (Em breve)"
+              >
+                <MessageSquare size={18} className="transition-transform group-hover:scale-105" />
+              </button>
+            </div>
+
+            {/* Seção Inferior: Equipe de Usuários */}
+            <div className="flex flex-col items-center gap-3 w-full border-t border-slate-800/60 pt-5 max-h-[45vh] overflow-y-auto scrollbar-none">
+              {systemUsers.map((u) => {
+                const initials = u.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                return (
+                  <div
+                    key={u.id}
+                    className="relative group cursor-pointer"
+                    title={`${u.nome} (Equipe)`}
+                    onClick={() => alert(`Iniciar chat com ${u.nome} (Funcionalidade em breve!)`)}
+                  >
+                    {u.avatarUrl ? (
+                      <img
+                        src={u.avatarUrl}
+                        alt={u.nome}
+                        className="w-8 h-8 rounded-full border border-slate-800/80 group-hover:border-slate-600 object-cover shadow-sm transition-all"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-slate-800 text-slate-300 border border-slate-700/50 flex items-center justify-center text-[10px] font-black uppercase transition-all group-hover:bg-slate-700">
+                        {initials}
+                      </div>
+                    )}
+                    {/* Indicador de Status Online (Bolinha Verde) */}
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-[#0A0D14] shadow-xs" />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Central de Notificações - Drawer Lateral Deslizante */}
           {showNotifications && (
@@ -1470,8 +1593,8 @@ const Sidebar = () => {
                 }}
               />
               
-              {/* Painel Lateral */}
-              <div className="fixed top-0 right-0 h-screen w-full max-w-[480px] bg-slate-50 shadow-[0_0_50px_rgba(0,0,0,0.18)] z-[160] flex flex-col animate-in slide-in-from-right duration-300 font-sans border-l border-slate-200">
+              {/* Painel Lateral (Deslocado 48px / right-12 para manter a barra direita livre) */}
+              <div className="fixed top-0 right-12 h-screen w-full max-w-[480px] bg-slate-50 shadow-[0_0_50px_rgba(0,0,0,0.18)] z-[160] flex flex-col animate-in slide-in-from-right duration-300 font-sans border-l border-slate-200">
                 {/* Header do Drawer */}
                 <div className="bg-white p-6 border-b border-slate-200/80 flex flex-col gap-4 shrink-0">
                   <div className="flex items-center justify-between">
@@ -1559,18 +1682,18 @@ const Sidebar = () => {
                             const getNotificationMeta = (text: string) => {
                               const lower = text.toLowerCase();
                               if (lower.includes('visualizou') || lower.includes('visualizada')) {
-                                return {
-                                  bg: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-                                  emoji: '👀',
-                                  title: 'Visualização de Proposta'
-                                };
+                                  return {
+                                    bg: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+                                    emoji: '👀',
+                                    title: 'Visualização de Proposta'
+                                  };
                               }
                               if (lower.includes('e-mail') || lower.includes('email')) {
-                                return {
-                                  bg: 'bg-blue-50 text-blue-600 border-blue-100',
-                                  emoji: '✉️',
-                                  title: 'Ação de E-mail'
-                                };
+                                  return {
+                                    bg: 'bg-blue-50 text-blue-600 border-blue-100',
+                                    emoji: '✉️',
+                                    title: 'Ação de E-mail'
+                                  };
                               }
                               return {
                                   bg: 'bg-[#1B4D3E]/8 text-[#1B4D3E] border-[#1B4D3E]/10',
@@ -1634,7 +1757,159 @@ const Sidebar = () => {
               </div>
             </>
           )}
-        </div>
+
+          {/* WIDGET FLUTUANTE DE WHATSAPP (CANTO INFERIOR DIREITO) */}
+          {showWhatsAppWidget && (
+            <div className="fixed bottom-4 right-16 w-[380px] h-[550px] bg-white border border-slate-200/80 shadow-2xl rounded-2xl z-[160] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300 font-sans border border-slate-200">
+              {activeWidgetLead ? (
+                /* MODO CHAT ATIVO */
+                <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50">
+                  {/* Cabeçalho do Chat */}
+                  <div className="p-3.5 bg-[#1B4D3E] text-white flex justify-between items-center shrink-0 shadow-sm">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <button
+                        onClick={() => setActiveWidgetLead(null)}
+                        className="p-1.5 text-emerald-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer mr-1"
+                        title="Voltar para a lista"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      
+                      <div className="w-8 h-8 bg-white/10 text-white font-extrabold text-[11px] rounded-lg flex items-center justify-center shrink-0 uppercase border border-white/10">
+                        {activeWidgetLead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                      </div>
+                      
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-black truncate leading-tight">
+                          {activeWidgetLead.nomeFantasia}
+                        </h4>
+                        <span className="text-[10px] text-emerald-200/80 font-bold block mt-0.5">{activeWidgetLead.telefone}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setShowWhatsAppWidget(false);
+                        setActiveWidgetLead(null);
+                      }}
+                      className="text-emerald-100 hover:text-white p-1 rounded-full hover:bg-white/10"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  {/* Corpo do WhatsAppChat */}
+                  <div className="flex-1 overflow-hidden relative">
+                    <WhatsAppChat leadId={activeWidgetLead.id} leadPhone={activeWidgetLead.telefone} />
+                  </div>
+                </div>
+              ) : (
+                /* MODO LISTA DE CONVERSAS */
+                <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50">
+                  {/* Cabeçalho do Widget */}
+                  <div className="p-4 bg-gradient-to-r from-slate-900 to-slate-950 text-white flex justify-between items-center shrink-0">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg border border-emerald-500/30">
+                        <MessageCircle size={16} className="fill-emerald-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-black uppercase tracking-wider">WhatsApp CRM</h3>
+                        <p className="text-[9px] text-slate-400 font-bold mt-0.5">Conversas do Funil em Tempo Real</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowWhatsAppWidget(false)}
+                      className="text-slate-400 hover:text-white p-1.5 rounded-full hover:bg-slate-800 transition-colors cursor-pointer"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  {/* Campo de Busca de Contatos */}
+                  <div className="p-3 bg-white border-b border-slate-100 shrink-0">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+                      <input 
+                        type="text"
+                        placeholder="Pesquisar conversas..."
+                        value={widgetSearchTerm}
+                        onChange={e => setWidgetSearchTerm(e.target.value)}
+                        className="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:border-[#1B4D3E] outline-none transition-all font-semibold text-slate-700"
+                      />
+                      {widgetSearchTerm && (
+                        <button 
+                          type="button" 
+                          onClick={() => setWidgetSearchTerm('')}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Lista de Contatos/Leads com conversas */}
+                  <div className="flex-1 overflow-y-auto divide-y divide-slate-100 bg-white">
+                    {(() => {
+                      const whatsappLeads = widgetLeads.filter(l => l.telefone && (l.whatsappMessages?.length > 0 || l.latestMsg));
+                      const filtered = whatsappLeads.filter(l => 
+                        l.nomeFantasia.toLowerCase().includes(widgetSearchTerm.toLowerCase()) || 
+                        l.telefone.includes(widgetSearchTerm)
+                      );
+
+                      if (filtered.length === 0) {
+                        return (
+                          <div className="p-8 text-center text-slate-400 text-xs font-semibold">
+                            Nenhuma conversa encontrada.
+                          </div>
+                        );
+                      }
+
+                      return filtered.map(lead => {
+                        const initials = lead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                        return (
+                          <div
+                            key={lead.id}
+                            onClick={() => setActiveWidgetLead(lead)}
+                            className="p-3.5 flex items-center gap-3 cursor-pointer hover:bg-slate-50/50 transition-colors bg-white"
+                          >
+                            <div className="w-9 h-9 bg-emerald-600/10 text-emerald-700 font-black text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-emerald-100">
+                              {initials}
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-baseline mb-0.5">
+                                <h4 className="text-xs font-black text-slate-800 truncate">{lead.nomeFantasia}</h4>
+                                {lead.latestMsg && (
+                                  <span className="text-[9px] text-slate-400 shrink-0 font-medium ml-1">
+                                    {new Date(lead.latestMsg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-slate-400 font-bold tracking-tight mb-1">{lead.telefone}</p>
+                              {lead.latestMsg && (
+                                <p className="text-xs text-slate-500 truncate font-semibold">
+                                  {lead.latestMsg.direction === 'OUTBOUND' ? 'Você: ' : ''}
+                                  {lead.latestMsg.texto}
+                                </p>
+                              )}
+                            </div>
+
+                            {lead.unreadCount > 0 && (
+                              <span className="bg-emerald-500 text-white font-black text-[9px] w-4.5 h-4.5 rounded-full flex items-center justify-center shrink-0 animate-pulse">
+                                {lead.unreadCount}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
     </>
   );
