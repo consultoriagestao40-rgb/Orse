@@ -1012,6 +1012,20 @@ export default function LeadsKanban() {
                           >
                             <Edit2 size={12} />
                           </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCreateStage(stage.id);
+                            }}
+                            className={`p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
+                              contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
+                            }`}
+                            title="Criar Nova Etapa"
+                          >
+                            <Plus size={12} />
+                          </button>
                         </div>
 
                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 shadow-sm ${badgeClass}`}>

@@ -8,7 +8,7 @@ import {
   Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer, Share2, Eye, Palette, Loader2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { transferirProposta, updateDocumentoStatusParam } from '@/app/propostas/actions';
+import { transferirProposta, updateDocumentoStatusParam, createDocumentoStatus } from '@/app/propostas/actions';
 import ClientLinkModal from '@/components/ClientLinkModal';
 import ClientTrackingModal from '@/components/ClientTrackingModal';
 import { getSegmentos } from '@/app/admin/settings/actions';
@@ -122,6 +122,28 @@ export default function PropostasComerciaisDashboard() {
         setVendedorOrder(newOrder);
         localStorage.setItem('proposta-vendedor-order', JSON.stringify(newOrder));
       }
+    }
+  };
+
+  const handleCreateStatus = async (insertAfterLabel: string) => {
+    const name = prompt('Nome do novo status/etapa (ex: Negociação):');
+    if (!name) return;
+    const trimmed = name.trim();
+    const res = await createDocumentoStatus(trimmed);
+    if (res.success) {
+      const currentCols = statuses.map(s => s.nome);
+      let order = statusOrder.length > 0 ? [...statusOrder] : [...currentCols];
+      const insertIdx = order.indexOf(insertAfterLabel);
+      if (insertIdx !== -1) {
+        order.splice(insertIdx + 1, 0, trimmed);
+      } else {
+        order.push(trimmed);
+      }
+      setStatusOrder(order);
+      localStorage.setItem('proposta-status-order', JSON.stringify(order));
+      loadData();
+    } else {
+      alert(res.error || 'Erro ao criar status');
     }
   };
 
@@ -507,12 +529,13 @@ export default function PropostasComerciaisDashboard() {
   ];
 
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
-  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onDragColumnStart, onDragColumnEnd, onDropColumn, onRenameColumn, isFirst = false }: {
+  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onDragColumnStart, onDragColumnEnd, onDropColumn, onRenameColumn, onCreateStatus, isFirst = false }: {
     label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor' | 'segmento'; statusId?: string; onColorChange?: (newColor: string) => void;
     onDragColumnStart?: (e: React.DragEvent, label: string) => void;
     onDragColumnEnd?: (e: React.DragEvent) => void;
     onDropColumn?: (e: React.DragEvent, label: string) => void;
     onRenameColumn?: (newName: string) => Promise<void>;
+    onCreateStatus?: (insertAfterLabel: string) => Promise<void>;
     isFirst?: boolean;
   }) => {
     const [showEditPopover, setShowEditPopover] = useState(false);
@@ -681,16 +704,33 @@ export default function PropostasComerciaisDashboard() {
                   {cards.length}
                 </span>
 
+                {isStatus && onCreateStatus && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCreateStatus(label);
+                    }}
+                    className={`p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer ${
+                      contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
+                    }`}
+                    title="Criar Nova Etapa"
+                    type="button"
+                  >
+                    <Plus size={12} />
+                  </button>
+                )}
+
                 {onColorChange && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowEditPopover(!showEditPopover);
                     }}
-                    className={`p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center ${
+                    className={`p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer ${
                       contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
                     }`}
                     title="Editar Coluna"
+                    type="button"
                   >
                     <Edit2 size={12} />
                   </button>
@@ -1212,6 +1252,7 @@ export default function PropostasComerciaisDashboard() {
                                   total={col.total}
                                   statusId={col.id}
                                   isFirst={idx === 0}
+                                  onCreateStatus={handleCreateStatus}
                                   onColorChange={async (newColor) => {
                                     await updateDocumentoStatusParam(col.id, col.label, newColor);
                                     setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));

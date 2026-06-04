@@ -107,6 +107,29 @@ export default function ContratosDashboard() {
     setIsAddingStatus(false);
   };
 
+  const handleCreateStatus = (insertAfterStatus: string) => {
+    const name = prompt('Nome do novo status/etapa (ex: Assinado):');
+    if (!name) return;
+    const trimmed = name.trim();
+    if (statusesList.includes(trimmed)) {
+      alert('Já existe um status com este nome.');
+      return;
+    }
+    const idx = statusesList.indexOf(insertAfterStatus);
+    const newList = [...statusesList];
+    if (idx !== -1) {
+      newList.splice(idx + 1, 0, trimmed);
+    } else {
+      newList.push(trimmed);
+    }
+    setStatusesList(newList);
+    localStorage.setItem('orse_contrato_statuses', JSON.stringify(newList));
+    
+    const newColors = { ...statusColors, [trimmed]: '#3b82f6' };
+    setStatusColors(newColors);
+    localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
+  };
+
   useEffect(() => {
     const saved = localStorage.getItem('orse_contrato_view_mode');
     if (saved) setViewMode(saved as any);
@@ -295,7 +318,7 @@ export default function ContratosDashboard() {
     '#38BDF8', '#0D9488', '#10B981', '#84CC16', '#FACC15', '#FB923C', '#F43F5E', '#EC4899', '#8B5CF6', '#64748B',
     '#0EA5E9', '#00B4D8', '#00F5D4', '#39FF14', '#FFD000', '#FF9F1C', '#FF007F', '#D000FF', '#7000FF', '#48CAE4',
     '#0369A1', '#0B6623', '#065F46', '#3F6212', '#A16207', '#C2410C', '#B91C1C', '#9D174D', '#581C87', '#334155',
-   const KanbanColumn = ({ status, isFirst = false }: { status: string; isFirst?: boolean }) => {
+  const KanbanColumn = ({ status, isFirst = false }: { status: string; isFirst?: boolean }) => {
     const cards = filteredContratos.filter(c => c.status === status);
     const total = cards.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
 
@@ -385,6 +408,20 @@ export default function ContratosDashboard() {
                 <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm ${badgeClass}`}>
                   {cards.length}
                 </span>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCreateStatus(status);
+                  }}
+                  className={`p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
+                    contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
+                  }`}
+                  title="Criar Nova Etapa"
+                >
+                  <Plus size={12} />
+                </button>
 
                 <button
                   type="button"
