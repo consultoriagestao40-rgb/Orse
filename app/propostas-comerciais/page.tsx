@@ -372,8 +372,11 @@ export default function PropostasComerciaisDashboard() {
   };
 
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
-  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange }: {
+  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onDragColumnStart, onDragColumnEnd, onDropColumn }: {
     label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor'; statusId?: string; onColorChange?: (newColor: string) => void;
+    onDragColumnStart?: (e: React.DragEvent, label: string) => void;
+    onDragColumnEnd?: (e: React.DragEvent) => void;
+    onDropColumn?: (e: React.DragEvent, label: string) => void;
   }) => {
     const [showColorPicker, setShowColorPicker] = useState(false);
     const userObj = usersList.find(u => u.nome === label);
@@ -398,7 +401,23 @@ export default function PropostasComerciaisDashboard() {
     ];
 
     return (
-      <div className="flex-shrink-0 w-72 shrink-0 relative">
+      <div 
+        className="flex-shrink-0 w-72 shrink-0 relative cursor-grab active:cursor-grabbing transition-all select-none duration-200 hover:scale-[1.01]"
+        draggable="true"
+        onDragStart={(e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest('button') || target.closest('select') || target.closest('input')) {
+            e.preventDefault();
+            return;
+          }
+          if (onDragColumnStart) onDragColumnStart(e, label);
+        }}
+        onDragEnd={onDragColumnEnd}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          if (onDropColumn) onDropColumn(e, label);
+        }}
+      >
         {isStatus ? (
           <div className={`border border-b-0 rounded-t-2xl rounded-b-none p-4 shadow-md text-left ${hStyle.bg} ${hStyle.text} ${hStyle.border} relative group`}>
             <div className="flex items-center justify-between mb-2">
