@@ -2097,7 +2097,7 @@ export default function LeadsKanban() {
             <div className="flex-1 flex overflow-hidden">
               
               {/* Left Panel: Chats List Sidebar */}
-              <div className="w-full md:w-[35%] lg:w-[30%] border-r border-slate-100 flex flex-col bg-slate-50 shrink-0">
+              <div className="w-full md:w-[35%] lg:w-[30%] border-r border-slate-100 flex flex-col bg-white shrink-0">
                 {/* Search in Chats */}
                 <div className="p-3 border-b border-slate-100 bg-white">
                   <div className="relative">
@@ -2122,7 +2122,7 @@ export default function LeadsKanban() {
                 </div>
 
                 {/* Chats scrollable container */}
-                <div className="flex-1 overflow-y-auto divide-y divide-slate-100 scrollbar-thin">
+                <div className="flex-1 overflow-y-auto divide-y divide-slate-100 scrollbar-thin bg-white">
                   {filteredChatLeads.length === 0 ? (
                     <div className="p-8 text-center text-slate-400 text-xs font-medium">
                       Nenhuma conversa encontrada.
@@ -2137,14 +2137,14 @@ export default function LeadsKanban() {
                             setSelectedChatLeadId(lead.id);
                             setIsEditingInline(false);
                           }}
-                          className={`p-3.5 flex items-start gap-3 cursor-pointer transition-all duration-150 ${
+                          className={`p-3.5 flex items-start gap-3 cursor-pointer transition-all duration-150 border-b border-slate-100 ${
                             isSelected 
-                              ? 'bg-emerald-50/70 border-l-4 border-emerald-500 font-bold font-black' 
-                              : 'hover:bg-white bg-slate-50/50'
+                              ? 'bg-[#e6fcf5]/70 border-l-4 border-[#0ca678] font-bold' 
+                              : 'hover:bg-slate-50 bg-white'
                           }`}
                         >
                           {/* Avatar and Initials for Chat List Sidebar Item */}
-                          <div className="w-10 h-10 bg-emerald-600/10 text-emerald-700 font-black text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-emerald-100">
+                          <div className="w-10 h-10 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
                             {getInitials(lead.nomeFantasia)}
                           </div>
 
@@ -2169,29 +2169,29 @@ export default function LeadsKanban() {
                               })()}
                             </div>
 
-                            <div className="text-[10px] text-slate-500 flex items-center gap-1">
-                              <Building size={10} className="shrink-0 text-slate-400" />
+                            <div className="text-[10px] text-slate-500 flex items-center gap-1.5 font-medium">
+                              <span className="shrink-0 select-none">🏢</span>
                               <span className="truncate">{lead.segmento || 'Sem segmento'}</span>
                             </div>
 
                             {lead.telefone && (
-                              <div className="text-[10px] text-slate-400 flex items-center gap-1 font-bold">
-                                <Phone size={10} className="text-slate-400 shrink-0" />
+                              <div className="text-[10px] text-slate-500 flex items-center gap-1.5 font-bold">
+                                <span className="shrink-0 select-none">📞</span>
                                 <span className="truncate">{lead.telefone}</span>
                               </div>
                             )}
 
-                            <div className="text-[9px] text-slate-400 font-sans flex items-center gap-1">
-                              <span className="font-bold text-slate-500">Etapa:</span>
-                              <span className="font-semibold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                            <div className="text-[10px] text-slate-500 flex items-center gap-1 font-medium">
+                              <span>Etapa:</span>
+                              <span className="font-bold text-[#1c7ed6] uppercase">
                                 {lead.stage?.nome || 'Sem Etapa'}
                               </span>
                             </div>
 
                             {lead.latestMsg && (
-                              <p className="text-xs text-slate-500 truncate mt-1 bg-slate-50 p-1.5 rounded-lg border border-slate-100 italic">
+                              <p className="text-xs text-slate-500 truncate mt-1.5 bg-[#f1f3f5] p-2 rounded-xl border border-slate-200/60 italic font-medium">
                                 {lead.latestMsg.direction === 'OUTBOUND' ? (
-                                  <span className="font-semibold text-slate-600 not-italic">Você: </span>
+                                  <span className="font-bold text-slate-600 not-italic">Você: </span>
                                 ) : ''}
                                 {lead.latestMsg.texto}
                               </p>
@@ -2200,7 +2200,7 @@ export default function LeadsKanban() {
 
                           {/* Unread badge */}
                           {lead.unreadCount > 0 && (
-                            <span className="bg-emerald-500 text-white font-black text-[9px] px-1.5 py-0.5 rounded-full shrink-0 animate-pulse">
+                            <span className="bg-[#0ca678] text-white font-black text-[9px] px-1.5 py-0.5 rounded-full shrink-0 animate-pulse">
                               {lead.unreadCount}
                             </span>
                           )}
@@ -2224,7 +2224,7 @@ export default function LeadsKanban() {
                           {/* Selected Lead mini header */}
                           <div className="p-4 bg-white border-b border-slate-100 flex justify-between items-center shrink-0">
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <div className="w-9 h-9 bg-emerald-50 text-emerald-800 font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-emerald-100">
+                              <div className="w-9 h-9 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
                                 {getInitials(activeLead.nomeFantasia)}
                               </div>
                               <div className="min-w-0">
@@ -2233,11 +2233,6 @@ export default function LeadsKanban() {
                                 </h4>
                                 <div className="flex items-center gap-2">
                                   <span className="text-[10px] text-slate-400 font-semibold">{activeLead.telefone}</span>
-                                  {activeLead.segmento && (
-                                    <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[9px] font-bold">
-                                      {activeLead.segmento}
-                                    </span>
-                                  )}
                                 </div>
                               </div>
                             </div>
@@ -2255,7 +2250,7 @@ export default function LeadsKanban() {
                                   });
                                   setIsEditingInline(!isEditingInline);
                                 }}
-                                className={`text-[10px] font-bold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 border ${
+                                className={`text-[10.5px] font-bold px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 border ${
                                   isEditingInline 
                                     ? 'bg-slate-800 text-white border-slate-800 hover:bg-slate-900' 
                                     : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm'
@@ -2267,7 +2262,7 @@ export default function LeadsKanban() {
                                   </>
                                 ) : (
                                   <>
-                                    <UserCog size={12} /> Completar Cadastro
+                                    <UserCog size={13} className="text-slate-600" /> Completar Cadastro
                                   </>
                                 )}
                               </button>
@@ -2278,10 +2273,10 @@ export default function LeadsKanban() {
                                   setSelectedLead(activeLead);
                                   setShowChatCenter(false);
                                 }}
-                                className="bg-gradient-to-r from-emerald-600 to-[#1B4D3E] hover:from-emerald-700 hover:to-[#13382d] text-white font-extrabold text-[10px] px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-600/10 hover:shadow-emerald-600/20 active:scale-95"
+                                className="bg-[#0ca678] hover:bg-[#099268] text-white font-extrabold text-[10.5px] px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-600/10 hover:shadow-emerald-600/20 active:scale-95"
                                 title="Ver no Funil"
                               >
-                                <Target size={12} /> Ver no Funil
+                                <Target size={13} /> Ver no Funil
                               </button>
                             </div>
                           </div>

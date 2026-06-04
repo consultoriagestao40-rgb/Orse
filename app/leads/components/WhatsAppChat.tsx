@@ -930,7 +930,7 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
             <button
               type="button"
               onClick={stopAndSendRecording}
-              className="w-10 h-10 bg-emerald-500 text-white hover:bg-emerald-600 rounded-full flex items-center justify-center shrink-0 transition-all scale-105 shadow-sm"
+              className="w-10 h-10 bg-[#1a365d] hover:bg-[#11223c] text-white rounded-full flex items-center justify-center shrink-0 transition-all scale-105 shadow-sm"
               title="Enviar Áudio"
             >
               <Send size={16} />
@@ -985,7 +985,7 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
                 <button 
                   type="submit" 
                   disabled={sending}
-                  className="w-11 h-11 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center shrink-0 shadow-sm transition-colors"
+                  className="w-11 h-11 bg-[#1a365d] hover:bg-[#11223c] disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center shrink-0 shadow-sm transition-colors"
                   title="Enviar mensagem"
                 >
                   <Send size={18} className={sending ? 'opacity-50' : ''} />
@@ -995,7 +995,7 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
                   type="button"
                   onClick={startRecording}
                   disabled={sending}
-                  className="w-11 h-11 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center shrink-0 shadow-sm transition-colors"
+                  className="w-11 h-11 bg-[#1a365d] hover:bg-[#11223c] disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center shrink-0 shadow-sm transition-colors"
                   title="Gravar mensagem de voz"
                 >
                   <Mic size={18} />
