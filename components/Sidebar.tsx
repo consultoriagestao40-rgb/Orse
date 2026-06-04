@@ -1491,6 +1491,12 @@ const Sidebar = () => {
       {/* BARRA UTILIÁRIA DIREITA E CENTRAIS DE ATENDIMENTO (ESTILO BITRIX) */}
       {user && (
         <>
+          {/* Estilo Dinâmico para Recuo da Barra Util Direita */}
+          <style dangerouslySetInnerHTML={{ __html: `
+            main {
+              margin-right: 48px !important;
+            }
+          `}} />
           {/* Barra Vertical de Atalhos (Extrema Direita) */}
           <div className="fixed top-0 right-0 h-screen w-12 bg-[#0A0D14] border-l border-slate-800/60 z-[170] flex flex-col justify-between py-5 items-center font-sans shadow-lg select-none">
             {/* Atalhos Superiores */}
@@ -1750,7 +1756,15 @@ const Sidebar = () => {
                             );
                           })
                         )}
-                 {/* WIDGET FLUTUANTE DE WHATSAPP (CANTO INFERIOR DIREITO) */}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </>
+          )}
+
+          {/* WIDGET FLUTUANTE DE WHATSAPP (CANTO INFERIOR DIREITO) */}
           {showWhatsAppWidget && (
             <div className="fixed bottom-4 right-16 w-[880px] h-[580px] bg-white border border-slate-200/80 shadow-2xl rounded-2xl z-[160] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300 font-sans border border-slate-200">
               {/* Cabeçalho Único do Widget */}
