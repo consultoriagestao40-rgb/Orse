@@ -695,6 +695,84 @@ const Sidebar = () => {
           return item.roles.includes(user?.role || 'USER');
         }
       });
+
+  const [orderedItems, setOrderedItems] = useState<any[]>([]);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  // Sincroniza e ordena os itens do menu
+  useEffect(() => {
+    const baseItems = isSaaSArea
+      ? [
+          { icon: Home, label: 'Voltar ao CRM', href: '/' },
+          { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
+        ]
+      : menuItems.filter(item => {
+          const isPlatformAccount = user?.email === 'admin@smartbidhub.com.br';
+          const isSuperAdminUser = user?.email === 'admin@smartbidhub.com.br' || user?.email === 'cristiano@grupojvsserv.com.br';
+          
+          if (isPlatformAccount) {
+            return item.href === '/admin/empresas';
+          } else {
+            if (item.href === '/admin/empresas' || item.roles.includes('SUPER_ADMIN')) {
+              return false;
+            }
+            return item.roles.includes(user?.role || 'USER');
+          }
+        });
+
+    if (typeof window !== 'undefined' && user?.email) {
+      const savedOrder = localStorage.getItem(`sb_sidebar_menu_order_${user.email}`);
+      if (savedOrder) {
+        try {
+          const orderArray = JSON.parse(savedOrder) as string[];
+          const sorted = [...baseItems].sort((a, b) => {
+            const idxA = orderArray.indexOf(a.label);
+            const idxB = orderArray.indexOf(b.label);
+            if (idxA === -1 && idxB === -1) return 0;
+            if (idxA === -1) return 1;
+            if (idxB === -1) return -1;
+            return idxA - idxB;
+          });
+          setOrderedItems(sorted);
+          return;
+        } catch (e) {
+          console.error('Erro ao ler ordem da sidebar:', e);
+        }
+      }
+    }
+    setOrderedItems(baseItems);
+  }, [user?.email, user?.role, isSaaSArea, pathname]);
+
+  // Manipuladores de Drag & Drop
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.setData('text/menu-index', String(index));
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    const sourceIndexStr = e.dataTransfer.getData('text/menu-index');
+    if (sourceIndexStr === '') return;
+    const sourceIndex = Number(sourceIndexStr);
+    if (sourceIndex === targetIndex) return;
+
+    const newItems = [...orderedItems];
+    const [removed] = newItems.splice(sourceIndex, 1);
+    newItems.splice(targetIndex, 0, removed);
+    setOrderedItems(newItems);
+
+    if (typeof window !== 'undefined' && user?.email) {
+      const orderLabels = newItems.map(item => item.label);
+      localStorage.setItem(`sb_sidebar_menu_order_${user.email}`, JSON.stringify(orderLabels));
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
  
   return (
     <>
@@ -745,28 +823,41 @@ const Sidebar = () => {
       
       {/* Menu de Navegação */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        {renderedMenuItems.map((item) => {
+        {orderedItems.map((item, index) => {
           const isActive = item.href === '/'
             ? pathname === '/'
             : item.href === '/pipeline'
               ? (pathname === '/pipeline' || ((pathname.startsWith('/propostas') || pathname.startsWith('/proposta')) && !pathname.startsWith('/propostas-comerciais')))
               : pathname === item.href;
           return (
-            <Link
+            <div
               key={item.label}
-              href={item.href}
-              title={isCollapsed ? item.label : undefined}
-              className={`flex items-center gap-3 rounded-2xl transition-all ${
-                isCollapsed ? 'justify-center p-3.5' : 'px-5 py-4'
-              } ${
-                isActive 
-                  ? 'bg-slate-900 text-white shadow-xl shadow-slate-200' 
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-bold'
+              draggable={!isSaaSArea}
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, index)}
+              onDragEnd={handleDragEnd}
+              className={`cursor-grab active:cursor-grabbing transition-all duration-150 ${
+                draggedIndex === index 
+                  ? 'opacity-40 scale-95 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl bg-slate-50/50' 
+                  : 'hover:scale-[1.01]'
               }`}
             >
-              <item.icon size={20} className={isActive ? 'text-emerald-400 shrink-0' : 'text-slate-400 shrink-0'} />
-              {!isCollapsed && <span className="text-sm truncate">{item.label}</span>}
-            </Link>
+              <Link
+                href={item.href}
+                title={isCollapsed ? item.label : undefined}
+                className={`flex items-center gap-3 rounded-2xl transition-all ${
+                  isCollapsed ? 'justify-center p-3.5' : 'px-5 py-4'
+                } ${
+                  isActive 
+                    ? 'bg-slate-900 text-white shadow-xl shadow-slate-200' 
+                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-bold'
+                }`}
+              >
+                <item.icon size={20} className={isActive ? 'text-emerald-400 shrink-0' : 'text-slate-400 shrink-0'} />
+                {!isCollapsed && <span className="text-sm truncate">{item.label}</span>}
+              </Link>
+            </div>
           );
         })}
       </nav>
