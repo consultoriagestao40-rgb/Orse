@@ -735,15 +735,15 @@ export default function LeadsKanban() {
                     preserveAspectRatio="none" 
                     viewBox="0 0 336 64"
                   >
-                    <polygon 
-                      points={points}
+                    <path 
+                      d="M 10,0 L 320,0 L 336,32 L 320,64 L 10,64 A 10,10 0 0,1 0,54 L 0,10 A 10,10 0 0,1 10,0 Z"
                       fill="currentColor" 
                       stroke="#1e293b" 
                       strokeWidth="2"
                       vectorEffect="non-scaling-stroke"
                     />
                   </svg>
-                  <div className={`relative z-10 flex justify-between items-center h-full ${isFirst ? 'pl-4' : 'pl-8'} pr-8`}>
+                  <div className="relative z-10 flex justify-between items-center h-full pl-6 pr-9">
                     <div className="flex items-center gap-1.5 min-w-0">
                       <h3 className="font-black text-slate-900 uppercase tracking-tight text-xs drop-shadow-sm truncate max-w-[130px]">
                         {stage.nome}

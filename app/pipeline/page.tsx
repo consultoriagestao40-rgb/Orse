@@ -584,57 +584,77 @@ function ProposalsDashboard() {
         </div>
         
         <div className="flex flex-col items-center gap-1.5 w-full">
-          {/* Cápsula de Título */}
+          {/* Cabeçalho Chevron/Seta */}
           <div 
-            className="w-full rounded-full pl-3.5 pr-4 py-2 flex items-center justify-between shadow-md border relative group/title bg-gradient-to-b from-white/10 to-black/5"
-            style={{
-              backgroundColor: resolvedHex,
-              borderColor: contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)',
-              color: contrast === 'white' ? '#ffffff' : '#0f172a'
-            }}
+            className="w-full h-11 relative group/title pointer-events-auto"
           >
-            {isStatus ? (
-              <span className={`text-xs font-black uppercase tracking-wider truncate`}>
-                {label}
-              </span>
-            ) : (
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                {colAvatarUrl ? (
-                  <img 
-                    src={colAvatarUrl} 
-                    alt={label} 
-                    className="w-6 h-6 rounded-full object-cover border border-white/20"
-                  />
-                ) : (
-                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white font-black text-[9px] uppercase border border-white/20 flex-shrink-0">
-                    {label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                  </div>
-                )}
-                <span className="text-xs font-black uppercase tracking-wider truncate">
+            {/* Background SVG Custom Shape */}
+            <svg 
+              className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200"
+              viewBox="0 0 288 44"
+              preserveAspectRatio="none"
+              style={{
+                color: resolvedHex,
+              }}
+            >
+              <path 
+                d="M 10,0 L 274,0 L 288,22 L 274,44 L 10,44 A 10,10 0 0,1 0,34 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                fill="currentColor"
+                stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
+                strokeWidth="1.5"
+              />
+            </svg>
+
+            {/* Conteúdo do Cabeçalho */}
+            <div 
+              className="absolute inset-0 z-10 flex items-center justify-between pl-4 pr-7"
+              style={{
+                color: contrast === 'white' ? '#ffffff' : '#0f172a'
+              }}
+            >
+              {isStatus ? (
+                <span className="text-xs font-black uppercase tracking-wider truncate max-w-[170px]">
                   {label}
                 </span>
-              </div>
-            )}
-            
-            <div className="flex items-center gap-1.5">
-              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm ${badgeClass}`}>
-                {cards.length}
-              </span>
-
-              {onColorChange && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowEditPopover(!showEditPopover);
-                  }}
-                  className={`p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center ${
-                    contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
-                  }`}
-                  title="Editar Coluna"
-                >
-                  <Edit2 size={12} />
-                </button>
+              ) : (
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  {colAvatarUrl ? (
+                    <img 
+                      src={colAvatarUrl} 
+                      alt={label} 
+                      className="w-6 h-6 rounded-full object-cover border border-white/20"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white font-black text-[9px] uppercase border border-white/20 flex-shrink-0">
+                      {label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                    </div>
+                  )}
+                  <span className="text-xs font-black uppercase tracking-wider truncate">
+                    {label}
+                  </span>
+                </div>
               )}
+              
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm ${badgeClass}`}>
+                  {cards.length}
+                </span>
+
+                {onColorChange && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowEditPopover(!showEditPopover);
+                    }}
+                    className={`p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center ${
+                      contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
+                    }`}
+                    title="Editar Coluna"
+                  >
+                    <Edit2 size={12} />
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Popover de Edição Unificado */}
