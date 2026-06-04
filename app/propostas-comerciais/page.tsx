@@ -125,26 +125,59 @@ export default function PropostasComerciaisDashboard() {
     }
   };
 
-  const handleCreateStatus = async (insertAfterLabel: string) => {
-    const name = prompt('Nome do novo status/etapa (ex: Negociação):');
-    if (!name) return;
-    const trimmed = name.trim();
-    const res = await createDocumentoStatus(trimmed);
-    if (res.success) {
-      const currentCols = statuses.map(s => s.nome);
-      let order = statusOrder.length > 0 ? [...statusOrder] : [...currentCols];
-      const insertIdx = order.indexOf(insertAfterLabel);
-      if (insertIdx !== -1) {
-        order.splice(insertIdx + 1, 0, trimmed);
-      } else {
-        order.push(trimmed);
+  const [customModal, setCustomModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    defaultValue?: string;
+    placeholder?: string;
+    onConfirm: (val: string) => void | Promise<void>;
+    onCancel?: () => void;
+    type: 'prompt' | 'alert' | 'confirm';
+    message?: string;
+  }>({
+    isOpen: false,
+    title: '',
+    onConfirm: () => {},
+    type: 'prompt',
+  });
+
+  const showCustomAlert = (title: string, message: string) => {
+    setCustomModal({
+      isOpen: true,
+      title,
+      message,
+      type: 'alert',
+      onConfirm: () => {}
+    });
+  };
+
+  const handleCreateStatus = (insertAfterLabel: string) => {
+    setCustomModal({
+      isOpen: true,
+      title: 'Novo Status/Etapa',
+      placeholder: 'Nome do novo status/etapa (ex: Negociação)',
+      type: 'prompt',
+      onConfirm: async (name) => {
+        if (!name.trim()) return;
+        const trimmed = name.trim();
+        const res = await createDocumentoStatus(trimmed);
+        if (res.success) {
+          const currentCols = statuses.map(s => s.nome);
+          let order = statusOrder.length > 0 ? [...statusOrder] : [...currentCols];
+          const insertIdx = order.indexOf(insertAfterLabel);
+          if (insertIdx !== -1) {
+            order.splice(insertIdx + 1, 0, trimmed);
+          } else {
+            order.push(trimmed);
+          }
+          setStatusOrder(order);
+          localStorage.setItem('proposta-status-order', JSON.stringify(order));
+          loadData();
+        } else {
+          showCustomAlert('Erro ao Criar Status', res.error || 'Erro ao criar status');
+        }
       }
-      setStatusOrder(order);
-      localStorage.setItem('proposta-status-order', JSON.stringify(order));
-      loadData();
-    } else {
-      alert(res.error || 'Erro ao criar status');
-    }
+    });
   };
 
   const loadData = async () => {
@@ -1652,6 +1685,74 @@ export default function PropostasComerciaisDashboard() {
             }
           }}
         />
+      )}
+      {customModal.isOpen && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md border border-slate-200 animate-in fade-in zoom-in-95 duration-200 text-slate-800 p-6 flex flex-col gap-4 font-sans">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
+                {customModal.title}
+              </h3>
+              <button
+                onClick={() => {
+                  setCustomModal(prev => ({ ...prev, isOpen: false }));
+                  if (customModal.onCancel) customModal.onCancel();
+                }}
+                className="text-slate-400 hover:text-slate-650 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            {customModal.type === 'prompt' && (
+              <input
+                type="text"
+                id="custom-modal-input"
+                defaultValue={customModal.defaultValue || ''}
+                placeholder={customModal.placeholder || ''}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const input = document.getElementById('custom-modal-input') as HTMLInputElement;
+                    customModal.onConfirm(input?.value || '');
+                    setCustomModal(prev => ({ ...prev, isOpen: false }));
+                  }
+                }}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500"
+              />
+            )}
+            
+            {customModal.type !== 'prompt' && (
+              <p className="text-xs text-slate-655 leading-relaxed font-medium">
+                {customModal.message}
+              </p>
+            )}
+            
+            <div className="flex justify-end gap-3 pt-2">
+              {customModal.type !== 'alert' && (
+                <button
+                  onClick={() => {
+                    setCustomModal(prev => ({ ...prev, isOpen: false }));
+                    if (customModal.onCancel) customModal.onCancel();
+                  }}
+                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all"
+                >
+                  Cancelar
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  const input = document.getElementById('custom-modal-input') as HTMLInputElement;
+                  customModal.onConfirm(customModal.type === 'prompt' ? (input?.value || '') : '');
+                  setCustomModal(prev => ({ ...prev, isOpen: false }));
+                }}
+                className="px-4 py-2 bg-[#1B4D3E] hover:bg-[#13382d] text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition-all"
+              >
+                {customModal.type === 'alert' ? 'OK' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>

@@ -81,6 +81,32 @@ export default function ContratosDashboard() {
   });
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
 
+  const [customModal, setCustomModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    defaultValue?: string;
+    placeholder?: string;
+    onConfirm: (val: string) => void | Promise<void>;
+    onCancel?: () => void;
+    type: 'prompt' | 'alert' | 'confirm';
+    message?: string;
+  }>({
+    isOpen: false,
+    title: '',
+    onConfirm: () => {},
+    type: 'prompt',
+  });
+
+  const showCustomAlert = (title: string, message: string) => {
+    setCustomModal({
+      isOpen: true,
+      title,
+      message,
+      type: 'alert',
+      onConfirm: () => {}
+    });
+  };
+
   const [isAddingStatus, setIsAddingStatus] = useState(false);
   const [newStatusInput, setNewStatusInput] = useState('');
 
@@ -108,26 +134,33 @@ export default function ContratosDashboard() {
   };
 
   const handleCreateStatus = (insertAfterStatus: string) => {
-    const name = prompt('Nome do novo status/etapa (ex: Assinado):');
-    if (!name) return;
-    const trimmed = name.trim();
-    if (statusesList.includes(trimmed)) {
-      alert('Já existe um status com este nome.');
-      return;
-    }
-    const idx = statusesList.indexOf(insertAfterStatus);
-    const newList = [...statusesList];
-    if (idx !== -1) {
-      newList.splice(idx + 1, 0, trimmed);
-    } else {
-      newList.push(trimmed);
-    }
-    setStatusesList(newList);
-    localStorage.setItem('orse_contrato_statuses', JSON.stringify(newList));
-    
-    const newColors = { ...statusColors, [trimmed]: '#3b82f6' };
-    setStatusColors(newColors);
-    localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
+    setCustomModal({
+      isOpen: true,
+      title: 'Novo Status/Etapa',
+      placeholder: 'Nome do novo status/etapa (ex: Assinado)',
+      type: 'prompt',
+      onConfirm: (name) => {
+        if (!name.trim()) return;
+        const trimmed = name.trim();
+        if (statusesList.includes(trimmed)) {
+          showCustomAlert('Status Duplicado', 'Já existe um status com este nome.');
+          return;
+        }
+        const idx = statusesList.indexOf(insertAfterStatus);
+        const newList = [...statusesList];
+        if (idx !== -1) {
+          newList.splice(idx + 1, 0, trimmed);
+        } else {
+          newList.push(trimmed);
+        }
+        setStatusesList(newList);
+        localStorage.setItem('orse_contrato_statuses', JSON.stringify(newList));
+        
+        const newColors = { ...statusColors, [trimmed]: '#3b82f6' };
+        setStatusColors(newColors);
+        localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
+      }
+    });
   };
 
   useEffect(() => {
@@ -197,16 +230,22 @@ export default function ContratosDashboard() {
     return 'bg-blue-100 text-blue-700 border-blue-200';
   };
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm('Tem certeza que deseja excluir este contrato? Essa ação não pode ser desfeita.')) {
-      const res = await deleteContrato(id);
-      if (res.success) {
-        setContratos(prev => prev.filter(c => c.id !== id));
-      } else {
-        alert('Erro ao excluir: ' + res.error);
+    setCustomModal({
+      isOpen: true,
+      title: 'Excluir Contrato',
+      message: 'Tem certeza que deseja excluir este contrato? Essa ação não pode ser desfeita.',
+      type: 'confirm',
+      onConfirm: async () => {
+        const res = await deleteContrato(id);
+        if (res.success) {
+          setContratos(prev => prev.filter(c => c.id !== id));
+        } else {
+          showCustomAlert('Erro ao Excluir Contrato', res.error || 'Erro ao excluir');
+        }
       }
-    }
+    });
   };
 
   const filteredContratos = contratos.filter(c => 
@@ -535,23 +574,32 @@ export default function ContratosDashboard() {
 
                     <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100 mt-1">
                       <button
-                        onClick={async () => {
+                        onClick={() => {
                           if (cards.length > 0) {
-                            alert(`Esta coluna possui ${cards.length} contrato(s). Por favor, mova todos os contratos para outra coluna antes de excluí-la.`);
+                            showCustomAlert(
+                              'Não é possível excluir',
+                              `Esta coluna possui ${cards.length} contrato(s). Por favor, mova todos os contratos para outra coluna antes de excluí-la.`
+                            );
                             return;
                           }
-                          if (window.confirm(`Tem certeza que deseja excluir a coluna "${status}"?`)) {
-                            const newStatusesList = statusesList.filter(s => s !== status);
-                            setStatusesList(newStatusesList);
-                            localStorage.setItem('orse_contrato_statuses', JSON.stringify(newStatusesList));
-                            
-                            const newColors = { ...statusColors };
-                            delete newColors[status];
-                            setStatusColors(newColors);
-                            localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
-                            
-                            setEditingStatusId(null);
-                          }
+                          setCustomModal({
+                            isOpen: true,
+                            title: 'Excluir Coluna',
+                            message: `Tem certeza que deseja excluir a coluna "${status}"?`,
+                            type: 'confirm',
+                            onConfirm: () => {
+                              const newStatusesList = statusesList.filter(s => s !== status);
+                              setStatusesList(newStatusesList);
+                              localStorage.setItem('orse_contrato_statuses', JSON.stringify(newStatusesList));
+                              
+                              const newColors = { ...statusColors };
+                              delete newColors[status];
+                              setStatusColors(newColors);
+                              localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
+                              
+                              setEditingStatusId(null);
+                            }
+                          });
                         }}
                         className="w-full py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold transition-colors text-center cursor-pointer flex items-center justify-center gap-1.5"
                         type="button"
@@ -1235,6 +1283,75 @@ export default function ContratosDashboard() {
               </div>
             </div>
           )}
+
+      {customModal.isOpen && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md border border-slate-200 animate-in fade-in zoom-in-95 duration-200 text-slate-800 p-6 flex flex-col gap-4 font-sans">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900">
+                {customModal.title}
+              </h3>
+              <button
+                onClick={() => {
+                  setCustomModal(prev => ({ ...prev, isOpen: false }));
+                  if (customModal.onCancel) customModal.onCancel();
+                }}
+                className="text-slate-400 hover:text-slate-650 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            {customModal.type === 'prompt' && (
+              <input
+                type="text"
+                id="custom-modal-input"
+                defaultValue={customModal.defaultValue || ''}
+                placeholder={customModal.placeholder || ''}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const input = document.getElementById('custom-modal-input') as HTMLInputElement;
+                    customModal.onConfirm(input?.value || '');
+                    setCustomModal(prev => ({ ...prev, isOpen: false }));
+                  }
+                }}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500"
+              />
+            )}
+            
+            {customModal.type !== 'prompt' && (
+              <p className="text-xs text-slate-650 leading-relaxed font-medium">
+                {customModal.message}
+              </p>
+            )}
+            
+            <div className="flex justify-end gap-3 pt-2">
+              {customModal.type !== 'alert' && (
+                <button
+                  onClick={() => {
+                    setCustomModal(prev => ({ ...prev, isOpen: false }));
+                    if (customModal.onCancel) customModal.onCancel();
+                  }}
+                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all"
+                >
+                  Cancelar
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  const input = document.getElementById('custom-modal-input') as HTMLInputElement;
+                  customModal.onConfirm(customModal.type === 'prompt' ? (input?.value || '') : '');
+                  setCustomModal(prev => ({ ...prev, isOpen: false }));
+                }}
+                className="px-4 py-2 bg-[#1B4D3E] hover:bg-[#1B4D3E]/80 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition-all"
+              >
+                {customModal.type === 'alert' ? 'OK' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
         </div>
       </main>
