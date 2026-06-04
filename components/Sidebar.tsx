@@ -1838,7 +1838,7 @@ const Sidebar = () => {
 
           {/* WIDGET FLUTUANTE DE WHATSAPP (CANTO INFERIOR DIREITO) */}
           {showWhatsAppWidget && (
-            <div className={`fixed top-0 right-12 bottom-0 bg-white shadow-2xl z-[160] flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-right duration-300 font-sans border-l border-slate-200 ${
+            <div className={`fixed top-0 right-12 bottom-0 bg-white shadow-2xl z-[160] flex flex-col transition-all duration-300 animate-in slide-in-from-right duration-300 font-sans border-l border-slate-200 ${
               isCollapsed ? 'left-20' : 'left-64'
             }`}>
               {/* External Close Button Tab on the Left Edge */}
