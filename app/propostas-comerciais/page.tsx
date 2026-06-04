@@ -410,7 +410,7 @@ export default function PropostasComerciaisDashboard() {
 
     return (
       <div 
-        className="flex-shrink-0 w-72 shrink-0 relative cursor-grab active:cursor-grabbing transition-all select-none duration-200 hover:scale-[1.01]"
+        className="flex-shrink-0 w-72 shrink-0 relative cursor-grab active:cursor-grabbing transition-all select-none duration-200 hover:scale-[1.01] pointer-events-auto"
         data-col-label={label}
         draggable="true"
         onDragStart={(e) => {
@@ -1009,7 +1009,7 @@ export default function PropostasComerciaisDashboard() {
                           {/* Cabeçalhos Fixos */}
                           <div 
                             id="kanban-headers-status"
-                            className="overflow-x-auto no-scrollbar pb-28 mb-[-112px] animate-in fade-in duration-200"
+                            className="overflow-x-auto no-scrollbar pb-28 mb-[-112px] animate-in fade-in duration-200 pointer-events-none"
                             onScroll={() => syncScroll('kanban-headers-status', 'kanban-cards-status')}
                             style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
                           >
@@ -1116,7 +1116,7 @@ export default function PropostasComerciaisDashboard() {
                             {/* Cabeçalhos Fixos */}
                             <div 
                               id="kanban-headers-vendedor"
-                              className="overflow-x-auto no-scrollbar pb-28 mb-[-112px] animate-in fade-in duration-200"
+                              className="overflow-x-auto no-scrollbar pb-28 mb-[-112px] animate-in fade-in duration-200 pointer-events-none"
                               onScroll={() => syncScroll('kanban-headers-vendedor', 'kanban-cards-vendedor')}
                               style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
                             >
