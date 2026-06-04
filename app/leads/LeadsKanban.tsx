@@ -59,6 +59,29 @@ const playWhatsAppChime = () => {
   }
 };
 
+const fmt = (v: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v);
+
+const getLeadTotalizerStyle = (color: string) => {
+  const lower = (color || '').toLowerCase();
+  if (lower.includes('blue')) {
+    return { backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#1d4ed8', borderColor: 'rgba(59, 130, 246, 0.25)' };
+  }
+  if (lower.includes('green') || lower.includes('emerald')) {
+    return { backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#047857', borderColor: 'rgba(16, 185, 129, 0.25)' };
+  }
+  if (lower.includes('amber')) {
+    return { backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#b45309', borderColor: 'rgba(245, 158, 11, 0.25)' };
+  }
+  if (lower.includes('rose')) {
+    return { backgroundColor: 'rgba(244, 63, 94, 0.1)', color: '#be123c', borderColor: 'rgba(244, 63, 94, 0.25)' };
+  }
+  if (lower.includes('purple')) {
+    return { backgroundColor: 'rgba(139, 92, 246, 0.1)', color: '#6d28d9', borderColor: 'rgba(139, 92, 246, 0.25)' };
+  }
+  return { backgroundColor: 'rgba(100, 116, 139, 0.1)', color: '#334155', borderColor: 'rgba(100, 116, 139, 0.25)' };
+};
+
 export default function LeadsKanban() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -681,6 +704,7 @@ export default function LeadsKanban() {
           <div className="flex gap-4 h-[calc(100vh-70px)] shrink-0 pr-1">
           {stages.map((stage, idx) => {
             const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
+            const totalValorEst = stageLeads.reduce((acc, lead) => acc + (lead.valorEst || 0), 0);
             const isFirst = idx === 0;
             const normalizedStageColor = stage.color === 'bg-emerald-100' ? 'bg-green-100' : (stage.color || 'bg-slate-100');
             const colorMap: Record<string, string> = {
@@ -720,70 +744,147 @@ export default function LeadsKanban() {
                     />
                   </svg>
                   <div className={`relative z-10 flex justify-between items-center h-full ${isFirst ? 'pl-4' : 'pl-8'} pr-8`}>
-                    <div className="flex items-center gap-2">
-                      {editingStageId === stage.id ? (
-                        <input
-                          autoFocus
-                          className="font-black text-slate-900 uppercase tracking-tight text-xs bg-white/70 border border-slate-400 rounded px-1.5 py-0.5 w-[120px] outline-none focus:ring-2 focus:ring-slate-900"
-                          value={editingStageName}
-                          onChange={(e) => setEditingStageName(e.target.value)}
-                          onBlur={() => handleSaveStageName(stage.id)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSaveStageName(stage.id);
-                            if (e.key === 'Escape') setEditingStageId(null);
-                          }}
-                        />
-                      ) : (
-                        <h3 
-                          className="font-black text-slate-900 uppercase tracking-tight text-xs cursor-pointer hover:underline drop-shadow-sm max-w-[140px] truncate"
-                          title="Clique duplo para editar"
-                          onDoubleClick={() => {
-                            setEditingStageId(stage.id);
-                            setEditingStageName(stage.nome);
-                          }}
-                        >
-                          {stage.nome}
-                        </h3>
-                      )}
-                      <div className="relative group/picker ml-1">
-                        <button 
-                          title="Mudar cor da coluna"
-                          className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-black/10 transition-colors flex items-center justify-center cursor-pointer"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
-                        </button>
-                        <div className="absolute top-8 left-0 bg-white p-3 rounded-xl shadow-xl border border-slate-200 hidden group-hover/picker:flex flex-wrap gap-2 z-10 w-32">
-                          {['bg-slate-100', 'bg-blue-100', 'bg-green-100', 'bg-amber-100', 'bg-rose-100', 'bg-purple-100'].map(c => {
-                            const saveVal = c === 'bg-green-100' ? 'bg-emerald-100' : c;
-                            return (
-                              <div 
-                                key={c} 
-                                onClick={async () => { await updateLeadStageColor(stage.id, saveVal); fetchData(); }} 
-                                className={`w-8 h-8 rounded-full cursor-pointer hover:scale-110 hover:ring-2 ring-offset-2 ring-slate-400 transition-all ${c}`}
-                                title="Selecionar esta cor"
-                              />
-                            );
-                          })}
-                        </div>
-                      </div>
-                      <button 
-                        onClick={() => handleCreateStage(stage.id)} 
-                        title="Adicionar Etapa à Direita" 
-                        className="p-1 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-black/10 transition-colors flex items-center justify-center cursor-pointer"
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <h3 className="font-black text-slate-900 uppercase tracking-tight text-xs drop-shadow-sm truncate max-w-[130px]">
+                        {stage.nome}
+                      </h3>
+                      
+                      {/* Pencil Icon visible on hover */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingStageName(stage.nome);
+                          setEditingStageId(stage.id);
+                        }}
+                        className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 text-slate-700 hover:bg-black/10 flex items-center justify-center cursor-pointer"
+                        title="Editar Etapa"
                       >
-                        <Plus size={16} />
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteStage(stage.id)} 
-                        title="Excluir Etapa" 
-                        className="p-1 rounded-lg text-slate-500 hover:text-rose-700 hover:bg-black/10 transition-colors flex items-center justify-center cursor-pointer"
-                      >
-                        <Trash2 size={16} />
+                        <Edit2 size={12} />
                       </button>
                     </div>
-                    <span className="bg-white/70 text-slate-800 text-xs font-black px-2 py-1 rounded-full shrink-0">
+
+                    <span className="bg-white/75 text-slate-800 text-xs font-black px-2.5 py-0.5 rounded-full shrink-0 shadow-sm">
                       {stageLeads.length}
                     </span>
+
+                    {/* Popover de Edição Unificado de Etapa */}
+                    {editingStageId === stage.id && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-30 cursor-default" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingStageId(null);
+                          }}
+                        />
+                        <div 
+                          className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3.5 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                              Editar Etapa CRM
+                            </span>
+                            <button 
+                              onClick={() => setEditingStageId(null)}
+                              className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+
+                          {/* Renomear Etapa */}
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Nome da Etapa</label>
+                            <input
+                              type="text"
+                              value={editingStageName}
+                              onChange={(e) => setEditingStageName(e.target.value)}
+                              className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-slate-300 outline-none w-full bg-slate-50 font-medium text-slate-900"
+                              placeholder="Nome da etapa"
+                              onKeyDown={async (e) => {
+                                if (e.key === 'Enter') {
+                                  await handleSaveStageName(stage.id);
+                                }
+                              }}
+                            />
+                          </div>
+
+                          {/* Cores da Etapa (Originais 6 do Lead CRM) */}
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Cor da Etapa</label>
+                            <div className="grid grid-cols-6 gap-2 mt-1">
+                              {['bg-slate-100', 'bg-blue-100', 'bg-green-100', 'bg-amber-100', 'bg-rose-100', 'bg-purple-100'].map(c => {
+                                const saveVal = c === 'bg-green-100' ? 'bg-emerald-100' : c;
+                                const isSelected = stage.color === saveVal || (stage.color === 'bg-emerald-100' && saveVal === 'bg-emerald-100') || (!stage.color && saveVal === 'bg-slate-100');
+                                return (
+                                  <button
+                                    key={c}
+                                    onClick={async () => {
+                                      await updateLeadStageColor(stage.id, saveVal);
+                                      fetchData();
+                                    }}
+                                    className={`w-7 h-7 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center ${c} ${
+                                      isSelected ? 'ring-2 ring-slate-800/30 border-slate-700 scale-105' : 'border-slate-200'
+                                    }`}
+                                    title="Mudar para esta cor"
+                                    type="button"
+                                  >
+                                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-slate-800" />}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Ações Avançadas da Etapa */}
+                          <div className="flex gap-2 pt-2 border-t border-slate-100">
+                            <button
+                              onClick={() => {
+                                setEditingStageId(null);
+                                handleCreateStage(stage.id);
+                              }}
+                              className="flex-1 py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold transition-colors text-center flex items-center justify-center gap-1 cursor-pointer"
+                              type="button"
+                            >
+                              <Plus size={13} />
+                              Nova Etapa
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingStageId(null);
+                                handleDeleteStage(stage.id);
+                              }}
+                              className="flex-1 py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition-colors text-center flex items-center justify-center gap-1 cursor-pointer"
+                              type="button"
+                            >
+                              <Trash2 size={13} />
+                              Excluir
+                            </button>
+                          </div>
+
+                          <button
+                            onClick={async () => {
+                              await handleSaveStageName(stage.id);
+                            }}
+                            className="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-colors text-center cursor-pointer"
+                            type="button"
+                          >
+                            Concluir
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Totalizer Pill */}
+                <div className="flex justify-center w-[calc(100%+16px)] my-1.5 shrink-0 z-10 pointer-events-auto">
+                  <div 
+                    className="px-3 py-0.5 rounded-full text-[11px] font-black shadow-sm select-none border"
+                    style={getLeadTotalizerStyle(stage.color)}
+                  >
+                    {fmt(totalValorEst)}
                   </div>
                 </div>
                 

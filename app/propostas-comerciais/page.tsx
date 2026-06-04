@@ -378,6 +378,84 @@ export default function PropostasComerciaisDashboard() {
   };
 
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
+  const tailwindColorMap: { [key: string]: string } = {
+    sky: '#0284c7',
+    blue: '#2563eb',
+    orange: '#ea580c',
+    amber: '#d97706',
+    emerald: '#059669',
+    green: '#16a34a',
+    red: '#dc2626',
+    rose: '#e11d48',
+    purple: '#9333ea',
+    violet: '#7c3aed',
+    yellow: '#ca8a04',
+    indigo: '#4f46e5',
+    pink: '#db2777',
+    teal: '#0d9488',
+    slate: '#475569',
+    gray: '#4b5563',
+  };
+
+  const resolveColorToHex = (color?: string): string => {
+    if (!color) return '#059669';
+    const lower = color.toLowerCase().trim();
+    if (lower.startsWith('#')) return lower;
+    return tailwindColorMap[lower] || '#059669';
+  };
+
+  const normalizeHex = (hex: string) => {
+    let h = hex.replace('#', '');
+    if (h.length === 3) {
+      h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    }
+    return '#' + h;
+  };
+
+  const getContrastYIQ = (hex: string) => {
+    const normalized = normalizeHex(hex);
+    const r = parseInt(normalized.slice(1, 3), 16);
+    const g = parseInt(normalized.slice(3, 5), 16);
+    const b = parseInt(normalized.slice(5, 7), 16);
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return (yiq >= 140) ? 'black' : 'white';
+  };
+
+  const hexToRgba = (hex: string, alpha: number) => {
+    const normalized = normalizeHex(hex);
+    const r = parseInt(normalized.slice(1, 3), 16);
+    const g = parseInt(normalized.slice(3, 5), 16);
+    const b = parseInt(normalized.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  const getDarkenedHexForText = (hex: string) => {
+    const normalized = normalizeHex(hex);
+    let r = parseInt(normalized.slice(1, 3), 16);
+    let g = parseInt(normalized.slice(3, 5), 16);
+    let b = parseInt(normalized.slice(5, 7), 16);
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    if (yiq > 170) {
+      r = Math.max(0, Math.floor(r * 0.5));
+      g = Math.max(0, Math.floor(g * 0.5));
+      b = Math.max(0, Math.floor(b * 0.5));
+    }
+    const toHexStr = (val: number) => val.toString(16).padStart(2, '0');
+    return `#${toHexStr(r)}${toHexStr(g)}${toHexStr(b)}`;
+  };
+
+  const PRESET_COLORS = [
+    // Row 1: Soft Pastels
+    '#E0F2FE', '#E0F2F1', '#D1FAE5', '#ECFCCB', '#FEF9C3', '#FFEDD5', '#FFE4E6', '#FCE7F3', '#F3E8FF', '#F1F5F9',
+    // Row 2: Standard Vibrant
+    '#38BDF8', '#0D9488', '#10B981', '#84CC16', '#FACC15', '#FB923C', '#F43F5E', '#EC4899', '#8B5CF6', '#64748B',
+    // Row 3: Bright Neon / Vivid
+    '#0EA5E9', '#00B4D8', '#00F5D4', '#39FF14', '#FFD000', '#FF9F1C', '#FF007F', '#D000FF', '#7000FF', '#48CAE4',
+    // Row 4: Deep / Dark
+    '#0369A1', '#0B6623', '#065F46', '#3F6212', '#A16207', '#C2410C', '#B91C1C', '#9D174D', '#581C87', '#334155',
+  ];
+
+  // ── Cabeçalho da coluna ────────────────────────────────────────────────────
   const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onDragColumnStart, onDragColumnEnd, onDropColumn, onRenameColumn }: {
     label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor'; statusId?: string; onColorChange?: (newColor: string) => void;
     onDragColumnStart?: (e: React.DragEvent, label: string) => void;
@@ -385,34 +463,26 @@ export default function PropostasComerciaisDashboard() {
     onDropColumn?: (e: React.DragEvent, label: string) => void;
     onRenameColumn?: (newName: string) => Promise<void>;
   }) => {
-    const [showColorPicker, setShowColorPicker] = useState(false);
-    const [isEditingName, setIsEditingName] = useState(false);
+    const [showEditPopover, setShowEditPopover] = useState(false);
     const [editNameValue, setEditNameValue] = useState(label);
+    const resolvedHex = resolveColorToHex(color);
+    const [customColorValue, setCustomColorValue] = useState(resolvedHex);
 
     useEffect(() => {
       setEditNameValue(label);
     }, [label]);
 
+    useEffect(() => {
+      setCustomColorValue(resolvedHex);
+    }, [resolvedHex]);
+
     const userObj = usersList.find(u => u.nome === label);
     const colAvatarUrl = userObj?.avatarUrl;
     const isStatus = type === 'status';
-    const hStyle = isStatus 
-      ? getHighlightedColorClass(color) 
-      : getHighlightedColorClass(color || 'emerald');
 
-    // Opções de cores do sistema
-    const colorOptions = [
-      { name: 'Céu', value: 'sky' },
-      { name: 'Laranja', value: 'orange' },
-      { name: 'Esmeralda', value: 'emerald' },
-      { name: 'Vermelho', value: 'red' },
-      { name: 'Roxo', value: 'purple' },
-      { name: 'Ardósia', value: 'slate' },
-      { name: 'Amarelo', value: 'yellow' },
-      { name: 'Indigo', value: 'indigo' },
-      { name: 'Pink', value: 'pink' },
-      { name: 'Teal', value: 'teal' }
-    ];
+    const contrast = getContrastYIQ(resolvedHex);
+    const textColorClass = contrast === 'white' ? 'text-white' : 'text-slate-900';
+    const badgeClass = contrast === 'white' ? 'bg-white/20 text-white' : 'bg-black/10 text-slate-800';
 
     return (
       <div 
@@ -490,168 +560,189 @@ export default function PropostasComerciaisDashboard() {
           <div className="absolute top-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
           <div className="absolute bottom-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
         </div>
-        {isStatus ? (
-          <div className={`border border-b-0 rounded-t-2xl rounded-b-none p-4 shadow-md text-left ${hStyle.bg} ${hStyle.text} ${hStyle.border} relative group`}>
-            <div className="flex items-center justify-between mb-2">
-              {isEditingName ? (
-                <input
-                  type="text"
-                  value={editNameValue}
-                  onChange={(e) => setEditNameValue(e.target.value)}
-                  onBlur={async () => {
-                    setIsEditingName(false);
-                    if (editNameValue.trim() && editNameValue.trim().toUpperCase() !== label.toUpperCase()) {
-                      if (onRenameColumn) {
-                        await onRenameColumn(editNameValue.trim());
-                      }
-                    }
-                  }}
-                  onKeyDown={async (e) => {
-                    if (e.key === 'Enter') {
-                      setIsEditingName(false);
-                      if (editNameValue.trim() && editNameValue.trim().toUpperCase() !== label.toUpperCase()) {
-                        if (onRenameColumn) {
-                          await onRenameColumn(editNameValue.trim());
-                        }
-                      }
-                    } else if (e.key === 'Escape') {
-                      setIsEditingName(false);
-                      setEditNameValue(label);
-                    }
-                  }}
-                  className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg border border-white/30 bg-white/20 text-white outline-none w-32 focus:bg-white/30"
-                  autoFocus
-                  onClick={(e) => e.stopPropagation()}
-                  onDragStart={(e) => e.preventDefault()}
-                />
-              ) : (
-                <span 
-                  onDoubleClick={() => setIsEditingName(true)}
-                  className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-sm cursor-edit select-text hover:bg-white/10 transition-colors ${hStyle.badge}`}
-                  title="Dois cliques para renomear"
-                >
-                  {label}
-                </span>
-              )}
-              
-              <div className="flex items-center gap-2">
-                {/* Ícone de Paleta de Cores 🎨 */}
-                {statusId && onColorChange && (
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowColorPicker(!showColorPicker)}
-                      className={`p-1 rounded hover:bg-white/20 transition-all ${showColorPicker ? 'bg-white/20' : 'opacity-60 group-hover:opacity-100'}`}
-                      title="Customizar Cor da Coluna"
-                    >
-                      <Palette size={14} className="text-white" />
-                    </button>
-
-                    {/* Popover Color Picker */}
-                    {showColorPicker && (
-                      <>
-                        <div 
-                          className="fixed inset-0 z-30" 
-                          onClick={() => setShowColorPicker(false)}
-                        />
-                        <div className="absolute right-0 top-6 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-2.5 min-w-[160px] animate-in fade-in slide-in-from-top-2 duration-150 flex flex-col gap-2">
-                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 px-1">Selecione a Cor</p>
-                          <div className="grid grid-cols-5 gap-1.5">
-                            {colorOptions.map(opt => {
-                              const previewStyle = getHighlightedColorClass(opt.value);
-                              return (
-                                <button
-                                  key={opt.value}
-                                  onClick={async () => {
-                                    setShowColorPicker(false);
-                                    await onColorChange(opt.value);
-                                  }}
-                                  className={`w-6 h-6 rounded-full border border-slate-200 shadow-sm transition-all hover:scale-115 active:scale-95 ${previewStyle.bg}`}
-                                  title={opt.name}
-                                />
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </>
-                    )}
+        
+        <div className="flex flex-col items-center gap-1.5 w-full">
+          {/* Cápsula de Título */}
+          <div 
+            className="w-full rounded-full pl-3.5 pr-4 py-2 flex items-center justify-between shadow-md border relative group/title bg-gradient-to-b from-white/10 to-black/5"
+            style={{
+              backgroundColor: resolvedHex,
+              borderColor: contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)',
+              color: contrast === 'white' ? '#ffffff' : '#0f172a'
+            }}
+          >
+            {isStatus ? (
+              <span className={`text-xs font-black uppercase tracking-wider truncate`}>
+                {label}
+              </span>
+            ) : (
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                {colAvatarUrl ? (
+                  <img 
+                    src={colAvatarUrl} 
+                    alt={label} 
+                    className="w-6 h-6 rounded-full object-cover border border-white/20"
+                  />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white font-black text-[9px] uppercase border border-white/20 flex-shrink-0">
+                    {label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                   </div>
                 )}
-
-                <span className={`text-xs font-black px-2.5 py-0.5 rounded-full shadow-sm ${hStyle.badge}`}>
-                  {cards.length}
+                <span className="text-xs font-black uppercase tracking-wider truncate">
+                  {label}
                 </span>
               </div>
-            </div>
-            <p className="text-sm font-black mt-3">{fmt(total)}</p>
-            <p className="text-[10px] opacity-75 font-medium mt-0.5">Volume total da coluna</p>
-          </div>
-        ) : (
-          <div className={`rounded-t-2xl rounded-b-none p-4 shadow-md text-left border border-b-0 ${hStyle.bg} ${hStyle.text} ${hStyle.border} relative group`}>
-            <div className="flex items-center gap-3 mb-2">
-              {colAvatarUrl ? (
-                <img 
-                  src={colAvatarUrl} 
-                  alt={label} 
-                  className="w-9 h-9 rounded-xl object-cover border border-white/20 shadow-md"
-                />
-              ) : (
-                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-white font-black text-sm uppercase border border-white/20 shadow-md">
-                  {label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-black truncate text-white">{label}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[10px] text-white/90 font-bold bg-white/10 px-2 py-0.5 rounded">{cards.length} proposta{cards.length !== 1 ? 's' : ''}</span>
-                </div>
-              </div>
+            )}
+            
+            <div className="flex items-center gap-1.5">
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm ${badgeClass}`}>
+                {cards.length}
+              </span>
 
-              {/* Paletinha de Cores para o Vendedor 🎨 */}
               {onColorChange && (
-                <div className="relative">
-                  <button
-                    onClick={() => setShowColorPicker(!showColorPicker)}
-                    className={`p-1 rounded hover:bg-white/20 transition-all ${showColorPicker ? 'bg-white/20' : 'opacity-60 group-hover:opacity-100'}`}
-                    title="Customizar Cor da Coluna"
-                  >
-                    <Palette size={14} className="text-white" />
-                  </button>
-
-                  {/* Popover Color Picker */}
-                  {showColorPicker && (
-                    <>
-                      <div 
-                        className="fixed inset-0 z-30" 
-                        onClick={() => setShowColorPicker(false)}
-                      />
-                      <div className="absolute right-0 top-6 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-2.5 min-w-[160px] animate-in fade-in slide-in-from-top-2 duration-150 flex flex-col gap-2">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 px-1">Selecione a Cor</p>
-                        <div className="grid grid-cols-5 gap-1.5">
-                          {colorOptions.map(opt => {
-                            const previewStyle = getHighlightedColorClass(opt.value);
-                            return (
-                              <button
-                                key={opt.value}
-                                onClick={async () => {
-                                  setShowColorPicker(false);
-                                  await onColorChange(opt.value);
-                                }}
-                                className={`w-6 h-6 rounded-full border border-slate-200 shadow-sm transition-all hover:scale-115 active:scale-95 ${previewStyle.bg}`}
-                                title={opt.name}
-                              />
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowEditPopover(!showEditPopover);
+                  }}
+                  className={`p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center ${
+                    contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
+                  }`}
+                  title="Editar Coluna"
+                >
+                  <Edit2 size={12} />
+                </button>
               )}
             </div>
-            <p className="text-base font-black text-white mt-3">{fmt(total)}</p>
-            <p className="text-[10px] text-white/70 font-medium mt-0.5">Volume total</p>
+
+            {/* Popover de Edição Unificado */}
+            {showEditPopover && (
+              <>
+                <div 
+                  className="fixed inset-0 z-30 cursor-default" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowEditPopover(false);
+                  }}
+                  onDragStart={(e) => e.preventDefault()}
+                />
+                <div 
+                  className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 animate-in fade-in slide-in-from-top-2 duration-150 flex flex-col gap-3 cursor-default"
+                  onClick={(e) => e.stopPropagation()}
+                  onDragStart={(e) => e.preventDefault()}
+                >
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      Editar Coluna
+                    </span>
+                    <button 
+                      onClick={() => setShowEditPopover(false)}
+                      className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+
+                  {isStatus && onRenameColumn && (
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Nome da Coluna</label>
+                      <input
+                        type="text"
+                        value={editNameValue}
+                        onChange={(e) => setEditNameValue(e.target.value)}
+                        className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-slate-300 outline-none w-full bg-slate-50 font-medium"
+                        placeholder="Nome da coluna"
+                        onKeyDown={async (e) => {
+                          if (e.key === 'Enter') {
+                            if (editNameValue.trim() && editNameValue.trim().toUpperCase() !== label.toUpperCase()) {
+                              await onRenameColumn(editNameValue.trim());
+                            }
+                            setShowEditPopover(false);
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {onColorChange && (
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Selecione a Cor</label>
+                      <div className="grid grid-cols-10 gap-1 mt-0.5">
+                        {PRESET_COLORS.map(c => {
+                          const isSelected = resolvedHex.toLowerCase() === c.toLowerCase();
+                          return (
+                            <button
+                              key={c}
+                              onClick={async () => {
+                                await onColorChange(c);
+                              }}
+                              className={`w-4 h-4 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center`}
+                              style={{
+                                backgroundColor: c,
+                                borderColor: isSelected ? '#0f172a' : 'rgba(0,0,0,0.1)',
+                                borderWidth: isSelected ? '2px' : '1px'
+                              }}
+                              title={c}
+                            >
+                              {isSelected && (
+                                <div 
+                                  className="w-1.5 h-1.5 rounded-full" 
+                                  style={{ backgroundColor: getContrastYIQ(c) === 'white' ? '#fff' : '#000' }} 
+                                />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cor Personalizada (HTML Color Input) */}
+                  {onColorChange && (
+                    <div className="flex flex-col gap-1 pt-1 border-t border-slate-100">
+                      <label className="flex items-center gap-2 cursor-pointer border border-slate-200 rounded-lg px-2.5 py-1.5 hover:bg-slate-50 transition-colors w-full">
+                        <input 
+                          type="color" 
+                          value={customColorValue}
+                          onChange={async (e) => {
+                            setCustomColorValue(e.target.value);
+                            await onColorChange(e.target.value);
+                          }}
+                          className="w-8 h-5 border-0 p-0 cursor-pointer rounded bg-transparent"
+                        />
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cor personalizada</span>
+                      </label>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={async () => {
+                      if (isStatus && onRenameColumn && editNameValue.trim() && editNameValue.trim().toUpperCase() !== label.toUpperCase()) {
+                        await onRenameColumn(editNameValue.trim());
+                      }
+                      setShowEditPopover(false);
+                    }}
+                    className="w-full py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-colors text-center"
+                  >
+                    Concluir
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-        )}
+
+          {/* Totalizador de Volume */}
+          <div 
+            className="px-3.5 py-1 rounded-full text-xs font-bold shadow-sm select-none text-center border"
+            style={{
+              backgroundColor: hexToRgba(resolvedHex, 0.1),
+              color: getDarkenedHexForText(resolvedHex),
+              borderColor: hexToRgba(resolvedHex, 0.25)
+            }}
+          >
+            {fmt(total)}
+          </div>
+        </div>
       </div>
     );
   };
