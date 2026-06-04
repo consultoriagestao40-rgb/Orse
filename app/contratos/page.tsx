@@ -408,6 +408,8 @@ export default function ContratosDashboard() {
         </div>
       </div>
     );
+  };
+
   const KanbanSegmentoColumn = ({ label, cards, isFirst = false, color }: { label: string; cards: any[]; isFirst?: boolean; color: string }) => {
     const total = cards.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
 
