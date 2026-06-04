@@ -2143,7 +2143,7 @@ export default function LeadsKanban() {
                               : 'hover:bg-white bg-slate-50/50'
                           }`}
                         >
-                          {/* Avatar / Initials */}
+                          {/* Avatar and Initials for Chat List Sidebar Item */}
                           <div className="w-10 h-10 bg-emerald-600/10 text-emerald-700 font-black text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-emerald-100">
                             {getInitials(lead.nomeFantasia)}
                           </div>
