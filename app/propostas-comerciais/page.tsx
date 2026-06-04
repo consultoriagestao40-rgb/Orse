@@ -993,7 +993,7 @@ export default function PropostasComerciaisDashboard() {
                       <div className="space-y-4">
                         {/* Container Sticky Unificado: Título + Cabeçalhos */}
                         <div 
-                          className="sticky top-0 z-20 pt-8 pb-0 mb-0 bg-transparent"
+                          className="sticky top-0 z-20 pt-8 pb-0 mb-0 bg-transparent pointer-events-none"
                           style={{ top: '-32px' }}
                         >
                           {/* Opaque background mask only for title + headers (excludes the pb-28/112px popover scroll space) */}
@@ -1100,7 +1100,7 @@ export default function PropostasComerciaisDashboard() {
                         <div className="space-y-4">
                           {/* Container Sticky Unificado: Título + Cabeçalhos */}
                           <div 
-                            className="sticky top-0 z-20 pt-8 pb-0 mb-0 bg-transparent"
+                            className="sticky top-0 z-20 pt-8 pb-0 mb-0 bg-transparent pointer-events-none"
                             style={{ top: '-32px' }}
                           >
                             {/* Opaque background mask only for title + headers (excludes the pb-28/112px popover scroll space) */}
