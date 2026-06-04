@@ -713,12 +713,12 @@ export default function PropostasComerciaisDashboard() {
               </h1>
               <p className="text-slate-500 text-sm mt-1">Gerador de documentos comerciais em PDF</p>
             </div>
-            <div className="flex items-center gap-3 bell-header-spacing">
-              <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm gap-1">
+            <div className="flex items-center gap-3 bell-header-spacing flex-shrink-0">
+              <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm gap-1 flex-shrink-0">
                 <button
                   onClick={() => setViewMode('lista')}
                   title="Visualização em Lista"
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                     viewMode === 'lista' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
                   }`}
                 >
@@ -727,7 +727,7 @@ export default function PropostasComerciaisDashboard() {
                 <button
                   onClick={() => setViewMode('kanban-status')}
                   title="Kanban por Status"
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                     viewMode === 'kanban-status' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
                   }`}
                 >
@@ -736,7 +736,7 @@ export default function PropostasComerciaisDashboard() {
                 <button
                   onClick={() => setViewMode('kanban-vendedor')}
                   title="Kanban por Vendedor"
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                     viewMode === 'kanban-vendedor' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
                   }`}
                 >
@@ -746,13 +746,13 @@ export default function PropostasComerciaisDashboard() {
 
               <button
                 onClick={() => router.push('/propostas-comerciais/templates')}
-                className="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold py-2.5 px-5 rounded text-sm flex items-center gap-2 shadow-sm transition-colors"
+                className="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold py-2.5 px-5 rounded text-sm flex items-center gap-2 shadow-sm transition-colors whitespace-nowrap flex-shrink-0"
               >
                 <FileText size={16} /> Templates
               </button>
               <button
                 onClick={() => setCreateModal({ isOpen: true, fpvId: '', templateId: '', empresaId: '', saving: false })}
-                className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold py-2.5 px-6 rounded text-sm flex items-center gap-2 shadow-sm transition-colors"
+                className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold py-2.5 px-6 rounded text-sm flex items-center gap-2 shadow-sm transition-colors whitespace-nowrap flex-shrink-0"
               >
                 <Plus size={18} /> Nova Proposta
               </button>

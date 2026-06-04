@@ -48,7 +48,7 @@ body.has-trial-banner main {
 
 @media (min-width: 768px) {
   .bell-header-spacing {
-    margin-right: 4.5rem !important;
+    margin-right: 0px !important;
   }
 }
 
