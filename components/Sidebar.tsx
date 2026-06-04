@@ -1570,7 +1570,7 @@ const Sidebar = () => {
             }
           `}} />
           {/* Barra Vertical de Atalhos (Extrema Direita) */}
-          <div className="fixed top-0 right-0 h-screen w-12 bg-white border-l border-slate-200/80 z-[170] flex flex-col py-5 items-center font-sans shadow-lg select-none">
+          <div className="fixed top-0 right-0 h-screen w-12 bg-[#0F172A]/75 backdrop-blur-xs border-l border-white/10 z-[170] flex flex-col py-5 items-center font-sans shadow-lg select-none">
             {/* Atalhos Superiores */}
             <div className="flex flex-col items-center gap-4 w-full">
               {/* Sino de Notificações */}
@@ -1581,8 +1581,8 @@ const Sidebar = () => {
                 }}
                 className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all relative cursor-pointer group ${
                   showNotifications 
-                    ? 'bg-[#1B4D3E] text-white shadow-md' 
-                    : 'text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100'
+                    ? 'bg-[#1B4D3E] text-white shadow-md shadow-[#1B4D3E]/30' 
+                    : 'text-slate-300 hover:text-white hover:bg-white/10'
                 }`}
                 title="Central de Notificações"
               >
@@ -1602,8 +1602,8 @@ const Sidebar = () => {
                 }}
                 className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all relative cursor-pointer group ${
                   showWhatsAppWidget 
-                    ? 'bg-emerald-600 text-white shadow-md' 
-                    : 'text-slate-400 hover:text-emerald-500 hover:bg-slate-100'
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' 
+                    : 'text-slate-300 hover:text-emerald-400 hover:bg-white/10'
                 }`}
                 title="Central WhatsApp CRM"
               >
@@ -1622,14 +1622,14 @@ const Sidebar = () => {
               {/* Chat Interno (Inativo por enquanto) */}
               <button
                 onClick={() => alert("O Chat Interno está sendo preparado e estará disponível em breve! 🚀")}
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-blue-500 hover:bg-slate-100 transition-all relative cursor-pointer group"
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-300 hover:text-blue-400 hover:bg-white/10 transition-all relative cursor-pointer group"
                 title="Chat Interno (Em breve)"
               >
                 <MessageSquare size={18} className="transition-transform group-hover:scale-105" />
               </button>
 
               {/* Divisor */}
-              <div className="w-8 h-px bg-slate-200 my-1 shrink-0" />
+              <div className="w-8 h-px bg-white/10 my-1 shrink-0" />
 
               {/* Seção de Equipe de Usuários (Subida) */}
               <div className="flex flex-col items-center gap-3 w-full max-h-[60vh] overflow-y-auto scrollbar-none py-1">
@@ -1648,22 +1648,21 @@ const Sidebar = () => {
                           <img
                             src={u.avatarUrl}
                             alt={u.nome}
-                            className="w-8 h-8 rounded-full border border-slate-200 group-hover:border-slate-400 object-cover shadow-sm transition-all"
+                            className="w-8 h-8 rounded-full border border-white/20 group-hover:border-white/50 object-cover shadow-sm transition-all"
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-center text-[10px] font-black uppercase transition-all group-hover:bg-slate-200">
+                          <div className="w-8 h-8 rounded-full bg-white/10 text-white/90 border border-white/10 flex items-center justify-center text-[10px] font-black uppercase transition-all group-hover:bg-white/20">
                             {initials}
                           </div>
                         )}
                         {/* Indicador de Status Online (Bolinha Verde) */}
-                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-white shadow-xs" />
+                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-[#0F172A] shadow-xs" />
                       </div>
                     );
                   })}
               </div>
             </div>
           </div>
-
 
           {/* Central de Notificações - Drawer Lateral Deslizante */}
           {showNotifications && (
