@@ -1570,7 +1570,7 @@ const Sidebar = () => {
             }
           `}} />
           {/* Barra Vertical de Atalhos (Extrema Direita) */}
-          <div className="fixed top-0 right-0 h-screen w-12 bg-sky-100/75 backdrop-blur-md border-l border-sky-200/50 z-[170] flex flex-col py-5 items-center font-sans shadow-lg select-none">
+          <div className="fixed top-0 right-0 h-screen w-12 bg-sky-200/40 backdrop-blur-md border-l border-sky-200/50 z-[170] flex flex-col py-5 items-center font-sans shadow-lg select-none">
             {/* Atalhos Superiores */}
             <div className="flex flex-col items-center gap-4 w-full">
               {/* Sino de Notificações */}
@@ -1656,7 +1656,7 @@ const Sidebar = () => {
                           </div>
                         )}
                         {/* Indicador de Status Online (Bolinha Verde) */}
-                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-sky-100 shadow-xs" />
+                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-sky-200 shadow-xs" />
                       </div>
                     );
                   })}
