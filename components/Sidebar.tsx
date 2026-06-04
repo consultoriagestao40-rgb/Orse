@@ -2,12 +2,13 @@
  
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone, MessageCircle, MessageSquare } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone, MessageCircle, MessageSquare, UserCog } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
 import { changeMyPassword, changeMyAvatar, getLoggedUser } from '@/app/propostas/actions';
-import { getLeads, getAllUsers } from '@/app/leads/actions';
+import { getLeads, getAllUsers, updateLeadData, changeLeadOwner } from '@/app/leads/actions';
+import { getSegmentos } from '@/app/admin/settings/actions';
 import WhatsAppChat from '@/app/leads/components/WhatsAppChat';
  
 const Sidebar = () => {
@@ -434,6 +435,66 @@ const Sidebar = () => {
   const [systemUsers, setSystemUsers] = useState<any[]>([]);
   const [widgetLeads, setWidgetLeads] = useState<any[]>([]);
   const [widgetSearchTerm, setWidgetSearchTerm] = useState('');
+
+  // Estados para edição inline no widget de WhatsApp
+  const [isEditingWidgetInline, setIsEditingWidgetInline] = useState(false);
+  const [widgetInlineForm, setWidgetInlineForm] = useState({
+    nomeFantasia: '',
+    contatoNome: '',
+    email: '',
+    assignedToId: '',
+    segmento: ''
+  });
+  const [widgetSegmentos, setWidgetSegmentos] = useState<any[]>([]);
+
+  // Efeito para carregar segmentos quando o widget de WhatsApp for aberto
+  useEffect(() => {
+    if (showWhatsAppWidget) {
+      const loadWidgetData = async () => {
+        try {
+          const segsRes = await getSegmentos();
+          if (Array.isArray(segsRes)) {
+            setWidgetSegmentos(segsRes);
+          } else if (segsRes && segsRes.success) {
+            setWidgetSegmentos(segsRes.segmentos);
+          }
+        } catch (err) {
+          console.error("Error loading segments for widget:", err);
+        }
+      };
+      loadWidgetData();
+    } else {
+      setIsEditingWidgetInline(false);
+    }
+  }, [showWhatsAppWidget]);
+
+  const handleSaveWidgetInlineLeadEdit = async (leadId: string) => {
+    const res = await updateLeadData(leadId, {
+      nomeFantasia: widgetInlineForm.nomeFantasia,
+      contatoNome: widgetInlineForm.contatoNome,
+      email: widgetInlineForm.email,
+      segmento: widgetInlineForm.segmento || undefined
+    });
+
+    if (res.success) {
+      if (widgetInlineForm.assignedToId) {
+        await changeLeadOwner(leadId, widgetInlineForm.assignedToId);
+      }
+      setIsEditingWidgetInline(false);
+      
+      // Recarregar leads para atualizar o estado do widget
+      const leadsRes = await getLeads();
+      if (leadsRes.success && leadsRes.leads) {
+        setWidgetLeads(leadsRes.leads);
+        const updatedLead = leadsRes.leads.find((l: any) => l.id === leadId);
+        if (updatedLead) {
+          setActiveWidgetLead(updatedLead);
+        }
+      }
+    } else {
+      alert("Erro ao salvar dados: " + res.error);
+    }
+  };
 
   // Efeito para carregar a equipe de usuários
   useEffect(() => {
@@ -1801,16 +1862,16 @@ const Sidebar = () => {
               </div>
 
               {/* Corpo em Duas Colunas */}
-              <div className="flex-1 flex overflow-hidden bg-slate-50">
+              <div className="flex-1 flex overflow-hidden bg-white">
                 {/* Coluna da Esquerda: Lista de Conversas (w-[280px]) */}
-                <div className="w-[280px] border-r border-slate-200/80 flex flex-col bg-slate-50 shrink-0">
+                <div className="w-[280px] border-r border-slate-200/80 flex flex-col bg-white shrink-0">
                   {/* Busca */}
                   <div className="p-3 bg-white border-b border-slate-100 shrink-0">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
                       <input 
                         type="text"
-                        placeholder="Encontrar um bate-papo..."
+                        placeholder="Pesquisar conversas..."
                         value={widgetSearchTerm}
                         onChange={e => setWidgetSearchTerm(e.target.value)}
                         className="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:border-[#1B4D3E] outline-none transition-all font-semibold text-slate-700 placeholder-slate-400"
@@ -1868,36 +1929,59 @@ const Sidebar = () => {
                           <div
                             key={lead.id}
                             onClick={() => setActiveWidgetLead(lead)}
-                            className={`p-3 flex items-start gap-2.5 cursor-pointer transition-colors relative border-l-2 ${
+                            className={`p-3.5 flex items-start gap-3 cursor-pointer transition-all duration-150 border-b border-slate-100 ${
                               isSelected 
-                                ? 'bg-emerald-50/50 border-emerald-500 font-bold' 
-                                : 'hover:bg-slate-50/50 bg-white border-transparent'
+                                ? 'bg-[#e6fcf5]/70 border-l-4 border-[#0ca678] font-bold' 
+                                : 'hover:bg-slate-50 bg-white border-transparent'
                             }`}
                           >
-                            <div className="w-8 h-8 bg-emerald-600/10 text-emerald-700 font-black text-[10px] rounded-xl flex items-center justify-center shrink-0 uppercase border border-emerald-100 shadow-xs">
+                            <div className="w-10 h-10 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
                               {initials}
                             </div>
                             
-                            <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0 space-y-1">
                               <div className="flex justify-between items-baseline mb-0.5">
-                                <h4 className={`text-xs truncate ${isSelected ? 'font-black text-slate-900' : 'font-semibold text-slate-700'}`}>{lead.nomeFantasia}</h4>
+                                <h4 className={`text-xs md:text-sm font-bold text-slate-800 truncate`} title={lead.nomeFantasia}>
+                                  {lead.nomeFantasia}
+                                </h4>
                                 {dateText && (
-                                  <span className="text-[9px] text-slate-400 shrink-0 font-medium ml-1">
+                                  <span className="text-[10px] text-slate-400 shrink-0 font-medium ml-1">
                                     {dateText}
                                   </span>
                                 )}
                               </div>
-                              <p className="text-[9px] text-slate-400 font-bold tracking-tight mb-0.5">{lead.telefone}</p>
+                              
+                              <div className="text-[10px] text-slate-500 flex items-center gap-1.5 font-medium">
+                                <span className="shrink-0 select-none">🏢</span>
+                                <span className="truncate">{lead.segmento || 'Sem segmento'}</span>
+                              </div>
+
+                              {lead.telefone && (
+                                <div className="text-[10px] text-slate-500 flex items-center gap-1.5 font-bold">
+                                  <span className="shrink-0 select-none">📞</span>
+                                  <span className="truncate">{lead.telefone}</span>
+                                </div>
+                              )}
+
+                              <div className="text-[10px] text-slate-500 flex items-center gap-1 font-medium">
+                                <span>Etapa:</span>
+                                <span className="font-bold text-[#1c7ed6] uppercase">
+                                  {lead.stage?.nome || 'Sem Etapa'}
+                                </span>
+                              </div>
+
                               {lead.latestMsg && (
-                                <p className="text-[11px] text-slate-500 truncate font-medium">
-                                  {lead.latestMsg.direction === 'OUTBOUND' ? 'Você: ' : ''}
+                                <p className="text-xs text-slate-500 truncate mt-1.5 bg-[#f1f3f5] p-2 rounded-xl border border-slate-200/60 italic font-medium">
+                                  {lead.latestMsg.direction === 'OUTBOUND' ? (
+                                    <span className="font-bold text-slate-600 not-italic">Você: </span>
+                                  ) : ''}
                                   {lead.latestMsg.texto}
                                 </p>
                               )}
                             </div>
 
                             {lead.unreadCount > 0 && (
-                              <span className="bg-emerald-500 text-white font-black text-[8px] w-4 h-4 rounded-full flex items-center justify-center shrink-0 animate-pulse">
+                              <span className="bg-[#0ca678] text-white font-black text-[9px] px-1.5 py-0.5 rounded-full shrink-0 animate-pulse">
                                 {lead.unreadCount}
                               </span>
                             )}
@@ -1911,38 +1995,163 @@ const Sidebar = () => {
                 {/* Coluna da Direita: Chat Ativo (flex-1) */}
                 <div className="flex-1 flex flex-col overflow-hidden bg-slate-50 relative">
                   {activeWidgetLead ? (
-                    <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-100">
-                      {/* Mini Cabeçalho do Chat */}
-                      <div className="p-3 bg-white border-b border-slate-200/80 flex justify-between items-center shrink-0 shadow-xs">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-8 h-8 bg-emerald-50 text-emerald-800 font-extrabold text-[10px] rounded-xl flex items-center justify-center shrink-0 uppercase border border-emerald-100">
-                            {activeWidgetLead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                    <div className="flex-1 flex h-full overflow-hidden bg-slate-100 relative">
+                      {/* Main Chat Container */}
+                      <div className="flex-1 flex flex-col h-full overflow-hidden">
+                        {/* Mini Cabeçalho do Chat */}
+                        <div className="p-3 bg-white border-b border-slate-200/80 flex justify-between items-center shrink-0 shadow-xs">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-9 h-9 bg-[#e7f5ff] text-[#1c7ed6] font-extrabold text-xs rounded-xl flex items-center justify-center shrink-0 uppercase border border-blue-100">
+                              {activeWidgetLead.nomeFantasia.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="text-xs font-black text-slate-800 truncate leading-none mb-0.5">
+                                {activeWidgetLead.nomeFantasia}
+                              </h4>
+                              <span className="text-[10px] text-slate-400 font-semibold">{activeWidgetLead.telefone}</span>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <h4 className="text-xs font-black text-slate-800 truncate leading-none mb-0.5">
-                              {activeWidgetLead.nomeFantasia}
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            {/* Inline Edit Button */}
+                            <button
+                              onClick={() => {
+                                setWidgetInlineForm({
+                                  nomeFantasia: activeWidgetLead.nomeFantasia || '',
+                                  contatoNome: activeWidgetLead.contatoNome || '',
+                                  email: activeWidgetLead.email || '',
+                                  assignedToId: activeWidgetLead.assignedToId || '',
+                                  segmento: activeWidgetLead.segmento || ''
+                                });
+                                setIsEditingWidgetInline(!isEditingWidgetInline);
+                              }}
+                              className={`text-[10.5px] font-bold px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 border ${
+                                isEditingWidgetInline 
+                                  ? 'bg-slate-800 text-white border-slate-800 hover:bg-slate-900' 
+                                  : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm'
+                              }`}
+                            >
+                              {isEditingWidgetInline ? (
+                                <>
+                                  <X size={12} /> Fechar Edição
+                                </>
+                              ) : (
+                                <>
+                                  <UserCog size={13} className="text-slate-600" /> Completar Cadastro
+                                </>
+                              )}
+                            </button>
+
+                            {/* Botão de Ver no Funil */}
+                            <button
+                              onClick={() => {
+                                window.location.href = `/leads?leadId=${activeWidgetLead.id}`;
+                              }}
+                              className="bg-[#0ca678] hover:bg-[#099268] text-white font-extrabold text-[10.5px] px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-sm shadow-emerald-600/10 hover:shadow-emerald-600/20 active:scale-95 cursor-pointer"
+                              title="Ver no Funil"
+                            >
+                              <Target size={13} /> Ver no Funil
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Componente WhatsAppChat */}
+                        <div className="flex-1 overflow-hidden relative">
+                          <WhatsAppChat leadId={activeWidgetLead.id} leadPhone={activeWidgetLead.telefone} />
+                        </div>
+                      </div>
+
+                      {/* Sliding inline edit panel */}
+                      {isEditingWidgetInline && (
+                        <div className="w-80 bg-white border-l border-slate-200 shadow-xl flex flex-col shrink-0 animate-slide-left z-10">
+                          <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                            <h4 className="text-xs md:text-sm font-black text-slate-800 flex items-center gap-1.5">
+                              <UserCog size={16} className="text-[#0ca678]" />
+                              Completar Cadastro
                             </h4>
-                            <span className="text-[10px] text-slate-400 font-semibold">{activeWidgetLead.telefone}</span>
+                            <button 
+                              onClick={() => setIsEditingWidgetInline(false)}
+                              className="text-slate-400 hover:text-slate-600"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+
+                          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                            <div>
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Nome / Nome Fantasia</label>
+                              <input 
+                                type="text" 
+                                value={widgetInlineForm.nomeFantasia}
+                                onChange={e => setWidgetInlineForm({ ...widgetInlineForm, nomeFantasia: e.target.value })}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none font-semibold"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Nome do Contato</label>
+                              <input 
+                                type="text" 
+                                value={widgetInlineForm.contatoNome}
+                                onChange={e => setWidgetInlineForm({ ...widgetInlineForm, contatoNome: e.target.value })}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none font-semibold"
+                                placeholder="Ex: João Silva"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">E-mail</label>
+                              <input 
+                                type="email" 
+                                value={widgetInlineForm.email}
+                                onChange={e => setWidgetInlineForm({ ...widgetInlineForm, email: e.target.value })}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none font-semibold"
+                                placeholder="Ex: contato@empresa.com"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Segmento</label>
+                              <select 
+                                value={widgetInlineForm.segmento}
+                                onChange={e => setWidgetInlineForm({ ...widgetInlineForm, segmento: e.target.value })}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none bg-white font-semibold"
+                              >
+                                <option value="">Selecione um segmento...</option>
+                                {widgetSegmentos.map(seg => {
+                                  const val = seg.nome || seg;
+                                  return (
+                                    <option key={seg.id || seg} value={val}>{val}</option>
+                                  );
+                                })}
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Responsável pelo Lead</label>
+                              <select 
+                                value={widgetInlineForm.assignedToId}
+                                onChange={e => setWidgetInlineForm({ ...widgetInlineForm, assignedToId: e.target.value })}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-[#0ca678] focus:ring-1 focus:ring-[#0ca678] outline-none bg-white font-semibold"
+                              >
+                                <option value="">Selecione um responsável...</option>
+                                {systemUsers.map(u => (
+                                  <option key={u.id} value={u.id}>{u.nome}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="p-4 border-t border-slate-100 bg-slate-50 shrink-0">
+                            <button
+                              onClick={() => handleSaveWidgetInlineLeadEdit(activeWidgetLead.id)}
+                              className="w-full bg-[#0ca678] hover:bg-[#099268] text-white text-xs font-bold py-2.5 rounded-xl transition-all shadow-md shadow-[#0ca678]/10 flex items-center justify-center gap-1.5"
+                            >
+                              <CheckCircle2 size={14} /> Salvar Alterações
+                            </button>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {/* Botão de Ver no Funil */}
-                          <button
-                            onClick={() => {
-                              window.location.href = `/leads?leadId=${activeWidgetLead.id}`;
-                            }}
-                            className="bg-emerald-600 hover:bg-[#1B4D3E] text-white font-black text-[9px] px-2.5 py-1.5 rounded-lg transition-all shadow-xs cursor-pointer"
-                          >
-                            Ver no Funil
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Componente WhatsAppChat */}
-                      <div className="flex-1 overflow-hidden relative">
-                        <WhatsAppChat leadId={activeWidgetLead.id} leadPhone={activeWidgetLead.telefone} />
-                      </div>
+                      )}
                     </div>
                   ) : (
                     /* Tela de instrução (Vazio) */
