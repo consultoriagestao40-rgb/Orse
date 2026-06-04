@@ -715,7 +715,7 @@ export default function PropostasComerciaisDashboard() {
 
           {/* LISTA */}
           {viewMode === 'lista' && (
-            <div className="bg-white rounded-md shadow-sm border border-slate-300 overflow-hidden w-full">
+            <div className="bg-white rounded-md shadow-sm border border-slate-300 overflow-x-auto w-full">
               <table className="w-full text-left border-collapse table-auto">
                 <thead>
                   <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">

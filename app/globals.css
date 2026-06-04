@@ -52,3 +52,35 @@ body.has-trial-banner main {
   }
 }
 
+/* Custom scrollbar and spacing overrides */
+main {
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+}
+
+/* Custom premium scrollbars, always visible */
+::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9 !important; /* slate-100 */
+  border-radius: 9999px !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important; /* slate-300 */
+  border-radius: 9999px !important;
+  border: 2px solid #f1f5f9 !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8 !important; /* slate-400 */
+}
+
+/* Firefox support */
+* {
+  scrollbar-width: thin !important;
+  scrollbar-color: #cbd5e1 #f1f5f9 !important;
+}
