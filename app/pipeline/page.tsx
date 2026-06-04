@@ -478,12 +478,13 @@ function ProposalsDashboard() {
   ];
 
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
-  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onDragColumnStart, onDragColumnEnd, onDropColumn, onRenameColumn }: {
+  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onDragColumnStart, onDragColumnEnd, onDropColumn, onRenameColumn, isFirst = false }: {
     label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor'; statusId?: string; onColorChange?: (newColor: string) => void;
     onDragColumnStart?: (e: React.DragEvent, label: string) => void;
     onDragColumnEnd?: (e: React.DragEvent) => void;
     onDropColumn?: (e: React.DragEvent, label: string) => void;
     onRenameColumn?: (newName: string) => Promise<void>;
+    isFirst?: boolean;
   }) => {
     const [showEditPopover, setShowEditPopover] = useState(false);
     const [editNameValue, setEditNameValue] = useState(label);
@@ -598,7 +599,10 @@ function ProposalsDashboard() {
               }}
             >
               <path 
-                d="M 10,0 L 274,0 L 288,22 L 274,44 L 10,44 A 10,10 0 0,1 0,34 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                d={isFirst 
+                  ? "M 10,0 L 274,0 L 288,22 L 274,44 L 10,44 A 10,10 0 0,1 0,34 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                  : "M 0,0 L 274,0 L 288,22 L 274,44 L 0,44 L 14,22 Z"
+                }
                 fill="currentColor"
                 stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
                 strokeWidth="1.5"
@@ -607,7 +611,7 @@ function ProposalsDashboard() {
 
             {/* Conteúdo do Cabeçalho */}
             <div 
-              className="absolute inset-0 z-10 flex items-center justify-between pl-4 pr-7"
+              className={`absolute inset-0 z-10 flex items-center justify-between ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
               style={{
                 color: contrast === 'white' ? '#ffffff' : '#0f172a'
               }}
@@ -1150,7 +1154,7 @@ function ProposalsDashboard() {
                             style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
                           >
                             <div className="flex gap-5 min-w-max pb-0 mb-0">
-                              {orderedStatusCols.map(col => (
+                              {orderedStatusCols.map((col, idx) => (
                                 <KanbanColumnHeader
                                   key={col.id}
                                   label={col.label}
@@ -1158,6 +1162,7 @@ function ProposalsDashboard() {
                                   cards={col.cards}
                                   total={col.total}
                                   statusId={col.id}
+                                  isFirst={idx === 0}
                                   onColorChange={async (newColor) => {
                                     await updatePropostaStatusParam(col.id, col.label, newColor);
                                     setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));
@@ -1259,7 +1264,7 @@ function ProposalsDashboard() {
                             style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
                           >
                             <div className="flex gap-5 min-w-max pb-0 mb-0">
-                              {orderedVendedorCols.map(col => {
+                              {orderedVendedorCols.map((col, idx) => {
                                 const vColor = vendedorColors[col.label] || 'emerald';
                                 return (
                                   <KanbanColumnHeader
@@ -1270,6 +1275,7 @@ function ProposalsDashboard() {
                                     cards={col.cards}
                                     total={col.total}
                                     statusId={col.id}
+                                    isFirst={idx === 0}
                                     onColorChange={async (newColor) => {
                                       localStorage.setItem(`kanban-vendedor-color-${col.label}`, newColor);
                                       setVendedorColors(prev => ({ ...prev, [col.label]: newColor }));
