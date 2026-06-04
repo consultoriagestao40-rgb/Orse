@@ -1,18 +1,18 @@
 import { PrismaClient } from '@prisma/client'
-import { Pool, neonConfig } from '@neondatabase/serverless'
-import { PrismaPg } from '@prisma/adapter-pg'
-import ws from 'ws'
-
-neonConfig.webSocketConstructor = ws
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient }
 
-// Using pg Adapter with Neon serverless WebSocket pool for transactions and serverless performance
+import { Pool } from 'pg'
+import { PrismaPg } from '@prisma/adapter-pg'
+
+// Using PrismaPg instead of PrismaNeonHttp to SUPPORT TRANSACTIONS in Vercel Serverless
 function createPrismaClient() {
   const connectionString = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL!
   const pool = new Pool({ 
     connectionString,
-    max: 1, // Minimize connection limit per serverless function to prevent exhaustion
+    max: 2, // Limite para evitar exaustão de conexões no ambiente serverless
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
   })
   const adapter = new PrismaPg(pool)
   return new PrismaClient({
