@@ -417,16 +417,10 @@ export default function PropostasComerciaisDashboard() {
         onDragEnd={(e) => {
           if (onDragColumnEnd) onDragColumnEnd(e);
           (window as any).__draggedColumn = null;
-          const leftGuide = e.currentTarget.querySelector('.drag-guide-left') as HTMLElement;
-          const rightGuide = e.currentTarget.querySelector('.drag-guide-right') as HTMLElement;
-          if (leftGuide) {
-            leftGuide.classList.remove('opacity-100');
-            leftGuide.classList.add('opacity-0');
-          }
-          if (rightGuide) {
-            rightGuide.classList.remove('opacity-100');
-            rightGuide.classList.add('opacity-0');
-          }
+          document.querySelectorAll('.drag-guide-left, .drag-guide-right').forEach(g => {
+            g.classList.remove('opacity-100');
+            g.classList.add('opacity-0');
+          });
         }}
         onDragOver={(e) => {
           e.preventDefault();
@@ -434,6 +428,12 @@ export default function PropostasComerciaisDashboard() {
           if (dragged && dragged.type === type && dragged.label !== label) {
             const parent = e.currentTarget.parentElement;
             if (parent) {
+              // Hide all sibling indicators first to avoid stickiness
+              parent.querySelectorAll('.drag-guide-left, .drag-guide-right').forEach(g => {
+                g.classList.remove('opacity-100');
+                g.classList.add('opacity-0');
+              });
+
               const children = Array.from(parent.children);
               const draggedIndex = children.findIndex(child => child.getAttribute('data-col-label') === dragged.label);
               const targetIndex = children.findIndex(child => child.getAttribute('data-col-label') === label);
@@ -447,40 +447,25 @@ export default function PropostasComerciaisDashboard() {
                   if (isLeft) {
                     leftGuide.classList.remove('opacity-0');
                     leftGuide.classList.add('opacity-100');
-                    rightGuide.classList.remove('opacity-100');
-                    rightGuide.classList.add('opacity-0');
                   } else {
                     rightGuide.classList.remove('opacity-0');
                     rightGuide.classList.add('opacity-100');
-                    leftGuide.classList.remove('opacity-100');
-                    leftGuide.classList.add('opacity-0');
                   }
                 }
               }
             }
           }
         }}
-        onDragLeave={(e) => {
-          const leftGuide = e.currentTarget.querySelector('.drag-guide-left') as HTMLElement;
-          const rightGuide = e.currentTarget.querySelector('.drag-guide-right') as HTMLElement;
-          if (leftGuide && rightGuide) {
-            leftGuide.classList.remove('opacity-100');
-            leftGuide.classList.add('opacity-0');
-            rightGuide.classList.remove('opacity-100');
-            rightGuide.classList.add('opacity-0');
-          }
+        onDragLeave={() => {
+          // Do nothing on drag leave of child elements to prevent indicator flickering
         }}
         onDrop={(e) => {
           if (onDropColumn) onDropColumn(e, label);
           (window as any).__draggedColumn = null;
-          const leftGuide = e.currentTarget.querySelector('.drag-guide-left') as HTMLElement;
-          const rightGuide = e.currentTarget.querySelector('.drag-guide-right') as HTMLElement;
-          if (leftGuide && rightGuide) {
-            leftGuide.classList.remove('opacity-100');
-            leftGuide.classList.add('opacity-0');
-            rightGuide.classList.remove('opacity-100');
-            rightGuide.classList.add('opacity-0');
-          }
+          document.querySelectorAll('.drag-guide-left, .drag-guide-right').forEach(g => {
+            g.classList.remove('opacity-100');
+            g.classList.add('opacity-0');
+          });
         }}
       >
         <div className="drag-guide-left absolute left-[-12px] top-0 bottom-0 w-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)] z-30 pointer-events-none opacity-0 transition-opacity duration-150 flex items-center justify-center">
