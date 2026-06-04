@@ -1,149 +1,97 @@
 'use client';
-// Force redeploy with database color column present
 
 import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import LandingPage from '@/components/LandingPage';
 import { 
-  FileText, Plus, Search, 
-  Users, TrendingUp, Clock,
-  LayoutList, LayoutGrid, UserSquare2,
-  Edit2, Trash2, FileStack, Filter,
-  MoreVertical, Share2, ArrowRightLeft, History, X, Palette
+  BarChart2, TrendingUp, Users, Clock, DollarSign, 
+  ArrowUpRight, Award, Briefcase, Activity, Percent, Filter, 
+  Calendar, CheckCircle, Edit2, Check, Target
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { 
-  getPropostas, updatePropostaStatus,
-  getPropostaStatuses, createPropostaStatus, deletePropostaStatus,
-  deleteProposta, getCurrentUserRole,
-  getUsersList, transferirProposta, compartilharProposta, getAuditLogs,
-  updatePropostaStatusParam
-} from '@/app/propostas/actions';
+import { getKPIs, getLoggedUser } from '@/app/propostas/actions';
 
-type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor';
-
-const fmt = (v: number) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v);
-
-function ProposalsDashboard() {
-  const router = useRouter();
+function RadarComercialDashboard() {
   const [loading, setLoading] = useState(true);
-  const [proposals, setProposals] = useState<any[]>([]);
-  const [statuses, setStatuses] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [userRole, setUserRole] = useState<string>('USER');
-  const [viewMode, setViewMode] = useState<ViewMode>('lista');
-  const [vendedorColors, setVendedorColors] = useState<Record<string, string>>({});
-  const [statusOrder, setStatusOrder] = useState<string[]>([]);
-  const [vendedorOrder, setVendedorOrder] = useState<string[]>([]);
+  const [kpis, setKpis] = useState<any>(null);
 
-  const handleDragColumnStart = (e: React.DragEvent, columnLabel: string, type: 'status' | 'vendedor') => {
-    e.dataTransfer.setData('text/column-id', columnLabel);
-    e.dataTransfer.setData('text/column-type', type);
-    e.currentTarget.classList.add('opacity-40');
-  };
+  // Filtros
+  const [userFilter, setUserFilter] = useState<string>('ALL');
+  const [period, setPeriod] = useState<'all' | '7' | '30' | 'mes' | 'ano' | 'custom'>('all');
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    return new Date().toISOString().substring(0, 7); // Ex: "2026-06"
+  });
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [chartViewMode, setChartViewMode] = useState<'mensal' | 'acumulada'>('mensal');
 
-  const handleDragColumnEnd = (e: React.DragEvent) => {
-    e.currentTarget.classList.remove('opacity-40');
-  };
-
-  const handleDropColumn = (e: React.DragEvent, targetLabel: string, type: 'status' | 'vendedor') => {
-    e.preventDefault();
-    const sourceLabel = e.dataTransfer.getData('text/column-id');
-    const sourceType = e.dataTransfer.getData('text/column-type');
-    
-    if (sourceType !== type || sourceLabel === targetLabel) return;
-
-    if (type === 'status') {
-      const currentCols = statuses.map(s => s.nome);
-      if (proposals.some(p => !p.status || !statuses.find(s => s.nome.toLowerCase() === p.status.toLowerCase()))) {
-        currentCols.push('Sem Status');
-      }
-      
-      let order = statusOrder.length > 0 ? [...statusOrder] : [...currentCols];
-      currentCols.forEach(c => {
-        if (!order.includes(c)) order.push(c);
-      });
-
-      const sourceIdx = order.indexOf(sourceLabel);
-      const targetIdx = order.indexOf(targetLabel);
-
-      if (sourceIdx !== -1 && targetIdx !== -1) {
-        const newOrder = [...order];
-        newOrder.splice(sourceIdx, 1);
-        newOrder.splice(targetIdx, 0, sourceLabel);
-        setStatusOrder(newOrder);
-        localStorage.setItem('kanban-status-order', JSON.stringify(newOrder));
-      }
-    } else {
-      const currentCols = Array.from(new Set(proposals.map(p => p.usuario || 'Sem Vendedor')));
-      let order = vendedorOrder.length > 0 ? [...vendedorOrder] : [...currentCols];
-      currentCols.forEach(c => {
-        if (!order.includes(c)) order.push(c);
-      });
-
-      const sourceIdx = order.indexOf(sourceLabel);
-      const targetIdx = order.indexOf(targetLabel);
-
-      if (sourceIdx !== -1 && targetIdx !== -1) {
-        const newOrder = [...order];
-        newOrder.splice(sourceIdx, 1);
-        newOrder.splice(targetIdx, 0, sourceLabel);
-        setVendedorOrder(newOrder);
-        localStorage.setItem('kanban-vendedor-order', JSON.stringify(newOrder));
-      }
-    }
-  };
-
-  // Modais e dados auxiliares
-  const [usersList, setUsersList] = useState<any[]>([]);
-  const [transferModal, setTransferModal] = useState<{ isOpen: boolean, propId: string | null }>({ isOpen: false, propId: null });
-  const [shareModal, setShareModal] = useState<{ isOpen: boolean, propId: string | null }>({ isOpen: false, propId: null });
-  const [auditModal, setAuditModal] = useState<{ isOpen: boolean, propId: string | null, logs: any[] }>({ isOpen: false, propId: null, logs: [] });
-  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  // Metas por vendedor
+  const [metas, setMetas] = useState<Record<string, number>>({});
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editGoalValue, setEditGoalValue] = useState<string>('');
 
   const loadData = async () => {
     setLoading(true);
-    const [data, statusData, role, usersData] = await Promise.all([
-      getPropostas(),
-      getPropostaStatuses(),
-      getCurrentUserRole(),
-      getUsersList()
-    ]);
-    setProposals(data);
-    setStatuses(statusData);
-    setUserRole(role);
-    setUsersList(usersData);
-    setLoading(false);
+    try {
+      const data = await getKPIs();
+      setKpis(data);
+    } catch (e) {
+      console.error('Erro ao buscar KPIs:', e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    loadData();
+  }, []);
 
+  // Sincroniza datas pré-definidas ao alterar o período ou o mês selecionado
+  useEffect(() => {
+    const today = new Date();
+    let start = new Date();
+    
+    if (period === 'all') {
+      setStartDate('');
+      setEndDate('');
+    } else if (period === '7') {
+      start.setDate(today.getDate() - 7);
+      setStartDate(start.toISOString().split('T')[0]);
+      setEndDate(today.toISOString().split('T')[0]);
+    } else if (period === '30') {
+      start.setDate(today.getDate() - 30);
+      setStartDate(start.toISOString().split('T')[0]);
+      setEndDate(today.toISOString().split('T')[0]);
+    } else if (period === 'mes') {
+      if (selectedMonth) {
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const firstDay = new Date(year, month - 1, 1);
+        const lastDay = new Date(year, month, 0);
+        
+        const formatLocal = (d: Date) => {
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${y}-${m}-${day}`;
+        };
+        
+        setStartDate(formatLocal(firstDay));
+        setEndDate(formatLocal(lastDay));
+      }
+    } else if (period === 'ano') {
+      start = new Date(today.getFullYear(), 0, 1);
+      setStartDate(start.toISOString().split('T')[0]);
+      setEndDate(today.toISOString().split('T')[0]);
+    }
+  }, [period, selectedMonth]);
+
+  // Carrega metas do localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const colors: Record<string, string> = {};
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('kanban-vendedor-color-')) {
-          const seller = key.replace('kanban-vendedor-color-', '');
-          colors[seller] = localStorage.getItem(key) || 'emerald';
-        }
-      }
-      setVendedorColors(colors);
-
-      // Load column order
-      const storedStatusOrder = localStorage.getItem('kanban-status-order');
-      if (storedStatusOrder) {
+      const saved = localStorage.getItem('sb_kpi_goals');
+      if (saved) {
         try {
-          setStatusOrder(JSON.parse(storedStatusOrder));
-        } catch (e) {
-          console.error(e);
-        }
-      }
-      const storedVendedorOrder = localStorage.getItem('kanban-vendedor-order');
-      if (storedVendedorOrder) {
-        try {
-          setVendedorOrder(JSON.parse(storedVendedorOrder));
+          setMetas(JSON.parse(saved));
         } catch (e) {
           console.error(e);
         }
@@ -151,1146 +99,990 @@ function ProposalsDashboard() {
     }
   }, []);
 
-  const getStatusStyle = (statusNome: string) => {
-    if (!statusNome) return 'bg-slate-100 text-slate-600 border border-slate-200';
-    const found = statuses.find(s => s.nome.toLowerCase() === statusNome.toLowerCase());
-    return found?.color || 'bg-slate-100 text-slate-600 border border-slate-200';
+  const saveGoal = (userName: string, val: number) => {
+    const activeMonthKey = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
+    const updated = { ...metas, [`${userName}_${activeMonthKey}`]: val };
+    setMetas(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sb_kpi_goals', JSON.stringify(updated));
+    }
+    setEditingUserId(null);
   };
 
-  const filteredProposals = proposals.filter(p =>
-    p.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.usuario || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+  };
 
-  const activeCount = proposals.length;
-  const monthlyVolume = proposals.reduce((acc, p) => acc + p.valor, 0);
-  const clientsCount = new Set(proposals.map(p => p.cliente)).size;
-  const revisionCount = proposals.filter(p => (p.status || '').toUpperCase().includes('REVIS')).length;
+  // =========================================================================
+  // PROCESSAMENTO DINÂMICO DE FILTROS E CÁLCULO DE MÉTRICAS (CLIENT-SIDE ENGINE)
+  // =========================================================================
+  const propostasList = kpis?.propostas || [];
+  const totalSellers = kpis?.usuarios || [];
 
-  // ── Dados para Kanban por Status ────────────────────────────────────────────
-  const kanbanStatusCols = statuses.map(s => {
-    const cards = filteredProposals.filter(p => (p.status || '').toLowerCase() === s.nome.toLowerCase());
+  const filteredPropostas = propostasList.filter((p: any) => {
+    const d = new Date(p.dataCriacao);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dataCriacaoStr = `${y}-${m}-${day}`;
+    
+    // 1. Filtro por Usuário
+    if (userFilter !== 'ALL' && p.usuario !== userFilter) {
+      return false;
+    }
+
+    // 2. Filtro por Data de Início
+    if (startDate && dataCriacaoStr < startDate) {
+      return false;
+    }
+
+    // 3. Filtro por Data de Fim
+    if (endDate && dataCriacaoStr > endDate) {
+      return false;
+    }
+
+    return true;
+  });
+
+  // Re-computar todas as estatísticas principais
+  let totalVolume = 0;
+  let totalAceito = 0;
+  let totalPropostasCount = filteredPropostas.length;
+  let totalAceitasCount = 0;
+
+  const volumePorUsuario: Record<string, { totalVal: number, totalAceito: number, count: number, totalAceitasCount: number }> = {};
+  const volumePorServico: Record<string, { totalVal: number, count: number }> = {};
+  
+  let somaDiasCiclo = 0;
+  let countDiasCiclo = 0;
+
+  filteredPropostas.forEach((p: any) => {
+    const valor = p.valor || 0;
+    const isAceito = p.isAceito;
+
+    totalVolume += valor;
+    if (isAceito) {
+      totalAceito += valor;
+      totalAceitasCount++;
+
+      // Ciclo de fechamento
+      if (p.dataAceitacao) {
+        const start = new Date(p.dataCriacao);
+        const end = new Date(p.dataAceitacao);
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const dias = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        somaDiasCiclo += dias;
+        countDiasCiclo++;
+      }
+    }
+
+    // Por usuário
+    const usuario = p.usuario;
+    if (!volumePorUsuario[usuario]) {
+      volumePorUsuario[usuario] = { totalVal: 0, totalAceito: 0, count: 0, totalAceitasCount: 0 };
+    }
+    volumePorUsuario[usuario].totalVal += valor;
+    if (isAceito) {
+      volumePorUsuario[usuario].totalAceito += valor;
+      volumePorUsuario[usuario].totalAceitasCount += 1;
+    }
+    volumePorUsuario[usuario].count += 1;
+
+    // Por tipo de serviço (normalizado com agrupamento)
+    const servico = (p.tipoServicos || 'Outros').trim().toUpperCase();
+    if (!volumePorServico[servico]) {
+      volumePorServico[servico] = { totalVal: 0, count: 0 };
+    }
+    volumePorServico[servico].totalVal += valor;
+    volumePorServico[servico].count += 1;
+  });
+
+  const ticketMedio = totalPropostasCount > 0 ? totalVolume / totalPropostasCount : 0;
+  const taxaConversao = totalVolume > 0 ? (totalAceito / totalVolume) * 100 : 0;
+  const conversaoQuantidade = totalPropostasCount > 0 ? (totalAceitasCount / totalPropostasCount) * 100 : 0;
+  const cicloMedio = countDiasCiclo > 0 ? somaDiasCiclo / countDiasCiclo : 0;
+
+  // =========================================================================
+  // CÁLCULOS DO GRÁFICO HISTÓRICO DE DESEMPENHO MENSAL (COMBO BAR + LINE)
+  // =========================================================================
+  const currentYear = new Date().getFullYear();
+  const chartMonths: string[] = [];
+  for (let i = 0; i < 12; i++) {
+    const monthKey = `${currentYear}-${String(i + 1).padStart(2, '0')}`;
+    chartMonths.push(monthKey);
+  }
+
+  const getShortMonthName = (monthKey: string) => {
+    const m = monthKey.split('-')[1];
+    const months: Record<string, string> = {
+      '01': 'JAN', '02': 'FEV', '03': 'MAR', '04': 'ABR', '05': 'MAI', '06': 'JUN',
+      '07': 'JUL', '08': 'AGO', '09': 'SET', '10': 'OUT', '11': 'NOV', '12': 'DEZ'
+    };
+    return months[m] || m;
+  };
+  
+  const monthlyData = chartMonths.map((mKey: string) => {
+    let realizado = 0;
+    
+    propostasList.forEach((p: any) => {
+      if (p.dataCriacao) {
+        const d = new Date(p.dataCriacao);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const pKey = `${y}-${m}`;
+        
+        if (pKey === mKey) {
+          if (userFilter !== 'ALL' && p.usuario !== userFilter) return;
+          if (p.isAceito) {
+            realizado += p.valor || 0;
+          }
+        }
+      }
+    });
+
+    let previsto = 0;
+    if (userFilter !== 'ALL') {
+      const key = `${userFilter}_${mKey}`;
+      previsto = metas[key] !== undefined ? metas[key] : 100000;
+    } else {
+      totalSellers.forEach((nome: string) => {
+        const key = `${nome}_${mKey}`;
+        previsto += metas[key] !== undefined ? metas[key] : 100000;
+      });
+    }
+    if (previsto === 0) previsto = 100000;
+
+    const atingidoPct = previsto > 0 ? (realizado / previsto) * 100 : 0;
+    
     return {
-      id: s.id,
-      label: s.nome,
-      color: s.color || 'bg-slate-100 text-slate-600 border border-slate-200',
-      cards,
-      total: cards.reduce((a, c) => a + c.valor, 0),
+      monthKey: mKey,
+      monthLabel: mKey,
+      previsto,
+      realizado,
+      atingidoPct
     };
   });
-  // Propostas sem status mapeado
-  const semStatus = filteredProposals.filter(p => !p.status || !statuses.find(s => s.nome.toLowerCase() === p.status.toLowerCase()));
-  if (semStatus.length > 0) {
-    kanbanStatusCols.push({
-      id: 'sem-status',
-      label: 'Sem Status',
-      color: 'bg-slate-100 text-slate-500 border border-slate-200',
-      cards: semStatus,
-      total: semStatus.reduce((a, c) => a + c.valor, 0),
+
+  let chartData = monthlyData;
+  if (chartViewMode === 'acumulada') {
+    let accPrevisto = 0;
+    let accRealizado = 0;
+    chartData = monthlyData.map((d) => {
+      accPrevisto += d.previsto;
+      accRealizado += d.realizado;
+      const atingidoPct = accPrevisto > 0 ? (accRealizado / accPrevisto) * 100 : 0;
+      return {
+        ...d,
+        previsto: accPrevisto,
+        realizado: accRealizado,
+        atingidoPct
+      };
     });
   }
 
-  // ── Dados para Kanban por Vendedor ──────────────────────────────────────────
-  const vendedoresMap = new Map<string, any[]>();
-  filteredProposals.forEach(p => {
-    const v = p.usuario || 'Sem Vendedor';
-    if (!vendedoresMap.has(v)) vendedoresMap.set(v, []);
-    vendedoresMap.get(v)!.push(p);
-  });
-  const kanbanVendedorCols = Array.from(vendedoresMap.entries()).map(([nome, cards]) => ({
-    id: nome,
-    label: nome,
-    cards,
-    total: cards.reduce((a, c) => a + c.valor, 0),
-  }));
+  const maxFaturamento = Math.max(...chartData.map(d => Math.max(d.previsto, d.realizado)), 50000);
+  const maxValY = maxFaturamento * 1.15;
+  
+  const maxPct = Math.max(...chartData.map(d => d.atingidoPct), 100);
+  const maxPctY = maxPct * 1.15;
 
-  // ── Menu de Ações Reutilizável ──────────────────────────────────────────────
-  const ActionMenu = ({ prop }: { prop: any }) => {
-    const [open, setOpen] = useState(false);
-    return (
-      <div className="relative" onClick={e => e.stopPropagation()}>
-        <button onClick={() => setOpen(!open)} className="text-amber-500 hover:text-amber-600 p-1 rounded transition-colors">
-          <MoreVertical size={16} />
-        </button>
-        {open && (
-          <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 shadow-xl rounded-lg py-1 z-50">
-            <button onClick={() => { setOpen(false); setShareModal({ isOpen: true, propId: prop.id }); }} className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-              <Share2 size={14} /> Compartilhar
-            </button>
-            {(userRole === 'ADMIN' || userRole === 'MANAGER') && (
-              <button onClick={() => { setOpen(false); setTransferModal({ isOpen: true, propId: prop.id }); }} className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-                <ArrowRightLeft size={14} /> Transferir
-              </button>
-            )}
-            {userRole === 'ADMIN' && (
-              <button onClick={async () => {
-                setOpen(false);
-                setLoading(true);
-                const logs = await getAuditLogs(prop.id);
-                setAuditModal({ isOpen: true, propId: prop.id, logs });
-                setLoading(false);
-              }} className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-                <History size={14} /> Auditoria
-              </button>
-            )}
-          </div>
-        )}
-        {open && <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />}
-      </div>
-    );
+  const formatShortCurrency = (val: number) => {
+    if (val >= 1000000) return `R$ ${(val / 1000000).toFixed(1)}M`;
+    if (val >= 1000) return `R$ ${(val / 1000).toFixed(0)}k`;
+    return `R$ ${val}`;
   };
 
-  const ProposalCard = ({ prop }: { prop: any }) => (
-    <div
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.setData('text/plain', prop.id);
-      }}
-      onClick={() => router.push(`/propostas/nova?id=${prop.id}`)}
-      className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing"
-    >
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
-            <FileText size={13} className="text-[#1B4D3E]" />
-          </div>
-          <span className="text-xs font-black text-slate-700 tracking-wide">{prop.numero}</span>
-        </div>
-        <div className="flex items-center gap-1 text-slate-400">
-          <FileStack size={11} />
-          <span className="text-[10px] font-bold">v{prop.versao}</span>
-        </div>
-      </div>
+  const activeMonthKey = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
 
-      <p className="text-sm font-bold text-slate-800 leading-tight mb-1 line-clamp-2">{prop.cliente}</p>
-      <p className="text-[10px] text-slate-400 font-medium mb-3">📅 {prop.data}</p>
-
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-black text-[#1B4D3E]">{fmt(prop.valor)}</span>
-        <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider ${getStatusStyle(prop.status)}`}>
-          {prop.status || '—'}
-        </span>
-      </div>
-
-      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          {prop.avatarUrl ? (
-            <img 
-              src={prop.avatarUrl} 
-              alt={prop.usuario} 
-              className="w-5 h-5 rounded-full object-cover border border-slate-200"
-            />
-          ) : (
-            <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
-              {(prop.usuario || '?').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-            </div>
-          )}
-          <span className="text-[10px] text-slate-500 font-medium">{prop.usuario}</span>
-        </div>
-        <ActionMenu prop={prop} />
-      </div>
-    </div>
-  );
-
-  const getBorderColorClass = (colorClass?: string) => {
-    if (!colorClass) return 'border-[#1B4D3E]';
-    if (colorClass.includes('slate')) return 'border-slate-400';
-    if (colorClass.includes('blue')) return 'border-blue-500';
-    if (colorClass.includes('green') || colorClass.includes('emerald')) return 'border-emerald-500';
-    if (colorClass.includes('red') || colorClass.includes('rose')) return 'border-red-500';
-    if (colorClass.includes('amber') || colorClass.includes('yellow')) return 'border-amber-500';
-    if (colorClass.includes('purple')) return 'border-purple-500';
-    return 'border-[#1B4D3E]';
-  };
-
-  const getHighlightedColorClass = (colorClass: any = '') => {
-    const lower = (colorClass || '').toLowerCase();
-    if (lower.includes('sky') || lower.includes('blue')) {
-      return {
-        bg: 'bg-gradient-to-br from-blue-600 to-sky-600',
-        border: 'border-blue-700',
-        text: 'text-white',
-        badge: 'bg-white/20 text-white border border-white/10',
-        totalColor: 'text-white'
-      };
-    }
-    if (lower.includes('orange') || lower.includes('amber')) {
-      return {
-        bg: 'bg-gradient-to-br from-amber-500 to-orange-500',
-        border: 'border-orange-600',
-        text: 'text-white',
-        badge: 'bg-white/20 text-white border border-white/10',
-        totalColor: 'text-white'
-      };
-    }
-    if (lower.includes('green') || lower.includes('emerald')) {
-      return {
-        bg: 'bg-gradient-to-br from-emerald-600 to-green-600',
-        border: 'border-emerald-700',
-        text: 'text-white',
-        badge: 'bg-white/20 text-white border border-white/10',
-        totalColor: 'text-white'
-      };
-    }
-    if (lower.includes('red') || lower.includes('rose')) {
-      return {
-        bg: 'bg-gradient-to-br from-red-600 to-rose-600',
-        border: 'border-rose-700',
-        text: 'text-white',
-        badge: 'bg-white/20 text-white border border-white/10',
-        totalColor: 'text-white'
-      };
-    }
-    if (lower.includes('purple') || lower.includes('violet')) {
-      return {
-        bg: 'bg-gradient-to-br from-purple-600 to-indigo-600',
-        border: 'border-purple-700',
-        text: 'text-white',
-        badge: 'bg-white/20 text-white border border-white/10',
-        totalColor: 'text-white'
-      };
-    }
-    if (lower.includes('yellow')) {
-      return {
-        bg: 'bg-gradient-to-br from-yellow-500 to-amber-500',
-        border: 'border-yellow-600',
-        text: 'text-white',
-        badge: 'bg-white/20 text-white border border-white/10',
-        totalColor: 'text-white'
-      };
-    }
-    if (lower.includes('indigo')) {
-      return {
-        bg: 'bg-gradient-to-br from-indigo-600 to-blue-700',
-        border: 'border-indigo-700',
-        text: 'text-white',
-        badge: 'bg-white/20 text-white border border-white/10',
-        totalColor: 'text-white'
-      };
-    }
-    if (lower.includes('pink')) {
-      return {
-        bg: 'bg-gradient-to-br from-pink-600 to-rose-500',
-        border: 'border-pink-700',
-        text: 'text-white',
-        badge: 'bg-white/20 text-white border border-white/10',
-        totalColor: 'text-white'
-      };
-    }
-    if (lower.includes('teal')) {
-      return {
-        bg: 'bg-gradient-to-br from-teal-600 to-emerald-600',
-        border: 'border-teal-700',
-        text: 'text-white',
-        badge: 'bg-white/20 text-white border border-white/10',
-        totalColor: 'text-white'
-      };
-    }
-    return {
-      bg: 'bg-gradient-to-br from-slate-600 to-slate-500',
-      border: 'border-slate-700',
-      text: 'text-white',
-      badge: 'bg-white/20 text-white border border-white/10',
-      totalColor: 'text-white'
-    };
-  };
-
-  const syncScroll = (sourceId: string, targetId: string) => {
-    const source = document.getElementById(sourceId);
-    const target = document.getElementById(targetId);
-    if (source && target) {
-      target.scrollLeft = source.scrollLeft;
+  const formatMonthYear = (monthKey: string) => {
+    try {
+      const [year, month] = monthKey.split('-');
+      const date = new Date(Number(year), Number(month) - 1, 1);
+      return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    } catch {
+      return monthKey;
     }
   };
 
-  // ── Cabeçalho da coluna ────────────────────────────────────────────────────
-  // ── Cabeçalho da coluna ────────────────────────────────────────────────────
-  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onDragColumnStart, onDragColumnEnd, onDropColumn }: {
-    label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor'; statusId?: string; onColorChange?: (newColor: string) => void;
-    onDragColumnStart?: (e: React.DragEvent, label: string) => void;
-    onDragColumnEnd?: (e: React.DragEvent) => void;
-    onDropColumn?: (e: React.DragEvent, label: string) => void;
-  }) => {
-    const [showColorPicker, setShowColorPicker] = useState(false);
-    const userObj = usersList.find(u => u.nome === label);
-    const colAvatarUrl = userObj?.avatarUrl;
-    const isStatus = type === 'status';
-    const hStyle = isStatus 
-      ? getHighlightedColorClass(color) 
-      : getHighlightedColorClass(color || 'emerald');
+  const totalMetasEmpresa = totalSellers.reduce((acc: number, nome: string) => {
+    if (userFilter !== 'ALL' && nome !== userFilter) return acc;
+    const key = `${nome}_${activeMonthKey}`;
+    const m = metas[key] !== undefined ? metas[key] : 100000;
+    return acc + m;
+  }, 0);
 
-    // Opções de cores do sistema
-    const colorOptions = [
-      { name: 'Céu', value: 'sky' },
-      { name: 'Laranja', value: 'orange' },
-      { name: 'Esmeralda', value: 'emerald' },
-      { name: 'Vermelho', value: 'red' },
-      { name: 'Roxo', value: 'purple' },
-      { name: 'Ardósia', value: 'slate' },
-      { name: 'Amarelo', value: 'yellow' },
-      { name: 'Indigo', value: 'indigo' },
-      { name: 'Pink', value: 'pink' },
-      { name: 'Teal', value: 'teal' }
-    ];
-
-    return (
-      <div 
-        className="flex-shrink-0 w-72 shrink-0 relative cursor-grab active:cursor-grabbing transition-all select-none duration-200 hover:scale-[1.01]"
-        draggable="true"
-        onDragStart={(e) => {
-          const target = e.target as HTMLElement;
-          if (target.closest('button') || target.closest('select') || target.closest('input')) {
-            e.preventDefault();
-            return;
-          }
-          if (onDragColumnStart) onDragColumnStart(e, label);
-        }}
-        onDragEnd={onDragColumnEnd}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => {
-          if (onDropColumn) onDropColumn(e, label);
-        }}
-      >
-        {isStatus ? (
-          <div className={`border border-b-0 rounded-t-2xl rounded-b-none p-4 shadow-md text-left ${hStyle.bg} ${hStyle.text} ${hStyle.border} relative group`}>
-            <div className="flex items-center justify-between mb-2">
-              <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-sm ${hStyle.badge}`}>
-                {label}
-              </span>
-              
-              <div className="flex items-center gap-2">
-                {/* Ícone de Paleta de Cores 🎨 */}
-                {statusId && onColorChange && (
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowColorPicker(!showColorPicker)}
-                      className={`p-1 rounded hover:bg-white/20 transition-all ${showColorPicker ? 'bg-white/20' : 'opacity-60 group-hover:opacity-100'}`}
-                      title="Customizar Cor da Coluna"
-                    >
-                      <Palette size={14} className="text-white" />
-                    </button>
-
-                    {/* Popover Color Picker */}
-                    {showColorPicker && (
-                      <>
-                        <div 
-                          className="fixed inset-0 z-30" 
-                          onClick={() => setShowColorPicker(false)}
-                        />
-                        <div className="absolute right-0 top-6 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-2.5 min-w-[160px] animate-in fade-in slide-in-from-top-2 duration-150 flex flex-col gap-2">
-                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 px-1">Selecione a Cor</p>
-                          <div className="grid grid-cols-5 gap-1.5">
-                            {colorOptions.map(opt => {
-                              const previewStyle = getHighlightedColorClass(opt.value);
-                              return (
-                                <button
-                                  key={opt.value}
-                                  onClick={async () => {
-                                    setShowColorPicker(false);
-                                    await onColorChange(opt.value);
-                                  }}
-                                  className={`w-6 h-6 rounded-full border border-slate-200 shadow-sm transition-all hover:scale-115 active:scale-95 ${previewStyle.bg}`}
-                                  title={opt.name}
-                                />
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                <span className={`text-xs font-black px-2.5 py-0.5 rounded-full shadow-sm ${hStyle.badge}`}>
-                  {cards.length}
-                </span>
-              </div>
-            </div>
-            <p className="text-sm font-black mt-3">{fmt(total)}</p>
-            <p className="text-[10px] opacity-75 font-medium mt-0.5">Volume total da coluna</p>
-          </div>
-        ) : (
-          <div className={`rounded-t-2xl rounded-b-none p-4 shadow-md text-left border border-b-0 ${hStyle.bg} ${hStyle.text} ${hStyle.border} relative group`}>
-            <div className="flex items-center gap-3 mb-2">
-              {colAvatarUrl ? (
-                <img 
-                  src={colAvatarUrl} 
-                  alt={label} 
-                  className="w-9 h-9 rounded-xl object-cover border border-white/20 shadow-md"
-                />
-              ) : (
-                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-white font-black text-sm uppercase border border-white/20 shadow-md">
-                  {label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-black truncate text-white">{label}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[10px] text-white/90 font-bold bg-white/10 px-2 py-0.5 rounded">{cards.length} proposta{cards.length !== 1 ? 's' : ''}</span>
-                </div>
-              </div>
-
-              {/* Paletinha de Cores para o Vendedor 🎨 */}
-              {onColorChange && (
-                <div className="relative">
-                  <button
-                    onClick={() => setShowColorPicker(!showColorPicker)}
-                    className={`p-1 rounded hover:bg-white/20 transition-all ${showColorPicker ? 'bg-white/20' : 'opacity-60 group-hover:opacity-100'}`}
-                    title="Customizar Cor da Coluna"
-                  >
-                    <Palette size={14} className="text-white" />
-                  </button>
-
-                  {/* Popover Color Picker */}
-                  {showColorPicker && (
-                    <>
-                      <div 
-                        className="fixed inset-0 z-30" 
-                        onClick={() => setShowColorPicker(false)}
-                      />
-                      <div className="absolute right-0 top-6 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-2.5 min-w-[160px] animate-in fade-in slide-in-from-top-2 duration-150 flex flex-col gap-2">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 px-1">Selecione a Cor</p>
-                        <div className="grid grid-cols-5 gap-1.5">
-                          {colorOptions.map(opt => {
-                            const previewStyle = getHighlightedColorClass(opt.value);
-                            return (
-                              <button
-                                key={opt.value}
-                                onClick={async () => {
-                                  setShowColorPicker(false);
-                                  await onColorChange(opt.value);
-                                }}
-                                className={`w-6 h-6 rounded-full border border-slate-200 shadow-sm transition-all hover:scale-115 active:scale-95 ${previewStyle.bg}`}
-                                title={opt.name}
-                              />
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-            <p className="text-base font-black text-white mt-3">{fmt(total)}</p>
-            <p className="text-[10px] text-white/70 font-medium mt-0.5">Volume total</p>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const getSuaveBgClass = (colorClass: string = '', type: 'status' | 'vendedor' = 'status') => {
-    const lower = (colorClass || '').toLowerCase();
-    if (lower.includes('sky') || lower.includes('blue')) {
-      return 'bg-blue-100/40 border border-blue-200/50';
-    }
-    if (lower.includes('orange') || lower.includes('amber')) {
-      return 'bg-amber-100/40 border border-amber-200/50';
-    }
-    if (lower.includes('green') || lower.includes('emerald')) {
-      return 'bg-emerald-100/40 border border-emerald-200/50';
-    }
-    if (lower.includes('red') || lower.includes('rose')) {
-      return 'bg-rose-100/40 border border-rose-200/50';
-    }
-    if (lower.includes('purple') || lower.includes('violet')) {
-      return 'bg-purple-100/40 border border-purple-200/50';
-    }
-    if (lower.includes('yellow')) {
-      return 'bg-yellow-100/40 border border-yellow-200/50';
-    }
-    if (lower.includes('indigo')) {
-      return 'bg-indigo-100/40 border border-indigo-200/50';
-    }
-    if (lower.includes('pink')) {
-      return 'bg-pink-100/40 border border-pink-200/50';
-    }
-    if (lower.includes('teal')) {
-      return 'bg-teal-100/40 border border-teal-200/50';
-    }
-    return 'bg-slate-100/50 border border-slate-200/50';
-  };
-
-  // ── Lista de cards da coluna ───────────────────────────────────────────────
-  const KanbanColumnCards = ({ label, cards, color, type = 'status', onDropProp }: {
-    label: string; cards: any[]; color?: string; type?: 'status' | 'vendedor'; onDropProp?: (propId: string) => void;
-  }) => {
-    const suaveBg = getSuaveBgClass(color, type);
-    return (
-      <div 
-        className={`flex-shrink-0 w-72 flex flex-col min-h-[600px] p-3 pt-4 rounded-b-2xl rounded-t-none border-t-0 ${suaveBg}`}
-        onDragOver={(e) => {
-          e.preventDefault();
-          e.currentTarget.classList.add('opacity-80');
-        }}
-        onDragLeave={(e) => {
-          e.currentTarget.classList.remove('opacity-80');
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          e.currentTarget.classList.remove('opacity-80');
-          const propId = e.dataTransfer.getData('text/plain');
-          if (propId && onDropProp) onDropProp(propId);
-        }}
-      >
-        <div className="flex flex-col gap-3 flex-1">
-          {cards.length === 0 ? (
-            <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem propostas</p>
-            </div>
-          ) : (
-            cards.map(prop => <ProposalCard key={prop.id} prop={prop} />)
-          )}
-        </div>
-      </div>
-    );
-  };
+  const atingidoGeralPct = totalMetasEmpresa > 0 ? (totalAceito / totalMetasEmpresa) * 100 : 0;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
-      <style dangerouslySetInnerHTML={{__html: `
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-      `}} />
+    <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
-
-      <main className="flex-1 p-8 overflow-y-auto h-full">
-        <div className="max-w-full mx-auto space-y-6">
-
+      
+      <main className="flex-1 p-8 overflow-y-auto">
+        <div className="max-w-7xl mx-auto space-y-6">
+          
           {/* HEADER */}
           <header className="flex justify-between items-end border-b border-slate-300 pb-4">
             <div>
-              <h1 className="text-2xl font-bold text-[#1B4D3E] tracking-wider uppercase">FPV - Gestão de Formação de Preço de Vendas</h1>
-              <p className="text-slate-500 text-sm mt-1">Engenharia de Custos e Controladoria de Facilities</p>
+              <h1 className="text-2xl font-bold text-[#1B4D3E] tracking-wider uppercase flex items-center gap-2">
+                <BarChart2 size={24} /> Radar Comercial & KPIs
+              </h1>
+              <p className="text-slate-500 text-sm mt-1 uppercase font-bold tracking-tighter">Gestão analítica de performance e metas comerciais</p>
             </div>
-            <div className="flex items-center gap-3 bell-header-spacing">
-              {/* Alternador de visualização */}
-              <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm gap-1">
-                <button
-                  onClick={() => setViewMode('lista')}
-                  title="Visualização em Lista"
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                    viewMode === 'lista'
-                      ? 'bg-[#1B4D3E] text-white shadow-sm'
-                      : 'text-amber-500 hover:text-amber-600'
-                  }`}
-                >
-                  <LayoutList size={14} /> Lista
-                </button>
-                <button
-                  onClick={() => setViewMode('kanban-status')}
-                  title="Kanban por Status"
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                    viewMode === 'kanban-status'
-                      ? 'bg-[#1B4D3E] text-white shadow-sm'
-                      : 'text-amber-500 hover:text-amber-600'
-                  }`}
-                >
-                  <LayoutGrid size={14} /> Por Status
-                </button>
-                <button
-                  onClick={() => setViewMode('kanban-vendedor')}
-                  title="Kanban por Vendedor"
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                    viewMode === 'kanban-vendedor'
-                      ? 'bg-[#1B4D3E] text-white shadow-sm'
-                      : 'text-amber-500 hover:text-amber-600'
-                  }`}
-                >
-                  <UserSquare2 size={14} /> Por Vendedor
-                </button>
-              </div>
-
-              <button
-                onClick={() => router.push('/propostas/nova')}
-                className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold py-2.5 px-6 rounded text-sm flex items-center gap-2 shadow-sm transition-colors"
-              >
-                <Plus size={18} /> Nova FPV
-              </button>
-            </div>
+            <button 
+              onClick={loadData}
+              className="bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-extrabold py-2 px-5 rounded-xl text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer active:scale-[0.98]"
+            >
+              Atualizar
+            </button>
           </header>
 
-          {/* KPIs */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {[
-              { label: 'Propostas Ativas', value: activeCount.toString(), icon: FileText, color: 'text-blue-600' },
-              { label: 'Volume Mensal', value: fmt(monthlyVolume), icon: TrendingUp, color: 'text-[#1B4D3E]' },
-              { label: 'Clientes Base', value: clientsCount.toString(), icon: Users, color: 'text-indigo-600' },
-              { label: 'Aguardando Revisão', value: revisionCount.toString().padStart(2, '0'), icon: Clock, color: 'text-orange-600' },
-            ].map((stat, i) => (
-              <div key={i} className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
-                <div className="p-3 bg-slate-50 rounded border border-slate-200">
-                  <stat.icon size={20} className={stat.color} />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{stat.label}</p>
-                  <p className="text-lg font-black text-slate-800 leading-none mt-1">{stat.value}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* BARRA DE BUSCA (sempre visível) */}
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-              <input
-                type="text"
-                placeholder="Buscar proposta, cliente ou vendedor..."
-                className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:ring-1 focus:ring-[#1B4D3E] focus:outline-none shadow-sm"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+          {/* FILTERS PANEL */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Filtrar por Vendedor</label>
+              <select 
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all cursor-pointer"
+                value={userFilter}
+                onChange={e => setUserFilter(e.target.value)}
+              >
+                <option value="ALL">👥 Todos os Vendedores</option>
+                {totalSellers.map((nome: string) => (
+                  <option key={nome} value={nome}>👤 {nome}</option>
+                ))}
+              </select>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-              <Filter size={13} />
-              <span>{filteredProposals.length} proposta{filteredProposals.length !== 1 ? 's' : ''}</span>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Filtro de Período</label>
+              <select 
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all cursor-pointer"
+                value={period}
+                onChange={e => setPeriod(e.target.value as any)}
+              >
+                <option value="all">📅 Todos os Períodos (Sem Filtro)</option>
+                <option value="mes">📅 Mensal (Escolher Mês)</option>
+                <option value="7">📅 Últimos 07 dias</option>
+                <option value="30">📅 Últimos 30 dias</option>
+                <option value="ano">📅 Este Ano</option>
+                <option value="custom">⚙️ Período Personalizado</option>
+              </select>
             </div>
-          </div>
 
-          {/* ── VISUALIZAÇÃO EM LISTA ─────────────────────────────────────────── */}
-          {viewMode === 'lista' && (
-            <div className="bg-white rounded-md shadow-sm border border-slate-300 overflow-hidden">
-              <div className="p-4 border-b border-slate-300 flex items-center justify-between bg-slate-50">
-                <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
-                  <FileText size={16} /> Pipeline de Orçamentos
-                  <span className="text-[10px] bg-white border border-slate-300 text-slate-500 px-2 py-0.5 rounded ml-2 font-bold">
-                    Total: {proposals.length}
-                  </span>
-                </h2>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[1100px]">
-                  <thead>
-                    <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
-                      <th className="px-6 py-3 w-1/5">ID / Proposta</th>
-                      <th className="px-6 py-3 w-1/4">Cliente</th>
-                      <th className="px-6 py-3">Responsável</th>
-                      <th className="px-6 py-3 text-right">Valor Total</th>
-                      <th className="px-6 py-3 text-center">Status</th>
-                      <th className="px-6 py-3 text-center">Versão</th>
-                      <th className="px-6 py-3 text-center w-[120px] min-w-[120px]">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm">
-                    {loading ? (
-                      <tr><td colSpan={7} className="px-6 py-12 text-center text-slate-400">Carregando pipeline...</td></tr>
-                    ) : filteredProposals.length === 0 ? (
-                      <tr><td colSpan={7} className="px-6 py-12 text-center text-slate-400">Nenhuma proposta encontrada.</td></tr>
-                    ) : filteredProposals.map((prop) => (
-                      <tr key={prop.id} className="border-b border-slate-200 hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-3">
-                          <div className="flex items-center gap-3">
-                            <FileText size={16} className="text-slate-400" />
-                            <div>
-                              <p className="font-bold text-slate-800">{prop.numero}</p>
-                              <p className="text-[10px] text-slate-500 uppercase font-medium">{prop.data}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-3">
-                          <p className="font-semibold text-slate-700">{prop.cliente}</p>
-                        </td>
-                        <td className="px-6 py-3">
-                          <div className="flex items-center gap-1.5">
-                            {prop.avatarUrl ? (
-                              <img 
-                                src={prop.avatarUrl} 
-                                alt={prop.usuario} 
-                                className="w-5 h-5 rounded-full object-cover border border-slate-200"
-                              />
-                            ) : (
-                              <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
-                                {(prop.usuario || '?').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                              </div>
-                            )}
-                            <span className="text-slate-600 font-medium">{prop.usuario}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-3 font-bold text-slate-800 text-right">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(prop.valor)}
-                        </td>
-                        <td className="px-6 py-3 text-center">
-                          <select
-                            value={prop.status}
-                            onChange={async (e) => {
-                              const newStatus = e.target.value;
-                              setProposals(proposals.map(p => p.id === prop.id ? { ...p, status: newStatus } : p));
-                              await updatePropostaStatus(prop.id, newStatus);
-                            }}
-                            className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border outline-none cursor-pointer ${getStatusStyle(prop.status)}`}
-                          >
-                            {statuses.map(s => (
-                              <option key={s.id} value={s.nome}>{s.nome}</option>
-                            ))}
-                            {!statuses.find(s => s.nome === prop.status) && (
-                              <option value={prop.status}>{prop.status}</option>
-                            )}
-                          </select>
-                        </td>
-                        <td className="px-6 py-3 text-center">
-                          <div className="flex items-center justify-center gap-1 text-slate-500">
-                            <FileStack size={14} />
-                            <span className="text-xs font-bold">v{prop.versao}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-3 text-center w-[120px] min-w-[120px]">
-                          <div className="flex items-center justify-center gap-2 relative flex-nowrap whitespace-nowrap">
-                            <button
-                              onClick={() => router.push(`/propostas/nova?id=${prop.id}`)}
-                              className="text-amber-500 hover:text-amber-600 transition-colors p-1"
-                              title="Editar Proposta"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            {userRole === 'ADMIN' && (
-                              <button
-                                onClick={async () => {
-                                  if (!confirm(`Excluir a proposta ${prop.numero} de "${prop.cliente}"? Esta ação não pode ser desfeita.`)) return;
-                                  setLoading(true);
-                                  const res = await deleteProposta(prop.id);
-                                  if (res.success) {
-                                    loadData();
-                                  } else {
-                                    alert('Erro ao excluir: ' + res.error);
-                                    setLoading(false);
-                                  }
-                                }}
-                                className="text-red-400 hover:text-red-600 transition-colors p-1"
-                                title="Excluir Proposta"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            )}
-                            <ActionMenu prop={prop} />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* Reordenação de status baseada no localStorage */}
-          {(() => {
-            const orderedStatusCols = [...kanbanStatusCols];
-            if (statusOrder.length > 0) {
-              orderedStatusCols.sort((a, b) => {
-                let idxA = statusOrder.indexOf(a.label);
-                let idxB = statusOrder.indexOf(b.label);
-                if (idxA === -1) idxA = 999;
-                if (idxB === -1) idxB = 999;
-                return idxA - idxB;
-              });
-            }
-
-            const orderedVendedorCols = [...kanbanVendedorCols];
-            if (vendedorOrder.length > 0) {
-              orderedVendedorCols.sort((a, b) => {
-                let idxA = vendedorOrder.indexOf(a.label);
-                let idxB = vendedorOrder.indexOf(b.label);
-                if (idxA === -1) idxA = 999;
-                if (idxB === -1) idxB = 999;
-                return idxA - idxB;
-              });
-            }
-
-            return (
+            {period === 'mes' ? (
               <>
-                {/* ── KANBAN POR STATUS ─────────────────────────────────────────────── */}
-                {viewMode === 'kanban-status' && (
-                  <div>
-                    {loading ? (
-                      <>
-                        <div className="flex items-center gap-2 mb-4">
-                          <LayoutGrid size={16} className="text-[#1B4D3E]" />
-                          <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
-                          <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                            {kanbanStatusCols.length} coluna{kanbanStatusCols.length !== 1 ? 's' : ''}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
-                      </>
-                    ) : (
-                      <div className="space-y-4">
-                        {/* Container Sticky Unificado: Título + Cabeçalhos */}
-                        <div 
-                          className="sticky top-0 z-20 pt-8 pb-0 mb-0 bg-transparent"
-                          style={{ top: '-32px' }}
-                        >
-                          {/* Opaque background mask only for title + headers (excludes the pb-28/112px popover scroll space) */}
-                          <div className="absolute inset-x-0 top-0 bottom-28 bg-[#F8FAFC] -z-10" />
-                          <div className="flex items-center gap-2 mb-4">
-                            <LayoutGrid size={16} className="text-[#1B4D3E]" />
-                            <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
-                            <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                              {kanbanStatusCols.length} coluna{kanbanStatusCols.length !== 1 ? 's' : ''}
-                            </span>
-                          </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Escolher Mês (Meta)</label>
+                  <input 
+                    type="month"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all cursor-pointer"
+                    value={selectedMonth}
+                    onChange={e => setSelectedMonth(e.target.value)}
+                  />
+                </div>
 
-                          {/* Cabeçalhos Fixos */}
-                          <div 
-                            id="kanban-headers-status"
-                            className="overflow-x-auto no-scrollbar pb-28 mb-[-112px] animate-in fade-in duration-200"
-                            onScroll={() => syncScroll('kanban-headers-status', 'kanban-cards-status')}
-                            style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
-                          >
-                            <div className="flex gap-5 min-w-max pb-0 mb-0">
-                              {orderedStatusCols.map(col => (
-                                <KanbanColumnHeader
-                                  key={col.id}
-                                  label={col.label}
-                                  color={col.color}
-                                  cards={col.cards}
-                                  total={col.total}
-                                  statusId={col.id}
-                                  onColorChange={async (newColor) => {
-                                    await updatePropostaStatusParam(col.id, col.label, newColor);
-                                    setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));
-                                  }}
-                                  onDragColumnStart={(e, l) => handleDragColumnStart(e, l, 'status')}
-                                  onDragColumnEnd={handleDragColumnEnd}
-                                  onDropColumn={(e, l) => handleDropColumn(e, l, 'status')}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Cards Roláveis (Sem qualquer pt ou mt para encostar fisicamente nos cabeçalhos sticky) */}
-                        <div 
-                          id="kanban-cards-status"
-                          className="overflow-x-auto pb-6 pt-0 mt-[-112px]"
-                          onScroll={() => syncScroll('kanban-cards-status', 'kanban-headers-status')}
-                        >
-                          <div className="flex gap-5 min-w-max pt-0 mt-0">
-                            {orderedStatusCols.map(col => (
-                              <KanbanColumnCards
-                                key={col.id}
-                                label={col.label}
-                                color={col.color}
-                                type="status"
-                                cards={col.cards}
-                                onDropProp={async (propId) => {
-                                  const prop = proposals.find(p => p.id === propId);
-                                  if (prop && prop.status !== col.label) {
-                                    setProposals(prev => prev.map(p => p.id === propId ? { ...p, status: col.label } : p));
-                                    const res = await updatePropostaStatus(propId, col.label);
-                                    if (!res.success) alert(res.error);
-                                  }
-                                }}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Período Ativo</label>
+                  <div className="w-full bg-slate-100 border border-slate-200/60 rounded-xl px-3.5 py-2.5 text-xs font-extrabold text-slate-500 select-none">
+                    {startDate ? new Date(startDate + 'T00:00:00').toLocaleDateString('pt-BR') : ''} a {endDate ? new Date(endDate + 'T00:00:00').toLocaleDateString('pt-BR') : ''}
                   </div>
-                )}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Início</label>
+                  <input 
+                    type="date"
+                    disabled={period !== 'custom'}
+                    className="w-full bg-slate-50 disabled:bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all cursor-pointer"
+                    value={startDate}
+                    onChange={e => setStartDate(e.target.value)}
+                  />
+                </div>
 
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Data Fim</label>
+                  <input 
+                    type="date"
+                    disabled={period !== 'custom'}
+                    className="w-full bg-slate-50 disabled:bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 outline-none hover:border-slate-300 focus:bg-white focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all cursor-pointer"
+                    value={endDate}
+                    onChange={e => setEndDate(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
+          </div>
 
-                {/* ── KANBAN POR VENDEDOR ───────────────────────────────────────────── */}
-                {viewMode === 'kanban-vendedor' && (
-                  <div>
-                    {loading ? (
-                      <>
-                        <div className="flex items-center gap-2 mb-4">
-                          <UserSquare2 size={16} className="text-[#1B4D3E]" />
-                          <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
-                          <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                            {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
-                      </>
-                    ) : kanbanVendedorCols.length === 0 ? (
-                      <>
-                        <div className="flex items-center gap-2 mb-4">
-                          <UserSquare2 size={16} className="text-[#1B4D3E]" />
-                          <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
-                          <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                            {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-center py-20 text-slate-400 text-sm">
-                          Nenhuma proposta encontrada.
-                        </div>
-                      </>
-                    ) : (
-                      <div className="space-y-4">
-                        {/* Container Sticky Unificado: Título + Cabeçalhos */}
-                        <div 
-                          className="sticky top-0 z-20 pt-8 pb-0 mb-0 bg-transparent"
-                          style={{ top: '-32px' }}
-                        >
-                          {/* Opaque background mask only for title + headers (excludes the pb-28/112px popover scroll space) */}
-                          <div className="absolute inset-x-0 top-0 bottom-28 bg-[#F8FAFC] -z-10" />
-                          <div className="flex items-center gap-2 mb-4">
-                            <UserSquare2 size={16} className="text-[#1B4D3E]" />
-                            <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
-                            <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                              {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
-                            </span>
-                          </div>
+          {loading ? (
+            <div className="bg-white rounded-3xl p-16 border border-slate-200 text-center shadow-xs">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1B4D3E] mx-auto mb-4"></div>
+              <p className="text-slate-400 font-medium">Processando indicadores comerciais...</p>
+            </div>
+          ) : propostasList.length === 0 ? (
+            <div className="bg-white rounded-3xl p-16 border border-slate-200 text-center shadow-xs">
+              <p className="text-slate-400 font-bold uppercase tracking-wider">Nenhuma proposta cadastrada no sistema.</p>
+              <p className="text-slate-300 text-xs mt-1">Crie propostas para visualizar os KPIs comerciais.</p>
+            </div>
+          ) : (
+            <>
+              {/* TARGETS BANNER (Meta Global da Empresa) */}
+              <div className="bg-gradient-to-r from-[#1B4D3E] to-[#12362B] rounded-3xl p-6 text-white shadow-[0_8px_30px_rgb(27,77,62,0.15)] border border-emerald-950 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div className="space-y-1.5 text-center md:text-left flex-1">
+                  <span className="text-[10px] font-black uppercase tracking-widest flex items-center justify-center md:justify-start gap-1" style={{ color: '#34D399' }}>
+                    <Target size={12} /> Meta Geral da Empresa (Mês)
+                  </span>
+                  <h2 className="text-xl font-black tracking-tight">Desempenho Comercial Corporativo - {formatMonthYear(activeMonthKey)}</h2>
+                  <p className="text-xs text-slate-200 font-medium">
+                    Soma de todas as metas individuais vs. Volume convertido nesta consulta.
+                  </p>
+                </div>
+                
+                <div className="flex flex-col md:flex-row items-center gap-6 md:gap-12 w-full md:w-auto">
+                  <div className="text-center md:text-right shrink-0">
+                    <p className="text-[9px] font-black uppercase tracking-wider" style={{ color: '#34D399' }}>Aceito / Meta Geral</p>
+                    <p className="text-2xl font-black mt-1">
+                      {formatCurrency(totalAceito)} <span className="text-xs font-bold text-emerald-300">/ {formatCurrency(totalMetasEmpresa)}</span>
+                    </p>
+                  </div>
+                  
+                  {/* Speedometer Gauge */}
+                  <div className="flex flex-col items-center shrink-0 select-none mt-2 md:mt-0">
+                    <div className="w-44 h-20 overflow-hidden relative">
+                      <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
+                        <path
+                          d="M 10 50 A 40 40 0 0 1 90 50"
+                          fill="none"
+                          stroke="#0D2C22"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M 10 50 A 40 40 0 0 1 90 50"
+                          fill="none"
+                          stroke="#34D399"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                          strokeDasharray="125.66"
+                          strokeDashoffset={125.66 - (125.66 * Math.min(100, atingidoGeralPct)) / 100}
+                          className="transition-all duration-1000 ease-out"
+                          style={{ filter: 'drop-shadow(0px 2px 4px rgba(52, 211, 153, 0.4))' }}
+                        />
+                        <line
+                          x1="50"
+                          y1="50"
+                          x2="50"
+                          y2="18"
+                          stroke="#F59E0B"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          transform={`rotate(${((Math.min(100, atingidoGeralPct) / 100) * 180) - 90} 50 50)`}
+                          style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3))' }}
+                        />
+                        <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
+                        <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
+                      </svg>
+                    </div>
+                    
+                    <div className="text-center mt-2 z-10">
+                      <span className="text-xl font-extrabold text-white leading-none block">
+                        {atingidoGeralPct.toFixed(1)}%
+                      </span>
+                      <p className="text-[7px] uppercase tracking-widest font-black mt-1" style={{ color: '#34D399' }}>Meta Atingida</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                          {/* Cabeçalhos Fixos */}
-                          <div 
-                            id="kanban-headers-vendedor"
-                            className="overflow-x-auto no-scrollbar pb-28 mb-[-112px] animate-in fade-in duration-200"
-                            onScroll={() => syncScroll('kanban-headers-vendedor', 'kanban-cards-vendedor')}
-                            style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
-                          >
-                            <div className="flex gap-5 min-w-max pb-0 mb-0">
-                              {orderedVendedorCols.map(col => {
-                                const vColor = vendedorColors[col.label] || 'emerald';
-                                return (
-                                  <KanbanColumnHeader
-                                    key={col.id}
-                                    label={col.label}
-                                    type="vendedor"
-                                    color={vColor}
-                                    cards={col.cards}
-                                    total={col.total}
-                                    statusId={col.id}
-                                    onColorChange={async (newColor) => {
-                                      localStorage.setItem(`kanban-vendedor-color-${col.label}`, newColor);
-                                      setVendedorColors(prev => ({ ...prev, [col.label]: newColor }));
-                                    }}
-                                    onDragColumnStart={(e, l) => handleDragColumnStart(e, l, 'vendedor')}
-                                    onDragColumnEnd={handleDragColumnEnd}
-                                    onDropColumn={(e, l) => handleDropColumn(e, l, 'vendedor')}
-                                  />
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
+              {/* STATS CARDS */}
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                
+                {/* TICKET MÉDIO */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all h-[190px]">
+                  <div className="flex justify-between items-start">
+                    <div className="p-2.5 bg-emerald-50 text-[#1B4D3E] rounded-xl border border-emerald-100 shrink-0">
+                      <DollarSign size={18} />
+                    </div>
+                    <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">Ticket Médio</span>
+                  </div>
+                  <div className="mt-2 flex-1 flex flex-col justify-end">
+                    <p className="text-xl font-black text-slate-800 tracking-tight leading-none">
+                      {formatCurrency(ticketMedio)}
+                    </p>
+                    <p className="text-[9px] text-slate-400 mt-2 font-bold uppercase tracking-wider">Média geral por proposta</p>
+                  </div>
+                </div>
 
-                        {/* Cards Roláveis (Sem qualquer pt ou mt para encostar fisicamente nos cabeçalhos sticky) */}
-                        <div 
-                          id="kanban-cards-vendedor"
-                          className="overflow-x-auto pb-6 pt-0 mt-[-112px]"
-                          onScroll={() => syncScroll('kanban-cards-vendedor', 'kanban-headers-vendedor')}
-                        >
-                          <div className="flex gap-5 min-w-max pt-0 mt-0">
-                            {orderedVendedorCols.map(col => {
-                              const vColor = vendedorColors[col.label] || 'emerald';
+                {/* TAXA DE CONVERSÃO VOLUME */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all h-[190px]">
+                  <div className="flex justify-between items-start">
+                    <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 shrink-0">
+                      <Percent size={18} />
+                    </div>
+                    <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">Conversão R$ (Volume)</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center select-none mt-1">
+                    <div className="w-28 h-12 overflow-hidden relative">
+                      <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
+                        <path
+                          d="M 10 50 A 40 40 0 0 1 90 50"
+                          fill="none"
+                          stroke="#F1F5F9"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M 10 50 A 40 40 0 0 1 90 50"
+                          fill="none"
+                          stroke="#2563EB"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                          strokeDasharray="125.66"
+                          strokeDashoffset={125.66 - (125.66 * Math.min(100, taxaConversao)) / 100}
+                          className="transition-all duration-1000 ease-out"
+                          style={{ filter: 'drop-shadow(0px 2px 4px rgba(37, 99, 235, 0.3))' }}
+                        />
+                        <line
+                          x1="50"
+                          y1="50"
+                          x2="50"
+                          y2="18"
+                          stroke="#F59E0B"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          transform={`rotate(${((Math.min(100, taxaConversao) / 100) * 180) - 90} 50 50)`}
+                          style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.2))' }}
+                        />
+                        <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
+                        <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
+                      </svg>
+                    </div>
+                    
+                    <div className="text-center mt-1.5 z-10">
+                      <span className="text-lg font-black text-slate-800 leading-none block">
+                        {taxaConversao.toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* TAXA DE CONVERSÃO PROPOSTAS (QTD) */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all h-[190px]">
+                  <div className="flex justify-between items-start">
+                    <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 shrink-0">
+                      <Percent size={18} />
+                    </div>
+                    <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">Conversão Qtd (Propostas)</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center select-none mt-1">
+                    <div className="w-28 h-12 overflow-hidden relative">
+                      <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
+                        <path
+                          d="M 10 50 A 40 40 0 0 1 90 50"
+                          fill="none"
+                          stroke="#F1F5F9"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M 10 50 A 40 40 0 0 1 90 50"
+                          fill="none"
+                          stroke="#10B981"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                          strokeDasharray="125.66"
+                          strokeDashoffset={125.66 - (125.66 * Math.min(100, conversaoQuantidade)) / 100}
+                          className="transition-all duration-1000 ease-out"
+                          style={{ filter: 'drop-shadow(0px 2px 4px rgba(16, 185, 129, 0.3))' }}
+                        />
+                        <line
+                          x1="50"
+                          y1="50"
+                          x2="50"
+                          y2="18"
+                          stroke="#F59E0B"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          transform={`rotate(${((Math.min(100, conversaoQuantidade) / 100) * 180) - 90} 50 50)`}
+                          style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.2))' }}
+                        />
+                        <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
+                        <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
+                      </svg>
+                    </div>
+                    
+                    <div className="text-center mt-1.5 z-10">
+                      <span className="text-lg font-black text-slate-800 leading-none block">
+                        {conversaoQuantidade.toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* VOLUME TOTAL */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all h-[190px]">
+                  <div className="flex justify-between items-start">
+                    <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100 shrink-0">
+                      <TrendingUp size={18} />
+                    </div>
+                    <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">Volume Total</span>
+                  </div>
+                  <div className="mt-2 flex-1 flex flex-col justify-end">
+                    <p className="text-xl font-black text-slate-800 tracking-tight leading-none">
+                      {formatCurrency(totalVolume)}
+                    </p>
+                    <p className="text-[9px] text-slate-400 mt-2 font-bold uppercase tracking-wider">
+                      Aceito: {formatCurrency(totalAceito)} ({totalAceitasCount} de {totalPropostasCount})
+                    </p>
+                  </div>
+                </div>
+
+                {/* CICLO DE FECHAMENTO */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between hover:shadow-md transition-all h-[190px]">
+                  <div className="flex justify-between items-start">
+                    <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl border border-amber-100 shrink-0">
+                      <Clock size={18} />
+                    </div>
+                    <span className="text-[9px] font-black text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full uppercase tracking-tighter">Ciclo Médio</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center select-none mt-1">
+                    <div className="w-28 h-12 overflow-hidden relative">
+                      <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50">
+                        <path
+                          d="M 10 50 A 40 40 0 0 1 90 50"
+                          fill="none"
+                          stroke="#F1F5F9"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M 10 50 A 40 40 0 0 1 90 50"
+                          fill="none"
+                          stroke="#F59E0B"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                          strokeDasharray="125.66"
+                          strokeDashoffset={125.66 - (125.66 * Math.min(100, cicloMedio)) / 100}
+                          className="transition-all duration-1000 ease-out"
+                          style={{ filter: 'drop-shadow(0px 2px 4px rgba(245, 158, 11, 0.3))' }}
+                        />
+                        <line
+                          x1="50"
+                          y1="50"
+                          x2="50"
+                          y2="18"
+                          stroke="#EF4444"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          transform={`rotate(${((Math.min(100, cicloMedio) / 100) * 180) - 90} 50 50)`}
+                          style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.2))' }}
+                        />
+                        <circle cx="50" cy="50" r="4.5" fill="#EF4444" />
+                        <circle cx="50" cy="50" r="1.5" fill="#FFFFFF" />
+                      </svg>
+                    </div>
+                    
+                    <div className="text-center mt-1.5 z-10">
+                      <span className="text-lg font-black text-slate-800 leading-none block">
+                        {cicloMedio.toFixed(1)} <span className="text-xs font-semibold text-slate-400">dias</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* DETAILED STATS ROW */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                {/* PERFORMANCE POR USUÁRIO */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                  <div className="p-5 border-b border-slate-100 bg-slate-50 flex items-center gap-2.5">
+                    <Users size={16} className="text-[#1B4D3E]" />
+                    <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider">Desempenho dos Vendedores</h2>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-100 text-slate-500 uppercase text-[9px] font-black tracking-wider border-b border-slate-200/80">
+                          <th className="px-5 py-3.5">Nome do Vendedor</th>
+                          <th className="px-5 py-3.5 text-center">Propostas</th>
+                          <th className="px-5 py-3.5 text-right">Volume Aceito</th>
+                          <th className="px-5 py-3.5 text-right">Meta Individual ({formatMonthYear(activeMonthKey)})</th>
+                          <th className="px-5 py-3.5 text-center w-1/4">Atingimento Meta</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-xs divide-y divide-slate-100">
+                        {totalSellers.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="px-5 py-8 text-center text-slate-400 font-medium italic">Nenhum vendedor encontrado.</td>
+                          </tr>
+                        ) : (
+                          totalSellers
+                            .filter((nome: string) => userFilter === 'ALL' || nome === userFilter)
+                            .map((nome: string) => {
+                              const stats = volumePorUsuario[nome] || { totalVal: 0, totalAceito: 0, count: 0, totalAceitasCount: 0 };
+                              const goalKey = `${nome}_${activeMonthKey}`;
+                              const metaVal = metas[goalKey] !== undefined ? metas[goalKey] : 100000;
+                              const atingidoPct = metaVal > 0 ? (stats.totalAceito / metaVal) * 100 : 0;
+                              const isFiltered = userFilter === nome;
+
                               return (
-                                <KanbanColumnCards
-                                  key={col.id}
-                                  label={col.label}
-                                  type="vendedor"
-                                  color={vColor}
-                                  cards={col.cards}
-                                  onDropProp={async (propId) => {
-                                    const prop = proposals.find(p => p.id === propId);
-                                    if (prop && prop.usuario !== col.label) {
-                                      if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
-                                        alert('Apenas gestores e administradores podem transferir propostas.');
-                                        return;
-                                      }
-                                      const newUser = usersList.find(u => u.nome === col.label);
-                                      if (newUser) {
-                                        setProposals(prev => prev.map(p => p.id === propId ? { ...p, usuario: newUser.nome } : p));
-                                        const res = await transferirProposta(propId, newUser.id);
-                                        if (!res.success) alert(res.error);
-                                      }
-                                    }
-                                  }}
-                                />
+                                <tr 
+                                  key={nome} 
+                                  className={`transition-all ${
+                                    isFiltered 
+                                      ? 'bg-emerald-50/40 border-l-4 border-emerald-600 font-semibold' 
+                                      : 'hover:bg-slate-50/50'
+                                  }`}
+                                >
+                                  <td className="px-5 py-4.5 flex items-center gap-3">
+                                    <div className="w-7 h-7 bg-slate-100 text-slate-700 font-black rounded-lg flex items-center justify-center text-[10px] border border-slate-200">
+                                      {nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <span className="font-extrabold text-slate-800">{nome}</span>
+                                      <div className="text-[9px] uppercase tracking-wider font-black mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5">
+                                        <span className="text-blue-600">💰 Conv. R$: {stats.totalVal > 0 ? ((stats.totalAceito / stats.totalVal) * 100).toFixed(1) : 0}%</span>
+                                        <span className="text-emerald-600">📄 Conv. Qtd: {stats.count > 0 ? ((stats.totalAceitasCount / stats.count) * 100).toFixed(1) : 0}%</span>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  
+                                  <td className="px-5 py-4.5 text-center font-bold text-slate-500">
+                                    <div>{stats.count}</div>
+                                    <div className="text-[9px] text-slate-400 font-medium mt-0.5">
+                                      {totalPropostasCount > 0 ? ((stats.count / totalPropostasCount) * 100).toFixed(1) : 0}%
+                                    </div>
+                                  </td>
+                                  
+                                  <td className="px-5 py-4.5 text-right font-black text-slate-800">
+                                    <div>{formatCurrency(stats.totalAceito)}</div>
+                                    <div className="text-[9px] text-slate-400 font-medium mt-0.5">
+                                      {totalAceito > 0 ? `${((stats.totalAceito / totalAceito) * 100).toFixed(1)}% do total` : '0%'}
+                                    </div>
+                                  </td>
+                                  
+                                  <td className="px-5 py-4.5 text-right font-extrabold text-slate-600">
+                                    {formatCurrency(metaVal)}
+                                  </td>
+                                  
+                                  <td className="px-5 py-4.5">
+                                    <div className="flex flex-col items-center justify-center">
+                                      <span className={`text-[10px] font-black ${
+                                        atingidoPct >= 100 
+                                          ? 'text-emerald-600' 
+                                          : atingidoPct >= 50 
+                                            ? 'text-indigo-600' 
+                                            : 'text-amber-500'
+                                      }`}>
+                                        {atingidoPct.toFixed(1)}%
+                                      </span>
+                                      <div className="w-full bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                        <div className={`h-1.5 rounded-full transition-all duration-500 ${
+                                          atingidoPct >= 100 
+                                            ? 'bg-emerald-500' 
+                                            : atingidoPct >= 50 
+                                              ? 'bg-indigo-500' 
+                                              : 'bg-amber-400'
+                                        }`} style={{ width: `${Math.min(100, atingidoPct)}%` }}></div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* VOLUME POR TIPO DE SERVIÇOS */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                  <div className="p-5 border-b border-slate-100 bg-slate-50 flex items-center gap-2.5">
+                    <Briefcase size={16} className="text-[#1B4D3E]" />
+                    <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider">Volume por Tipo de Serviços</h2>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-100 text-slate-500 uppercase text-[9px] font-black tracking-wider border-b border-slate-200/80">
+                          <th className="px-5 py-3.5">Categoria do Serviço</th>
+                          <th className="px-5 py-3.5 text-center">Propostas</th>
+                          <th className="px-5 py-3.5 text-right">Volume Total</th>
+                          <th className="px-5 py-3.5 text-right">Ticket Médio</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-xs divide-y divide-slate-100">
+                        {Object.keys(volumePorServico).length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="px-5 py-8 text-center text-slate-400 font-medium italic">Nenhuma proposta categorizada nesta consulta.</td>
+                          </tr>
+                        ) : (
+                          Object.entries(volumePorServico).map(([nome, data]) => (
+                            <tr key={nome} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-5 py-4">
+                                <span className="font-extrabold text-slate-700 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl uppercase tracking-tighter text-[9px]">
+                                  {nome}
+                                </span>
+                              </td>
+                              <td className="px-5 py-4 text-center">
+                                <p className="font-bold text-slate-500">{data.count}</p>
+                                <p className="text-[9px] text-slate-400 font-semibold mt-0.5">
+                                  {totalPropostasCount > 0 ? ((data.count / totalPropostasCount) * 100).toFixed(1) : 0}%
+                                </p>
+                              </td>
+                              <td className="px-5 py-4 text-right">
+                                <p className="font-black text-[#1B4D3E]">{formatCurrency(data.totalVal)}</p>
+                                <p className="text-[9px] text-slate-400 font-bold mt-0.5">
+                                  {totalVolume > 0 ? ((data.totalVal / totalVolume) * 100).toFixed(1) : 0}% do total
+                                </p>
+                              </td>
+                              <td className="px-5 py-4 text-right font-bold text-slate-500">
+                                {formatCurrency(data.count > 0 ? data.totalVal / data.count : 0)}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* GRÁFICO HISTÓRICO DE DESEMPENHO MENSAL */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mt-8 flex flex-col hover:shadow-md transition-shadow">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-slate-100 pb-5">
+                  <div>
+                    <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                      <BarChart2 size={16} className="text-[#1B4D3E]" /> Acompanhamento de Metas Mensais
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-wide">
+                      Histórico de Meta (Previsto) vs Faturamento Aceito (Realizado) e Percentual de Atingimento (%)
+                    </p>
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/80">
+                      <button
+                        onClick={() => setChartViewMode('mensal')}
+                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
+                          chartViewMode === 'mensal'
+                            ? 'bg-[#1B4D3E] text-white shadow-sm'
+                            : 'text-slate-500 hover:text-slate-750'
+                        }`}
+                      >
+                        📅 Mensal
+                      </button>
+                      <button
+                        onClick={() => setChartViewMode('acumulada')}
+                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
+                          chartViewMode === 'acumulada'
+                            ? 'bg-[#1B4D3E] text-white shadow-sm'
+                            : 'text-slate-500 hover:text-slate-750'
+                        }`}
+                      >
+                        📈 Acumulada
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SVG Combo Chart Canvas */}
+                <div className="w-full overflow-x-auto select-none">
+                  <div className="min-w-[920px] h-[260px] relative px-2">
+                    <svg className="w-full h-full overflow-visible" viewBox="0 0 1000 240">
+                      {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
+                        const yCoord = 200 - (ratio * 180);
+                        const leftVal = ratio * maxFaturamento;
+                        const rightPctVal = ratio * maxPct;
+                        return (
+                          <g key={index}>
+                            <line 
+                              x1="70" 
+                              y1={yCoord} 
+                              x2="930" 
+                              y2={yCoord} 
+                              stroke="#E2E8F0" 
+                              strokeWidth="1" 
+                              strokeDasharray="4 4" 
+                            />
+                            <text 
+                              x="60" 
+                              y={yCoord + 3} 
+                              textAnchor="end" 
+                              className="fill-slate-400 text-[8px] font-bold tracking-tight"
+                            >
+                              {formatShortCurrency(leftVal)}
+                            </text>
+                            <text 
+                              x="940" 
+                              y={yCoord + 3} 
+                              textAnchor="start" 
+                              className="fill-amber-500 text-[8px] font-black tracking-tight"
+                            >
+                              {rightPctVal.toFixed(0)}%
+                            </text>
+                          </g>
+                        );
+                      })}
+
+                      <line x1="70" y1="200" x2="930" y2="200" stroke="#CBD5E1" strokeWidth="1.5" />
+
+                      {chartData.map((d, i) => {
+                        const gap = 860 / chartData.length;
+                        const xCenter = 70 + (i * gap) + (gap / 2);
+                        
+                        const hPrevisto = (d.previsto / maxValY) * 180;
+                        const yPrevisto = 200 - hPrevisto;
+                        
+                        const hRealizado = (d.realizado / maxValY) * 180;
+                        const yRealizado = 200 - hRealizado;
+
+                        return (
+                          <g key={`bar-${i}`} className="group">
+                            <rect
+                              x={xCenter - 11}
+                              y={yPrevisto}
+                              width="10"
+                              height={Math.max(1, hPrevisto)}
+                              fill="#6366F1"
+                              rx="1.5"
+                              className="transition-all duration-300 hover:fill-indigo-600 cursor-pointer"
+                            />
+                            <text
+                              x={xCenter - 6}
+                              y={yPrevisto - 6}
+                              textAnchor="middle"
+                              className="fill-indigo-600 text-[7px] font-black"
+                            >
+                              {formatShortCurrency(d.previsto)}
+                            </text>
+
+                            <rect
+                              x={xCenter + 1}
+                              y={yRealizado}
+                              width="10"
+                              height={Math.max(1, hRealizado)}
+                              fill="#10B981"
+                              rx="1.5"
+                              className="transition-all duration-300 hover:fill-emerald-600 cursor-pointer"
+                            />
+                            <text
+                              x={xCenter + 6}
+                              y={yRealizado - 6}
+                              textAnchor="middle"
+                              className="fill-emerald-600 text-[7px] font-black"
+                            >
+                              {formatShortCurrency(d.realizado)}
+                            </text>
+                            
+                            <text 
+                              x={xCenter} 
+                              y="218" 
+                              textAnchor="middle" 
+                              className="fill-slate-500 text-[9px] font-black uppercase tracking-wider"
+                            >
+                              {getShortMonthName(d.monthKey)}
+                            </text>
+                            <text 
+                              x={xCenter} 
+                              y="227" 
+                              textAnchor="middle" 
+                              className="fill-slate-400 text-[7px] font-bold tracking-tight"
+                            >
+                              {d.monthKey.split('-')[0]}
+                            </text>
+                          </g>
+                        );
+                      })}
+
+                      {(() => {
+                        const gap = 860 / chartData.length;
+                        const points = chartData.map((d, i) => {
+                          const xCenter = 70 + (i * gap) + (gap / 2);
+                          const hPct = (d.atingidoPct / maxPctY) * 180;
+                          const yCoord = 200 - hPct;
+                          return `${xCenter},${yCoord}`;
+                        });
+                        
+                        return (
+                          <>
+                            <polyline
+                              fill="none"
+                              stroke="#F59E0B"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              points={points.join(' ')}
+                              style={{ filter: 'drop-shadow(0px 2px 4px rgba(245, 158, 11, 0.4))' }}
+                            />
+                            
+                            {chartData.map((d, i) => {
+                              const xCenter = 70 + (i * gap) + (gap / 2);
+                              const hPct = (d.atingidoPct / maxPctY) * 180;
+                              const yCoord = 200 - hPct;
+                              
+                              return (
+                                <g key={`dot-${i}`} className="group cursor-pointer">
+                                  <circle
+                                    cx={xCenter}
+                                    cy={yCoord}
+                                    r="3.5"
+                                    fill="#F59E0B"
+                                    stroke="#FFFFFF"
+                                    strokeWidth="1.5"
+                                    className="transition-all duration-300 group-hover:r-4.5 group-hover:stroke-amber-600"
+                                  />
+                                  <text
+                                    x={xCenter}
+                                    y={yCoord - 8}
+                                    textAnchor="middle"
+                                    className="fill-amber-600 text-[7px] font-black bg-white"
+                                    style={{ filter: 'drop-shadow(0px 1px 1px rgba(255, 255, 255, 0.9))' }}
+                                  >
+                                    {d.atingidoPct.toFixed(1)}%
+                                  </text>
+                                </g>
                               );
                             })}
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                          </>
+                        );
+                      })()}
+                    </svg>
                   </div>
-                )}
-              </>
-            );
-          })()}
+                </div>
+
+                <div className="flex justify-center mt-5 select-none border-t border-slate-100 pt-5">
+                  <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[9px] font-black uppercase tracking-wider bg-slate-50 border border-slate-200/60 px-5 py-2.5 rounded-2xl shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="w-3.5 h-3.5 bg-[#6366F1] rounded-md block shadow-sm shadow-indigo-500/20"></span>
+                      <span className="text-slate-500">Previsto (Meta)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-3.5 h-3.5 bg-[#10B981] rounded-md block shadow-sm shadow-emerald-500/20"></span>
+                      <span className="text-slate-500">Realizado (Aceito)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-7 h-1 bg-[#F59E0B] relative flex items-center justify-center rounded">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B] absolute border border-white"></span>
+                      </span>
+                      <span className="text-slate-500">Atingimento (%)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </>
+          )}
 
         </div>
       </main>
-
-      {/* MODAL DE TRANSFERÊNCIA */}
-      {transferModal.isOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                <ArrowRightLeft size={20} className="text-[#1B4D3E]" /> Transferir Proposta
-              </h2>
-              <button onClick={() => setTransferModal({ isOpen: false, propId: null })} className="text-amber-500 hover:text-amber-600">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="p-5">
-              <p className="text-sm text-slate-500 mb-4">
-                Selecione o usuário para o qual deseja transferir a propriedade desta proposta. O usuário atual perderá acesso se não tiver outra permissão.
-              </p>
-              <select
-                className="w-full p-2.5 border border-slate-300 rounded-lg text-sm mb-6"
-                value={selectedUserId}
-                onChange={e => setSelectedUserId(e.target.value)}
-              >
-                <option value="">-- Selecione o Novo Dono --</option>
-                {usersList.map(u => (
-                  <option key={u.id} value={u.id}>{u.nome} ({u.role})</option>
-                ))}
-              </select>
-              <div className="flex gap-3 justify-end">
-                <button onClick={() => setTransferModal({ isOpen: false, propId: null })} className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                <button 
-                  onClick={async () => {
-                    if (!selectedUserId || !transferModal.propId) return;
-                    setLoading(true);
-                    const res = await transferirProposta(transferModal.propId, selectedUserId);
-                    if (res.success) {
-                      setTransferModal({ isOpen: false, propId: null });
-                      loadData();
-                    } else {
-                      alert(res.error);
-                      setLoading(false);
-                    }
-                  }}
-                  className="px-4 py-2 text-sm font-bold bg-[#1B4D3E] text-white rounded-lg hover:bg-[#13382d]"
-                  disabled={!selectedUserId}
-                >
-                  Confirmar Transferência
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL DE COMPARTILHAMENTO */}
-      {shareModal.isOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                <Share2 size={20} className="text-[#1B4D3E]" /> Compartilhar Proposta
-              </h2>
-              <button onClick={() => setShareModal({ isOpen: false, propId: null })} className="text-amber-500 hover:text-amber-600">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="p-5">
-              <p className="text-sm text-slate-500 mb-4">
-                Selecione o usuário que também poderá visualizar e editar esta proposta (Coautoria).
-              </p>
-              <select
-                className="w-full p-2.5 border border-slate-300 rounded-lg text-sm mb-6"
-                value={selectedUserId}
-                onChange={e => setSelectedUserId(e.target.value)}
-              >
-                <option value="">-- Selecione o Colega --</option>
-                {usersList.map(u => (
-                  <option key={u.id} value={u.id}>{u.nome}</option>
-                ))}
-              </select>
-              <div className="flex gap-3 justify-end">
-                <button onClick={() => setShareModal({ isOpen: false, propId: null })} className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                <button 
-                  onClick={async () => {
-                    if (!selectedUserId || !shareModal.propId) return;
-                    setLoading(true);
-                    const res = await compartilharProposta(shareModal.propId, selectedUserId);
-                    if (res.success) {
-                      setShareModal({ isOpen: false, propId: null });
-                      loadData();
-                    } else {
-                      alert(res.error);
-                      setLoading(false);
-                    }
-                  }}
-                  className="px-4 py-2 text-sm font-bold bg-[#1B4D3E] text-white rounded-lg hover:bg-[#13382d]"
-                  disabled={!selectedUserId}
-                >
-                  Conceder Acesso
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL DE AUDITORIA */}
-      {auditModal.isOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[80vh]">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
-              <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                <History size={20} className="text-[#1B4D3E]" /> Linha do Tempo / Auditoria
-              </h2>
-              <button onClick={() => setAuditModal({ isOpen: false, propId: null, logs: [] })} className="text-amber-500 hover:text-amber-600">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="p-6 overflow-y-auto flex-1">
-              {auditModal.logs.length === 0 ? (
-                <p className="text-center text-slate-400 text-sm py-10">Nenhum registro encontrado para esta proposta.</p>
-              ) : (
-                <div className="relative border-l border-slate-200 ml-4 space-y-6">
-                  {auditModal.logs.map((log: any) => {
-                    let Icon = FileText;
-                    let color = 'bg-blue-100 text-blue-600';
-                    let desc = '';
-
-                    switch(log.action) {
-                      case 'CREATE': 
-                        Icon = Plus; color = 'bg-emerald-100 text-emerald-600'; desc = 'Criou a proposta'; break;
-                      case 'VERSION_SAVE': 
-                        Icon = FileStack; color = 'bg-purple-100 text-purple-600'; desc = `Salvou nova versão (v${log.details?.versao})`; break;
-                      case 'VERSION_UPDATE': 
-                        Icon = Edit2; color = 'bg-amber-100 text-amber-600'; desc = `Atualizou a versão (v${log.details?.versao})`; break;
-                      case 'STATUS_CHANGE': 
-                        Icon = LayoutGrid; color = 'bg-indigo-100 text-indigo-600'; desc = `Alterou status para "${log.details?.newStatus}"`; break;
-                      case 'TRANSFER': 
-                        Icon = ArrowRightLeft; color = 'bg-orange-100 text-orange-600'; desc = `Transferiu a proposta para ${log.details?.toUserName}`; break;
-                      case 'SHARE': 
-                        Icon = Share2; color = 'bg-pink-100 text-pink-600'; desc = `Compartilhou com ${log.details?.sharedWithUserName}`; break;
-                    }
-
-                    return (
-                      <div key={log.id} className="relative pl-6">
-                        <div className={`absolute -left-[13px] top-1 w-6 h-6 rounded-full border-2 border-white flex items-center justify-center ${color}`}>
-                          <Icon size={12} />
-                        </div>
-                        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-bold text-slate-800">{log.user?.nome}</span>
-                            <span className="text-[10px] text-slate-400 font-medium">{new Date(log.createdAt).toLocaleString('pt-BR')}</span>
-                          </div>
-                          <p className="text-xs text-slate-600">{desc}</p>
-                          {log.details?.changelog && (
-                            <div className="mt-2 text-[10px] bg-white p-2 rounded border border-slate-200 text-slate-500 italic">
-                              "{log.details.changelog}"
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-            <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end shrink-0">
-              <button onClick={() => setAuditModal({ isOpen: false, propId: null, logs: [] })} className="px-5 py-2 text-sm font-bold bg-[#1B4D3E] text-white rounded-lg hover:bg-[#13382d]">
-                Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -1334,7 +1126,7 @@ export default function Page() {
   }
 
   if (isLoggedIn) {
-    return <ProposalsDashboard />;
+    return <RadarComercialDashboard />;
   }
 
   return <LandingPage />;

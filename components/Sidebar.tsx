@@ -654,11 +654,12 @@ const Sidebar = () => {
 
  
   const menuItems = [
+    { icon: BarChart2, label: 'Radar Comercial', href: '/', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Search, label: 'Prospecção Inteligente', href: '/prospeccao', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Calendar, label: 'Calendário Global', href: '/calendar', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Target, label: 'Pipeline de Leads', href: '/leads', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Mail, label: 'Gestão de E-mails', href: '/emails', roles: ['ADMIN', 'MANAGER', 'USER'] },
-    { icon: Home, label: 'Pipeline de FVP', href: '/', roles: ['ADMIN', 'MANAGER', 'USER'] },
+    { icon: Home, label: 'Pipeline de FVP', href: '/pipeline', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Presentation, label: 'Proposta Comercial', href: '/propostas-comerciais', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: FileText, label: 'Contratos', href: '/contratos', roles: ['ADMIN', 'MANAGER'] },
     { icon: Briefcase, label: 'Regras (CCT)', href: '/admin/ccts', roles: ['ADMIN', 'MANAGER', 'USER'] },
@@ -667,7 +668,6 @@ const Sidebar = () => {
     { icon: ShieldCheck, label: 'Usuários e Permissões', href: '/admin/usuarios', roles: ['ADMIN'] },
     { icon: ShoppingCart, label: 'Produtos e Insumos', href: '/produtos', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: ShieldCheck, label: 'EPIs e Uniformes', href: '/epis', roles: ['ADMIN', 'MANAGER', 'USER'] },
-    { icon: BarChart2, label: 'Controladoria', href: '/admin/controladoria', roles: ['ADMIN'] },
     { icon: Settings, label: 'Configurações', href: '/admin/settings', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas', roles: ['SUPER_ADMIN'] },
   ];
@@ -746,9 +746,11 @@ const Sidebar = () => {
       {/* Menu de Navegação */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {renderedMenuItems.map((item) => {
-          const isActive = item.href === '/' 
-            ? (pathname === '/' || ((pathname.startsWith('/propostas') || pathname.startsWith('/proposta')) && !pathname.startsWith('/propostas-comerciais')))
-            : pathname === item.href;
+          const isActive = item.href === '/'
+            ? pathname === '/'
+            : item.href === '/pipeline'
+              ? (pathname === '/pipeline' || ((pathname.startsWith('/propostas') || pathname.startsWith('/proposta')) && !pathname.startsWith('/propostas-comerciais')))
+              : pathname === item.href;
           return (
             <Link
               key={item.label}

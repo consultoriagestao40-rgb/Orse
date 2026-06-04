@@ -1739,7 +1739,7 @@ export default function SettingsPage() {
                       <p className="text-xs font-bold text-slate-700 uppercase">Como funciona?</p>
                       <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
                         Selecione o mês de referência e insira as metas individuais dos vendedores nos campos abaixo. 
-                        As metas são salvas automaticamente após a alteração dos valores e serão exibidas na aba de <strong>Controladoria</strong> para monitorar o atingimento.
+                        As metas são salvas automaticamente após a alteração dos valores e serão exibidas na aba de <strong>Radar Comercial</strong> para monitorar o atingimento.
                       </p>
                     </div>
                   </div>
