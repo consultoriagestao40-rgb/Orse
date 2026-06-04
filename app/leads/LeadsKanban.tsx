@@ -873,19 +873,6 @@ export default function LeadsKanban() {
             {showMetrics ? "Ocultar Métricas" : "Mostrar Métricas"}
           </button>
 
-          <button 
-            type="button"
-            onClick={() => setShowChatCenter(true)}
-            className="relative flex items-center justify-center gap-2 bg-emerald-600 text-white px-4 py-2 text-xs md:text-sm rounded-xl font-bold hover:bg-emerald-700 transition-all w-full sm:w-auto shadow-sm"
-          >
-            <MessageCircle size={16} />
-            <span>Central de WhatsApp</span>
-            {totalUnreadCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white font-black text-[9px] px-2 py-0.5 rounded-full border-2 border-white animate-bounce shrink-0">
-                {totalUnreadCount}
-              </span>
-            )}
-          </button>
 
           <div className="hidden sm:block w-px h-8 bg-slate-200 mx-1"></div>
 

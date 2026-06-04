@@ -1838,7 +1838,21 @@ const Sidebar = () => {
 
           {/* WIDGET FLUTUANTE DE WHATSAPP (CANTO INFERIOR DIREITO) */}
           {showWhatsAppWidget && (
-            <div className="fixed bottom-4 right-16 w-[880px] h-[580px] bg-white border border-slate-200/80 shadow-2xl rounded-2xl z-[160] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300 font-sans border border-slate-200">
+            <div className={`fixed top-0 right-12 bottom-0 bg-white shadow-2xl z-[160] flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-right duration-300 font-sans border-l border-slate-200 ${
+              isCollapsed ? 'left-20' : 'left-64'
+            }`}>
+              {/* External Close Button Tab on the Left Edge */}
+              <button
+                onClick={() => {
+                  setShowWhatsAppWidget(false);
+                  setActiveWidgetLead(null);
+                }}
+                className="absolute top-4 left-[-40px] w-10 h-10 bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-l-2xl flex items-center justify-center shadow-lg transition-all z-[170] group active:scale-95 cursor-pointer"
+                title="Fechar Central"
+              >
+                <X size={20} className="stroke-[2.5] transition-transform group-hover:rotate-90" />
+              </button>
+
               {/* Cabeçalho Único do Widget */}
               <div className="p-4 bg-gradient-to-r from-slate-900 to-slate-950 text-white flex justify-between items-center shrink-0 border-b border-slate-800 select-none">
                 <div className="flex items-center gap-2">
@@ -1850,21 +1864,12 @@ const Sidebar = () => {
                     <p className="text-[9px] text-slate-400 font-bold mt-0.5">Acompanhe e responda todas as conversas do funil em tempo real</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setShowWhatsAppWidget(false);
-                    setActiveWidgetLead(null);
-                  }}
-                  className="text-slate-400 hover:text-white p-1.5 rounded-full hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  <X size={16} />
-                </button>
               </div>
 
               {/* Corpo em Duas Colunas */}
               <div className="flex-1 flex overflow-hidden bg-white">
-                {/* Coluna da Esquerda: Lista de Conversas (w-[280px]) */}
-                <div className="w-[280px] border-r border-slate-200/80 flex flex-col bg-white shrink-0">
+                {/* Coluna da Esquerda: Lista de Conversas (w-[320px]) */}
+                <div className="w-[320px] border-r border-slate-200/80 flex flex-col bg-white shrink-0">
                   {/* Busca */}
                   <div className="p-3 bg-white border-b border-slate-100 shrink-0">
                     <div className="relative">
