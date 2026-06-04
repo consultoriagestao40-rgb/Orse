@@ -235,6 +235,14 @@ model PropostaStatus {
   ativo Boolean @default(true)
 }
 
+model DocumentoStatus {
+  id    String  @id @default(cuid())
+  nome  String  @unique
+  color String  @default("bg-slate-100 text-slate-600 border border-slate-200")
+  ativo Boolean @default(true)
+}
+
+
 model Produto {
   id            String   @id @default(cuid())
   codigo        Int      @unique @default(autoincrement())

@@ -172,10 +172,17 @@ export async function updatePropostaStatusParam(id: string, nome: string, color?
     if (color) {
       data.color = color;
     }
+    const oldStatus = await prisma.propostaStatus.findUnique({ where: { id } });
     const s = await prisma.propostaStatus.update({
       where: { id },
       data
     });
+    if (oldStatus && oldStatus.nome.toLowerCase() !== s.nome.toLowerCase()) {
+      await prisma.proposta.updateMany({
+        where: { status: { equals: oldStatus.nome, mode: 'insensitive' } },
+        data: { status: s.nome }
+      });
+    }
     revalidatePath('/');
     return { success: true, data: s };
   } catch (error: any) {
@@ -195,6 +202,91 @@ export async function togglePropostaStatusParam(id: string, ativo: boolean) {
     return { success: false, error: error.message };
   }
 }
+
+export async function getDocumentoStatuses() {
+  try {
+    const statuses = await prisma.documentoStatus.findMany({
+      orderBy: { nome: 'asc' },
+    });
+    if (statuses.length === 0) {
+      // Seed default DocumentoStatus if empty
+      await prisma.documentoStatus.createMany({
+        data: [
+          { nome: "RASCUNHO", color: "bg-slate-100 text-slate-600 border border-slate-200" },
+          { nome: "ENVIADA", color: "bg-sky-100 text-sky-800 border border-sky-200" },
+          { nome: "APROVADA", color: "bg-green-100 text-green-800 border border-green-200" },
+          { nome: "RECUSADA", color: "bg-red-100 text-red-800 border border-red-200" }
+        ],
+        skipDuplicates: true,
+      });
+      return prisma.documentoStatus.findMany({ orderBy: { nome: 'asc' } });
+    }
+    return statuses;
+  } catch (error) {
+    console.error('Erro ao buscar documento statuses:', error);
+    return [];
+  }
+}
+
+export async function createDocumentoStatus(nome: string) {
+  try {
+    const s = await prisma.documentoStatus.create({
+      data: { nome: nome.toUpperCase().trim() },
+    });
+    revalidatePath('/');
+    return { success: true, data: s };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteDocumentoStatus(id: string) {
+  try {
+    await prisma.documentoStatus.delete({ where: { id } });
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateDocumentoStatusParam(id: string, nome: string, color?: string) {
+  try {
+    const data: any = { nome: nome.toUpperCase().trim() };
+    if (color) {
+      data.color = color;
+    }
+    const oldStatus = await prisma.documentoStatus.findUnique({ where: { id } });
+    const s = await prisma.documentoStatus.update({
+      where: { id },
+      data
+    });
+    if (oldStatus && oldStatus.nome.toLowerCase() !== s.nome.toLowerCase()) {
+      await prisma.documentoProposta.updateMany({
+        where: { status: { equals: oldStatus.nome, mode: 'insensitive' } },
+        data: { status: s.nome }
+      });
+    }
+    revalidatePath('/');
+    return { success: true, data: s };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function toggleDocumentoStatusParam(id: string, ativo: boolean) {
+  try {
+    const s = await prisma.documentoStatus.update({
+      where: { id },
+      data: { ativo }
+    });
+    revalidatePath('/');
+    return { success: true, data: s };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 
 // Helpers
 async function getDefaultUser() {

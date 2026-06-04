@@ -8,7 +8,7 @@ import {
   Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer, Share2, Eye, Palette
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { getPropostas, getCurrentUserRole, getUsersList, transferirProposta, getPropostaStatuses, updatePropostaStatusParam } from '@/app/propostas/actions';
+import { getPropostas, getCurrentUserRole, getUsersList, transferirProposta, getDocumentoStatuses, updateDocumentoStatusParam } from '@/app/propostas/actions';
 import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
 import ClientLinkModal from '@/components/ClientLinkModal';
 import ClientTrackingModal from '@/components/ClientTrackingModal';
@@ -118,7 +118,7 @@ export default function PropostasComerciaisDashboard() {
       getEmpresasEmissoras(),
       getCurrentUserRole(),
       getUsersList(),
-      getPropostaStatuses()
+      getDocumentoStatuses()
     ]);
     setDocs(dataDocs);
     setFpvs(dataFpvs);
@@ -372,13 +372,21 @@ export default function PropostasComerciaisDashboard() {
   };
 
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
-  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onDragColumnStart, onDragColumnEnd, onDropColumn }: {
+  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onDragColumnStart, onDragColumnEnd, onDropColumn, onRenameColumn }: {
     label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor'; statusId?: string; onColorChange?: (newColor: string) => void;
     onDragColumnStart?: (e: React.DragEvent, label: string) => void;
     onDragColumnEnd?: (e: React.DragEvent) => void;
     onDropColumn?: (e: React.DragEvent, label: string) => void;
+    onRenameColumn?: (newName: string) => Promise<void>;
   }) => {
     const [showColorPicker, setShowColorPicker] = useState(false);
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [editNameValue, setEditNameValue] = useState(label);
+
+    useEffect(() => {
+      setEditNameValue(label);
+    }, [label]);
+
     const userObj = usersList.find(u => u.nome === label);
     const colAvatarUrl = userObj?.avatarUrl;
     const isStatus = type === 'status';
@@ -479,9 +487,46 @@ export default function PropostasComerciaisDashboard() {
         {isStatus ? (
           <div className={`border border-b-0 rounded-t-2xl rounded-b-none p-4 shadow-md text-left ${hStyle.bg} ${hStyle.text} ${hStyle.border} relative group`}>
             <div className="flex items-center justify-between mb-2">
-              <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-sm ${hStyle.badge}`}>
-                {label}
-              </span>
+              {isEditingName ? (
+                <input
+                  type="text"
+                  value={editNameValue}
+                  onChange={(e) => setEditNameValue(e.target.value)}
+                  onBlur={async () => {
+                    setIsEditingName(false);
+                    if (editNameValue.trim() && editNameValue.trim().toUpperCase() !== label.toUpperCase()) {
+                      if (onRenameColumn) {
+                        await onRenameColumn(editNameValue.trim());
+                      }
+                    }
+                  }}
+                  onKeyDown={async (e) => {
+                    if (e.key === 'Enter') {
+                      setIsEditingName(false);
+                      if (editNameValue.trim() && editNameValue.trim().toUpperCase() !== label.toUpperCase()) {
+                        if (onRenameColumn) {
+                          await onRenameColumn(editNameValue.trim());
+                        }
+                      }
+                    } else if (e.key === 'Escape') {
+                      setIsEditingName(false);
+                      setEditNameValue(label);
+                    }
+                  }}
+                  className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg border border-white/30 bg-white/20 text-white outline-none w-32 focus:bg-white/30"
+                  autoFocus
+                  onClick={(e) => e.stopPropagation()}
+                  onDragStart={(e) => e.preventDefault()}
+                />
+              ) : (
+                <span 
+                  onDoubleClick={() => setIsEditingName(true)}
+                  className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-sm cursor-edit select-text hover:bg-white/10 transition-colors ${hStyle.badge}`}
+                  title="Dois cliques para renomear"
+                >
+                  {label}
+                </span>
+              )}
               
               <div className="flex items-center gap-2">
                 {/* Ícone de Paleta de Cores 🎨 */}
@@ -978,8 +1023,12 @@ export default function PropostasComerciaisDashboard() {
                                   total={col.total}
                                   statusId={col.id}
                                   onColorChange={async (newColor) => {
-                                    await updatePropostaStatusParam(col.id, col.label, newColor);
+                                    await updateDocumentoStatusParam(col.id, col.label, newColor);
                                     setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));
+                                  }}
+                                  onRenameColumn={async (newName) => {
+                                    await updateDocumentoStatusParam(col.id, newName);
+                                    setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, nome: newName.toUpperCase().trim() } : s));
                                   }}
                                   onDragColumnStart={(e, l) => handleDragColumnStart(e, l, 'status')}
                                   onDragColumnEnd={handleDragColumnEnd}

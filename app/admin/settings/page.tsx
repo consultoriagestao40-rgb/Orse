@@ -9,7 +9,9 @@ import {
 } from 'lucide-react';
 import { 
   getPropostaStatuses, createPropostaStatus, deletePropostaStatus, getLoggedUser,
-  updatePropostaStatusParam, togglePropostaStatusParam
+  updatePropostaStatusParam, togglePropostaStatusParam,
+  getDocumentoStatuses, createDocumentoStatus, deleteDocumentoStatus,
+  updateDocumentoStatusParam, toggleDocumentoStatusParam
 } from '@/app/propostas/actions';
 import { 
   getEscalas, createEscala, updateEscala, deleteEscala 
@@ -43,7 +45,7 @@ const menuGroups = [
   {
     title: 'Parâmetros Operacionais',
     items: [
-      { id: 'status', label: 'Status de Proposta', icon: Layers, roles: ['ADMIN', 'MANAGER', 'USER'] },
+      { id: 'status', label: 'Status (FPV & Proposta)', icon: Layers, roles: ['ADMIN', 'MANAGER', 'USER'] },
       { id: 'escalas', label: 'Escalas de Trabalho', icon: CalendarDays, roles: ['ADMIN', 'MANAGER', 'USER'] },
       { id: 'unidades', label: 'Unidades de Medida', icon: Ruler, roles: ['ADMIN', 'MANAGER', 'USER'] },
       { id: 'categorias', label: 'Categorias', icon: Tag, roles: ['ADMIN', 'MANAGER', 'USER'] },
@@ -193,6 +195,8 @@ export default function SettingsPage() {
   // Status
   const [statuses, setStatuses] = useState<any[]>([]);
   const [newStatusName, setNewStatusName] = useState('');
+  const [docStatuses, setDocStatuses] = useState<any[]>([]);
+  const [newDocStatusName, setNewDocStatusName] = useState('');
 
   // FAQ
   const [faqs, setFaqs] = useState<any[]>([]);
@@ -661,7 +665,7 @@ export default function SettingsPage() {
   const [newSegmentoNome, setNewSegmentoNome] = useState('');
 
   // Estado para Edição de Itens de Parâmetros
-  const [editingItem, setEditingItem] = useState<{ id: string; type: 'status' | 'unidade' | 'categoria' | 'tipo' | 'segmento'; nome: string; color?: string } | null>(null);
+  const [editingItem, setEditingItem] = useState<{ id: string; type: 'status' | 'docStatus' | 'unidade' | 'categoria' | 'tipo' | 'segmento'; nome: string; color?: string } | null>(null);
 
 
   // Metas
@@ -779,6 +783,8 @@ export default function SettingsPage() {
       if (activeTab === 'status') {
         const data = await getPropostaStatuses();
         setStatuses(data || []);
+        const docData = await getDocumentoStatuses();
+        setDocStatuses(docData || []);
       } else if (activeTab === 'escalas') {
         const data = await getEscalas();
         setEscalas(data || []);
@@ -931,13 +937,33 @@ export default function SettingsPage() {
     else alert('Erro ao excluir: ' + res.error);
   };
 
+  const handleAddDocStatus = async () => {
+    if (!newDocStatusName.trim()) return;
+    const res = await createDocumentoStatus(newDocStatusName);
+    if (res.success) {
+      setNewDocStatusName('');
+      loadData();
+    } else {
+      alert('Erro ao adicionar status de proposta: ' + res.error);
+    }
+  };
+
+  const handleDeleteDocStatus = async (id: string) => {
+    if (!confirm('Tem certeza que deseja remover este status de proposta?')) return;
+    const res = await deleteDocumentoStatus(id);
+    if (res.success) loadData();
+    else alert('Erro ao excluir: ' + res.error);
+  };
+
   // Ações de Toggle de Ativo/Inativo e Edição de Parâmetros
-  const handleToggleAtivoParam = async (id: string, type: 'status' | 'unidade' | 'categoria' | 'tipo' | 'segmento', currentAtivo: boolean) => {
+  const handleToggleAtivoParam = async (id: string, type: 'status' | 'docStatus' | 'unidade' | 'categoria' | 'tipo' | 'segmento', currentAtivo: boolean) => {
     const nextAtivo = !currentAtivo;
     let res: any;
     
     if (type === 'status') {
       res = await togglePropostaStatusParam(id, nextAtivo);
+    } else if (type === 'docStatus') {
+      res = await toggleDocumentoStatusParam(id, nextAtivo);
     } else if (type === 'unidade') {
       res = await toggleUnidadeMedida(id, nextAtivo);
     } else if (type === 'categoria') {
@@ -967,6 +993,8 @@ export default function SettingsPage() {
     
     if (type === 'status') {
       res = await updatePropostaStatusParam(id, nome, color);
+    } else if (type === 'docStatus') {
+      res = await updateDocumentoStatusParam(id, nome, color);
     } else if (type === 'unidade') {
       res = await updateUnidadeMedida(id, nome);
     } else if (type === 'categoria') {
@@ -1138,83 +1166,169 @@ export default function SettingsPage() {
               <div>
                 <div className="bg-[#1B4D3E] px-6 py-3 border-b border-[#13382D]">
                   <h2 className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                    <Layers size={14} /> Definição de Status das Propostas
+                    <Layers size={14} /> Definição de Status (FPV & Proposta)
                   </h2>
                 </div>
                 
-                <div className="p-6 space-y-6">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Novo nome de status (Ex: EM ANÁLISE)"
-                      value={newStatusName}
-                      onChange={e => setNewStatusName(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && handleAddStatus()}
-                      className="flex-1 px-3 py-2 border border-slate-300 rounded text-sm outline-none focus:border-[#1B4D3E] font-bold uppercase"
-                    />
-                    <button 
-                      onClick={handleAddStatus}
-                      className="bg-[#1B4D3E] hover:bg-emerald-900 text-white px-6 py-2 rounded text-sm font-bold flex items-center gap-2 transition-all shadow-sm"
-                    >
-                      <Plus size={16} /> Adicionar
-                    </button>
+                <div className="p-6 grid grid-cols-1 xl:grid-cols-2 gap-8">
+                  {/* Seção FPV */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-bold text-slate-800 border-b pb-2 flex items-center gap-2">
+                      <Layers size={14} className="text-[#1B4D3E]" /> Status das FPVs (Orçamentos)
+                    </h3>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Novo status de FPV (Ex: EM ANÁLISE)"
+                        value={newStatusName}
+                        onChange={e => setNewStatusName(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleAddStatus()}
+                        className="flex-1 px-3 py-2 border border-slate-300 rounded text-sm outline-none focus:border-[#1B4D3E] font-bold uppercase"
+                      />
+                      <button 
+                        onClick={handleAddStatus}
+                        className="bg-[#1B4D3E] hover:bg-emerald-900 text-white px-4 py-2 rounded text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                      >
+                        <Plus size={14} /> Adicionar
+                      </button>
+                    </div>
+
+                    <div className="overflow-x-auto border border-slate-100 rounded-xl">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-200">
+                            <th className="px-4 py-3">Nome do Status</th>
+                            <th className="px-4 py-3 text-center">Status</th>
+                            <th className="px-4 py-3 text-right">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {statuses.map(s => (
+                            <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                              <td className="px-4 py-3 font-bold text-slate-700">
+                                <span className={`text-[10px] font-black px-3 py-1 rounded uppercase tracking-wider ${s.color}`}>
+                                  {s.nome}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                  s.ativo !== false 
+                                    ? 'bg-green-50 text-green-700 border border-green-200' 
+                                    : 'bg-slate-100 text-slate-500 border border-slate-200'
+                                }`}>
+                                  {s.ativo !== false ? 'Ativo' : 'Inativo'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <div className="flex justify-end gap-3">
+                                  <button 
+                                    onClick={() => setEditingItem({ id: s.id, type: 'status', nome: s.nome, color: s.color })} 
+                                    className="text-amber-500 hover:text-amber-600 transition-colors"
+                                    title="Editar"
+                                  >
+                                    <Edit2 size={14} />
+                                  </button>
+                                  <button 
+                                    onClick={() => handleToggleAtivoParam(s.id, 'status', s.ativo !== false)} 
+                                    className={`${s.ativo !== false ? 'text-emerald-600 hover:text-emerald-700' : 'text-slate-400 hover:text-slate-500'} transition-colors`}
+                                    title={s.ativo !== false ? "Inativar" : "Ativar"}
+                                  >
+                                    {s.ativo !== false ? <Eye size={14} /> : <EyeOff size={14} />}
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeleteStatus(s.id)} 
+                                    className="text-slate-400 hover:text-red-600 transition-colors"
+                                    title="Remover"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse text-xs">
-                      <thead>
-                        <tr className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-200">
-                          <th className="px-4 py-3">Nome do Status</th>
-                          <th className="px-4 py-3 text-center">Status</th>
-                          <th className="px-4 py-3 text-right">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {statuses.map(s => (
-                          <tr key={s.id} className="hover:bg-slate-50 transition-colors">
-                            <td className="px-4 py-3 font-bold text-slate-700">
-                              <span className={`text-[10px] font-black px-3 py-1 rounded uppercase tracking-wider ${s.color}`}>
-                                {s.nome}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-center">
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                s.ativo !== false 
-                                  ? 'bg-green-50 text-green-700 border border-green-200' 
-                                  : 'bg-slate-100 text-slate-500 border border-slate-200'
-                              }`}>
-                                {s.ativo !== false ? 'Ativo' : 'Inativo'}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-right">
-                              <div className="flex justify-end gap-3">
-                                <button 
-                                  onClick={() => setEditingItem({ id: s.id, type: 'status', nome: s.nome, color: s.color })} 
-                                  className="text-amber-500 hover:text-amber-600 transition-colors"
-                                  title="Editar"
-                                >
-                                  <Edit2 size={14} />
-                                </button>
-                                <button 
-                                  onClick={() => handleToggleAtivoParam(s.id, 'status', s.ativo !== false)} 
-                                  className={`${s.ativo !== false ? 'text-emerald-600 hover:text-emerald-700' : 'text-slate-400 hover:text-slate-500'} transition-colors`}
-                                  title={s.ativo !== false ? "Inativar" : "Ativar"}
-                                >
-                                  {s.ativo !== false ? <Eye size={14} /> : <EyeOff size={14} />}
-                                </button>
-                                <button 
-                                  onClick={() => handleDeleteStatus(s.id)} 
-                                  className="text-slate-400 hover:text-red-600 transition-colors"
-                                  title="Remover"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            </td>
+                  {/* Seção Proposta Comercial */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-bold text-slate-800 border-b pb-2 flex items-center gap-2">
+                      <Layers size={14} className="text-[#1B4D3E]" /> Status das Propostas Comerciais (PDFs)
+                    </h3>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Novo status de Proposta (Ex: ENVIADA)"
+                        value={newDocStatusName}
+                        onChange={e => setNewDocStatusName(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleAddDocStatus()}
+                        className="flex-1 px-3 py-2 border border-slate-300 rounded text-sm outline-none focus:border-[#1B4D3E] font-bold uppercase"
+                      />
+                      <button 
+                        onClick={handleAddDocStatus}
+                        className="bg-[#1B4D3E] hover:bg-emerald-900 text-white px-4 py-2 rounded text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                      >
+                        <Plus size={14} /> Adicionar
+                      </button>
+                    </div>
+
+                    <div className="overflow-x-auto border border-slate-100 rounded-xl">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-200">
+                            <th className="px-4 py-3">Nome do Status</th>
+                            <th className="px-4 py-3 text-center">Status</th>
+                            <th className="px-4 py-3 text-right">Ações</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {docStatuses.map(s => (
+                            <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                              <td className="px-4 py-3 font-bold text-slate-700">
+                                <span className={`text-[10px] font-black px-3 py-1 rounded uppercase tracking-wider ${s.color}`}>
+                                  {s.nome}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                  s.ativo !== false 
+                                    ? 'bg-green-50 text-green-700 border border-green-200' 
+                                    : 'bg-slate-100 text-slate-500 border border-slate-200'
+                                }`}>
+                                  {s.ativo !== false ? 'Ativo' : 'Inativo'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <div className="flex justify-end gap-3">
+                                  <button 
+                                    onClick={() => setEditingItem({ id: s.id, type: 'docStatus', nome: s.nome, color: s.color })} 
+                                    className="text-amber-500 hover:text-amber-600 transition-colors"
+                                    title="Editar"
+                                  >
+                                    <Edit2 size={14} />
+                                  </button>
+                                  <button 
+                                    onClick={() => handleToggleAtivoParam(s.id, 'docStatus', s.ativo !== false)} 
+                                    className={`${s.ativo !== false ? 'text-emerald-600 hover:text-emerald-700' : 'text-slate-400 hover:text-slate-500'} transition-colors`}
+                                    title={s.ativo !== false ? "Inativar" : "Ativar"}
+                                  >
+                                    {s.ativo !== false ? <Eye size={14} /> : <EyeOff size={14} />}
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeleteDocStatus(s.id)} 
+                                    className="text-slate-400 hover:text-red-600 transition-colors"
+                                    title="Remover"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2404,7 +2518,7 @@ export default function SettingsPage() {
               <div className="bg-[#1B4D3E] px-6 py-3 border-b border-[#13382D] flex justify-between items-center">
                 <h2 className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                   <Edit2 size={14} /> Editar {
-                    editingItem.type === 'status' ? 'Status' :
+                    editingItem.type === 'status' || editingItem.type === 'docStatus' ? 'Status' :
                     editingItem.type === 'unidade' ? 'Unidade de Medida' :
                     editingItem.type === 'categoria' ? 'Categoria' :
                     editingItem.type === 'tipo' ? 'Tipo de Serviço' : 'Segmento'
@@ -2427,7 +2541,7 @@ export default function SettingsPage() {
                   />
                 </div>
 
-                {editingItem.type === 'status' && (
+                {(editingItem.type === 'status' || editingItem.type === 'docStatus') && (
                   <>
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block text-left">
