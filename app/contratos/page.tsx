@@ -638,7 +638,15 @@ export default function ContratosDashboard() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 flex-1">
+        <div 
+          className="flex flex-col gap-3 flex-1 min-h-[600px] p-3 pt-4 rounded-b-2xl rounded-t-none border-t-0"
+          style={{
+            backgroundColor: hexToRgba(resolvedHex, 0.04),
+            borderColor: hexToRgba(resolvedHex, 0.15),
+            borderWidth: '1px',
+            borderStyle: 'solid'
+          }}
+        >
           {cards.length === 0 ? (
             <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
               <p className="text-xs text-slate-300 font-medium">Vazio</p>

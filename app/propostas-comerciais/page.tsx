@@ -938,10 +938,19 @@ export default function PropostasComerciaisDashboard() {
   const KanbanColumnCards = ({ label, cards, color, type = 'status', onDropProp }: {
     label: string; cards: any[]; color?: string; type?: 'status' | 'vendedor' | 'segmento'; onDropProp?: (propId: string) => void;
   }) => {
-    const suaveBg = getSuaveBgClass(color, type);
+    const resolvedHex = resolveColorToHex(color);
+    const bgRgba = hexToRgba(resolvedHex, 0.04);
+    const borderRgba = hexToRgba(resolvedHex, 0.15);
+    
     return (
       <div 
-        className={`flex-shrink-0 w-72 flex flex-col min-h-[600px] p-3 pt-4 rounded-b-2xl rounded-t-none border-t-0 ${suaveBg}`}
+        className="flex-shrink-0 w-72 flex flex-col min-h-[600px] p-3 pt-4 rounded-b-2xl rounded-t-none border-t-0"
+        style={{
+          backgroundColor: bgRgba,
+          borderColor: borderRgba,
+          borderWidth: '1px',
+          borderStyle: 'solid'
+        }}
         onDragOver={(e) => {
           e.preventDefault();
           e.currentTarget.classList.add('opacity-80');
