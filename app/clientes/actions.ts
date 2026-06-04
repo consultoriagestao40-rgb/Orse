@@ -50,18 +50,19 @@ export async function createCliente(data: any) {
 
 export async function updateCliente(id: string, data: any) {
   try {
+    const updateData: any = {};
+    if (data.nomeFantasia !== undefined) updateData.nomeFantasia = data.nomeFantasia;
+    if (data.razaoSocial !== undefined) updateData.razaoSocial = data.razaoSocial;
+    if (data.cnpj !== undefined) updateData.cnpj = data.cnpj;
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.whatsapp !== undefined) updateData.whatsapp = data.whatsapp;
+    if (data.endereco !== undefined) updateData.endereco = data.endereco;
+    if (data.contato !== undefined) updateData.contato = data.contato;
+    if (data.segmento !== undefined) updateData.segmento = data.segmento;
+
     await prisma.client.update({
       where: { id },
-      data: {
-        nomeFantasia: data.nomeFantasia || 'Novo Cliente',
-        razaoSocial: data.razaoSocial || '',
-        cnpj: data.cnpj || '',
-        email: data.email || '',
-        whatsapp: data.whatsapp || '',
-        endereco: data.endereco || '',
-        contato: data.contato || '',
-        segmento: data.segmento || '',
-      }
+      data: updateData
     });
     revalidatePath('/clientes');
     return { success: true };

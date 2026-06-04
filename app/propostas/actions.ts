@@ -369,6 +369,19 @@ export async function saveProposta(data: any) {
       propostaId = newProposta.id;
     }
 
+    // Se o cliente existe, atualiza os dados dele (incluindo o segmento) no cadastro geral de clientes
+    if (dbClient) {
+      await prisma.client.update({
+        where: { id: dbClient.id },
+        data: {
+          segmento: cliente.segmento !== undefined ? cliente.segmento : undefined,
+          contato: cliente.contato !== undefined ? cliente.contato : undefined,
+          email: cliente.email !== undefined ? cliente.email : undefined,
+          whatsapp: cliente.celular !== undefined ? (cliente.celular || null) : undefined,
+        }
+      }).catch(err => console.error('Erro ao atualizar segmento do cliente:', err));
+    }
+
     const lastVersion = await prisma.propostaVersao.findFirst({
       where: { propostaId },
       orderBy: { versao: 'desc' }
@@ -383,6 +396,7 @@ export async function saveProposta(data: any) {
 
     const metadados = {
       clienteNome: cliente.cliente,
+      segmento: cliente.segmento || '',
       contato: cliente.contato,
       celular: cliente.celular,
       email: cliente.email,
@@ -647,6 +661,7 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
       where: { id },
       include: {
         user: true,
+        client: true,
         versoes: {
           orderBy: { versao: 'desc' },
           include: { items: true }
@@ -701,6 +716,7 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
       cliente: {
         id: proposta.clientId,
         clienteNome: meta.clienteNome || '',
+        segmento: meta.segmento || proposta.client?.segmento || '',
         contato: meta.contato || '',
         celular: meta.celular || '',
         email: meta.email || '',
