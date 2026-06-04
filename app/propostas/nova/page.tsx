@@ -13,7 +13,7 @@ import { getEscalas } from '@/app/escalas/actions';
 import { getProdutos } from '@/app/produtos/actions';
 import { createCliente, getClientes } from '@/app/clientes/actions';
 import { createProduto } from '@/app/produtos/actions';
-import { saveProposta, getPropostaCompleta, getLoggedUser } from '@/app/propostas/actions';
+import { saveProposta, getPropostaCompleta, getLoggedUser, getProposalPageInitData } from '@/app/propostas/actions';
 import { getTiposServico, getSegmentos, createTipoServico, createSegmento } from '@/app/admin/settings/actions';
 import { getEquipesTecnicas } from '@/app/admin/equipes-tecnicas/actions';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -120,6 +120,7 @@ function PropostaEditor() {
             revisao: `R${String(fullData.versao).padStart(2, '0')}`,
             tipoServicos: fullData.cliente.tipoServicos || '',
             tipoProposta: fullData.cliente.tipoProposta || 'RECORRENTE',
+            segmento: clientObj?.segmento || fullData.cliente.segmento || '',
             vendedorNome: (!fullData.cliente.vendedorNome || fullData.cliente.vendedorNome === 'Ádamo Quadros') ? (currentUser?.nome || 'Ádamo Quadros') : fullData.cliente.vendedorNome,
             vendedorCargo: (!fullData.cliente.vendedorCargo || fullData.cliente.vendedorCargo === 'Novos Negócios') ? (currentUser?.cargo || (currentUser?.role === 'ADMIN' ? 'Diretor Comercial' : currentUser?.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios')) : fullData.cliente.vendedorCargo,
             vendedorTelefone: (!fullData.cliente.vendedorTelefone || fullData.cliente.vendedorTelefone === '(41) 9 9737-0880') ? (currentUser?.celular || '(41) 9 9737-0880') : fullData.cliente.vendedorTelefone,
@@ -399,16 +400,26 @@ function PropostaEditor() {
       try {
         console.log('Iniciando carregamento do Editor FPV...');
         setLoading(true);
-        const [dataCcts, dataEscalas, dataProdutos, dataTipos, dataSegmentos, loggedUser, dataEmpresas, eqRes] = await Promise.all([
-          getCCTs(), 
-          getEscalas(), 
-          getProdutos(), 
-          getTiposServico(),
-          getSegmentos(),
-          getLoggedUser(),
-          getEmpresasEmissoras(),
-          getEquipesTecnicas()
-        ]);
+        const res = await getProposalPageInitData(id || undefined);
+        if (!res.success) {
+          showAlert(res.error || 'Erro ao carregar dados.', 'error', 'Erro');
+          setLoading(false);
+          return;
+        }
+
+        const {
+          dataCcts,
+          dataEscalas,
+          dataProdutos,
+          dataTipos,
+          dataSegmentos,
+          loggedUser,
+          dataEmpresas,
+          eqRes,
+          clientesData,
+          fullData
+        } = res;
+        
         setCcts(dataCcts || []);
         setEquipesTecnicasDb(eqRes?.success ? eqRes.list : []);
         setEscalasDb(dataEscalas || []);
@@ -417,22 +428,17 @@ function PropostaEditor() {
         setSegmentos(dataSegmentos || []);
         setEmpresasEmissoras(dataEmpresas || []);
         if (dataEmpresas && dataEmpresas.length > 0) setSelectedEmpresaId(dataEmpresas[0].id);
+        setClientesList(clientesData || []);
+        console.log('CCTs, Escalas, Produtos, Tipos de Serviço, Segmentos e Clientes carregados em paralelo via Server Action única.');
+
         setCurrentUser(loggedUser || null);
         if (loggedUser && loggedUser.email === 'admin@smartbidhub.com.br') {
           router.push('/admin/empresas');
           return;
         }
-        console.log('CCTs, Escalas, Produtos, Tipos de Serviço e Segmentos carregados.');
-        
-        const { getClientes } = await import('@/app/clientes/actions');
-        const clientesData = await getClientes();
-        setClientesList(clientesData || []);
-        console.log('Clientes carregados:', clientesData?.length || 0);
-        setCurrentUser(loggedUser);
 
         if (id) {
-          console.log('Buscando proposta ID:', id);
-          const fullData = await getPropostaCompleta(id);
+          console.log('Proposta ID recebido:', id);
           if (fullData) {
             console.log('Proposta encontrada. Mapeando dados...');
             const clientObj = (clientesData || []).find((c: any) => c.id === fullData.clientId);
@@ -444,89 +450,100 @@ function PropostaEditor() {
             }
             
             const loadedProposta = {
-               ...proposta,
-               id: fullData.id,
-               cliente: { 
-                 ...proposta.cliente, 
-                 cliente: clientObj?.nomeFantasia || fullData.cliente.clienteNome || '', 
-                 codigo: clientObj?.codigo || (fullData.cliente as any).codigo || '',
-                 sindicatoId: savedSindicatoId,
-                 contato: fullData.cliente.contato || '',
-                 celular: fullData.cliente.celular || '',
-                 email: fullData.cliente.email || '',
-                 objetoProposta: fullData.cliente.objetoProposta || '',
-                 hasEscopoTecnico: fullData.cliente.hasEscopoTecnico || false,
-                 escopoTecnico: fullData.cliente.escopoTecnico || '',
-                 cidade: fullData.cliente.cidade || '',
-                 dataElaboracao: fullData.cliente.dataElaboracao || '',
-                 numeroProposta: (fullData as any).numero || '',
-                 revisao: `R${String(fullData.versao).padStart(2, '0')}`,
-                 tipoServicos: fullData.cliente.tipoServicos || '',
-                 tipoProposta: fullData.cliente.tipoProposta || 'RECORRENTE',
-                 vendedorNome: (!fullData.cliente.vendedorNome || fullData.cliente.vendedorNome === 'Ádamo Quadros') ? (loggedUser?.nome || 'Ádamo Quadros') : fullData.cliente.vendedorNome,
-                 vendedorCargo: (!fullData.cliente.vendedorCargo || fullData.cliente.vendedorCargo === 'Novos Negócios') ? (loggedUser?.cargo || (loggedUser?.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser?.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios')) : fullData.cliente.vendedorCargo,
-                 vendedorTelefone: (!fullData.cliente.vendedorTelefone || fullData.cliente.vendedorTelefone === '(41) 9 9737-0880' || fullData.cliente.vendedorTelefone === '(41) 99737-0880') ? (loggedUser?.celular || '(41) 9 9737-0880') : fullData.cliente.vendedorTelefone,
-                 vendedorEmail: (!fullData.cliente.vendedorEmail || fullData.cliente.vendedorEmail === 'contato@silvaconsultoria.com.br') ? (loggedUser?.email || 'contato@silvaconsultoria.com.br') : fullData.cliente.vendedorEmail,
+                ...proposta,
+                id: fullData.id,
+                cliente: { 
+                  ...proposta.cliente, 
+                  cliente: clientObj?.nomeFantasia || fullData.cliente.clienteNome || '', 
+                  codigo: clientObj?.codigo || (fullData.cliente as any).codigo || '',
+                  sindicatoId: savedSindicatoId,
+                  contato: fullData.cliente.contato || '',
+                  celular: fullData.cliente.celular || '',
+                  email: fullData.cliente.email || '',
+                  objetoProposta: fullData.cliente.objetoProposta || '',
+                  hasEscopoTecnico: fullData.cliente.hasEscopoTecnico || false,
+                  escopoTecnico: fullData.cliente.escopoTecnico || '',
+                  cidade: fullData.cliente.cidade || '',
+                  dataElaboracao: fullData.cliente.dataElaboracao || '',
+                  numeroProposta: (fullData as any).numero || '',
+                  revisao: `R${String(fullData.versao).padStart(2, '0')}`,
+                  tipoServicos: fullData.cliente.tipoServicos || '',
+                  tipoProposta: fullData.cliente.tipoProposta || 'RECORRENTE',
+                  segmento: clientObj?.segmento || fullData.cliente.segmento || '',
+                  vendedorNome: (!fullData.cliente.vendedorNome || fullData.cliente.vendedorNome === 'Ádamo Quadros') ? (loggedUser?.nome || 'Ádamo Quadros') : fullData.cliente.vendedorNome,
+                  vendedorCargo: (!fullData.cliente.vendedorCargo || fullData.cliente.vendedorCargo === 'Novos Negócios') ? (loggedUser?.cargo || (loggedUser?.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser?.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios')) : fullData.cliente.vendedorCargo,
+                  vendedorTelefone: (!fullData.cliente.vendedorTelefone || fullData.cliente.vendedorTelefone === '(41) 9 9737-0880' || fullData.cliente.vendedorTelefone === '(41) 99737-0880') ? (loggedUser?.celular || '(41) 9 9737-0880') : fullData.cliente.vendedorTelefone,
+                  vendedorEmail: (!fullData.cliente.vendedorEmail || fullData.cliente.vendedorEmail === 'contato@silvaconsultoria.com.br') ? (loggedUser?.email || 'contato@silvaconsultoria.com.br') : fullData.cliente.vendedorEmail,
                   quadroEfetivoSubtitulo: fullData.cliente.quadroEfetivoSubtitulo || 'Quadro efetivo - Opções',
                   quadroEfetivoClausula1: fullData.cliente.quadroEfetivoClausula1 || 'Em casos de trabalho em feriados ou necessidades de jornada fora do escopo o funcionário deverá ter duas folgas compensatórias em sequência;',
                   quadroEfetivoClausula2: fullData.cliente.quadroEfetivoClausula2 || 'Para reduções no efetivo prazo de 30 (trinta) dias;',
                   quadroEfetivoClausula3: fullData.cliente.quadroEfetivoClausula3 || 'Intervalo para jornadas acima de 6h diárias de no mínimo 60 minutos, entre 4h a 6h o intervalo será de 15 minutos (CLT).',
-               condicoesColaboradores: fullData.cliente.condicoesColaboradores || [],
-               condicoesCliente: fullData.cliente.condicoesCliente || [],
-               razaoSocial: clientObj?.razaoSocial || (fullData.cliente as any).razaoSocial || '',
-               cnpj: clientObj?.cnpj || (fullData.cliente as any).cnpj || '',
-               dataInicio: fullData.cliente.dataInicio || '',
-               dataVencimento: fullData.cliente.dataVencimento || '',
-               contatoCargo: fullData.cliente.contatoCargo || '',
-               condicaoColaboradores1: fullData.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
-               condicaoColaboradores2: fullData.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
-               condicaoColaboradores3: fullData.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.',
-               condicaoCliente1: fullData.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
-               condicaoCliente2: fullData.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao dissídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
-               condicaoCliente3: fullData.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.'
-               },
-               premissas: {
-                 ...fullData.premissas,
-                 tributos: Array.isArray(fullData.premissas.tributos) ? fullData.premissas.tributos : []
-               },
-               equipe: (fullData.equipe || []).map((e: any) => {
-                   let healedAtivosConfig = e.ativosConfig || {};
-                   if (e.tipoItem === 'SPOT' && e.equipeTecnicaId) {
-                      const eq = (eqRes?.success ? eqRes.list : []).find((x: any) => x.id === e.equipeTecnicaId);
-                      if (eq) {
-                         healedAtivosConfig = {
-                            ...healedAtivosConfig,
-                            custoMensalMaoObra: eq.custoMensalMaoObra,
-                            custoMensalVeiculo: eq.custoMensalVeiculo,
-                            custoMensalCombustivel: eq.custoMensalCombustivel,
-                            custoMensalTotal: eq.custoMensalTotal
-                         };
-                      }
-                   }
-                   return {
-                      ...e,
-                      showConfig: false,
-                      cctBase: (dataCcts || []).find((c: any) => c.id === savedSindicatoId) || {},
-                      ativosConfig: healedAtivosConfig
-                   };
-                }),
-               versao: fullData.versao,
-               insumos: (fullData as any).insumos || { materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0, servicosDescricao: '' },
-               dreEncargos: (fullData as any).dreEncargos,
-               encargos: (fullData as any).encargos || proposta.encargos,
-               itensInclusosExcluidos: (fullData.cliente as any).itensInclusosExcluidos || [
-                  { id: '1', descricao: 'Fornecimento de mão de obra', incluso: true },
-                  { id: '2', descricao: 'Fornecimento de insumos necessario para a prestação dos serviços', incluso: true },
-                  { id: '3', descricao: 'Maquinas e equipamentos', incluso: false },
-                  { id: '4', descricao: 'Produtos químicos', incluso: false },
-                  { id: '5', descricao: 'Descartaveis', incluso: false }
-               ],
-               dreTaxPercent: (fullData as any).dreTaxPercent
-            };
-            setProposta(loadedProposta);
-            setInitialPropostaJson(JSON.stringify(loadedProposta));
-            setVersions(fullData.availableVersions || []);
-            console.log('Estado da proposta atualizado.');
+                  condicaoColaboradores1: fullData.cliente.condicaoColaboradores1 || 'Vale alimentação de R$900,00;',
+                  condicaoColaboradores2: fullData.cliente.condicaoColaboradores2 || 'Cesta trimestral de assiduidade;',
+                  condicaoColaboradores3: fullData.cliente.condicaoColaboradores3 || '2 Vales transporte por dia.',
+                  condicaoCliente1: fullData.cliente.condicaoCliente1 || 'Faturamento dos serviços aos dias 15 ou 30 de cada mês com vencimento nos próximos 15 dias;',
+                  condicaoCliente2: fullData.cliente.condicaoCliente2 || 'Reajuste anual, automático e equivalente ao disssídio da categoria (SIEMACO) todo mês fevereiro de cada ano subsequente;',
+                  condicaoCliente3: fullData.cliente.condicaoCliente3 || 'Próximo reajuste Fevereiro/2026.',
+                  razaoSocial: fullData.cliente.razaoSocial || '',
+                  cnpj: fullData.cliente.cnpj || '',
+                  dataInicio: fullData.cliente.dataInicio || '',
+                  dataVencimento: fullData.cliente.dataVencimento || '',
+                  contatoCargo: fullData.cliente.contatoCargo || '',
+                  condicoesColaboradores: fullData.cliente.condicoesColaboradores || [],
+                  condicoesCliente: fullData.cliente.condicoesCliente || [],
+                  itensInclusosExcluidos: fullData.cliente.itensInclusosExcluidos || []
+                },
+                insumos: {
+                  materiais: fullData.insumos.materiais || 0,
+                  maquinas: fullData.insumos.maquinas || 0,
+                  descartaveis: fullData.insumos.descartaveis || 0,
+                  servicos: fullData.insumos.servicos || 0,
+                  servicosDescricao: fullData.insumos.servicosDescricao || '',
+                  detalheMateriais: fullData.insumos.detalheMateriais || [],
+                  detalheMaquinas: fullData.insumos.detalheMaquinas || [],
+                },
+                premissas: {
+                  ...fullData.premissas,
+                  tributos: Array.isArray(fullData.premissas.tributos) ? fullData.premissas.tributos : []
+                },
+                equipe: (fullData.equipe || []).map((e: any) => {
+                    let healedAtivosConfig = e.ativosConfig || {};
+                    if (e.tipoItem === 'SPOT' && e.equipeTecnicaId) {
+                       const eq = (eqRes?.success ? eqRes.list : []).find((x: any) => x.id === e.equipeTecnicaId);
+                       if (eq) {
+                          healedAtivosConfig = {
+                             ...healedAtivosConfig,
+                             custoMensalMaoObra: eq.custoMensalMaoObra,
+                             custoMensalVeiculo: eq.custoMensalVeiculo,
+                             custoMensalCombustivel: eq.custoMensalCombustivel,
+                             custoMensalTotal: eq.custoMensalTotal
+                          };
+                       }
+                    }
+                    return {
+                       ...e,
+                       showConfig: false,
+                       cctBase: (dataCcts || []).find((c: any) => c.id === (e.cargo?.cctId || savedSindicatoId)) || {},
+                       ativosConfig: healedAtivosConfig
+                    };
+                 }),
+                versao: fullData.versao,
+                insumos: (fullData as any).insumos || { materiais: 0, maquinas: 0, descartaveis: 0, servicos: 0, servicosDescricao: '' },
+                dreEncargos: (fullData as any).dreEncargos,
+                encargos: (fullData as any).encargos || proposta.encargos,
+                itensInclusosExcluidos: (fullData.cliente as any).itensInclusosExcluidos || [
+                   { id: '1', descricao: 'Fornecimento de mão de obra', incluso: true },
+                   { id: '2', descricao: 'Fornecimento de insumos necessario para a prestação dos serviços', incluso: true },
+                   { id: '3', descricao: 'Maquinas e equipamentos', incluso: false },
+                   { id: '4', descricao: 'Produtos químicos', incluso: false },
+                   { id: '5', descricao: 'Descartaveis', incluso: false }
+                ],
+                dreTaxPercent: (fullData as any).dreTaxPercent
+             };
+             setProposta(loadedProposta);
+             setInitialPropostaJson(JSON.stringify(loadedProposta));
+             setVersions(fullData.availableVersions || []);
+             console.log('Estado da proposta atualizado.');
           } else {
              console.warn('Proposta não encontrada no banco.');
              showAlert('Você não tem permissão para visualizar esta proposta ou ela não existe.', 'error', 'Erro', () => router.push('/'));
@@ -546,6 +563,7 @@ function PropostaEditor() {
                  contato: foundClient?.contato || '',
                  email: foundClient?.email || '',
                  celular: foundClient?.whatsapp || '',
+                 segmento: foundClient?.segmento || '',
                  vendedorNome: loggedUser.nome,
                  vendedorCargo: loggedUser.cargo || (loggedUser.role === 'ADMIN' ? 'Diretor Comercial' : loggedUser.role === 'MANAGER' ? 'Gerente Comercial' : 'Novos Negócios'),
                  vendedorTelefone: loggedUser.celular || '(41) 9 9737-0880',
@@ -567,7 +585,6 @@ function PropostaEditor() {
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      const currentJson = JSON.stringify(proposta);
       const hasChanges = initialPropostaJson !== null && initialPropostaJson !== currentJson;
       if (hasChanges) {
         e.preventDefault();
@@ -960,11 +977,18 @@ function PropostaEditor() {
   const handleVoltar = () => {
     const currentJson = JSON.stringify(proposta);
     if (initialPropostaJson && initialPropostaJson !== currentJson) {
-      setPendingNavigationUrl('/');
+      setPendingNavigationUrl('BACK');
       setGoBackAfterSave(true);
       setShowConfirmDiscardModal(true);
     } else {
-      router.push('/');
+      const prevPath = typeof window !== 'undefined' ? sessionStorage.getItem('prevPath') : null;
+      if (prevPath) {
+        router.push(prevPath);
+      } else if (typeof window !== 'undefined' && window.history.length > 1) {
+        router.back();
+      } else {
+        router.push('/pipeline');
+      }
     }
   };
 
@@ -1006,7 +1030,14 @@ function PropostaEditor() {
             if (pendingNavigationUrl && pendingNavigationUrl !== 'BACK') {
                router.push(pendingNavigationUrl);
             } else {
-               router.push('/');
+               const prevPath = typeof window !== 'undefined' ? sessionStorage.getItem('prevPath') : null;
+               if (prevPath) {
+                 router.push(prevPath);
+               } else if (typeof window !== 'undefined' && window.history.length > 1) {
+                 router.back();
+               } else {
+                 router.push('/pipeline');
+               }
             }
           } else if (!proposta.id) {
              router.push(`/propostas/nova?id=${res.propostaId}`);
@@ -1495,7 +1526,8 @@ function PropostaEditor() {
                                              email: c.email || '',
                                              celular: c.whatsapp || '',
                                              contato: c.contato || '',
-                                             contatoCargo: ''
+                                             contatoCargo: '',
+                                             segmento: c.segmento || ''
                                           }
                                        });
                                        setShowClientDropdown(false);
@@ -5943,7 +5975,14 @@ function PropostaEditor() {
                            if (pendingNavigationUrl && pendingNavigationUrl !== 'BACK') {
                               router.push(pendingNavigationUrl);
                            } else {
-                              router.push('/');
+                              const prevPath = typeof window !== 'undefined' ? sessionStorage.getItem('prevPath') : null;
+                              if (prevPath) {
+                                 router.push(prevPath);
+                              } else if (typeof window !== 'undefined' && window.history.length > 1) {
+                                 router.back();
+                              } else {
+                                 router.push('/pipeline');
+                              }
                            }
                         }}
                         className="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-extrabold uppercase tracking-widest py-3.5 px-4 rounded-xl transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2"

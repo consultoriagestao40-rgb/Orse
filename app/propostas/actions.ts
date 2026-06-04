@@ -1140,3 +1140,76 @@ export async function getPipelinePageData() {
   }
 }
 
+export async function getProposalPageInitData(propostaId?: string, versionId?: string) {
+  noStore();
+  try {
+    const loggedUser = await getLoggedUser();
+    if (!loggedUser) return { success: false, error: 'Não autorizado.' };
+
+    const tenantId = loggedUser.tenantId;
+    const whereClause = tenantId ? { tenantId } : {};
+
+    const [
+      ccts,
+      escalas,
+      produtos,
+      tiposServico,
+      segmentos,
+      empresasEmissoras,
+      equipesTecnicas,
+      clientes,
+      propostaCompleta
+    ] = await Promise.all([
+      prisma.cCT.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' },
+        include: { cargos: true }
+      }),
+      prisma.escala.findMany({
+        where: whereClause,
+        orderBy: { nome: 'asc' }
+      }),
+      prisma.produto.findMany({
+        where: whereClause,
+        orderBy: { descricao: 'asc' }
+      }),
+      prisma.tipoServico.findMany({
+        orderBy: { nome: 'asc' }
+      }),
+      prisma.segmento.findMany({
+        orderBy: { nome: 'asc' }
+      }),
+      prisma.empresaEmissora.findMany({
+        orderBy: { nomeFantasia: 'asc' }
+      }),
+      prisma.equipeTecnicaComposicao.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.client.findMany({
+        where: whereClause,
+        orderBy: { nomeFantasia: 'asc' }
+      }),
+      propostaId ? getPropostaCompleta(propostaId, versionId) : Promise.resolve(null)
+    ]);
+
+    return JSON.parse(JSON.stringify({
+      success: true,
+      dataCcts: ccts,
+      dataEscalas: escalas,
+      dataProdutos: produtos,
+      dataTipos: tiposServico,
+      dataSegmentos: segmentos,
+      loggedUser,
+      dataEmpresas: empresasEmissoras,
+      eqRes: { success: true, list: equipesTecnicas },
+      clientesData: clientes,
+      fullData: propostaCompleta
+    }));
+  } catch (error: any) {
+    console.error('Erro ao buscar dados iniciais da proposta:', error);
+    return { success: false, error: error.message || 'Erro ao carregar dados.' };
+  }
+}
+
+

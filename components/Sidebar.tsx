@@ -15,6 +15,15 @@ const Sidebar = () => {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTenantBlocked, setIsTenantBlocked] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && pathname) {
+      if (!pathname.startsWith('/propostas/nova')) {
+        sessionStorage.setItem('prevPath', pathname + window.location.search);
+      }
+    }
+  }, [pathname]);
+
   
   // Helper para obter o logo do cookie de forma síncrona no primeiro render client-side
   const getInitialLogoUrl = () => {
