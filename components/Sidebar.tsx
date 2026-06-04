@@ -870,10 +870,21 @@ const Sidebar = () => {
           </div>
         ) : (
           <div className="w-full flex flex-col items-center gap-3">
-            {/* SBH Acronym Badge (Always clean and premium when collapsed) */}
-            <div className="w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-[11px] font-black shadow-md transition-all shrink-0 tracking-wider">
-              SBH
-            </div>
+            {/* SBH Acronym Badge or Small Tenant Logo when collapsed */}
+            {(user?.tenantLogoUrl || getInitialLogoUrl()) ? (
+              <div className="w-10 h-10 bg-white border border-slate-200/80 rounded-xl flex items-center justify-center p-1.5 shadow-2xs transition-all shrink-0 hover:bg-slate-50 relative overflow-hidden" title={user?.tenantNome || getInitialLogoNome()}>
+                <img 
+                  src={user?.tenantLogoUrl || getInitialLogoUrl()} 
+                  alt={user?.tenantNome || getInitialLogoNome()} 
+                  suppressHydrationWarning={true}
+                  className="max-h-full max-w-full object-contain rounded-sm"
+                />
+              </div>
+            ) : (
+              <div className="w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-[11px] font-black shadow-md transition-all shrink-0 tracking-wider">
+                SBH
+              </div>
+            )}
           </div>
         )}
         
