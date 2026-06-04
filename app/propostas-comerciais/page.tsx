@@ -54,26 +54,19 @@ export default function PropostasComerciaisDashboard() {
   const [vendedorColors, setVendedorColors] = useState<Record<string, string>>({});
   const [statusOrder, setStatusOrder] = useState<string[]>([]);
   const [vendedorOrder, setVendedorOrder] = useState<string[]>([]);
-  const [draggedColumn, setDraggedColumn] = useState<{ label: string; type: 'status' | 'vendedor' } | null>(null);
-  const [dragOverColumn, setDragOverColumn] = useState<{ label: string; type: 'status' | 'vendedor' } | null>(null);
 
   const handleDragColumnStart = (e: React.DragEvent, columnLabel: string, type: 'status' | 'vendedor') => {
     e.dataTransfer.setData('text/column-id', columnLabel);
     e.dataTransfer.setData('text/column-type', type);
-    setDraggedColumn({ label: columnLabel, type });
     e.currentTarget.classList.add('opacity-40');
   };
 
   const handleDragColumnEnd = (e: React.DragEvent) => {
     e.currentTarget.classList.remove('opacity-40');
-    setDraggedColumn(null);
-    setDragOverColumn(null);
   };
 
   const handleDropColumn = (e: React.DragEvent, targetLabel: string, type: 'status' | 'vendedor') => {
     e.preventDefault();
-    setDraggedColumn(null);
-    setDragOverColumn(null);
     const sourceLabel = e.dataTransfer.getData('text/column-id');
     const sourceType = e.dataTransfer.getData('text/column-type');
     
@@ -407,41 +400,10 @@ export default function PropostasComerciaisDashboard() {
       { name: 'Teal', value: 'teal' }
     ];
 
-    const getDragPosition = () => {
-      if (!draggedColumn || !dragOverColumn || draggedColumn.type !== type || dragOverColumn.label !== label) {
-        return null;
-      }
-      
-      const defaultCols = type === 'status' 
-        ? kanbanStatusCols.map(c => c.label)
-        : kanbanVendedorCols.map(c => c.label);
-        
-      const order = type === 'status' ? statusOrder : vendedorOrder;
-      
-      const sortedLabels = [...defaultCols];
-      if (order.length > 0) {
-        sortedLabels.sort((a, b) => {
-          let idxA = order.indexOf(a);
-          let idxB = order.indexOf(b);
-          if (idxA === -1) idxA = 999;
-          if (idxB === -1) idxB = 999;
-          return idxA - idxB;
-        });
-      }
-      
-      const draggedIdx = sortedLabels.indexOf(draggedColumn.label);
-      const targetIdx = sortedLabels.indexOf(label);
-      
-      if (draggedIdx === -1 || targetIdx === -1) return null;
-      
-      return draggedIdx > targetIdx ? 'left' : 'right';
-    };
-
-    const dragPos = getDragPosition();
-
     return (
       <div 
         className="flex-shrink-0 w-72 shrink-0 relative cursor-grab active:cursor-grabbing transition-all select-none duration-200 hover:scale-[1.01]"
+        data-col-label={label}
         draggable="true"
         onDragStart={(e) => {
           const target = e.target as HTMLElement;
@@ -450,37 +412,85 @@ export default function PropostasComerciaisDashboard() {
             return;
           }
           if (onDragColumnStart) onDragColumnStart(e, label);
+          (window as any).__draggedColumn = { label, type };
         }}
-        onDragEnd={onDragColumnEnd}
+        onDragEnd={(e) => {
+          if (onDragColumnEnd) onDragColumnEnd(e);
+          (window as any).__draggedColumn = null;
+          const leftGuide = e.currentTarget.querySelector('.drag-guide-left') as HTMLElement;
+          const rightGuide = e.currentTarget.querySelector('.drag-guide-right') as HTMLElement;
+          if (leftGuide) {
+            leftGuide.classList.remove('opacity-100');
+            leftGuide.classList.add('opacity-0');
+          }
+          if (rightGuide) {
+            rightGuide.classList.remove('opacity-100');
+            rightGuide.classList.add('opacity-0');
+          }
+        }}
         onDragOver={(e) => {
           e.preventDefault();
-          if (draggedColumn && draggedColumn.type === type && draggedColumn.label !== label) {
-            if (dragOverColumn?.label !== label) {
-              setDragOverColumn({ label, type });
+          const dragged = (window as any).__draggedColumn;
+          if (dragged && dragged.type === type && dragged.label !== label) {
+            const parent = e.currentTarget.parentElement;
+            if (parent) {
+              const children = Array.from(parent.children);
+              const draggedIndex = children.findIndex(child => child.getAttribute('data-col-label') === dragged.label);
+              const targetIndex = children.findIndex(child => child.getAttribute('data-col-label') === label);
+              
+              if (draggedIndex !== -1 && targetIndex !== -1) {
+                const isLeft = draggedIndex > targetIndex;
+                const leftGuide = e.currentTarget.querySelector('.drag-guide-left') as HTMLElement;
+                const rightGuide = e.currentTarget.querySelector('.drag-guide-right') as HTMLElement;
+                
+                if (leftGuide && rightGuide) {
+                  if (isLeft) {
+                    leftGuide.classList.remove('opacity-0');
+                    leftGuide.classList.add('opacity-100');
+                    rightGuide.classList.remove('opacity-100');
+                    rightGuide.classList.add('opacity-0');
+                  } else {
+                    rightGuide.classList.remove('opacity-0');
+                    rightGuide.classList.add('opacity-100');
+                    leftGuide.classList.remove('opacity-100');
+                    leftGuide.classList.add('opacity-0');
+                  }
+                }
+              }
             }
           }
         }}
-        onDragLeave={() => {
-          if (dragOverColumn?.label === label) {
-            setDragOverColumn(null);
+        onDragLeave={(e) => {
+          const leftGuide = e.currentTarget.querySelector('.drag-guide-left') as HTMLElement;
+          const rightGuide = e.currentTarget.querySelector('.drag-guide-right') as HTMLElement;
+          if (leftGuide && rightGuide) {
+            leftGuide.classList.remove('opacity-100');
+            leftGuide.classList.add('opacity-0');
+            rightGuide.classList.remove('opacity-100');
+            rightGuide.classList.add('opacity-0');
           }
         }}
         onDrop={(e) => {
           if (onDropColumn) onDropColumn(e, label);
+          (window as any).__draggedColumn = null;
+          const leftGuide = e.currentTarget.querySelector('.drag-guide-left') as HTMLElement;
+          const rightGuide = e.currentTarget.querySelector('.drag-guide-right') as HTMLElement;
+          if (leftGuide && rightGuide) {
+            leftGuide.classList.remove('opacity-100');
+            leftGuide.classList.add('opacity-0');
+            rightGuide.classList.remove('opacity-100');
+            rightGuide.classList.add('opacity-0');
+          }
         }}
       >
-        {dragPos === 'left' && (
-          <div className="absolute left-[-12px] top-0 bottom-0 w-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)] z-30 pointer-events-none animate-pulse flex items-center justify-center">
-            <div className="absolute top-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-            <div className="absolute bottom-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-          </div>
-        )}
-        {dragPos === 'right' && (
-          <div className="absolute right-[-12px] top-0 bottom-0 w-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)] z-30 pointer-events-none animate-pulse flex items-center justify-center">
-            <div className="absolute top-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-            <div className="absolute bottom-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-          </div>
-        )}
+        <div className="drag-guide-left absolute left-[-12px] top-0 bottom-0 w-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)] z-30 pointer-events-none opacity-0 transition-opacity duration-150 flex items-center justify-center">
+          <div className="absolute top-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+          <div className="absolute bottom-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+        </div>
+        <div className="drag-guide-right absolute right-[-12px] top-0 bottom-0 w-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)] z-30 pointer-events-none opacity-0 transition-opacity duration-150 flex items-center justify-center">
+          <div className="absolute top-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+          <div className="absolute bottom-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+        </div>
         {isStatus ? (
           <div className={`border border-b-0 rounded-t-2xl rounded-b-none p-4 shadow-md text-left ${hStyle.bg} ${hStyle.text} ${hStyle.border} relative group`}>
             <div className="flex items-center justify-between mb-2">
