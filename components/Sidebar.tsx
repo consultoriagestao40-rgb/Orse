@@ -698,6 +698,8 @@ const Sidebar = () => {
 
   const [orderedItems, setOrderedItems] = useState<any[]>([]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [recentlyDroppedId, setRecentlyDroppedId] = useState<string | null>(null);
 
   // Sincroniza e ordena os itens do menu
   useEffect(() => {
@@ -749,20 +751,35 @@ const Sidebar = () => {
     e.dataTransfer.setData('text/menu-index', String(index));
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
   };
 
   const handleDrop = (e: React.DragEvent, targetIndex: number) => {
     const sourceIndexStr = e.dataTransfer.getData('text/menu-index');
     if (sourceIndexStr === '') return;
     const sourceIndex = Number(sourceIndexStr);
+    
+    setDragOverIndex(null);
     if (sourceIndex === targetIndex) return;
 
     const newItems = [...orderedItems];
     const [removed] = newItems.splice(sourceIndex, 1);
     newItems.splice(targetIndex, 0, removed);
     setOrderedItems(newItems);
+
+    const label = removed.label;
+    setRecentlyDroppedId(label);
+    
+    // Timer curto para soltar e começar o fade de 10 segundos
+    setTimeout(() => {
+      setRecentlyDroppedId(null);
+    }, 100);
 
     if (typeof window !== 'undefined' && user?.email) {
       const orderLabels = newItems.map(item => item.label);
@@ -772,6 +789,7 @@ const Sidebar = () => {
 
   const handleDragEnd = () => {
     setDraggedIndex(null);
+    setDragOverIndex(null);
   };
  
   return (
@@ -829,23 +847,45 @@ const Sidebar = () => {
             : item.href === '/pipeline'
               ? (pathname === '/pipeline' || ((pathname.startsWith('/propostas') || pathname.startsWith('/proposta')) && !pathname.startsWith('/propostas-comerciais')))
               : pathname === item.href;
+
+          const isDragOver = dragOverIndex === index;
+          const isDraggingUp = draggedIndex !== null && draggedIndex > index;
+          const isDraggingDown = draggedIndex !== null && draggedIndex < index;
+          const isHighlighted = recentlyDroppedId === item.label;
+
           return (
             <div
               key={item.label}
               draggable={!isSaaSArea}
               onDragStart={(e) => handleDragStart(e, index)}
-              onDragOver={handleDragOver}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, index)}
               onDragEnd={handleDragEnd}
-              className={`cursor-grab active:cursor-grabbing transition-all duration-150 ${
+              className={`cursor-grab active:cursor-grabbing transition-all duration-150 border-t-2 border-b-2 border-transparent ${
                 draggedIndex === index 
                   ? 'opacity-40 scale-95 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl bg-slate-50/50' 
                   : 'hover:scale-[1.01]'
+              } ${
+                isDragOver && isDraggingUp ? 'border-t-emerald-500 scale-[1.01]' : ''
+              } ${
+                isDragOver && isDraggingDown ? 'border-b-emerald-500 scale-[1.01]' : ''
               }`}
             >
               <Link
                 href={item.href}
                 title={isCollapsed ? item.label : undefined}
+                style={
+                  isHighlighted
+                    ? {
+                        backgroundColor: isActive ? '#05070a' : '#CBD5E1',
+                        color: isActive ? '#FFFFFF' : '#0F172A',
+                        transition: 'none',
+                      }
+                    : {
+                        transition: 'background-color 10s ease-out, color 10s ease-out',
+                      }
+                }
                 className={`flex items-center gap-3 rounded-2xl transition-all ${
                   isCollapsed ? 'justify-center p-3.5' : 'px-5 py-4'
                 } ${
