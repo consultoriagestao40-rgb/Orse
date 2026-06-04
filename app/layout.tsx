@@ -46,6 +46,10 @@ export default function RootLayout({
                 }
               }
               
+              if (window.location.pathname.indexOf('/proposta/ver/') !== -1) {
+                return;
+              }
+              
               if (window.location.pathname.indexOf('/admin/empresas') !== -1) {
                 color = '#1B4D3E';
                 logoUrl = '';
