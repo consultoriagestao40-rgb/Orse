@@ -116,9 +116,61 @@ export default function ContratosDashboard() {
 
   const statusList = ['Pendente de Assinatura', 'Vigente', 'Reajuste Pendente', 'Encerrado'];
 
-  const KanbanColumn = ({ status }: { status: string }) => {
+  const resolveStatusColorToHex = (status: string): string => {
+    if (status === 'Pendente de Assinatura') return '#f59e0b'; // amber
+    if (status === 'Vigente') return '#10b981'; // emerald
+    if (status === 'Reajuste Pendente') return '#f97316'; // orange
+    if (status === 'Encerrado') return '#64748b'; // slate
+    return '#3b82f6'; // blue
+  };
+
+  const normalizeHex = (hex: string) => {
+    let h = hex.replace('#', '');
+    if (h.length === 3) {
+      h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    }
+    return '#' + h;
+  };
+
+  const getContrastYIQ = (hex: string) => {
+    const normalized = normalizeHex(hex);
+    const r = parseInt(normalized.slice(1, 3), 16);
+    const g = parseInt(normalized.slice(3, 5), 16);
+    const b = parseInt(normalized.slice(5, 7), 16);
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return (yiq >= 140) ? 'black' : 'white';
+  };
+
+  const hexToRgba = (hex: string, alpha: number) => {
+    const normalized = normalizeHex(hex);
+    const r = parseInt(normalized.slice(1, 3), 16);
+    const g = parseInt(normalized.slice(3, 5), 16);
+    const b = parseInt(normalized.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  const getDarkenedHexForText = (hex: string) => {
+    const normalized = normalizeHex(hex);
+    let r = parseInt(normalized.slice(1, 3), 16);
+    let g = parseInt(normalized.slice(3, 5), 16);
+    let b = parseInt(normalized.slice(5, 7), 16);
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    if (yiq > 170) {
+      r = Math.max(0, Math.floor(r * 0.5));
+      g = Math.max(0, Math.floor(g * 0.5));
+      b = Math.max(0, Math.floor(b * 0.5));
+    }
+    const toHexStr = (val: number) => val.toString(16).padStart(2, '0');
+    return `#${toHexStr(r)}${toHexStr(g)}${toHexStr(b)}`;
+  };
+
+  const KanbanColumn = ({ status, isFirst = false }: { status: string; isFirst?: boolean }) => {
     const cards = filteredContratos.filter(c => c.status === status);
     const total = cards.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
+
+    const resolvedHex = resolveStatusColorToHex(status);
+    const contrast = getContrastYIQ(resolvedHex);
+    const badgeClass = contrast === 'white' ? 'bg-white/20 text-white' : 'bg-black/10 text-slate-800';
 
     return (
       <div 
@@ -135,16 +187,57 @@ export default function ContratosDashboard() {
           }
         }}
       >
-        <div className="bg-white border border-slate-200 rounded-xl mb-3 p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider border ${getStatusColor(status)}`}>
-              {status}
-            </span>
-            <span className="text-xs font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
-              {cards.length}
-            </span>
+        <div className="flex flex-col items-center gap-1.5 w-full mb-3 select-none">
+          {/* Cabeçalho Chevron/Seta */}
+          <div className="w-full h-11 relative group/title pointer-events-auto">
+            {/* Background SVG Custom Shape */}
+            <svg 
+              className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200"
+              viewBox="0 0 320 44"
+              preserveAspectRatio="none"
+              style={{
+                color: resolvedHex,
+              }}
+            >
+              <path 
+                d={isFirst 
+                  ? "M 10,0 L 306,0 L 320,22 L 306,44 L 10,44 A 10,10 0 0,1 0,34 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                  : "M 0,0 L 306,0 L 320,22 L 306,44 L 0,44 L 14,22 Z"
+                }
+                fill="currentColor"
+                stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
+                strokeWidth="1.5"
+              />
+            </svg>
+
+            {/* Conteúdo do Cabeçalho */}
+            <div 
+              className={`absolute inset-0 z-10 flex items-center justify-between ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+              style={{
+                color: contrast === 'white' ? '#ffffff' : '#0f172a'
+              }}
+            >
+              <span className="text-xs font-black uppercase tracking-wider truncate max-w-[200px]">
+                {status}
+              </span>
+              
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm ${badgeClass}`}>
+                {cards.length}
+              </span>
+            </div>
           </div>
-          <p className="text-sm font-black text-[#1B4D3E]">{fmt(total)}<span className="text-[10px] text-slate-400 font-bold"> /mês</span></p>
+
+          {/* Totalizador de Volume */}
+          <div 
+            className="px-3.5 py-1 rounded-full text-xs font-bold shadow-sm select-none text-center border"
+            style={{
+              backgroundColor: hexToRgba(resolvedHex, 0.1),
+              color: getDarkenedHexForText(resolvedHex),
+              borderColor: hexToRgba(resolvedHex, 0.25)
+            }}
+          >
+            {fmt(total)} /mês
+          </div>
         </div>
 
         <div className="flex flex-col gap-3 flex-1">
@@ -434,8 +527,8 @@ export default function ContratosDashboard() {
           {viewMode === 'kanban-status' && (
             <div className="overflow-x-auto pb-6">
               <div className="flex gap-5 min-w-max">
-                {statusList.map(status => (
-                  <KanbanColumn key={status} status={status} />
+                {statusList.map((status, index) => (
+                  <KanbanColumn key={status} status={status} isFirst={index === 0} />
                 ))}
               </div>
             </div>
