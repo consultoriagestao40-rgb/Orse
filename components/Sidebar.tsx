@@ -1570,7 +1570,7 @@ const Sidebar = () => {
             }
           `}} />
           {/* Barra Vertical de Atalhos (Extrema Direita) */}
-          <div className="fixed top-0 right-0 h-screen w-12 bg-[#0A0D14] border-l border-slate-800/60 z-[170] flex flex-col justify-between py-5 items-center font-sans shadow-lg select-none">
+          <div className="fixed top-0 right-0 h-screen w-12 bg-white border-l border-slate-200/80 z-[170] flex flex-col py-5 items-center font-sans shadow-lg select-none">
             {/* Atalhos Superiores */}
             <div className="flex flex-col items-center gap-4 w-full">
               {/* Sino de Notificações */}
@@ -1582,13 +1582,13 @@ const Sidebar = () => {
                 className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all relative cursor-pointer group ${
                   showNotifications 
                     ? 'bg-[#1B4D3E] text-white shadow-md' 
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                    : 'text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100'
                 }`}
                 title="Central de Notificações"
               >
                 <Bell size={18} className="transition-transform group-hover:scale-105" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[8px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-[#0A0D14] shadow-xs">
+                  <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[8px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs">
                     {unreadCount}
                   </span>
                 )}
@@ -1603,7 +1603,7 @@ const Sidebar = () => {
                 className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all relative cursor-pointer group ${
                   showWhatsAppWidget 
                     ? 'bg-emerald-600 text-white shadow-md' 
-                    : 'text-slate-400 hover:text-emerald-400 hover:bg-slate-800/50'
+                    : 'text-slate-400 hover:text-emerald-500 hover:bg-slate-100'
                 }`}
                 title="Central WhatsApp CRM"
               >
@@ -1612,7 +1612,7 @@ const Sidebar = () => {
                   const whatsappLeads = widgetLeads.filter(l => l.telefone);
                   const totalUnread = whatsappLeads.reduce((acc, lead) => acc + (lead.unreadCount || 0), 0);
                   return totalUnread > 0 ? (
-                    <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[8px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-[#0A0D14] shadow-xs">
+                    <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[8px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs">
                       {totalUnread}
                     </span>
                   ) : null;
@@ -1622,42 +1622,46 @@ const Sidebar = () => {
               {/* Chat Interno (Inativo por enquanto) */}
               <button
                 onClick={() => alert("O Chat Interno está sendo preparado e estará disponível em breve! 🚀")}
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 hover:text-blue-400 hover:bg-slate-800/50 transition-all relative cursor-pointer group"
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-blue-500 hover:bg-slate-100 transition-all relative cursor-pointer group"
                 title="Chat Interno (Em breve)"
               >
                 <MessageSquare size={18} className="transition-transform group-hover:scale-105" />
               </button>
-            </div>
 
-            {/* Seção Inferior: Equipe de Usuários */}
-            <div className="flex flex-col items-center gap-3 w-full border-t border-slate-800/60 pt-5 max-h-[45vh] overflow-y-auto scrollbar-none">
-              {systemUsers.map((u) => {
-                const initials = u.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
-                return (
-                  <div
-                    key={u.id}
-                    className="relative group cursor-pointer"
-                    title={`${u.nome} (Equipe)`}
-                    onClick={() => alert(`Iniciar chat com ${u.nome} (Funcionalidade em breve!)`)}
-                  >
-                    {u.avatarUrl ? (
-                      <img
-                        src={u.avatarUrl}
-                        alt={u.nome}
-                        className="w-8 h-8 rounded-full border border-slate-800/80 group-hover:border-slate-600 object-cover shadow-sm transition-all"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-slate-800 text-slate-300 border border-slate-700/50 flex items-center justify-center text-[10px] font-black uppercase transition-all group-hover:bg-slate-700">
-                        {initials}
+              {/* Divisor */}
+              <div className="w-8 h-px bg-slate-200 my-1 shrink-0" />
+
+              {/* Seção de Equipe de Usuários (Subida) */}
+              <div className="flex flex-col items-center gap-3 w-full max-h-[60vh] overflow-y-auto scrollbar-none py-1">
+                {systemUsers
+                  .filter(u => u.email !== user?.email && u.nome !== user?.nome)
+                  .map((u) => {
+                    const initials = u.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                    return (
+                      <div
+                        key={u.id}
+                        className="relative group cursor-pointer"
+                        title={`${u.nome} (Equipe)`}
+                        onClick={() => alert(`Iniciar chat com ${u.nome} (Funcionalidade em breve!)`)}
+                      >
+                        {u.avatarUrl ? (
+                          <img
+                            src={u.avatarUrl}
+                            alt={u.nome}
+                            className="w-8 h-8 rounded-full border border-slate-200 group-hover:border-slate-400 object-cover shadow-sm transition-all"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-center text-[10px] font-black uppercase transition-all group-hover:bg-slate-200">
+                            {initials}
+                          </div>
+                        )}
+                        {/* Indicador de Status Online (Bolinha Verde) */}
+                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-white shadow-xs" />
                       </div>
-                    )}
-                    {/* Indicador de Status Online (Bolinha Verde) */}
-                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-[#0A0D14] shadow-xs" />
-                  </div>
-                );
-              })}
+                    );
+                  })}
+              </div>
             </div>
-          </div>
 
           {/* Central de Notificações - Drawer Lateral Deslizante */}
           {showNotifications && (
