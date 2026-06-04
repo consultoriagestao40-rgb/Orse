@@ -380,6 +380,9 @@ const Sidebar = () => {
 
       // Buscar dados atualizados do usuário diretamente do banco de dados (evita cookies desatualizados)
       const fetchFreshUser = async () => {
+        if (sessionStorage.getItem('sb_user_fresh_checked') === 'true') {
+          return;
+        }
         try {
           const freshUser = await getLoggedUser();
           if (freshUser) {
@@ -399,6 +402,7 @@ const Sidebar = () => {
             // Atualiza o cookie local com os dados mais recentes do banco
             const encoded = encodeURIComponent(JSON.stringify(userObj));
             document.cookie = `sb_user=${encoded}; path=/; max-age=${60 * 60 * 24 * 7}; Secure; SameSite=Lax`;
+            sessionStorage.setItem('sb_user_fresh_checked', 'true');
           }
         } catch (err) {
           console.error('Erro ao buscar dados atualizados do usuário:', err);
@@ -407,15 +411,39 @@ const Sidebar = () => {
 
       // Checa se o tenant do inquilino está ativo e verifica o status do teste de 7 dias
       const verifyActiveStatus = async () => {
+        if (sessionStorage.getItem('sb_tenant_checked') === 'true') {
+          const savedActive = sessionStorage.getItem('sb_tenant_active');
+          if (savedActive === 'false') {
+            setIsTenantBlocked(true);
+          }
+          const savedTrial = sessionStorage.getItem('sb_tenant_trial');
+          if (savedTrial) {
+            try {
+              const trialRes = JSON.parse(savedTrial);
+              setTrialStatus(trialRes);
+              if (trialRes.isTrialActive) {
+                if (!trialRes.trialExpired && trialRes.hasContact) {
+                  document.body.classList.add('has-trial-banner');
+                } else {
+                  document.body.classList.remove('has-trial-banner');
+                }
+              }
+            } catch (e) {}
+          }
+          return;
+        }
+
         try {
           const res = await checkCurrentTenantActive();
           if (res && res.success && res.active === false) {
             setIsTenantBlocked(true);
           }
+          sessionStorage.setItem('sb_tenant_active', res && res.success ? String(res.active) : 'true');
 
           const trialRes = await getTenantTrialStatus();
           if (trialRes && trialRes.success) {
             setTrialStatus(trialRes);
+            sessionStorage.setItem('sb_tenant_trial', JSON.stringify(trialRes));
             if (trialRes.isTrialActive) {
               if (!trialRes.trialExpired && trialRes.hasContact) {
                 document.body.classList.add('has-trial-banner');
@@ -424,6 +452,7 @@ const Sidebar = () => {
               }
             }
           }
+          sessionStorage.setItem('sb_tenant_checked', 'true');
         } catch (error) {
           console.error('Erro ao verificar suspensão e teste da empresa:', error);
         }
@@ -507,7 +536,7 @@ const Sidebar = () => {
 
   // Efeito para carregar a equipe de usuários
   useEffect(() => {
-    if (user) {
+    if (user && showWhatsAppWidget) {
       const loadSystemUsers = async () => {
         try {
           const res = await getAllUsers();
@@ -520,11 +549,11 @@ const Sidebar = () => {
       };
       loadSystemUsers();
     }
-  }, [user]);
+  }, [user, showWhatsAppWidget]);
 
   // Efeito para carregar leads do WhatsApp com polling de 5 segundos
   useEffect(() => {
-    if (user) {
+    if (user && showWhatsAppWidget) {
       const loadLeadsForWidget = async () => {
         try {
           const res = await getLeads();
@@ -540,7 +569,7 @@ const Sidebar = () => {
       const interval = setInterval(loadLeadsForWidget, 5000);
       return () => clearInterval(interval);
     }
-  }, [user]);
+  }, [user, showWhatsAppWidget]);
 
   const loadNotifications = async () => {
     try {

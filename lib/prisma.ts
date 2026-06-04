@@ -10,7 +10,7 @@ function createPrismaClient() {
   const connectionString = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL!
   const pool = new Pool({ 
     connectionString,
-    max: 2, // Limite baixo para evitar a exaustão de conexões no ambiente serverless (Vercel)
+    max: 10, // Aumentado para permitir queries paralelas sem filas e evitar lentidão
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
   })
