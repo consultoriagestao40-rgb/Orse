@@ -1662,6 +1662,8 @@ const Sidebar = () => {
                   })}
               </div>
             </div>
+          </div>
+
 
           {/* Central de Notificações - Drawer Lateral Deslizante */}
           {showNotifications && (
