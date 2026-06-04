@@ -11,6 +11,9 @@ import { useRouter } from 'next/navigation';
 import { transferirProposta, updateDocumentoStatusParam } from '@/app/propostas/actions';
 import ClientLinkModal from '@/components/ClientLinkModal';
 import ClientTrackingModal from '@/components/ClientTrackingModal';
+import { getSegmentos } from '@/app/admin/settings/actions';
+import { updateCliente } from '@/app/clientes/actions';
+import { Building } from 'lucide-react';
 import { 
   createDocumentoProposta, 
   updateDocumentoStatus, 
@@ -19,7 +22,7 @@ import {
   getCreateProposalModalData
 } from './actions';
 
-type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor';
+type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor' | 'kanban-segmento';
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v);
@@ -62,8 +65,11 @@ export default function PropostasComerciaisDashboard() {
 
   const [statuses, setStatuses] = useState<any[]>([]);
   const [vendedorColors, setVendedorColors] = useState<Record<string, string>>({});
+  const [segmentoColors, setSegmentoColors] = useState<Record<string, string>>({});
+  const [editingSegmentoId, setEditingSegmentoId] = useState<string | null>(null);
   const [statusOrder, setStatusOrder] = useState<string[]>([]);
   const [vendedorOrder, setVendedorOrder] = useState<string[]>([]);
+  const [segmentos, setSegmentos] = useState<any[]>([]);
 
   const handleDragColumnStart = (e: React.DragEvent, columnLabel: string, type: 'status' | 'vendedor') => {
     e.dataTransfer.setData('text/column-id', columnLabel);
@@ -121,11 +127,20 @@ export default function PropostasComerciaisDashboard() {
 
   const loadData = async () => {
     setLoading(true);
-    const { docs, role, usersList, statuses } = await getPropostasComerciaisPageData();
+    const [pageData, segmentosRes] = await Promise.all([
+      getPropostasComerciaisPageData(),
+      getSegmentos()
+    ]);
+    const { docs, role, usersList, statuses } = pageData;
     setDocs(docs);
     setUserRole(role);
     setUsersList(usersList);
     setStatuses(statuses || []);
+    if (segmentosRes && segmentosRes.success) {
+      setSegmentos(segmentosRes.segmentos);
+    } else if (Array.isArray(segmentosRes)) {
+      setSegmentos(segmentosRes);
+    }
     setLoading(false);
   };
 
@@ -151,14 +166,21 @@ export default function PropostasComerciaisDashboard() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const colors: Record<string, string> = {};
+      const segColors: Record<string, string> = {};
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.startsWith('kanban-vendedor-color-')) {
-          const seller = key.replace('kanban-vendedor-color-', '');
-          colors[seller] = localStorage.getItem(key) || 'emerald';
+        if (key) {
+          if (key.startsWith('kanban-vendedor-color-')) {
+            const seller = key.replace('kanban-vendedor-color-', '');
+            colors[seller] = localStorage.getItem(key) || 'emerald';
+          } else if (key.startsWith('kanban-segmento-color-')) {
+            const seg = key.replace('kanban-segmento-color-', '');
+            segColors[seg] = localStorage.getItem(key) || 'emerald';
+          }
         }
       }
       setVendedorColors(colors);
+      setSegmentoColors(segColors);
 
       // Load column order
       const storedStatusOrder = localStorage.getItem('proposta-status-order');
@@ -221,6 +243,34 @@ export default function PropostasComerciaisDashboard() {
     cards,
     total: cards.reduce((a, c) => a + (c.valor || 0), 0),
   }));
+
+  // ── Dados para Kanban por Segmento ──────────────────────────────────────────
+  const kanbanSegmentoCols = React.useMemo(() => {
+    const cols: { id: string; label: string; cards: any[]; total: number }[] = [];
+    
+    // Column for Sem Segmento
+    const unassigned = filteredDocs.filter(d => !d.segmento || d.segmento === 'Sem Segmento');
+    cols.push({
+      id: 'unassigned',
+      label: 'Sem Segmento',
+      cards: unassigned,
+      total: unassigned.reduce((acc, d) => acc + (d.valor || 0), 0)
+    });
+
+    // Columns for each segment
+    segmentos.forEach(seg => {
+      const segName = seg.nome || seg;
+      const segDocs = filteredDocs.filter(d => d.segmento === segName);
+      cols.push({
+        id: seg.id || segName,
+        label: segName,
+        cards: segDocs,
+        total: segDocs.reduce((acc, d) => acc + (d.valor || 0), 0)
+      });
+    });
+
+    return cols;
+  }, [filteredDocs, segmentos]);
 
   const ProposalCard = ({ doc }: { doc: any }) => (
     <div
@@ -467,7 +517,7 @@ export default function PropostasComerciaisDashboard() {
 
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
   const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onDragColumnStart, onDragColumnEnd, onDropColumn, onRenameColumn, isFirst = false }: {
-    label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor'; statusId?: string; onColorChange?: (newColor: string) => void;
+    label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor' | 'segmento'; statusId?: string; onColorChange?: (newColor: string) => void;
     onDragColumnStart?: (e: React.DragEvent, label: string) => void;
     onDragColumnEnd?: (e: React.DragEvent) => void;
     onDropColumn?: (e: React.DragEvent, label: string) => void;
@@ -490,6 +540,7 @@ export default function PropostasComerciaisDashboard() {
     const userObj = usersList.find(u => u.nome === label);
     const colAvatarUrl = userObj?.avatarUrl;
     const isStatus = type === 'status';
+    const isSegmento = type === 'segmento';
 
     const contrast = getContrastYIQ(resolvedHex);
     const textColorClass = contrast === 'white' ? 'text-white' : 'text-slate-900';
@@ -608,6 +659,13 @@ export default function PropostasComerciaisDashboard() {
                 <span className="text-xs font-black uppercase tracking-wider truncate max-w-[170px]">
                   {label}
                 </span>
+              ) : isSegmento ? (
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <Building size={14} className={contrast === 'white' ? 'text-white/80 shrink-0' : 'text-slate-900/80 shrink-0'} />
+                  <span className="text-xs font-black uppercase tracking-wider truncate">
+                    {label}
+                  </span>
+                </div>
               ) : (
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   {colAvatarUrl ? (
@@ -814,7 +872,7 @@ export default function PropostasComerciaisDashboard() {
   };
 
   const KanbanColumnCards = ({ label, cards, color, type = 'status', onDropProp }: {
-    label: string; cards: any[]; color?: string; type?: 'status' | 'vendedor'; onDropProp?: (propId: string) => void;
+    label: string; cards: any[]; color?: string; type?: 'status' | 'vendedor' | 'segmento'; onDropProp?: (propId: string) => void;
   }) => {
     const suaveBg = getSuaveBgClass(color, type);
     return (
@@ -917,6 +975,15 @@ export default function PropostasComerciaisDashboard() {
                   }`}
                 >
                   <UserSquare2 size={14} /> Por Vendedor
+                </button>
+                <button
+                  onClick={() => handleViewModeChange('kanban-segmento')}
+                  title="Kanban por Segmento"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
+                    viewMode === 'kanban-segmento' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
+                  }`}
+                >
+                  <Building size={14} /> Por Segmento
                 </button>
               </div>
 
@@ -1309,6 +1376,127 @@ export default function PropostasComerciaisDashboard() {
                                           if (!res.success) {
                                             alert(res.error);
                                             loadData();
+                                          }
+                                        }
+                                      }
+                                    }}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── KANBAN POR SEGMENTO ───────────────────────────────────────────── */}
+                  {viewMode === 'kanban-segmento' && (
+                    <div>
+                      {loading ? (
+                        <>
+                          <div className="flex items-center gap-2 mb-4">
+                            <Building size={16} className="text-[#1B4D3E]" />
+                            <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Segmento</h2>
+                            <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                              {kanbanSegmentoCols.length} segmento{kanbanSegmentoCols.length !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
+                        </>
+                      ) : kanbanSegmentoCols.length === 0 ? (
+                        <>
+                          <div className="flex items-center gap-2 mb-4">
+                            <Building size={16} className="text-[#1B4D3E]" />
+                            <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Segmento</h2>
+                            <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                              {kanbanSegmentoCols.length} segmento{kanbanSegmentoCols.length !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-center py-20 text-slate-400 text-sm">
+                            Nenhum segmento configurado.
+                          </div>
+                        </>
+                      ) : (
+                        <div className="space-y-4">
+                          {/* Container Sticky Unificado: Título + Cabeçalhos */}
+                          <div 
+                            className="sticky top-0 z-20 pt-8 pb-0 mb-0 bg-transparent pointer-events-none"
+                            style={{ top: '-32px' }}
+                          >
+                            <div className="absolute inset-x-0 top-0 bottom-28 bg-[#F8FAFC] -z-10" />
+                            <div className="flex items-center gap-2 mb-4">
+                              <Building size={16} className="text-[#1B4D3E]" />
+                              <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Segmento</h2>
+                              <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                                {kanbanSegmentoCols.length} segmento{kanbanSegmentoCols.length !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+
+                            {/* Cabeçalhos Fixos */}
+                            <div 
+                              id="kanban-headers-segmento"
+                              className="overflow-x-auto no-scrollbar pb-28 mb-[-112px] animate-in fade-in duration-200 pointer-events-none"
+                              onScroll={() => syncScroll('kanban-headers-segmento', 'kanban-cards-segmento')}
+                              style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+                            >
+                              <div className="flex gap-5 min-w-max pb-0 mb-0">
+                                {kanbanSegmentoCols.map((col, idx) => {
+                                  const segColor = segmentoColors[col.label] || '#3b82f6';
+                                  return (
+                                    <KanbanColumnHeader
+                                      key={col.id}
+                                      label={col.label}
+                                      type="segmento"
+                                      color={segColor}
+                                      cards={col.cards}
+                                      total={col.total}
+                                      statusId={col.id}
+                                      isFirst={idx === 0}
+                                      onColorChange={async (newColor) => {
+                                        localStorage.setItem(`kanban-segmento-color-${col.label}`, newColor);
+                                        setSegmentoColors(prev => ({ ...prev, [col.label]: newColor }));
+                                      }}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Cards Roláveis */}
+                          <div 
+                            id="kanban-cards-segmento"
+                            className="overflow-x-auto pb-6 pt-0 mt-[-112px]"
+                            onScroll={() => syncScroll('kanban-cards-segmento', 'kanban-headers-segmento')}
+                          >
+                            <div className="flex gap-5 min-w-max pt-0 mt-0">
+                              {kanbanSegmentoCols.map(col => {
+                                const segColor = segmentoColors[col.label] || '#3b82f6';
+                                return (
+                                  <KanbanColumnCards
+                                    key={col.id}
+                                    label={col.label}
+                                    type="vendedor"
+                                    color={segColor}
+                                    cards={col.cards}
+                                    onDropProp={async (propId) => {
+                                      const doc = docs.find(d => d.propostaId === propId || d.id === propId);
+                                      if (doc) {
+                                        const newSegment = col.id === 'unassigned' ? '' : col.label;
+                                        if (doc.segmento !== newSegment) {
+                                          // Update local state optimistically
+                                          setDocs(prev => prev.map(d => (d.propostaId === propId || d.id === propId) ? { ...d, segmento: newSegment || 'Sem Segmento' } : d));
+                                          
+                                          // Update client segment in backend
+                                          if (doc.clientId) {
+                                            const res = await updateCliente(doc.clientId, { segmento: newSegment });
+                                            if (!res.success) {
+                                              alert(res.error || 'Erro ao atualizar o segmento do cliente');
+                                              loadData();
+                                            }
+                                          } else {
+                                            alert('Esta proposta comercial não tem um cliente cadastrado no banco de dados para salvar o segmento.');
                                           }
                                         }
                                       }

@@ -42,6 +42,7 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
       select: {
         id: true,
         propostaId: true,
+        clientId: true,
         valorTotal: true,
         status: true,
         statusAssinatura: true,
@@ -50,7 +51,8 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
         createdAt: true,
         client: {
           select: {
-            nomeFantasia: true
+            nomeFantasia: true,
+            segmento: true
           }
         },
         empresaEmissora: {
@@ -84,8 +86,10 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
       return {
         id: d.id,
         propostaId: d.propostaId,
+        clientId: d.clientId,
         numeroFPV: d.proposta?.numero,
         cliente: d.client?.nomeFantasia || 'Sem Cliente',
+        segmento: d.client?.segmento || 'Sem Segmento',
         empresa: d.empresaEmissora?.nomeFantasia,
         valor: d.valorTotal,
         status: d.status,

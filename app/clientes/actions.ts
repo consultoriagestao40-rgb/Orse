@@ -35,6 +35,7 @@ export async function createCliente(data: any) {
         whatsapp: data.whatsapp || '',
         endereco: data.endereco || '',
         contato: data.contato || '',
+        segmento: data.segmento || '',
         tenantId: user?.tenantId || null,
       }
     });
@@ -59,6 +60,7 @@ export async function updateCliente(id: string, data: any) {
         whatsapp: data.whatsapp || '',
         endereco: data.endereco || '',
         contato: data.contato || '',
+        segmento: data.segmento || '',
       }
     });
     revalidatePath('/clientes');

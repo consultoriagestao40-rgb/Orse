@@ -5,12 +5,14 @@ import Sidebar from '@/components/Sidebar';
 import { 
   FileText, Plus, Search, 
   Users, TrendingUp, Clock,
-  LayoutList, LayoutGrid, AlertCircle, Edit2, CheckCircle, Calendar, DollarSign, Trash2, Printer
+  LayoutList, LayoutGrid, AlertCircle, Edit2, CheckCircle, Calendar, DollarSign, Trash2, Printer, Building, X
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getContratos, updateContratoStatus, deleteContrato } from './actions';
+import { getSegmentos } from '@/app/admin/settings/actions';
+import { updateCliente } from '@/app/clientes/actions';
 
-type ViewMode = 'lista' | 'kanban-status';
+type ViewMode = 'lista' | 'kanban-status' | 'kanban-segmento';
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
@@ -66,10 +68,25 @@ export default function ContratosDashboard() {
   const [contratos, setContratos] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('lista');
+  const [segmentoColors, setSegmentoColors] = useState<Record<string, string>>({});
+  const [editingSegmentoId, setEditingSegmentoId] = useState<string | null>(null);
+  const [segmentos, setSegmentos] = useState<any[]>([]);
 
   useEffect(() => {
     const saved = localStorage.getItem('orse_contrato_view_mode');
     if (saved) setViewMode(saved as any);
+
+    if (typeof window !== 'undefined') {
+      const segColors: Record<string, string> = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('kanban-segmento-color-')) {
+          const seg = key.replace('kanban-segmento-color-', '');
+          segColors[seg] = localStorage.getItem(key) || '#3b82f6';
+        }
+      }
+      setSegmentoColors(segColors);
+    }
   }, []);
 
   const handleViewModeChange = (mode: ViewMode) => {
@@ -79,9 +96,17 @@ export default function ContratosDashboard() {
 
   const loadData = async () => {
     setLoading(true);
-    const res = await getContratos();
+    const [res, segmentosRes] = await Promise.all([
+      getContratos(),
+      getSegmentos()
+    ]);
     if (res.success) {
       setContratos(res.data || []);
+    }
+    if (segmentosRes && segmentosRes.success) {
+      setSegmentos(segmentosRes.segmentos);
+    } else if (Array.isArray(segmentosRes)) {
+      setSegmentos(segmentosRes);
     }
     setLoading(false);
   };
@@ -114,6 +139,33 @@ export default function ContratosDashboard() {
     c.empresaEmissora?.nomeFantasia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.proposta?.numero?.toString().includes(searchTerm)
   );
+
+  const kanbanSegmentoCols = React.useMemo(() => {
+    const cols: { id: string; label: string; cards: any[]; total: number }[] = [];
+    
+    // Column for Sem Segmento
+    const unassigned = filteredContratos.filter(c => !c.client?.segmento || c.client?.segmento === 'Sem Segmento');
+    cols.push({
+      id: 'unassigned',
+      label: 'Sem Segmento',
+      cards: unassigned,
+      total: unassigned.reduce((acc, c) => acc + (c.valorMensal || 0), 0)
+    });
+
+    // Columns for each segment
+    segmentos.forEach(seg => {
+      const segName = seg.nome || seg;
+      const segContratos = filteredContratos.filter(c => c.client?.segmento === segName);
+      cols.push({
+        id: seg.id || segName,
+        label: segName,
+        cards: segContratos,
+        total: segContratos.reduce((acc, c) => acc + (c.valorMensal || 0), 0)
+      });
+    });
+
+    return cols;
+  }, [filteredContratos, segmentos]);
 
   const ativos = contratos.filter(c => c.status === 'Vigente');
   const pendentesAssinatura = contratos.filter(c => c.status === 'Pendente de Assinatura');
@@ -173,6 +225,37 @@ export default function ContratosDashboard() {
     const toHexStr = (val: number) => val.toString(16).padStart(2, '0');
     return `#${toHexStr(r)}${toHexStr(g)}${toHexStr(b)}`;
   };
+  const resolveColorToHex = (color?: string): string => {
+    if (!color) return '#3b82f6';
+    const lower = color.toLowerCase().trim();
+    if (lower.startsWith('#')) return lower;
+    const tailwindColorMap: { [key: string]: string } = {
+      sky: '#0284c7',
+      blue: '#2563eb',
+      orange: '#ea580c',
+      amber: '#d97706',
+      emerald: '#059669',
+      green: '#16a34a',
+      red: '#dc2626',
+      rose: '#e11d48',
+      purple: '#9333ea',
+      violet: '#7c3aed',
+      yellow: '#ca8a04',
+      indigo: '#4f46e5',
+      pink: '#db2777',
+      teal: '#0d9488',
+      slate: '#475569',
+      gray: '#4b5563',
+    };
+    return tailwindColorMap[lower] || '#3b82f6';
+  };
+
+  const PRESET_COLORS = [
+    '#E0F2FE', '#E0F2F1', '#D1FAE5', '#ECFCCB', '#FEF9C3', '#FFEDD5', '#FFE4E6', '#FCE7F3', '#F3E8FF', '#F1F5F9',
+    '#38BDF8', '#0D9488', '#10B981', '#84CC16', '#FACC15', '#FB923C', '#F43F5E', '#EC4899', '#8B5CF6', '#64748B',
+    '#0EA5E9', '#00B4D8', '#00F5D4', '#39FF14', '#FFD000', '#FF9F1C', '#FF007F', '#D000FF', '#7000FF', '#48CAE4',
+    '#0369A1', '#0B6623', '#065F46', '#3F6212', '#A16207', '#C2410C', '#B91C1C', '#9D174D', '#581C87', '#334155',
+  ];
 
   const KanbanColumn = ({ status, isFirst = false }: { status: string; isFirst?: boolean }) => {
     const cards = filteredContratos.filter(c => c.status === status);
@@ -325,6 +408,277 @@ export default function ContratosDashboard() {
         </div>
       </div>
     );
+  const KanbanSegmentoColumn = ({ label, cards, isFirst = false, color }: { label: string; cards: any[]; isFirst?: boolean; color: string }) => {
+    const total = cards.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
+
+    const resolvedHex = resolveColorToHex(color);
+    const contrast = getContrastYIQ(resolvedHex);
+    const badgeClass = contrast === 'white' ? 'bg-white/20 text-white' : 'bg-black/10 text-slate-800';
+
+    return (
+      <div 
+        className="flex-shrink-0 w-80 flex flex-col"
+        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-slate-200/50', 'rounded-xl'); }}
+        onDragLeave={(e) => e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl')}
+        onDrop={async (e) => {
+          e.preventDefault();
+          e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl');
+          const id = e.dataTransfer.getData('text/plain');
+          if (id) {
+            const newSegment = label === 'Sem Segmento' ? '' : label;
+            const targetContrato = contratos.find(c => c.id === id);
+            if (targetContrato) {
+              // Local optimistic update
+              setContratos(prev => prev.map(c => c.id === id ? {
+                ...c,
+                client: c.client ? { ...c.client, segmento: newSegment || null } : null
+              } : c));
+
+              if (targetContrato.clientId) {
+                const res = await updateCliente(targetContrato.clientId, { segmento: newSegment });
+                if (!res.success) {
+                  alert(res.error || 'Erro ao atualizar o segmento do cliente');
+                  loadData();
+                }
+              } else {
+                alert('Este contrato não tem um cliente associado no banco de dados para salvar o segmento.');
+              }
+            }
+          }
+        }}
+      >
+        <div className="flex flex-col items-center gap-1.5 w-full mb-3 select-none">
+          {/* Cabeçalho Chevron/Seta */}
+          <div className="w-full h-11 relative group/title pointer-events-auto">
+            {/* Background SVG Custom Shape */}
+            <svg 
+              className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200"
+              viewBox="0 0 320 44"
+              preserveAspectRatio="none"
+              style={{
+                color: resolvedHex,
+              }}
+            >
+              <path 
+                d={isFirst 
+                  ? "M 10,0 L 306,0 L 320,22 L 306,44 L 10,44 A 10,10 0 0,1 0,34 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                  : "M 0,0 L 306,0 L 320,22 L 306,44 L 0,44 L 14,22 Z"
+                }
+                fill="currentColor"
+                stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
+                strokeWidth="1.5"
+              />
+            </svg>
+
+            {/* Conteúdo do Cabeçalho */}
+            <div 
+              className={`absolute inset-0 z-10 flex items-center justify-between ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+              style={{
+                color: contrast === 'white' ? '#ffffff' : '#0f172a'
+              }}
+            >
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                <Building size={14} className={contrast === 'white' ? 'text-white/80 shrink-0' : 'text-slate-900/80 shrink-0'} />
+                <span className="text-xs font-black uppercase tracking-wider truncate">
+                  {label}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm ${badgeClass}`}>
+                  {cards.length}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingSegmentoId(label);
+                  }}
+                  className={`p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
+                    contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
+                  }`}
+                  title="Editar Cor"
+                >
+                  <Edit2 size={12} />
+                </button>
+              </div>
+
+              {editingSegmentoId === label && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-30 cursor-default" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingSegmentoId(null);
+                    }}
+                  />
+                  <div 
+                    className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        Editar Coluna
+                      </span>
+                      <button 
+                        onClick={() => setEditingSegmentoId(null)}
+                        className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Selecione a Cor</label>
+                      <div className="grid grid-cols-10 gap-1 mt-0.5">
+                        {PRESET_COLORS.map(c => {
+                          const isSelected = resolvedHex.toLowerCase() === c.toLowerCase();
+                          return (
+                            <button
+                              key={c}
+                              onClick={() => {
+                                localStorage.setItem(`kanban-segmento-color-${label}`, c);
+                                setSegmentoColors(prev => ({ ...prev, [label]: c }));
+                              }}
+                              className="w-4 h-4 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center"
+                              style={{
+                                backgroundColor: c,
+                                borderColor: isSelected ? '#0f172a' : 'rgba(0,0,0,0.1)',
+                                borderWidth: isSelected ? '2px' : '1px'
+                              }}
+                              title={c}
+                              type="button"
+                            >
+                              {isSelected && (
+                                <div 
+                                  className="w-1.5 h-1.5 rounded-full" 
+                                  style={{ backgroundColor: getContrastYIQ(c) === 'white' ? '#fff' : '#000' }} 
+                                />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1 pt-1 border-t border-slate-100">
+                      <label className="flex items-center gap-2 cursor-pointer border border-slate-200 rounded-lg px-2.5 py-1.5 hover:bg-slate-50 transition-colors w-full">
+                        <input 
+                          type="color" 
+                          value={resolvedHex}
+                          onChange={(e) => {
+                            const newColor = e.target.value;
+                            localStorage.setItem(`kanban-segmento-color-${label}`, newColor);
+                            setSegmentoColors(prev => ({ ...prev, [label]: newColor }));
+                          }}
+                          className="w-8 h-5 border-0 p-0 cursor-pointer rounded bg-transparent"
+                        />
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cor personalizada</span>
+                      </label>
+                    </div>
+
+                    <button
+                      onClick={() => setEditingSegmentoId(null)}
+                      className="w-full py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-colors text-center cursor-pointer mt-1"
+                      type="button"
+                    >
+                      Concluir
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Totalizador de Volume */}
+          <div 
+            className="px-3.5 py-1 rounded-full text-xs font-bold shadow-sm select-none text-center border"
+            style={{
+              backgroundColor: hexToRgba(resolvedHex, 0.1),
+              color: getDarkenedHexForText(resolvedHex),
+              borderColor: hexToRgba(resolvedHex, 0.25)
+            }}
+          >
+            {fmt(total)} /mês
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 flex-1">
+          {cards.length === 0 ? (
+            <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
+              <p className="text-xs text-slate-300 font-medium">Vazio</p>
+            </div>
+          ) : (
+            cards.map(c => (
+              <div
+                key={c.id}
+                draggable
+                onDragStart={(e) => e.dataTransfer.setData('text/plain', c.id)}
+                onClick={() => router.push(`/contratos/${c.id}`)}
+                className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer cursor-grab active:cursor-grabbing"
+              >
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2">
+                    <FileText size={13} className="text-[#1B4D3E]" />
+                    <span className="text-xs font-black text-slate-700 tracking-wide">{gerarNumeroContrato(c)}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-bold bg-slate-100 px-2 py-0.5 rounded">{c.empresaEmissora?.nomeFantasia}</span>
+                </div>
+
+                <p className="text-sm font-bold text-slate-800 leading-tight mb-3 line-clamp-2">{c.client?.razaoSocial || c.client?.nomeFantasia}</p>
+                
+                <div className="grid grid-cols-2 gap-2 mb-3 border-t border-slate-100 pt-3">
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Início</p>
+                    <p className="text-[11px] font-bold text-slate-700">{c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : 'A definir'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Reajuste</p>
+                    <p className="text-[11px] font-bold text-orange-600">{c.dataReajuste ? new Date(c.dataReajuste).toLocaleDateString('pt-BR') : 'Não definido'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Mensal</p>
+                    <span className="text-sm font-black text-[#1B4D3E]">{fmt(c.valorMensal)}</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Vigência</p>
+                    <span className="text-[11px] font-bold text-slate-600">{c.vigenciaMeses} meses</span>
+                  </div>
+                </div>
+
+                <div className="mt-2 text-[10px] text-slate-400 font-medium border-t border-slate-50 pt-2 flex flex-col gap-1">
+                  <div className="flex justify-between items-center">
+                    <span>Criado por:</span>
+                    <div className="flex items-center gap-1">
+                      {c.proposta?.user?.avatarUrl ? (
+                        <img 
+                          src={c.proposta.user.avatarUrl} 
+                          alt={c.proposta.user.nome} 
+                          className="w-4 h-4 rounded-full object-cover border border-slate-200"
+                        />
+                      ) : (
+                        <div className="w-4 h-4 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[7px] font-black text-[#1B4D3E] uppercase border border-slate-200">
+                          {(c.proposta?.user?.nome || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                        </div>
+                      )}
+                      <span className="font-bold text-slate-600">{c.proposta?.user?.nome || 'Sistema'}</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Gerado em:</span>
+                    <span className="font-bold text-slate-600">{new Date(c.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -357,6 +711,14 @@ export default function ContratosDashboard() {
                   }`}
                 >
                   <LayoutGrid size={14} /> Kanban
+                </button>
+                <button
+                  onClick={() => handleViewModeChange('kanban-segmento')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                    viewMode === 'kanban-segmento' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
+                  }`}
+                >
+                  <Building size={14} /> Segmento
                 </button>
               </div>
 
@@ -539,6 +901,23 @@ export default function ContratosDashboard() {
               <div className="flex gap-5 min-w-max">
                 {statusList.map((status, index) => (
                   <KanbanColumn key={status} status={status} isFirst={index === 0} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* KANBAN POR SEGMENTO */}
+          {viewMode === 'kanban-segmento' && (
+            <div className="overflow-x-auto pb-6">
+              <div className="flex gap-5 min-w-max">
+                {kanbanSegmentoCols.map((col, index) => (
+                  <KanbanSegmentoColumn
+                    key={col.id}
+                    label={col.label}
+                    cards={col.cards}
+                    isFirst={index === 0}
+                    color={segmentoColors[col.label] || '#3b82f6'}
+                  />
                 ))}
               </div>
             </div>

@@ -101,6 +101,7 @@ model Client {
   whatsapp     String?
   endereco     String?
   contato      String?
+  segmento     String?
   createdAt    DateTime   @default(now())
   propostas    Proposta[]
   contratos    Contrato[]

@@ -134,7 +134,7 @@ export default function LeadsKanban() {
   const [userFilter, setUserFilter] = useState('all');
   const [filterUsers, setFilterUsers] = useState<any[]>([]);
 
-  type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor';
+  type ViewMode = 'lista' | 'kanban-status' | 'kanban-vendedor' | 'kanban-segmento';
   const [viewMode, setViewMode] = useState<ViewMode>('kanban-status');
 
   useEffect(() => {
@@ -143,14 +143,21 @@ export default function LeadsKanban() {
 
     if (typeof window !== 'undefined') {
       const colors: Record<string, string> = {};
+      const segColors: Record<string, string> = {};
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.startsWith('kanban-vendedor-color-')) {
-          const seller = key.replace('kanban-vendedor-color-', '');
-          colors[seller] = localStorage.getItem(key) || '#3b82f6';
+        if (key) {
+          if (key.startsWith('kanban-vendedor-color-')) {
+            const seller = key.replace('kanban-vendedor-color-', '');
+            colors[seller] = localStorage.getItem(key) || '#3b82f6';
+          } else if (key.startsWith('kanban-segmento-color-')) {
+            const seg = key.replace('kanban-segmento-color-', '');
+            segColors[seg] = localStorage.getItem(key) || '#3b82f6';
+          }
         }
       }
       setVendedorColors(colors);
+      setSegmentoColors(segColors);
     }
   }, []);
 
@@ -163,6 +170,8 @@ export default function LeadsKanban() {
   const [editingStageName, setEditingStageName] = useState('');
   const [editingVendedorId, setEditingVendedorId] = useState<string | null>(null);
   const [vendedorColors, setVendedorColors] = useState<Record<string, string>>({});
+  const [editingSegmentoId, setEditingSegmentoId] = useState<string | null>(null);
+  const [segmentoColors, setSegmentoColors] = useState<Record<string, string>>({});
   const [isDragging, setIsDragging] = useState(false);
 
   const knownUnreadMessageIdsRef = React.useRef<Set<string>>(new Set());
@@ -584,6 +593,24 @@ export default function LeadsKanban() {
     await changeLeadOwner(id, assignedToId as any);
   };
 
+  const handleDropSegmento = async (e: React.DragEvent, segmentName: string) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const id = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('leadId');
+    if (!id) return;
+
+    const newSegment = segmentName === 'unassigned' ? '' : segmentName;
+
+    // Optimistic update
+    setLeads(prev => prev.map(l => l.id === id ? { 
+      ...l, 
+      segmento: newSegment || null 
+    } : l));
+
+    await updateLeadData(id, { segmento: newSegment });
+    fetchData();
+  };
+
   const PRESET_VENDEDOR_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6', '#f97316', '#64748b'];
 
   const PRESET_COLORS = [
@@ -700,6 +727,33 @@ export default function LeadsKanban() {
     return cols;
   }, [filteredLeads, filterUsers]);
 
+  const kanbanSegmentoCols = React.useMemo(() => {
+    const cols: { id: string; label: string; cards: any[]; total: number }[] = [];
+    
+    // First, column for "Sem Segmento"
+    const unassigned = filteredLeads.filter(l => !l.segmento);
+    cols.push({
+      id: 'unassigned',
+      label: 'Sem Segmento',
+      cards: unassigned,
+      total: unassigned.reduce((acc, l) => acc + (l.valorEst || 0), 0)
+    });
+
+    // Columns for each segment in segmentos
+    segmentos.forEach(seg => {
+      const segName = seg.nome || seg;
+      const segLeads = filteredLeads.filter(l => l.segmento === segName);
+      cols.push({
+        id: seg.id || segName,
+        label: segName,
+        cards: segLeads,
+        total: segLeads.reduce((acc, l) => acc + (l.valorEst || 0), 0)
+      });
+    });
+
+    return cols;
+  }, [filteredLeads, segmentos]);
+
   // Get all leads with WhatsApp messages, sorted by the latest message date
   const chatLeads = leads
     .filter(lead => lead.telefone && (lead.whatsappMessages?.length > 0))
@@ -798,6 +852,18 @@ export default function LeadsKanban() {
               }`}
             >
               <Users size={14} /> Por Vendedor
+            </button>
+            <button
+              type="button"
+              onClick={() => handleViewModeChange('kanban-segmento')}
+              title="Kanban por Segmento"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
+                viewMode === 'kanban-segmento'
+                  ? 'bg-[#1B4D3E] text-white shadow-sm'
+                  : 'text-amber-500 hover:text-amber-600'
+              }`}
+            >
+              <Building size={14} /> Por Segmento
             </button>
           </div>
           {/* Real-time Search Input */}
@@ -1454,6 +1520,274 @@ export default function LeadsKanban() {
                                   <Mail size={10} className="text-slate-400 shrink-0" /> {lead.email}
                                 </span>
                               )}
+                            </div>
+                          )}
+
+                          {lead.activities && lead.activities.length > 0 && (
+                            <div className="mt-2 bg-amber-50/70 border border-amber-100 p-1.5 rounded-lg text-[10px] flex items-center gap-1 text-amber-700">
+                              <CalendarDays size={11} className="text-amber-500 shrink-0" />
+                              <span className="font-semibold shrink-0">{lead.activities[0].tipo}:</span>
+                              <span className="truncate flex-1">{lead.activities[0].titulo}</span>
+                              <span className="text-[9px] text-amber-600 font-medium bg-amber-100/80 px-1 py-0.5 rounded shrink-0">
+                                {safeDate(lead.activities[0].dataInicio)}
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 text-[9px] text-slate-400 font-sans">
+                             <div className="flex items-center gap-1">
+                               <span className="font-bold text-slate-500">Etapa:</span>
+                               <span className="font-semibold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-wide">{lead.stage?.nome || 'Sem Etapa'}</span>
+                             </div>
+                             <div className="font-semibold text-slate-400">
+                               {safeDate(lead.updatedAt)}
+                             </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {viewMode === 'kanban-segmento' && (
+          <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
+            <div className="flex gap-5 h-[calc(100vh-70px)] shrink-0 pr-1">
+              {kanbanSegmentoCols.map((col, idx) => {
+                const colLeads = col.cards;
+                const isFirst = idx === 0;
+                const defaultColColor = col.id === 'unassigned' ? '#64748b' : PRESET_VENDEDOR_COLORS[idx % PRESET_VENDEDOR_COLORS.length];
+                const colColor = segmentoColors[col.label] || defaultColColor;
+                const resolvedHex = resolveColorToHex(colColor);
+                const contrast = getContrastYIQ(resolvedHex);
+                const badgeClass = contrast === 'white' ? 'bg-white/20 text-white' : 'bg-black/10 text-slate-800';
+
+                return (
+                  <div 
+                    key={col.id} 
+                    className="w-72 shrink-0 flex flex-col h-full rounded-2xl relative"
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDropSegmento(e, col.id)}
+                  >
+                    <div className="relative h-11 shrink-0 z-10 w-full group/header">
+                      <svg 
+                        className="absolute inset-0 w-full h-full drop-shadow-sm" 
+                        preserveAspectRatio="none" 
+                        viewBox="0 0 288 44"
+                        style={{ color: resolvedHex }}
+                      >
+                        <path 
+                          d={isFirst 
+                            ? "M 10,0 L 274,0 L 288,22 L 274,44 L 10,44 A 10,10 0 0,1 0,34 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                            : "M 0,0 L 274,0 L 288,22 L 274,44 L 0,44 L 14,22 Z"
+                          }
+                          fill="currentColor" 
+                          stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
+                          strokeWidth="1.5"
+                        />
+                      </svg>
+                      <div 
+                        className={`relative z-10 flex justify-between items-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                        style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          <Building size={10} className={contrast === 'white' ? 'text-white/80 shrink-0' : 'text-slate-900/80 shrink-0'} />
+                          <h3 className="font-black uppercase tracking-tight text-xs truncate">
+                            {col.label}
+                          </h3>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm ${badgeClass}`}>
+                            {colLeads.length}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingSegmentoId(col.id);
+                            }}
+                            className={`p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
+                              contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
+                            }`}
+                            title="Editar Cor"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+                        </div>
+
+                        {editingSegmentoId === col.id && (
+                          <>
+                            <div 
+                              className="fixed inset-0 z-30 cursor-default" 
+                              onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingSegmentoId(null);
+                              }}
+                            />
+                            <div 
+                              className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                  Editar Coluna
+                                </span>
+                                <button 
+                                  onClick={() => setEditingSegmentoId(null)}
+                                  className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
+                                >
+                                  <X size={12} />
+                                </button>
+                              </div>
+
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Selecione a Cor</label>
+                                <div className="grid grid-cols-10 gap-1 mt-0.5">
+                                  {PRESET_COLORS.map(c => {
+                                    const isSelected = resolvedHex.toLowerCase() === c.toLowerCase();
+                                    return (
+                                      <button
+                                        key={c}
+                                        onClick={() => {
+                                          localStorage.setItem(`kanban-segmento-color-${col.label}`, c);
+                                          setSegmentoColors(prev => ({ ...prev, [col.label]: c }));
+                                        }}
+                                        className="w-4 h-4 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center"
+                                        style={{
+                                          backgroundColor: c,
+                                          borderColor: isSelected ? '#0f172a' : 'rgba(0,0,0,0.1)',
+                                          borderWidth: isSelected ? '2px' : '1px'
+                                        }}
+                                        title={c}
+                                        type="button"
+                                      >
+                                        {isSelected && (
+                                          <div 
+                                            className="w-1.5 h-1.5 rounded-full" 
+                                            style={{ backgroundColor: getContrastYIQ(c) === 'white' ? '#fff' : '#000' }} 
+                                          />
+                                        )}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col gap-1 pt-1 border-t border-slate-100">
+                                <label className="flex items-center gap-2 cursor-pointer border border-slate-200 rounded-lg px-2.5 py-1.5 hover:bg-slate-50 transition-colors w-full">
+                                  <input 
+                                    type="color" 
+                                    value={resolvedHex}
+                                    onChange={(e) => {
+                                      const newColor = e.target.value;
+                                      localStorage.setItem(`kanban-segmento-color-${col.label}`, newColor);
+                                      setSegmentoColors(prev => ({ ...prev, [col.label]: newColor }));
+                                    }}
+                                    className="w-8 h-5 border-0 p-0 cursor-pointer rounded bg-transparent"
+                                  />
+                                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cor personalizada</span>
+                                </label>
+                              </div>
+
+                              <button
+                                onClick={() => setEditingSegmentoId(null)}
+                                className="w-full py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-colors text-center cursor-pointer mt-1"
+                                type="button"
+                              >
+                                Concluir
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-center w-full my-1.5 shrink-0 z-10 pointer-events-auto">
+                      <div 
+                        className="px-3 py-0.5 rounded-full text-[11px] font-black shadow-sm select-none border"
+                        style={{
+                          backgroundColor: hexToRgba(resolvedHex, 0.1),
+                          color: getDarkenedHexForText(resolvedHex),
+                          borderColor: hexToRgba(resolvedHex, 0.25)
+                        }}
+                      >
+                        {fmt(col.total)}
+                      </div>
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col p-3 overflow-y-auto space-y-3 bg-[#F8FAFC] border-x border-b border-slate-200 rounded-b-2xl -mt-[1px] z-0">
+                      {colLeads.map(lead => (
+                        <div
+                          key={lead.id}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, lead.id)}
+                          onDragEnd={handleDragEnd}
+                          onClick={() => setSelectedLead(lead)}
+                          className="bg-white p-3 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-green-200 transition-all group"
+                        >
+                          <div className="flex items-center justify-between gap-1.5 mb-1">
+                            <div className="font-bold text-xs text-slate-800 truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</div>
+                            {(() => {
+                              const unreadCount = lead.whatsappMessages?.filter(
+                                (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
+                              ).length || 0;
+                              if (unreadCount > 0) {
+                                return (
+                                  <span className="bg-green-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 animate-pulse shadow-sm shadow-green-500/30" title={`${unreadCount} mensagens não lidas`}>
+                                    <MessageSquare size={8} fill="white" /> {unreadCount}
+                                  </span>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
+                          
+                          <div className="text-[10px] text-slate-500 flex items-center gap-1 mb-1.5">
+                            <Building size={10} className="shrink-0" /> <span className="truncate">{lead.segmento || 'Sem segmento'}</span>
+                          </div>
+                          
+                          {(lead.telefone || lead.email) && (
+                            <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
+                              {lead.telefone && (
+                                <span className="flex items-center gap-0.5 truncate max-w-[110px]" title={lead.telefone}>
+                                  <Phone size={10} className="text-slate-400 shrink-0" /> {lead.telefone}
+                                </span>
+                              )}
+                              {lead.email && (
+                                <span className="flex items-center gap-0.5 truncate max-w-[120px]" title={lead.email}>
+                                  <Mail size={10} className="text-slate-400 shrink-0" /> {lead.email}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {lead.endereco && (
+                            <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-2">
+                              <a 
+                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.endereco)}`} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                onClick={e => e.stopPropagation()} 
+                                className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[9px] font-black py-1 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-blue-100"
+                                title="Abrir no Google Maps"
+                              >
+                                <MapPin size={9} /> Maps
+                              </a>
+                              <a 
+                                href={`https://waze.com/ul?q=${encodeURIComponent(lead.endereco)}`} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                onClick={e => e.stopPropagation()} 
+                                className="flex-1 bg-cyan-50 hover:bg-cyan-100 text-cyan-600 text-[9px] font-black py-1 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-cyan-100"
+                                title="Abrir no Waze"
+                              >
+                                <Navigation size={9} /> Waze
+                              </a>
                             </div>
                           )}
 

@@ -575,6 +575,8 @@ export async function getPropostas(preFetchedUser?: any) {
         id: p.id,
         numero: `FPV-${p.numero.toString().padStart(3, '0')}`,
         cliente: clienteNome,
+        clientId: p.clientId,
+        segmento: p.client?.segmento || 'Sem Segmento',
         data: p.createdAt.toLocaleDateString('pt-BR'),
         valor: lastVersao?.precoVenda || 0,
         status: p.status,
