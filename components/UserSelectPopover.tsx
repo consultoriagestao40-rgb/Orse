@@ -49,7 +49,6 @@ export default function UserSelectPopover({
       const rect = anchorEl.getBoundingClientRect();
       const popoverWidth = 280;
       const windowWidth = window.innerWidth;
-      const windowHeight = window.innerHeight;
 
       let left = rect.left + window.scrollX;
       let top = rect.bottom + window.scrollY + 8;
@@ -59,12 +58,6 @@ export default function UserSelectPopover({
         left = windowWidth - popoverWidth - 16;
       }
       if (left < 16) left = 16;
-
-      // Adjust vertically if going off-screen
-      const popoverHeight = 320; // approximate
-      if (top + popoverHeight > windowHeight + window.scrollY) {
-        top = rect.top + window.scrollY - popoverHeight - 8;
-      }
 
       setCoords({ top, left });
     } else {
