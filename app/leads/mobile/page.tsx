@@ -21,6 +21,7 @@ import {
 } from '../chat-actions';
 import { getLoggedUser } from '@/app/propostas/actions';
 import { getSegmentos } from '@/app/admin/settings/actions';
+import UserSelectPopover from '@/components/UserSelectPopover';
 import { 
   Phone, 
   MessageCircle, 
@@ -150,6 +151,7 @@ export default function MobileCRM() {
   const [savingComment, setSavingComment] = useState(false);
   const [segmentos, setSegmentos] = useState<any[]>([]);
   const [systemUsers, setSystemUsers] = useState<any[]>([]);
+  const [isOwnerPopoverOpen, setIsOwnerPopoverOpen] = useState(false);
 
   // Lead Creation States
   const [newLeadForm, setNewLeadForm] = useState({
@@ -1077,17 +1079,53 @@ export default function MobileCRM() {
                     {systemUsers.find(u => u.id === lead.assignedToId)?.nome || 'Sem responsável'}
                   </span>
                 </div>
-                <select
-                  value={lead.assignedToId || ''}
-                  onChange={e => handleOwnerChange(lead.id, e.target.value)}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:border-blue-500 focus:outline-none"
+                <div 
+                  id="mobile-lead-owner-anchor"
+                  onClick={() => setIsOwnerPopoverOpen(true)}
+                  className="flex items-center gap-2.5 p-2.5 border border-slate-200 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition-all duration-150 group"
                 >
-                  {systemUsers.map(u => (
-                    <option key={u.id} value={u.id}>
-                      {u.nome} ({u.cargo || 'Membro'})
-                    </option>
-                  ))}
-                </select>
+                  {(() => {
+                    const assignedUser = systemUsers.find(u => u.id === lead.assignedToId);
+                    if (assignedUser?.avatarUrl) {
+                      return (
+                        <img 
+                          src={assignedUser.avatarUrl} 
+                          alt={assignedUser.nome} 
+                          className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0 shadow-sm"
+                        />
+                      );
+                    } else if (assignedUser) {
+                      const initials = assignedUser.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                      return (
+                        <div className="w-8 h-8 rounded-full bg-[#1B4D3E]/10 text-[#1B4D3E] border border-[#1B4D3E]/20 flex items-center justify-center text-xs font-black shrink-0 uppercase">
+                          {initials}
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs text-slate-400 shrink-0">
+                        👤
+                      </div>
+                    );
+                  })()}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-slate-700 truncate">
+                      {systemUsers.find(u => u.id === lead.assignedToId)?.nome || 'Sem responsável'}
+                    </p>
+                    <p className="text-[9px] text-slate-400 font-medium">Clique para transferir/alterar</p>
+                  </div>
+                </div>
+
+                <UserSelectPopover
+                  isOpen={isOwnerPopoverOpen}
+                  onClose={() => setIsOwnerPopoverOpen(false)}
+                  users={systemUsers}
+                  selectedIds={lead.assignedToId ? [lead.assignedToId] : []}
+                  onSelect={(userId) => handleOwnerChange(lead.id, userId)}
+                  title="Pesquisar colega..."
+                  anchorEl={isOwnerPopoverOpen ? 'mobile-lead-owner-anchor' : null}
+                  isMulti={false}
+                />
               </div>
 
               {/* Quick Contact Actions */}

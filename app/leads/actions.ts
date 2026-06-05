@@ -13,8 +13,15 @@ export async function getLeads(filters?: { startDate?: string; endDate?: string;
     if (user.tenantId) {
       where.tenantId = user.tenantId;
     }
-    if (filters?.userId && filters.userId !== 'all') {
-      where.assignedToId = filters.userId;
+    if (user.role === 'USER') {
+      where.OR = [
+        { assignedToId: user.id },
+        { shares: { some: { userId: user.id } } }
+      ];
+    } else {
+      if (filters?.userId && filters.userId !== 'all') {
+        where.assignedToId = filters.userId;
+      }
     }
     if (filters?.startDate || filters?.endDate) {
       where.createdAt = {};
