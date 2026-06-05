@@ -513,7 +513,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
   const renderTermoDeAceite = (clauseNum: number, startIdx: number) => (
     <div className="mt-4">
       <div className="text-[13px] text-justify space-y-4 mb-6 text-slate-800 leading-relaxed pl-4">
-         <p><span className="font-bold mr-1">{clauseNum}.{startIdx + 1}.</span>Ao assinar este termo de aceite, o <strong>{proposta.cliente?.cliente?.toUpperCase() || proposta.cliente?.razaoSocial?.toUpperCase() || "CLIENTE"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
+         <p><span className="font-bold mr-1">{clauseNum}.{startIdx + 1}.</span>Ao assinar este termo de aceite, o <strong>{proposta.cliente?.cliente?.toUpperCase() || proposta.cliente?.nomeFantasia?.toUpperCase() || proposta.cliente?.clienteNome?.toUpperCase() || proposta.cliente?.razaoSocial?.toUpperCase() || "CLIENTE"}</strong> manifesta sua concordância com os valores descritos, premissas de investimento e condições comerciais apresentadas nesta proposta comercial.</p>
          <p><span className="font-bold mr-1">{clauseNum}.{startIdx + 2}.</span>Este documento servirá como base oficial para a elaboração do instrumento jurídico definitivo (Contrato de Prestação de Serviços) entre as partes.</p>
       </div>
       
@@ -526,7 +526,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
             </tr>
             <tr className="border-b border-slate-300 text-[10px] text-slate-800">
               <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Nome Fantasia</td>
-              <td className="px-4 py-2 font-semibold">{proposta.cliente?.cliente || ""}</td>
+              <td className="px-4 py-2 font-semibold">{proposta.cliente?.cliente || proposta.cliente?.nomeFantasia || proposta.cliente?.clienteNome || ""}</td>
             </tr>
             <tr className="border-b border-slate-300 text-[10px] text-slate-800">
               <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">CNPJ</td>
@@ -627,7 +627,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
               <div className="w-14 h-14 mb-3 shrink-0" />
             )}
             <div className="w-full border-t border-slate-900 pt-2 font-black text-[10px] uppercase">
-               {proposta.cliente?.razaoSocial || proposta.cliente?.cliente || "CLIENTE"}
+               {proposta.cliente?.razaoSocial || proposta.cliente?.cliente || proposta.cliente?.nomeFantasia || proposta.cliente?.clienteNome || "CLIENTE"}
             </div>
             <div className="mt-1 font-bold text-[10px] text-slate-800">
                {proposta.nomeAssinante || proposta.cliente?.contato || "Representante Legal"}
@@ -767,7 +767,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                   <div className="bg-slate-100 border-l-4 border-slate-900 p-4 mb-8">
                     <h3 className="font-bold uppercase mb-3 text-xs text-slate-900">DADOS DO CLIENTE</h3>
                     <div className="flex flex-col gap-1 text-xs text-slate-900">
-                      <p><strong>Cliente:</strong> {proposta.cliente?.cliente || proposta.cliente?.razaoSocial}</p>
+                      <p><strong>Cliente:</strong> {proposta.cliente?.cliente || proposta.cliente?.nomeFantasia || proposta.cliente?.clienteNome || proposta.cliente?.razaoSocial}</p>
                       <p><strong>Código:</strong> {proposta.cliente?.codigo ? `CLI-${String(proposta.cliente.codigo).padStart(4, '0')}` : 'Não cadastrado'}</p>
                       <p><strong>CNPJ/CPF:</strong> {proposta.cliente?.cnpj}</p>
                       <p><strong>Endereço:</strong> {proposta.cliente?.endereco || proposta.cliente?.logradouro ? `${proposta.cliente?.logradouro || proposta.cliente?.endereco}${proposta.cliente?.numero ? `, ${proposta.cliente?.numero}` : ''}${proposta.cliente?.bairro ? `, ${proposta.cliente?.bairro}` : ''}${proposta.cliente?.cidade ? `, ${proposta.cliente?.cidade}${proposta.cliente?.uf && proposta.cliente?.uf !== 'undefined' ? ` - ${proposta.cliente?.uf}` : ''}` : ''}` : proposta.cliente?.cidade}</p>

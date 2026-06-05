@@ -548,6 +548,9 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     cliente: {
       ...(fullProposta?.cliente || {}),
       ...doc.client,
+      cliente: doc.client?.nomeFantasia || fullProposta?.cliente?.cliente || '',
+      clienteNome: doc.client?.nomeFantasia || fullProposta?.cliente?.clienteNome || '',
+      nomeFantasia: doc.client?.nomeFantasia || fullProposta?.cliente?.nomeFantasia || '',
       clausulasA4: doc.tipo === 'SLIDE_DECK' 
         ? (doc.configApresentacao?.clausulasA4 || [])
         : (doc.secoes?.map((s: any) => ({ titulo: s.titulo, texto: s.texto })) || []),
