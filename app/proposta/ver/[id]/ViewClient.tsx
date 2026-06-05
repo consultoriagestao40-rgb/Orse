@@ -16,6 +16,17 @@ const PropostaApresentacaoPrint = dynamic(
   { ssr: false }
 );
 
+const formatFaqText = (q: string): string => {
+  if (!q) return '';
+  const trimmed = q.trim();
+  const alphabetic = trimmed.replace(/[^a-zA-ZáéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]/g, '');
+  if (alphabetic && alphabetic === alphabetic.toUpperCase()) {
+    const lower = trimmed.toLowerCase();
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+  }
+  return trimmed;
+};
+
 export default function ViewClient({ doc, fullProposta }: { doc: any, fullProposta: any }) {
   const color = doc.tenant?.primaryColor || '#1B4D3E';
   
@@ -2329,9 +2340,16 @@ return (
           {/* 8. ABA: PERGUNTAS FREQUENTES (FAQ) */}
           {activeClientTab === 'faq' && faqList.length > 0 && (
             <div className="max-w-[960px] mx-auto bg-white rounded-3xl p-6 md:p-10 shadow-2xl shadow-slate-950/20 text-slate-800 animate-fadeIn relative">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center print:hidden flex items-center justify-center gap-2 border-b border-slate-100 pb-3">
-                ❓ Perguntas Frequentes (FAQ)
-              </h3>
+              {/* Header Banner Premium */}
+              <div className="bg-[#1B4D3E]/5 border border-[#1B4D3E]/10 rounded-2xl p-6 mb-8 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-[#1B4D3E] text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-900/10">
+                  <HelpCircle size={22} className="animate-pulse" />
+                </div>
+                <div className="text-left">
+                  <h4 className="text-sm font-black text-[#1B4D3E] uppercase tracking-wider">Perguntas Frequentes (FAQ)</h4>
+                  <p className="text-[11px] text-slate-500 font-bold uppercase mt-0.5">Esclarecimentos operacionais rápidos sobre a prestação de serviços proposta.</p>
+                </div>
+              </div>
 
               <div className="space-y-4 max-w-3xl mx-auto py-2">
                 {faqList.map((item: { pergunta: string; resposta: string }, idx: number) => {
@@ -2339,22 +2357,29 @@ return (
                   return (
                     <div 
                       key={idx} 
-                      className={`border rounded-2xl transition-all duration-200 ${
+                      className={`border rounded-2xl transition-all duration-350 ${
                         isOpen 
-                          ? 'border-emerald-500/30 bg-emerald-50/5 shadow-md shadow-emerald-500/5' 
+                          ? 'border-[#1B4D3E]/30 bg-emerald-50/5 shadow-md shadow-emerald-500/5' 
                           : 'border-slate-200 bg-white hover:border-slate-350 hover:bg-slate-50/30'
                       }`}
                     >
                       <button
                         type="button"
                         onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                        className="w-full text-left px-5 py-4 flex justify-between items-center gap-4 cursor-pointer focus:outline-none"
+                        className="w-full text-left px-5 py-4 flex justify-between items-center gap-4 cursor-pointer focus:outline-none group"
                       >
-                        <span className="text-xs font-black text-slate-800 uppercase tracking-wide">
-                          {idx + 1}. {item.pergunta}
-                        </span>
-                        <div className={`p-1.5 rounded-full transition-all duration-200 ${
-                          isOpen ? 'bg-emerald-100/50 text-[#1B4D3E] rotate-90' : 'bg-slate-100 text-slate-400'
+                        <div className="flex items-center gap-4 min-w-0">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 ${
+                            isOpen ? 'bg-[#1B4D3E] text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200/80'
+                          }`}>
+                            <span className="text-[10px] font-black">{idx + 1}</span>
+                          </div>
+                          <span className="text-[13px] font-bold text-slate-800 leading-snug tracking-normal">
+                            {formatFaqText(item.pergunta)}
+                          </span>
+                        </div>
+                        <div className={`p-1.5 rounded-full transition-all duration-200 shrink-0 ${
+                          isOpen ? 'bg-emerald-100/50 text-[#1B4D3E] rotate-90' : 'bg-slate-100 text-slate-400 font-bold'
                         }`}>
                           <ChevronRight size={14} />
                         </div>
@@ -2363,8 +2388,11 @@ return (
                       <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
                         isOpen ? 'max-h-[500px] border-t border-slate-100' : 'max-h-0'
                       }`}>
-                        <div className="px-5 py-4 text-xs text-slate-650 leading-relaxed whitespace-pre-line font-medium font-sans">
-                          {item.resposta}
+                        <div className="px-5 py-5 text-[12px] text-slate-600 leading-relaxed whitespace-pre-line font-medium font-sans bg-slate-50/50 flex gap-3.5 text-left">
+                          <div className="w-1 bg-[#1B4D3E]/20 rounded-full shrink-0" />
+                          <div className="flex-1">
+                            {formatFaqText(item.resposta)}
+                          </div>
                         </div>
                       </div>
                     </div>
