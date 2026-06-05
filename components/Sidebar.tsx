@@ -1,8 +1,8 @@
 'use client';
  
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone, MessageCircle, MessageSquare, UserCog } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone, MessageCircle, MessageSquare, UserCog, Send } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
@@ -10,6 +10,7 @@ import { changeMyPassword, changeMyAvatar, getLoggedUser } from '@/app/propostas
 import { getLeads, getAllUsers, updateLeadData, changeLeadOwner } from '@/app/leads/actions';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import WhatsAppChat from '@/app/leads/components/WhatsAppChat';
+import { sendInternalMessage, getInternalMessages, markInternalMessagesAsRead, getChatList } from '@/app/leads/chat-actions';
  
 const Sidebar = () => {
   const pathname = usePathname();
@@ -470,6 +471,18 @@ const Sidebar = () => {
   const [widgetLeads, setWidgetLeads] = useState<any[]>([]);
   const [widgetSearchTerm, setWidgetSearchTerm] = useState('');
 
+  // Estados para Chat Interno
+  const [showChatWidget, setShowChatWidget] = useState(false);
+  const [activeChatUser, setActiveChatUser] = useState<any | null>(null);
+  const [chatList, setChatList] = useState<any[]>([]);
+  const [totalUnreadChat, setTotalUnreadChat] = useState(0);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [newChatMessage, setNewChatMessage] = useState('');
+  const [sendingChat, setSendingChat] = useState(false);
+  const [chatSearchTerm, setChatSearchTerm] = useState('');
+  const [loadingChatMessages, setLoadingChatMessages] = useState(false);
+  const chatMessagesEndRef = useRef<HTMLDivElement>(null);
+
   // Estados para edição inline no widget de WhatsApp
   const [isEditingWidgetInline, setIsEditingWidgetInline] = useState(false);
   const [widgetInlineForm, setWidgetInlineForm] = useState({
@@ -530,9 +543,9 @@ const Sidebar = () => {
     }
   };
 
-  // Efeito para carregar a equipe de usuários
+  // Efeito para carregar a equipe de usuários (Carrega sempre que o usuário estiver logado para manter avatares preenchidos)
   useEffect(() => {
-    if (user && showWhatsAppWidget) {
+    if (user) {
       const loadSystemUsers = async () => {
         try {
           const res = await getAllUsers();
@@ -545,7 +558,121 @@ const Sidebar = () => {
       };
       loadSystemUsers();
     }
-  }, [user, showWhatsAppWidget]);
+  }, [user]);
+
+  // Efeito para carregar a lista de conversas do Chat Interno
+  const loadChatListData = async () => {
+    if (!user) return;
+    try {
+      const res = await getChatList();
+      if (res.success && res.chatList) {
+        setChatList(res.chatList);
+        setTotalUnreadChat(res.totalUnread || 0);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar lista de chat:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      loadChatListData();
+      const interval = setInterval(loadChatListData, 4000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  // Efeito para carregar mensagens do chat ativo
+  const fetchChatMessages = async (otherUserId: string) => {
+    try {
+      const res = await getInternalMessages(otherUserId);
+      if (res.success && res.messages) {
+        setChatMessages(res.messages);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar mensagens do chat:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (user && activeChatUser) {
+      fetchChatMessages(activeChatUser.id);
+      const interval = setInterval(() => {
+        fetchChatMessages(activeChatUser.id);
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [user, activeChatUser]);
+
+  // Rolagem automática ao receber mensagens
+  useEffect(() => {
+    if (chatMessagesEndRef.current) {
+      chatMessagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages]);
+
+  const handleSelectChatUser = async (u: any) => {
+    setActiveChatUser(u);
+    setLoadingChatMessages(true);
+    try {
+      await markInternalMessagesAsRead(u.id);
+      const res = await getInternalMessages(u.id);
+      if (res.success && res.messages) {
+        setChatMessages(res.messages);
+      }
+      loadChatListData();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingChatMessages(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeChatUser && chatMessages.length > 0) {
+      const hasUnread = chatMessages.some(m => m.senderId === activeChatUser.id && !m.read);
+      if (hasUnread) {
+        markInternalMessagesAsRead(activeChatUser.id).then(() => {
+          loadChatListData();
+        });
+      }
+    }
+  }, [chatMessages, activeChatUser]);
+
+  const handleSendChatMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!activeChatUser || !newChatMessage.trim() || sendingChat) return;
+
+    const content = newChatMessage;
+    setNewChatMessage('');
+    setSendingChat(true);
+
+    const tempMessage = {
+      id: 'temp-' + Date.now(),
+      senderId: user.id,
+      receiverId: activeChatUser.id,
+      content: content.trim(),
+      read: false,
+      createdAt: new Date()
+    };
+    setChatMessages(prev => [...prev, tempMessage]);
+
+    try {
+      const res = await sendInternalMessage(activeChatUser.id, content);
+      if (res.success && res.message) {
+        setChatMessages(prev => prev.map(m => m.id === tempMessage.id ? res.message : m));
+        loadChatListData();
+      } else {
+        alert("Erro ao enviar mensagem: " + res.error);
+        setChatMessages(prev => prev.filter(m => m.id !== tempMessage.id));
+      }
+    } catch (err) {
+      console.error(err);
+      setChatMessages(prev => prev.filter(m => m.id !== tempMessage.id));
+    } finally {
+      setSendingChat(false);
+    }
+  };
 
   // Efeito para carregar leads do WhatsApp com polling de 5 segundos
   useEffect(() => {
@@ -1653,13 +1780,26 @@ const Sidebar = () => {
                 })()}
               </button>
 
-              {/* Chat Interno (Inativo por enquanto) */}
+              {/* Chat Interno */}
               <button
-                onClick={() => alert("O Chat Interno está sendo preparado e estará disponível em breve! 🚀")}
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition-all relative cursor-pointer group"
-                title="Chat Interno (Em breve)"
+                onClick={() => {
+                  setShowChatWidget(!showChatWidget);
+                  setShowWhatsAppWidget(false);
+                  setShowNotifications(false);
+                }}
+                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all relative cursor-pointer group ${
+                  showChatWidget 
+                    ? 'text-blue-600 bg-blue-50 border border-blue-200/80 shadow-xs' 
+                    : 'text-slate-500 hover:text-blue-600 hover:bg-slate-100'
+                }`}
+                title="Chat Interno"
               >
                 <MessageSquare size={18} className="transition-transform group-hover:scale-105" />
+                {totalUnreadChat > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-[8px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs">
+                    {totalUnreadChat}
+                  </span>
+                )}
               </button>
 
               {/* Divisor */}
@@ -1671,12 +1811,20 @@ const Sidebar = () => {
                   .filter(u => u.email !== user?.email && u.nome !== user?.nome)
                   .map((u) => {
                     const initials = u.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                    const chatUser = chatList.find(c => c.id === u.id);
+                    const unread = chatUser?.unreadCount || 0;
+
                     return (
                       <div
                         key={u.id}
                         className="relative group cursor-pointer"
                         title={`${u.nome} (Equipe)`}
-                        onClick={() => alert(`Iniciar chat com ${u.nome} (Funcionalidade em breve!)`)}
+                        onClick={() => {
+                          setShowChatWidget(true);
+                          setShowWhatsAppWidget(false);
+                          setShowNotifications(false);
+                          handleSelectChatUser(u);
+                        }}
                       >
                         {u.avatarUrl ? (
                           <img
@@ -1691,6 +1839,11 @@ const Sidebar = () => {
                         )}
                         {/* Indicador de Status Online (Bolinha Verde) */}
                         <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-white shadow-xs" />
+                        {unread > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-[8px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-xs animate-pulse">
+                            {unread}
+                          </span>
+                        )}
                       </div>
                     );
                   })}
@@ -2207,6 +2360,272 @@ const Sidebar = () => {
                         <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-1">Central WhatsApp CRM</h4>
                         <p className="text-[11px] text-slate-400 font-semibold max-w-[280px]">Selecione um contato na lista à esquerda para carregar a conversa e começar a responder.</p>
                       </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* WIDGET FLUTUANTE DE CHAT INTERNO (CANTO INFERIOR DIREITO) */}
+          {showChatWidget && (
+            <div className={`fixed top-3 right-14 bottom-0 bg-white shadow-2xl z-[160] flex flex-col transition-all duration-300 animate-in slide-in-from-right duration-300 font-sans border-t border-l border-slate-200 rounded-t-3xl border-t-0 border-x-0 border-solid ${
+              isCollapsed ? 'left-20' : 'left-64'
+            }`}>
+              {/* External Close Button Tab on the Left Edge */}
+              <button
+                onClick={() => {
+                  setShowChatWidget(false);
+                  setActiveChatUser(null);
+                }}
+                className="absolute top-4 left-[-40px] w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-l-2xl flex items-center justify-center shadow-lg transition-all z-[170] group active:scale-95 cursor-pointer border-none"
+                title="Fechar Chat Interno"
+              >
+                <X size={20} className="stroke-[2.5] transition-transform group-hover:rotate-90" />
+              </button>
+
+              {/* Cabeçalho Único do Widget */}
+              <div className="p-4 bg-gradient-to-r from-blue-900 to-slate-950 text-white flex justify-between items-center shrink-0 border-b border-slate-800 select-none rounded-t-3xl border-t-0 border-x-0 border-solid">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-blue-500/20 text-blue-400 rounded-lg border border-blue-500/30">
+                    <MessageSquare size={16} className="fill-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black uppercase tracking-wider">Chat Interno da Equipe</h3>
+                    <p className="text-[9px] text-slate-400 font-bold mt-0.5">Comunique-se com outros membros do time em tempo real</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Corpo em Duas Colunas */}
+              <div className="flex-1 flex overflow-hidden bg-white">
+                {/* Coluna da Esquerda: Lista de Usuários (w-[320px]) */}
+                <div className="w-[320px] border-r border-slate-200/80 flex flex-col bg-white shrink-0 border-t-0 border-b-0 border-l-0 border-solid">
+                  {/* Busca */}
+                  <div className="p-3 bg-white border-b border-slate-100 shrink-0 border-t-0 border-x-0 border-solid">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+                      <input 
+                        type="text"
+                        placeholder="Pesquisar contatos..."
+                        value={chatSearchTerm}
+                        onChange={e => setChatSearchTerm(e.target.value)}
+                        className="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:border-blue-600 outline-none transition-all font-semibold text-slate-700 placeholder-slate-400"
+                      />
+                      {chatSearchTerm && (
+                        <button 
+                          type="button" 
+                          onClick={() => setChatSearchTerm('')}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 border-none bg-transparent"
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Lista de Contatos */}
+                  <div className="flex-1 overflow-y-auto divide-y divide-slate-100 bg-white no-scrollbar divide-solid">
+                    {(() => {
+                      const filtered = chatList.filter(u => 
+                        u.nome.toLowerCase().includes(chatSearchTerm.toLowerCase()) ||
+                        (u.cargo && u.cargo.toLowerCase().includes(chatSearchTerm.toLowerCase()))
+                      );
+
+                      if (filtered.length === 0) {
+                        return (
+                          <div className="p-8 text-center text-slate-400 text-xs font-semibold">
+                            Nenhum colega de equipe encontrado.
+                          </div>
+                        );
+                      }
+
+                      return filtered.map(u => {
+                        const isSelected = activeChatUser?.id === u.id;
+                        const initials = u.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                        
+                        return (
+                          <div
+                            key={u.id}
+                            onClick={() => handleSelectChatUser(u)}
+                            className={`p-3.5 flex items-start gap-3 cursor-pointer transition-all duration-150 border-b border-slate-100 ${
+                              isSelected 
+                                ? 'bg-blue-50/70 border-l-4 border-l-blue-600 font-bold border-t-0 border-r-0 border-b-0 border-solid' 
+                                : 'hover:bg-slate-50 bg-white border-transparent'
+                            }`}
+                          >
+                            <div className="relative shrink-0">
+                              {u.avatarUrl ? (
+                                <img
+                                  src={u.avatarUrl}
+                                  alt={u.nome}
+                                  className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-xs"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 bg-slate-100 text-slate-700 border border-slate-200/80 rounded-xl flex items-center justify-center text-[10px] font-black uppercase">
+                                  {initials}
+                                </div>
+                              )}
+                              {/* Green online indicator bubble */}
+                              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-white shadow-xs" />
+                            </div>
+
+                            <div className="flex-1 min-w-0 space-y-0.5">
+                              <div className="flex justify-between items-baseline">
+                                <h4 className="text-xs md:text-sm font-bold text-slate-800 truncate" title={u.nome}>
+                                  {u.nome}
+                                </h4>
+                                {u.lastMessage && (
+                                  <span className="text-[9px] text-slate-400 font-medium ml-1">
+                                    {new Date(u.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="text-[10px] text-slate-400 font-semibold truncate">
+                                {u.cargo || 'Membro da Equipe'}
+                              </div>
+
+                              {u.lastMessage && (
+                                <p className={`text-xs truncate mt-1 ${u.unreadCount > 0 ? 'font-bold text-slate-900' : 'text-slate-500'}`}>
+                                  {u.lastMessage.senderId === user.id ? 'Você: ' : ''}
+                                  {u.lastMessage.content}
+                                </p>
+                              )}
+                            </div>
+
+                            {u.unreadCount > 0 && (
+                              <span className="bg-blue-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded-full shrink-0">
+                                {u.unreadCount}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                </div>
+
+                {/* Coluna da Direita: Chat Ativo (flex-1) */}
+                <div className="flex-1 flex flex-col overflow-hidden bg-slate-50 relative">
+                  {activeChatUser ? (
+                    <div className="flex-1 flex h-full overflow-hidden bg-slate-100 relative">
+                      <div className="flex-1 flex flex-col h-full overflow-hidden">
+                        {/* Mini Cabeçalho do Chat */}
+                        <div className="p-3 bg-white border-b border-slate-200/80 flex justify-between items-center shrink-0 shadow-xs border-t-0 border-x-0 border-solid">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            {activeChatUser.avatarUrl ? (
+                              <img
+                                src={activeChatUser.avatarUrl}
+                                alt={activeChatUser.nome}
+                                className="w-9 h-9 rounded-xl object-cover border border-slate-200"
+                              />
+                            ) : (
+                              <div className="w-9 h-9 bg-slate-100 text-slate-700 border border-slate-200 rounded-xl flex items-center justify-center text-[10px] font-black uppercase">
+                                {activeChatUser.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <h4 className="text-xs font-bold text-slate-800 truncate leading-tight">{activeChatUser.nome}</h4>
+                              <p className="text-[9px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
+                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse inline-block" />
+                                online
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Corpo de Mensagens */}
+                        <div 
+                          className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#efeae2] relative"
+                          style={{
+                            backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")',
+                            backgroundBlendMode: 'overlay',
+                            backgroundColor: '#efeae2'
+                          }}
+                        >
+                          {loadingChatMessages ? (
+                            <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                            </div>
+                          ) : chatMessages.length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center p-6 text-center select-none">
+                              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-slate-400 shadow-xs border border-slate-200/60 mb-2">
+                                <MessageSquare size={20} />
+                              </div>
+                              <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Nenhuma mensagem ainda</p>
+                              <p className="text-[10px] text-slate-400 font-medium max-w-[200px]">Envie uma mensagem abaixo para iniciar a conversa.</p>
+                            </div>
+                          ) : (
+                            chatMessages.map((msg, index) => {
+                              const isMe = msg.senderId === user.id;
+                              const showDoubleCheck = msg.read;
+                              const checkColor = showDoubleCheck ? 'text-blue-500' : 'text-slate-400';
+                              
+                              return (
+                                <div
+                                  key={msg.id || index}
+                                  className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'}`}
+                                >
+                                  <div
+                                    className={`max-w-[70%] rounded-2xl px-3 py-2 text-xs shadow-xs relative ${
+                                      isMe
+                                        ? 'bg-[#d9fdd3] text-slate-800 rounded-tr-none'
+                                        : 'bg-white text-slate-800 rounded-tl-none border border-slate-200/40'
+                                    }`}
+                                  >
+                                    <p className="break-words font-medium pr-10 whitespace-pre-wrap">{msg.content}</p>
+                                    
+                                    <div className="absolute bottom-1 right-2 flex items-center gap-1 text-[8px] font-bold text-slate-400 select-none">
+                                      <span>
+                                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                      {isMe && (
+                                        <span className={`font-black ${checkColor}`}>
+                                          {showDoubleCheck ? '✓✓' : '✓'}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                          <div ref={chatMessagesEndRef} />
+                        </div>
+
+                        {/* Input de Envio de Mensagens */}
+                        <form 
+                          onSubmit={handleSendChatMessage}
+                          className="p-3 bg-[#f0f2f5] border-t border-slate-200 flex items-center gap-2 shrink-0 select-none border-x-0 border-b-0 border-solid"
+                        >
+                          <input
+                            type="text"
+                            placeholder="Digite uma mensagem..."
+                            value={newChatMessage}
+                            onChange={e => setNewChatMessage(e.target.value)}
+                            className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-blue-600 transition-all font-semibold text-slate-700"
+                            disabled={sendingChat}
+                          />
+                          <button
+                            type="submit"
+                            disabled={sendingChat || !newChatMessage.trim()}
+                            className="w-9 h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center transition-all disabled:opacity-50 disabled:hover:bg-blue-600 cursor-pointer shadow-sm active:scale-95 shrink-0 border-none"
+                          >
+                            <Send size={15} className="fill-white" />
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center select-none bg-slate-50">
+                      <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-slate-400 border border-slate-200/80 shadow-sm mb-4 animate-bounce">
+                        <MessageSquare size={26} className="text-blue-500" />
+                      </div>
+                      <h3 className="text-sm font-black text-slate-800 tracking-tight">Chat Interno da Silva Consultoria</h3>
+                      <p className="text-xs text-slate-400 mt-1 max-w-[280px] font-semibold leading-relaxed">
+                        Selecione um colega de equipe na lista ao lado para iniciar um bate-papo em tempo real.
+                      </p>
                     </div>
                   )}
                 </div>

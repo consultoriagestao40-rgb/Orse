@@ -89,6 +89,8 @@ model User {
   color          String?         @default("slate")
   tenantId       String?
   tenant         Tenant?         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sentInternalMessages     InternalMessage[] @relation("SentInternalMessages")
+  receivedInternalMessages InternalMessage[] @relation("ReceivedInternalMessages")
 }
 
 model Client {
@@ -659,4 +661,14 @@ model FaqPadrao {
   updatedAt DateTime @updatedAt
 }
 
+model InternalMessage {
+  id          String   @id @default(cuid())
+  senderId    String
+  receiverId  String
+  content     String   @db.Text
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
+  sender      User     @relation("SentInternalMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User     @relation("ReceivedInternalMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+}
