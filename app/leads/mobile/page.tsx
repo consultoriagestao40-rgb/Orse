@@ -145,6 +145,7 @@ export default function MobileCRM() {
   const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
   const [isEditingLead, setIsEditingLead] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [editLeadForm, setEditLeadForm] = useState({
     nomeFantasia: '',
     segmento: '',
@@ -638,8 +639,11 @@ export default function MobileCRM() {
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 bg-slate-800/40 pl-2 pr-1.5 py-1 rounded-xl border border-slate-800/60 max-w-[100px] sm:max-w-none">
+          <div className="flex items-center gap-2 relative">
+            <div 
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              className="flex items-center gap-1.5 bg-slate-800/40 pl-2 pr-1.5 py-1 rounded-xl border border-slate-800/60 max-w-[100px] sm:max-w-none cursor-pointer active:scale-95 transition-all select-none"
+            >
               <span className="text-[10px] font-black text-slate-300 truncate max-w-[50px] sm:max-w-none">{currentUser?.nome.split(' ')[0]}</span>
               {currentUser?.avatarUrl ? (
                 <img 
@@ -648,28 +652,39 @@ export default function MobileCRM() {
                   className="w-7 h-7 rounded-full border border-slate-700 object-cover"
                 />
               ) : (
-                <div className="w-7 h-7 rounded-full bg-slate-700 text-white flex items-center justify-center text-[9px] font-black uppercase font-mono">
+                <div className="w-7 h-7 rounded-full bg-slate-700 text-white flex items-center justify-center text-[9px] font-black uppercase font-mono font-bold">
                   {currentUser?.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
                 </div>
               )}
             </div>
 
-            <button
-              onClick={async () => {
-                if (confirm("Deseja realmente sair do SmartBid?")) {
-                  try {
-                    await fetch('/api/auth/logout', { method: 'POST' });
-                    window.location.href = '/login';
-                  } catch (err) {
-                    console.error(err);
-                  }
-                }
-              }}
-              className="p-1.5 bg-rose-500/10 hover:bg-rose-600 text-rose-400 hover:text-white rounded-xl active:scale-95 border border-rose-500/20 cursor-pointer flex items-center justify-center shrink-0 shadow-sm"
-              title="Sair"
-            >
-              <LogOut size={14} />
-            </button>
+            {isProfileMenuOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-45 bg-transparent" 
+                  onClick={() => setIsProfileMenuOpen(false)}
+                />
+                <div className="absolute right-0 top-full mt-2 w-28 bg-slate-950 border border-slate-800 rounded-xl shadow-xl p-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150 select-none">
+                  <button
+                    onClick={async () => {
+                      setIsProfileMenuOpen(false);
+                      if (confirm("Deseja realmente sair do SmartBid?")) {
+                        try {
+                          await fetch('/api/auth/logout', { method: 'POST' });
+                          window.location.href = '/login';
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      }
+                    }}
+                    className="w-full flex items-center justify-between px-2.5 py-2 text-rose-455 hover:text-white hover:bg-rose-500/10 rounded-lg text-[10px] font-black uppercase tracking-wider border-none bg-transparent cursor-pointer transition-colors active:scale-95"
+                  >
+                    <span>Sair</span>
+                    <LogOut size={12} className="stroke-[2.5]" />
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
