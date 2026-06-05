@@ -1,0 +1,17 @@
+{
+  "name": "SmartBid CRM",
+  "short_name": "SmartBid",
+  "description": "SmartBid CRM - Silva Consultoria",
+  "start_url": "/leads",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#1B4D3E",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
