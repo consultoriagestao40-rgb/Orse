@@ -913,13 +913,15 @@ return (
                     </div>
                   </div>
                   {/* Mobile Countdown (Compact) */}
-                  <div className="sm:hidden text-[9px] bg-white/10 text-white border border-white/20 font-black uppercase tracking-wider px-2 py-1.5 rounded-xl">
-                    ⏱️ {timeLeft.days > 0 ? `${timeLeft.days}d` : `${String(timeLeft.hours).padStart(2, '0')}h`}
+                  <div className="sm:hidden flex items-center gap-1.5 text-[10px] bg-white/10 text-white border border-white/20 font-black uppercase tracking-wider px-2.5 py-1.5 rounded-full shrink-0 shadow-inner">
+                    <Clock size={12} className="text-white/95 shrink-0" />
+                    <span>{timeLeft.days > 0 ? `${timeLeft.days}d` : `${String(timeLeft.hours).padStart(2, '0')}h`}</span>
                   </div>
                 </>
               ) : (
-                <div className="text-[9px] bg-white/10 text-white border border-white/20 font-black uppercase tracking-wider px-3.5 py-2 rounded-xl">
-                  Válida até {expirationDateStr}
+                <div className="sm:hidden flex items-center gap-1.5 text-[10px] bg-white/10 text-white border border-white/20 font-black uppercase tracking-wider px-3 py-1.5 rounded-full shrink-0">
+                  <Clock size={12} className="text-white/95 shrink-0" />
+                  <span>Válida até {expirationDateStr}</span>
                 </div>
               )}
             </div>
@@ -1055,6 +1057,7 @@ return (
                     <button
                       onClick={() => {
                         setActiveClientTab('historico');
+                        setMobileMenuOpen(false);
                         setTimeout(() => {
                           document.getElementById('chat-textarea')?.focus();
                         }, 100);
@@ -1134,6 +1137,7 @@ return (
                     <button
                       onClick={() => {
                         setActiveClientTab('historico');
+                        setMobileMenuOpen(false);
                         setTimeout(() => {
                           document.getElementById('chat-textarea')?.focus();
                         }, 100);
@@ -2699,7 +2703,9 @@ return (
           onClick={() => {
             window.print();
           }}
-          className="fixed bottom-6 right-6 z-[99999] bg-[#1e4480] hover:bg-slate-800 text-white p-4 rounded-xl shadow-2xl flex items-center justify-center transition-all hover:scale-105 border border-white/10 print:hidden cursor-pointer animate-fadeIn"
+          className={`fixed bottom-6 right-6 z-[99999] bg-[#1e4480] hover:bg-slate-800 text-white p-4 rounded-xl shadow-2xl flex items-center justify-center transition-all hover:scale-105 border border-white/10 print:hidden cursor-pointer animate-fadeIn ${
+            mobileMenuOpen ? 'hidden md:flex' : 'flex'
+          }`}
           title="Salvar PDF / Imprimir"
         >
           <Printer size={20} />
