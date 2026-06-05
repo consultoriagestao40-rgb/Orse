@@ -39,6 +39,76 @@ import {
   Plus
 } from 'lucide-react';
 
+const tailwindColorMap: { [key: string]: string } = {
+  sky: '#0284c7',
+  blue: '#2563eb',
+  orange: '#ea580c',
+  amber: '#d97706',
+  emerald: '#059669',
+  green: '#16a34a',
+  red: '#dc2626',
+  rose: '#e11d48',
+  purple: '#9333ea',
+  violet: '#7c3aed',
+  yellow: '#ca8a04',
+  indigo: '#4f46e5',
+  pink: '#db2777',
+  teal: '#0d9488',
+  slate: '#475569',
+  gray: '#4b5563',
+  'bg-slate-100': '#64748b',
+  'bg-blue-100': '#3b82f6',
+  'bg-green-100': '#10b981',
+  'bg-emerald-100': '#10b981',
+  'bg-amber-100': '#f59e0b',
+  'bg-rose-100': '#f43f5e',
+  'bg-purple-100': '#8b5cf6',
+};
+
+const resolveColorToHex = (color?: string): string => {
+  if (!color) return '#64748b';
+  const lower = color.toLowerCase().trim();
+  if (lower.startsWith('#')) return lower;
+  if (tailwindColorMap[lower]) return tailwindColorMap[lower];
+  const stripped = lower.replace('bg-', '').split('-')[0];
+  return tailwindColorMap[stripped] || '#64748b';
+};
+
+const normalizeHex = (hex: string) => {
+  let h = hex.replace('#', '');
+  if (h.length === 3) {
+    h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  }
+  return '#' + h;
+};
+
+const getContrastYIQ = (hex: string) => {
+  const normalized = normalizeHex(hex);
+  const r = parseInt(normalized.slice(1, 3), 16);
+  const g = parseInt(normalized.slice(3, 5), 16);
+  const b = parseInt(normalized.slice(5, 7), 16);
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return (yiq >= 140) ? 'black' : 'white';
+};
+
+const getHighlightedStageColorClass = (color?: string) => {
+  if (!color) return { style: { backgroundColor: 'rgba(100, 116, 139, 0.1)', color: '#334155', borderColor: 'rgba(100, 116, 139, 0.25)', borderWidth: '1px', borderStyle: 'solid' } };
+  const resolvedHex = resolveColorToHex(color);
+  const contrast = getContrastYIQ(resolvedHex);
+  const bg = resolvedHex;
+  const text = contrast === 'white' ? '#ffffff' : '#000000';
+  const border = contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)';
+  return {
+    style: {
+      backgroundColor: bg,
+      color: text,
+      borderColor: border,
+      borderWidth: '1px',
+      borderStyle: 'solid'
+    }
+  };
+};
+
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v);
 
@@ -61,6 +131,7 @@ export default function MobileCRM() {
   const [loadingLeads, setLoadingLeads] = useState(true);
   const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
   const [isEditingLead, setIsEditingLead] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editLeadForm, setEditLeadForm] = useState({
     nomeFantasia: '',
     segmento: '',
@@ -158,12 +229,9 @@ export default function MobileCRM() {
     }
   }, [currentUser]);
 
-  // Filter leads dynamically based on selected stage and search query
+  // Filter leads dynamically based on search query
   useEffect(() => {
     let result = leads;
-    if (selectedStageId) {
-      result = result.filter(l => l.stageId === selectedStageId);
-    }
     if (searchTerm.trim()) {
       const query = searchTerm.toLowerCase();
       result = result.filter(l => 
@@ -174,7 +242,7 @@ export default function MobileCRM() {
       );
     }
     setFilteredLeads(result);
-  }, [leads, selectedStageId, searchTerm]);
+  }, [leads, searchTerm]);
 
   // Load active chat list
   const loadChatListMobile = async () => {
@@ -375,6 +443,7 @@ export default function MobileCRM() {
         await loadCRMData();
         // Go back to CRM tab
         setActiveTab('crm');
+        setIsCreateModalOpen(false);
       } else {
         alert("Erro ao cadastrar lead: " + res.error);
       }
@@ -468,7 +537,15 @@ export default function MobileCRM() {
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="p-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl active:scale-95 border-none cursor-pointer flex items-center justify-center shrink-0 shadow-sm"
+              title="Novo Lead"
+            >
+              <Plus size={16} />
+            </button>
+            
             <span className="text-[10px] font-black text-slate-300 mr-1">{currentUser?.nome}</span>
             {currentUser?.avatarUrl ? (
               <img 
@@ -514,35 +591,7 @@ export default function MobileCRM() {
         {activeTab === 'crm' && (
           <div className="space-y-4">
             
-            {/* Horizontal Stages Selector list */}
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none snap-x select-none">
-              {stages.map((stage) => {
-                const isSelected = selectedStageId === stage.id;
-                const stageLeadsCount = leads.filter(l => l.stageId === stage.id).length;
-                
-                return (
-                  <button
-                    key={stage.id}
-                    onClick={() => {
-                      setSelectedStageId(stage.id);
-                      setExpandedLeadId(null);
-                    }}
-                    className={`snap-center flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider shrink-0 transition-all cursor-pointer border border-solid active:scale-95 ${
-                      isSelected
-                        ? 'bg-[#1B4D3E] text-white border-[#1B4D3E] shadow-sm'
-                        : 'bg-white text-slate-500 border-slate-200'
-                    }`}
-                  >
-                    <span>{stage.nome}</span>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
-                      isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
-                    }`}>
-                      {stageLeadsCount}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+
 
             {/* Leads List */}
             {loadingLeads ? (
@@ -555,8 +604,8 @@ export default function MobileCRM() {
                 <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-400 border border-slate-100 mb-3">
                   <Building size={20} />
                 </div>
-                <h4 className="text-xs font-black uppercase text-slate-700 tracking-wider">Nenhum lead nesta fase</h4>
-                <p className="text-[10px] text-slate-400 font-semibold mt-1 max-w-[200px] mx-auto">Tente alterar os filtros ou cadastrar um novo lead na aba de criação.</p>
+                <h4 className="text-xs font-black uppercase text-slate-700 tracking-wider">Nenhum lead encontrado</h4>
+                <p className="text-[10px] text-slate-400 font-semibold mt-1 max-w-[200px] mx-auto">Cadastre um novo lead na aba de criação rápida para iniciar.</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -576,7 +625,19 @@ export default function MobileCRM() {
                         className="p-4 cursor-pointer"
                       >
                         <div className="flex justify-between items-start gap-2 mb-1">
-                          <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight truncate">{lead.nomeFantasia}</h3>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight truncate">{lead.nomeFantasia}</h3>
+                            {lead.stage && (
+                              <div className="mt-1 flex">
+                                <span 
+                                  className="text-[8px] font-black uppercase px-2 py-0.5 rounded-lg tracking-wider border border-solid"
+                                  style={getHighlightedStageColorClass(lead.stage.color).style}
+                                >
+                                  {lead.stage.nome}
+                                </span>
+                              </div>
+                            )}
+                          </div>
                           <span className="text-[10px] font-black text-emerald-700 shrink-0 bg-emerald-50 px-2 py-0.5 rounded-lg">
                             {formatCurrency(lead.valorEst)}
                           </span>
@@ -614,7 +675,7 @@ export default function MobileCRM() {
                             {/* WhatsApp Button */}
                             {lead.telefone ? (
                               <a 
-                                href={`https://wa.me/${lead.telefone.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá, tudo bem? Aqui é o ${currentUser.nome} da Silva Consultoria.`)}`}
+                                href={`https://wa.me/${lead.telefone.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá, tudo bem? Aqui é o ${currentUser.nome} do SmartBid CRM.`)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="w-8 h-8 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center transition-all active:scale-90 shadow-sm"
@@ -659,136 +720,7 @@ export default function MobileCRM() {
           </div>
         )}
 
-        {/* ================= TAB 2: QUICK NEW LEAD ================= */}
-        {activeTab === 'new-lead' && (
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-md space-y-4">
-            <div className="text-center pb-2 border-b border-slate-100 select-none">
-              <PlusCircle className="text-emerald-500 mx-auto mb-1" size={24} />
-              <h3 className="text-xs font-black uppercase text-slate-700 tracking-wider">Novo Cadastro Rápido</h3>
-              <p className="text-[9px] text-slate-400 font-semibold mt-0.5">Preencha os dados do cliente captado em campo</p>
-            </div>
 
-            <form onSubmit={handleCreateLeadSubmit} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Nome do Lead / Empresa *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Condomínio Residencial Plaza"
-                  value={newLeadForm.nomeFantasia}
-                  onChange={e => setNewLeadForm({ ...newLeadForm, nomeFantasia: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Segmento</label>
-                  <select
-                    value={newLeadForm.segmento}
-                    onChange={e => setNewLeadForm({ ...newLeadForm, segmento: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
-                  >
-                    <option value="">Selecione...</option>
-                    {segmentos.map((s, idx) => (
-                      <option key={s.id || idx} value={s.nome}>{s.nome}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Valor Est. Contrato</label>
-                  <input
-                    type="number"
-                    placeholder="Ex: 15000"
-                    value={newLeadForm.valorEst}
-                    onChange={e => setNewLeadForm({ ...newLeadForm, valorEst: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Contato Principal</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Carlos (Síndico)"
-                    value={newLeadForm.contatoNome}
-                    onChange={e => setNewLeadForm({ ...newLeadForm, contatoNome: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">WhatsApp / Telefone</label>
-                  <input
-                    type="tel"
-                    placeholder="Ex: (41) 99999-9999"
-                    value={newLeadForm.telefone}
-                    onChange={e => setNewLeadForm({ ...newLeadForm, telefone: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">E-mail</label>
-                <input
-                  type="email"
-                  placeholder="Ex: contato@cliente.com"
-                  value={newLeadForm.email}
-                  onChange={e => setNewLeadForm({ ...newLeadForm, email: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Endereço Completo</label>
-                <input
-                  type="text"
-                  placeholder="Rua, Número, Bairro"
-                  value={newLeadForm.endereco}
-                  onChange={e => setNewLeadForm({ ...newLeadForm, endereco: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <div className="col-span-2 space-y-1">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Cidade</label>
-                  <input
-                    type="text"
-                    placeholder="Curitiba"
-                    value={newLeadForm.cidade}
-                    onChange={e => setNewLeadForm({ ...newLeadForm, cidade: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">UF</label>
-                  <input
-                    type="text"
-                    placeholder="PR"
-                    maxLength={2}
-                    value={newLeadForm.uf}
-                    onChange={e => setNewLeadForm({ ...newLeadForm, uf: e.target.value.toUpperCase() })}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-center focus:outline-none focus:border-emerald-500 focus:bg-white"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={submittingLead || !newLeadForm.nomeFantasia}
-                className="w-full bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-bold py-3.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 border-none cursor-pointer"
-              >
-                {submittingLead ? "Cadastrando..." : "Cadastrar Lead"}
-              </button>
-            </form>
-          </div>
-        )}
 
         {/* ================= TAB 3: TEAM CHAT MOBILE ================= */}
         {activeTab === 'chat' && (
@@ -1011,14 +943,11 @@ export default function MobileCRM() {
         {/* Tab Novo Lead */}
         <button
           onClick={() => {
-            setActiveTab('new-lead');
-            setActiveChatUser(null);
+            setIsCreateModalOpen(true);
           }}
-          className={`flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent border-none ${
-            activeTab === 'new-lead' ? 'text-[#1B4D3E] font-black' : 'text-slate-400 font-bold'
-          }`}
+          className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent border-none text-slate-400 font-bold"
         >
-          <PlusCircle size={18} className={activeTab === 'new-lead' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+          <PlusCircle size={18} className="text-slate-400" />
           <span className="text-[8px] uppercase tracking-wider">Novo Lead</span>
         </button>
 
@@ -1402,6 +1331,165 @@ export default function MobileCRM() {
           </div>
         );
       })()}
+
+      {/* FULL-SCREEN NEW LEAD CREATION OVERLAY */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 bg-slate-50 z-50 overflow-y-auto font-sans flex flex-col animate-in slide-in-from-bottom duration-300">
+          {/* Header */}
+          <header className="sticky top-0 bg-gradient-to-r from-slate-900 to-slate-950 text-white z-55 shadow-md p-4 shrink-0 flex items-center justify-between select-none">
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setIsCreateModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-white rounded-lg active:scale-95 bg-transparent border-none cursor-pointer"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <div>
+                <h1 className="text-[9px] font-black uppercase text-emerald-400 tracking-wider">Novo Cadastro</h1>
+                <h2 className="text-xs font-bold text-white uppercase">Novo Lead Rápido</h2>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => setIsCreateModalOpen(false)}
+              className="p-1.5 text-slate-400 hover:text-white rounded-lg active:scale-95 bg-transparent border-none cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+          </header>
+
+          {/* Form Content */}
+          <div className="flex-1 p-4 pb-24 max-w-lg mx-auto w-full">
+            <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-md space-y-4">
+              <div className="text-center pb-2 border-b border-slate-100 select-none">
+                <PlusCircle className="text-emerald-500 mx-auto mb-1" size={24} />
+                <h3 className="text-xs font-black uppercase text-slate-700 tracking-wider">Novo Cadastro Rápido</h3>
+                <p className="text-[9px] text-slate-400 font-semibold mt-0.5">Preencha os dados do cliente captado em campo</p>
+              </div>
+
+              <form onSubmit={handleCreateLeadSubmit} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Nome do Lead / Empresa *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ex: Condomínio Residencial Plaza"
+                    value={newLeadForm.nomeFantasia}
+                    onChange={e => setNewLeadForm({ ...newLeadForm, nomeFantasia: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Segmento</label>
+                    <select
+                      value={newLeadForm.segmento}
+                      onChange={e => setNewLeadForm({ ...newLeadForm, segmento: e.target.value })}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                    >
+                      <option value="">Selecione...</option>
+                      {segmentos.map((s, idx) => (
+                        <option key={s.id || idx} value={s.nome}>{s.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Valor Est. Contrato</label>
+                    <input
+                      type="number"
+                      placeholder="Ex: 15000"
+                      value={newLeadForm.valorEst}
+                      onChange={e => setNewLeadForm({ ...newLeadForm, valorEst: e.target.value })}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Contato Principal</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Carlos (Síndico)"
+                      value={newLeadForm.contatoNome}
+                      onChange={e => setNewLeadForm({ ...newLeadForm, contatoNome: e.target.value })}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">WhatsApp / Telefone</label>
+                    <input
+                      type="tel"
+                      placeholder="Ex: (41) 99999-9999"
+                      value={newLeadForm.telefone}
+                      onChange={e => setNewLeadForm({ ...newLeadForm, telefone: e.target.value })}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">E-mail</label>
+                  <input
+                    type="email"
+                    placeholder="Ex: contato@cliente.com"
+                    value={newLeadForm.email}
+                    onChange={e => setNewLeadForm({ ...newLeadForm, email: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Endereço Completo</label>
+                  <input
+                    type="text"
+                    placeholder="Rua, Número, Bairro"
+                    value={newLeadForm.endereco}
+                    onChange={e => setNewLeadForm({ ...newLeadForm, endereco: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="col-span-2 space-y-1">
+                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Cidade</label>
+                    <input
+                      type="text"
+                      placeholder="Curitiba"
+                      value={newLeadForm.cidade}
+                      onChange={e => setNewLeadForm({ ...newLeadForm, cidade: e.target.value })}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">UF</label>
+                    <input
+                      type="text"
+                      placeholder="PR"
+                      maxLength={2}
+                      value={newLeadForm.uf}
+                      onChange={e => setNewLeadForm({ ...newLeadForm, uf: e.target.value.toUpperCase() })}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-center focus:outline-none focus:border-emerald-500 focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submittingLead || !newLeadForm.nomeFantasia}
+                  className="w-full bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-bold py-3.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 border-none cursor-pointer"
+                >
+                  {submittingLead ? "Cadastrando..." : "Cadastrar Lead"}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
