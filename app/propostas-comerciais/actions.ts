@@ -25,13 +25,23 @@ export async function getDocumentosProposta(preFetchedUser?: any) {
     let lightConfigs: any[] = [];
     if (user?.tenantId) {
       lightConfigs = await prisma.$queryRaw<Array<{ id: string, config: any }>>`
-        SELECT id, ("configApresentacao" - 'fotosList' - 'documentosList' - 'faqList') as config
+        SELECT id, 
+               CASE 
+                 WHEN "configApresentacao" IS NULL THEN NULL
+                 WHEN jsonb_typeof("configApresentacao") = 'object' THEN "configApresentacao" - 'fotosList' - 'documentosList' - 'faqList'
+                 ELSE "configApresentacao"
+               END as config
         FROM "DocumentoProposta"
         WHERE "tenantId" = ${user.tenantId}
       `;
     } else {
       lightConfigs = await prisma.$queryRaw<Array<{ id: string, config: any }>>`
-        SELECT id, ("configApresentacao" - 'fotosList' - 'documentosList' - 'faqList') as config
+        SELECT id, 
+               CASE 
+                 WHEN "configApresentacao" IS NULL THEN NULL
+                 WHEN jsonb_typeof("configApresentacao") = 'object' THEN "configApresentacao" - 'fotosList' - 'documentosList' - 'faqList'
+                 ELSE "configApresentacao"
+               END as config
         FROM "DocumentoProposta"
       `;
     }
