@@ -1250,17 +1250,19 @@ function PropostaEditor() {
                   <td className="px-4 py-2">
                     <input 
                       type="number" 
-                      className="w-full bg-white text-slate-800 border border-slate-300 rounded px-2 py-1 text-center font-bold outline-none focus:border-[#1B4D3E]"
+                      className="bg-white text-slate-800 border border-slate-300 rounded px-2 py-1 text-center font-bold outline-none focus:border-[#1B4D3E] mx-auto block"
                       value={item.quantidade}
                       onChange={(e) => updateInsumoItem(tipo, item.id, 'quantidade', (e.target.value === '' ? '' : Number(e.target.value)))}
+                      style={{ width: `${Math.max(3, String(item.quantidade || '').length) + 3}ch`, minWidth: '60px' }}
                     />
                   </td>
                   <td className="px-4 py-2">
                     <input 
                       type="number" 
-                      className="w-full bg-white text-slate-800 border border-slate-300 rounded px-2 py-1 text-center font-bold outline-none focus:border-[#1B4D3E]"
+                      className="bg-white text-slate-800 border border-slate-300 rounded px-2 py-1 text-center font-bold outline-none focus:border-[#1B4D3E] mx-auto block"
                       value={item.vidaUtil}
                       onChange={(e) => updateInsumoItem(tipo, item.id, 'vidaUtil', (e.target.value === '' ? '' : Number(e.target.value)))}
+                      style={{ width: `${Math.max(3, String(item.vidaUtil || '').length) + 3}ch`, minWidth: '60px' }}
                     />
                   </td>
                   <td className="px-4 py-2 text-right font-bold text-[#1B4D3E] bg-emerald-50">
