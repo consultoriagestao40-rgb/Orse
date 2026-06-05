@@ -600,6 +600,7 @@ export default function ContratosDashboard() {
               )}
             </div>
           </div>
+        </div>
 
         <div 
           className="flex flex-col gap-3 flex-1 min-h-[600px] p-3 border-x border-b rounded-b-2xl"
@@ -876,6 +877,7 @@ export default function ContratosDashboard() {
               )}
             </div>
           </div>
+        </div>
 
         <div 
           className="flex flex-col gap-3 flex-1 min-h-[600px] p-3 border-x border-b rounded-b-2xl"
