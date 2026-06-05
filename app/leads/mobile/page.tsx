@@ -1402,7 +1402,6 @@ export default function MobileCRM() {
           </div>
         );
       })()}
-      </nav>
     </div>
   );
 }
