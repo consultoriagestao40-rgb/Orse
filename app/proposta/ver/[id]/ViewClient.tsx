@@ -884,6 +884,18 @@ return (
             <p className="text-[9px] sm:text-xs text-white/75 font-bold tracking-wide mt-0.5">
               FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')} • Revisão R{String(versao?.versao || 1).padStart(2, '0')}
             </p>
+            {/* Real-time mobile countdown directly under the title */}
+            {timeLeft && !timeLeft.isExpired ? (
+              <div className="sm:hidden flex items-center gap-1 text-[9px] text-amber-300 font-bold uppercase tracking-wider mt-0.5 select-none font-mono">
+                <Clock size={10} className="text-amber-300 animate-pulse shrink-0" />
+                <span>Expira em: {timeLeft.days}d {String(timeLeft.hours).padStart(2, '0')}h {String(timeLeft.minutes).padStart(2, '0')}m {String(timeLeft.seconds).padStart(2, '0')}s</span>
+              </div>
+            ) : (
+              <div className="sm:hidden flex items-center gap-1 text-[9px] text-white/60 font-bold uppercase tracking-wider mt-0.5 select-none">
+                <Clock size={10} className="text-white/60 shrink-0" />
+                <span>Validade: {expirationDateStr}</span>
+              </div>
+            )}
           </div>
         </div>
         
@@ -894,53 +906,36 @@ return (
             : (doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR'));
 
           return (
-            <div className="flex items-center gap-4 shrink-0 ml-3">
-              <div className="hidden md:flex flex-col text-right justify-center">
+            <div className="hidden sm:flex items-center gap-4 shrink-0 ml-3">
+              <div className="flex flex-col text-right justify-center">
                 <span className="text-[9px] text-white/70 font-black uppercase tracking-widest leading-none">Validade da Proposta</span>
                 <span className="text-xs font-black text-white mt-1">{expirationDateStr}</span>
               </div>
-              {timeLeft && !timeLeft.isExpired ? (
-                <>
-                  {/* Desktop Countdown */}
-                  <div className="hidden sm:flex gap-2 items-center font-mono">
-                    {timeLeft.days > 0 && (
-                      <>
-                        <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
-                          <span className="text-sm font-black text-white leading-none">{timeLeft.days}</span>
-                          <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">dias</span>
-                        </div>
-                        <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
-                      </>
-                    )}
-                    <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
-                      <span className="text-sm font-black text-white leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
-                      <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">horas</span>
-                    </div>
-                    <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
-                    <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
-                      <span className="text-sm font-black text-white leading-none">{String(timeLeft.minutes).padStart(2, '0')}</span>
-                      <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">min</span>
-                    </div>
-                    <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
-                    <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
-                      <span className="text-sm font-black text-white animate-pulse leading-none">{String(timeLeft.seconds).padStart(2, '0')}</span>
-                      <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">seg</span>
-                    </div>
+              {timeLeft && !timeLeft.isExpired && (
+                <div className="flex gap-2 items-center font-mono">
+                  {timeLeft.days > 0 && (
+                    <>
+                      <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
+                        <span className="text-sm font-black text-white leading-none">{timeLeft.days}</span>
+                        <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">dias</span>
+                      </div>
+                      <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
+                    </>
+                  )}
+                  <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
+                    <span className="text-sm font-black text-white leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
+                    <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">horas</span>
                   </div>
-                  {/* Mobile Countdown (Compact but complete) */}
-                  <div className="sm:hidden flex items-center gap-1.5 text-[10px] bg-white/10 text-white border border-white/20 font-black uppercase tracking-wider px-2.5 py-1.5 rounded-full shrink-0 shadow-inner">
-                    <Clock size={12} className="text-white/95 shrink-0" />
-                    <span>
-                      {timeLeft.days > 0 
-                        ? `${timeLeft.days}d ${timeLeft.hours}h ${timeLeft.minutes}m` 
-                        : `${timeLeft.hours}h ${timeLeft.minutes}m ${timeLeft.seconds}s`}
-                    </span>
+                  <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
+                  <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
+                    <span className="text-sm font-black text-white leading-none">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                    <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">min</span>
                   </div>
-                </>
-              ) : (
-                <div className="sm:hidden flex items-center gap-1.5 text-[10px] bg-white/10 text-white border border-white/20 font-black uppercase tracking-wider px-3 py-1.5 rounded-full shrink-0">
-                  <Clock size={12} className="text-white/95 shrink-0" />
-                  <span>Validade: {expirationDateStr}</span>
+                  <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
+                  <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
+                    <span className="text-sm font-black text-white animate-pulse leading-none">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                    <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">seg</span>
+                  </div>
                 </div>
               )}
             </div>
