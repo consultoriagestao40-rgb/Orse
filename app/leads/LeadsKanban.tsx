@@ -2803,6 +2803,8 @@ export default function LeadsKanban() {
 
           </div>
         </div>
+      )}
+
       {customModal.isOpen && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md border border-slate-200 animate-in fade-in zoom-in-95 duration-200 text-slate-800 p-6 flex flex-col gap-4 font-sans">
