@@ -1870,8 +1870,8 @@ function ProposalsDashboard() {
         onSelect={handleInlinePropostaOwnerSelect}
         title="Pesquisar responsável..."
         anchorEl={
-          inlineOwnerPropId && typeof document !== 'undefined'
-            ? document.getElementById(`avatar-inline-owner-${inlineOwnerPropId}`)
+          inlineOwnerPropId
+            ? `avatar-inline-owner-${inlineOwnerPropId}`
             : null
         }
         isMulti={false}
@@ -1887,11 +1887,7 @@ function ProposalsDashboard() {
             selectedIds={teamModal.prop.userId ? [teamModal.prop.userId] : []}
             onSelect={(userId) => handlePropostaOwnerChange(teamModal.prop.id, userId)}
             title="Pesquisar responsável..."
-            anchorEl={
-              isOwnerPopoverOpen && typeof document !== 'undefined'
-                ? document.getElementById('team-modal-owner-anchor')
-                : null
-            }
+            anchorEl={isOwnerPopoverOpen ? 'team-modal-owner-anchor' : null}
             isMulti={false}
           />
 
@@ -1902,11 +1898,7 @@ function ProposalsDashboard() {
             selectedIds={teamModal.prop.shares?.filter((s: any) => s.role !== 'OBSERVADOR').map((s: any) => s.user?.id) || []}
             onSelect={handleTogglePropostaParticipant}
             title="Pesquisar participante..."
-            anchorEl={
-              isParticipantPopoverOpen && typeof document !== 'undefined'
-                ? document.getElementById('team-modal-participant-anchor')
-                : null
-            }
+            anchorEl={isParticipantPopoverOpen ? 'team-modal-participant-anchor' : null}
             isMulti={true}
           />
 
@@ -1917,11 +1909,7 @@ function ProposalsDashboard() {
             selectedIds={teamModal.prop.shares?.filter((s: any) => s.role === 'OBSERVADOR').map((s: any) => s.user?.id) || []}
             onSelect={handleTogglePropostaObserver}
             title="Pesquisar observador..."
-            anchorEl={
-              isObserverPopoverOpen && typeof document !== 'undefined'
-                ? document.getElementById('team-modal-observer-anchor')
-                : null
-            }
+            anchorEl={isObserverPopoverOpen ? 'team-modal-observer-anchor' : null}
             isMulti={true}
           />
         </>

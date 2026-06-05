@@ -19,7 +19,7 @@ interface UserSelectPopoverProps {
   selectedIds: string[];
   onSelect: (userId: string) => void;
   title?: string;
-  anchorEl: HTMLElement | null;
+  anchorEl: HTMLElement | null | string;
   isMulti?: boolean;
 }
 
@@ -46,7 +46,13 @@ export default function UserSelectPopover({
   // Position popover relative to anchor element
   useEffect(() => {
     if (isOpen && anchorEl) {
-      const rect = anchorEl.getBoundingClientRect();
+      const resolvedAnchor = typeof anchorEl === 'string'
+        ? document.getElementById(anchorEl)
+        : anchorEl;
+
+      if (!resolvedAnchor) return;
+
+      const rect = resolvedAnchor.getBoundingClientRect();
       const popoverWidth = 280;
       const windowWidth = window.innerWidth;
 
@@ -68,11 +74,15 @@ export default function UserSelectPopover({
   // Click outside to close
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      const resolvedAnchor = typeof anchorEl === 'string'
+        ? document.getElementById(anchorEl)
+        : anchorEl;
+
       if (
         popoverRef.current &&
         !popoverRef.current.contains(event.target as Node) &&
-        anchorEl &&
-        !anchorEl.contains(event.target as Node)
+        resolvedAnchor &&
+        !resolvedAnchor.contains(event.target as Node)
       ) {
         onClose();
       }

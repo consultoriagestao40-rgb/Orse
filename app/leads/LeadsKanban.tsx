@@ -2517,11 +2517,7 @@ export default function LeadsKanban() {
               selectedIds={selectedLead.assignedToId ? [selectedLead.assignedToId] : []}
               onSelect={handleOwnerChange}
               title="Pesquisar responsável..."
-              anchorEl={
-                isOwnerPopoverOpen && typeof document !== 'undefined'
-                  ? document.getElementById('lead-drawer-owner-anchor')
-                  : null
-              }
+              anchorEl={isOwnerPopoverOpen ? 'lead-drawer-owner-anchor' : null}
               isMulti={false}
             />
 
@@ -2532,11 +2528,7 @@ export default function LeadsKanban() {
               selectedIds={selectedLead.shares?.filter((s: any) => s.role !== 'OBSERVADOR').map((s: any) => s.user?.id) || []}
               onSelect={handleToggleParticipant}
               title="Pesquisar participante..."
-              anchorEl={
-                isParticipantPopoverOpen && typeof document !== 'undefined'
-                  ? document.getElementById('lead-drawer-participant-anchor')
-                  : null
-              }
+              anchorEl={isParticipantPopoverOpen ? 'lead-drawer-participant-anchor' : null}
               isMulti={true}
             />
 
@@ -2547,11 +2539,7 @@ export default function LeadsKanban() {
               selectedIds={selectedLead.shares?.filter((s: any) => s.role === 'OBSERVADOR').map((s: any) => s.user?.id) || []}
               onSelect={handleToggleObserver}
               title="Pesquisar observador..."
-              anchorEl={
-                isObserverPopoverOpen && typeof document !== 'undefined'
-                  ? document.getElementById('lead-drawer-observer-anchor')
-                  : null
-              }
+              anchorEl={isObserverPopoverOpen ? 'lead-drawer-observer-anchor' : null}
               isMulti={true}
             />
           </div>
@@ -2571,8 +2559,8 @@ export default function LeadsKanban() {
         onSelect={handleInlineOwnerSelect}
         title="Pesquisar responsável..."
         anchorEl={
-          inlineOwnerLeadId && typeof document !== 'undefined'
-            ? document.getElementById(`lead-avatar-inline-owner-${inlineOwnerLeadId}`)
+          inlineOwnerLeadId
+            ? `lead-avatar-inline-owner-${inlineOwnerLeadId}`
             : null
         }
         isMulti={false}
