@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, Check, X, User } from 'lucide-react';
 
 interface UserItem {
@@ -34,7 +35,13 @@ export default function UserSelectPopover({
 }: UserSelectPopoverProps) {
   const [search, setSearch] = useState('');
   const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const [mounted, setMounted] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   // Position popover relative to anchor element
   useEffect(() => {
@@ -83,21 +90,34 @@ export default function UserSelectPopover({
     };
   }, [isOpen, onClose, anchorEl]);
 
-  if (!isOpen) return null;
+  // Close on scroll anywhere in the application
+  useEffect(() => {
+    function handleScroll() {
+      onClose();
+    }
+    if (isOpen) {
+      window.addEventListener('scroll', handleScroll, { capture: true });
+    }
+    return () => {
+      window.removeEventListener('scroll', handleScroll, { capture: true });
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !mounted) return null;
 
   const filteredUsers = users.filter(u =>
     u.nome.toLowerCase().includes(search.toLowerCase()) ||
     (u.cargo && u.cargo.toLowerCase().includes(search.toLowerCase()))
   );
 
-  return (
+  return createPortal(
     <div
       ref={popoverRef}
       style={{
         position: 'absolute',
         top: `${coords.top}px`,
         left: `${coords.left}px`,
-        zIndex: 1000
+        zIndex: 9999
       }}
       className="w-[280px] bg-white border border-slate-200/80 rounded-2xl shadow-xl p-3 text-slate-800 flex flex-col gap-3 font-sans animate-in fade-in slide-in-from-top-2 duration-200"
     >
@@ -189,6 +209,7 @@ export default function UserSelectPopover({
           })
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
