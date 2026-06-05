@@ -2382,17 +2382,7 @@ return (
                 </div>
               </div>
             );
-          })()}ze={14} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+          })()}
 
           {/* 8. ABA: PERGUNTAS FREQUENTES (FAQ) */}
           {activeClientTab === 'faq' && faqList.length > 0 && (
