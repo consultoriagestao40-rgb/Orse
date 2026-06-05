@@ -462,6 +462,7 @@ function ProposalsDashboard() {
 
       <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
         <div 
+          id={`avatar-inline-owner-${prop.id}`}
           onClick={(e) => {
             e.stopPropagation();
             setInlineOwnerAnchorEl(e.currentTarget);
@@ -1726,6 +1727,7 @@ function ProposalsDashboard() {
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Responsável</label>
                 <div 
+                  id="team-modal-owner-anchor"
                   onClick={(e) => {
                     setOwnerAnchorEl(e.currentTarget);
                     setIsOwnerPopoverOpen(true);
@@ -1796,6 +1798,7 @@ function ProposalsDashboard() {
                     );
                   })}
                   <button
+                    id="team-modal-participant-anchor"
                     onClick={(e) => {
                       setParticipantAnchorEl(e.currentTarget);
                       setIsParticipantPopoverOpen(true);
@@ -1838,6 +1841,7 @@ function ProposalsDashboard() {
                     );
                   })}
                   <button
+                    id="team-modal-observer-anchor"
                     onClick={(e) => {
                       setObserverAnchorEl(e.currentTarget);
                       setIsObserverPopoverOpen(true);
@@ -1865,7 +1869,11 @@ function ProposalsDashboard() {
         }
         onSelect={handleInlinePropostaOwnerSelect}
         title="Pesquisar responsável..."
-        anchorEl={inlineOwnerAnchorEl}
+        anchorEl={
+          inlineOwnerPropId && typeof document !== 'undefined'
+            ? document.getElementById(`avatar-inline-owner-${inlineOwnerPropId}`)
+            : null
+        }
         isMulti={false}
       />
 
@@ -1879,7 +1887,11 @@ function ProposalsDashboard() {
             selectedIds={teamModal.prop.userId ? [teamModal.prop.userId] : []}
             onSelect={(userId) => handlePropostaOwnerChange(teamModal.prop.id, userId)}
             title="Pesquisar responsável..."
-            anchorEl={ownerAnchorEl}
+            anchorEl={
+              isOwnerPopoverOpen && typeof document !== 'undefined'
+                ? document.getElementById('team-modal-owner-anchor')
+                : null
+            }
             isMulti={false}
           />
 
@@ -1890,7 +1902,11 @@ function ProposalsDashboard() {
             selectedIds={teamModal.prop.shares?.filter((s: any) => s.role !== 'OBSERVADOR').map((s: any) => s.user?.id) || []}
             onSelect={handleTogglePropostaParticipant}
             title="Pesquisar participante..."
-            anchorEl={participantAnchorEl}
+            anchorEl={
+              isParticipantPopoverOpen && typeof document !== 'undefined'
+                ? document.getElementById('team-modal-participant-anchor')
+                : null
+            }
             isMulti={true}
           />
 
@@ -1901,7 +1917,11 @@ function ProposalsDashboard() {
             selectedIds={teamModal.prop.shares?.filter((s: any) => s.role === 'OBSERVADOR').map((s: any) => s.user?.id) || []}
             onSelect={handleTogglePropostaObserver}
             title="Pesquisar observador..."
-            anchorEl={observerAnchorEl}
+            anchorEl={
+              isObserverPopoverOpen && typeof document !== 'undefined'
+                ? document.getElementById('team-modal-observer-anchor')
+                : null
+            }
             isMulti={true}
           />
         </>

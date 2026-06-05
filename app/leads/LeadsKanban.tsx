@@ -290,6 +290,7 @@ const LeadCard = ({
 
       <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
         <div 
+          id={`lead-avatar-inline-owner-${lead.id}`}
           onClick={(e) => {
             if (onOwnerClick) {
               e.stopPropagation();
@@ -2360,6 +2361,7 @@ export default function LeadsKanban() {
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Responsável</label>
                       <div 
+                        id="lead-drawer-owner-anchor"
                         onClick={(e) => {
                           setOwnerAnchorEl(e.currentTarget);
                           setIsOwnerPopoverOpen(true);
@@ -2429,6 +2431,7 @@ export default function LeadsKanban() {
                           );
                         })}
                         <button
+                          id="lead-drawer-participant-anchor"
                           onClick={(e) => {
                             setParticipantAnchorEl(e.currentTarget);
                             setIsParticipantPopoverOpen(true);
@@ -2470,6 +2473,7 @@ export default function LeadsKanban() {
                           );
                         })}
                         <button
+                          id="lead-drawer-observer-anchor"
                           onClick={(e) => {
                             setObserverAnchorEl(e.currentTarget);
                             setIsObserverPopoverOpen(true);
@@ -2513,7 +2517,11 @@ export default function LeadsKanban() {
               selectedIds={selectedLead.assignedToId ? [selectedLead.assignedToId] : []}
               onSelect={handleOwnerChange}
               title="Pesquisar responsável..."
-              anchorEl={ownerAnchorEl}
+              anchorEl={
+                isOwnerPopoverOpen && typeof document !== 'undefined'
+                  ? document.getElementById('lead-drawer-owner-anchor')
+                  : null
+              }
               isMulti={false}
             />
 
@@ -2524,7 +2532,11 @@ export default function LeadsKanban() {
               selectedIds={selectedLead.shares?.filter((s: any) => s.role !== 'OBSERVADOR').map((s: any) => s.user?.id) || []}
               onSelect={handleToggleParticipant}
               title="Pesquisar participante..."
-              anchorEl={participantAnchorEl}
+              anchorEl={
+                isParticipantPopoverOpen && typeof document !== 'undefined'
+                  ? document.getElementById('lead-drawer-participant-anchor')
+                  : null
+              }
               isMulti={true}
             />
 
@@ -2535,7 +2547,11 @@ export default function LeadsKanban() {
               selectedIds={selectedLead.shares?.filter((s: any) => s.role === 'OBSERVADOR').map((s: any) => s.user?.id) || []}
               onSelect={handleToggleObserver}
               title="Pesquisar observador..."
-              anchorEl={observerAnchorEl}
+              anchorEl={
+                isObserverPopoverOpen && typeof document !== 'undefined'
+                  ? document.getElementById('lead-drawer-observer-anchor')
+                  : null
+              }
               isMulti={true}
             />
           </div>
@@ -2554,7 +2570,11 @@ export default function LeadsKanban() {
         }
         onSelect={handleInlineOwnerSelect}
         title="Pesquisar responsável..."
-        anchorEl={inlineOwnerAnchorEl}
+        anchorEl={
+          inlineOwnerLeadId && typeof document !== 'undefined'
+            ? document.getElementById(`lead-avatar-inline-owner-${inlineOwnerLeadId}`)
+            : null
+        }
         isMulti={false}
       />
 
