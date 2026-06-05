@@ -39,7 +39,8 @@ import {
   ArrowLeft,
   Navigation,
   RefreshCw,
-  Plus
+  Plus,
+  LogOut
 } from 'lucide-react';
 
 const tailwindColorMap: { [key: string]: string } = {
@@ -563,7 +564,7 @@ export default function MobileCRM() {
             </div>
           </div>
           
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setIsCreateModalOpen(true)}
               className="p-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl active:scale-95 border-none cursor-pointer flex items-center justify-center shrink-0 shadow-sm"
@@ -572,18 +573,37 @@ export default function MobileCRM() {
               <Plus size={16} />
             </button>
             
-            <span className="text-[10px] font-black text-slate-300 mr-1">{currentUser?.nome}</span>
-            {currentUser?.avatarUrl ? (
-              <img 
-                src={currentUser.avatarUrl} 
-                alt={currentUser.nome} 
-                className="w-8 h-8 rounded-full border border-slate-700 object-cover"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center text-[10px] font-black uppercase">
-                {currentUser?.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
-              </div>
-            )}
+            <div className="flex items-center gap-1.5 bg-slate-800/40 pl-2 pr-1.5 py-1 rounded-xl border border-slate-800/60 max-w-[100px] sm:max-w-none">
+              <span className="text-[10px] font-black text-slate-300 truncate max-w-[50px] sm:max-w-none">{currentUser?.nome.split(' ')[0]}</span>
+              {currentUser?.avatarUrl ? (
+                <img 
+                  src={currentUser.avatarUrl} 
+                  alt={currentUser.nome} 
+                  className="w-7 h-7 rounded-full border border-slate-700 object-cover"
+                />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-slate-700 text-white flex items-center justify-center text-[9px] font-black uppercase font-mono">
+                  {currentUser?.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={async () => {
+                if (confirm("Deseja realmente sair do SmartBid CRM?")) {
+                  try {
+                    await fetch('/api/auth/logout', { method: 'POST' });
+                    window.location.href = '/login';
+                  } catch (err) {
+                    console.error(err);
+                  }
+                }
+              }}
+              className="p-1.5 bg-rose-500/10 hover:bg-rose-600 text-rose-400 hover:text-white rounded-xl active:scale-95 border border-rose-500/20 cursor-pointer flex items-center justify-center shrink-0 shadow-sm"
+              title="Sair"
+            >
+              <LogOut size={14} />
+            </button>
           </div>
         </div>
 
