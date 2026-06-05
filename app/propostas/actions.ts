@@ -756,7 +756,7 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
         cnpj: meta.cnpj || '',
         dataInicio: meta.dataInicio || '',
         dataVencimento: meta.dataVencimento || '',
-        contatoCargo: meta.contatoCargo || '',
+        contatoCargo: meta.contatoCargo || proposta.client?.contatoCargo || '',
         condicoesColaboradores: meta.condicoesColaboradores || [],
         condicoesCliente: meta.condicoesCliente || [],
         itensInclusosExcluidos: (() => {
