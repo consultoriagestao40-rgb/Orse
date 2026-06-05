@@ -859,7 +859,11 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     }
   }, [activeClientTab]);
 
-return (
+  const expirationDateStr = doc.configApresentacao?.linkExpiresAt 
+    ? new Date(doc.configApresentacao.linkExpiresAt).toLocaleDateString('pt-BR')
+    : (doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR'));
+
+  return (
     <div className="bg-[#FAFBFD] w-full h-screen text-slate-800 font-sans flex flex-col overflow-hidden select-none pt-20 animate-fadeIn">
       <style dangerouslySetInnerHTML={{ __html: themeStyleHtml }} />
       
@@ -901,10 +905,6 @@ return (
         
         {/* Right: Larger Countdown Timer digits if active, otherwise static badge */}
         {(() => {
-          const expirationDateStr = doc.configApresentacao?.linkExpiresAt 
-            ? new Date(doc.configApresentacao.linkExpiresAt).toLocaleDateString('pt-BR')
-            : (doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR'));
-
           return (
             <div className="hidden sm:flex items-center gap-4 shrink-0 ml-3">
               <div className="flex flex-col text-right justify-center">
