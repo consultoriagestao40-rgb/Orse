@@ -82,6 +82,132 @@ const getLeadTotalizerStyle = (color: string) => {
   return { backgroundColor: 'rgba(100, 116, 139, 0.1)', color: '#334155', borderColor: 'rgba(100, 116, 139, 0.25)' };
 };
 
+const LeadCard = ({ 
+  lead, 
+  handleDragStart, 
+  handleDragEnd, 
+  setSelectedLead, 
+  showStageInFooter = false 
+}: { 
+  lead: any; 
+  handleDragStart: (e: React.DragEvent, id: string) => void; 
+  handleDragEnd: () => void; 
+  setSelectedLead: (lead: any) => void; 
+  showStageInFooter?: boolean; 
+}) => {
+  const unreadCount = lead.whatsappMessages?.filter(
+    (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
+  ).length || 0;
+
+  return (
+    <div
+      draggable
+      onDragStart={(e) => handleDragStart(e, lead.id)}
+      onDragEnd={handleDragEnd}
+      onClick={() => setSelectedLead(lead)}
+      className="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-[#1B4D3E]/30 transition-all group flex flex-col gap-2"
+    >
+      <div className="flex items-start justify-between gap-1.5 min-w-0">
+        <div className="font-bold text-xs text-slate-800 leading-snug line-clamp-2 max-w-[85%]" title={lead.nomeFantasia}>
+          {lead.nomeFantasia}
+        </div>
+        {unreadCount > 0 && (
+          <span className="bg-[#25D366] text-white text-[8px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 animate-pulse shadow-sm shadow-[#25D366]/30" title={`${unreadCount} mensagens não lidas`}>
+            <MessageSquare size={8} fill="white" /> {unreadCount}
+          </span>
+        )}
+      </div>
+
+      <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
+        <Building size={9} className="shrink-0 text-slate-400" /> 
+        <span className="truncate">{lead.segmento || 'Sem segmento'}</span>
+      </div>
+
+      {(lead.telefone || lead.email) && (
+        <div className="flex flex-wrap items-center gap-2 text-[9px] text-slate-500 font-medium">
+          {lead.telefone && (
+            <span className="flex items-center gap-0.5 truncate max-w-[105px]" title={lead.telefone}>
+              <Phone size={9} className="text-slate-400 shrink-0" /> {lead.telefone}
+            </span>
+          )}
+          {lead.email && (
+            <span className="flex items-center gap-0.5 truncate max-w-[110px]" title={lead.email}>
+              <Mail size={9} className="text-slate-400 shrink-0" /> {lead.email}
+            </span>
+          )}
+        </div>
+      )}
+
+      {lead.endereco && (
+        <div className="flex items-center gap-1.5">
+          <a 
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.endereco)}`} 
+            target="_blank" 
+            rel="noreferrer" 
+            onClick={e => e.stopPropagation()} 
+            className="flex-1 bg-blue-50/60 hover:bg-blue-100/80 text-blue-600 text-[8.5px] font-black py-0.5 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-blue-100/50"
+            title="Abrir no Google Maps"
+          >
+            <MapPin size={8} /> Maps
+          </a>
+          <a 
+            href={`https://waze.com/ul?q=${encodeURIComponent(lead.endereco)}`} 
+            target="_blank" 
+            rel="noreferrer" 
+            onClick={e => e.stopPropagation()} 
+            className="flex-1 bg-cyan-50/60 hover:bg-cyan-100/80 text-cyan-600 text-[8.5px] font-black py-0.5 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-cyan-100/50"
+            title="Abrir no Waze"
+          >
+            <Navigation size={8} /> Waze
+          </a>
+        </div>
+      )}
+
+      {lead.activities && lead.activities.length > 0 && (
+        <div className="bg-amber-50/40 border border-amber-100/60 p-1 rounded-lg text-[9px] flex items-center gap-1 text-amber-700">
+          <CalendarDays size={10} className="text-amber-500 shrink-0" />
+          <span className="font-bold shrink-0">{lead.activities[0].tipo}:</span>
+          <span className="truncate flex-1 font-medium">{lead.activities[0].titulo}</span>
+          <span className="text-[8px] text-amber-600 font-bold bg-amber-100/70 px-1 py-0.5 rounded shrink-0">
+            {safeDate(lead.activities[0].dataInicio)}
+          </span>
+        </div>
+      )}
+
+      {(showStageInFooter || lead.assignedTo) && (
+        <div className="flex items-center justify-between pt-1.5 border-t border-slate-100/80 text-[8.5px] text-slate-400 font-sans">
+          {showStageInFooter ? (
+            <div className="flex items-center gap-1">
+              <span className="font-bold text-slate-400">Etapa:</span>
+              <span className="font-black text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded-md uppercase tracking-wider text-[8px]">{lead.stage?.nome || 'Sem Etapa'}</span>
+            </div>
+          ) : (
+            lead.assignedTo && (
+              <div className="flex items-center gap-1.5">
+                {lead.assignedTo.avatarUrl ? (
+                  <img 
+                    src={lead.assignedTo.avatarUrl} 
+                    alt={lead.assignedTo.nome} 
+                    className="w-4 h-4 rounded-full object-cover border border-slate-100 shrink-0"
+                  />
+                ) : (
+                  <div className="w-4 h-4 rounded-full bg-emerald-600/10 text-emerald-700 border border-emerald-100/40 flex items-center justify-center text-[6.5px] font-black shrink-0 uppercase">
+                    {lead.assignedTo.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                  </div>
+                )}
+                <span className="font-bold text-slate-600">{lead.assignedTo.nome.split(' ')[0]}</span>
+              </div>
+            )
+          )}
+          <div className="font-semibold text-slate-400/80">
+            {safeDate(lead.updatedAt)}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function LeadsKanban() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1002,7 +1128,7 @@ export default function LeadsKanban() {
         {showMetrics && <PipelineMetrics leads={filteredLeads} stages={stages} />}
         {viewMode === 'kanban-status' && (
           <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
-            <div className="flex gap-5 h-[calc(100vh-70px)] shrink-0 pr-1">
+            <div className="flex gap-3 h-[calc(100vh-70px)] shrink-0 pr-1">
               {stages.map((stage, idx) => {
                 const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
                 const totalValorEst = stageLeads.reduce((acc, lead) => acc + (lead.valorEst || 0), 0);
@@ -1255,108 +1381,13 @@ export default function LeadsKanban() {
                       }}
                     >
                       {stageLeads.map(lead => (
-                        <div
+                        <LeadCard
                           key={lead.id}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, lead.id)}
-                          onDragEnd={handleDragEnd}
-                          onClick={() => setSelectedLead(lead)}
-                          className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-[#1B4D3E]/30 transition-all group"
-                        >
-                          <div className="flex items-center justify-between gap-1.5 mb-1">
-                            <div className="font-bold text-sm text-slate-800 truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</div>
-                            {(() => {
-                              const unreadCount = lead.whatsappMessages?.filter(
-                                (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
-                              ).length || 0;
-                              if (unreadCount > 0) {
-                                return (
-                                  <span className="bg-green-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 animate-pulse shadow-sm shadow-green-500/30" title={`${unreadCount} mensagens não lidas`}>
-                                    <MessageSquare size={8} fill="white" /> {unreadCount}
-                                  </span>
-                                );
-                              }
-                              return null;
-                            })()}
-                          </div>
-                          
-                          <div className="text-[10px] text-slate-500 flex items-center gap-1 mb-1.5">
-                            <Building size={10} className="shrink-0" /> <span className="truncate">{lead.segmento || 'Sem segmento'}</span>
-                          </div>
-                          
-                          {(lead.telefone || lead.email) && (
-                            <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
-                              {lead.telefone && (
-                                <span className="flex items-center gap-0.5 truncate max-w-[110px]" title={lead.telefone}>
-                                  <Phone size={10} className="text-slate-400 shrink-0" /> {lead.telefone}
-                                </span>
-                              )}
-                              {lead.email && (
-                                <span className="flex items-center gap-0.5 truncate max-w-[120px]" title={lead.email}>
-                                  <Mail size={10} className="text-slate-400 shrink-0" /> {lead.email}
-                                </span>
-                              )}
-                            </div>
-                          )}
-
-                          {lead.endereco && (
-                            <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-2">
-                              <a 
-                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.endereco)}`} 
-                                target="_blank" 
-                                rel="noreferrer" 
-                                onClick={e => e.stopPropagation()} 
-                                className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[9px] font-black py-1 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-blue-100"
-                                title="Abrir no Google Maps"
-                              >
-                                <MapPin size={9} /> Maps
-                              </a>
-                              <a 
-                                href={`https://waze.com/ul?q=${encodeURIComponent(lead.endereco)}`} 
-                                target="_blank" 
-                                rel="noreferrer" 
-                                onClick={e => e.stopPropagation()} 
-                                className="flex-1 bg-cyan-50 hover:bg-cyan-100 text-cyan-600 text-[9px] font-black py-1 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-cyan-100"
-                                title="Abrir no Waze"
-                              >
-                                <Navigation size={9} /> Waze
-                              </a>
-                            </div>
-                          )}
-
-                          {lead.activities && lead.activities.length > 0 && (
-                            <div className="mt-2 bg-amber-50/70 border border-amber-100 p-1.5 rounded-lg text-[10px] flex items-center gap-1 text-amber-700">
-                              <CalendarDays size={11} className="text-amber-500 shrink-0" />
-                              <span className="font-semibold shrink-0">{lead.activities[0].tipo}:</span>
-                              <span className="truncate flex-1">{lead.activities[0].titulo}</span>
-                              <span className="text-[9px] text-amber-600 font-medium bg-amber-100/80 px-1 py-0.5 rounded shrink-0">
-                                {safeDate(lead.activities[0].dataInicio)}
-                              </span>
-                            </div>
-                          )}
-
-                          {lead.assignedTo && (
-                            <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 text-[9px] text-slate-400 font-sans">
-                               <div className="flex items-center gap-1.5">
-                                 {lead.assignedTo.avatarUrl ? (
-                                   <img 
-                                     src={lead.assignedTo.avatarUrl} 
-                                     alt={lead.assignedTo.nome} 
-                                     className="w-4.5 h-4.5 rounded-full object-cover border border-slate-100 shrink-0 shadow-xs"
-                                   />
-                                 ) : (
-                                   <div className="w-4.5 h-4.5 rounded-full bg-emerald-600/15 text-emerald-700 border border-emerald-100/50 flex items-center justify-center text-[7px] font-black shrink-0 uppercase">
-                                     {lead.assignedTo.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
-                                   </div>
-                                 )}
-                                 <span className="font-bold text-slate-700">{lead.assignedTo.nome.split(' ')[0]}</span>
-                               </div>
-                               <div className="font-semibold text-slate-400">
-                                 {safeDate(lead.updatedAt)}
-                               </div>
-                            </div>
-                          )}
-                        </div>
+                          lead={lead}
+                          handleDragStart={handleDragStart}
+                          handleDragEnd={handleDragEnd}
+                          setSelectedLead={setSelectedLead}
+                        />
                       ))}
                     </div>
                   </div>
@@ -1368,7 +1399,7 @@ export default function LeadsKanban() {
 
         {viewMode === 'kanban-vendedor' && (
           <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
-            <div className="flex gap-5 h-[calc(100vh-70px)] shrink-0 pr-1">
+            <div className="flex gap-3 h-[calc(100vh-70px)] shrink-0 pr-1">
               {kanbanVendedorCols.map((col, idx) => {
                 const colLeads = col.cards;
                 const isFirst = idx === 0;
@@ -1555,71 +1586,14 @@ export default function LeadsKanban() {
                       }}
                     >
                       {colLeads.map(lead => (
-                        <div
+                        <LeadCard
                           key={lead.id}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, lead.id)}
-                          onDragEnd={handleDragEnd}
-                          onClick={() => setSelectedLead(lead)}
-                          className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-[#1B4D3E]/30 transition-all group"
-                        >
-                          <div className="flex items-center justify-between gap-1.5 mb-1">
-                            <div className="font-bold text-sm text-slate-800 truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</div>
-                            {(() => {
-                              const unreadCount = lead.whatsappMessages?.filter(
-                                (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
-                              ).length || 0;
-                              if (unreadCount > 0) {
-                                return (
-                                  <span className="bg-green-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 animate-pulse shadow-sm shadow-green-500/30" title={`${unreadCount} mensagens não lidas`}>
-                                    <MessageSquare size={8} fill="white" /> {unreadCount}
-                                  </span>
-                                );
-                              }
-                              return null;
-                            })()}
-                          </div>
-                          
-                          <div className="text-[10px] text-slate-500 flex items-center gap-1 mb-1.5">
-                            <Building size={10} className="shrink-0" /> <span className="truncate">{lead.segmento || 'Sem segmento'}</span>
-                          </div>
-                          
-                          {(lead.telefone || lead.email) && (
-                            <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
-                              {lead.telefone && (
-                                <span className="flex items-center gap-0.5 truncate max-w-[110px]" title={lead.telefone}>
-                                  <Phone size={10} className="text-slate-400 shrink-0" /> {lead.telefone}
-                                </span>
-                              )}
-                              {lead.email && (
-                                <span className="flex items-center gap-0.5 truncate max-w-[120px]" title={lead.email}>
-                                  <Mail size={10} className="text-slate-400 shrink-0" /> {lead.email}
-                                </span>
-                              )}
-                            </div>
-                          )}
-
-                          {lead.activities && lead.activities.length > 0 && (
-                            <div className="mt-2 bg-amber-50/70 border border-amber-100 p-1.5 rounded-lg text-[10px] flex items-center gap-1 text-amber-700">
-                              <CalendarDays size={11} className="text-amber-500 shrink-0" />
-                              <span className="font-semibold shrink-0">{lead.activities[0].tipo}:</span>
-                              <span className="truncate flex-1">{lead.activities[0].titulo}</span>
-                              <span className="text-[9px] text-amber-600 font-medium bg-amber-100/80 px-1 py-0.5 rounded shrink-0">
-                                {safeDate(lead.activities[0].dataInicio)}
-                              </span>
-                            </div>
-                          )}
-
-                          <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 text-[9px] text-slate-400 font-sans">
-                             <div className="flex items-center gap-1">
-                               <span className="font-bold text-slate-500">Etapa:</span>
-                               <span className="font-semibold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-wide">{lead.stage?.nome || 'Sem Etapa'}</span>
-                             </div>
-                             <div className="font-semibold text-slate-400">
-                               {safeDate(lead.updatedAt)}
-                             </div>
-                          </div>
-                        </div>
+                          lead={lead}
+                          handleDragStart={handleDragStart}
+                          handleDragEnd={handleDragEnd}
+                          setSelectedLead={setSelectedLead}
+                          showStageInFooter={true}
+                        />
                       ))}
                     </div>
                   </div>
@@ -1631,7 +1605,7 @@ export default function LeadsKanban() {
 
         {viewMode === 'kanban-segmento' && (
           <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
-            <div className="flex gap-5 h-[calc(100vh-70px)] shrink-0 pr-1">
+            <div className="flex gap-3 h-[calc(100vh-70px)] shrink-0 pr-1">
               {kanbanSegmentoCols.map((col, idx) => {
                 const colLeads = col.cards;
                 const isFirst = idx === 0;
@@ -1806,96 +1780,14 @@ export default function LeadsKanban() {
                       }}
                     >
                       {colLeads.map(lead => (
-                        <div
+                        <LeadCard
                           key={lead.id}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, lead.id)}
-                          onDragEnd={handleDragEnd}
-                          onClick={() => setSelectedLead(lead)}
-                          className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-[#1B4D3E]/30 transition-all group"
-                        >
-                          <div className="flex items-center justify-between gap-1.5 mb-1">
-                            <div className="font-bold text-sm text-slate-800 truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</div>
-                            {(() => {
-                              const unreadCount = lead.whatsappMessages?.filter(
-                                (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
-                              ).length || 0;
-                              if (unreadCount > 0) {
-                                return (
-                                  <span className="bg-green-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 animate-pulse shadow-sm shadow-green-500/30" title={`${unreadCount} mensagens não lidas`}>
-                                    <MessageSquare size={8} fill="white" /> {unreadCount}
-                                  </span>
-                                );
-                              }
-                              return null;
-                            })()}
-                          </div>
-                          
-                          <div className="text-[10px] text-slate-500 flex items-center gap-1 mb-1.5">
-                            <Building size={10} className="shrink-0" /> <span className="truncate">{lead.segmento || 'Sem segmento'}</span>
-                          </div>
-                          
-                          {(lead.telefone || lead.email) && (
-                            <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
-                              {lead.telefone && (
-                                <span className="flex items-center gap-0.5 truncate max-w-[110px]" title={lead.telefone}>
-                                  <Phone size={10} className="text-slate-400 shrink-0" /> {lead.telefone}
-                                </span>
-                              )}
-                              {lead.email && (
-                                <span className="flex items-center gap-0.5 truncate max-w-[120px]" title={lead.email}>
-                                  <Mail size={10} className="text-slate-400 shrink-0" /> {lead.email}
-                                </span>
-                              )}
-                            </div>
-                          )}
-
-                          {lead.endereco && (
-                            <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-2">
-                              <a 
-                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.endereco)}`} 
-                                target="_blank" 
-                                rel="noreferrer" 
-                                onClick={e => e.stopPropagation()} 
-                                className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[9px] font-black py-1 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-blue-100"
-                                title="Abrir no Google Maps"
-                              >
-                                <MapPin size={9} /> Maps
-                              </a>
-                              <a 
-                                href={`https://waze.com/ul?q=${encodeURIComponent(lead.endereco)}`} 
-                                target="_blank" 
-                                rel="noreferrer" 
-                                onClick={e => e.stopPropagation()} 
-                                className="flex-1 bg-cyan-50 hover:bg-cyan-100 text-cyan-600 text-[9px] font-black py-1 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-cyan-100"
-                                title="Abrir no Waze"
-                              >
-                                <Navigation size={9} /> Waze
-                              </a>
-                            </div>
-                          )}
-
-                          {lead.activities && lead.activities.length > 0 && (
-                            <div className="mt-2 bg-amber-50/70 border border-amber-100 p-1.5 rounded-lg text-[10px] flex items-center gap-1 text-amber-700">
-                              <CalendarDays size={11} className="text-amber-500 shrink-0" />
-                              <span className="font-semibold shrink-0">{lead.activities[0].tipo}:</span>
-                              <span className="truncate flex-1">{lead.activities[0].titulo}</span>
-                              <span className="text-[9px] text-amber-600 font-medium bg-amber-100/80 px-1 py-0.5 rounded shrink-0">
-                                {safeDate(lead.activities[0].dataInicio)}
-                              </span>
-                            </div>
-                          )}
-
-                          <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 text-[9px] text-slate-400 font-sans">
-                             <div className="flex items-center gap-1">
-                               <span className="font-bold text-slate-500">Etapa:</span>
-                               <span className="font-semibold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-wide">{lead.stage?.nome || 'Sem Etapa'}</span>
-                             </div>
-                             <div className="font-semibold text-slate-400">
-                               {safeDate(lead.updatedAt)}
-                             </div>
-                          </div>
-                        </div>
+                          lead={lead}
+                          handleDragStart={handleDragStart}
+                          handleDragEnd={handleDragEnd}
+                          setSelectedLead={setSelectedLead}
+                          showStageInFooter={true}
+                        />
                       ))}
                     </div>
                   </div>

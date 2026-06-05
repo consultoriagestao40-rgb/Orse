@@ -1194,7 +1194,7 @@ export default function ContratosDashboard() {
           {/* KANBAN POR STATUS */}
           {viewMode === 'kanban-status' && (
             <div className="overflow-x-auto pb-6">
-              <div className="flex gap-5 min-w-max">
+              <div className="flex gap-3 min-w-max">
                 {statusList.map((status, index) => (
                   <KanbanColumn key={status} status={status} isFirst={index === 0} />
                 ))}
@@ -1205,7 +1205,7 @@ export default function ContratosDashboard() {
           {/* KANBAN POR SEGMENTO */}
           {viewMode === 'kanban-segmento' && (
             <div className="overflow-x-auto pb-6">
-              <div className="flex gap-5 min-w-max">
+              <div className="flex gap-3 min-w-max">
                 {kanbanSegmentoCols.map((col, index) => (
                   <KanbanSegmentoColumn
                     key={col.id}
