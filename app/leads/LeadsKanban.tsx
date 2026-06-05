@@ -1040,7 +1040,7 @@ export default function LeadsKanban() {
                         style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
                       >
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <h3 className="font-black uppercase tracking-tight text-xs truncate max-w-[130px]">
+                          <h3 className="font-black uppercase tracking-wider text-xs truncate max-w-[170px]">
                             {stage.nome}
                           </h3>
                           
@@ -1261,10 +1261,10 @@ export default function LeadsKanban() {
                           onDragStart={(e) => handleDragStart(e, lead.id)}
                           onDragEnd={handleDragEnd}
                           onClick={() => setSelectedLead(lead)}
-                          className="bg-white p-3 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-green-200 transition-all group"
+                          className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-[#1B4D3E]/30 transition-all group"
                         >
                           <div className="flex items-center justify-between gap-1.5 mb-1">
-                            <div className="font-bold text-xs text-slate-800 truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</div>
+                            <div className="font-bold text-sm text-slate-800 truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</div>
                             {(() => {
                               const unreadCount = lead.whatsappMessages?.filter(
                                 (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
@@ -1420,7 +1420,7 @@ export default function LeadsKanban() {
                           ) : (
                             <User size={10} className={contrast === 'white' ? 'text-white/80 shrink-0' : 'text-slate-900/80 shrink-0'} />
                           )}
-                          <h3 className="font-black uppercase tracking-tight text-xs truncate">
+                          <h3 className="font-black uppercase tracking-wider text-xs truncate">
                             {col.label}
                           </h3>
                         </div>
@@ -1561,10 +1561,10 @@ export default function LeadsKanban() {
                           onDragStart={(e) => handleDragStart(e, lead.id)}
                           onDragEnd={handleDragEnd}
                           onClick={() => setSelectedLead(lead)}
-                          className="bg-white p-3 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-green-200 transition-all group"
+                          className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-[#1B4D3E]/30 transition-all group"
                         >
                           <div className="flex items-center justify-between gap-1.5 mb-1">
-                            <div className="font-bold text-xs text-slate-800 truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</div>
+                            <div className="font-bold text-sm text-slate-800 truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</div>
                             {(() => {
                               const unreadCount = lead.whatsappMessages?.filter(
                                 (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
@@ -1671,7 +1671,7 @@ export default function LeadsKanban() {
                       >
                         <div className="flex items-center gap-1.5 min-w-0 flex-1">
                           <Building size={10} className={contrast === 'white' ? 'text-white/80 shrink-0' : 'text-slate-900/80 shrink-0'} />
-                          <h3 className="font-black uppercase tracking-tight text-xs truncate">
+                          <h3 className="font-black uppercase tracking-wider text-xs truncate">
                             {col.label}
                           </h3>
                         </div>
@@ -1812,10 +1812,10 @@ export default function LeadsKanban() {
                           onDragStart={(e) => handleDragStart(e, lead.id)}
                           onDragEnd={handleDragEnd}
                           onClick={() => setSelectedLead(lead)}
-                          className="bg-white p-3 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-green-200 transition-all group"
+                          className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-[#1B4D3E]/30 transition-all group"
                         >
                           <div className="flex items-center justify-between gap-1.5 mb-1">
-                            <div className="font-bold text-xs text-slate-800 truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</div>
+                            <div className="font-bold text-sm text-slate-800 truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</div>
                             {(() => {
                               const unreadCount = lead.whatsappMessages?.filter(
                                 (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'

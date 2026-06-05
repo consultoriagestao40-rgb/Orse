@@ -638,15 +638,17 @@ export default function ContratosDashboard() {
               >
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div className="flex items-center gap-2">
-                    <FileText size={13} className="text-[#1B4D3E]" />
+                    <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
+                      <FileText size={13} className="text-[#1B4D3E]" />
+                    </div>
                     <span className="text-xs font-black text-slate-700 tracking-wide">{gerarNumeroContrato(c)}</span>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-bold bg-slate-100 px-2 py-0.5 rounded">{c.empresaEmissora?.nomeFantasia}</span>
+                  <span className="text-[9px] font-black px-2 py-0.5 rounded bg-slate-100 text-slate-500 uppercase tracking-wider">{c.empresaEmissora?.nomeFantasia}</span>
                 </div>
 
                 <p className="text-sm font-bold text-slate-800 leading-tight mb-3 line-clamp-2">{c.client?.razaoSocial || c.client?.nomeFantasia}</p>
                 
-                <div className="grid grid-cols-2 gap-2 mb-3 border-t border-slate-100 pt-3">
+                <div className="grid grid-cols-2 gap-x-2 gap-y-3 mb-3 border-t border-slate-100 pt-3">
                   <div>
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Início</p>
                     <p className="text-[11px] font-bold text-slate-700">{c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : 'A definir'}</p>
@@ -655,41 +657,34 @@ export default function ContratosDashboard() {
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Reajuste</p>
                     <p className="text-[11px] font-bold text-orange-600">{c.dataReajuste ? new Date(c.dataReajuste).toLocaleDateString('pt-BR') : 'Não definido'}</p>
                   </div>
-                </div>
-
-                <div className="flex items-center justify-between border-t border-slate-100 pt-3">
                   <div>
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Mensal</p>
                     <span className="text-sm font-black text-[#1B4D3E]">{fmt(c.valorMensal)}</span>
                   </div>
-                  <div className="text-right">
+                  <div>
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Vigência</p>
                     <span className="text-[11px] font-bold text-slate-600">{c.vigenciaMeses} meses</span>
                   </div>
                 </div>
 
-                <div className="mt-2 text-[10px] text-slate-400 font-medium border-t border-slate-50 pt-2 flex flex-col gap-1">
-                  <div className="flex justify-between items-center">
-                    <span>Criado por:</span>
-                    <div className="flex items-center gap-1">
-                      {c.proposta?.user?.avatarUrl ? (
-                        <img 
-                          src={c.proposta.user.avatarUrl} 
-                          alt={c.proposta.user.nome} 
-                          className="w-4 h-4 rounded-full object-cover border border-slate-200"
-                        />
-                      ) : (
-                        <div className="w-4 h-4 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[7px] font-black text-[#1B4D3E] uppercase border border-slate-200">
-                          {(c.proposta?.user?.nome || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                        </div>
-                      )}
-                      <span className="font-bold text-slate-600">{c.proposta?.user?.nome || 'Sistema'}</span>
-                    </div>
+                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    {c.proposta?.user?.avatarUrl ? (
+                      <img 
+                        src={c.proposta.user.avatarUrl} 
+                        alt={c.proposta.user.nome} 
+                        className="w-5 h-5 rounded-full object-cover border border-slate-200"
+                      />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
+                        {(c.proposta?.user?.nome || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                      </div>
+                    )}
+                    <span className="text-[10px] text-slate-500 font-medium">{c.proposta?.user?.nome || 'Sistema'}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span>Gerado em:</span>
-                    <span className="font-bold text-slate-600">{new Date(c.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
+                  <span className="text-[9px] text-slate-400 font-medium" title={`Gerado em ${new Date(c.createdAt).toLocaleString('pt-BR')}`}>
+                    {new Date(c.createdAt).toLocaleDateString('pt-BR')}
+                  </span>
                 </div>
               </div>
             ))
@@ -895,7 +890,15 @@ export default function ContratosDashboard() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 flex-1">
+        <div 
+          className="flex flex-col gap-3 flex-1 min-h-[600px] p-3 pt-4 rounded-b-2xl rounded-t-none border-t-0"
+          style={{
+            backgroundColor: hexToRgba(resolvedHex, 0.04),
+            borderColor: hexToRgba(resolvedHex, 0.15),
+            borderWidth: '1px',
+            borderStyle: 'solid'
+          }}
+        >
           {cards.length === 0 ? (
             <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
               <p className="text-xs text-slate-300 font-medium">Vazio</p>
@@ -911,15 +914,17 @@ export default function ContratosDashboard() {
               >
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div className="flex items-center gap-2">
-                    <FileText size={13} className="text-[#1B4D3E]" />
+                    <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
+                      <FileText size={13} className="text-[#1B4D3E]" />
+                    </div>
                     <span className="text-xs font-black text-slate-700 tracking-wide">{gerarNumeroContrato(c)}</span>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-bold bg-slate-100 px-2 py-0.5 rounded">{c.empresaEmissora?.nomeFantasia}</span>
+                  <span className="text-[9px] font-black px-2 py-0.5 rounded bg-slate-100 text-slate-500 uppercase tracking-wider">{c.empresaEmissora?.nomeFantasia}</span>
                 </div>
 
                 <p className="text-sm font-bold text-slate-800 leading-tight mb-3 line-clamp-2">{c.client?.razaoSocial || c.client?.nomeFantasia}</p>
                 
-                <div className="grid grid-cols-2 gap-2 mb-3 border-t border-slate-100 pt-3">
+                <div className="grid grid-cols-2 gap-x-2 gap-y-3 mb-3 border-t border-slate-100 pt-3">
                   <div>
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Início</p>
                     <p className="text-[11px] font-bold text-slate-700">{c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : 'A definir'}</p>
@@ -928,41 +933,34 @@ export default function ContratosDashboard() {
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Reajuste</p>
                     <p className="text-[11px] font-bold text-orange-600">{c.dataReajuste ? new Date(c.dataReajuste).toLocaleDateString('pt-BR') : 'Não definido'}</p>
                   </div>
-                </div>
-
-                <div className="flex items-center justify-between border-t border-slate-100 pt-3">
                   <div>
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Mensal</p>
                     <span className="text-sm font-black text-[#1B4D3E]">{fmt(c.valorMensal)}</span>
                   </div>
-                  <div className="text-right">
+                  <div>
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Vigência</p>
                     <span className="text-[11px] font-bold text-slate-600">{c.vigenciaMeses} meses</span>
                   </div>
                 </div>
 
-                <div className="mt-2 text-[10px] text-slate-400 font-medium border-t border-slate-50 pt-2 flex flex-col gap-1">
-                  <div className="flex justify-between items-center">
-                    <span>Criado por:</span>
-                    <div className="flex items-center gap-1">
-                      {c.proposta?.user?.avatarUrl ? (
-                        <img 
-                          src={c.proposta.user.avatarUrl} 
-                          alt={c.proposta.user.nome} 
-                          className="w-4 h-4 rounded-full object-cover border border-slate-200"
-                        />
-                      ) : (
-                        <div className="w-4 h-4 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[7px] font-black text-[#1B4D3E] uppercase border border-slate-200">
-                          {(c.proposta?.user?.nome || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                        </div>
-                      )}
-                      <span className="font-bold text-slate-600">{c.proposta?.user?.nome || 'Sistema'}</span>
-                    </div>
+                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    {c.proposta?.user?.avatarUrl ? (
+                      <img 
+                        src={c.proposta.user.avatarUrl} 
+                        alt={c.proposta.user.nome} 
+                        className="w-5 h-5 rounded-full object-cover border border-slate-200"
+                      />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
+                        {(c.proposta?.user?.nome || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                      </div>
+                    )}
+                    <span className="text-[10px] text-slate-500 font-medium">{c.proposta?.user?.nome || 'Sistema'}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span>Gerado em:</span>
-                    <span className="font-bold text-slate-600">{new Date(c.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
+                  <span className="text-[9px] text-slate-400 font-medium" title={`Gerado em ${new Date(c.createdAt).toLocaleString('pt-BR')}`}>
+                    {new Date(c.createdAt).toLocaleDateString('pt-BR')}
+                  </span>
                 </div>
               </div>
             ))
