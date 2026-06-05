@@ -2469,25 +2469,32 @@ return (
 
           {/* 9. ABA: CONVERSA E NEGOCIAÇÃO (CHAT STYLING) */}
           {activeClientTab === 'historico' && (
-            <div className="max-w-[960px] mx-auto bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-6 md:p-10 shadow-2xl shadow-slate-950/20 text-slate-800 animate-fadeIn relative">
+            <div className="max-w-[960px] mx-auto bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-6 md:p-10 shadow-2xl shadow-slate-950/20 text-slate-800 animate-fadeIn relative animate-duration-300">
               {/* Premium Header */}
-              <div className="bg-[#1B4D3E]/5 border border-[#1B4D3E]/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-8 flex items-center justify-between gap-4">
+              <div 
+                style={{ backgroundColor: `${theme.light}`, borderColor: `${theme.primary}15` }}
+                className="border rounded-xl sm:rounded-2xl p-4 sm:p-5 mb-5 flex items-center justify-between gap-4 shadow-xs"
+              >
                 <div className="flex items-center gap-3 sm:gap-4">
                   {doc.proposta?.user?.avatarUrl ? (
                     <img 
                       src={doc.proposta.user.avatarUrl} 
                       alt={doc.proposta.user.nome} 
-                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-[#1B4D3E]/20 shadow-sm shrink-0"
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 shadow-xs shrink-0"
+                      style={{ borderColor: theme.primary }}
                     />
                   ) : (
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#1B4D3E] text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-900/10 font-bold uppercase">
+                    <div 
+                      style={{ backgroundColor: theme.primary }}
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full text-white flex items-center justify-center shrink-0 shadow-md font-bold uppercase"
+                    >
                       {(doc.proposta?.user?.nome || 'C').substring(0, 2).toUpperCase()}
                     </div>
                   )}
                   <div className="text-left">
-                    <h4 className="text-xs sm:text-sm font-black text-[#1B4D3E] uppercase tracking-wider">{doc.proposta?.user?.nome || 'Consultor Comercial'}</h4>
-                    <span className="text-[9px] sm:text-[9.5px] font-black text-[#25D366] uppercase tracking-widest flex items-center gap-1.5 mt-0.5 animate-pulse">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#25D366] inline-block"></span>
+                    <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800">{doc.proposta?.user?.nome || 'Consultor Comercial'}</h4>
+                    <span className="text-[9px] sm:text-[9.5px] font-black uppercase tracking-widest flex items-center gap-1.5 mt-0.5" style={{ color: theme.primary }}>
+                      <span className="w-1.5 h-1.5 rounded-full inline-block animate-pulse" style={{ backgroundColor: theme.primary }}></span>
                       Consultor Responsável • Online
                     </span>
                   </div>
@@ -2499,42 +2506,81 @@ return (
               </div>
 
               {/* Chat Canvas Box */}
-              <div className="border border-slate-200 rounded-2xl sm:rounded-3xl overflow-hidden shadow-inner bg-[#F0F2F5] flex flex-col h-[400px] sm:h-[500px]">
+              <div className="border border-slate-200/80 rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm bg-[#F8FAFC] flex flex-col h-[420px] sm:h-[520px]">
                 {/* Chat Message Box Scrollable */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 scrollbar-thin scroll-smooth flex flex-col">
                   {(!doc.configApresentacao?.negotiations || doc.configApresentacao.negotiations.length === 0) ? (
-                    <div className="my-auto text-center py-10 px-4 space-y-3">
-                      <div className="w-14 h-14 bg-slate-100 border border-slate-250 text-slate-400 rounded-full flex items-center justify-center mx-auto text-lg">
+                    <div className="my-auto text-center py-12 px-6 space-y-4 animate-fadeIn">
+                      <div 
+                        style={{ color: theme.primary, borderColor: `${theme.primary}20` }}
+                        className="w-16 h-16 bg-white border rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-sm"
+                      >
                         💬
                       </div>
-                      <h5 className="text-xs font-black text-slate-700 uppercase tracking-wider">Inicie a Negociação</h5>
-                      <p className="text-[10px] sm:text-[10.5px] font-bold text-slate-450 uppercase tracking-wider max-w-sm mx-auto leading-relaxed">
-                        Tire dúvidas, proponha ajustes de premissas ou envie considerações sobre a proposta comercial diretamente ao consultor.
+                      <div className="space-y-1">
+                        <h5 className="text-sm font-black text-slate-800 uppercase tracking-wider">Negociar Proposta</h5>
+                        <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest">Canal de Comunicação Direto</p>
+                      </div>
+                      <p className="text-xs font-semibold text-slate-500 max-w-sm mx-auto leading-relaxed">
+                        Tire dúvidas, envie observações ou sugira ajustes nos termos da proposta. O consultor responsável receberá as mensagens no mesmo instante.
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-4 pr-1">
-                      {doc.configApresentacao.negotiations.map((item: any) => {
+                      {doc.configApresentacao.negotiations.map((item: any, idx: number) => {
+                        const msgDate = new Date(item.data).toLocaleDateString('pt-BR');
                         const dateStr = new Date(item.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                         const fullDateStr = new Date(item.data).toLocaleString('pt-BR');
 
+                        // Show Date Divider if day changed
+                        let showDateDivider = false;
+                        if (idx === 0) {
+                          showDateDivider = true;
+                        } else {
+                          const prevMsg = doc.configApresentacao.negotiations[idx - 1];
+                          const prevMsgDate = new Date(prevMsg.data).toLocaleDateString('pt-BR');
+                          if (msgDate !== prevMsgDate) {
+                            showDateDivider = true;
+                          }
+                        }
+
+                        const today = new Date().toLocaleDateString('pt-BR');
+                        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR');
+                        let dateLabel = msgDate;
+                        if (msgDate === today) {
+                          dateLabel = 'Hoje';
+                        } else if (msgDate === yesterday) {
+                          dateLabel = 'Ontem';
+                        }
+
                         return (
                           <div key={item.id} className="space-y-4">
+                            {showDateDivider && (
+                              <div className="flex justify-center my-4">
+                                <span className="bg-white/80 backdrop-blur-xs text-[10px] font-black uppercase tracking-wider text-slate-500 px-3.5 py-1 rounded-full shadow-xs border border-slate-200">
+                                  {dateLabel}
+                                </span>
+                              </div>
+                            )}
+
                             {/* Client Message Row (Right) */}
                             <div className="flex justify-end w-full">
-                              <div className="max-w-[85%] sm:max-w-[80%] bg-[#d9fdd3] text-slate-800 rounded-xl sm:rounded-2xl rounded-tr-none px-3 py-2 sm:px-4 sm:py-3 shadow-sm border border-[#c1e8ba]/30 text-left relative group">
+                              <div 
+                                style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.dark})` }}
+                                className="max-w-[85%] sm:max-w-[75%] text-white rounded-2xl rounded-tr-none px-4 py-3 shadow-md shadow-slate-900/10 text-left relative group border border-white/5"
+                              >
                                 <div className="flex items-center justify-between gap-3 mb-1">
-                                  <span className="text-[9px] sm:text-[9.5px] font-black text-emerald-800 uppercase tracking-wider">
+                                  <span className="text-[9.5px] font-black text-white/80 uppercase tracking-wider">
                                     {item.nomeCliente || 'Você'}
                                   </span>
                                   {item.tipo === 'recusa' && (
-                                    <span className="text-[8px] font-black uppercase tracking-wider bg-red-100 text-red-700 px-1.5 py-0.5 rounded">
+                                    <span className="text-[8px] font-black uppercase tracking-wider bg-red-500/20 text-red-200 px-1.5 py-0.5 rounded border border-red-500/30">
                                       ⚠️ Recusa
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-xs sm:text-sm font-semibold leading-relaxed whitespace-pre-wrap">{item.mensagem}</p>
-                                <span className="text-[8.5px] sm:text-[9px] font-bold text-slate-450 block text-right mt-1.5 font-mono tracking-wider" title={fullDateStr}>
+                                <p className="text-xs sm:text-[13px] font-medium leading-relaxed whitespace-pre-wrap text-white/95">{item.mensagem}</p>
+                                <span className="text-[8.5px] font-bold text-white/70 block text-right mt-1.5 font-mono tracking-wider" title={fullDateStr}>
                                   {dateStr}
                                 </span>
                               </div>
@@ -2543,15 +2589,24 @@ return (
                             {/* Seller Message Row (Left) */}
                             {item.respondida ? (
                               <div className="flex justify-start w-full">
-                                <div className="max-w-[85%] sm:max-w-[80%] bg-white text-slate-800 rounded-xl sm:rounded-2xl rounded-tl-none px-3 py-2 sm:px-4 sm:py-3 shadow-sm border border-slate-150 text-left relative">
+                                <div 
+                                  style={{ borderLeftColor: theme.primary }}
+                                  className="max-w-[85%] sm:max-w-[75%] bg-white text-slate-800 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm border border-slate-200/60 border-l-[3.5px] text-left relative"
+                                >
                                   <div className="flex items-center justify-between gap-3 mb-1">
-                                    <span className="text-[9px] sm:text-[9.5px] font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-[#1B4D3E] inline-block"></span>
+                                    <span 
+                                      style={{ color: theme.primary }}
+                                      className="text-[9.5px] font-black uppercase tracking-wider flex items-center gap-1"
+                                    >
+                                      <span 
+                                        style={{ backgroundColor: theme.primary }}
+                                        className="w-1.5 h-1.5 rounded-full inline-block"
+                                      ></span>
                                       {item.nomeVendedor || doc.proposta?.user?.nome || 'Consultor'}
                                     </span>
                                   </div>
-                                  <p className="text-xs sm:text-sm font-semibold leading-relaxed whitespace-pre-wrap">{item.resposta}</p>
-                                  <span className="text-[8.5px] sm:text-[9px] font-bold text-slate-450 block text-right mt-1.5 font-mono tracking-wider">
+                                  <p className="text-xs sm:text-[13px] font-medium leading-relaxed whitespace-pre-wrap text-slate-700">{item.resposta}</p>
+                                  <span className="text-[8.5px] font-bold text-slate-400 block text-right mt-1.5 font-mono tracking-wider">
                                     {item.dataResposta ? new Date(item.dataResposta).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''}
                                   </span>
                                 </div>
@@ -2572,7 +2627,7 @@ return (
                 </div>
 
                 {/* Chat Input Field at the Bottom */}
-                <div className="bg-[#F0F2F5] border-t border-slate-200 p-3 sm:p-4 shrink-0">
+                <div className="bg-white border-t border-slate-200/60 p-3 sm:p-4 shrink-0 shadow-xs">
                   <div className="flex gap-2 sm:gap-3 items-end">
                     <textarea 
                       id="chat-textarea"
@@ -2589,16 +2644,19 @@ return (
                           handleSendNegotiation();
                         }
                       }}
-                      className="flex-1 px-3 py-2.5 sm:px-4 sm:py-3 bg-white border border-slate-200 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all resize-none max-h-24 min-h-[38px] sm:min-h-[42px] leading-relaxed scrollbar-thin shadow-xs"
+                      className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-medium text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-all resize-none max-h-24 min-h-[38px] sm:min-h-[42px] leading-relaxed scrollbar-thin shadow-inner"
                     />
                     <button 
                       type="button"
                       disabled={loading || !negotiationText.trim()}
                       onClick={handleSendNegotiation}
-                      className={`h-[38px] sm:h-[42px] px-4 sm:px-5 rounded-xl sm:rounded-2xl font-black text-[9px] sm:text-[10px] uppercase tracking-widest text-white transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      style={{ 
+                        backgroundColor: !negotiationText.trim() || loading ? '#E2E8F0' : theme.primary,
+                      }}
+                      className={`h-[38px] sm:h-[42px] px-4 sm:px-5 rounded-xl sm:rounded-2xl font-black text-[9px] sm:text-[10px] uppercase tracking-widest text-white transition-all cursor-pointer flex items-center justify-center gap-2 border border-transparent shadow-md active:scale-95 shrink-0 ${
                         !negotiationText.trim() || loading
-                          ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed shadow-none'
-                          : 'bg-[#25D366] hover:bg-[#128C7E] shadow-md shadow-[#25D366]/20 active:scale-95'
+                          ? 'text-slate-400 border-slate-200 cursor-not-allowed shadow-none'
+                          : 'hover:brightness-95 shadow-emerald-900/10'
                       }`}
                     >
                       {loading ? (
@@ -2606,13 +2664,16 @@ return (
                       ) : (
                         <>
                           <span>Enviar</span>
-                          <span className="text-[11px] font-bold">➔</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                          </svg>
                         </>
                       )}
                     </button>
                   </div>
-                  <span className="text-[8px] sm:text-[8.5px] text-slate-400 font-bold uppercase tracking-wider block mt-2 text-left px-1">
-                    Pressione Enter para enviar, Shift+Enter para pular linha. O consultor receberá no WhatsApp.
+                  <span className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wider block mt-2.5 text-left px-1">
+                    Pressione Enter para enviar, Shift+Enter para quebra de linha. O consultor receberá no WhatsApp.
                   </span>
                 </div>
               </div>
