@@ -699,7 +699,44 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
             opacity: 1;
           }
 
+          /* On screen, force outer layout table to behave as a block div to allow children to scroll and wrap */
+          .public-doc-table {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            border: none !important;
+          }
+          .public-doc-tbody, .public-doc-tr, .public-doc-td {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            border: none !important;
+            box-sizing: border-box !important;
+          }
+          .public-doc-thead, .public-doc-tfoot {
+            display: none !important;
+          }
+
           @media print {
+            .public-doc-table {
+              display: table !important;
+              width: 100% !important;
+            }
+            .public-doc-thead {
+              display: table-header-group !important;
+            }
+            .public-doc-tbody {
+              display: table-row-group !important;
+            }
+            .public-doc-tr {
+              display: table-row !important;
+            }
+            .public-doc-td {
+              display: table-cell !important;
+            }
+            .public-doc-tfoot {
+              display: table-footer-group !important;
+            }
             @page { margin: 0 !important; size: auto; }
             .no-print, [class*="no-print"] { display: none !important; }
             * {
@@ -741,13 +778,13 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
         `}} />
 
         <div className="bg-white w-full relative text-slate-900 text-xs">
-          <table className="w-full border-collapse">
-            <thead>
+          <table className="w-full border-collapse public-doc-table">
+            <thead className="public-doc-thead">
               <tr><td className="print-margin-header border-none p-0"></td></tr>
             </thead>
-            <tbody>
-              <tr>
-                <td className="print-content-cell px-2 py-6 sm:px-6 md:px-12 md:py-10 border-none align-top w-full max-w-full">
+            <tbody className="public-doc-tbody">
+              <tr className="public-doc-tr">
+                <td className="public-doc-td print-content-cell px-2 py-6 sm:px-6 md:px-12 md:py-10 border-none align-top w-full max-w-full">
                   
                   {/* CABEÇALHO HORIZONTAL */}
                   <div className="flex flex-col sm:flex-row items-center justify-between border-b-2 border-slate-900 pb-6 mb-6 gap-4 sm:gap-0">
@@ -979,7 +1016,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
                 </td>
               </tr>
             </tbody>
-            <tfoot>
+            <tfoot className="public-doc-tfoot">
               <tr><td className="print-margin-footer border-none p-0"></td></tr>
             </tfoot>
           </table>
