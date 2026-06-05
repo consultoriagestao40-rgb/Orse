@@ -5,7 +5,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export const metadata = {
-  title: 'Pipeline de Leads | SmartBidHub',
+  title: 'Pipeline de Leads | SmartBid',
 };
 
 export default async function LeadsPage() {

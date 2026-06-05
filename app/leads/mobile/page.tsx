@@ -40,7 +40,8 @@ import {
   Navigation,
   RefreshCw,
   Plus,
-  LogOut
+  LogOut,
+  Target
 } from 'lucide-react';
 
 const tailwindColorMap: { [key: string]: string } = {
@@ -124,7 +125,15 @@ export default function MobileCRM() {
   const [loadingUser, setLoadingUser] = useState(true);
   
   // Navigation
-  const [activeTab, setActiveTab] = useState<'crm' | 'new-lead' | 'chat'>('crm');
+  const [activeTab, setActiveTab] = useState<'crm' | 'new-lead' | 'chat' | 'prospeccao'>('crm');
+
+  // Prospecção States
+  const [prospTermo, setProspTermo] = useState('');
+  const [prospLocalizacao, setProspLocalizacao] = useState('');
+  const [loadingProsp, setLoadingProsp] = useState(false);
+  const [prospResults, setProspResults] = useState<any[]>([]);
+  const [prospSelected, setProspSelected] = useState<Set<number>>(new Set());
+  const [prospInjecting, setProspInjecting] = useState(false);
 
   // Leads CRM States
   const [stages, setStages] = useState<any[]>([]);
@@ -536,11 +545,77 @@ export default function MobileCRM() {
     }
   };
 
+  // Prospecção Search
+  const handleProspSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prospTermo || !prospLocalizacao) return;
+    
+    setLoadingProsp(true);
+    setProspResults([]);
+    setProspSelected(new Set());
+    
+    try {
+      const res = await fetch('/api/prospeccao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ termo: prospTermo, localizacao: prospLocalizacao })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setProspResults(data.results);
+      } else {
+        alert('Erro: ' + data.error);
+      }
+    } catch (err) {
+      alert('Erro na busca');
+    }
+    setLoadingProsp(false);
+  };
+
+  // Prospecção Inject
+  const handleProspInject = async () => {
+    if (prospSelected.size === 0) return;
+    setProspInjecting(true);
+    
+    try {
+      const selectedLeads = Array.from(prospSelected).map(i => prospResults[i]);
+      
+      let injectedCount = 0;
+      for (const lead of selectedLeads) {
+        const res = await createLead({
+          nomeFantasia: lead.nomeFantasia,
+          endereco: lead.endereco,
+          telefone: lead.telefone,
+          segmento: lead.segmento,
+          site: lead.site,
+          porte: lead.porte,
+          avaliacoes: lead.avaliacoes
+        });
+        if (res.success) injectedCount++;
+      }
+      
+      alert(`${injectedCount} Leads injetados com sucesso no Pipeline!`);
+      
+      // Remove from list
+      setProspResults(prev => prev.filter((_, i) => !prospSelected.has(i)));
+      setProspSelected(new Set());
+      
+      // Reload leads
+      const leadsRes = await getLeads();
+      if (leadsRes.success && leadsRes.leads) {
+        setLeads(leadsRes.leads);
+      }
+    } catch (error) {
+      alert('Erro ao injetar leads');
+    }
+    setProspInjecting(false);
+  };
+
   if (loadingUser) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 font-sans">
         <RefreshCw className="animate-spin text-emerald-500 mb-3" size={32} />
-        <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Iniciando SmartBid CRM Mobile...</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Iniciando SmartBid Mobile...</p>
       </div>
     );
   }
@@ -559,20 +634,11 @@ export default function MobileCRM() {
               <ArrowLeft size={18} />
             </button>
             <div>
-              <h1 className="text-sm font-black tracking-tight uppercase">SmartBid CRM</h1>
-              <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">{currentUser?.tenant?.nomeFantasia || 'Silva Consultoria'}</p>
+              <h1 className="text-sm font-black tracking-tight uppercase">SmartBid</h1>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="p-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl active:scale-95 border-none cursor-pointer flex items-center justify-center shrink-0 shadow-sm"
-              title="Novo Lead"
-            >
-              <Plus size={16} />
-            </button>
-            
             <div className="flex items-center gap-1.5 bg-slate-800/40 pl-2 pr-1.5 py-1 rounded-xl border border-slate-800/60 max-w-[100px] sm:max-w-none">
               <span className="text-[10px] font-black text-slate-300 truncate max-w-[50px] sm:max-w-none">{currentUser?.nome.split(' ')[0]}</span>
               {currentUser?.avatarUrl ? (
@@ -590,7 +656,7 @@ export default function MobileCRM() {
 
             <button
               onClick={async () => {
-                if (confirm("Deseja realmente sair do SmartBid CRM?")) {
+                if (confirm("Deseja realmente sair do SmartBid?")) {
                   try {
                     await fetch('/api/auth/logout', { method: 'POST' });
                     window.location.href = '/login';
@@ -766,7 +832,139 @@ export default function MobileCRM() {
           </div>
         )}
 
+        {/* ================= TAB 4: MÁQUINA DE PROSPECÇÃO ================= */}
+        {activeTab === 'prospeccao' && (
+          <div className="space-y-4">
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+              <div className="text-center select-none pb-1">
+                <Target className="text-[#1B4D3E] mx-auto mb-1 animate-pulse" size={24} />
+                <h3 className="text-xs font-black uppercase text-slate-700 tracking-wider">Máquina de Prospecção</h3>
+                <p className="text-[9px] text-slate-400 font-semibold mt-0.5">Extraia empresas do Google e injete no seu Funil</p>
+              </div>
 
+              <form onSubmit={handleProspSearch} className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">O que procura?</label>
+                  <input 
+                    required
+                    value={prospTermo}
+                    onChange={e => setProspTermo(e.target.value)}
+                    placeholder="Ex: Clínicas Odontológicas, Condomínios..." 
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white text-slate-700"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Onde?</label>
+                  <input 
+                    required
+                    value={prospLocalizacao}
+                    onChange={e => setProspLocalizacao(e.target.value)}
+                    placeholder="Ex: Centro de Curitiba, Batel..." 
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white text-slate-700"
+                  />
+                </div>
+                <button 
+                  type="submit" 
+                  disabled={loadingProsp || !prospTermo || !prospLocalizacao}
+                  className="w-full bg-[#1B4D3E] hover:bg-[#13382d] text-white text-xs font-bold py-3.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 border-none cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  {loadingProsp ? 'Buscando no Google...' : <><Search size={14} /> Procurar Empresas</>}
+                </button>
+              </form>
+            </div>
+
+            {/* Statistics and Inject Action */}
+            {prospResults.length > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col items-center justify-center text-center">
+                  <div className="text-xl font-black text-blue-650 leading-none">{prospResults.length}</div>
+                  <div className="text-[8px] font-bold text-slate-400 uppercase tracking-wider mt-1">Encontradas</div>
+                </div>
+                <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col items-center justify-center text-center">
+                  <div className="text-xl font-black text-emerald-650 leading-none">{prospSelected.size}</div>
+                  <div className="text-[8px] font-bold text-slate-400 uppercase tracking-wider mt-1">Selecionadas</div>
+                </div>
+                <button 
+                  disabled={prospSelected.size === 0 || prospInjecting}
+                  onClick={handleProspInject}
+                  className="bg-[#1B4D3E] hover:bg-[#13382d] text-white p-3 rounded-2xl shadow-sm flex flex-col items-center justify-center text-center border-none disabled:opacity-50 active:scale-95 cursor-pointer"
+                >
+                  <Plus size={16} className="mb-0.5" /> 
+                  <span className="text-[8px] font-black uppercase tracking-wider">{prospInjecting ? 'Injetando...' : 'Injetar'}</span>
+                </button>
+              </div>
+            )}
+
+            {/* Results List */}
+            {prospResults.length > 0 && (
+              <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden divide-y divide-slate-100 divide-solid">
+                {prospResults.map((item, idx) => {
+                  const isSelected = prospSelected.has(idx);
+                  return (
+                    <div 
+                      key={idx} 
+                      onClick={() => {
+                        const newSet = new Set(prospSelected);
+                        if (newSet.has(idx)) {
+                          newSet.delete(idx);
+                        } else {
+                          newSet.add(idx);
+                        }
+                        setProspSelected(newSet);
+                      }}
+                      className={`p-3.5 flex items-start gap-3 cursor-pointer hover:bg-slate-50 transition-colors ${isSelected ? 'bg-emerald-50/40' : ''}`}
+                    >
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 ${isSelected ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 bg-white'}`}>
+                        {isSelected && <Check size={10} className="stroke-[3]" />}
+                      </div>
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight truncate">{item.nomeFantasia}</h4>
+                        <p className="text-[9px] text-slate-500 font-semibold leading-tight">{item.endereco}</p>
+                        
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {item.telefone && (
+                            <span className="text-[8px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md border border-slate-200">
+                              📞 {item.telefone}
+                            </span>
+                          )}
+                          {item.porte && (
+                            <span className="text-[8px] font-bold text-white bg-slate-800 px-1.5 py-0.5 rounded-md">
+                              Porte {item.porte}
+                            </span>
+                          )}
+                          {item.avaliacoes && (
+                            <span className="text-[8px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200/50">
+                              ★ {item.avaliacoes} av.
+                            </span>
+                          )}
+                          {item.segmento && (
+                            <span className="text-[8px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded-md border border-blue-200/50">
+                              {item.segmento}
+                            </span>
+                          )}
+                        </div>
+
+                        {item.site && (
+                          <div className="pt-0.5">
+                            <a 
+                              href={item.site} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="text-[9px] text-blue-600 hover:underline font-bold inline-flex items-center gap-0.5" 
+                              onClick={e => e.stopPropagation()}
+                            >
+                              🔗 {item.site.replace('https://', '').replace('http://', '').split('/')[0]}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ================= TAB 3: TEAM CHAT MOBILE ================= */}
         {activeTab === 'chat' && (
@@ -978,7 +1176,7 @@ export default function MobileCRM() {
             setActiveChatUser(null);
             loadCRMData();
           }}
-          className={`flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent border-none ${
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none ${
             activeTab === 'crm' ? 'text-[#1B4D3E] font-black' : 'text-slate-400 font-bold'
           }`}
         >
@@ -986,12 +1184,26 @@ export default function MobileCRM() {
           <span className="text-[8px] uppercase tracking-wider">Funil CRM</span>
         </button>
 
+        {/* Tab Prospecção */}
+        <button
+          onClick={() => {
+            setActiveTab('prospeccao');
+            setActiveChatUser(null);
+          }}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none ${
+            activeTab === 'prospeccao' ? 'text-[#1B4D3E] font-black' : 'text-slate-400 font-bold'
+          }`}
+        >
+          <Target size={18} className={activeTab === 'prospeccao' ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+          <span className="text-[8px] uppercase tracking-wider">Prospecção</span>
+        </button>
+
         {/* Tab Novo Lead */}
         <button
           onClick={() => {
             setIsCreateModalOpen(true);
           }}
-          className="flex flex-col items-center gap-1 py-1 px-4 rounded-2xl active:scale-95 transition-all bg-transparent border-none text-slate-400 font-bold"
+          className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent border-none text-slate-400 font-bold"
         >
           <PlusCircle size={18} className="text-slate-400" />
           <span className="text-[8px] uppercase tracking-wider">Novo Lead</span>

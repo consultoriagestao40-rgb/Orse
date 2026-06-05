@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SmartBidHub | Inteligência em Facilities & Serviços",
+  title: "SmartBid | Inteligência em Facilities & Serviços",
   description: "Plataforma de engenharia de custos e gestão comercial da Silva Consultoria Empresarial LTDA.",
   manifest: "/manifest.json",
   icons: {
