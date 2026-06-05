@@ -34,7 +34,7 @@ export default function UserSelectPopover({
   isMulti = false
 }: UserSelectPopoverProps) {
   const [search, setSearch] = useState('');
-  const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
   const [mounted, setMounted] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -67,6 +67,8 @@ export default function UserSelectPopover({
       }
 
       setCoords({ top, left });
+    } else {
+      setCoords(null);
     }
   }, [isOpen, anchorEl]);
 
@@ -103,7 +105,7 @@ export default function UserSelectPopover({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen || !mounted) return null;
+  if (!isOpen || !mounted || !coords) return null;
 
   const filteredUsers = users.filter(u =>
     u.nome.toLowerCase().includes(search.toLowerCase()) ||
