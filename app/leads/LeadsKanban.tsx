@@ -82,6 +82,108 @@ const getLeadTotalizerStyle = (color: string) => {
   return { backgroundColor: 'rgba(100, 116, 139, 0.1)', color: '#334155', borderColor: 'rgba(100, 116, 139, 0.25)' };
 };
 
+const normalizeText = (text?: string) => {
+  if (!text) return '';
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+    .trim();
+};
+
+const tailwindColorMap: { [key: string]: string } = {
+  sky: '#0284c7',
+  blue: '#2563eb',
+  orange: '#ea580c',
+  amber: '#d97706',
+  emerald: '#059669',
+  green: '#16a34a',
+  red: '#dc2626',
+  rose: '#e11d48',
+  purple: '#9333ea',
+  violet: '#7c3aed',
+  yellow: '#ca8a04',
+  indigo: '#4f46e5',
+  pink: '#db2777',
+  teal: '#0d9488',
+  slate: '#475569',
+  gray: '#4b5563',
+  'bg-slate-100': '#64748b',
+  'bg-blue-100': '#3b82f6',
+  'bg-green-100': '#10b981',
+  'bg-emerald-100': '#10b981',
+  'bg-amber-100': '#f59e0b',
+  'bg-rose-100': '#f43f5e',
+  'bg-purple-100': '#8b5cf6',
+};
+
+const resolveColorToHex = (color?: string): string => {
+  if (!color) return '#64748b';
+  const lower = color.toLowerCase().trim();
+  if (lower.startsWith('#')) return lower;
+  if (tailwindColorMap[lower]) return tailwindColorMap[lower];
+  const stripped = lower.replace('bg-', '').split('-')[0];
+  return tailwindColorMap[stripped] || '#64748b';
+};
+
+const normalizeHex = (hex: string) => {
+  let h = hex.replace('#', '');
+  if (h.length === 3) {
+    h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  }
+  return '#' + h;
+};
+
+const getContrastYIQ = (hex: string) => {
+  const normalized = normalizeHex(hex);
+  const r = parseInt(normalized.slice(1, 3), 16);
+  const g = parseInt(normalized.slice(3, 5), 16);
+  const b = parseInt(normalized.slice(5, 7), 16);
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return (yiq >= 140) ? 'black' : 'white';
+};
+
+const hexToRgba = (hex: string, alpha: number) => {
+  const normalized = normalizeHex(hex);
+  const r = parseInt(normalized.slice(1, 3), 16);
+  const g = parseInt(normalized.slice(3, 5), 16);
+  const b = parseInt(normalized.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const getDarkenedHexForText = (hex: string) => {
+  const normalized = normalizeHex(hex);
+  let r = parseInt(normalized.slice(1, 3), 16);
+  let g = parseInt(normalized.slice(3, 5), 16);
+  let b = parseInt(normalized.slice(5, 7), 16);
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  if (yiq > 170) {
+    r = Math.max(0, Math.floor(r * 0.5));
+    g = Math.max(0, Math.floor(g * 0.5));
+    b = Math.max(0, Math.floor(b * 0.5));
+  }
+  const toHexStr = (val: number) => val.toString(16).padStart(2, '0');
+  return `#${toHexStr(r)}${toHexStr(g)}${toHexStr(b)}`;
+};
+
+const getHighlightedStageColorClass = (color?: string) => {
+  if (!color) return { style: { backgroundColor: 'rgba(100, 116, 139, 0.1)', color: '#334155', borderColor: 'rgba(100, 116, 139, 0.25)', borderWidth: '1px', borderStyle: 'solid' } };
+  const resolvedHex = resolveColorToHex(color);
+  const contrast = getContrastYIQ(resolvedHex);
+  const bg = resolvedHex;
+  const text = contrast === 'white' ? '#ffffff' : '#000000';
+  const border = contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)';
+  return {
+    style: {
+      backgroundColor: bg,
+      color: text,
+      borderColor: border,
+      borderWidth: '1px',
+      borderStyle: 'solid'
+    }
+  };
+};
+
 const LeadCard = ({ 
   lead, 
   handleDragStart, 
@@ -105,105 +207,113 @@ const LeadCard = ({
       onDragStart={(e) => handleDragStart(e, lead.id)}
       onDragEnd={handleDragEnd}
       onClick={() => setSelectedLead(lead)}
-      className="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-[#1B4D3E]/30 transition-all group flex flex-col gap-2"
+      className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing text-left flex flex-col gap-2"
     >
-      <div className="flex items-start justify-between gap-1.5 min-w-0">
-        <div className="font-bold text-xs text-slate-800 leading-snug line-clamp-2 max-w-[85%]" title={lead.nomeFantasia}>
-          {lead.nomeFantasia}
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg shrink-0">
+            <Building size={13} className="text-[#1B4D3E]" />
+          </div>
+          <span className="text-xs font-black text-slate-700 tracking-wide uppercase truncate max-w-[150px]">
+            {lead.segmento || 'SEM SEGMENTO'}
+          </span>
         </div>
         {unreadCount > 0 && (
-          <span className="bg-[#25D366] text-white text-[8px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 animate-pulse shadow-sm shadow-[#25D366]/30" title={`${unreadCount} mensagens não lidas`}>
+          <span className="bg-[#25D366] text-white text-[8px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 animate-pulse shadow-sm shadow-[#25D366]/30">
             <MessageSquare size={8} fill="white" /> {unreadCount}
           </span>
         )}
       </div>
 
-      <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
-        <Building size={9} className="shrink-0 text-slate-400" /> 
-        <span className="truncate">{lead.segmento || 'Sem segmento'}</span>
+      <p className="text-sm font-bold text-slate-800 leading-tight mb-1 line-clamp-2">{lead.nomeFantasia}</p>
+      
+      <div className="flex flex-col gap-1.5">
+        {(lead.telefone || lead.email) && (
+          <p className="text-[10px] text-slate-400 font-medium truncate" title={`${lead.telefone || ''} | ${lead.email || ''}`}>
+            {lead.telefone && <span>📞 {lead.telefone}</span>}
+            {lead.telefone && lead.email && <span className="mx-1">&bull;</span>}
+            {lead.email && <span>✉️ {lead.email}</span>}
+          </p>
+        )}
+
+        {lead.endereco && (
+          <div className="flex items-center gap-1.5">
+            <a 
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.endereco)}`} 
+              target="_blank" 
+              rel="noreferrer" 
+              onClick={e => e.stopPropagation()} 
+              className="flex-1 bg-blue-50/60 hover:bg-blue-100/80 text-blue-600 text-[8.5px] font-black py-0.5 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-blue-100/50"
+              title="Abrir no Google Maps"
+            >
+              <MapPin size={8} /> Maps
+            </a>
+            <a 
+              href={`https://waze.com/ul?q=${encodeURIComponent(lead.endereco)}`} 
+              target="_blank" 
+              rel="noreferrer" 
+              onClick={e => e.stopPropagation()} 
+              className="flex-1 bg-cyan-50/60 hover:bg-cyan-100/80 text-cyan-600 text-[8.5px] font-black py-0.5 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-cyan-100/50"
+              title="Abrir no Waze"
+            >
+              <Navigation size={8} /> Waze
+            </a>
+          </div>
+        )}
+
+        {lead.activities && lead.activities.length > 0 && (
+          <div className="bg-amber-50/40 border border-amber-100/60 p-1.5 rounded-lg text-[9px] flex items-center gap-1 text-amber-700">
+            <CalendarDays size={10} className="text-amber-500 shrink-0" />
+            <span className="font-bold shrink-0">{lead.activities[0].tipo}:</span>
+            <span className="truncate flex-1 font-medium">{lead.activities[0].titulo}</span>
+            <span className="text-[8px] text-amber-600 font-bold bg-amber-100/70 px-1 py-0.5 rounded shrink-0">
+              {safeDate(lead.activities[0].dataInicio)}
+            </span>
+          </div>
+        )}
       </div>
 
-      {(lead.telefone || lead.email) && (
-        <div className="flex flex-wrap items-center gap-2 text-[9px] text-slate-500 font-medium">
-          {lead.telefone && (
-            <span className="flex items-center gap-0.5 truncate max-w-[105px]" title={lead.telefone}>
-              <Phone size={9} className="text-slate-400 shrink-0" /> {lead.telefone}
-            </span>
-          )}
-          {lead.email && (
-            <span className="flex items-center gap-0.5 truncate max-w-[110px]" title={lead.email}>
-              <Mail size={9} className="text-slate-400 shrink-0" /> {lead.email}
-            </span>
-          )}
-        </div>
-      )}
+      <div className="flex items-center justify-between mt-1">
+        <span className="text-sm font-black text-[#1B4D3E]">{fmt(lead.valorEst || 0)}</span>
+        {!showStageInFooter && (
+          <span 
+            style={getHighlightedStageColorClass(lead.stage?.color).style} 
+            className="text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider"
+          >
+            {lead.stage?.nome || 'DESCOBERTA'}
+          </span>
+        )}
+      </div>
 
-      {lead.endereco && (
+      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <a 
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.endereco)}`} 
-            target="_blank" 
-            rel="noreferrer" 
-            onClick={e => e.stopPropagation()} 
-            className="flex-1 bg-blue-50/60 hover:bg-blue-100/80 text-blue-600 text-[8.5px] font-black py-0.5 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-blue-100/50"
-            title="Abrir no Google Maps"
-          >
-            <MapPin size={8} /> Maps
-          </a>
-          <a 
-            href={`https://waze.com/ul?q=${encodeURIComponent(lead.endereco)}`} 
-            target="_blank" 
-            rel="noreferrer" 
-            onClick={e => e.stopPropagation()} 
-            className="flex-1 bg-cyan-50/60 hover:bg-cyan-100/80 text-cyan-600 text-[8.5px] font-black py-0.5 px-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors border border-cyan-100/50"
-            title="Abrir no Waze"
-          >
-            <Navigation size={8} /> Waze
-          </a>
-        </div>
-      )}
-
-      {lead.activities && lead.activities.length > 0 && (
-        <div className="bg-amber-50/40 border border-amber-100/60 p-1 rounded-lg text-[9px] flex items-center gap-1 text-amber-700">
-          <CalendarDays size={10} className="text-amber-500 shrink-0" />
-          <span className="font-bold shrink-0">{lead.activities[0].tipo}:</span>
-          <span className="truncate flex-1 font-medium">{lead.activities[0].titulo}</span>
-          <span className="text-[8px] text-amber-600 font-bold bg-amber-100/70 px-1 py-0.5 rounded shrink-0">
-            {safeDate(lead.activities[0].dataInicio)}
+          {lead.assignedTo?.avatarUrl ? (
+            <img 
+              src={lead.assignedTo.avatarUrl} 
+              alt={lead.assignedTo.nome} 
+              className="w-5 h-5 rounded-full object-cover border border-slate-200"
+            />
+          ) : (
+            <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
+              {(lead.assignedTo?.nome || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+            </div>
+          )}
+          <span className="text-[10px] text-slate-500 font-medium truncate max-w-[100px]" title={lead.assignedTo?.nome || 'Sistema'}>
+            {lead.assignedTo?.nome || 'Sistema'}
           </span>
         </div>
-      )}
-
-      {(showStageInFooter || lead.assignedTo) && (
-        <div className="flex items-center justify-between pt-1.5 border-t border-slate-100/80 text-[8.5px] text-slate-400 font-sans">
-          {showStageInFooter ? (
-            <div className="flex items-center gap-1">
-              <span className="font-bold text-slate-400">Etapa:</span>
-              <span className="font-black text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded-md uppercase tracking-wider text-[8px]">{lead.stage?.nome || 'Sem Etapa'}</span>
-            </div>
-          ) : (
-            lead.assignedTo && (
-              <div className="flex items-center gap-1.5">
-                {lead.assignedTo.avatarUrl ? (
-                  <img 
-                    src={lead.assignedTo.avatarUrl} 
-                    alt={lead.assignedTo.nome} 
-                    className="w-4 h-4 rounded-full object-cover border border-slate-100 shrink-0"
-                  />
-                ) : (
-                  <div className="w-4 h-4 rounded-full bg-emerald-600/10 text-emerald-700 border border-emerald-100/40 flex items-center justify-center text-[6.5px] font-black shrink-0 uppercase">
-                    {lead.assignedTo.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
-                  </div>
-                )}
-                <span className="font-bold text-slate-600">{lead.assignedTo.nome.split(' ')[0]}</span>
-              </div>
-            )
-          )}
-          <div className="font-semibold text-slate-400/80">
-            {safeDate(lead.updatedAt)}
-          </div>
-        </div>
-      )}
+        
+        {showStageInFooter ? (
+          <span 
+            style={getHighlightedStageColorClass(lead.stage?.color).style} 
+            className="text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider"
+          >
+            {lead.stage?.nome || 'DESCOBERTA'}
+          </span>
+        ) : (
+          <span className="text-[10px] text-slate-400 font-medium">📅 {safeDate(lead.updatedAt)}</span>
+        )}
+      </div>
     </div>
   );
 };
@@ -796,86 +906,22 @@ export default function LeadsKanban() {
     '#0369A1', '#0B6623', '#065F46', '#3F6212', '#A16207', '#C2410C', '#B91C1C', '#9D174D', '#581C87', '#334155',
   ];
 
-  const tailwindColorMap: { [key: string]: string } = {
-    sky: '#0284c7',
-    blue: '#2563eb',
-    orange: '#ea580c',
-    amber: '#d97706',
-    emerald: '#059669',
-    green: '#16a34a',
-    red: '#dc2626',
-    rose: '#e11d48',
-    purple: '#9333ea',
-    violet: '#7c3aed',
-    yellow: '#ca8a04',
-    indigo: '#4f46e5',
-    pink: '#db2777',
-    teal: '#0d9488',
-    slate: '#475569',
-    gray: '#4b5563',
-    'bg-slate-100': '#64748b',
-    'bg-blue-100': '#3b82f6',
-    'bg-green-100': '#10b981',
-    'bg-emerald-100': '#10b981',
-    'bg-amber-100': '#f59e0b',
-    'bg-rose-100': '#f43f5e',
-    'bg-purple-100': '#8b5cf6',
+  const getSegmentColor = (label: string, defaultColor: string) => {
+    const key = Object.keys(segmentoColors).find(k => k.toLowerCase().trim() === label.toLowerCase().trim());
+    return key ? segmentoColors[key] : defaultColor;
   };
 
-  const resolveColorToHex = (color?: string): string => {
-    if (!color) return '#64748b';
-    const lower = color.toLowerCase().trim();
-    if (lower.startsWith('#')) return lower;
-    if (tailwindColorMap[lower]) return tailwindColorMap[lower];
-    const stripped = lower.replace('bg-', '').split('-')[0];
-    return tailwindColorMap[stripped] || '#64748b';
-  };
-
-  const normalizeHex = (hex: string) => {
-    let h = hex.replace('#', '');
-    if (h.length === 3) {
-      h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
-    }
-    return '#' + h;
-  };
-
-  const getContrastYIQ = (hex: string) => {
-    const normalized = normalizeHex(hex);
-    const r = parseInt(normalized.slice(1, 3), 16);
-    const g = parseInt(normalized.slice(3, 5), 16);
-    const b = parseInt(normalized.slice(5, 7), 16);
-    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-    return (yiq >= 140) ? 'black' : 'white';
-  };
-
-  const hexToRgba = (hex: string, alpha: number) => {
-    const normalized = normalizeHex(hex);
-    const r = parseInt(normalized.slice(1, 3), 16);
-    const g = parseInt(normalized.slice(3, 5), 16);
-    const b = parseInt(normalized.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  };
-
-  const getDarkenedHexForText = (hex: string) => {
-    const normalized = normalizeHex(hex);
-    let r = parseInt(normalized.slice(1, 3), 16);
-    let g = parseInt(normalized.slice(3, 5), 16);
-    let b = parseInt(normalized.slice(5, 7), 16);
-    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-    if (yiq > 170) {
-      r = Math.max(0, Math.floor(r * 0.5));
-      g = Math.max(0, Math.floor(g * 0.5));
-      b = Math.max(0, Math.floor(b * 0.5));
-    }
-    const toHexStr = (val: number) => val.toString(16).padStart(2, '0');
-    return `#${toHexStr(r)}${toHexStr(g)}${toHexStr(b)}`;
+  const getVendedorColor = (label: string, defaultColor: string) => {
+    const key = Object.keys(vendedorColors).find(k => k.toLowerCase().trim() === label.toLowerCase().trim());
+    return key ? vendedorColors[key] : defaultColor;
   };
 
   const kanbanVendedorCols = React.useMemo(() => {
     const cols: { id: string; label: string; avatarUrl?: string | null; cards: any[]; total: number }[] = [];
     
+    const userIds = filterUsers.map(u => u.id);
     // First, column for "Sem Vendedor / Não Atribuído"
-    const unassigned = filteredLeads.filter(l => !l.assignedToId);
+    const unassigned = filteredLeads.filter(l => !l.assignedToId || !userIds.includes(l.assignedToId));
     cols.push({
       id: 'unassigned',
       label: 'Não Atribuído',
@@ -902,8 +948,15 @@ export default function LeadsKanban() {
   const kanbanSegmentoCols = React.useMemo(() => {
     const cols: { id: string; label: string; cards: any[]; total: number }[] = [];
     
+    const segmentNamesNormalized = segmentos.map(seg => normalizeText(seg.nome || seg));
+
     // First, column for "Sem Segmento"
-    const unassigned = filteredLeads.filter(l => !l.segmento);
+    const unassigned = filteredLeads.filter(l => {
+      if (!l.segmento) return true;
+      const normalizedSeg = normalizeText(l.segmento);
+      return !segmentNamesNormalized.includes(normalizedSeg);
+    });
+
     cols.push({
       id: 'unassigned',
       label: 'Sem Segmento',
@@ -914,7 +967,8 @@ export default function LeadsKanban() {
     // Columns for each segment in segmentos
     segmentos.forEach(seg => {
       const segName = seg.nome || seg;
-      const segLeads = filteredLeads.filter(l => l.segmento === segName);
+      const normalizedSegName = normalizeText(segName);
+      const segLeads = filteredLeads.filter(l => l.segmento && normalizeText(l.segmento) === normalizedSegName);
       cols.push({
         id: seg.id || segName,
         label: segName,
@@ -1177,7 +1231,7 @@ export default function LeadsKanban() {
                               setEditingStageName(stage.nome);
                               setEditingStageId(stage.id);
                             }}
-                            className={`p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
+                            className={`p-1 rounded-full opacity-60 hover:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
                               contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
                             }`}
                             title="Editar Etapa"
@@ -1191,7 +1245,7 @@ export default function LeadsKanban() {
                               e.stopPropagation();
                               handleCreateStage(stage.id);
                             }}
-                            className={`p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
+                            className={`p-1 rounded-full opacity-60 hover:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
                               contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
                             }`}
                             title="Criar Nova Etapa"
@@ -1358,21 +1412,8 @@ export default function LeadsKanban() {
                       </div>
                     </div>
 
-                    <div className="flex justify-center w-full my-1.5 shrink-0 z-10 pointer-events-auto">
-                      <div 
-                        className="px-3 py-0.5 rounded-full text-[11px] font-black shadow-sm select-none border"
-                        style={{
-                          backgroundColor: hexToRgba(resolvedHex, 0.1),
-                          color: getDarkenedHexForText(resolvedHex),
-                          borderColor: hexToRgba(resolvedHex, 0.25)
-                        }}
-                      >
-                        {fmt(totalValorEst)}
-                      </div>
-                    </div>
-                    
                     <div 
-                      className="flex-1 flex flex-col p-3 overflow-y-auto space-y-3 border-x border-b rounded-b-2xl -mt-[1px] z-0"
+                      className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
                       style={{
                         backgroundColor: hexToRgba(resolvedHex, 0.04),
                         borderColor: hexToRgba(resolvedHex, 0.15),
@@ -1380,15 +1421,31 @@ export default function LeadsKanban() {
                         borderStyle: 'solid'
                       }}
                     >
-                      {stageLeads.map(lead => (
-                        <LeadCard
-                          key={lead.id}
-                          lead={lead}
-                          handleDragStart={handleDragStart}
-                          handleDragEnd={handleDragEnd}
-                          setSelectedLead={setSelectedLead}
-                        />
-                      ))}
+                      {/* Totalizador de Volume */}
+                      <div className="flex justify-center w-full mb-3 shrink-0 z-10 pointer-events-auto">
+                        <div 
+                          className="px-3 py-0.5 rounded-full text-[11px] font-black shadow-sm select-none border"
+                          style={{
+                            backgroundColor: hexToRgba(resolvedHex, 0.1),
+                            color: getDarkenedHexForText(resolvedHex),
+                            borderColor: hexToRgba(resolvedHex, 0.25)
+                          }}
+                        >
+                          {fmt(totalValorEst)}
+                        </div>
+                      </div>
+
+                      <div className="flex-1 flex flex-col gap-3">
+                        {stageLeads.map(lead => (
+                          <LeadCard
+                            key={lead.id}
+                            lead={lead}
+                            handleDragStart={handleDragStart}
+                            handleDragEnd={handleDragEnd}
+                            setSelectedLead={setSelectedLead}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
                 );
@@ -1404,7 +1461,7 @@ export default function LeadsKanban() {
                 const colLeads = col.cards;
                 const isFirst = idx === 0;
                 const defaultColColor = col.id === 'unassigned' ? '#64748b' : PRESET_VENDEDOR_COLORS[idx % PRESET_VENDEDOR_COLORS.length];
-                const colColor = vendedorColors[col.label] || defaultColColor;
+                const colColor = getVendedorColor(col.label, defaultColColor);
                 const resolvedHex = resolveColorToHex(colColor);
                 const contrast = getContrastYIQ(resolvedHex);
                 const badgeClass = contrast === 'white' ? 'bg-white/20 text-white' : 'bg-black/10 text-slate-800';
@@ -1563,21 +1620,8 @@ export default function LeadsKanban() {
                       </div>
                     </div>
 
-                    <div className="flex justify-center w-full my-1.5 shrink-0 z-10 pointer-events-auto">
-                      <div 
-                        className="px-3 py-0.5 rounded-full text-[11px] font-black shadow-sm select-none border"
-                        style={{
-                          backgroundColor: hexToRgba(resolvedHex, 0.1),
-                          color: getDarkenedHexForText(resolvedHex),
-                          borderColor: hexToRgba(resolvedHex, 0.25)
-                        }}
-                      >
-                        {fmt(col.total)}
-                      </div>
-                    </div>
-                    
                     <div 
-                      className="flex-1 flex flex-col p-3 overflow-y-auto space-y-3 border-x border-b rounded-b-2xl -mt-[1px] z-0"
+                      className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
                       style={{
                         backgroundColor: hexToRgba(resolvedHex, 0.04),
                         borderColor: hexToRgba(resolvedHex, 0.15),
@@ -1585,16 +1629,32 @@ export default function LeadsKanban() {
                         borderStyle: 'solid'
                       }}
                     >
-                      {colLeads.map(lead => (
-                        <LeadCard
-                          key={lead.id}
-                          lead={lead}
-                          handleDragStart={handleDragStart}
-                          handleDragEnd={handleDragEnd}
-                          setSelectedLead={setSelectedLead}
-                          showStageInFooter={true}
-                        />
-                      ))}
+                      {/* Totalizador de Volume */}
+                      <div className="flex justify-center w-full mb-3 shrink-0 z-10 pointer-events-auto">
+                        <div 
+                          className="px-3 py-0.5 rounded-full text-[11px] font-black shadow-sm select-none border"
+                          style={{
+                            backgroundColor: hexToRgba(resolvedHex, 0.1),
+                            color: getDarkenedHexForText(resolvedHex),
+                            borderColor: hexToRgba(resolvedHex, 0.25)
+                          }}
+                        >
+                          {fmt(col.total)}
+                        </div>
+                      </div>
+
+                      <div className="flex-1 flex flex-col gap-3">
+                        {colLeads.map(lead => (
+                          <LeadCard
+                            key={lead.id}
+                            lead={lead}
+                            handleDragStart={handleDragStart}
+                            handleDragEnd={handleDragEnd}
+                            setSelectedLead={setSelectedLead}
+                            showStageInFooter={true}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
                 );
@@ -1610,7 +1670,7 @@ export default function LeadsKanban() {
                 const colLeads = col.cards;
                 const isFirst = idx === 0;
                 const defaultColColor = col.id === 'unassigned' ? '#64748b' : PRESET_VENDEDOR_COLORS[idx % PRESET_VENDEDOR_COLORS.length];
-                const colColor = segmentoColors[col.label] || defaultColColor;
+                const colColor = getSegmentColor(col.label, defaultColColor);
                 const resolvedHex = resolveColorToHex(colColor);
                 const contrast = getContrastYIQ(resolvedHex);
                 const badgeClass = contrast === 'white' ? 'bg-white/20 text-white' : 'bg-black/10 text-slate-800';
@@ -1757,21 +1817,8 @@ export default function LeadsKanban() {
                       </div>
                     </div>
 
-                    <div className="flex justify-center w-full my-1.5 shrink-0 z-10 pointer-events-auto">
-                      <div 
-                        className="px-3 py-0.5 rounded-full text-[11px] font-black shadow-sm select-none border"
-                        style={{
-                          backgroundColor: hexToRgba(resolvedHex, 0.1),
-                          color: getDarkenedHexForText(resolvedHex),
-                          borderColor: hexToRgba(resolvedHex, 0.25)
-                        }}
-                      >
-                        {fmt(col.total)}
-                      </div>
-                    </div>
-                    
                     <div 
-                      className="flex-1 flex flex-col p-3 overflow-y-auto space-y-3 border-x border-b rounded-b-2xl -mt-[1px] z-0"
+                      className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
                       style={{
                         backgroundColor: hexToRgba(resolvedHex, 0.04),
                         borderColor: hexToRgba(resolvedHex, 0.15),
@@ -1779,16 +1826,32 @@ export default function LeadsKanban() {
                         borderStyle: 'solid'
                       }}
                     >
-                      {colLeads.map(lead => (
-                        <LeadCard
-                          key={lead.id}
-                          lead={lead}
-                          handleDragStart={handleDragStart}
-                          handleDragEnd={handleDragEnd}
-                          setSelectedLead={setSelectedLead}
-                          showStageInFooter={true}
-                        />
-                      ))}
+                      {/* Totalizador de Volume */}
+                      <div className="flex justify-center w-full mb-3 shrink-0 z-10 pointer-events-auto">
+                        <div 
+                          className="px-3 py-0.5 rounded-full text-[11px] font-black shadow-sm select-none border"
+                          style={{
+                            backgroundColor: hexToRgba(resolvedHex, 0.1),
+                            color: getDarkenedHexForText(resolvedHex),
+                            borderColor: hexToRgba(resolvedHex, 0.25)
+                          }}
+                        >
+                          {fmt(col.total)}
+                        </div>
+                      </div>
+
+                      <div className="flex-1 flex flex-col gap-3">
+                        {colLeads.map(lead => (
+                          <LeadCard
+                            key={lead.id}
+                            lead={lead}
+                            handleDragStart={handleDragStart}
+                            handleDragEnd={handleDragEnd}
+                            setSelectedLead={setSelectedLead}
+                            showStageInFooter={true}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
                 );

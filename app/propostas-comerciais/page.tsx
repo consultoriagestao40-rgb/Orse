@@ -1284,7 +1284,7 @@ export default function PropostasComerciaisDashboard() {
                             onScroll={() => syncScroll('kanban-headers-status', 'kanban-cards-status')}
                             style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
                           >
-                            <div className="flex gap-5 min-w-max pb-0 mb-0">
+                            <div className="flex gap-3 min-w-max pb-0 mb-0">
                               {orderedStatusCols.map((col, idx) => (
                                 <KanbanColumnHeader
                                   key={col.id}
@@ -1318,7 +1318,7 @@ export default function PropostasComerciaisDashboard() {
                           className="overflow-x-auto pb-6 pt-0 mt-[-112px]"
                           onScroll={() => syncScroll('kanban-cards-status', 'kanban-headers-status')}
                         >
-                          <div className="flex gap-5 min-w-max pt-0 mt-0">
+                          <div className="flex gap-3 min-w-max pt-0 mt-0">
                             {orderedStatusCols.map(col => (
                               <KanbanColumnCards
                                 key={col.id}
@@ -1393,7 +1393,7 @@ export default function PropostasComerciaisDashboard() {
                               onScroll={() => syncScroll('kanban-headers-vendedor', 'kanban-cards-vendedor')}
                               style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
                             >
-                              <div className="flex gap-5 min-w-max pb-0 mb-0">
+                              <div className="flex gap-3 min-w-max pb-0 mb-0">
                                 {orderedVendedorCols.map((col, idx) => {
                                   const vColor = vendedorColors[col.label] || 'emerald';
                                   return (
@@ -1426,7 +1426,7 @@ export default function PropostasComerciaisDashboard() {
                             className="overflow-x-auto pb-6 pt-0 mt-[-112px]"
                             onScroll={() => syncScroll('kanban-cards-vendedor', 'kanban-headers-vendedor')}
                           >
-                            <div className="flex gap-5 min-w-max pt-0 mt-0">
+                            <div className="flex gap-3 min-w-max pt-0 mt-0">
                               {orderedVendedorCols.map(col => {
                                 const vColor = vendedorColors[col.label] || 'emerald';
                                 return (
@@ -1514,7 +1514,7 @@ export default function PropostasComerciaisDashboard() {
                               onScroll={() => syncScroll('kanban-headers-segmento', 'kanban-cards-segmento')}
                               style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
                             >
-                              <div className="flex gap-5 min-w-max pb-0 mb-0">
+                              <div className="flex gap-3 min-w-max pb-0 mb-0">
                                 {kanbanSegmentoCols.map((col, idx) => {
                                   const segColor = segmentoColors[col.label] || '#3b82f6';
                                   return (
@@ -1544,7 +1544,7 @@ export default function PropostasComerciaisDashboard() {
                             className="overflow-x-auto pb-6 pt-0 mt-[-112px]"
                             onScroll={() => syncScroll('kanban-cards-segmento', 'kanban-headers-segmento')}
                           >
-                            <div className="flex gap-5 min-w-max pt-0 mt-0">
+                            <div className="flex gap-3 min-w-max pt-0 mt-0">
                               {kanbanSegmentoCols.map(col => {
                                 const segColor = segmentoColors[col.label] || '#3b82f6';
                                 return (
