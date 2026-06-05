@@ -932,8 +932,8 @@ return (
                     <Clock size={12} className="text-white/95 shrink-0" />
                     <span>
                       {timeLeft.days > 0 
-                        ? `${timeLeft.days}d ${String(timeLeft.hours).padStart(2, '0')}h` 
-                        : `${String(timeLeft.hours).padStart(2, '0')}h ${String(timeLeft.minutes).padStart(2, '0')}m`}
+                        ? `${timeLeft.days}d ${timeLeft.hours}h ${timeLeft.minutes}m` 
+                        : `${timeLeft.hours}h ${timeLeft.minutes}m ${timeLeft.seconds}s`}
                     </span>
                   </div>
                 </>
@@ -2636,7 +2636,7 @@ return (
                 <div className="bg-[#F0F2F5] border-t border-slate-200/60 p-2 sm:p-3 shrink-0">
                   <div className="flex gap-2 sm:gap-3 items-center">
                     {/* Pill Input Container */}
-                    <div className="flex-1 bg-white border border-slate-250/80 rounded-full flex items-center px-4 py-1.5 shadow-xs">
+                    <div className="flex-1 min-w-0 bg-white border border-slate-250/80 rounded-full flex items-center px-4 py-1.5 shadow-xs">
                       {/* Left icon (decorative clip icon) */}
                       <button 
                         type="button"
@@ -2662,7 +2662,7 @@ return (
                             handleSendNegotiation();
                           }
                         }}
-                        className="flex-1 px-3 py-1 bg-transparent border-0 outline-none focus:ring-0 text-base sm:text-sm font-medium text-slate-850 resize-none max-h-20 min-h-[28px] leading-relaxed scrollbar-none"
+                        className="flex-1 min-w-0 px-3 py-1 bg-transparent border-0 outline-none focus:ring-0 text-base sm:text-sm font-medium text-slate-850 resize-none max-h-20 min-h-[28px] leading-relaxed scrollbar-none"
                       />
                     </div>
 
@@ -2672,12 +2672,13 @@ return (
                       disabled={loading || !negotiationText.trim()}
                       onClick={handleSendNegotiation}
                       style={{ 
-                        backgroundColor: !negotiationText.trim() || loading ? '#B0BEC5' : theme.primary,
+                        backgroundColor: !negotiationText.trim() || loading ? '#F1F5F9' : theme.primary,
+                        color: !negotiationText.trim() || loading ? '#94A3B8' : '#FFFFFF',
                       }}
-                      className={`w-11 h-11 rounded-full flex items-center justify-center text-white transition-all cursor-pointer shadow-md active:scale-95 shrink-0 ${
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md active:scale-95 shrink-0 ${
                         !negotiationText.trim() || loading
-                          ? 'text-slate-400 cursor-not-allowed shadow-none opacity-80'
-                          : 'hover:brightness-95 hover:shadow-lg'
+                          ? 'border border-slate-200 cursor-not-allowed shadow-none'
+                          : 'border border-transparent hover:brightness-95 shadow-md shadow-slate-350/10'
                       }`}
                     >
                       {loading ? (
