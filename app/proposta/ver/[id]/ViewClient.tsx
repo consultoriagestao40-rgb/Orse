@@ -8,7 +8,7 @@ import {
   CheckCircle, Edit, FileText, X, Printer, CheckCircle2, ShieldCheck, Mail, MapPin, 
   Smartphone, User, Presentation, Calculator, BookOpen, ChevronRight, ChevronLeft, Menu, TrendingUp,
   UserCheck, ClipboardList, Package, Layers, Info, Download, Clock, AlertTriangle,
-  Video, Image, Paperclip, ExternalLink, Eye, HelpCircle
+  Video, Image, Paperclip, ExternalLink, Eye, HelpCircle, MessageSquare, FileSpreadsheet
 } from 'lucide-react';
 
 const PropostaApresentacaoPrint = dynamic(
@@ -610,7 +610,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     { id: 'fotos', label: '6. Fotos da Visita Técnica', icon: Image, show: tabsConfig.fotos && !!doc.configApresentacao?.fotosList?.length },
     { id: 'documentos', label: '7. Documentos & Certidões', icon: Paperclip, show: tabsConfig.documentos && !!doc.configApresentacao?.documentosList?.length },
     { id: 'faq', label: '8. Perguntas Frequentes (FAQ)', icon: HelpCircle, show: tabsConfig.faq && !!faqList.length },
-    { id: 'historico', label: '9. Histórico e Ajustes', icon: Clock, show: !!doc.configApresentacao?.negotiations && doc.configApresentacao.negotiations.length > 0 }
+    { id: 'historico', label: '9. Conversa & Negociação', icon: MessageSquare, show: true }
   ].filter(item => item.show);
 
   // Define a aba ativa padrão inicial
@@ -1017,7 +1017,7 @@ return (
                   <div className="flex flex-col gap-2 items-center w-full">
                     <button
                       onClick={() => setShowApprovalModal(true)}
-                      className="w-10 h-10 bg-[#1B4D3E] hover:bg-[#13382D] text-white rounded-2xl flex items-center justify-center shadow-md cursor-pointer transition-all active:scale-95 text-xs font-bold"
+                      className="w-10 h-10 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-2xl flex items-center justify-center shadow-md cursor-pointer transition-all active:scale-95 text-xs font-bold shadow-[#25D366]/20"
                       title="Aceitar Proposta"
                     >
                       👍
@@ -1028,7 +1028,7 @@ return (
                         setNegotiationType('decline');
                         setShowNegotiationModal(true);
                       }}
-                      className="w-10 h-10 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl flex items-center justify-center cursor-pointer transition-all active:scale-95 text-xs font-bold shadow-xs"
+                      className="w-10 h-10 bg-[#EF4444] hover:bg-[#DC2626] text-white rounded-2xl flex items-center justify-center shadow-md cursor-pointer transition-all active:scale-95 text-xs font-bold shadow-red-500/10"
                       title="Declinar Proposta"
                     >
                       👎
@@ -1036,11 +1036,13 @@ return (
 
                     <button
                       onClick={() => {
-                        setNegotiationType('comment');
-                        setShowNegotiationModal(true);
+                        setActiveClientTab('historico');
+                        setTimeout(() => {
+                          document.getElementById('chat-textarea')?.focus();
+                        }, 100);
                       }}
                       className="w-10 h-10 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl flex items-center justify-center cursor-pointer transition-all active:scale-95 text-xs font-bold shadow-xs"
-                      title="Comentar"
+                      title="Falar com o Consultor (Chat)"
                     >
                       💬
                     </button>
@@ -1050,17 +1052,17 @@ return (
             </div>
           ) : (
             /* EXPANDED VIEW */
-            <div className="flex flex-col justify-between h-full w-full">
-              <div>
+            <div className="flex flex-col justify-between h-full w-full overflow-hidden">
+              <div className="flex flex-col flex-1 min-h-0 overflow-y-auto scrollbar-thin">
                 {/* Top Padding / Menu Title Block (colored top block, conforming to rounded corner) */}
-                <div className="bg-[#CCD3DC] px-6 pt-6 pb-4 border-b border-slate-300/80 rounded-none mb-4">
+                <div className="bg-[#CCD3DC] px-6 pt-6 pb-4 border-b border-slate-300/80 rounded-none mb-4 shrink-0">
                   <span className="text-[11px] text-[#1B4D3E] font-black uppercase tracking-wider block">
                     Menu da Proposta
                   </span>
                 </div>
 
                 {/* Menu de Navegação */}
-                <div className="flex flex-col gap-1.5 px-6">
+                <div className="flex flex-col gap-1.5 px-6 pb-4">
                   {navItems.map((item) => (
                     <button
                       key={item.id}
@@ -1085,7 +1087,7 @@ return (
               </div>
 
               {/* Rodapé da Sidebar - Botões de Ação Dinâmicos */}
-              <div className="px-6 pb-6 mt-8 pt-6 border-t border-slate-200/60 flex flex-col gap-2.5">
+              <div className="px-6 pb-6 pt-6 border-t border-slate-200/60 flex flex-col gap-2.5 shrink-0 bg-white mt-auto">
                 {approved ? (
                   <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
                     <CheckCircle2 size={24} className="text-[#1B4D3E] mb-1" />
@@ -1096,7 +1098,7 @@ return (
                   <>
                     <button
                       onClick={() => setShowApprovalModal(true)}
-                      className="w-full bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl shadow-lg shadow-[#1B4D3E]/10 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl shadow-lg shadow-[#25D366]/25 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
                     >
                       <span className="text-[14px]">👍</span> Aceitar Proposta
                     </button>
@@ -1106,19 +1108,21 @@ return (
                         setNegotiationType('decline');
                         setShowNegotiationModal(true);
                       }}
-                      className="w-full bg-white hover:bg-slate-50 text-slate-700 font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-slate-200"
+                      className="w-full bg-[#EF4444] hover:bg-[#DC2626] text-white font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl shadow-lg shadow-red-500/10 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-transparent"
                     >
                       <span className="text-[14px]">👎</span> Declinar Proposta
                     </button>
 
                     <button
                       onClick={() => {
-                        setNegotiationType('comment');
-                        setShowNegotiationModal(true);
+                        setActiveClientTab('historico');
+                        setTimeout(() => {
+                          document.getElementById('chat-textarea')?.focus();
+                        }, 100);
                       }}
                       className="w-full bg-white hover:bg-slate-50 text-slate-700 font-black text-[10px] uppercase tracking-wider py-3.5 rounded-2xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-slate-200"
                     >
-                      <span className="text-[14px]">💬</span> Comentar
+                      <span className="text-[14px]">💬</span> Falar com o Consultor
                     </button>
                   </>
                 )}
@@ -2257,7 +2261,6 @@ return (
                   >
                     <ChevronRight size={24} />
                   </button>
-
                   <div className="absolute bottom-4 text-white/50 text-xs font-black uppercase tracking-widest font-mono">
                     Foto {lightboxIndex + 1} de {fotosList.length}
                   </div>
@@ -2267,65 +2270,119 @@ return (
           )}
 
           {/* 7. ABA: DOCUMENTOS E CERTIDÕES */}
-          {activeClientTab === 'documentos' && documentosList.length > 0 && (
-            <div className="max-w-[960px] mx-auto bg-white rounded-3xl p-6 md:p-10 shadow-2xl shadow-slate-950/20 text-slate-800 animate-fadeIn relative">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center print:hidden flex items-center justify-center gap-2 border-b border-slate-100 pb-3">
-                📋 Documentos e Certidões Complementares
-              </h3>
-              
-              <div className="overflow-x-auto border border-slate-150 rounded-2xl shadow-sm">
-                <table className="w-full text-left border-collapse font-sans text-xs">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-400 text-[10px] font-black uppercase tracking-widest">
-                      <th className="px-6 py-4">Nome do Documento</th>
-                      <th className="px-6 py-4 text-center">Formato</th>
-                      <th className="px-6 py-4 text-right">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {documentosList.map((docItem: { name: string; url: string }, idx: number) => (
-                      <tr 
+          {activeClientTab === 'documentos' && documentosList.length > 0 && (() => {
+            const getFileInfo = (fileName: string) => {
+              const ext = fileName.split('.').pop()?.toLowerCase() || '';
+              if (ext === 'pdf') {
+                return {
+                  label: 'PDF',
+                  color: 'text-red-600 bg-red-50 border-red-100',
+                  iconColor: 'text-red-650 bg-red-50/50 border-red-100/50',
+                  bgClass: 'hover:border-red-500/20 hover:bg-red-50/5',
+                  Icon: FileText
+                };
+              }
+              if (['doc', 'docx'].includes(ext)) {
+                return {
+                  label: 'WORD',
+                  color: 'text-blue-600 bg-blue-50 border-blue-100',
+                  iconColor: 'text-blue-650 bg-blue-50/50 border-blue-100/50',
+                  bgClass: 'hover:border-blue-500/20 hover:bg-blue-50/5',
+                  Icon: FileText
+                };
+              }
+              if (['xls', 'xlsx', 'csv'].includes(ext)) {
+                return {
+                  label: 'EXCEL',
+                  color: 'text-emerald-650 bg-emerald-50 border-emerald-100',
+                  iconColor: 'text-emerald-700 bg-emerald-50/50 border-emerald-100/50',
+                  bgClass: 'hover:border-emerald-500/20 hover:bg-emerald-50/5',
+                  Icon: FileSpreadsheet
+                };
+              }
+              return {
+                label: 'ARQUIVO',
+                color: 'text-slate-600 bg-slate-50 border-slate-100',
+                iconColor: 'text-slate-700 bg-slate-50/50 border-slate-100/50',
+                bgClass: 'hover:border-slate-500/20 hover:bg-slate-50/5',
+                Icon: FileText
+              };
+            };
+
+            return (
+              <div className="max-w-[960px] mx-auto bg-white rounded-3xl p-6 md:p-10 shadow-2xl shadow-slate-950/20 text-slate-800 animate-fadeIn relative">
+                {/* Header Banner Premium */}
+                <div className="bg-[#1B4D3E]/5 border border-[#1B4D3E]/10 rounded-2xl p-6 mb-8 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#1B4D3E] text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-900/10">
+                    <Paperclip size={22} className="animate-pulse" />
+                  </div>
+                  <div className="text-left">
+                    <h4 className="text-sm font-black text-[#1B4D3E] uppercase tracking-wider">Documentos e Certidões</h4>
+                    <p className="text-[11px] text-slate-500 font-bold uppercase mt-0.5">Certidões negativas, regularidades fiscais e termos complementares de suporte.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 max-w-3xl mx-auto py-2">
+                  {documentosList.map((docItem: { name: string; url: string }, idx: number) => {
+                    const info = getFileInfo(docItem.name);
+                    const FileIcon = info.Icon;
+                    
+                    return (
+                      <div 
                         key={idx}
                         onClick={() => handleDocumentOpen(docItem.url)}
-                        className="hover:bg-slate-50/80 transition-colors cursor-pointer group animate-in fade-in duration-200"
+                        className={`group border border-slate-200 bg-white rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all duration-200 cursor-pointer shadow-xs ${info.bgClass}`}
                       >
-                        {/* Nome do Documento */}
-                        <td className="px-6 py-4 max-w-[400px]">
-                          <div className="flex items-center gap-3">
-                            <div className="bg-red-50 text-red-650 p-2.5 rounded-xl border border-red-100 group-hover:scale-105 transition-transform shrink-0">
-                              <FileText size={18} />
-                            </div>
-                            <span className="font-extrabold text-slate-800 group-hover:text-[#1B4D3E] transition-colors truncate block" title={docItem.name}>
+                        <div className="flex items-center gap-4 min-w-0 w-full sm:w-auto">
+                          {/* Beautiful format-colored icon container */}
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border transition-all duration-200 group-hover:scale-105 ${info.iconColor}`}>
+                            <FileIcon size={22} />
+                          </div>
+                          
+                          <div className="text-left min-w-0 flex-1">
+                            {/* Format Label */}
+                            <span className={`text-[8.5px] font-black tracking-widest uppercase px-2 py-0.5 rounded-md border inline-block mb-1.5 ${info.color}`}>
+                              {info.label}
+                            </span>
+                            {/* File Name */}
+                            <h5 className="text-xs font-black text-slate-800 group-hover:text-[#1B4D3E] transition-colors truncate block pr-2" title={docItem.name}>
                               {docItem.name}
+                            </h5>
+                            {/* Subtitle helper */}
+                            <span className="text-[9.5px] text-slate-400 font-bold block mt-0.5 uppercase tracking-wider">
+                              Clique para abrir o documento em nova aba
                             </span>
                           </div>
-                        </td>
+                        </div>
 
-                        {/* Formato */}
-                        <td className="px-6 py-4 text-center">
-                          <span className="text-[9px] font-black uppercase tracking-wider text-red-650 bg-red-50 border border-red-100 px-2 py-0.5 rounded-md inline-block">
-                            PDF
-                          </span>
-                        </td>
-
-                        {/* Ações */}
-                        <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-end gap-2">
-                            <button 
-                              type="button"
-                              onClick={() => handleDocumentOpen(docItem.url)}
-                              className="bg-white hover:bg-slate-100 border border-slate-300 p-2 rounded-xl text-slate-600 hover:text-slate-900 transition-colors flex items-center justify-center shadow-sm cursor-pointer"
-                              title="Visualizar no Navegador"
-                            >
-                              <ExternalLink size={14} />
-                            </button>
-                            <button 
-                              type="button"
-                              onClick={(e) => handleDocumentDownload(e, docItem.url, docItem.name)}
-                              className="bg-emerald-650 hover:bg-emerald-700 text-white p-2 rounded-xl transition-colors flex items-center justify-center shadow shadow-emerald-500/10 active:scale-95 cursor-pointer"
-                              title="Baixar Arquivo"
-                            >
-                              <Download size={14} />
+                        {/* Actions */}
+                        <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end pt-3 sm:pt-0 border-t border-slate-100 sm:border-0" onClick={(e) => e.stopPropagation()}>
+                          <button 
+                            type="button"
+                            onClick={() => handleDocumentOpen(docItem.url)}
+                            className="bg-white hover:bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl text-slate-650 hover:text-slate-850 hover:border-slate-350 transition-all flex items-center gap-1.5 text-[9.5px] font-black uppercase tracking-wider shadow-xs cursor-pointer active:scale-95"
+                            title="Visualizar no Navegador"
+                          >
+                            <ExternalLink size={13} />
+                            <span>Abrir</span>
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={(e) => handleDocumentDownload(e, docItem.url, docItem.name)}
+                            className="bg-[#1B4D3E] hover:bg-[#13382D] text-white px-3.5 py-2.5 rounded-xl transition-all flex items-center gap-1.5 text-[9.5px] font-black uppercase tracking-wider shadow-md hover:shadow-lg active:scale-95 cursor-pointer"
+                            title="Baixar Arquivo"
+                          >
+                            <Download size={13} />
+                            <span>Baixar</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}ze={14} />
                             </button>
                           </div>
                         </td>
@@ -2402,113 +2459,155 @@ return (
             </div>
           )}
 
-          {/* 9. ABA: HISTÓRICO E AJUSTES */}
+          {/* 9. ABA: CONVERSA E NEGOCIAÇÃO (CHAT STYLING) */}
           {activeClientTab === 'historico' && (
             <div className="max-w-[960px] mx-auto bg-white rounded-3xl p-6 md:p-10 shadow-2xl shadow-slate-950/20 text-slate-800 animate-fadeIn relative">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center print:hidden flex items-center justify-center gap-2 border-b border-slate-100 pb-3">
-                💬 Histórico de Negociações e Ajustes
-              </h3>
-              
-              {(!doc.configApresentacao?.negotiations || doc.configApresentacao.negotiations.length === 0) ? (
-                <div className="py-20 text-center text-slate-400 italic">
-                  Nenhum registro de ajustes ou negociação encontrado.
+              {/* Premium Header */}
+              <div className="bg-[#1B4D3E]/5 border border-[#1B4D3E]/10 rounded-2xl p-6 mb-8 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  {doc.proposta?.user?.avatarUrl ? (
+                    <img 
+                      src={doc.proposta.user.avatarUrl} 
+                      alt={doc.proposta.user.nome} 
+                      className="w-12 h-12 rounded-full object-cover border border-[#1B4D3E]/20 shadow-sm shrink-0"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-xl bg-[#1B4D3E] text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-900/10 font-bold uppercase flex items-center justify-center">
+                      {(doc.proposta?.user?.nome || 'C').substring(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="text-left">
+                    <h4 className="text-sm font-black text-[#1B4D3E] uppercase tracking-wider">{doc.proposta?.user?.nome || 'Consultor Comercial'}</h4>
+                    <span className="text-[9.5px] font-black text-[#25D366] uppercase tracking-widest flex items-center gap-1.5 mt-0.5 animate-pulse">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#25D366] inline-block"></span>
+                      Consultor Responsável • Online
+                    </span>
+                  </div>
                 </div>
-              ) : (
-                <div className="relative pl-8 border-l-2 border-slate-200 space-y-8 ml-4 max-w-2xl mx-auto py-4 text-left font-sans">
-                  {doc.configApresentacao.negotiations.map((item: any) => {
-                    const clientInitials = (item.nomeCliente || 'Cliente')
-                      .split(' ')
-                      .map((n: string) => n[0])
-                      .join('')
-                      .substring(0, 2)
-                      .toUpperCase();
+                <div className="hidden sm:block text-right">
+                  <span className="text-[9.5px] font-black text-slate-400 uppercase tracking-widest block">Proposta Comercial</span>
+                  <span className="text-xs font-black text-slate-700 block mt-0.5 font-mono">FPV-{String(doc.proposta.numero).padStart(3, '0')}</span>
+                </div>
+              </div>
 
-                    const sellerAvatar = doc.proposta?.user?.avatarUrl;
-                    const sellerInitials = (item.nomeVendedor || doc.proposta?.user?.nome || 'Consultor')
-                      .split(' ')
-                      .map((n: string) => n[0])
-                      .join('')
-                      .substring(0, 2)
-                      .toUpperCase();
+              {/* Chat Canvas Box */}
+              <div className="border border-slate-200 rounded-3xl overflow-hidden shadow-inner bg-[#F0F2F5] flex flex-col h-[500px]">
+                {/* Chat Message Box Scrollable */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scroll-smooth flex flex-col">
+                  {(!doc.configApresentacao?.negotiations || doc.configApresentacao.negotiations.length === 0) ? (
+                    <div className="my-auto text-center py-10 px-4 space-y-3">
+                      <div className="w-14 h-14 bg-slate-100 border border-slate-250 text-slate-400 rounded-full flex items-center justify-center mx-auto text-lg">
+                        💬
+                      </div>
+                      <h5 className="text-xs font-black text-slate-700 uppercase tracking-wider">Inicie a Negociação</h5>
+                      <p className="text-[10.5px] font-bold text-slate-450 uppercase tracking-wider max-w-sm mx-auto leading-relaxed">
+                        Tire dúvidas, proponha ajustes de premissas ou envie considerações sobre a proposta comercial diretamente ao consultor.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 pr-1">
+                      {doc.configApresentacao.negotiations.map((item: any) => {
+                        const dateStr = new Date(item.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        const fullDateStr = new Date(item.data).toLocaleString('pt-BR');
 
-                    const dateStr = new Date(item.data).toLocaleString('pt-BR');
-                    const responseDateStr = item.dataResposta ? new Date(item.dataResposta).toLocaleString('pt-BR') : '';
+                        return (
+                          <div key={item.id} className="space-y-4">
+                            {/* Client Message Row (Right) */}
+                            <div className="flex justify-end w-full">
+                              <div className="max-w-[80%] bg-[#d9fdd3] text-slate-800 rounded-2xl rounded-tr-none px-4 py-3 shadow-sm border border-[#c1e8ba]/30 text-left relative group">
+                                <div className="flex items-center justify-between gap-3 mb-1">
+                                  <span className="text-[8.5px] font-black text-emerald-800 uppercase tracking-wider">
+                                    {item.nomeCliente || 'Você'}
+                                  </span>
+                                  {item.tipo === 'recusa' && (
+                                    <span className="text-[8px] font-black uppercase tracking-wider bg-red-100 text-red-700 px-1.5 py-0.5 rounded">
+                                      ⚠️ Recusa
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs font-semibold leading-relaxed whitespace-pre-wrap">{item.mensagem}</p>
+                                <span className="text-[8px] font-bold text-slate-450 block text-right mt-1.5 font-mono tracking-wider" title={fullDateStr}>
+                                  {dateStr}
+                                </span>
+                              </div>
+                            </div>
 
-                    return (
-                      <div key={item.id} className="space-y-6">
-                        
-                        {/* Event 1: Client Message */}
-                        <div className="relative pl-4">
-                          {/* Dot / Avatar on the timeline */}
-                          <div className="absolute -left-[49px] top-0 w-8 h-8 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-extrabold text-xs uppercase border border-slate-200 shadow-xs">
-                            {clientInitials}
-                          </div>
-                          
-                          {/* Message Header */}
-                          <div className="flex items-center flex-wrap gap-2 text-xs">
-                            <span className="font-extrabold text-slate-800">{item.nomeCliente || 'Cliente'}</span>
-                            <span className="text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full border border-slate-200">
-                              {item.tipo === 'recusa' ? '👎 Recusa' : '💬 Contraproposta'}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-mono font-medium ml-auto">
-                              {dateStr}
-                            </span>
-                          </div>
-                          
-                          {/* Message Bubble */}
-                          <div className="mt-1.5 max-w-xl text-xs font-semibold text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50 border border-slate-150 p-3.5 rounded-2xl rounded-tl-none">
-                            {item.mensagem}
-                          </div>
-                        </div>
-
-                        {/* Event 2: Consultant Response or Awaiting message */}
-                        {item.respondida ? (
-                          <div className="relative pl-4">
-                            {/* Dot / Avatar on the timeline */}
-                            {sellerAvatar ? (
-                              <img 
-                                src={sellerAvatar} 
-                                alt={item.nomeVendedor || 'Consultor'} 
-                                className="absolute -left-[49px] top-0 w-8 h-8 rounded-full object-cover border border-slate-200 shadow-xs"
-                              />
+                            {/* Seller Message Row (Left) */}
+                            {item.respondida ? (
+                              <div className="flex justify-start w-full">
+                                <div className="max-w-[80%] bg-white text-slate-800 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm border border-slate-150 text-left relative">
+                                  <div className="flex items-center justify-between gap-3 mb-1">
+                                    <span className="text-[8.5px] font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-[#1B4D3E] inline-block"></span>
+                                      {item.nomeVendedor || doc.proposta?.user?.nome || 'Consultor'}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs font-semibold leading-relaxed whitespace-pre-wrap">{item.resposta}</p>
+                                  <span className="text-[8px] font-bold text-slate-450 block text-right mt-1.5 font-mono tracking-wider">
+                                    {item.dataResposta ? new Date(item.dataResposta).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''}
+                                  </span>
+                                </div>
+                              </div>
                             ) : (
-                              <div className="absolute -left-[49px] top-0 w-8 h-8 rounded-full bg-[#1B4D3E]/10 text-[#1B4D3E] flex items-center justify-center font-extrabold text-xs uppercase border border-[#1B4D3E]/20 shadow-xs">
-                                {sellerInitials}
+                              <div className="flex justify-start w-full pl-4">
+                                <div className="text-[10px] text-slate-400 italic font-semibold leading-relaxed flex items-center gap-1.5 bg-white/60 border border-slate-200/50 px-3 py-1.5 rounded-full shadow-xs">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block animate-ping"></span>
+                                  Aguardando retorno do consultor responsável...
+                                </div>
                               </div>
                             )}
-
-                            {/* Message Header */}
-                            <div className="flex items-center flex-wrap gap-2 text-xs">
-                              <span className="font-extrabold text-slate-800">{item.nomeVendedor || 'Consultor'}</span>
-                              <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
-                                ✓ Resposta
-                              </span>
-                              <span className="text-[10px] text-slate-400 font-mono font-medium ml-auto">
-                                {responseDateStr}
-                              </span>
-                            </div>
-
-                            {/* Message Bubble */}
-                            <div className="mt-1.5 max-w-xl text-xs font-medium text-slate-600 leading-relaxed whitespace-pre-line bg-[#1B4D3E]/5 border border-[#1B4D3E]/10 p-3.5 rounded-2xl rounded-tl-none">
-                              {item.resposta}
-                            </div>
                           </div>
-                        ) : (
-                          <div className="relative pl-4">
-                            <div className="absolute -left-[49px] top-1 w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center text-xs font-bold border border-amber-200 shadow-xs">
-                              ⌛
-                            </div>
-                            <div className="text-[11px] text-slate-400 italic font-medium leading-relaxed">
-                              Aguardando retorno do consultor responsável...
-                            </div>
-                          </div>
-                        )}
-
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {/* Chat Input Field at the Bottom */}
+                <div className="bg-[#F0F2F5] border-t border-slate-200 p-4 shrink-0">
+                  <div className="flex gap-3 items-end">
+                    <textarea 
+                      id="chat-textarea"
+                      rows={1}
+                      placeholder="Digite suas considerações ou contraproposta..." 
+                      value={negotiationText}
+                      onChange={(e) => {
+                        setNegotiationText(e.target.value);
+                        setNegotiationType('comment');
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendNegotiation();
+                        }
+                      }}
+                      className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-semibold text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] transition-all resize-none max-h-24 min-h-[42px] leading-relaxed scrollbar-thin shadow-xs"
+                    />
+                    <button 
+                      type="button"
+                      disabled={loading || !negotiationText.trim()}
+                      onClick={handleSendNegotiation}
+                      className={`h-[42px] px-5 rounded-2xl font-black text-[10px] uppercase tracking-widest text-white transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                        !negotiationText.trim() || loading
+                          ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed shadow-none'
+                          : 'bg-[#25D366] hover:bg-[#128C7E] shadow-md shadow-[#25D366]/20 active:scale-95'
+                      }`}
+                    >
+                      {loading ? (
+                        <div className="w-4.5 h-4.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <>
+                          <span>Enviar</span>
+                          <span className="text-[12px] font-bold">➔</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <span className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wider block mt-2 text-left px-1">
+                    Pressione Enter para enviar, Shift+Enter para quebra de linha. O consultor receberá no WhatsApp.
+                  </span>
+                </div>
+              </div>
             </div>
           )}
 

@@ -948,13 +948,16 @@ export async function uploadClientFileAction(base64Data: string, fileName: strin
     }
 
     // Determine extension
-    let ext = '.png';
-    if (fileType.includes('jpeg') || fileType.includes('jpg')) ext = '.jpg';
-    else if (fileType.includes('webp')) ext = '.webp';
-    else if (fileType.includes('gif')) ext = '.gif';
-    else if (fileType.includes('pdf')) ext = '.pdf';
-    else if (fileType.includes('sheet') || fileType.includes('excel') || fileType.includes('ms-excel')) ext = '.xlsx';
-    else if (fileType.includes('word') || fileType.includes('officedocument')) ext = '.docx';
+    let ext = path.extname(fileName).toLowerCase();
+    if (!ext) {
+      ext = '.png';
+      if (fileType.includes('jpeg') || fileType.includes('jpg')) ext = '.jpg';
+      else if (fileType.includes('webp')) ext = '.webp';
+      else if (fileType.includes('gif')) ext = '.gif';
+      else if (fileType.includes('pdf')) ext = '.pdf';
+      else if (fileType.includes('sheet') || fileType.includes('excel') || fileType.includes('ms-excel')) ext = '.xlsx';
+      else if (fileType.includes('word') || fileType.includes('officedocument')) ext = '.docx';
+    }
 
     const cleanFileName = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}${ext}`;
     const uploadDir = path.join(process.cwd(), 'public', 'uploads');

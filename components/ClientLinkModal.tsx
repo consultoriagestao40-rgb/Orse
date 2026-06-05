@@ -586,7 +586,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                     <input 
                       type="file" 
                       multiple 
-                      accept=".pdf"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx"
                       onChange={handleDocUpload}
                       disabled={uploadingDocs}
                       className="hidden"
@@ -599,8 +599,8 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
                     ) : (
                       <div className="flex flex-col items-center gap-1 text-slate-500">
                         <Plus size={16} className="text-blue-600 mb-1" />
-                        <span className="text-[10px] font-black uppercase tracking-wider">Clique para adicionar PDFs</span>
-                        <span className="text-[9px] text-slate-400 font-bold">Apenas arquivos no formato PDF (Máx. 15MB)</span>
+                        <span className="text-[10px] font-black uppercase tracking-wider">Clique para adicionar documentos</span>
+                        <span className="text-[9px] text-slate-400 font-bold">Formatos: PDF, Word (doc/docx) e Excel (xls/xlsx) (Máx. 15MB)</span>
                       </div>
                     )}
                   </label>
