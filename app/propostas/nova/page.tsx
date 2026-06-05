@@ -177,7 +177,7 @@ function PropostaEditor() {
   const [showClientDropdown, setShowClientDropdown] = useState(false);
 
   const [showNewClientModal, setShowNewClientModal] = useState(false);
-  const [newClientForm, setNewClientForm] = useState({ nomeFantasia: '', razaoSocial: '', cnpj: '', email: '', whatsapp: '', endereco: '', contato: '', segmento: '' });
+  const [newClientForm, setNewClientForm] = useState({ nomeFantasia: '', razaoSocial: '', cnpj: '', email: '', whatsapp: '', endereco: '', contato: '', contatoCargo: '', segmento: '' });
   const [savingClient, setSavingClient] = useState(false);
 
   const [showNewProductModal, setShowNewProductModal] = useState(false);
@@ -203,6 +203,7 @@ function PropostaEditor() {
       revisao: '', 
       tipoServicos: '', 
       contato: '', 
+      contatoCargo: '', 
       celular: '', 
       email: '', 
       objetoProposta: '', 
@@ -936,11 +937,12 @@ function PropostaEditor() {
              email: newClientForm.email,
              celular: newClientForm.whatsapp,
              contato: newClientForm.contato,
+             contatoCargo: newClientForm.contatoCargo,
              segmento: newClientForm.segmento
           }
         });
         setShowNewClientModal(false);
-        setNewClientForm({ nomeFantasia: '', razaoSocial: '', cnpj: '', email: '', whatsapp: '', endereco: '', contato: '', segmento: '' });
+        setNewClientForm({ nomeFantasia: '', razaoSocial: '', cnpj: '', email: '', whatsapp: '', endereco: '', contato: '', contatoCargo: '', segmento: '' });
       } else {
         showAlert(res.error, 'error', 'Erro');
       }
@@ -1537,7 +1539,7 @@ function PropostaEditor() {
                                              email: c.email || '',
                                              celular: c.whatsapp || '',
                                              contato: c.contato || '',
-                                             contatoCargo: '',
+                                             contatoCargo: c.contatoCargo || '',
                                              segmento: c.segmento || ''
                                           }
                                        });
@@ -1625,6 +1627,11 @@ function PropostaEditor() {
                     <div className="space-y-1">
                        <label className="text-xs font-semibold text-slate-700">Contato / Responsável</label>
                        <input type="text" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]" value={proposta.cliente.contato} onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, contato: e.target.value}})} />
+                    </div>
+
+                    <div className="space-y-1">
+                       <label className="text-xs font-semibold text-slate-700">Cargo do Contato</label>
+                       <input type="text" className="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]" value={proposta.cliente.contatoCargo || ''} onChange={(e) => setProposta({...proposta, cliente: {...proposta.cliente, contatoCargo: e.target.value}})} />
                     </div>
 
                     <div className="space-y-1">
@@ -5872,6 +5879,10 @@ function PropostaEditor() {
                      <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase">Contato (Responsável)</label>
                         <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newClientForm.contato} onChange={e => setNewClientForm({...newClientForm, contato: e.target.value})} />
+                     </div>
+                     <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">Cargo do Contato</label>
+                        <input type="text" className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:border-[#1B4D3E] outline-none bg-white text-slate-800" value={newClientForm.contatoCargo || ''} onChange={e => setNewClientForm({...newClientForm, contatoCargo: e.target.value})} />
                      </div>
                      <div className="space-y-1">
                         <label className="text-[10px] font-bold text-slate-500 uppercase">Segmento</label>

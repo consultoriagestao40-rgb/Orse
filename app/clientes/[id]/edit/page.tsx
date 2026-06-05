@@ -19,6 +19,7 @@ export default function ClienteEditPage({ params }: { params: Promise<{ id: stri
     whatsapp: '',
     endereco: '',
     contato: '',
+    contatoCargo: '',
   });
 
   const [loading, setLoading] = useState(!isNew);
@@ -175,7 +176,7 @@ export default function ClienteEditPage({ params }: { params: Promise<{ id: stri
               />
             </div>
 
-            <div className="space-y-2 col-span-2">
+            <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CONTATO / RESPONSÁVEL</label>
               <input 
                 type="text" 
@@ -185,7 +186,17 @@ export default function ClienteEditPage({ params }: { params: Promise<{ id: stri
                 placeholder="Nome do responsável no cliente"
               />
             </div>
-          </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CARGO DO CONTATO</label>
+              <input 
+                type="text" 
+                value={formData.contatoCargo || ''}
+                onChange={(e) => setFormData({...formData, contatoCargo: e.target.value})}
+                className="w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all"
+                placeholder="Ex: Comprador / Gerente Financeiro"
+              />
+            </div>
         </div>
       </main>
     </div>

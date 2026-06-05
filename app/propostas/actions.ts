@@ -378,6 +378,7 @@ export async function saveProposta(data: any) {
           contato: cliente.contato !== undefined ? cliente.contato : undefined,
           email: cliente.email !== undefined ? cliente.email : undefined,
           whatsapp: cliente.celular !== undefined ? (cliente.celular || null) : undefined,
+          contatoCargo: cliente.contatoCargo !== undefined ? cliente.contatoCargo : undefined,
         }
       }).catch(err => console.error('Erro ao atualizar segmento do cliente:', err));
     }

@@ -35,6 +35,7 @@ export async function createCliente(data: any) {
         whatsapp: data.whatsapp || '',
         endereco: data.endereco || '',
         contato: data.contato || '',
+        contatoCargo: data.contatoCargo || '',
         segmento: data.segmento || '',
         tenantId: user?.tenantId || null,
       }
@@ -58,6 +59,7 @@ export async function updateCliente(id: string, data: any) {
     if (data.whatsapp !== undefined) updateData.whatsapp = data.whatsapp;
     if (data.endereco !== undefined) updateData.endereco = data.endereco;
     if (data.contato !== undefined) updateData.contato = data.contato;
+    if (data.contatoCargo !== undefined) updateData.contatoCargo = data.contatoCargo;
     if (data.segmento !== undefined) updateData.segmento = data.segmento;
 
     await prisma.client.update({
