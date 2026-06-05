@@ -17,9 +17,9 @@ export const metadata: Metadata = {
   description: "Plataforma de engenharia de custos e gestão comercial da Silva Consultoria Empresarial LTDA.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/icon.png",
-    shortcut: "/icon.png",
-    apple: "/icon.png",
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
   },
 };
 
