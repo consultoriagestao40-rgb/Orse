@@ -197,6 +197,7 @@ export default function ClienteEditPage({ params }: { params: Promise<{ id: stri
                 placeholder="Ex: Comprador / Gerente Financeiro"
               />
             </div>
+          </div>
         </div>
       </main>
     </div>
