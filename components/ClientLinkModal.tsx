@@ -246,7 +246,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
       const res = await updateConfigApresentacao(documentoId, newConfig);
       if (res.success) {
         // Copiar o link do cliente para a área de transferência
-        const shareUrl = `${window.location.origin}/proposta/ver/${documentoId}`;
+        const shareUrl = `https://smartbidhub.com.br/proposta/ver/${documentoId}`;
         await navigator.clipboard.writeText(shareUrl);
         
         setCopied(true);
@@ -267,7 +267,7 @@ export default function ClientLinkModal({ documentoId, configApresentacao, onClo
     }
   };
 
-  const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/proposta/ver/${documentoId}` : '';
+  const shareUrl = `https://smartbidhub.com.br/proposta/ver/${documentoId}`;
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">

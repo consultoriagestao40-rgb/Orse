@@ -849,21 +849,22 @@ return (
       <style dangerouslySetInnerHTML={{ __html: themeStyleHtml }} />
       
       {/* Real-time Countdown Timer fixed at the top (ALWAYS ACTIVE FOR CONSISTENCY) */}
-      <div className="fixed top-0 left-0 right-0 h-20 bg-[#1B4D3E] text-white flex items-center justify-between px-6 z-[9999] shadow-md print:hidden font-sans">
+      <div className="fixed top-0 left-0 right-0 min-h-20 bg-[#1B4D3E] text-white flex items-center justify-between px-4 sm:px-6 z-[9999] shadow-md print:hidden font-sans py-2 sm:py-0">
         {/* Left: Voltar button (mobile only) & Validade Title or Info */}
         <div className="flex items-center gap-3">
           {!mobileMenuOpen && (
             <button 
               onClick={() => setMobileMenuOpen(true)}
-              className="flex md:hidden items-center gap-1.5 text-xs font-black text-white bg-white/10 border border-white/15 px-3 py-2 rounded-xl active:scale-95 mr-1"
+              className="flex md:hidden items-center gap-1.5 text-xs font-black text-white bg-white/10 border border-white/15 px-3 py-2 rounded-xl active:scale-95 mr-1 shrink-0"
             >
               <ChevronLeft size={16} /> Voltar
             </button>
           )}
-          <Clock size={20} className="text-white/80 animate-pulse hidden sm:block animate-duration-1000" />
+          <Clock size={20} className="text-white/80 animate-pulse hidden sm:block animate-duration-1000 shrink-0" />
           <div className="flex flex-col text-left justify-center py-1">
-            <h1 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-white leading-tight">
-              Proposta Comercial para - <span className="uppercase font-black">{(doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Empresa').toUpperCase()}</span>
+            <h1 className="text-xs sm:text-base md:text-lg lg:text-xl font-bold text-white leading-tight">
+              <span className="hidden sm:inline">Proposta Comercial para - </span>
+              <span className="uppercase font-black">{(doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Empresa').toUpperCase()}</span>
             </h1>
             <p className="text-[10px] sm:text-xs text-white/85 font-bold tracking-wide mt-1">
               FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')} • Revisão R{String(versao?.versao || 1).padStart(2, '0')}
@@ -878,37 +879,44 @@ return (
             : (doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR'));
 
           return (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 shrink-0">
               <div className="hidden md:flex flex-col text-right justify-center">
                 <span className="text-[9px] text-white/70 font-black uppercase tracking-widest leading-none">Validade da Proposta</span>
                 <span className="text-xs font-black text-white mt-1">{expirationDateStr}</span>
               </div>
               {timeLeft && !timeLeft.isExpired ? (
-                <div className="flex gap-2 items-center font-mono">
-                  {timeLeft.days > 0 && (
-                    <>
-                      <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
-                        <span className="text-sm font-black text-white leading-none">{timeLeft.days}</span>
-                        <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">dias</span>
-                      </div>
-                      <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
-                    </>
-                  )}
-                  <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
-                    <span className="text-sm font-black text-white leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
-                    <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">horas</span>
+                <>
+                  {/* Desktop Countdown */}
+                  <div className="hidden sm:flex gap-2 items-center font-mono">
+                    {timeLeft.days > 0 && (
+                      <>
+                        <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
+                          <span className="text-sm font-black text-white leading-none">{timeLeft.days}</span>
+                          <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">dias</span>
+                        </div>
+                        <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
+                      </>
+                    )}
+                    <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
+                      <span className="text-sm font-black text-white leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
+                      <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">horas</span>
+                    </div>
+                    <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
+                    <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
+                      <span className="text-sm font-black text-white leading-none">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                      <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">min</span>
+                    </div>
+                    <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
+                    <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
+                      <span className="text-sm font-black text-white animate-pulse leading-none">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                      <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">seg</span>
+                    </div>
                   </div>
-                  <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
-                  <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
-                    <span className="text-sm font-black text-white leading-none">{String(timeLeft.minutes).padStart(2, '0')}</span>
-                    <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">min</span>
+                  {/* Mobile Countdown (Compact) */}
+                  <div className="sm:hidden text-[9px] bg-white/10 text-white border border-white/20 font-black uppercase tracking-wider px-2 py-1.5 rounded-xl">
+                    ⏱️ {timeLeft.days > 0 ? `${timeLeft.days}d` : `${String(timeLeft.hours).padStart(2, '0')}h`}
                   </div>
-                  <span className="text-sm font-black text-white/50 animate-pulse leading-none">:</span>
-                  <div className="flex flex-col items-center min-w-[44px] bg-white/10 border border-white/20 rounded-xl p-1 shadow-inner">
-                    <span className="text-sm font-black text-white animate-pulse leading-none">{String(timeLeft.seconds).padStart(2, '0')}</span>
-                    <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">seg</span>
-                  </div>
-                </div>
+                </>
               ) : (
                 <div className="text-[9px] bg-white/10 text-white border border-white/20 font-black uppercase tracking-wider px-3.5 py-2 rounded-xl">
                   Válida até {expirationDateStr}
@@ -1142,7 +1150,7 @@ return (
         </aside>
 
         {/* CONTAINER PRINCIPAL DE CONTEÚDO (CANVAS) */}
-        <main className={`flex-1 h-full overflow-y-auto p-4 md:p-8 bg-[#FAFBFD] print:w-full print:p-0 print:m-0 ${
+        <main className={`flex-1 h-full overflow-y-auto p-2 sm:p-4 md:p-8 bg-[#FAFBFD] print:w-full print:p-0 print:m-0 ${
           mobileMenuOpen ? 'hidden' : 'block'
         } md:block`}>
 
@@ -1165,7 +1173,7 @@ return (
 
           {/* 2. ABA: PROPOSTA COMERCIAL A4 */}
           {activeClientTab === 'proposta' && (
-            <div className="max-w-[960px] mx-auto bg-white rounded-3xl p-6 md:p-10 shadow-2xl shadow-slate-950/20 print:p-0 print:shadow-none">
+            <div className="max-w-[960px] mx-auto bg-white rounded-xl sm:rounded-3xl p-2 sm:p-6 md:p-10 shadow-2xl shadow-slate-950/20 print:p-0 print:shadow-none">
               <div className="text-slate-800">
                 <DocumentoA4 
                   proposta={mergedProposta} 

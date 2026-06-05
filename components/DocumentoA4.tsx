@@ -381,95 +381,99 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
   const totalGeral = totalEquipe + totalInsumos;
 
   const renderTabelaComercial = () => (
-    <div className="mt-8 pr-2 font-sans">
+    <div className="mt-8 pr-2 font-sans w-full max-w-full">
         {/* QUADRO EFETIVO */}
-        <div className="break-inside-avoid print:break-inside-avoid mb-6">
+        <div className="break-inside-avoid print:break-inside-avoid mb-6 w-full max-w-full">
           <h5 className="font-black uppercase mb-2 text-[10px]">QUADRO EFETIVO / SERVIÇOS</h5>
-          <table className="w-full text-left border-collapse border border-slate-300 text-xs">
-          <thead>
-            <tr className="bg-slate-900 text-white font-bold uppercase text-[10px]">
-              <th className="p-2 border border-slate-300">Cargo / Função</th>
-              <th className="p-2 border border-slate-300 text-center">Escala</th>
-              <th className="p-2 border border-slate-300 text-center">Qtd</th>
-              {isSpot && <th className="p-2 border border-slate-300 text-center">Unidade</th>}
-              <th className="p-2 border border-slate-300 text-right">Valor Unit.</th>
-              <th className="p-2 border border-slate-300 text-right">{isSpot ? 'Valor' : 'Valor Mensal'}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {equipe.map((item: any, idx: number) => {
-              const precoVendaTotal = resultado?.items?.[idx]?.precoVenda || 0;
-              const isSpotItem = item.tipoItem === 'SPOT';
-              const qty = isSpotItem ? (item.quantidadeDemanda || 1) : (item.quantidade || 1);
-              const precoUnitario = isSpotItem ? (precoVendaTotal / qty) : (item.quantidade > 0 ? precoVendaTotal / item.quantidade : 0);
-              
-              return (
-                <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}>
-                  <td className="p-2 border border-slate-300 font-bold text-slate-800">{item.nomeCargo}</td>
-                  <td className="p-2 border border-slate-300 text-center text-slate-600">{item.escala}</td>
-                  <td className="p-2 border border-slate-300 text-center text-slate-600">{qty}</td>
-                  {isSpot && <td className="p-2 border border-slate-300 text-center uppercase font-bold text-slate-600">{item.unidadeMedida || 'DIA'}</td>}
-                  <td className="p-2 border border-slate-300 text-right text-slate-600">{fmt(precoUnitario)}</td>
-                  <td className="p-2 border border-slate-300 text-right font-bold text-slate-800">{fmt(precoVendaTotal)}</td>
+          <div className="overflow-x-auto w-full max-w-full border border-slate-300 rounded-lg no-print-border">
+            <table className="w-full text-left border-collapse text-xs min-w-[580px] sm:min-w-0">
+              <thead>
+                <tr className="bg-slate-900 text-white font-bold uppercase text-[10px]">
+                  <th className="p-2 border-r border-b border-slate-300">Cargo / Função</th>
+                  <th className="p-2 border-r border-b border-slate-300 text-center">Escala</th>
+                  <th className="p-2 border-r border-b border-slate-300 text-center">Qtd</th>
+                  {isSpot && <th className="p-2 border-r border-b border-slate-300 text-center">Unidade</th>}
+                  <th className="p-2 border-r border-b border-slate-300 text-right">Valor Unit.</th>
+                  <th className="p-2 border-b border-slate-300 text-right">{isSpot ? 'Valor' : 'Valor Mensal'}</th>
                 </tr>
-              );
-            })}
-            {equipe.length === 0 && (
-              <tr><td colSpan={isSpot ? 6 : 5} className="p-4 text-center text-slate-500 italic">Nenhum posto de serviço adicionado.</td></tr>
-            )}
-          </tbody>
-          <tfoot>
-            <tr className="bg-slate-200 font-black text-slate-900">
-              <td colSpan={isSpot ? 5 : 4} className="p-2 border border-slate-300 text-right uppercase">Total dos Serviços:</td>
-              <td className="p-2 border border-slate-300 text-right">{fmt(totalEquipe)}</td>
-            </tr>
-          </tfoot>
-        </table>
+              </thead>
+              <tbody>
+                {equipe.map((item: any, idx: number) => {
+                  const precoVendaTotal = resultado?.items?.[idx]?.precoVenda || 0;
+                  const isSpotItem = item.tipoItem === 'SPOT';
+                  const qty = isSpotItem ? (item.quantidadeDemanda || 1) : (item.quantidade || 1);
+                  const precoUnitario = isSpotItem ? (precoVendaTotal / qty) : (item.quantidade > 0 ? precoVendaTotal / item.quantidade : 0);
+                  
+                  return (
+                    <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}>
+                      <td className="p-2 border-r border-b border-slate-200 font-bold text-slate-800">{item.nomeCargo}</td>
+                      <td className="p-2 border-r border-b border-slate-200 text-center text-slate-600">{item.escala}</td>
+                      <td className="p-2 border-r border-b border-slate-200 text-center text-slate-600">{qty}</td>
+                      {isSpot && <td className="p-2 border-r border-b border-slate-200 text-center uppercase font-bold text-slate-600">{item.unidadeMedida || 'DIA'}</td>}
+                      <td className="p-2 border-r border-b border-slate-200 text-right text-slate-600">{fmt(precoUnitario)}</td>
+                      <td className="p-2 border-b border-slate-200 text-right font-bold text-slate-800">{fmt(precoVendaTotal)}</td>
+                    </tr>
+                  );
+                })}
+                {equipe.length === 0 && (
+                  <tr><td colSpan={isSpot ? 6 : 5} className="p-4 text-center text-slate-500 italic">Nenhum posto de serviço adicionado.</td></tr>
+                )}
+              </tbody>
+              <tfoot>
+                <tr className="bg-slate-200 font-black text-slate-900">
+                  <td colSpan={isSpot ? 5 : 4} className="p-2 border-r border-slate-300 text-right uppercase">Total dos Serviços:</td>
+                  <td className="p-2 border-slate-300 text-right">{fmt(totalEquipe)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
 
         {/* INSUMOS E MATERIAIS */}
-        <div className="break-inside-avoid print:break-inside-avoid mb-6">
+        <div className="break-inside-avoid print:break-inside-avoid mb-6 w-full max-w-full">
           <h5 className="font-black uppercase mb-2 text-[10px]">EQUIPAMENTOS E INSUMOS</h5>
-          <table className="w-full text-left border-collapse border border-slate-300 text-xs">
-          <thead>
-            <tr className="bg-slate-900 text-white font-bold uppercase text-[10px]">
-              <th className="p-2 border border-slate-300">Descrição</th>
-              <th className="p-2 border border-slate-300 text-right">{isSpot ? 'Valor' : 'Valor Mensal'}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="bg-white border-b border-slate-300">
-              <td className="p-2 border-r border-slate-300 font-bold text-slate-800">Materiais de Limpeza e Consumo</td>
-              <td className="p-2 text-right text-slate-700">{fmt(vMateriais)}</td>
-            </tr>
-            <tr className="bg-slate-50 border-b border-slate-300">
-              <td className="p-2 border-r border-slate-300 font-bold text-slate-800">Máquinas e Equipamentos</td>
-              <td className="p-2 text-right text-slate-700">{fmt(vMaquinas)}</td>
-            </tr>
-            <tr className="bg-white border-b border-slate-300">
-              <td className="p-2 border-r border-slate-300 font-bold text-slate-800">Materiais Descartáveis</td>
-              <td className="p-2 text-right text-slate-700">{fmt(vDescartaveis)}</td>
-            </tr>
-            {vServicos > 0 && (
-              <tr className="bg-slate-50 border-b border-slate-300">
-                <td className="p-2 border-r border-slate-300 font-bold text-slate-800">{isSpot ? "Equipamentos Locados" : (proposta.insumos?.servicosDescricao || "Serviços Terceirizados")}</td>
-                <td className="p-2 text-right text-slate-700">{fmt(vServicos)}</td>
-              </tr>
-            )}
-          </tbody>
-          <tfoot>
-            <tr className="bg-slate-200 font-black text-slate-900">
-              <td className="p-2 border border-slate-300 text-right uppercase">Total de Equipamentos e Insumos:</td>
-              <td className="p-2 border border-slate-300 text-right">{fmt(totalInsumos)}</td>
-            </tr>
-          </tfoot>
-        </table>
+          <div className="overflow-x-auto w-full max-w-full border border-slate-300 rounded-lg no-print-border">
+            <table className="w-full text-left border-collapse text-xs min-w-[400px] sm:min-w-0">
+              <thead>
+                <tr className="bg-slate-900 text-white font-bold uppercase text-[10px]">
+                  <th className="p-2 border-r border-b border-slate-300">Descrição</th>
+                  <th className="p-2 border-b border-slate-300 text-right">{isSpot ? 'Valor' : 'Valor Mensal'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="bg-white border-b border-slate-200">
+                  <td className="p-2 border-r border-slate-200 font-bold text-slate-800">Materiais de Limpeza e Consumo</td>
+                  <td className="p-2 text-right text-slate-700">{fmt(vMateriais)}</td>
+                </tr>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <td className="p-2 border-r border-slate-200 font-bold text-slate-800">Máquinas e Equipamentos</td>
+                  <td className="p-2 text-right text-slate-700">{fmt(vMaquinas)}</td>
+                </tr>
+                <tr className="bg-white border-b border-slate-200">
+                  <td className="p-2 border-r border-slate-200 font-bold text-slate-800">Materiais Descartáveis</td>
+                  <td className="p-2 text-right text-slate-700">{fmt(vDescartaveis)}</td>
+                </tr>
+                {vServicos > 0 && (
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <td className="p-2 border-r border-slate-200 font-bold text-slate-800">{isSpot ? "Equipamentos Locados" : (proposta.insumos?.servicosDescricao || "Serviços Terceirizados")}</td>
+                    <td className="p-2 text-right text-slate-700">{fmt(vServicos)}</td>
+                  </tr>
+                )}
+              </tbody>
+              <tfoot>
+                <tr className="bg-slate-200 font-black text-slate-900">
+                  <td className="p-2 border-r border-slate-300 text-right uppercase">Total de Equipamentos e Insumos:</td>
+                  <td className="p-2 border-slate-300 text-right">{fmt(totalInsumos)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
 
         {/* VALOR TOTAL */}
-        <div className="w-full mt-8 p-5 bg-[#1B4D3E] total-premium-card text-white flex justify-between items-center text-center font-black text-base mb-2 uppercase tracking-wide rounded-none border border-emerald-950 shadow-md">
+        <div className="w-full mt-8 p-5 bg-[#1B4D3E] total-premium-card text-white flex flex-col sm:flex-row justify-between items-center text-center gap-3 font-black text-sm sm:text-base mb-2 uppercase tracking-wide rounded-none border border-emerald-950 shadow-md">
           <span className="text-white !text-white tracking-wider">VALOR TOTAL DA PROPOSTA:</span>
-          <span className="text-2xl text-white !text-white font-black tracking-tight">{fmt(totalGeral)} {isSpot ? '' : 'Mensal'}</span>
+          <span className="text-lg sm:text-2xl text-white !text-white font-black tracking-tight">{fmt(totalGeral)} {isSpot ? '' : 'Mensal'}</span>
         </div>
         {totalGeral > 0 && (
           <div className="text-center text-[#1B4D3E] font-bold text-[10px] uppercase mb-12 tracking-wider">
@@ -482,30 +486,32 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
   const renderTabelaItensInclusosExcluidos = () => {
     return (
       <div className="w-full mt-4 break-inside-avoid print:break-inside-avoid">
-        <table className="w-full text-left border-collapse border border-slate-300 break-inside-avoid print:break-inside-avoid">
-          <thead>
-            <tr className="bg-slate-100 text-[10px] font-bold uppercase tracking-wider border-b border-slate-300">
-              <th className="px-4 py-2 border-r border-slate-300 w-16">Item</th>
-              <th className="px-4 py-2 border-r border-slate-300">Descrição</th>
-              <th className="px-4 py-2 text-center w-32">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(proposta.itensInclusosExcluidos || []).map((p: any, idx: number) => (
-              <tr key={p.id || idx} className="border-b border-slate-300 text-[10px] text-slate-800">
-                <td className="px-4 py-2 border-r border-slate-300 text-slate-600">{String(idx + 1).padStart(2, '0')}</td>
-                <td className="px-4 py-2 border-r border-slate-300 font-semibold">{p.descricao}</td>
-                <td className="px-4 py-2 text-center font-bold">
-                  {p.incluso ? (
-                    <span className="text-emerald-600">INCLUSO</span>
-                  ) : (
-                    <span className="text-rose-600">NÃO INCLUSO</span>
-                  )}
-                </td>
+        <div className="overflow-x-auto w-full border border-slate-300 rounded-lg no-print-border">
+          <table className="w-full text-left border-collapse text-xs min-w-[500px] sm:min-w-0">
+            <thead>
+              <tr className="bg-slate-100 text-[10px] font-bold uppercase tracking-wider border-b border-slate-300">
+                <th className="px-4 py-2 border-r border-slate-300 w-16">Item</th>
+                <th className="px-4 py-2 border-r border-slate-300">Descrição</th>
+                <th className="px-4 py-2 text-center w-32">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(proposta.itensInclusosExcluidos || []).map((p: any, idx: number) => (
+                <tr key={p.id || idx} className="border-b border-slate-300 text-[10px] text-slate-800">
+                  <td className="px-4 py-2 border-r border-slate-200 text-slate-600">{String(idx + 1).padStart(2, '0')}</td>
+                  <td className="px-4 py-2 border-r border-slate-200 font-semibold">{p.descricao}</td>
+                  <td className="px-4 py-2 text-center font-bold">
+                    {p.incluso ? (
+                      <span className="text-emerald-600">INCLUSO</span>
+                    ) : (
+                      <span className="text-rose-600">NÃO INCLUSO</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   };
@@ -518,53 +524,55 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
       </div>
       
       <div className="w-full mt-4">
-        <table className="w-full text-left border-collapse border border-slate-300 break-inside-avoid print:break-inside-avoid">
-          <tbody>
-            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 w-1/4 uppercase">Razão Social</td>
-              <td className="px-4 py-2 font-semibold">{proposta.cliente?.razaoSocial || ""}</td>
-            </tr>
-            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Nome Fantasia</td>
-              <td className="px-4 py-2 font-semibold">{proposta.cliente?.cliente || proposta.cliente?.nomeFantasia || proposta.cliente?.clienteNome || ""}</td>
-            </tr>
-            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">CNPJ</td>
-              <td className="px-4 py-2 font-semibold">{proposta.cliente?.cnpj || ""}</td>
-            </tr>
-            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Valor</td>
-              <td className="px-4 py-2 font-black text-slate-900">{fmt(totalGeral)} {totalGeral > 0 ? `(${numeroPorExtenso.porExtenso(totalGeral, numeroPorExtenso.estilo.monetario)})` : ''}</td>
-            </tr>
-            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Início</td>
-              <td className="px-4 py-2 font-semibold">{formatBRDate(proposta.cliente?.dataInicio)}</td>
-            </tr>
-            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Vencimento</td>
-              <td className="px-4 py-2 font-semibold">{formatBRDate(proposta.cliente?.dataVencimento)}</td>
-            </tr>
-            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Contato</td>
-              <td className="px-4 py-2 font-semibold">{proposta.cliente?.contato || ""}</td>
-            </tr>
-            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Cargo</td>
-              <td className="px-4 py-2 font-semibold">{proposta.cliente?.contatoCargo || ""}</td>
-            </tr>
-            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">Celular</td>
-              <td className="px-4 py-2 font-semibold">{proposta.cliente?.celular || ""}</td>
-            </tr>
-            <tr className="border-b border-slate-300 text-[10px] text-slate-800">
-              <td className="px-4 py-2 border-r border-slate-300 font-bold bg-slate-100 uppercase">E-mail</td>
-              <td className="px-4 py-2 font-semibold">{proposta.cliente?.email || ""}</td>
-            </tr>
-          </tbody>
-        </table>
+        <div className="overflow-x-auto w-full border border-slate-300 rounded-lg no-print-border">
+          <table className="w-full text-left border-collapse min-w-[500px] sm:min-w-0">
+            <tbody>
+              <tr className="border-b border-slate-200 text-[10px] text-slate-800">
+                <td className="px-4 py-2 border-r border-slate-200 font-bold bg-slate-100 w-1/4 uppercase">Razão Social</td>
+                <td className="px-4 py-2 font-semibold">{proposta.cliente?.razaoSocial || ""}</td>
+              </tr>
+              <tr className="border-b border-slate-200 text-[10px] text-slate-800">
+                <td className="px-4 py-2 border-r border-slate-200 font-bold bg-slate-100 uppercase">Nome Fantasia</td>
+                <td className="px-4 py-2 font-semibold">{proposta.cliente?.cliente || proposta.cliente?.nomeFantasia || proposta.cliente?.clienteNome || ""}</td>
+              </tr>
+              <tr className="border-b border-slate-200 text-[10px] text-slate-800">
+                <td className="px-4 py-2 border-r border-slate-200 font-bold bg-slate-100 uppercase">CNPJ</td>
+                <td className="px-4 py-2 font-semibold">{proposta.cliente?.cnpj || ""}</td>
+              </tr>
+              <tr className="border-b border-slate-200 text-[10px] text-slate-800">
+                <td className="px-4 py-2 border-r border-slate-200 font-bold bg-slate-100 uppercase">Valor</td>
+                <td className="px-4 py-2 font-black text-slate-900">{fmt(totalGeral)} {totalGeral > 0 ? `(${numeroPorExtenso.porExtenso(totalGeral, numeroPorExtenso.estilo.monetario)})` : ''}</td>
+              </tr>
+              <tr className="border-b border-slate-200 text-[10px] text-slate-800">
+                <td className="px-4 py-2 border-r border-slate-200 font-bold bg-slate-100 uppercase">Início</td>
+                <td className="px-4 py-2 font-semibold">{formatBRDate(proposta.cliente?.dataInicio)}</td>
+              </tr>
+              <tr className="border-b border-slate-200 text-[10px] text-slate-800">
+                <td className="px-4 py-2 border-r border-slate-200 font-bold bg-slate-100 uppercase">Vencimento</td>
+                <td className="px-4 py-2 font-semibold">{formatBRDate(proposta.cliente?.dataVencimento)}</td>
+              </tr>
+              <tr className="border-b border-slate-200 text-[10px] text-slate-800">
+                <td className="px-4 py-2 border-r border-slate-200 font-bold bg-slate-100 uppercase">Contato</td>
+                <td className="px-4 py-2 font-semibold">{proposta.cliente?.contato || ""}</td>
+              </tr>
+              <tr className="border-b border-slate-200 text-[10px] text-slate-800">
+                <td className="px-4 py-2 border-r border-slate-200 font-bold bg-slate-100 uppercase">Cargo</td>
+                <td className="px-4 py-2 font-semibold">{proposta.cliente?.contatoCargo || ""}</td>
+              </tr>
+              <tr className="border-b border-slate-200 text-[10px] text-slate-800">
+                <td className="px-4 py-2 border-r border-slate-200 font-bold bg-slate-100 uppercase">Celular</td>
+                <td className="px-4 py-2 font-semibold">{proposta.cliente?.celular || ""}</td>
+              </tr>
+              <tr className="border-b border-slate-200 text-[10px] text-slate-800">
+                <td className="px-4 py-2 border-r border-slate-200 font-bold bg-slate-100 uppercase">E-mail</td>
+                <td className="px-4 py-2 font-semibold">{proposta.cliente?.email || ""}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div className="mt-24 pt-10 grid grid-cols-2 gap-12 text-center break-inside-avoid print:break-inside-avoid max-w-2xl mx-auto font-sans">
+      <div className="mt-24 pt-10 grid grid-cols-1 sm:grid-cols-2 gap-12 sm:gap-12 text-center break-inside-avoid print:break-inside-avoid max-w-2xl mx-auto font-sans">
          {/* ISSUER / SELLER SIGNATURE */}
          <div className="flex flex-col items-center justify-end">
             {proposta.cliente?.vendedorAvatarUrl ? (
@@ -739,19 +747,19 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
             </thead>
             <tbody>
               <tr>
-                <td className="print-content-cell px-4 py-6 md:px-12 md:py-10 border-none align-top">
+                <td className="print-content-cell px-2 py-6 sm:px-6 md:px-12 md:py-10 border-none align-top w-full max-w-full">
                   
                   {/* CABEÇALHO HORIZONTAL */}
-                  <div className="flex items-center justify-between border-b-2 border-slate-900 pb-6 mb-6">
+                  <div className="flex flex-col sm:flex-row items-center justify-between border-b-2 border-slate-900 pb-6 mb-6 gap-4 sm:gap-0">
                     <div className="w-32 hidden sm:block"></div>
-                    <div className="flex flex-col items-center text-center flex-1">
-                      <h1 className="text-lg font-black uppercase tracking-widest">{empresaEmissora.nomeFantasia}</h1>
+                    <div className="flex flex-col items-center text-center flex-1 order-2 sm:order-1">
+                      <h1 className="text-base sm:text-lg font-black uppercase tracking-widest">{empresaEmissora.nomeFantasia}</h1>
                       <p className="font-bold mt-1 text-[10px]">CNPJ: {empresaEmissora.cnpj}</p>
                       {empresaEmissora.endereco && <p className="text-[10px]">{empresaEmissora.endereco}</p>}
                       {empresaEmissora.telefone && <p className="text-[10px]">Telefone: {empresaEmissora.telefone}</p>}
                       {empresaEmissora.email && <p className="text-[10px]">Email: {empresaEmissora.email}</p>}
                     </div>
-                    <div className="w-32 flex justify-end">
+                    <div className="w-full sm:w-32 flex justify-center sm:justify-end order-1 sm:order-2">
                       <img src={companyLogo} alt="Logo" className="h-12 object-contain" />
                     </div>
                   </div>
