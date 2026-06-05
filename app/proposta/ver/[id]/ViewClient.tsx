@@ -394,6 +394,13 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
       .border-emerald-600 { border-color: var(--primary-color-hover) !important; }
     `;
     document.head.appendChild(style);
+
+    return () => {
+      const existing = document.getElementById('dynamic-client-theme-style');
+      if (existing) {
+        existing.remove();
+      }
+    };
   }, [doc.tenant?.primaryColor]);
 
   // 2. Fetch real client IP on mount

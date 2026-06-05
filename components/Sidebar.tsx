@@ -380,9 +380,6 @@ const Sidebar = () => {
 
       // Buscar dados atualizados do usuário diretamente do banco de dados (evita cookies desatualizados)
       const fetchFreshUser = async () => {
-        if (sessionStorage.getItem('sb_user_fresh_checked') === 'true') {
-          return;
-        }
         try {
           const freshUser = await getLoggedUser();
           if (freshUser) {
@@ -402,7 +399,6 @@ const Sidebar = () => {
             // Atualiza o cookie local com os dados mais recentes do banco
             const encoded = encodeURIComponent(JSON.stringify(userObj));
             document.cookie = `sb_user=${encoded}; path=/; max-age=${60 * 60 * 24 * 7}; Secure; SameSite=Lax`;
-            sessionStorage.setItem('sb_user_fresh_checked', 'true');
           }
         } catch (err) {
           console.error('Erro ao buscar dados atualizados do usuário:', err);
@@ -873,14 +869,14 @@ const Sidebar = () => {
       if (savedOrder) {
         try {
           const orderArray = JSON.parse(savedOrder) as string[];
-          const sorted = [...baseItems].sort((a, b) => {
-            const idxA = orderArray.indexOf(a.label);
-            const idxB = orderArray.indexOf(b.label);
-            if (idxA === -1 && idxB === -1) return 0;
-            if (idxA === -1) return 1;
-            if (idxB === -1) return -1;
-            return idxA - idxB;
-          });
+          const validLabels = baseItems.map(item => item.label);
+          const cleanOrder = orderArray.filter(label => validLabels.includes(label));
+          const missingItems = baseItems.filter(item => !cleanOrder.includes(item.label));
+          
+          const sorted = [
+            ...cleanOrder.map(label => baseItems.find(item => item.label === label)).filter(Boolean),
+            ...missingItems
+          ] as any[];
           setOrderedItems(sorted);
           return;
         } catch (e) {
