@@ -423,6 +423,14 @@ export default function LeadsKanban() {
   const [viewMode, setViewMode] = useState<ViewMode>('kanban-status');
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+        router.push('/leads/mobile');
+        return;
+      }
+    }
+
     const saved = localStorage.getItem('orse_leads_view_mode');
     if (saved) setViewMode(saved as any);
 

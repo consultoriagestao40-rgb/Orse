@@ -1,12 +1,21 @@
 import React, { Suspense } from 'react';
 import Sidebar from '@/components/Sidebar';
 import LeadsKanban from './LeadsKanban';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 export const metadata = {
   title: 'Pipeline de Leads | SmartBidHub',
 };
 
-export default function LeadsPage() {
+export default async function LeadsPage() {
+  const headersList = await headers();
+  const userAgent = headersList.get('user-agent') || '';
+  const isMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+  if (isMobile) {
+    redirect('/leads/mobile');
+  }
+
   return (
     <div className="flex h-screen bg-slate-50">
       <Sidebar />
