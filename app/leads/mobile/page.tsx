@@ -9,7 +9,9 @@ import {
   createLead, 
   addComment, 
   getComments,
-  updateLeadData
+  updateLeadData,
+  changeLeadOwner,
+  getUsersForFilter
 } from '../actions';
 import { 
   getChatList, 
@@ -147,6 +149,7 @@ export default function MobileCRM() {
   const [newCommentText, setNewCommentText] = useState('');
   const [savingComment, setSavingComment] = useState(false);
   const [segmentos, setSegmentos] = useState<any[]>([]);
+  const [systemUsers, setSystemUsers] = useState<any[]>([]);
 
   // Lead Creation States
   const [newLeadForm, setNewLeadForm] = useState({
@@ -199,6 +202,7 @@ export default function MobileCRM() {
       const stagesRes = await getLeadStages();
       const leadsRes = await getLeads();
       const segmentsRes = await getSegmentos();
+      const usersRes = await getUsersForFilter();
 
       if (stagesRes.success && stagesRes.stages) {
         setStages(stagesRes.stages);
@@ -215,6 +219,10 @@ export default function MobileCRM() {
         setSegmentos(segmentsRes);
       } else if (segmentsRes && segmentsRes.success) {
         setSegmentos(segmentsRes.segmentos);
+      }
+
+      if (usersRes.success && usersRes.users) {
+        setSystemUsers(usersRes.users);
       }
     } catch (err) {
       console.error(err);
@@ -401,6 +409,22 @@ export default function MobileCRM() {
         setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stageId } : l));
       } else {
         alert("Erro ao alterar fase: " + res.error);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Transfer lead ownership
+  const handleOwnerChange = async (leadId: string, assignedToId: string) => {
+    try {
+      const res = await changeLeadOwner(leadId, assignedToId);
+      if (res.success) {
+        // Update local state
+        setLeads(prev => prev.map(l => l.id === leadId ? { ...l, assignedToId } : l));
+        alert("Responsável alterado com sucesso!");
+      } else {
+        alert("Erro ao transferir lead: " + res.error);
       }
     } catch (err) {
       console.error(err);
@@ -978,7 +1002,7 @@ export default function MobileCRM() {
         if (!lead) return null;
 
         return (
-          <div className="fixed inset-0 bg-slate-50 z-50 overflow-y-auto font-sans flex flex-col animate-in slide-in-from-right duration-300">
+          <div className="fixed inset-0 bg-slate-50 z-50 font-sans flex flex-col h-screen overflow-hidden animate-in slide-in-from-right duration-300">
             {/* Header */}
             <header className="sticky top-0 bg-gradient-to-r from-slate-900 to-slate-950 text-white z-55 shadow-md p-4 shrink-0 flex items-center justify-between select-none">
               <div className="flex items-center gap-2 max-w-[70%]">
@@ -1025,7 +1049,7 @@ export default function MobileCRM() {
             </header>
 
             {/* Scrollable Content */}
-            <div className="flex-1 p-4 pb-24 space-y-5 max-w-lg mx-auto w-full">
+            <div className="flex-1 overflow-y-auto p-4 pb-24 space-y-5 max-w-lg mx-auto w-full">
               {/* Pipeline Phase selector */}
               <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
                 <div className="flex justify-between items-center">
@@ -1041,6 +1065,27 @@ export default function MobileCRM() {
                 >
                   {stages.map(st => (
                     <option key={st.id} value={st.id}>{st.nome}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Responsável (Transferência de Lead) */}
+              <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Responsável pelo Lead</span>
+                  <span className="text-[10px] font-black text-blue-700 bg-blue-50 px-2 py-0.5 rounded-lg uppercase">
+                    {systemUsers.find(u => u.id === lead.assignedToId)?.nome || 'Sem responsável'}
+                  </span>
+                </div>
+                <select
+                  value={lead.assignedToId || ''}
+                  onChange={e => handleOwnerChange(lead.id, e.target.value)}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:border-blue-500 focus:outline-none"
+                >
+                  {systemUsers.map(u => (
+                    <option key={u.id} value={u.id}>
+                      {u.nome} ({u.cargo || 'Membro'})
+                    </option>
                   ))}
                 </select>
               </div>
@@ -1334,7 +1379,7 @@ export default function MobileCRM() {
 
       {/* FULL-SCREEN NEW LEAD CREATION OVERLAY */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 bg-slate-50 z-50 overflow-y-auto font-sans flex flex-col animate-in slide-in-from-bottom duration-300">
+        <div className="fixed inset-0 bg-slate-50 z-50 font-sans flex flex-col h-screen overflow-hidden animate-in slide-in-from-bottom duration-300">
           {/* Header */}
           <header className="sticky top-0 bg-gradient-to-r from-slate-900 to-slate-950 text-white z-55 shadow-md p-4 shrink-0 flex items-center justify-between select-none">
             <div className="flex items-center gap-2">
@@ -1359,7 +1404,7 @@ export default function MobileCRM() {
           </header>
 
           {/* Form Content */}
-          <div className="flex-1 p-4 pb-24 max-w-lg mx-auto w-full">
+          <div className="flex-1 overflow-y-auto p-4 pb-24 max-w-lg mx-auto w-full">
             <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-md space-y-4">
               <div className="text-center pb-2 border-b border-slate-100 select-none">
                 <PlusCircle className="text-emerald-500 mx-auto mb-1" size={24} />
