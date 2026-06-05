@@ -107,31 +107,7 @@ export default function ContratosDashboard() {
     });
   };
 
-  const [isAddingStatus, setIsAddingStatus] = useState(false);
-  const [newStatusInput, setNewStatusInput] = useState('');
 
-  const handleCreateNewStatus = () => {
-    const name = newStatusInput.trim();
-    if (!name) {
-      setIsAddingStatus(false);
-      return;
-    }
-    if (statusesList.includes(name)) {
-      alert('Já existe um status com este nome.');
-      return;
-    }
-    const newStatusesList = [...statusesList, name];
-    setStatusesList(newStatusesList);
-    localStorage.setItem('orse_contrato_statuses', JSON.stringify(newStatusesList));
-    
-    // Default color
-    const newColors = { ...statusColors, [name]: '#3b82f6' };
-    setStatusColors(newColors);
-    localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
-    
-    setNewStatusInput('');
-    setIsAddingStatus(false);
-  };
 
   const handleCreateStatus = (insertAfterStatus: string) => {
     setCustomModal({
@@ -1224,53 +1200,6 @@ export default function ContratosDashboard() {
                 {statusList.map((status, index) => (
                   <KanbanColumn key={status} status={status} isFirst={index === 0} />
                 ))}
-
-                {/* Botão de Adicionar Nova Coluna */}
-                {isAddingStatus ? (
-                  <div className="flex-shrink-0 w-80 bg-[#1B4D3E]/5 border border-[#1B4D3E]/20 rounded-2xl p-4 flex flex-col gap-3 h-fit text-slate-800">
-                    <span className="text-[10px] font-bold text-[#1B4D3E] uppercase tracking-wider">Novo Status de Contrato</span>
-                    <input
-                      type="text"
-                      autoFocus
-                      value={newStatusInput}
-                      onChange={(e) => setNewStatusInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleCreateNewStatus();
-                        if (e.key === 'Escape') {
-                          setIsAddingStatus(false);
-                          setNewStatusInput('');
-                        }
-                      }}
-                      placeholder="Digite o nome..."
-                      className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-slate-300 outline-none w-full bg-white font-medium"
-                    />
-                    <div className="flex gap-2 justify-end">
-                      <button
-                        onClick={() => {
-                          setIsAddingStatus(false);
-                          setNewStatusInput('');
-                        }}
-                        className="px-2.5 py-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        onClick={handleCreateNewStatus}
-                        className="px-3 py-1.5 bg-[#1B4D3E] hover:bg-[#1B4D3E]/80 text-white rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
-                      >
-                        Adicionar
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setIsAddingStatus(true)}
-                    className="flex-shrink-0 w-80 h-36 border-2 border-dashed border-slate-200 hover:border-[#1B4D3E]/30 rounded-2xl flex flex-col items-center justify-center gap-2 group transition-colors text-slate-400 hover:text-[#1B4D3E] cursor-pointer bg-white"
-                  >
-                    <Plus size={20} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-xs font-bold uppercase tracking-wider">Adicionar Coluna</span>
-                  </button>
-                )}
               </div>
             </div>
           )}
