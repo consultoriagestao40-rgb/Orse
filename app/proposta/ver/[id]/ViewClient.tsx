@@ -865,23 +865,23 @@ return (
       
       {/* Real-time Countdown Timer fixed at the top (ALWAYS ACTIVE FOR CONSISTENCY) */}
       <div className="fixed top-0 left-0 right-0 min-h-20 bg-[#1B4D3E] text-white flex items-center justify-between px-4 sm:px-6 z-[9999] shadow-md print:hidden font-sans py-2 sm:py-0">
-        {/* Left: Voltar button (mobile only) & Validade Title or Info */}
-        <div className="flex items-center gap-3">
+        {/* Left: Voltar button (mobile only) & Title Info */}
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
           {!mobileMenuOpen && (
             <button 
               onClick={() => setMobileMenuOpen(true)}
-              className="flex md:hidden items-center gap-1.5 text-xs font-black text-white bg-white/10 border border-white/15 px-3 py-2 rounded-xl active:scale-95 mr-1 shrink-0"
+              className="flex md:hidden items-center justify-center w-9 h-9 text-white bg-white/10 border border-white/15 rounded-full active:scale-95 shrink-0"
+              title="Voltar ao Menu"
             >
-              <ChevronLeft size={16} /> Voltar
+              <ChevronLeft size={20} />
             </button>
           )}
           <Clock size={20} className="text-white/80 animate-pulse hidden sm:block animate-duration-1000 shrink-0" />
-          <div className="flex flex-col text-left justify-center py-1">
-            <h1 className="text-xs sm:text-base md:text-lg lg:text-xl font-bold text-white leading-tight">
-              <span className="hidden sm:inline">Proposta Comercial para - </span>
-              <span className="uppercase font-black">{(doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Empresa').toUpperCase()}</span>
+          <div className="flex flex-col text-left justify-center py-1 min-w-0 flex-1">
+            <h1 className="text-xs sm:text-base md:text-lg lg:text-xl font-black text-white leading-tight uppercase truncate sm:whitespace-normal">
+              {doc.client?.nomeFantasia || doc.client?.razaoSocial || 'Empresa'}
             </h1>
-            <p className="text-[10px] sm:text-xs text-white/85 font-bold tracking-wide mt-1">
+            <p className="text-[9px] sm:text-xs text-white/75 font-bold tracking-wide mt-0.5">
               FPV-{String(doc.proposta?.numero || 'XXX').padStart(3, '0')} • Revisão R{String(versao?.versao || 1).padStart(2, '0')}
             </p>
           </div>
@@ -894,7 +894,7 @@ return (
             : (doc.dataValidade || new Date(new Date().getTime() + 30*24*60*60*1000).toLocaleDateString('pt-BR'));
 
           return (
-            <div className="flex items-center gap-4 shrink-0">
+            <div className="flex items-center gap-4 shrink-0 ml-3">
               <div className="hidden md:flex flex-col text-right justify-center">
                 <span className="text-[9px] text-white/70 font-black uppercase tracking-widest leading-none">Validade da Proposta</span>
                 <span className="text-xs font-black text-white mt-1">{expirationDateStr}</span>
@@ -927,16 +927,20 @@ return (
                       <span className="text-[6.5px] text-white/70 font-black uppercase tracking-wider mt-0.5">seg</span>
                     </div>
                   </div>
-                  {/* Mobile Countdown (Compact) */}
+                  {/* Mobile Countdown (Compact but complete) */}
                   <div className="sm:hidden flex items-center gap-1.5 text-[10px] bg-white/10 text-white border border-white/20 font-black uppercase tracking-wider px-2.5 py-1.5 rounded-full shrink-0 shadow-inner">
                     <Clock size={12} className="text-white/95 shrink-0" />
-                    <span>{timeLeft.days > 0 ? `${timeLeft.days}d` : `${String(timeLeft.hours).padStart(2, '0')}h`}</span>
+                    <span>
+                      {timeLeft.days > 0 
+                        ? `${timeLeft.days}d ${String(timeLeft.hours).padStart(2, '0')}h` 
+                        : `${String(timeLeft.hours).padStart(2, '0')}h ${String(timeLeft.minutes).padStart(2, '0')}m`}
+                    </span>
                   </div>
                 </>
               ) : (
                 <div className="sm:hidden flex items-center gap-1.5 text-[10px] bg-white/10 text-white border border-white/20 font-black uppercase tracking-wider px-3 py-1.5 rounded-full shrink-0">
                   <Clock size={12} className="text-white/95 shrink-0" />
-                  <span>Válida até {expirationDateStr}</span>
+                  <span>Validade: {expirationDateStr}</span>
                 </div>
               )}
             </div>
@@ -2708,7 +2712,7 @@ return (
       )}
 
       {/* BOTÃO FLUTUANTE DE IMPRESSÃO */}
-      {!(activeClientTab === 'apresentacao' && hasCanva) && (
+      {activeClientTab === 'proposta' && (
         <button
           onClick={() => {
             window.print();
