@@ -16,9 +16,10 @@ import {
   getPropostas, updatePropostaStatus,
   getPropostaStatuses, createPropostaStatus, deletePropostaStatus,
   deleteProposta, getCurrentUserRole,
-  getUsersList, transferirProposta, compartilharProposta, getAuditLogs,
+  getUsersList, transferirProposta, compartilharProposta, removerCompartilhamentoProposta, getAuditLogs,
   updatePropostaStatusParam, getPipelinePageData
 } from '@/app/propostas/actions';
+import UserSelectPopover from '@/components/UserSelectPopover';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import { updateCliente } from '@/app/clientes/actions';
 import { Building } from 'lucide-react';
@@ -113,10 +114,21 @@ function ProposalsDashboard() {
 
   // Modais e dados auxiliares
   const [usersList, setUsersList] = useState<any[]>([]);
-  const [transferModal, setTransferModal] = useState<{ isOpen: boolean, propId: string | null }>({ isOpen: false, propId: null });
-  const [shareModal, setShareModal] = useState<{ isOpen: boolean, propId: string | null }>({ isOpen: false, propId: null });
+  const [teamModal, setTeamModal] = useState<{ isOpen: boolean, prop: any | null }>({ isOpen: false, prop: null });
   const [auditModal, setAuditModal] = useState<{ isOpen: boolean, propId: string | null, logs: any[] }>({ isOpen: false, propId: null, logs: [] });
   const [selectedUserId, setSelectedUserId] = useState<string>('');
+
+  // Popovers para gerenciamento de equipe
+  const [ownerAnchorEl, setOwnerAnchorEl] = useState<HTMLElement | null>(null);
+  const [isOwnerPopoverOpen, setIsOwnerPopoverOpen] = useState(false);
+  const [participantAnchorEl, setParticipantAnchorEl] = useState<HTMLElement | null>(null);
+  const [isParticipantPopoverOpen, setIsParticipantPopoverOpen] = useState(false);
+  const [observerAnchorEl, setObserverAnchorEl] = useState<HTMLElement | null>(null);
+  const [isObserverPopoverOpen, setIsObserverPopoverOpen] = useState(false);
+
+  // Alteração inline no card
+  const [inlineOwnerAnchorEl, setInlineOwnerAnchorEl] = useState<HTMLElement | null>(null);
+  const [inlineOwnerPropId, setInlineOwnerPropId] = useState<string | null>(null);
 
   const [customModal, setCustomModal] = useState<{
     isOpen: boolean;
@@ -193,6 +205,85 @@ function ProposalsDashboard() {
   };
 
   useEffect(() => { loadData(); }, []);
+
+  // Funções de equipe para FPV
+  const handlePropostaOwnerChange = async (propostaId: string, newOwnerId: string) => {
+    setLoading(true);
+    const res = await transferirProposta(propostaId, newOwnerId);
+    if (res.success) {
+      // Reload proposals
+      const pageData = await getPipelinePageData();
+      setProposals(pageData.proposals);
+      // Update modal prop if open
+      if (teamModal.isOpen && teamModal.prop?.id === propostaId) {
+        const matching = pageData.proposals.find((p: any) => p.id === propostaId);
+        if (matching) setTeamModal({ isOpen: true, prop: matching });
+      }
+    } else {
+      alert("Erro ao transferir proposta: " + res.error);
+    }
+    setLoading(false);
+  };
+
+  const handleAddPropostaShare = async (propostaId: string, userId: string, role: string = 'PARTICIPANTE') => {
+    setLoading(true);
+    const res = await compartilharProposta(propostaId, userId, role);
+    if (res.success) {
+      const pageData = await getPipelinePageData();
+      setProposals(pageData.proposals);
+      if (teamModal.isOpen && teamModal.prop?.id === propostaId) {
+        const matching = pageData.proposals.find((p: any) => p.id === propostaId);
+        if (matching) setTeamModal({ isOpen: true, prop: matching });
+      }
+    } else {
+      alert("Erro ao compartilhar proposta: " + res.error);
+    }
+    setLoading(false);
+  };
+
+  const handleRemovePropostaShare = async (propostaId: string, userId: string) => {
+    setLoading(true);
+    const res = await removerCompartilhamentoProposta(propostaId, userId);
+    if (res.success) {
+      const pageData = await getPipelinePageData();
+      setProposals(pageData.proposals);
+      if (teamModal.isOpen && teamModal.prop?.id === propostaId) {
+        const matching = pageData.proposals.find((p: any) => p.id === propostaId);
+        if (matching) setTeamModal({ isOpen: true, prop: matching });
+      }
+    } else {
+      alert("Erro ao remover coautoria: " + res.error);
+    }
+    setLoading(false);
+  };
+
+  const handleTogglePropostaParticipant = async (userId: string) => {
+    if (!teamModal.prop) return;
+    const propostaId = teamModal.prop.id;
+    const isSelected = teamModal.prop.shares?.some((s: any) => s.user?.id === userId && s.role !== 'OBSERVADOR');
+    if (isSelected) {
+      await handleRemovePropostaShare(propostaId, userId);
+    } else {
+      await handleAddPropostaShare(propostaId, userId, 'PARTICIPANTE');
+    }
+  };
+
+  const handleTogglePropostaObserver = async (userId: string) => {
+    if (!teamModal.prop) return;
+    const propostaId = teamModal.prop.id;
+    const isSelected = teamModal.prop.shares?.some((s: any) => s.user?.id === userId && s.role === 'OBSERVADOR');
+    if (isSelected) {
+      await handleRemovePropostaShare(propostaId, userId);
+    } else {
+      await handleAddPropostaShare(propostaId, userId, 'OBSERVADOR');
+    }
+  };
+
+  const handleInlinePropostaOwnerSelect = async (userId: string) => {
+    if (!inlineOwnerPropId) return;
+    await handlePropostaOwnerChange(inlineOwnerPropId, userId);
+    setInlineOwnerPropId(null);
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -316,14 +407,9 @@ function ProposalsDashboard() {
         </button>
         {open && (
           <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 shadow-xl rounded-lg py-1 z-50">
-            <button onClick={() => { setOpen(false); setShareModal({ isOpen: true, propId: prop.id }); }} className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-              <Share2 size={14} /> Compartilhar
+            <button onClick={() => { setOpen(false); setTeamModal({ isOpen: true, prop }); }} className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-semibold">
+              <Users size={14} className="text-[#1B4D3E]" /> Gerenciar Equipe
             </button>
-            {(userRole === 'ADMIN' || userRole === 'MANAGER') && (
-              <button onClick={() => { setOpen(false); setTransferModal({ isOpen: true, propId: prop.id }); }} className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-                <ArrowRightLeft size={14} /> Transferir
-              </button>
-            )}
             {userRole === 'ADMIN' && (
               <button onClick={async () => {
                 setOpen(false);
@@ -375,7 +461,14 @@ function ProposalsDashboard() {
       </div>
 
       <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
+        <div 
+          onClick={(e) => {
+            e.stopPropagation();
+            setInlineOwnerAnchorEl(e.currentTarget);
+            setInlineOwnerPropId(prop.id);
+          }}
+          className="flex items-center gap-1.5 hover:bg-slate-50 p-1 rounded-lg transition-colors cursor-pointer"
+        >
           {prop.avatarUrl ? (
             <img 
               src={prop.avatarUrl} 
@@ -387,7 +480,7 @@ function ProposalsDashboard() {
               {(prop.usuario || '?').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
             </div>
           )}
-          <span className="text-[10px] text-slate-500 font-medium">{prop.usuario}</span>
+          <span className="text-[10px] text-slate-500 font-medium truncate max-w-[100px]">{prop.usuario}</span>
         </div>
         <ActionMenu prop={prop} />
       </div>
@@ -1612,108 +1705,206 @@ function ProposalsDashboard() {
         </div>
       </main>
 
-      {/* MODAL DE TRANSFERÊNCIA */}
-      {transferModal.isOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                <ArrowRightLeft size={20} className="text-[#1B4D3E]" /> Transferir Proposta
-              </h2>
-              <button onClick={() => setTransferModal({ isOpen: false, propId: null })} className="text-amber-500 hover:text-amber-600">
-                <X size={20} />
+      {/* MODAL DE EQUIPE */}
+      {teamModal.isOpen && teamModal.prop && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] backdrop-blur-sm p-4" onClick={() => setTeamModal({ isOpen: false, prop: null })}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <div>
+                <h2 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <Users size={16} className="text-[#1B4D3E]" /> Equipe da Proposta
+                </h2>
+                <p className="text-[11px] text-slate-400 font-medium mt-0.5">Gerencie os responsáveis e membros da proposta</p>
+              </div>
+              <button onClick={() => setTeamModal({ isOpen: false, prop: null })} className="text-slate-400 hover:text-slate-600 bg-white p-1.5 rounded-full shadow-sm">
+                <X size={16} />
               </button>
             </div>
-            <div className="p-5">
-              <p className="text-sm text-slate-500 mb-4">
-                Selecione o usuário para o qual deseja transferir a propriedade desta proposta. O usuário atual perderá acesso se não tiver outra permissão.
-              </p>
-              <select
-                className="w-full p-2.5 border border-slate-300 rounded-lg text-sm mb-6"
-                value={selectedUserId}
-                onChange={e => setSelectedUserId(e.target.value)}
-              >
-                <option value="">-- Selecione o Novo Dono --</option>
-                {usersList.map(u => (
-                  <option key={u.id} value={u.id}>{u.nome} ({u.role})</option>
-                ))}
-              </select>
-              <div className="flex gap-3 justify-end">
-                <button onClick={() => setTransferModal({ isOpen: false, propId: null })} className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                <button 
-                  onClick={async () => {
-                    if (!selectedUserId || !transferModal.propId) return;
-                    setLoading(true);
-                    const res = await transferirProposta(transferModal.propId, selectedUserId);
-                    if (res.success) {
-                      setTransferModal({ isOpen: false, propId: null });
-                      loadData();
-                    } else {
-                      alert(res.error);
-                      setLoading(false);
-                    }
+            
+            <div className="p-5 space-y-4">
+              {/* Responsável */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Responsável</label>
+                <div 
+                  onClick={(e) => {
+                    setOwnerAnchorEl(e.currentTarget);
+                    setIsOwnerPopoverOpen(true);
                   }}
-                  className="px-4 py-2 text-sm font-bold bg-[#1B4D3E] text-white rounded-lg hover:bg-[#13382d]"
-                  disabled={!selectedUserId}
+                  className="flex items-center gap-2.5 p-2 border border-slate-200/80 rounded-xl bg-slate-50/50 hover:bg-slate-50 cursor-pointer transition-all duration-150 group"
                 >
-                  Confirmar Transferência
-                </button>
+                  {(() => {
+                    const assignedUser = usersList.find(u => u.id === teamModal.prop.userId);
+                    if (assignedUser?.avatarUrl) {
+                      return (
+                        <img 
+                          src={assignedUser.avatarUrl} 
+                          alt={assignedUser.nome} 
+                          className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0"
+                        />
+                      );
+                    } else if (assignedUser) {
+                      const initials = assignedUser.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                      return (
+                        <div className="w-8 h-8 rounded-full bg-[#1B4D3E]/10 text-[#1B4D3E] border border-[#1B4D3E]/20 flex items-center justify-center text-xs font-black shrink-0 uppercase">
+                          {initials}
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs text-slate-400 shrink-0">
+                        👤
+                      </div>
+                    );
+                  })()}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-slate-700 truncate">
+                      {usersList.find(u => u.id === teamModal.prop.userId)?.nome || 'Sem responsável'}
+                    </p>
+                    <p className="text-[9px] text-slate-400 font-medium">Clique para alterar</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Participantes */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Participantes</label>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {teamModal.prop.shares?.filter((s: any) => s.role !== 'OBSERVADOR').map((s: any) => {
+                    const u = s.user;
+                    if (!u) return null;
+                    const initials = u.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                    return (
+                      <div key={s.id} className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/60 pl-1.5 pr-1 py-1 rounded-lg">
+                        {u.avatarUrl ? (
+                          <img src={u.avatarUrl} alt={u.nome} className="w-5 h-5 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <div className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[8px] font-black text-slate-500 shrink-0 uppercase">
+                            {initials}
+                          </div>
+                        )}
+                        <span className="text-[11px] font-bold text-slate-700 max-w-[100px] truncate">{u.nome}</span>
+                        <button 
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await handleRemovePropostaShare(teamModal.prop.id, u.id);
+                          }} 
+                          className="text-slate-400 hover:text-red-500 p-0.5 rounded transition-colors"
+                        >
+                          <X size={10} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                  <button
+                    onClick={(e) => {
+                      setParticipantAnchorEl(e.currentTarget);
+                      setIsParticipantPopoverOpen(true);
+                    }}
+                    className="text-[#1B4D3E] hover:text-[#1B4D3E]/80 text-[11px] font-bold flex items-center gap-1 py-1 px-2 rounded-lg hover:bg-[#1B4D3E]/5 transition-all duration-150"
+                  >
+                    + Inserir participante
+                  </button>
+                </div>
+              </div>
+
+              {/* Observadores */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Observadores</label>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {teamModal.prop.shares?.filter((s: any) => s.role === 'OBSERVADOR').map((s: any) => {
+                    const u = s.user;
+                    if (!u) return null;
+                    const initials = u.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                    return (
+                      <div key={s.id} className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/60 pl-1.5 pr-1 py-1 rounded-lg">
+                        {u.avatarUrl ? (
+                          <img src={u.avatarUrl} alt={u.nome} className="w-5 h-5 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <div className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[8px] font-black text-slate-500 shrink-0 uppercase">
+                            {initials}
+                          </div>
+                        )}
+                        <span className="text-[11px] font-bold text-slate-700 max-w-[100px] truncate">{u.nome}</span>
+                        <button 
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await handleRemovePropostaShare(teamModal.prop.id, u.id);
+                          }} 
+                          className="text-slate-400 hover:text-red-500 p-0.5 rounded transition-colors"
+                        >
+                          <X size={10} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                  <button
+                    onClick={(e) => {
+                      setObserverAnchorEl(e.currentTarget);
+                      setIsObserverPopoverOpen(true);
+                    }}
+                    className="text-[#1B4D3E] hover:text-[#1B4D3E]/80 text-[11px] font-bold flex items-center gap-1 py-1 px-2 rounded-lg hover:bg-[#1B4D3E]/5 transition-all duration-150"
+                  >
+                    + Colocar observador
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL DE COMPARTILHAMENTO */}
-      {shareModal.isOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                <Share2 size={20} className="text-[#1B4D3E]" /> Compartilhar Proposta
-              </h2>
-              <button onClick={() => setShareModal({ isOpen: false, propId: null })} className="text-amber-500 hover:text-amber-600">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="p-5">
-              <p className="text-sm text-slate-500 mb-4">
-                Selecione o usuário que também poderá visualizar e editar esta proposta (Coautoria).
-              </p>
-              <select
-                className="w-full p-2.5 border border-slate-300 rounded-lg text-sm mb-6"
-                value={selectedUserId}
-                onChange={e => setSelectedUserId(e.target.value)}
-              >
-                <option value="">-- Selecione o Colega --</option>
-                {usersList.map(u => (
-                  <option key={u.id} value={u.id}>{u.nome}</option>
-                ))}
-              </select>
-              <div className="flex gap-3 justify-end">
-                <button onClick={() => setShareModal({ isOpen: false, propId: null })} className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                <button 
-                  onClick={async () => {
-                    if (!selectedUserId || !shareModal.propId) return;
-                    setLoading(true);
-                    const res = await compartilharProposta(shareModal.propId, selectedUserId);
-                    if (res.success) {
-                      setShareModal({ isOpen: false, propId: null });
-                      loadData();
-                    } else {
-                      alert(res.error);
-                      setLoading(false);
-                    }
-                  }}
-                  className="px-4 py-2 text-sm font-bold bg-[#1B4D3E] text-white rounded-lg hover:bg-[#13382d]"
-                  disabled={!selectedUserId}
-                >
-                  Conceder Acesso
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Popover Inline para Alteração de Responsável no Card */}
+      <UserSelectPopover
+        isOpen={inlineOwnerPropId !== null}
+        onClose={() => setInlineOwnerPropId(null)}
+        users={usersList}
+        selectedIds={
+          inlineOwnerPropId
+            ? [proposals.find(p => p.id === inlineOwnerPropId)?.userId || '']
+            : []
+        }
+        onSelect={handleInlinePropostaOwnerSelect}
+        title="Pesquisar responsável..."
+        anchorEl={inlineOwnerAnchorEl}
+        isMulti={false}
+      />
+
+      {/* Popovers para o Modal de Equipe */}
+      {teamModal.isOpen && teamModal.prop && (
+        <>
+          <UserSelectPopover
+            isOpen={isOwnerPopoverOpen}
+            onClose={() => setIsOwnerPopoverOpen(false)}
+            users={usersList}
+            selectedIds={teamModal.prop.userId ? [teamModal.prop.userId] : []}
+            onSelect={(userId) => handlePropostaOwnerChange(teamModal.prop.id, userId)}
+            title="Pesquisar responsável..."
+            anchorEl={ownerAnchorEl}
+            isMulti={false}
+          />
+
+          <UserSelectPopover
+            isOpen={isParticipantPopoverOpen}
+            onClose={() => setIsParticipantPopoverOpen(false)}
+            users={usersList}
+            selectedIds={teamModal.prop.shares?.filter((s: any) => s.role !== 'OBSERVADOR').map((s: any) => s.user?.id) || []}
+            onSelect={handleTogglePropostaParticipant}
+            title="Pesquisar participante..."
+            anchorEl={participantAnchorEl}
+            isMulti={true}
+          />
+
+          <UserSelectPopover
+            isOpen={isObserverPopoverOpen}
+            onClose={() => setIsObserverPopoverOpen(false)}
+            users={usersList}
+            selectedIds={teamModal.prop.shares?.filter((s: any) => s.role === 'OBSERVADOR').map((s: any) => s.user?.id) || []}
+            onSelect={handleTogglePropostaObserver}
+            title="Pesquisar observador..."
+            anchorEl={observerAnchorEl}
+            isMulti={true}
+          />
+        </>
       )}
 
       {/* MODAL DE AUDITORIA */}

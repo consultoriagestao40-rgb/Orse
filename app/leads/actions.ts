@@ -70,7 +70,7 @@ export async function getUsersForFilter() {
     }
     const users = await prisma.user.findMany({
       where,
-      select: { id: true, nome: true, avatarUrl: true },
+      select: { id: true, nome: true, avatarUrl: true, cargo: true },
       orderBy: { nome: 'asc' }
     });
     return { success: true, users };
@@ -555,18 +555,31 @@ export async function getAllUsers() {
   }
 }
 
-export async function addLeadShare(leadId: string, userId: string) {
+export async function addLeadShare(leadId: string, userId: string, role: string = 'PARTICIPANTE') {
   const currentUser = await getLoggedUser();
   if (!currentUser) return { success: false, error: 'Unauthorized' };
   try {
     const existing = await prisma.leadShare.findUnique({ where: { leadId_userId: { leadId, userId } } });
-    if (existing) return { success: false, error: 'Usuário já está adicionado a este lead.' };
+    if (existing) {
+      if (existing.role === role) {
+        return { success: false, error: 'Usuário já está adicionado a este lead com essa função.' };
+      }
+      const share = await prisma.leadShare.update({
+        where: { leadId_userId: { leadId, userId } },
+        data: { role }
+      });
+      return { success: true, share };
+    }
 
-    const share = await prisma.leadShare.create({ data: { leadId, userId } });
+    const share = await prisma.leadShare.create({ data: { leadId, userId, role } });
     const addedUser = await prisma.user.findUnique({ where: { id: userId }});
     
     await prisma.leadHistory.create({
-      data: { leadId, tipo: 'MUDANCA_FASE', descricao: `${addedUser?.nome} foi adicionado(a) à equipe por ${currentUser.nome}` }
+      data: { 
+        leadId, 
+        tipo: 'MUDANCA_FASE', 
+        descricao: `${addedUser?.nome} foi adicionado(a) como ${role === 'OBSERVADOR' ? 'observador(a)' : 'participante'} por ${currentUser.nome}` 
+      }
     });
     
     revalidatePath('/leads');

@@ -292,6 +292,7 @@ model PropostaShare {
   id         String   @id @default(cuid())
   propostaId String
   userId     String
+  role       String   @default("PARTICIPANTE") // "PARTICIPANTE" ou "OBSERVADOR"
   createdAt  DateTime @default(now())
 
   proposta Proposta @relation(fields: [propostaId], references: [id], onDelete: Cascade)
@@ -490,6 +491,7 @@ model LeadShare {
   id        String   @id @default(cuid())
   leadId    String
   userId    String
+  role       String   @default("PARTICIPANTE") // "PARTICIPANTE" ou "OBSERVADOR"
   createdAt DateTime @default(now())
 
   lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)

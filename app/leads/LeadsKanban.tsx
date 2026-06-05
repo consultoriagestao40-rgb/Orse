@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact } from './actions';
-import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid } from 'lucide-react';
+import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
 import PipelineMetrics from './components/PipelineMetrics';
 import WhatsAppChat from './components/WhatsAppChat';
+import UserSelectPopover from '@/components/UserSelectPopover';
 
 const safeDate = (val: any) => {
   if (!val) return 'Data Inválida';
@@ -189,13 +190,15 @@ const LeadCard = ({
   handleDragStart, 
   handleDragEnd, 
   setSelectedLead, 
-  showStageInFooter = false 
+  showStageInFooter = false,
+  onOwnerClick
 }: { 
   lead: any; 
   handleDragStart: (e: React.DragEvent, id: string) => void; 
   handleDragEnd: () => void; 
   setSelectedLead: (lead: any) => void; 
   showStageInFooter?: boolean; 
+  onOwnerClick?: (e: React.MouseEvent<HTMLElement>, leadId: string) => void;
 }) => {
   const unreadCount = lead.whatsappMessages?.filter(
     (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
@@ -286,7 +289,15 @@ const LeadCard = ({
       </div>
 
       <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
+        <div 
+          onClick={(e) => {
+            if (onOwnerClick) {
+              e.stopPropagation();
+              onOwnerClick(e, lead.id);
+            }
+          }}
+          className="flex items-center gap-1.5 hover:bg-slate-50 p-1 rounded-lg transition-colors cursor-pointer"
+        >
           {lead.assignedTo?.avatarUrl ? (
             <img 
               src={lead.assignedTo.avatarUrl} 
@@ -382,6 +393,17 @@ export default function LeadsKanban() {
   });
   
   const [showNewLead, setShowNewLead] = useState(false);
+  
+  // User select popover anchor elements and open states
+  const [ownerAnchorEl, setOwnerAnchorEl] = useState<HTMLElement | null>(null);
+  const [isOwnerPopoverOpen, setIsOwnerPopoverOpen] = useState(false);
+  const [participantAnchorEl, setParticipantAnchorEl] = useState<HTMLElement | null>(null);
+  const [isParticipantPopoverOpen, setIsParticipantPopoverOpen] = useState(false);
+  const [observerAnchorEl, setObserverAnchorEl] = useState<HTMLElement | null>(null);
+  const [isObserverPopoverOpen, setIsObserverPopoverOpen] = useState(false);
+  const [inlineOwnerAnchorEl, setInlineOwnerAnchorEl] = useState<HTMLElement | null>(null);
+  const [inlineOwnerLeadId, setInlineOwnerLeadId] = useState<string | null>(null);
+
   const [newLeadForm, setNewLeadForm] = useState({
     nomeFantasia: '',
     segmento: '',
@@ -769,6 +791,59 @@ export default function LeadsKanban() {
         if (upLead) setSelectedLead(upLead);
       }
     }
+  };
+
+  const handleAddObserver = async (userId: string) => {
+    if (!selectedLead || !userId) return;
+    const res = await addLeadShare(selectedLead.id, userId, 'OBSERVADOR');
+    if (res.success) {
+      fetchData();
+      const updatedLeads = await getLeads({});
+      if (updatedLeads.success) {
+        const upLead = updatedLeads.leads.find((l:any) => l.id === selectedLead.id);
+        if (upLead) setSelectedLead(upLead);
+      }
+    } else {
+      alert("Erro ao adicionar observador: " + res.error);
+    }
+  };
+
+  const handleToggleParticipant = async (userId: string) => {
+    if (!selectedLead) return;
+    const isSelected = selectedLead.shares?.some((s: any) => s.user?.id === userId && s.role !== 'OBSERVADOR');
+    if (isSelected) {
+      await handleRemoveParticipant(userId);
+    } else {
+      await handleAddParticipant(userId);
+    }
+  };
+
+  const handleToggleObserver = async (userId: string) => {
+    if (!selectedLead) return;
+    const isSelected = selectedLead.shares?.some((s: any) => s.user?.id === userId && s.role === 'OBSERVADOR');
+    if (isSelected) {
+      await handleRemoveParticipant(userId);
+    } else {
+      await handleAddObserver(userId);
+    }
+  };
+
+  const handleInlineOwnerSelect = async (userId: string) => {
+    if (!inlineOwnerLeadId) return;
+    const res = await changeLeadOwner(inlineOwnerLeadId, userId);
+    if (res.success) {
+      fetchData();
+      if (selectedLeadRef.current && selectedLeadRef.current.id === inlineOwnerLeadId) {
+        const updatedLeads = await getLeads({});
+        if (updatedLeads.success) {
+          const upLead = updatedLeads.leads.find((l:any) => l.id === selectedLeadRef.current.id);
+          if (upLead) setSelectedLead(upLead);
+        }
+      }
+    } else {
+      alert("Erro ao alterar responsável: " + res.error);
+    }
+    setInlineOwnerLeadId(null);
   };
 
   const handleDropDelete = async (e: React.DragEvent) => {
@@ -1443,6 +1518,10 @@ export default function LeadsKanban() {
                             handleDragStart={handleDragStart}
                             handleDragEnd={handleDragEnd}
                             setSelectedLead={setSelectedLead}
+                            onOwnerClick={(e, leadId) => {
+                              setInlineOwnerAnchorEl(e.currentTarget);
+                              setInlineOwnerLeadId(leadId);
+                            }}
                           />
                         ))}
                       </div>
@@ -1652,6 +1731,10 @@ export default function LeadsKanban() {
                             handleDragEnd={handleDragEnd}
                             setSelectedLead={setSelectedLead}
                             showStageInFooter={true}
+                            onOwnerClick={(e, leadId) => {
+                              setInlineOwnerAnchorEl(e.currentTarget);
+                              setInlineOwnerLeadId(leadId);
+                            }}
                           />
                         ))}
                       </div>
@@ -1849,6 +1932,10 @@ export default function LeadsKanban() {
                             handleDragEnd={handleDragEnd}
                             setSelectedLead={setSelectedLead}
                             showStageInFooter={true}
+                            onOwnerClick={(e, leadId) => {
+                              setInlineOwnerAnchorEl(e.currentTarget);
+                              setInlineOwnerLeadId(leadId);
+                            }}
                           />
                         ))}
                       </div>
@@ -2269,10 +2356,16 @@ export default function LeadsKanban() {
                   </div>
 
                   {/* Equipe / Responsável Block */}
-                  <div className="pt-6 border-t border-slate-50 space-y-4">
+                  <div className="pt-6 border-t border-slate-100/60 space-y-4">
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Responsável</label>
-                      <div className="flex items-center gap-2.5">
+                      <div 
+                        onClick={(e) => {
+                          setOwnerAnchorEl(e.currentTarget);
+                          setIsOwnerPopoverOpen(true);
+                        }}
+                        className="flex items-center gap-2.5 p-2 border border-slate-200/80 rounded-xl bg-slate-50/50 hover:bg-slate-50 cursor-pointer transition-all duration-150 group"
+                      >
                         {(() => {
                           const assignedUser = filterUsers.find(u => u.id === selectedLead.assignedToId);
                           if (assignedUser?.avatarUrl) {
@@ -2280,56 +2373,112 @@ export default function LeadsKanban() {
                               <img 
                                 src={assignedUser.avatarUrl} 
                                 alt={assignedUser.nome} 
-                                className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0 shadow-sm animate-in fade-in zoom-in-95 duration-200"
+                                className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0 shadow-sm"
                               />
                             );
                           } else if (assignedUser) {
                             const initials = assignedUser.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
                             return (
-                              <div className="w-9 h-9 rounded-full bg-emerald-600/10 text-emerald-700 border border-emerald-100 flex items-center justify-center text-xs font-black shrink-0 uppercase animate-in fade-in zoom-in-95 duration-200">
+                              <div className="w-8 h-8 rounded-full bg-[#1B4D3E]/10 text-[#1B4D3E] border border-[#1B4D3E]/20 flex items-center justify-center text-xs font-black shrink-0 uppercase">
                                 {initials}
                               </div>
                             );
                           }
                           return (
-                            <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs text-slate-400 shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs text-slate-400 shrink-0">
                               👤
                             </div>
                           );
                         })()}
-                        <select 
-                          value={selectedLead.assignedToId || ''} 
-                          onChange={(e) => handleOwnerChange(e.target.value)}
-                          className="flex-1 p-2 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white font-semibold outline-none focus:border-slate-300 transition-colors"
-                        >
-                          <option value="">Sem responsável</option>
-                          {filterUsers.map(u => (
-                            <option key={u.id} value={u.id}>{u.nome}</option>
-                          ))}
-                        </select>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-slate-700 truncate">
+                            {filterUsers.find(u => u.id === selectedLead.assignedToId)?.nome || 'Sem responsável'}
+                          </p>
+                          <p className="text-[9px] text-slate-400 font-medium">Clique para alterar</p>
+                        </div>
                       </div>
                     </div>
 
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Participantes</label>
-                      <div className="space-y-2 mb-2">
-                        {selectedLead.shares?.map((s: any) => (
-                          <div key={s.id} className="flex items-center justify-between bg-slate-50 p-2 rounded-lg">
-                            <span className="text-xs font-bold text-slate-700">{s.user?.nome}</span>
-                            <button onClick={() => handleRemoveParticipant(s.user.id)} className="text-red-400 hover:text-red-600 p-1"><X size={12}/></button>
-                          </div>
-                        ))}
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {selectedLead.shares?.filter((s: any) => s.role !== 'OBSERVADOR').map((s: any) => {
+                          const u = s.user;
+                          if (!u) return null;
+                          const initials = u.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                          return (
+                            <div key={s.id} className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/60 pl-1.5 pr-1 py-1 rounded-lg">
+                              {u.avatarUrl ? (
+                                <img src={u.avatarUrl} alt={u.nome} className="w-5 h-5 rounded-full object-cover shrink-0" />
+                              ) : (
+                                <div className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[8px] font-black text-slate-500 shrink-0 uppercase">
+                                  {initials}
+                                </div>
+                              )}
+                              <span className="text-[11px] font-bold text-slate-700 max-w-[100px] truncate">{u.nome}</span>
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveParticipant(u.id);
+                                }} 
+                                className="text-slate-400 hover:text-red-500 p-0.5 rounded transition-colors"
+                              >
+                                <X size={10} />
+                              </button>
+                            </div>
+                          );
+                        })}
+                        <button
+                          onClick={(e) => {
+                            setParticipantAnchorEl(e.currentTarget);
+                            setIsParticipantPopoverOpen(true);
+                          }}
+                          className="text-[#1B4D3E] hover:text-[#1B4D3E]/80 text-[11px] font-bold flex items-center gap-1 py-1 px-2 rounded-lg hover:bg-[#1B4D3E]/5 transition-all duration-150"
+                        >
+                          + Inserir participante
+                        </button>
                       </div>
-                      <select 
-                        value="" 
-                        onChange={(e) => handleAddParticipant(e.target.value)}
-                        className="w-full p-2 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white"
-                      >
-                        <option value="">Adicionar participante...</option>
-                        {filterUsers.filter(u => u.id !== selectedLead.assignedToId && !selectedLead.shares?.some((s:any) => s.user?.id === u.id)).map(u => (
-                          <option key={u.id} value={u.id}>{u.nome}</option>
-                        ))}
-                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Observadores</label>
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {selectedLead.shares?.filter((s: any) => s.role === 'OBSERVADOR').map((s: any) => {
+                          const u = s.user;
+                          if (!u) return null;
+                          const initials = u.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+                          return (
+                            <div key={s.id} className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/60 pl-1.5 pr-1 py-1 rounded-lg">
+                              {u.avatarUrl ? (
+                                <img src={u.avatarUrl} alt={u.nome} className="w-5 h-5 rounded-full object-cover shrink-0" />
+                              ) : (
+                                <div className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[8px] font-black text-slate-500 shrink-0 uppercase">
+                                  {initials}
+                                </div>
+                              )}
+                              <span className="text-[11px] font-bold text-slate-700 max-w-[100px] truncate">{u.nome}</span>
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveParticipant(u.id);
+                                }} 
+                                className="text-slate-400 hover:text-red-500 p-0.5 rounded transition-colors"
+                              >
+                                <X size={10} />
+                              </button>
+                            </div>
+                          );
+                        })}
+                        <button
+                          onClick={(e) => {
+                            setObserverAnchorEl(e.currentTarget);
+                            setIsObserverPopoverOpen(true);
+                          }}
+                          className="text-[#1B4D3E] hover:text-[#1B4D3E]/80 text-[11px] font-bold flex items-center gap-1 py-1 px-2 rounded-lg hover:bg-[#1B4D3E]/5 transition-all duration-150"
+                        >
+                          + Colocar observador
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2355,9 +2504,59 @@ export default function LeadsKanban() {
             </div>
 
             </div> {/* Fim do Main Body */}
+
+            {/* Popovers de Seleção de Usuários */}
+            <UserSelectPopover
+              isOpen={isOwnerPopoverOpen}
+              onClose={() => setIsOwnerPopoverOpen(false)}
+              users={filterUsers}
+              selectedIds={selectedLead.assignedToId ? [selectedLead.assignedToId] : []}
+              onSelect={handleOwnerChange}
+              title="Pesquisar responsável..."
+              anchorEl={ownerAnchorEl}
+              isMulti={false}
+            />
+
+            <UserSelectPopover
+              isOpen={isParticipantPopoverOpen}
+              onClose={() => setIsParticipantPopoverOpen(false)}
+              users={filterUsers}
+              selectedIds={selectedLead.shares?.filter((s: any) => s.role !== 'OBSERVADOR').map((s: any) => s.user?.id) || []}
+              onSelect={handleToggleParticipant}
+              title="Pesquisar participante..."
+              anchorEl={participantAnchorEl}
+              isMulti={true}
+            />
+
+            <UserSelectPopover
+              isOpen={isObserverPopoverOpen}
+              onClose={() => setIsObserverPopoverOpen(false)}
+              users={filterUsers}
+              selectedIds={selectedLead.shares?.filter((s: any) => s.role === 'OBSERVADOR').map((s: any) => s.user?.id) || []}
+              onSelect={handleToggleObserver}
+              title="Pesquisar observador..."
+              anchorEl={observerAnchorEl}
+              isMulti={true}
+            />
           </div>
         </div>
       )}
+
+      {/* Popover Inline para Alteração de Responsável no Card */}
+      <UserSelectPopover
+        isOpen={inlineOwnerLeadId !== null}
+        onClose={() => setInlineOwnerLeadId(null)}
+        users={filterUsers}
+        selectedIds={
+          inlineOwnerLeadId
+            ? [leads.find(l => l.id === inlineOwnerLeadId)?.assignedToId || '']
+            : []
+        }
+        onSelect={handleInlineOwnerSelect}
+        title="Pesquisar responsável..."
+        anchorEl={inlineOwnerAnchorEl}
+        isMulti={false}
+      />
 
       {/* Modal de Conversão (Dados Obrigatórios) */}
       {showConvertModal && selectedLead && (

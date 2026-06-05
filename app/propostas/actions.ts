@@ -567,6 +567,11 @@ export async function getPropostas(preFetchedUser?: any) {
       include: {
         client: true,
         user: true,
+        shares: {
+          include: {
+            user: true
+          }
+        },
         versoes: {
           select: {
             versao: true,
@@ -596,7 +601,9 @@ export async function getPropostas(preFetchedUser?: any) {
         status: p.status,
         versao: lastVersao?.versao || 1,
         usuario: p.user.nome,
-        avatarUrl: p.user.avatarUrl
+        userId: p.user.id,
+        avatarUrl: p.user.avatarUrl,
+        shares: p.shares
       };
     });
   } catch (error) {
@@ -961,7 +968,7 @@ export async function getUsersList(preFetchedUser?: any) {
     const users = await prisma.user.findMany({
       where: whereClause,
       orderBy: { nome: 'asc' },
-      select: { id: true, nome: true, role: true, avatarUrl: true }
+      select: { id: true, nome: true, role: true, avatarUrl: true, cargo: true }
     });
     return users;
   } catch (error) {
@@ -1003,7 +1010,7 @@ export async function transferirProposta(propostaId: string, newUserId: string) 
   }
 }
 
-export async function compartilharProposta(propostaId: string, shareUserId: string) {
+export async function compartilharProposta(propostaId: string, shareUserId: string, role: string = 'PARTICIPANTE') {
   try {
     const loggedUser = await getLoggedUser();
     if (!loggedUser) return { success: false, error: 'Não autorizado.' };
@@ -1018,11 +1025,11 @@ export async function compartilharProposta(propostaId: string, shareUserId: stri
       return { success: false, error: 'Você não tem permissão para compartilhar esta proposta.' };
     }
 
-    // Criar o compartilhamento se não existir
+    // Criar ou atualizar o compartilhamento com a role
     await prisma.propostaShare.upsert({
       where: { propostaId_userId: { propostaId, userId: shareUserId } },
-      create: { propostaId, userId: shareUserId },
-      update: {}
+      create: { propostaId, userId: shareUserId, role },
+      update: { role }
     });
 
     await prisma.auditLog.create({
@@ -1030,7 +1037,40 @@ export async function compartilharProposta(propostaId: string, shareUserId: stri
         propostaId,
         userId: loggedUser.id,
         action: 'SHARE',
-        details: { sharedWithUserId: shareUserId, sharedWithUserName: shareUser.nome }
+        details: { sharedWithUserId: shareUserId, sharedWithUserName: shareUser.nome, role }
+      }
+    });
+
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function removerCompartilhamentoProposta(propostaId: string, shareUserId: string) {
+  try {
+    const loggedUser = await getLoggedUser();
+    if (!loggedUser) return { success: false, error: 'Não autorizado.' };
+
+    const proposta = await prisma.proposta.findUnique({ where: { id: propostaId } });
+    if (!proposta) return { success: false, error: 'Proposta não encontrada.' };
+
+    // Verificar permissão (dono, admin ou manager)
+    if (proposta.userId !== loggedUser.id && loggedUser.role === 'USER') {
+      return { success: false, error: 'Você não tem permissão para remover compartilhamentos desta proposta.' };
+    }
+
+    await prisma.propostaShare.delete({
+      where: { propostaId_userId: { propostaId, userId: shareUserId } }
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        propostaId,
+        userId: loggedUser.id,
+        action: 'UNSHARE',
+        details: { removedUserId: shareUserId }
       }
     });
 
@@ -1045,7 +1085,7 @@ export async function getPropostaShares(propostaId: string) {
   try {
     const shares = await prisma.propostaShare.findMany({
       where: { propostaId },
-      include: { user: true }
+      include: { user: { select: { id: true, nome: true, email: true, cargo: true, avatarUrl: true } } }
     });
     return shares;
   } catch (error) {
