@@ -150,6 +150,13 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     .border-emerald-400 { border-color: var(--primary-color) !important; }
     .border-emerald-500 { border-color: var(--primary-color) !important; }
     .border-emerald-600 { border-color: var(--primary-color-hover) !important; }
+
+    /* Prevent mobile keyboard zoom on focus */
+    @media screen and (max-width: 768px) {
+      input, textarea, select {
+        font-size: 16px !important;
+      }
+    }
   `;
 
   const [loading, setLoading] = useState(false);
@@ -392,6 +399,14 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
       .border-emerald-400 { border-color: var(--primary-color) !important; }
       .border-emerald-500 { border-color: var(--primary-color) !important; }
       .border-emerald-600 { border-color: var(--primary-color-hover) !important; }
+      .border-emerald-450 { border-color: var(--primary-color-hover) !important; }
+
+      /* Prevent mobile keyboard zoom on focus */
+      @media screen and (max-width: 768px) {
+        input, textarea, select {
+          font-size: 16px !important;
+        }
+      }
     `;
     document.head.appendChild(style);
 
@@ -2643,7 +2658,7 @@ return (
                             handleSendNegotiation();
                           }
                         }}
-                        className="flex-1 px-3 py-1 bg-transparent border-0 outline-none focus:ring-0 text-xs sm:text-sm font-medium text-slate-850 resize-none max-h-20 min-h-[28px] leading-relaxed scrollbar-none"
+                        className="flex-1 px-3 py-1 bg-transparent border-0 outline-none focus:ring-0 text-base sm:text-sm font-medium text-slate-850 resize-none max-h-20 min-h-[28px] leading-relaxed scrollbar-none"
                       />
                     </div>
 
