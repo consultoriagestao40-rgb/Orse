@@ -103,7 +103,7 @@ export default async function PublicPropostaView(props: { params: Promise<{ id: 
 
             {/* Rodapé institucional premium */}
             <div className="pt-2 text-[9px] text-slate-500 font-black uppercase tracking-widest flex items-center justify-center gap-1.5">
-              <span>{res.empresaEmissora?.nomeFantasia || 'ORSE'}</span>
+              <span>{res.empresaEmissora?.nomeFantasia || 'SmartBid'}</span>
               <span className="w-1 h-1 rounded-full bg-slate-700" />
               <span>Gestão de Propostas</span>
             </div>

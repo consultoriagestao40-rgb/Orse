@@ -60,6 +60,18 @@ export default function MobileCRM() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingLeads, setLoadingLeads] = useState(true);
   const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
+  const [isEditingLead, setIsEditingLead] = useState(false);
+  const [editLeadForm, setEditLeadForm] = useState({
+    nomeFantasia: '',
+    segmento: '',
+    telefone: '',
+    email: '',
+    contatoNome: '',
+    valorEst: '',
+    endereco: '',
+    cidade: '',
+    uf: 'PR'
+  });
   const [leadComments, setLeadComments] = useState<any[]>([]);
   const [newCommentText, setNewCommentText] = useState('');
   const [savingComment, setSavingComment] = useState(false);
@@ -229,10 +241,21 @@ export default function MobileCRM() {
 
   // Handle lead click to expand and load comments
   const handleLeadExpand = async (leadId: string) => {
-    if (expandedLeadId === leadId) {
-      setExpandedLeadId(null);
-      return;
+    const lead = leads.find(l => l.id === leadId);
+    if (lead) {
+      setEditLeadForm({
+        nomeFantasia: lead.nomeFantasia || '',
+        segmento: lead.segmento || '',
+        telefone: lead.telefone || '',
+        email: lead.email || '',
+        contatoNome: lead.contatoNome || '',
+        valorEst: lead.valorEst !== undefined && lead.valorEst !== null ? String(lead.valorEst) : '',
+        endereco: lead.endereco || '',
+        cidade: lead.cidade || '',
+        uf: lead.uf || 'PR'
+      });
     }
+    setIsEditingLead(false);
     setExpandedLeadId(leadId);
     setLeadComments([]);
     try {
@@ -244,6 +267,38 @@ export default function MobileCRM() {
       console.error(err);
     }
   };
+
+  // Save edited lead details
+  const handleSaveLeadEdit = async (leadId: string) => {
+    try {
+      const res = await updateLeadData(leadId, {
+        nomeFantasia: editLeadForm.nomeFantasia,
+        segmento: editLeadForm.segmento,
+        telefone: editLeadForm.telefone,
+        email: editLeadForm.email,
+        contatoNome: editLeadForm.contatoNome,
+        valorEst: editLeadForm.valorEst ? parseFloat(editLeadForm.valorEst) : 0,
+        endereco: editLeadForm.endereco,
+        cidade: editLeadForm.cidade,
+        uf: editLeadForm.uf
+      });
+
+      if (res.success) {
+        setIsEditingLead(false);
+        // Refresh local leads list
+        const leadsRes = await getLeads();
+        if (leadsRes.success && leadsRes.leads) {
+          setLeads(leadsRes.leads);
+        }
+        alert("Lead atualizado com sucesso!");
+      } else {
+        alert("Erro ao salvar alterações: " + res.error);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
 
   // Add Comment/Note
   const handleAddComment = async (leadId: string) => {
@@ -389,7 +444,7 @@ export default function MobileCRM() {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 font-sans">
         <RefreshCw className="animate-spin text-emerald-500 mb-3" size={32} />
-        <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Iniciando Orse CRM Mobile...</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Iniciando SmartBid CRM Mobile...</p>
       </div>
     );
   }
@@ -408,7 +463,7 @@ export default function MobileCRM() {
               <ArrowLeft size={18} />
             </button>
             <div>
-              <h1 className="text-sm font-black tracking-tight uppercase">Orse CRM</h1>
+              <h1 className="text-sm font-black tracking-tight uppercase">SmartBid CRM</h1>
               <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">{currentUser?.tenant?.nomeFantasia || 'Silva Consultoria'}</p>
             </div>
           </div>
@@ -591,89 +646,11 @@ export default function MobileCRM() {
                           </div>
 
                           <div className="flex items-center gap-1 text-[9px] font-bold text-slate-400 select-none">
-                            <span>Ver histórico</span>
-                            <ChevronRight size={10} className={`transition-transform duration-200 ${isExpanded ? 'rotate-90 text-slate-600' : ''}`} />
+                            <span>Ver detalhes</span>
+                            <ChevronRight size={10} className="text-slate-500" />
                           </div>
                         </div>
                       </div>
-
-                      {/* Expanded Section (Notes, Details, phase switcher) */}
-                      {isExpanded && (
-                        <div className="border-t border-slate-100 bg-slate-50 p-4 space-y-4 animate-in slide-in-from-top duration-200">
-                          
-                          {/* Phase switcher */}
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Mudar Fase do Lead</label>
-                            <select
-                              value={lead.stageId}
-                              onChange={e => handleStageChange(lead.id, e.target.value)}
-                              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold focus:border-emerald-500 focus:outline-none"
-                            >
-                              {stages.map(st => (
-                                <option key={st.id} value={st.id}>{st.nome}</option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {/* Extra info details block */}
-                          <div className="grid grid-cols-2 gap-3 bg-white p-3 rounded-xl border border-slate-100">
-                            <div>
-                              <p className="text-[8px] font-bold text-slate-400 uppercase">Contato</p>
-                              <p className="text-[10px] font-semibold text-slate-700 truncate">{lead.contatoNome || 'Não registrado'}</p>
-                            </div>
-                            <div>
-                              <p className="text-[8px] font-bold text-slate-400 uppercase">E-mail</p>
-                              <p className="text-[10px] font-semibold text-slate-700 truncate">{lead.email || 'Não registrado'}</p>
-                            </div>
-                            <div className="col-span-2">
-                              <p className="text-[8px] font-bold text-slate-400 uppercase">Cidade / UF</p>
-                              <p className="text-[10px] font-semibold text-slate-700 truncate">
-                                {lead.cidade ? `${lead.cidade} - ${lead.uf || 'PR'}` : 'Não registrado'}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Comments/Notes section */}
-                          <div className="space-y-2">
-                            <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Anotações de Visita ({leadComments.length})</label>
-                            
-                            {/* Input Form */}
-                            <div className="flex gap-2">
-                              <input
-                                type="text"
-                                placeholder="Registrar anotação de visita..."
-                                value={newCommentText}
-                                onChange={e => setNewCommentText(e.target.value)}
-                                className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-500"
-                              />
-                              <button
-                                onClick={() => handleAddComment(lead.id)}
-                                disabled={savingComment || !newCommentText.trim()}
-                                className="w-8 h-8 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shrink-0 disabled:opacity-50 active:scale-95 border-none cursor-pointer"
-                              >
-                                <Send size={12} className="fill-white" />
-                              </button>
-                            </div>
-
-                            {/* Comments list feed */}
-                            <div className="space-y-2 max-h-48 overflow-y-auto no-scrollbar pt-1">
-                              {leadComments.length === 0 ? (
-                                <p className="text-[10px] text-slate-400 italic text-center py-2">Nenhuma anotação neste lead.</p>
-                              ) : (
-                                leadComments.map((comm) => (
-                                  <div key={comm.id} className="bg-white p-2.5 rounded-xl border border-slate-100 text-[10px] space-y-0.5 shadow-xs">
-                                    <div className="flex justify-between font-bold text-slate-400">
-                                      <span>{comm.user?.nome || 'Vendedor'}</span>
-                                      <span>{new Date(comm.createdAt).toLocaleDateString()}</span>
-                                    </div>
-                                    <p className="text-slate-700 font-medium whitespace-pre-wrap">{comm.texto}</p>
-                                  </div>
-                                ))
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -1064,6 +1041,367 @@ export default function MobileCRM() {
             </span>
           )}
         </button>
+      </nav>
+
+      {/* FULL-SCREEN LEAD DETAIL & EDIT OVERLAY */}
+      {expandedLeadId && (() => {
+        const lead = leads.find(l => l.id === expandedLeadId);
+        if (!lead) return null;
+
+        return (
+          <div className="fixed inset-0 bg-slate-50 z-50 overflow-y-auto font-sans flex flex-col animate-in slide-in-from-right duration-300">
+            {/* Header */}
+            <header className="sticky top-0 bg-gradient-to-r from-slate-900 to-slate-950 text-white z-55 shadow-md p-4 shrink-0 flex items-center justify-between select-none">
+              <div className="flex items-center gap-2 max-w-[70%]">
+                <button 
+                  onClick={() => {
+                    setExpandedLeadId(null);
+                    setIsEditingLead(false);
+                  }}
+                  className="p-1 text-slate-400 hover:text-white rounded-lg active:scale-95 bg-transparent border-none cursor-pointer"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <div className="min-w-0">
+                  <h1 className="text-[9px] font-black uppercase text-emerald-400 tracking-wider">Detalhes do Lead</h1>
+                  <h2 className="text-xs font-bold truncate text-white uppercase">{isEditingLead ? 'Editando Dados' : lead.nomeFantasia}</h2>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                {isEditingLead ? (
+                  <>
+                    <button
+                      onClick={() => setIsEditingLead(false)}
+                      className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase border border-slate-700 bg-slate-800 text-slate-300 active:scale-95 cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={() => handleSaveLeadEdit(lead.id)}
+                      className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase bg-emerald-500 hover:bg-emerald-600 text-white active:scale-95 border-none cursor-pointer"
+                    >
+                      Salvar
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setIsEditingLead(true)}
+                    className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase bg-blue-600 hover:bg-blue-700 text-white active:scale-95 border-none cursor-pointer"
+                  >
+                    Editar
+                  </button>
+                )}
+              </div>
+            </header>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 p-4 pb-24 space-y-5 max-w-lg mx-auto w-full">
+              {/* Pipeline Phase selector */}
+              <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Fase do Pipeline</span>
+                  <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg uppercase">
+                    {stages.find(s => s.id === lead.stageId)?.nome || 'Sem fase'}
+                  </span>
+                </div>
+                <select
+                  value={lead.stageId}
+                  onChange={e => handleStageChange(lead.id, e.target.value)}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:border-emerald-500 focus:outline-none"
+                >
+                  {stages.map(st => (
+                    <option key={st.id} value={st.id}>{st.nome}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Quick Contact Actions */}
+              {!isEditingLead && (
+                <div className="grid grid-cols-3 gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+                  {/* Telefonar */}
+                  {lead.telefone ? (
+                    <a
+                      href={`tel:${lead.telefone}`}
+                      className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 transition-all active:scale-95"
+                    >
+                      <Phone size={18} className="text-slate-600 mb-1" />
+                      <span className="text-[9px] font-black uppercase tracking-wider">Ligar</span>
+                    </a>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 opacity-55">
+                      <Phone size={18} className="mb-1" />
+                      <span className="text-[9px] font-black uppercase tracking-wider">Ligar</span>
+                    </div>
+                  )}
+
+                  {/* WhatsApp */}
+                  {lead.telefone ? (
+                    <a
+                      href={`https://wa.me/${lead.telefone.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá, tudo bem? Aqui é o ${currentUser.nome} do SmartBid CRM.`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex flex-col items-center justify-center p-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/40 text-emerald-800 transition-all active:scale-95"
+                    >
+                      <MessageCircle size={18} className="text-emerald-600 mb-1 fill-emerald-600/10" />
+                      <span className="text-[9px] font-black uppercase tracking-wider">WhatsApp</span>
+                    </a>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-400 opacity-55">
+                      <MessageCircle size={18} className="mb-1" />
+                      <span className="text-[9px] font-black uppercase tracking-wider">WhatsApp</span>
+                    </div>
+                  )}
+
+                  {/* Maps GPS */}
+                  {lead.endereco ? (
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lead.endereco} ${lead.cidade || ''} ${lead.uf || ''}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex flex-col items-center justify-center p-3 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200/40 text-blue-800 transition-all active:scale-95"
+                    >
+                      <Navigation size={18} className="text-blue-600 mb-1 fill-blue-600/10" />
+                      <span className="text-[9px] font-black uppercase tracking-wider">Rotas</span>
+                    </a>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-blue-50 border border-blue-100 text-blue-400 opacity-55">
+                      <Navigation size={18} className="mb-1" />
+                      <span className="text-[9px] font-black uppercase tracking-wider">Rotas</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Form / Details Card */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+                <div className="flex items-center gap-1.5 border-b border-slate-100 pb-2.5">
+                  <Building size={16} className="text-slate-500" />
+                  <h3 className="text-xs font-black uppercase text-slate-700 tracking-wider">Informações Cadastrais</h3>
+                </div>
+
+                {isEditingLead ? (
+                  <div className="space-y-3.5">
+                    {/* Nome Fantasia */}
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Nome do Lead / Empresa</label>
+                      <input
+                        type="text"
+                        value={editLeadForm.nomeFantasia}
+                        onChange={e => setEditLeadForm({ ...editLeadForm, nomeFantasia: e.target.value })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                      />
+                    </div>
+
+                    {/* Segmento & Valor Est. */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Segmento</label>
+                        <select
+                          value={editLeadForm.segmento}
+                          onChange={e => setEditLeadForm({ ...editLeadForm, segmento: e.target.value })}
+                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                        >
+                          <option value="">Selecione...</option>
+                          {segmentos.map((s, idx) => (
+                            <option key={s.id || idx} value={s.nome}>{s.nome}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Valor Est. Contrato (R$)</label>
+                        <input
+                          type="number"
+                          value={editLeadForm.valorEst}
+                          onChange={e => setEditLeadForm({ ...editLeadForm, valorEst: e.target.value })}
+                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Contato Principal & Telefone */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Contato Principal</label>
+                        <input
+                          type="text"
+                          value={editLeadForm.contatoNome}
+                          onChange={e => setEditLeadForm({ ...editLeadForm, contatoNome: e.target.value })}
+                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Telefone / WhatsApp</label>
+                        <input
+                          type="tel"
+                          value={editLeadForm.telefone}
+                          onChange={e => setEditLeadForm({ ...editLeadForm, telefone: e.target.value })}
+                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                        />
+                      </div>
+                    </div>
+
+                    {/* E-mail */}
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">E-mail</label>
+                      <input
+                        type="email"
+                        value={editLeadForm.email}
+                        onChange={e => setEditLeadForm({ ...editLeadForm, email: e.target.value })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                      />
+                    </div>
+
+                    {/* Endereço */}
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Endereço Completo</label>
+                      <input
+                        type="text"
+                        value={editLeadForm.endereco}
+                        onChange={e => setEditLeadForm({ ...editLeadForm, endereco: e.target.value })}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                      />
+                    </div>
+
+                    {/* Cidade & UF */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="col-span-2 space-y-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Cidade</label>
+                        <input
+                          type="text"
+                          value={editLeadForm.cidade}
+                          onChange={e => setEditLeadForm({ ...editLeadForm, cidade: e.target.value })}
+                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-wider">UF</label>
+                        <input
+                          type="text"
+                          maxLength={2}
+                          value={editLeadForm.uf}
+                          onChange={e => setEditLeadForm({ ...editLeadForm, uf: e.target.value.toUpperCase() })}
+                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-center focus:outline-none focus:border-emerald-500 focus:bg-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-xs">
+                    <div>
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Segmento</p>
+                      <p className="text-slate-800 font-bold mt-0.5">{lead.segmento || 'Sem segmento'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Valor Est. Contrato</p>
+                      <p className="text-emerald-700 font-extrabold mt-0.5">{formatCurrency(lead.valorEst)}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Contato Principal</p>
+                      <p className="text-slate-800 font-bold mt-0.5">{lead.contatoNome || 'Não informado'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Telefone / WhatsApp</p>
+                      <p className="text-slate-800 font-bold mt-0.5 flex items-center gap-1">
+                        {lead.telefone ? (
+                          <>
+                            <span>{lead.telefone}</span>
+                            <a href={`tel:${lead.telefone}`} className="text-blue-600 hover:text-blue-700 active:scale-90">📞</a>
+                          </>
+                        ) : 'Não informado'}
+                      </p>
+                    </div>
+
+                    <div className="col-span-2">
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">E-mail</p>
+                      <p className="text-slate-800 font-bold mt-0.5 flex items-center gap-1">
+                        {lead.email ? (
+                          <>
+                            <span className="truncate">{lead.email}</span>
+                            <a href={`mailto:${lead.email}`} className="text-blue-600 hover:text-blue-700 active:scale-90">✉️</a>
+                          </>
+                        ) : 'Não informado'}
+                      </p>
+                    </div>
+
+                    <div className="col-span-2">
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Cidade / UF</p>
+                      <p className="text-slate-800 font-bold mt-0.5">
+                        {lead.cidade ? `${lead.cidade} - ${lead.uf || 'PR'}` : 'Não informado'}
+                      </p>
+                    </div>
+
+                    {lead.endereco && (
+                      <div className="col-span-2 border-t border-slate-100 pt-2">
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Endereço Completo</p>
+                        <p className="text-slate-700 font-semibold mt-0.5 flex items-start gap-1">
+                          <MapPin size={11} className="text-slate-400 mt-0.5 shrink-0" />
+                          <span>{lead.endereco}</span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Relatórios de Visita / Anotações */}
+              {!isEditingLead && (
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+                  <div className="flex items-center gap-1.5 border-b border-slate-100 pb-2.5">
+                    <MessageSquare size={16} className="text-slate-500" />
+                    <h3 className="text-xs font-black uppercase text-slate-700 tracking-wider">
+                      Relatórios de Visita ({leadComments.length})
+                    </h3>
+                  </div>
+
+                  {/* Input Form */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Registrar nova anotação de visita..."
+                      value={newCommentText}
+                      onChange={e => setNewCommentText(e.target.value)}
+                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all text-slate-700"
+                    />
+                    <button
+                      onClick={() => handleAddComment(lead.id)}
+                      disabled={savingComment || !newCommentText.trim()}
+                      className="w-10 h-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shrink-0 disabled:opacity-50 active:scale-95 border-none cursor-pointer"
+                    >
+                      <Send size={14} className="fill-white" />
+                    </button>
+                  </div>
+
+                  {/* Comments list feed */}
+                  <div className="space-y-2.5 max-h-64 overflow-y-auto no-scrollbar pt-1">
+                    {leadComments.length === 0 ? (
+                      <p className="text-[10px] text-slate-400 italic text-center py-4">
+                        Nenhum relatório de visita registrado.
+                      </p>
+                    ) : (
+                      leadComments.map((comm) => (
+                        <div key={comm.id} className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-[10px] space-y-1.5 shadow-2xs">
+                          <div className="flex justify-between items-center font-bold text-slate-400">
+                            <span className="text-slate-600 uppercase tracking-wide">
+                              {comm.user?.nome || 'Vendedor'}
+                            </span>
+                            <span>{new Date(comm.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          <p className="text-slate-700 font-medium text-xs whitespace-pre-wrap">{comm.texto}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
       </nav>
     </div>
   );
