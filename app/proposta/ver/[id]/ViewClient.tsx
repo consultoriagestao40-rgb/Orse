@@ -2567,58 +2567,41 @@ return (
                               </div>
                             )}
 
-                            {/* Client Message Row (Right) */}
+                            {/* Client Message Row (Right) - WhatsApp Style */}
                             <div className="flex justify-end w-full animate-slideUp">
                               <div 
-                                style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.dark})` }}
-                                className="max-w-[85%] sm:max-w-[75%] text-white rounded-2xl rounded-tr-none px-4 py-3 shadow-md shadow-slate-900/10 text-left relative border border-white/5"
+                                style={{ backgroundColor: theme.primary }}
+                                className="max-w-[85%] sm:max-w-[70%] text-white rounded-2xl rounded-tr-none px-4 py-2.5 shadow-xs text-left relative"
                               >
-                                <div className="flex items-center justify-between gap-3 mb-1">
-                                  <span className="text-[9.5px] font-black text-white/80 uppercase tracking-wider">
-                                    {item.nomeCliente || 'Você'}
-                                  </span>
-                                  {item.tipo === 'recusa' && (
+                                {item.tipo === 'recusa' && (
+                                  <div className="mb-1">
                                     <span className="text-[8px] font-black uppercase tracking-wider bg-red-500/20 text-red-200 px-1.5 py-0.5 rounded border border-red-500/30">
                                       ⚠️ Recusa
                                     </span>
-                                  )}
+                                  </div>
+                                )}
+                                <p className="text-xs sm:text-[13px] font-medium leading-relaxed whitespace-pre-wrap pr-1">{item.mensagem}</p>
+                                <div className="flex items-center justify-end gap-1 mt-1 text-[8.5px] text-white/75 font-mono select-none">
+                                  <span title={fullDateStr}>{dateStr}</span>
+                                  <span className="text-sky-300 font-sans font-bold leading-none" title="Entregue e Visualizada">✓✓</span>
                                 </div>
-                                <p className="text-xs sm:text-[13px] font-medium leading-relaxed whitespace-pre-wrap text-white/95">{item.mensagem}</p>
-                                <span className="text-[8.5px] font-bold text-white/70 block text-right mt-1.5 font-mono tracking-wider" title={fullDateStr}>
-                                  {dateStr}
-                                </span>
                               </div>
                             </div>
 
-                            {/* Seller Message Row (Left) */}
+                            {/* Seller Message Row (Left) - WhatsApp Style */}
                             {item.respondida ? (
                               <div className="flex justify-start w-full animate-slideUp">
-                                <div 
-                                  style={{ borderLeftColor: theme.primary }}
-                                  className="max-w-[85%] sm:max-w-[75%] bg-white text-slate-800 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm border border-slate-200/60 border-l-[3.5px] text-left relative"
-                                >
-                                  <div className="flex items-center justify-between gap-3 mb-1">
-                                    <span 
-                                      style={{ color: theme.primary }}
-                                      className="text-[9.5px] font-black uppercase tracking-wider flex items-center gap-1"
-                                    >
-                                      <span 
-                                        style={{ backgroundColor: theme.primary }}
-                                        className="w-1.5 h-1.5 rounded-full inline-block"
-                                      ></span>
-                                      {item.nomeVendedor || doc.proposta?.user?.nome || 'Consultor'}
-                                    </span>
+                                <div className="max-w-[85%] sm:max-w-[70%] bg-white text-slate-800 rounded-2xl rounded-tl-none px-4 py-2.5 shadow-xs border border-slate-200/60 text-left relative">
+                                  <p className="text-xs sm:text-[13px] font-medium leading-relaxed whitespace-pre-wrap pr-1">{item.resposta}</p>
+                                  <div className="flex items-center justify-end mt-1 text-[8.5px] text-slate-400 font-mono select-none">
+                                    <span>{item.dataResposta ? new Date(item.dataResposta).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : dateStr}</span>
                                   </div>
-                                  <p className="text-xs sm:text-[13px] font-medium leading-relaxed whitespace-pre-wrap text-slate-700">{item.resposta}</p>
-                                  <span className="text-[8.5px] font-bold text-slate-400 block text-right mt-1.5 font-mono tracking-wider">
-                                    {item.dataResposta ? new Date(item.dataResposta).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''}
-                                  </span>
                                 </div>
                               </div>
                             ) : (
-                              <div className="flex justify-start w-full pl-2 sm:pl-4">
-                                <div className="text-[9.5px] sm:text-[10px] text-slate-400 italic font-semibold leading-relaxed flex items-center gap-1.5 bg-white/60 border border-slate-200/50 px-3 py-1.5 rounded-full shadow-xs">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block animate-ping"></span>
+                              <div className="flex justify-start w-full pl-2">
+                                <div className="text-[10px] text-slate-400 italic font-semibold leading-relaxed flex items-center gap-1.5 bg-white/60 border border-slate-200/50 px-3.5 py-1.5 rounded-full shadow-2xs">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block animate-pulse shrink-0"></span>
                                   Aguardando retorno do consultor responsável...
                                 </div>
                               </div>
@@ -2630,54 +2613,66 @@ return (
                   )}
                 </div>
 
-                {/* Chat Input Field at the Bottom */}
-                <div className="bg-white border-t border-slate-200/60 p-3 sm:p-4 shrink-0 shadow-xs">
-                  <div className="flex gap-2 sm:gap-3 items-end">
-                    <textarea 
-                      id="chat-textarea"
-                      rows={1}
-                      placeholder="Digite suas considerações..." 
-                      value={negotiationText}
-                      onChange={(e) => {
-                        setNegotiationText(e.target.value);
-                        setNegotiationType('comment');
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendNegotiation();
-                        }
-                      }}
-                      className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-medium text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-all resize-none max-h-24 min-h-[38px] sm:min-h-[42px] leading-relaxed scrollbar-thin shadow-inner"
-                    />
+                {/* Chat Input Field at the Bottom (WhatsApp Model: Pill Input + Circle Button) */}
+                <div className="bg-[#F0F2F5] border-t border-slate-200/60 p-2 sm:p-3 shrink-0">
+                  <div className="flex gap-2 sm:gap-3 items-center">
+                    {/* Pill Input Container */}
+                    <div className="flex-1 bg-white border border-slate-250/80 rounded-full flex items-center px-4 py-1.5 shadow-xs">
+                      {/* Left icon (decorative clip icon) */}
+                      <button 
+                        type="button"
+                        className="text-slate-400 hover:text-slate-600 p-1 transition-colors cursor-pointer shrink-0"
+                        title="Anexar arquivo"
+                      >
+                        <Paperclip size={16} />
+                      </button>
+
+                      {/* Actual Input Textarea */}
+                      <textarea 
+                        id="chat-textarea"
+                        rows={1}
+                        placeholder="Digite uma mensagem..." 
+                        value={negotiationText}
+                        onChange={(e) => {
+                          setNegotiationText(e.target.value);
+                          setNegotiationType('comment');
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendNegotiation();
+                          }
+                        }}
+                        className="flex-1 px-3 py-1 bg-transparent border-0 outline-none focus:ring-0 text-xs sm:text-sm font-medium text-slate-850 resize-none max-h-20 min-h-[28px] leading-relaxed scrollbar-none"
+                      />
+                    </div>
+
+                    {/* Circular Floating Send Button */}
                     <button 
                       type="button"
                       disabled={loading || !negotiationText.trim()}
                       onClick={handleSendNegotiation}
                       style={{ 
-                        backgroundColor: !negotiationText.trim() || loading ? '#E2E8F0' : theme.primary,
+                        backgroundColor: !negotiationText.trim() || loading ? '#B0BEC5' : theme.primary,
                       }}
-                      className={`h-[38px] sm:h-[42px] px-4 sm:px-5 rounded-xl sm:rounded-2xl font-black text-[9px] sm:text-[10px] uppercase tracking-widest text-white transition-all cursor-pointer flex items-center justify-center gap-2 border border-transparent shadow-md active:scale-95 shrink-0 ${
+                      className={`w-11 h-11 rounded-full flex items-center justify-center text-white transition-all cursor-pointer shadow-md active:scale-95 shrink-0 ${
                         !negotiationText.trim() || loading
-                          ? 'text-slate-400 border-slate-200 cursor-not-allowed shadow-none'
-                          : 'hover:brightness-95 shadow-emerald-900/10'
+                          ? 'text-slate-400 cursor-not-allowed shadow-none opacity-80'
+                          : 'hover:brightness-95 hover:shadow-lg'
                       }`}
                     >
                       {loading ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       ) : (
-                        <>
-                          <span>Enviar</span>
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                            <line x1="22" y1="2" x2="11" y2="13"></line>
-                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                          </svg>
-                        </>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4.5 h-4.5 text-white ml-0.5">
+                          <line x1="22" y1="2" x2="11" y2="13"></line>
+                          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
                       )}
                     </button>
                   </div>
-                  <span className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wider block mt-2.5 text-left px-1">
-                    Pressione Enter para enviar, Shift+Enter para quebra de linha. O consultor receberá no WhatsApp.
+                  <span className="text-[8px] text-slate-450 font-bold uppercase tracking-wider block mt-1.5 text-center">
+                    Pressione Enter para enviar. Mensagens serão entregues no WhatsApp do consultor.
                   </span>
                 </div>
               </div>
