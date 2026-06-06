@@ -1056,17 +1056,20 @@ function ProposalsDashboard() {
     label: string; cards: any[]; color?: string; type?: 'status' | 'vendedor'; onDropProp?: (propId: string) => void;
   }) => {
     const resolvedHex = resolveColorToHex(color);
-    const bgRgba = hexToRgba(resolvedHex, 0.04);
-    const borderRgba = hexToRgba(resolvedHex, 0.15);
+    const contrast = getContrastYIQ(resolvedHex);
+    const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.04 : 0.15);
+    const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.15 : 0.4);
     
     return (
       <div 
-        className="flex-shrink-0 w-72 flex flex-col min-h-[600px] p-3 pt-4 rounded-b-2xl rounded-t-none border-t-0"
+        className="flex-shrink-0 w-72 flex flex-col min-h-[600px] px-3 pb-3 rounded-b-2xl rounded-t-none border-t-0"
         style={{
           backgroundColor: bgRgba,
           borderColor: borderRgba,
-          borderWidth: '1px',
-          borderStyle: 'solid'
+          borderWidth: '0 1px 1px 1px',
+          borderStyle: 'solid',
+          marginTop: '-22px',
+          paddingTop: '34px'
         }}
         onDragOver={(e) => {
           e.preventDefault();

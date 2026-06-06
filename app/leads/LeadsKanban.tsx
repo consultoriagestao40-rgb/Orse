@@ -1505,12 +1505,14 @@ export default function LeadsKanban() {
                     </div>
 
                     <div 
-                      className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
+                      className="flex-1 flex flex-col px-3 pb-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
                       style={{
-                        backgroundColor: hexToRgba(resolvedHex, 0.04),
-                        borderColor: hexToRgba(resolvedHex, 0.15),
+                        backgroundColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.04 : 0.15),
+                        borderColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.15 : 0.4),
                         borderWidth: '0 1px 1px 1px',
-                        borderStyle: 'solid'
+                        borderStyle: 'solid',
+                        marginTop: '-22px',
+                        paddingTop: '34px'
                       }}
                     >
                       {/* Totalizador de Volume */}
@@ -1717,12 +1719,14 @@ export default function LeadsKanban() {
                     </div>
 
                     <div 
-                      className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
+                      className="flex-1 flex flex-col px-3 pb-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
                       style={{
-                        backgroundColor: hexToRgba(resolvedHex, 0.04),
-                        borderColor: hexToRgba(resolvedHex, 0.15),
+                        backgroundColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.04 : 0.15),
+                        borderColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.15 : 0.4),
                         borderWidth: '0 1px 1px 1px',
-                        borderStyle: 'solid'
+                        borderStyle: 'solid',
+                        marginTop: '-22px',
+                        paddingTop: '34px'
                       }}
                     >
                       {/* Totalizador de Volume */}
@@ -1918,12 +1922,14 @@ export default function LeadsKanban() {
                     </div>
 
                     <div 
-                      className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
+                      className="flex-1 flex flex-col px-3 pb-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
                       style={{
-                        backgroundColor: hexToRgba(resolvedHex, 0.04),
-                        borderColor: hexToRgba(resolvedHex, 0.15),
+                        backgroundColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.04 : 0.15),
+                        borderColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.15 : 0.4),
                         borderWidth: '0 1px 1px 1px',
-                        borderStyle: 'solid'
+                        borderStyle: 'solid',
+                        marginTop: '-22px',
+                        paddingTop: '34px'
                       }}
                     >
                       {/* Totalizador de Volume */}
