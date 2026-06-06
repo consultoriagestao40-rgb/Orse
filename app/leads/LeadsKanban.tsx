@@ -1538,9 +1538,10 @@ export default function LeadsKanban() {
                         )}
                       </div>
                     </div>
+                  </div>
 
-                    <div 
-                      className="flex-1 w-72 flex flex-col items-start min-h-[600px]"
+                  <div 
+                    className="flex-1 w-72 flex flex-col items-start min-h-[600px]"
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, stage.id)}
                     >
@@ -1576,10 +1577,11 @@ export default function LeadsKanban() {
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {viewMode === 'kanban-vendedor' && (
           <div className="flex gap-[16px] min-w-max pt-0 mt-0 items-stretch">
