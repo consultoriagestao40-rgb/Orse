@@ -1577,11 +1577,10 @@ export default function LeadsKanban() {
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          )}
 
         {viewMode === 'kanban-vendedor' && (
           <div className="flex gap-[16px] min-w-max pt-0 mt-0 items-stretch">
@@ -1793,8 +1792,9 @@ export default function LeadsKanban() {
                         </div>
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                );
+              })}
             </div>
           )}
 
