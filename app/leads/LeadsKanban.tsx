@@ -1751,10 +1751,9 @@ export default function LeadsKanban() {
                           </>
                         )}
                       </div>
-                    </div>
 
-                    <div 
-                      className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
+                      <div 
+                        className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
                       style={{
                         width: '274px',
                         minWidth: '274px',
@@ -1952,10 +1951,9 @@ export default function LeadsKanban() {
                           </>
                         )}
                       </div>
-                    </div>
 
-                    <div 
-                      className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
+                      <div 
+                        className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
                       style={{
                         width: '274px',
                         minWidth: '274px',
