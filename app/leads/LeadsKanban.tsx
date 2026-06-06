@@ -1346,48 +1346,48 @@ export default function LeadsKanban() {
                         />
                       </svg>
                       <div 
-                        className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                        className={`relative z-10 flex items-center justify-between h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
                         style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
                       >
-                        <div className="flex justify-between items-center w-full min-w-0">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <h3 className="font-black uppercase tracking-wider text-sm truncate max-w-[170px]">
-                              {stage.nome}
-                            </h3>
-                            
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingStageName(stage.nome);
-                                setEditingStageId(stage.id);
-                              }}
-                              className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                              style={{ color: 'inherit' }}
-                              title="Editar Etapa"
-                            >
-                              <Edit2 size={11} />
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCreateStage(stage.id);
-                              }}
-                              className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                              style={{ color: 'inherit' }}
-                              title="Criar Nova Etapa"
-                            >
-                              <Plus size={11} />
-                            </button>
-                          </div>
+                        <div className="flex flex-col justify-center min-w-0 flex-1">
+                          <h3 className="font-black uppercase tracking-wider text-sm truncate max-w-[160px]">
+                            {stage.nome}
+                          </h3>
+                          
+                          {/* Subtítulo integrado com o totalizador de volume e leads */}
+                          <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
+                            {fmt(totalValorEst)} • {stageLeads.length} {stageLeads.length === 1 ? 'lead' : 'leads'}
+                          </span>
                         </div>
 
-                        {/* Subtítulo integrado com o totalizador de volume e leads */}
-                        <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
-                          {fmt(totalValorEst)} • {stageLeads.length} {stageLeads.length === 1 ? 'lead' : 'leads'}
-                        </span>
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingStageName(stage.nome);
+                              setEditingStageId(stage.id);
+                            }}
+                            className="p-1.5 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                            style={{ color: 'inherit' }}
+                            title="Editar Etapa"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCreateStage(stage.id);
+                            }}
+                            className="p-1.5 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                            style={{ color: 'inherit' }}
+                            title="Criar Nova Etapa"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
 
                         {editingStageId === stage.id && (
                           <>
@@ -1628,11 +1628,11 @@ export default function LeadsKanban() {
                           />
                         </svg>
                         <div 
-                          className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                          className={`relative z-10 flex items-center justify-between h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
                           style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
                         >
-                          <div className="flex justify-between items-center w-full min-w-0">
-                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          <div className="flex flex-col justify-center min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 min-w-0">
                               {col.avatarUrl ? (
                                 <img 
                                   src={col.avatarUrl} 
@@ -1651,28 +1651,28 @@ export default function LeadsKanban() {
                               </h3>
                             </div>
 
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              {col.id !== 'unassigned' && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingVendedorId(col.id);
-                                  }}
-                                  className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                                  style={{ color: 'inherit' }}
-                                  title="Editar Cor"
-                                >
-                                  <Edit2 size={11} />
-                                </button>
-                              )}
-                            </div>
+                            {/* Subtítulo integrado com o totalizador de volume e leads */}
+                            <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
+                              {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
+                            </span>
                           </div>
 
-                          {/* Subtítulo integrado com o totalizador de volume e leads */}
-                          <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
-                            {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
-                          </span>
+                          <div className="flex items-center gap-2 shrink-0 ml-2">
+                            {col.id !== 'unassigned' && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingVendedorId(col.id);
+                                }}
+                                className="p-1.5 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                                style={{ color: 'inherit' }}
+                                title="Editar Cor"
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         {editingVendedorId === col.id && (
@@ -1847,39 +1847,39 @@ export default function LeadsKanban() {
                         />
                       </svg>
                         <div 
-                          className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                          className={`relative z-10 flex items-center justify-between h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
                           style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
                         >
-                          <div className="flex justify-between items-center w-full min-w-0">
-                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          <div className="flex flex-col justify-center min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 min-w-0">
                               <Building size={12} className="shrink-0" style={{ color: 'inherit' }} />
                               <h3 className="font-black uppercase tracking-wider text-sm truncate">
                                 {col.label}
                               </h3>
                             </div>
 
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              {col.id !== 'unassigned' && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingSegmentoId(col.id);
-                                  }}
-                                  className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                                  style={{ color: 'inherit' }}
-                                  title="Editar Cor"
-                                >
-                                  <Edit2 size={11} />
-                                </button>
-                              )}
-                            </div>
+                            {/* Subtítulo integrado com o totalizador de volume e leads */}
+                            <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
+                              {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
+                            </span>
                           </div>
 
-                          {/* Subtítulo integrado com o totalizador de volume e leads */}
-                          <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
-                            {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
-                          </span>
+                          <div className="flex items-center gap-2 shrink-0 ml-2">
+                            {col.id !== 'unassigned' && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingSegmentoId(col.id);
+                                }}
+                                className="p-1.5 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                                style={{ color: 'inherit' }}
+                                title="Editar Cor"
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                            )}
+                          </div>
                         {editingSegmentoId === col.id && (
                           <>
                             <div 

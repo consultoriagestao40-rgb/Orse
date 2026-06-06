@@ -854,25 +854,25 @@ function ProposalsDashboard() {
 
           {/* Conteúdo do Cabeçalho */}
           <div 
-            className={`absolute inset-0 z-10 flex flex-col justify-center ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+            className={`absolute inset-0 z-10 flex items-center justify-between ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
             style={{
               color: contrast === 'white' ? '#ffffff' : '#0f172a',
             }}
           >
-            <div className="flex items-center justify-between w-full min-w-0">
+            <div className="flex flex-col justify-center min-w-0 flex-1">
               {isStatus ? (
-                <span className="text-sm font-black uppercase tracking-wider truncate max-w-[170px]">
+                <span className="text-sm font-black uppercase tracking-wider truncate max-w-[160px]">
                   {label}
                 </span>
               ) : isSegmento ? (
-                <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div className="flex items-center gap-2 min-w-0">
                   <Building size={14} className="shrink-0" style={{ color: textHex }} />
                   <span className="text-sm font-black uppercase tracking-wider truncate">
                     {label}
                   </span>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div className="flex items-center gap-2 min-w-0">
                   {colAvatarUrl ? (
                     <img 
                       src={colAvatarUrl} 
@@ -890,43 +890,43 @@ function ProposalsDashboard() {
                 </div>
               )}
               
-              <div className="flex items-center gap-1.5 shrink-0">
-                {isStatus && onCreateStatus && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onCreateStatus(label);
-                    }}
-                    className="p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                    style={{ color: 'inherit' }}
-                    title="Criar Nova Etapa"
-                    type="button"
-                  >
-                    <Plus size={12} />
-                  </button>
-                )}
-
-                {onColorChange && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowEditPopover(!showEditPopover);
-                    }}
-                    className="p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                    style={{ color: 'inherit' }}
-                    title="Editar Coluna"
-                    type="button"
-                  >
-                    <Edit2 size={12} />
-                  </button>
-                )}
-              </div>
+              {/* Subtítulo integrado com o totalizador de volume e negócios */}
+              <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
+                {fmt(total)} • {cards.length} {cards.length === 1 ? 'negócio' : 'negócios'}
+              </span>
             </div>
+            
+            <div className="flex items-center gap-2 shrink-0 ml-2">
+              {isStatus && onCreateStatus && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCreateStatus(label);
+                  }}
+                  className="p-1.5 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                  style={{ color: 'inherit' }}
+                  title="Criar Nova Etapa"
+                  type="button"
+                >
+                  <Plus size={14} />
+                </button>
+              )}
 
-            {/* Subtítulo integrado com o totalizador de volume e negócios */}
-            <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
-              {fmt(total)} • {cards.length} {cards.length === 1 ? 'negócio' : 'negócios'}
-            </span>
+              {onColorChange && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowEditPopover(!showEditPopover);
+                  }}
+                  className="p-1.5 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                  style={{ color: 'inherit' }}
+                  title="Editar Coluna"
+                  type="button"
+                >
+                  <Edit2 size={14} />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Popover de Edição Unificado */}

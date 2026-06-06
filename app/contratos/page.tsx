@@ -415,37 +415,40 @@ export default function ContratosDashboard() {
               />
             </svg>
             <div 
-              className={`absolute inset-0 z-10 flex flex-col justify-center ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+              className={`absolute inset-0 z-10 flex items-center justify-between ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
               style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
             >
-              <div className="flex items-center justify-between w-full min-w-0">
-                <span className="text-sm font-black uppercase tracking-wider truncate max-w-[170px]">
+              <div className="flex flex-col justify-center min-w-0 flex-1">
+                <span className="text-sm font-black uppercase tracking-wider truncate max-w-[160px]">
                   {status}
                 </span>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); handleCreateStatus(status); }}
-                    className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                    style={{ color: 'inherit' }}
-                    title="Criar Nova Etapa"
-                  >
-                    <Plus size={12} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setEditingStatusId(status); }}
-                    className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                    style={{ color: 'inherit' }}
-                    title="Editar Coluna"
-                  >
-                    <Edit2 size={12} />
-                  </button>
-                </div>
+                
+                {/* Subtítulo integrado com o totalizador de volume e negócios */}
+                <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
+                  {fmt(total)}/mês • {cards.length} {cards.length === 1 ? 'contrato' : 'contratos'}
+                </span>
               </div>
-              <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
-              {fmt(total)}/mês • {cards.length} {cards.length === 1 ? 'contrato' : 'contratos'}
-            </span>
+              
+              <div className="flex items-center gap-2 shrink-0 ml-2">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleCreateStatus(status); }}
+                  className="p-1.5 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                  style={{ color: 'inherit' }}
+                  title="Criar Nova Etapa"
+                >
+                  <Plus size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setEditingStatusId(status); }}
+                  className="p-1.5 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                  style={{ color: 'inherit' }}
+                  title="Editar Coluna"
+                >
+                  <Edit2 size={14} />
+                </button>
+              </div>  </span>
           </div>
           {editingStatusId === status && (
             <>
@@ -698,32 +701,36 @@ export default function ContratosDashboard() {
               />
             </svg>
             <div 
-              className={`absolute inset-0 z-10 flex flex-col justify-center ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+              className={`absolute inset-0 z-10 flex items-center justify-between ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
               style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
             >
-              <div className="flex items-center justify-between w-full min-w-0">
-                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+              <div className="flex flex-col justify-center min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 min-w-0">
                   <Building size={14} className="shrink-0" style={{ color: 'inherit' }} />
                   <span className="text-sm font-black uppercase tracking-wider truncate">
                     {label}
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setEditingSegmentoId(label); }}
-                    className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                    style={{ color: 'inherit' }}
-                    title="Editar Cor"
-                  >
-                    <Edit2 size={12} />
-                  </button>
-                </div>
+                
+                {/* Subtítulo integrado com o totalizador de volume e negócios */}
+                <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
+                  {fmt(total)}/mês • {cards.length} {cards.length === 1 ? 'contrato' : 'contratos'}
+                </span>
               </div>
-              <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
-                {fmt(total)}/mês • {cards.length} {cards.length === 1 ? 'contrato' : 'contratos'}
-              </span>
+              
+              <div className="flex items-center gap-2 shrink-0 ml-2">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setEditingSegmentoId(label); }}
+                  className="p-1.5 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                  style={{ color: 'inherit' }}
+                  title="Editar Cor"
+                >
+                  <Edit2 size={14} />
+                </button>
+              </div>
             </div>
+
           {editingSegmentoId === label && (
             <>
               <div 
