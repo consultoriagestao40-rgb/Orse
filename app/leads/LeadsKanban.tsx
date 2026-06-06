@@ -694,7 +694,7 @@ export default function LeadsKanban() {
     setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stageId } : l));
 
     await updateLeadStage(leadId, stageId);
-    fetchData();
+    fetchData(true);
   };
 
   const handleStageChangeInModal = async (newStageId: string) => {
@@ -990,6 +990,7 @@ export default function LeadsKanban() {
     } : l));
 
     await changeLeadOwner(id, assignedToId as any);
+    fetchData(true);
   };
 
   const handleDropSegmento = async (e: React.DragEvent, segmentName: string) => {
@@ -1007,7 +1008,7 @@ export default function LeadsKanban() {
     } : l));
 
     await updateLeadData(id, { segmento: newSegment });
-    fetchData();
+    fetchData(true);
   };
 
   const PRESET_VENDEDOR_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6', '#f97316', '#64748b'];
@@ -1151,7 +1152,7 @@ export default function LeadsKanban() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 overflow-y-auto scrollbar-thin">
+    <div className="flex flex-col h-screen bg-slate-50 overflow-hidden">
       <div className="p-4 md:py-6 md:pl-4 md:pr-1 bg-white border-b border-slate-200 flex flex-col lg:flex-row justify-between lg:items-center gap-4 shrink-0">
         <div>
           <h1 className="text-xl md:text-2xl font-black text-slate-800">Pipeline de Leads</h1>
@@ -1303,10 +1304,10 @@ export default function LeadsKanban() {
         </div>
       </div>
 
-      <div className="flex flex-col flex-1 py-6 pl-2 pr-1 bg-slate-50">
+      <div className="flex flex-col flex-1 py-6 pl-2 pr-1 bg-slate-50 overflow-x-auto overflow-y-hidden min-h-0">
         {showMetrics && <PipelineMetrics leads={filteredLeads} stages={stages} />}
         {viewMode === 'kanban-status' && (
-          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch">
+          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch h-full">
             {stages.map((stage, idx) => {
               const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
               const totalValorEst = stageLeads.reduce((acc, lead) => acc + (lead.valorEst || 0), 0);
@@ -1321,24 +1322,24 @@ export default function LeadsKanban() {
               return (
                 <div 
                   key={stage.id} 
-                  className="flex flex-col"
+                  className="flex flex-col h-full"
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, stage.id)}
                 >
                   <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
-                    <div className="relative h-12 shrink-0 z-10 w-full group/header pointer-events-auto">
+                    <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
                       <svg 
                         className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
-                        viewBox={isLast ? "0 0 274 48" : "0 0 282 48"}
+                        viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
                         preserveAspectRatio="none"
                         style={{ color: resolvedHex }}
                       >
                         <path 
                           d={isFirst 
-                            ? "M 8,0 L 274,0 L 282,24 L 274,48 L 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                            ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
                             : isLast 
-                              ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,48 L 0,48 L 8,24 L 0,0 Z"
-                              : "M 0,0 L 274,0 L 282,24 L 274,48 L 0,48 L 8,24 L 0,0 Z"
+                              ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                              : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
                           }
                           fill="currentColor" 
                           stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -1357,10 +1358,7 @@ export default function LeadsKanban() {
                           {/* Subtítulo integrado com o totalizador de volume e leads */}
                           <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
                             {fmt(totalValorEst)} • {stageLeads.length} {stageLeads.length === 1 ? 'lead' : 'leads'}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                                         <div className="flex items-center gap-2 shrink-0 ml-2">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -1372,7 +1370,7 @@ export default function LeadsKanban() {
                             style={{ color: 'inherit' }}
                             title="Editar Etapa"
                           >
-                            <Edit2 size={14} />
+                            <Edit2 size={16} />
                           </button>
 
                           <button
@@ -1385,8 +1383,9 @@ export default function LeadsKanban() {
                             style={{ color: 'inherit' }}
                             title="Criar Nova Etapa"
                           >
-                            <Plus size={14} />
+                            <Plus size={16} />
                           </button>
+                        </div>         </button>
                         </div>
 
                         {editingStageId === stage.id && (
@@ -1399,7 +1398,7 @@ export default function LeadsKanban() {
                               }}
                             />
                             <div 
-                              className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3.5 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
+                              className="absolute left-1/2 -translate-x-1/2 top-12 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3.5 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
@@ -1545,12 +1544,12 @@ export default function LeadsKanban() {
                   </div>
 
                   <div 
-                    className="flex-1 w-[274px] flex flex-col items-start min-h-[600px]"
+                    className="flex-1 w-[274px] flex flex-col items-start min-h-0 overflow-y-auto"
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, stage.id)}
                     >
                       <div
-                        className="flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+                        className="w-full flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
                         style={{
                           width: '274px',
                           minWidth: '274px',
@@ -1587,7 +1586,7 @@ export default function LeadsKanban() {
           )}
 
         {viewMode === 'kanban-vendedor' && (
-          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch">
+          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch h-full">
               {kanbanVendedorCols.map((col, idx) => {
                 const colLeads = col.cards;
                 const isFirst = idx === 0;
@@ -1603,24 +1602,24 @@ export default function LeadsKanban() {
                 return (
                   <div 
                     key={col.id} 
-                    className="flex flex-col"
+                    className="flex flex-col h-full"
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDropVendedor(e, col.id)}
                   >
                     <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
-                      <div className="relative h-12 shrink-0 z-10 w-full group/header pointer-events-auto">
+                      <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
                         <svg 
                           className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
-                          viewBox={isLast ? "0 0 274 48" : "0 0 282 48"}
+                          viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
                           preserveAspectRatio="none"
                           style={{ color: resolvedHex }}
                         >
                           <path 
                             d={isFirst 
-                              ? "M 8,0 L 274,0 L 282,24 L 274,48 L 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                              ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
                               : isLast 
-                                ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,48 L 0,48 L 8,24 L 0,0 Z"
-                                : "M 0,0 L 274,0 L 282,24 L 274,48 L 0,48 L 8,24 L 0,0 Z"
+                                ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                                : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
                             }
                             fill="currentColor" 
                             stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -1669,7 +1668,7 @@ export default function LeadsKanban() {
                                 style={{ color: 'inherit' }}
                                 title="Editar Cor"
                               >
-                                <Edit2 size={14} />
+                                <Edit2 size={16} />
                               </button>
                             )}
                           </div>
@@ -1685,7 +1684,7 @@ export default function LeadsKanban() {
                               }}
                             />
                             <div 
-                              className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
+                              className="absolute left-1/2 -translate-x-1/2 top-12 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
@@ -1763,12 +1762,12 @@ export default function LeadsKanban() {
                     </div>
 
                   <div 
-                    className="flex-1 w-[274px] flex flex-col items-start min-h-[600px]"
+                    className="flex-1 w-[274px] flex flex-col items-start min-h-0 overflow-y-auto"
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDropVendedor(e, col.id)}
                   >
                       <div
-                        className="flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+                        className="w-full flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
                         style={{
                           width: '274px',
                           minWidth: '274px',
@@ -1806,7 +1805,7 @@ export default function LeadsKanban() {
           )}
 
         {viewMode === 'kanban-segmento' && (
-          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch">
+          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch h-full">
             {kanbanSegmentoCols.map((col, idx) => {
               const colLeads = col.cards;
               const isFirst = idx === 0;
@@ -1822,24 +1821,24 @@ export default function LeadsKanban() {
               return (
                 <div 
                   key={col.id} 
-                  className="flex flex-col"
+                  className="flex flex-col h-full"
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDropSegmento(e, col.id)}
                 >
                   <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
-                    <div className="relative h-12 shrink-0 z-10 w-full group/header pointer-events-auto">
+                    <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
                       <svg 
                         className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
-                        viewBox={isLast ? "0 0 274 48" : "0 0 282 48"}
+                        viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
                         preserveAspectRatio="none"
                         style={{ color: resolvedHex }}
                       >
                         <path 
                           d={isFirst 
-                            ? "M 8,0 L 274,0 L 282,24 L 274,48 L 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                            ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
                             : isLast 
-                              ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,48 L 0,48 L 8,24 L 0,0 Z"
-                              : "M 0,0 L 274,0 L 282,24 L 274,48 L 0,48 L 8,24 L 0,0 Z"
+                              ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                              : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
                           }
                           fill="currentColor" 
                           stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -1876,7 +1875,7 @@ export default function LeadsKanban() {
                                 style={{ color: 'inherit' }}
                                 title="Editar Cor"
                               >
-                                <Edit2 size={14} />
+                                <Edit2 size={16} />
                               </button>
                             )}
                           </div>
@@ -1890,7 +1889,7 @@ export default function LeadsKanban() {
                               }}
                             />
                             <div 
-                              className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
+                              className="absolute left-1/2 -translate-x-1/2 top-12 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
@@ -1969,12 +1968,12 @@ export default function LeadsKanban() {
                   </div>
 
                   <div 
-                    className="flex-1 w-[274px] flex flex-col items-start min-h-[600px]"
+                    className="flex-1 w-[274px] flex flex-col items-start min-h-0 overflow-y-auto"
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDropSegmento(e, col.id)}
                     >
                       <div
-                        className="flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+                        className="w-full flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
                         style={{
                           width: '274px',
                           minWidth: '274px',

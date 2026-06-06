@@ -57,7 +57,11 @@ export async function getLeads(filters?: { startDate?: string; endDate?: string;
             status: true,
             texto: true,
             createdAt: true
-          }
+          },
+          orderBy: {
+            createdAt: 'desc'
+          },
+          take: 30
         }
       },
       orderBy: { updatedAt: 'desc' }
@@ -161,7 +165,6 @@ export async function updateLeadStage(leadId: string, stageId: string) {
       }
     });
 
-    revalidatePath('/leads');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -186,7 +189,6 @@ export async function updateLeadData(leadId: string, data: { nomeFantasia?: stri
       }
     });
 
-    revalidatePath('/leads');
     return { success: true, lead };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -213,7 +215,6 @@ export async function changeLeadOwner(leadId: string, assignedToId: string) {
       }
     });
 
-    revalidatePath('/leads');
     return { success: true, lead };
   } catch (error: any) {
     return { success: false, error: error.message };

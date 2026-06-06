@@ -392,22 +392,22 @@ export default function ContratosDashboard() {
 
     return (
       <div 
-        className="flex flex-col"
+        className="flex flex-col h-full"
       >
         <div className="flex-shrink-0 w-[306px] shrink-0 relative select-none duration-200">
-          <div className="relative h-12 shrink-0 z-10 w-full group/title pointer-events-auto">
+          <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
               className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[306px]' : 'w-[314px]'}`}
-              viewBox={isLast ? "0 0 306 48" : "0 0 314 48"}
+              viewBox={isLast ? "0 0 306 52" : "0 0 314 52"}
               preserveAspectRatio="none"
               style={{ color: resolvedHex }}
             >
               <path 
                 d={isFirst 
-                  ? "M 8,0 L 306,0 L 314,24 L 306,48 L 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                  ? "M 8,0 L 306,0 L 314,26 L 306,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
                   : isLast 
-                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,48 L 0,48 L 8,24 L 0,0 Z"
-                    : "M 0,0 L 306,0 L 314,24 L 306,48 L 0,48 L 8,24 L 0,0 Z"
+                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,52 L 0,52 L 8,26 L 0,0 Z"
+                    : "M 0,0 L 306,0 L 314,26 L 306,52 L 0,52 L 8,26 L 0,0 Z"
                 }
                 fill="currentColor"
                 stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -437,7 +437,7 @@ export default function ContratosDashboard() {
                   style={{ color: 'inherit' }}
                   title="Criar Nova Etapa"
                 >
-                  <Plus size={14} />
+                  <Plus size={16} />
                 </button>
                 <button
                   type="button"
@@ -446,10 +446,10 @@ export default function ContratosDashboard() {
                   style={{ color: 'inherit' }}
                   title="Editar Coluna"
                 >
-                  <Edit2 size={14} />
+                  <Edit2 size={16} />
                 </button>
-              </div>  </span>
-          </div>
+              </div>
+            </div>
           {editingStatusId === status && (
             <>
               <div 
@@ -457,7 +457,7 @@ export default function ContratosDashboard() {
                 onClick={(e) => { e.stopPropagation(); setEditingStatusId(null); }}
               />
               <div 
-                className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
+                className="absolute left-1/2 -translate-x-1/2 top-12 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
@@ -572,7 +572,7 @@ export default function ContratosDashboard() {
         </div>
       </div>
       <div 
-        className="flex-1 w-[306px] flex flex-col items-start min-h-[600px]"
+        className="flex-1 w-[306px] flex flex-col items-start min-h-0 overflow-y-auto"
           onDragOver={(e) => { e.preventDefault(); }}
           onDrop={async (e) => {
             e.preventDefault();
@@ -584,7 +584,7 @@ export default function ContratosDashboard() {
           }}
         >
           <div
-            className="flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+            className="w-full flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
             style={{
               width: '306px',
               minWidth: '306px',
@@ -678,22 +678,22 @@ export default function ContratosDashboard() {
 
     return (
       <div 
-        className="flex flex-col"
+        className="flex flex-col h-full"
       >
         <div className="flex-shrink-0 w-[306px] shrink-0 relative select-none duration-200">
-          <div className="relative h-12 shrink-0 z-10 w-full group/title pointer-events-auto">
+          <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
               className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[306px]' : 'w-[314px]'}`}
-              viewBox={isLast ? "0 0 306 48" : "0 0 314 48"}
+              viewBox={isLast ? "0 0 306 52" : "0 0 314 52"}
               preserveAspectRatio="none"
               style={{ color: resolvedHex }}
             >
               <path 
                 d={isFirst 
-                  ? "M 8,0 L 306,0 L 314,24 L 306,48 L 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                  ? "M 8,0 L 306,0 L 314,26 L 306,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
                   : isLast 
-                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,48 L 0,48 L 8,24 L 0,0 Z"
-                    : "M 0,0 L 306,0 L 314,24 L 306,48 L 0,48 L 8,24 L 0,0 Z"
+                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,52 L 0,52 L 8,26 L 0,0 Z"
+                    : "M 0,0 L 306,0 L 314,26 L 306,52 L 0,52 L 8,26 L 0,0 Z"
                 }
                 fill="currentColor"
                 stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -726,7 +726,7 @@ export default function ContratosDashboard() {
                   style={{ color: 'inherit' }}
                   title="Editar Cor"
                 >
-                  <Edit2 size={14} />
+                  <Edit2 size={16} />
                 </button>
               </div>
             </div>
@@ -738,7 +738,7 @@ export default function ContratosDashboard() {
                 onClick={(e) => { e.stopPropagation(); setEditingSegmentoId(null); }}
               />
               <div 
-                className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
+                className="absolute left-1/2 -translate-x-1/2 top-12 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
@@ -810,7 +810,7 @@ export default function ContratosDashboard() {
         </div>
       </div>
       <div 
-        className="flex-1 w-[306px] flex flex-col items-start min-h-[600px]"
+        className="flex-1 w-[306px] flex flex-col items-start min-h-0 overflow-y-auto"
           onDragOver={(e) => { e.preventDefault(); }}
           onDrop={async (e) => {
             e.preventDefault();
@@ -837,7 +837,7 @@ export default function ContratosDashboard() {
           }}
         >
           <div
-            className="flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+            className="w-full flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
             style={{
               width: '306px',
               minWidth: '306px',
@@ -925,11 +925,11 @@ export default function ContratosDashboard() {
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
 
-      <main className="flex-1 p-8 overflow-y-auto">
-        <div className="max-w-full mx-auto space-y-6">
+      <main className="flex-1 p-8 overflow-hidden h-screen flex flex-col bg-[#F8FAFC]">
+        <div className="max-w-full mx-auto space-y-6 flex-1 flex flex-col min-h-0 w-full">
 
           {/* HEADER */}
-          <header className="flex justify-between items-end border-b border-slate-300 pb-4">
+          <header className="flex justify-between items-end border-b border-slate-300 pb-4 shrink-0">
             <div>
               <h1 className="text-2xl font-bold text-[#1B4D3E] tracking-wider uppercase">Gestão de Contratos (CLM)</h1>
               <p className="text-slate-500 text-sm mt-1">Ciclo de vida, Reajustes e Aditivos</p>
@@ -979,7 +979,7 @@ export default function ContratosDashboard() {
           </header>
 
           {/* KPIs */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 shrink-0">
             <div className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
               <div className="p-3 bg-amber-50 rounded border border-amber-200 text-amber-600"><AlertCircle size={20} /></div>
               <div>
@@ -1025,7 +1025,7 @@ export default function ContratosDashboard() {
           </div>
 
           {/* BARRA DE BUSCA */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
               <input
@@ -1040,8 +1040,8 @@ export default function ContratosDashboard() {
 
           {/* VISUALIZAÇÃO EM LISTA */}
           {viewMode === 'lista' && (
-            <div className="bg-white rounded-md shadow-sm border border-slate-300 overflow-hidden">
-              <div className="overflow-x-auto">
+            <div className="bg-white rounded-md shadow-sm border border-slate-300 overflow-hidden flex-1 flex flex-col min-h-0 w-full">
+              <div className="overflow-auto flex-1 min-h-0">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
@@ -1144,8 +1144,8 @@ export default function ContratosDashboard() {
 
           {/* KANBAN POR STATUS */}
           {viewMode === 'kanban-status' && (
-            <div className="overflow-x-auto pb-6">
-              <div className="flex gap-[3px] min-w-max items-stretch">
+            <div className="flex-1 min-h-0 overflow-x-auto pb-4">
+              <div className="flex gap-[3px] min-w-max items-stretch h-full">
                 {statusList.map((status, index) => (
                   <KanbanColumn key={status} status={status} isFirst={index === 0} isLast={index === statusList.length - 1} />
                 ))}
@@ -1155,8 +1155,8 @@ export default function ContratosDashboard() {
 
           {/* KANBAN POR SEGMENTO */}
           {viewMode === 'kanban-segmento' && (
-            <div className="overflow-x-auto pb-6">
-              <div className="flex gap-[3px] min-w-max items-stretch">
+            <div className="flex-1 min-h-0 overflow-x-auto pb-4">
+              <div className="flex gap-[3px] min-w-max items-stretch h-full">
                 {kanbanSegmentoCols.map((col, index) => (
                   <KanbanSegmentoColumn
                     key={col.id}

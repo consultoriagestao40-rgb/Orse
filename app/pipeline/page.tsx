@@ -828,12 +828,12 @@ function ProposalsDashboard() {
         
         {/* Cabeçalho Chevron/Seta */}
         <div 
-          className="w-full h-12 relative group/title pointer-events-auto"
+          className="w-full h-[52px] relative group/title pointer-events-auto"
         >
           {/* Background SVG Custom Shape */}
           <svg 
             className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
-            viewBox={isLast ? "0 0 274 48" : "0 0 282 48"}
+            viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
             preserveAspectRatio="none"
             style={{
               color: resolvedHex,
@@ -841,10 +841,10 @@ function ProposalsDashboard() {
           >
             <path 
               d={isFirst 
-                ? "M 8,0 L 274,0 L 282,24 L 274,48 L 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
                 : isLast 
-                  ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,48 L 0,48 L 8,24 L 0,0 Z"
-                  : "M 0,0 L 274,0 L 282,24 L 274,48 L 0,48 L 8,24 L 0,0 Z"
+                  ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                  : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
               }
               fill="currentColor"
               stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -908,7 +908,7 @@ function ProposalsDashboard() {
                   title="Criar Nova Etapa"
                   type="button"
                 >
-                  <Plus size={14} />
+                  <Plus size={16} />
                 </button>
               )}
 
@@ -923,7 +923,7 @@ function ProposalsDashboard() {
                   title="Editar Coluna"
                   type="button"
                 >
-                  <Edit2 size={14} />
+                  <Edit2 size={16} />
                 </button>
               )}
             </div>
@@ -941,7 +941,7 @@ function ProposalsDashboard() {
                 onDragStart={(e) => e.preventDefault()}
               />
               <div 
-                className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 animate-in fade-in slide-in-from-top-2 duration-150 flex flex-col gap-3 cursor-default"
+                className="absolute left-1/2 -translate-x-1/2 top-12 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 animate-in fade-in slide-in-from-top-2 duration-150 flex flex-col gap-3 cursor-default"
                 onClick={(e) => e.stopPropagation()}
                 onDragStart={(e) => e.preventDefault()}
               >
@@ -1091,7 +1091,7 @@ function ProposalsDashboard() {
     
     return (
       <div 
-        className="flex-1 w-[274px] flex flex-col items-start min-h-[600px]"
+        className="flex-1 w-[274px] flex flex-col items-start min-h-0 overflow-y-auto"
         onDragOver={(e) => {
           e.preventDefault();
           e.currentTarget.classList.add('opacity-80');
@@ -1107,7 +1107,7 @@ function ProposalsDashboard() {
         }}
       >
         <div
-          className="flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+          className="w-full flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
           style={{
             width: '274px',
             minWidth: '274px',
@@ -1143,11 +1143,11 @@ function ProposalsDashboard() {
       `}} />
       <Sidebar />
 
-      <main className="flex-1 p-8 overflow-y-auto h-full">
-        <div className="max-w-full mx-auto space-y-6">
+      <main className="flex-1 p-8 overflow-hidden h-screen flex flex-col bg-[#F8FAFC]">
+        <div className="max-w-full mx-auto space-y-6 flex-1 flex flex-col min-h-0 w-full">
 
           {/* HEADER */}
-          <header className="flex justify-between items-end border-b border-slate-300 pb-4">
+          <header className="flex justify-between items-end border-b border-slate-300 pb-4 shrink-0">
             <div>
               <h1 className="text-2xl font-bold text-[#1B4D3E] tracking-wider uppercase">FPV - Gestão de Formação de Preço de Vendas</h1>
               <p className="text-slate-500 text-sm mt-1">Engenharia de Custos e Controladoria de Facilities</p>
@@ -1211,7 +1211,7 @@ function ProposalsDashboard() {
           </header>
 
           {/* KPIs */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
             {[
               { label: 'Propostas Ativas', value: activeCount.toString(), icon: FileText, color: 'text-blue-600' },
               { label: 'Volume Mensal', value: fmt(monthlyVolume), icon: TrendingUp, color: 'text-[#1B4D3E]' },
@@ -1231,7 +1231,7 @@ function ProposalsDashboard() {
           </div>
 
           {/* BARRA DE BUSCA (sempre visível) */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
               <input
@@ -1250,8 +1250,8 @@ function ProposalsDashboard() {
 
           {/* ── VISUALIZAÇÃO EM LISTA ─────────────────────────────────────────── */}
           {viewMode === 'lista' && (
-            <div className="bg-white rounded-md shadow-sm border border-slate-300 overflow-hidden">
-              <div className="p-4 border-b border-slate-300 flex items-center justify-between bg-slate-50">
+            <div className="bg-white rounded-md shadow-sm border border-slate-300 overflow-hidden flex-1 flex flex-col min-h-0 w-full">
+              <div className="p-4 border-b border-slate-300 flex items-center justify-between bg-slate-50 shrink-0">
                 <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
                   <FileText size={16} /> Pipeline de Orçamentos
                   <span className="text-[10px] bg-white border border-slate-300 text-slate-500 px-2 py-0.5 rounded ml-2 font-bold">
@@ -1260,7 +1260,7 @@ function ProposalsDashboard() {
                 </h2>
               </div>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-auto flex-1 min-h-0">
                 <table className="w-full text-left border-collapse min-w-[1100px]">
                   <thead>
                     <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
@@ -1415,8 +1415,8 @@ function ProposalsDashboard() {
                         <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
                       </>
                     ) : (
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2 mb-4">
+                      <div className="space-y-4 flex-1 flex flex-col min-h-0">
+                        <div className="flex items-center gap-2 mb-4 shrink-0">
                           <LayoutGrid size={16} className="text-[#1B4D3E]" />
                           <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
                           <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
@@ -1425,13 +1425,13 @@ function ProposalsDashboard() {
                         </div>
 
                         {/* Painel Kanban Unificado */}
-                        <div className="overflow-x-auto pb-6 pt-0">
-                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch">
+                        <div className="flex-1 min-h-0 overflow-x-auto pb-4 pt-0">
+                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch h-full">
                             {orderedStatusCols.map((col, idx) => {
                               const isFirst = idx === 0;
                               const isLast = idx === orderedStatusCols.length - 1;
                               return (
-                                <div key={col.id} className="flex flex-col">
+                                <div key={col.id} className="flex flex-col h-full">
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}
@@ -1509,8 +1509,8 @@ function ProposalsDashboard() {
                         </div>
                       </>
                     ) : (
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2 mb-4">
+                      <div className="space-y-4 flex-1 flex flex-col min-h-0">
+                        <div className="flex items-center gap-2 mb-4 shrink-0">
                           <UserSquare2 size={16} className="text-[#1B4D3E]" />
                           <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
                           <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
@@ -1519,14 +1519,14 @@ function ProposalsDashboard() {
                         </div>
 
                         {/* Painel Kanban Unificado */}
-                        <div className="overflow-x-auto pb-6 pt-0">
-                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch">
+                        <div className="flex-1 min-h-0 overflow-x-auto pb-4 pt-0">
+                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch h-full">
                             {orderedVendedorCols.map((col, idx) => {
                               const vColor = vendedorColors[col.label] || 'emerald';
                               const isFirst = idx === 0;
                               const isLast = idx === orderedVendedorCols.length - 1;
                               return (
-                                <div key={col.id} className="flex flex-col">
+                                <div key={col.id} className="flex flex-col h-full">
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}
@@ -1607,8 +1607,8 @@ function ProposalsDashboard() {
                         </div>
                       </>
                     ) : (
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2 mb-4">
+                      <div className="space-y-4 flex-1 flex flex-col min-h-0">
+                        <div className="flex items-center gap-2 mb-4 shrink-0">
                           <Building size={16} className="text-[#1B4D3E]" />
                           <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Segmento</h2>
                           <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
@@ -1617,14 +1617,14 @@ function ProposalsDashboard() {
                         </div>
 
                         {/* Painel Kanban Unificado */}
-                        <div className="overflow-x-auto pb-6 pt-0">
-                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch">
+                        <div className="flex-1 min-h-0 overflow-x-auto pb-4 pt-0">
+                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch h-full">
                             {kanbanSegmentoCols.map((col, idx) => {
                               const segColor = segmentoColors[col.label] || '#3b82f6';
                               const isFirst = idx === 0;
                               const isLast = idx === kanbanSegmentoCols.length - 1;
                               return (
-                                <div key={col.id} className="flex flex-col">
+                                <div key={col.id} className="flex flex-col h-full">
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}
