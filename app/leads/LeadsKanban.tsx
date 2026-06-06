@@ -1306,50 +1306,48 @@ export default function LeadsKanban() {
       <div className="flex flex-col flex-1 py-6 pl-2 pr-1 bg-slate-50">
         {showMetrics && <PipelineMetrics leads={filteredLeads} stages={stages} />}
         {viewMode === 'kanban-status' && (
-          <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
-            <div className="flex gap-[4px] h-[calc(100vh-70px)] shrink-0 pr-1 items-stretch">
-              {stages.map((stage, idx) => {
-                const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
-                const totalValorEst = stageLeads.reduce((acc, lead) => acc + (lead.valorEst || 0), 0);
-                const isFirst = idx === 0;
-                const resolvedHex = resolveColorToHex(stage.color);
-                const contrast = getContrastYIQ(resolvedHex);
-                const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
-                const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
-                const textHex = getDarkenedHexForText(resolvedHex);
+          <div className="flex gap-[16px] min-w-max pt-0 mt-0 items-stretch">
+            {stages.map((stage, idx) => {
+              const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
+              const totalValorEst = stageLeads.reduce((acc, lead) => acc + (lead.valorEst || 0), 0);
+              const isFirst = idx === 0;
+              const resolvedHex = resolveColorToHex(stage.color);
+              const contrast = getContrastYIQ(resolvedHex);
+              const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
+              const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
+              const textHex = getDarkenedHexForText(resolvedHex);
 
-                return (
-                  <div 
-                    key={stage.id} 
-                    className="w-72 shrink-0 flex flex-col h-full rounded-2xl relative"
-                    style={{ marginLeft: isFirst ? '0px' : '-14px' }}
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, stage.id)}
-                  >
-                    <div className="relative h-14 shrink-0 z-10 w-full group/header">
+              return (
+                <div 
+                  key={stage.id} 
+                  className="flex flex-col"
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, stage.id)}
+                >
+                  <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
+                    <div className="relative h-14 shrink-0 z-10 w-full group/header pointer-events-auto">
                       <svg 
-                        className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200" 
-                        preserveAspectRatio="none" 
+                        className="absolute inset-0 w-[288px] h-full drop-shadow-sm transition-all duration-200 overflow-visible" 
                         viewBox="0 0 288 56"
-                        style={{ color: bgRgba }}
+                        style={{ color: resolvedHex }}
                       >
                         <path 
                           d={isFirst 
                             ? "M 10,0 L 274,0 L 288,28 L 274,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                            : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 L 14,28 Z"
+                            : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 Z"
                           }
                           fill="currentColor" 
-                          stroke={borderRgba}
+                          stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
                           strokeWidth="1.5"
                         />
                       </svg>
                       <div 
                         className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
-                        style={{ color: textHex }}
+                        style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
                       >
                         <div className="flex justify-between items-center w-full min-w-0">
                           <div className="flex items-center gap-1.5 min-w-0">
-                            <h3 className="font-black uppercase tracking-wider text-xs truncate max-w-[170px]">
+                            <h3 className="font-black uppercase tracking-wider text-sm truncate max-w-[170px]">
                               {stage.nome}
                             </h3>
                             
@@ -1361,7 +1359,7 @@ export default function LeadsKanban() {
                                 setEditingStageId(stage.id);
                               }}
                               className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                              style={{ color: textHex }}
+                              style={{ color: 'inherit' }}
                               title="Editar Etapa"
                             >
                               <Edit2 size={11} />
@@ -1374,7 +1372,7 @@ export default function LeadsKanban() {
                                 handleCreateStage(stage.id);
                               }}
                               className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                              style={{ color: textHex }}
+                              style={{ color: 'inherit' }}
                               title="Criar Nova Etapa"
                             >
                               <Plus size={11} />
@@ -1383,7 +1381,7 @@ export default function LeadsKanban() {
                         </div>
 
                         {/* Subtítulo integrado com o totalizador de volume e leads */}
-                        <span className="text-[10px] font-bold mt-0.5 opacity-70 truncate select-none">
+                        <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
                           {fmt(totalValorEst)} • {stageLeads.length} {stageLeads.length === 1 ? 'lead' : 'leads'}
                         </span>
 
@@ -1541,36 +1539,40 @@ export default function LeadsKanban() {
                       </div>
                     </div>
 
-                     <div 
-                      className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
-                      style={{
-                        width: '274px',
-                        minWidth: '274px',
-                        maxWidth: '274px',
-                        marginLeft: '0px',
-                        alignSelf: 'flex-start',
-                        backgroundColor: bgRgba,
-                        borderColor: borderRgba,
-                        borderWidth: '0 1px 1px 1px',
-                        borderStyle: 'solid',
-                        minHeight: '600px',
-                      }}
+                    <div 
+                      className="flex-1 w-72 flex flex-col items-start min-h-[600px]"
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, stage.id)}
                     >
-
-                      <div className="flex-1 flex flex-col gap-3">
-                        {stageLeads.map(lead => (
-                          <LeadCard
-                            key={lead.id}
-                            lead={lead}
-                            handleDragStart={handleDragStart}
-                            handleDragEnd={handleDragEnd}
-                            setSelectedLead={setSelectedLead}
-                            onOwnerClick={(e, leadId) => {
-                              setInlineOwnerAnchorEl(e.currentTarget);
-                              setInlineOwnerLeadId(leadId);
-                            }}
-                          />
-                        ))}
+                      <div
+                        className="flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+                        style={{
+                          width: '274px',
+                          minWidth: '274px',
+                          maxWidth: '274px',
+                          marginLeft: '0px',
+                          alignSelf: 'flex-start',
+                          backgroundColor: bgRgba,
+                          borderColor: borderRgba,
+                          borderWidth: '0 1px 1px 1px',
+                          borderStyle: 'solid',
+                        }}
+                      >
+                        <div className="flex-1 flex flex-col gap-3">
+                          {stageLeads.map(lead => (
+                            <LeadCard
+                              key={lead.id}
+                              lead={lead}
+                              handleDragStart={handleDragStart}
+                              handleDragEnd={handleDragEnd}
+                              setSelectedLead={setSelectedLead}
+                              onOwnerClick={(e, leadId) => {
+                                setInlineOwnerAnchorEl(e.currentTarget);
+                                setInlineOwnerLeadId(leadId);
+                              }}
+                            />
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1581,8 +1583,7 @@ export default function LeadsKanban() {
         )}
 
         {viewMode === 'kanban-vendedor' && (
-          <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
-            <div className="flex gap-[4px] h-[calc(100vh-70px)] shrink-0 pr-1 items-stretch">
+          <div className="flex gap-[16px] min-w-max pt-0 mt-0 items-stretch">
               {kanbanVendedorCols.map((col, idx) => {
                 const colLeads = col.cards;
                 const isFirst = idx === 0;
@@ -1597,75 +1598,74 @@ export default function LeadsKanban() {
                 return (
                   <div 
                     key={col.id} 
-                    className="w-72 shrink-0 flex flex-col h-full rounded-2xl relative"
-                    style={{ marginLeft: isFirst ? '0px' : '-14px' }}
+                    className="flex flex-col"
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDropVendedor(e, col.id)}
                   >
-                    <div className="relative h-14 shrink-0 z-10 w-full group/header">
-                      <svg 
-                        className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200" 
-                        preserveAspectRatio="none" 
-                        viewBox="0 0 288 56"
-                        style={{ color: bgRgba }}
-                      >
-                        <path 
-                          d={isFirst 
-                            ? "M 10,0 L 274,0 L 288,28 L 274,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                            : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 L 14,28 Z"
-                          }
-                          fill="currentColor" 
-                          stroke={borderRgba}
-                          strokeWidth="1.5"
-                        />
-                      </svg>
-                      <div 
-                        className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
-                        style={{ color: textHex }}
-                      >
-                        <div className="flex justify-between items-center w-full min-w-0">
-                          <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                            {col.avatarUrl ? (
-                              <img 
-                                src={col.avatarUrl} 
-                                alt={col.label} 
-                                className="w-5 h-5 rounded-full object-cover border border-white/20 shrink-0"
-                              />
-                            ) : col.id !== 'unassigned' ? (
-                              <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center font-black text-[8px] uppercase border border-black/10 shrink-0" style={{ color: textHex }}>
-                                {col.label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                              </div>
-                            ) : (
-                              <User size={10} className="shrink-0" style={{ color: textHex }} />
-                            )}
-                            <h3 className="font-black uppercase tracking-wider text-xs truncate">
-                              {col.label}
-                            </h3>
+                    <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
+                      <div className="relative h-14 shrink-0 z-10 w-full group/header pointer-events-auto">
+                        <svg 
+                          className="absolute inset-0 w-[288px] h-full drop-shadow-sm transition-all duration-200 overflow-visible" 
+                          viewBox="0 0 288 56"
+                          style={{ color: resolvedHex }}
+                        >
+                          <path 
+                            d={isFirst 
+                              ? "M 10,0 L 274,0 L 288,28 L 274,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                              : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 Z"
+                            }
+                            fill="currentColor" 
+                            stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
+                            strokeWidth="1.5"
+                          />
+                        </svg>
+                        <div 
+                          className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                          style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
+                        >
+                          <div className="flex justify-between items-center w-full min-w-0">
+                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                              {col.avatarUrl ? (
+                                <img 
+                                  src={col.avatarUrl} 
+                                  alt={col.label} 
+                                  className="w-5 h-5 rounded-full object-cover border border-white/20 shrink-0"
+                                />
+                              ) : col.id !== 'unassigned' ? (
+                                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center font-black text-[8px] uppercase border border-black/10 shrink-0" style={{ color: 'inherit' }}>
+                                  {col.label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                                </div>
+                              ) : (
+                                <User size={10} className="shrink-0" style={{ color: 'inherit' }} />
+                              )}
+                              <h3 className="font-black uppercase tracking-wider text-sm truncate">
+                                {col.label}
+                              </h3>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {col.id !== 'unassigned' && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingVendedorId(col.id);
+                                  }}
+                                  className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                                  style={{ color: 'inherit' }}
+                                  title="Editar Cor"
+                                >
+                                  <Edit2 size={11} />
+                                </button>
+                              )}
+                            </div>
                           </div>
 
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            {col.id !== 'unassigned' && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingVendedorId(col.id);
-                                }}
-                                className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                                style={{ color: textHex }}
-                                title="Editar Cor"
-                              >
-                                <Edit2 size={11} />
-                              </button>
-                            )}
-                          </div>
+                          {/* Subtítulo integrado com o totalizador de volume e leads */}
+                          <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
+                            {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
+                          </span>
                         </div>
-
-                        {/* Subtítulo integrado com o totalizador de volume e leads */}
-                        <span className="text-[10px] font-bold mt-0.5 opacity-70 truncate select-none">
-                          {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
-                        </span>
-                      </div>
 
                         {editingVendedorId === col.id && (
                           <>
@@ -1754,48 +1754,52 @@ export default function LeadsKanban() {
                       </div>
 
                        <div 
-                        className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
-                      style={{
-                        width: '274px',
-                        minWidth: '274px',
-                        maxWidth: '274px',
-                        marginLeft: '0px',
-                        alignSelf: 'flex-start',
-                        backgroundColor: bgRgba,
-                        borderColor: borderRgba,
-                        borderWidth: '0 1px 1px 1px',
-                        borderStyle: 'solid',
-                        minHeight: '600px',
-                      }}
+                    <div 
+                      className="flex-1 w-72 flex flex-col items-start min-h-[600px]"
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDropVendedor(e, col.id)}
                     >
-
-                      <div className="flex-1 flex flex-col gap-3">
-                        {colLeads.map(lead => (
-                          <LeadCard
-                            key={lead.id}
-                            lead={lead}
-                            handleDragStart={handleDragStart}
-                            handleDragEnd={handleDragEnd}
-                            setSelectedLead={setSelectedLead}
-                            showStageInFooter={true}
-                            onOwnerClick={(e, leadId) => {
-                              setInlineOwnerAnchorEl(e.currentTarget);
-                              setInlineOwnerLeadId(leadId);
-                            }}
-                          />
-                        ))}
+                      <div
+                        className="flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+                        style={{
+                          width: '274px',
+                          minWidth: '274px',
+                          maxWidth: '274px',
+                          marginLeft: '0px',
+                          alignSelf: 'flex-start',
+                          backgroundColor: bgRgba,
+                          borderColor: borderRgba,
+                          borderWidth: '0 1px 1px 1px',
+                          borderStyle: 'solid',
+                        }}
+                      >
+                        <div className="flex-1 flex flex-col gap-3">
+                          {colLeads.map(lead => (
+                            <LeadCard
+                              key={lead.id}
+                              lead={lead}
+                              handleDragStart={handleDragStart}
+                              handleDragEnd={handleDragEnd}
+                              setSelectedLead={setSelectedLead}
+                              showStageInFooter={true}
+                              onOwnerClick={(e, leadId) => {
+                                setInlineOwnerAnchorEl(e.currentTarget);
+                                setInlineOwnerLeadId(leadId);
+                              }}
+                            />
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
-                );
               })}
             </div>
           </div>
         )}
 
         {viewMode === 'kanban-segmento' && (
-          <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
-            <div className="flex gap-[4px] h-[calc(100vh-70px)] shrink-0 pr-1 items-stretch">
+          <div className="flex gap-[16px] min-w-max pt-0 mt-0 items-stretch">
+            {kanbanSegmentoCols.map((col, idx) => {
               {kanbanSegmentoCols.map((col, idx) => {
                 const colLeads = col.cards;
                 const isFirst = idx === 0;
@@ -1810,41 +1814,62 @@ export default function LeadsKanban() {
                 return (
                   <div 
                     key={col.id} 
-                    className="w-72 shrink-0 flex flex-col h-full rounded-2xl relative"
-                    style={{ marginLeft: isFirst ? '0px' : '-14px' }}
+                    className="flex flex-col"
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDropSegmento(e, col.id)}
                   >
-                    <div className="relative h-14 shrink-0 z-10 w-full group/header">
-                      <svg 
-                        className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200" 
-                        preserveAspectRatio="none" 
-                        viewBox="0 0 288 56"
-                        style={{ color: bgRgba }}
-                      >
-                        <path 
-                          d={isFirst 
-                            ? "M 10,0 L 274,0 L 288,28 L 274,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                            : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 L 14,28 Z"
-                          }
-                          fill="currentColor" 
-                          stroke={borderRgba}
-                          strokeWidth="1.5"
-                        />
-                      </svg>
-                      <div 
-                        className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
-                        style={{ color: textHex }}
-                      >
-                        <div className="flex justify-between items-center w-full min-w-0">
-                          <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                            <Building size={12} className="shrink-0" style={{ color: textHex }} />
-                            <h3 className="font-black uppercase tracking-wider text-xs truncate">
-                              {col.label}
-                            </h3>
+                    <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
+                      <div className="relative h-14 shrink-0 z-10 w-full group/header pointer-events-auto">
+                        <svg 
+                          className="absolute inset-0 w-[288px] h-full drop-shadow-sm transition-all duration-200 overflow-visible" 
+                          viewBox="0 0 288 56"
+                          style={{ color: resolvedHex }}
+                        >
+                          <path 
+                            d={isFirst 
+                              ? "M 10,0 L 274,0 L 288,28 L 274,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                              : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 Z"
+                            }
+                            fill="currentColor" 
+                            stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
+                            strokeWidth="1.5"
+                          />
+                        </svg>
+                        <div 
+                          className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                          style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
+                        >
+                          <div className="flex justify-between items-center w-full min-w-0">
+                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                              <Building size={12} className="shrink-0" style={{ color: 'inherit' }} />
+                              <h3 className="font-black uppercase tracking-wider text-sm truncate">
+                                {col.label}
+                              </h3>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {col.id !== 'unassigned' && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingSegmentoId(col.id);
+                                  }}
+                                  className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                                  style={{ color: 'inherit' }}
+                                  title="Editar Cor"
+                                >
+                                  <Edit2 size={11} />
+                                </button>
+                              )}
+                            </div>
                           </div>
 
-                          <div className="flex items-center gap-1.5 shrink-0">
+                          {/* Subtítulo integrado com o totalizador de volume e leads */}
+                          <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
+                            {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
+                          </span>
+                        </div>
                             {col.id !== 'unassigned' && (
                               <button
                                 type="button"
@@ -1954,37 +1979,41 @@ export default function LeadsKanban() {
                         )}
                       </div>
 
-                       <div 
-                        className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
-                      style={{
-                        width: '274px',
-                        minWidth: '274px',
-                        maxWidth: '274px',
-                        marginLeft: '0px',
-                        alignSelf: 'flex-start',
-                        backgroundColor: bgRgba,
-                        borderColor: borderRgba,
-                        borderWidth: '0 1px 1px 1px',
-                        borderStyle: 'solid',
-                        minHeight: '600px',
-                      }}
+                    <div 
+                      className="flex-1 w-72 flex flex-col items-start min-h-[600px]"
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDropSegmento(e, col.id)}
                     >
-
-                      <div className="flex-1 flex flex-col gap-3">
-                        {colLeads.map(lead => (
-                          <LeadCard
-                            key={lead.id}
-                            lead={lead}
-                            handleDragStart={handleDragStart}
-                            handleDragEnd={handleDragEnd}
-                            setSelectedLead={setSelectedLead}
-                            showStageInFooter={true}
-                            onOwnerClick={(e, leadId) => {
-                              setInlineOwnerAnchorEl(e.currentTarget);
-                              setInlineOwnerLeadId(leadId);
-                            }}
-                          />
-                        ))}
+                      <div
+                        className="flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+                        style={{
+                          width: '274px',
+                          minWidth: '274px',
+                          maxWidth: '274px',
+                          marginLeft: '0px',
+                          alignSelf: 'flex-start',
+                          backgroundColor: bgRgba,
+                          borderColor: borderRgba,
+                          borderWidth: '0 1px 1px 1px',
+                          borderStyle: 'solid',
+                        }}
+                      >
+                        <div className="flex-1 flex flex-col gap-3">
+                          {colLeads.map(lead => (
+                            <LeadCard
+                              key={lead.id}
+                              lead={lead}
+                              handleDragStart={handleDragStart}
+                              handleDragEnd={handleDragEnd}
+                              setSelectedLead={setSelectedLead}
+                              showStageInFooter={true}
+                              onOwnerClick={(e, leadId) => {
+                                setInlineOwnerAnchorEl(e.currentTarget);
+                                setInlineOwnerLeadId(leadId);
+                              }}
+                            />
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>

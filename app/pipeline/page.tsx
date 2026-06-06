@@ -746,7 +746,7 @@ function ProposalsDashboard() {
 
     return (
       <div 
-        className="flex-shrink-0 w-72 shrink-0 relative cursor-grab active:cursor-grabbing transition-all select-none duration-200 hover:scale-[1.01] pointer-events-auto"
+        className="flex-shrink-0 w-[274px] shrink-0 relative cursor-grab active:cursor-grabbing transition-all select-none duration-200 hover:scale-[1.01] pointer-events-auto"
         data-col-label={label}
         draggable="true"
         onDragStart={(e) => {
@@ -827,20 +827,20 @@ function ProposalsDashboard() {
         >
           {/* Background SVG Custom Shape */}
           <svg 
-            className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200"
+            className="absolute inset-0 w-[288px] h-full drop-shadow-sm transition-all duration-200 overflow-visible"
             viewBox="0 0 288 56"
             preserveAspectRatio="none"
             style={{
-              color: bgRgba,
+              color: resolvedHex,
             }}
           >
             <path 
               d={isFirst 
                 ? "M 10,0 L 274,0 L 288,28 L 274,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 L 14,28 Z"
+                : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 Z"
               }
               fill="currentColor"
-              stroke={borderRgba}
+              stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
               strokeWidth="1.5"
             />
           </svg>
@@ -849,18 +849,18 @@ function ProposalsDashboard() {
           <div 
             className={`absolute inset-0 z-10 flex flex-col justify-center ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
             style={{
-              color: textHex,
+              color: contrast === 'white' ? '#ffffff' : '#0f172a',
             }}
           >
             <div className="flex items-center justify-between w-full min-w-0">
               {isStatus ? (
-                <span className="text-xs font-black uppercase tracking-wider truncate max-w-[170px]">
+                <span className="text-sm font-black uppercase tracking-wider truncate max-w-[170px]">
                   {label}
                 </span>
               ) : isSegmento ? (
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   <Building size={14} className="shrink-0" style={{ color: textHex }} />
-                  <span className="text-xs font-black uppercase tracking-wider truncate">
+                  <span className="text-sm font-black uppercase tracking-wider truncate">
                     {label}
                   </span>
                 </div>
@@ -877,7 +877,7 @@ function ProposalsDashboard() {
                       {label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                     </div>
                   )}
-                  <span className="text-xs font-black uppercase tracking-wider truncate">
+                  <span className="text-sm font-black uppercase tracking-wider truncate">
                     {label}
                   </span>
                 </div>
@@ -891,7 +891,7 @@ function ProposalsDashboard() {
                       onCreateStatus(label);
                     }}
                     className="p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                    style={{ color: textHex }}
+                    style={{ color: 'inherit' }}
                     title="Criar Nova Etapa"
                     type="button"
                   >
@@ -906,7 +906,7 @@ function ProposalsDashboard() {
                       setShowEditPopover(!showEditPopover);
                     }}
                     className="p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                    style={{ color: textHex }}
+                    style={{ color: 'inherit' }}
                     title="Editar Coluna"
                     type="button"
                   >
@@ -917,7 +917,7 @@ function ProposalsDashboard() {
             </div>
 
             {/* Subtítulo integrado com o totalizador de volume e negócios */}
-            <span className="text-[10px] font-bold mt-0.5 opacity-90 truncate select-none">
+            <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
               {fmt(total)} • {cards.length} {cards.length === 1 ? 'negócio' : 'negócios'}
             </span>
           </div>
@@ -1100,7 +1100,7 @@ function ProposalsDashboard() {
         }}
       >
         <div
-          className="flex-1 flex flex-col p-3 rounded-b-2xl rounded-t-none"
+          className="flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
           style={{
             width: '274px',
             minWidth: '274px',
@@ -1419,11 +1419,11 @@ function ProposalsDashboard() {
 
                         {/* Painel Kanban Unificado */}
                         <div className="overflow-x-auto pb-6 pt-0">
-                          <div className="flex gap-[4px] min-w-max pt-0 mt-0 items-stretch">
+                          <div className="flex gap-[16px] min-w-max pt-0 mt-0 items-stretch">
                             {orderedStatusCols.map((col, idx) => {
                               const isFirst = idx === 0;
                               return (
-                                <div key={col.id} className="flex flex-col" style={{ marginLeft: isFirst ? '0px' : '-14px' }}>
+                                <div key={col.id} className="flex flex-col">
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}
@@ -1511,12 +1511,12 @@ function ProposalsDashboard() {
 
                         {/* Painel Kanban Unificado */}
                         <div className="overflow-x-auto pb-6 pt-0">
-                          <div className="flex gap-[4px] min-w-max pt-0 mt-0 items-stretch">
+                          <div className="flex gap-[16px] min-w-max pt-0 mt-0 items-stretch">
                             {orderedVendedorCols.map((col, idx) => {
                               const vColor = vendedorColors[col.label] || 'emerald';
                               const isFirst = idx === 0;
                               return (
-                                <div key={col.id} className="flex flex-col" style={{ marginLeft: isFirst ? '0px' : '-14px' }}>
+                                <div key={col.id} className="flex flex-col">
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}
@@ -1607,12 +1607,12 @@ function ProposalsDashboard() {
 
                         {/* Painel Kanban Unificado */}
                         <div className="overflow-x-auto pb-6 pt-0">
-                          <div className="flex gap-[4px] min-w-max pt-0 mt-0 items-stretch">
+                          <div className="flex gap-[16px] min-w-max pt-0 mt-0 items-stretch">
                             {kanbanSegmentoCols.map((col, idx) => {
                               const segColor = segmentoColors[col.label] || '#3b82f6';
                               const isFirst = idx === 0;
                               return (
-                                <div key={col.id} className="flex flex-col" style={{ marginLeft: isFirst ? '0px' : '-14px' }}>
+                                <div key={col.id} className="flex flex-col">
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}

@@ -392,67 +392,55 @@ export default function ContratosDashboard() {
 
     return (
       <div 
-        className="flex-shrink-0 w-80 flex flex-col h-full rounded-2xl relative"
-        style={{ marginLeft: isFirst ? '0px' : '-14px' }}
-        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-slate-200/50', 'rounded-xl'); }}
-        onDragLeave={(e) => e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl')}
-        onDrop={async (e) => {
-          e.preventDefault();
-          e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl');
-          const id = e.dataTransfer.getData('text/plain');
-          if (id) {
-            setContratos(prev => prev.map(c => c.id === id ? { ...c, status } : c));
-            await updateContratoStatus(id, status);
-          }
-        }}
+        className="flex flex-col"
       >
-        <div className="relative h-14 shrink-0 z-10 w-full group/title">
-          <svg 
-            className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200"
-            viewBox="0 0 320 56"
-            preserveAspectRatio="none"
-            style={{ color: bgRgba }}
-          >
-            <path 
-              d={isFirst 
-                ? "M 10,0 L 306,0 L 320,28 L 306,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                : "M 0,0 L 306,0 L 320,28 L 306,56 L 0,56 L 14,28 Z"
-              }
-              fill="currentColor"
-              stroke={borderRgba}
-              strokeWidth="1.5"
-            />
-          </svg>
-          <div 
-            className={`absolute inset-0 z-10 flex flex-col justify-center ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
-            style={{ color: textHex }}
-          >
-            <div className="flex items-center justify-between w-full min-w-0">
-              <span className="text-xs font-black uppercase tracking-wider truncate max-w-[170px]">
-                {status}
-              </span>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); handleCreateStatus(status); }}
-                  className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                  style={{ color: textHex }}
-                  title="Criar Nova Etapa"
-                >
-                  <Plus size={12} />
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setEditingStatusId(status); }}
-                  className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                  style={{ color: textHex }}
-                  title="Editar Coluna"
-                >
-                  <Edit2 size={12} />
-                </button>
+        <div className="flex-shrink-0 w-[306px] shrink-0 relative select-none duration-200">
+          <div className="relative h-14 shrink-0 z-10 w-full group/title pointer-events-auto">
+            <svg 
+              className="absolute inset-0 w-[320px] h-full drop-shadow-sm transition-all duration-200 overflow-visible"
+              viewBox="0 0 320 56"
+              style={{ color: resolvedHex }}
+            >
+              <path 
+                d={isFirst 
+                  ? "M 10,0 L 306,0 L 320,28 L 306,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                  : "M 0,0 L 306,0 L 320,28 L 306,56 L 0,56 Z"
+                }
+                fill="currentColor"
+                stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
+                strokeWidth="1.5"
+              />
+            </svg>
+            <div 
+              className={`absolute inset-0 z-10 flex flex-col justify-center ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+              style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
+            >
+              <div className="flex items-center justify-between w-full min-w-0">
+                <span className="text-sm font-black uppercase tracking-wider truncate max-w-[170px]">
+                  {status}
+                </span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); handleCreateStatus(status); }}
+                    className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                    style={{ color: 'inherit' }}
+                    title="Criar Nova Etapa"
+                  >
+                    <Plus size={12} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setEditingStatusId(status); }}
+                    className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                    style={{ color: 'inherit' }}
+                    title="Editar Coluna"
+                  >
+                    <Edit2 size={12} />
+                  </button>
+                </div>
               </div>
-            </div>
-            <span className="text-[10px] font-bold mt-0.5 opacity-70 truncate select-none">
+              <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
               {fmt(total)}/mês • {cards.length} {cards.length === 1 ? 'contrato' : 'contratos'}
             </span>
           </div>
@@ -577,35 +565,33 @@ export default function ContratosDashboard() {
           )}
         </div>
         <div 
-          className="flex-1 flex flex-col p-3 border-x border-b rounded-b-2xl z-0"
-          style={{
-            width: '306px',
-            minWidth: '306px',
-            maxWidth: '306px',
-            marginLeft: '0px',
-            alignSelf: 'flex-start',
-            backgroundColor: bgRgba,
-            borderColor: borderRgba,
-            borderWidth: '0 1px 1px 1px',
-            borderStyle: 'solid',
-            minHeight: '600px'
+          className="flex-1 w-[320px] flex flex-col items-start min-h-[600px]"
+          onDragOver={(e) => { e.preventDefault(); }}
+          onDrop={async (e) => {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('text/plain');
+            if (id) {
+              setContratos(prev => prev.map(c => c.id === id ? { ...c, status } : c));
+              await updateContratoStatus(id, status);
+            }
           }}
         >
-          <div className="flex-1 flex flex-col gap-3">
-            {cards.length === 0 ? (
-              <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
-                <p className="text-xs text-slate-300 font-medium">Vazio</p>
-              </div>
-            ) : (
-              cards.map(c => (
-                <div
-                  key={c.id}
-                  draggable
-                  onDragStart={(e) => e.dataTransfer.setData('text/plain', c.id)}
-                  onClick={() => router.push(`/contratos/${c.id}`)}
-                  className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer cursor-grab active:cursor-grabbing"
-                >
-                  <div className="flex items-start justify-between gap-2 mb-3">
+          <div
+            className="flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+            style={{
+              width: '306px',
+              minWidth: '306px',
+              maxWidth: '306px',
+              marginLeft: '0px',
+              alignSelf: 'flex-start',
+              backgroundColor: bgRgba,
+              borderColor: borderRgba,
+              borderWidth: '0 1px 1px 1px',
+              borderStyle: 'solid',
+            }}
+          >
+            <div className="flex-1 flex flex-col gap-3">
+              {cards.length === 0 ? (
                     <div className="flex items-center gap-2">
                       <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
                         <FileText size={13} className="text-[#1B4D3E]" />
@@ -671,40 +657,49 @@ export default function ContratosDashboard() {
 
     return (
       <div 
-        className="flex-shrink-0 w-80 flex flex-col h-full rounded-2xl relative"
-        style={{ marginLeft: isFirst ? '0px' : '-14px' }}
-        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-slate-200/50', 'rounded-xl'); }}
-        onDragLeave={(e) => e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl')}
-        onDrop={async (e) => {
-          e.preventDefault();
-          e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl');
-          const id = e.dataTransfer.getData('text/plain');
-          if (id) {
-            const newSegment = label === 'Sem Segmento' ? '' : label;
-            const targetContrato = contratos.find(c => c.id === id);
-            if (targetContrato) {
-              setContratos(prev => prev.map(c => c.id === id ? {
-                ...c,
-                client: c.client ? { ...c.client, segmento: newSegment || null } : null
-              } : c));
-              if (targetContrato.clientId) {
-                const res = await updateCliente(targetContrato.clientId, { segmento: newSegment });
-                if (!res.success) {
-                  alert(res.error || 'Erro ao atualizar o segmento do cliente');
-                  loadData();
-                }
-              } else {
-                alert('Este contrato não tem um cliente associado no banco de dados para salvar o segmento.');
-              }
-            }
-          }
-        }}
+        className="flex flex-col"
       >
-        <div className="relative h-14 shrink-0 z-10 w-full group/title">
-          <svg 
-            className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200"
-            viewBox="0 0 320 56"
-            preserveAspectRatio="none"
+        <div className="flex-shrink-0 w-[306px] shrink-0 relative select-none duration-200">
+          <div className="relative h-14 shrink-0 z-10 w-full group/title pointer-events-auto">
+            <svg 
+              className="absolute inset-0 w-[320px] h-full drop-shadow-sm transition-all duration-200 overflow-visible"
+              viewBox="0 0 320 56"
+              style={{ color: resolvedHex }}
+            >
+              <path 
+                d={isFirst 
+                  ? "M 10,0 L 306,0 L 320,28 L 306,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                  : "M 0,0 L 306,0 L 320,28 L 306,56 L 0,56 Z"
+                }
+                fill="currentColor"
+                stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
+                strokeWidth="1.5"
+              />
+            </svg>
+            <div 
+              className={`absolute inset-0 z-10 flex flex-col justify-center ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+              style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
+            >
+              <div className="flex items-center justify-between w-full min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                  <Building size={14} className="shrink-0" style={{ color: 'inherit' }} />
+                  <span className="text-sm font-black uppercase tracking-wider truncate">
+                    {label}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setEditingSegmentoId(label); }}
+                    className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                    style={{ color: 'inherit' }}
+                    title="Editar Cor"
+                  >
+                    <Edit2 size={12} />
+                  </button>
+                </div>
+              </div>
+              <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
             style={{ color: bgRgba }}
           >
             <path 
@@ -822,36 +817,48 @@ export default function ContratosDashboard() {
           )}
         </div>
         <div 
-          className="flex-1 flex flex-col p-3 border-x border-b rounded-b-2xl z-0"
-          style={{
-            width: '306px',
-            minWidth: '306px',
-            maxWidth: '306px',
-            marginLeft: '0px',
-            alignSelf: 'flex-start',
-            backgroundColor: bgRgba,
-            borderColor: borderRgba,
-            borderWidth: '0 1px 1px 1px',
-            borderStyle: 'solid',
-            minHeight: '600px'
+          className="flex-1 w-[320px] flex flex-col items-start min-h-[600px]"
+          onDragOver={(e) => { e.preventDefault(); }}
+          onDrop={async (e) => {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('text/plain');
+            if (id) {
+              const newSegment = label === 'Sem Segmento' ? '' : label;
+              const targetContrato = contratos.find(c => c.id === id);
+              if (targetContrato) {
+                setContratos(prev => prev.map(c => c.id === id ? {
+                  ...c,
+                  client: c.client ? { ...c.client, segmento: newSegment || null } : null
+                } : c));
+                if (targetContrato.clientId) {
+                  const res = await updateCliente(targetContrato.clientId, { segmento: newSegment });
+                  if (!res.success) {
+                    alert(res.error || 'Erro ao atualizar o segmento do cliente');
+                    loadData();
+                  }
+                } else {
+                  alert('Este contrato não tem um cliente associado no banco de dados para salvar o segmento.');
+                }
+              }
+            }
           }}
         >
-          <div className="flex-1 flex flex-col gap-3">
-            {cards.length === 0 ? (
-              <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
-                <p className="text-xs text-slate-300 font-medium">Vazio</p>
-              </div>
-            ) : (
-              cards.map(c => (
-                <div
-                  key={c.id}
-                  draggable
-                  onDragStart={(e) => e.dataTransfer.setData('text/plain', c.id)}
-                  onClick={() => router.push(`/contratos/${c.id}`)}
-                  className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer cursor-grab active:cursor-grabbing"
-                >
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-2">
+          <div
+            className="flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+            style={{
+              width: '306px',
+              minWidth: '306px',
+              maxWidth: '306px',
+              marginLeft: '0px',
+              alignSelf: 'flex-start',
+              backgroundColor: bgRgba,
+              borderColor: borderRgba,
+              borderWidth: '0 1px 1px 1px',
+              borderStyle: 'solid',
+            }}
+          >
+            <div className="flex-1 flex flex-col gap-3">
+              {cards.length === 0 ? (
                       <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
                         <FileText size={13} className="text-[#1B4D3E]" />
                       </div>
@@ -1130,7 +1137,7 @@ export default function ContratosDashboard() {
           {/* KANBAN POR STATUS */}
           {viewMode === 'kanban-status' && (
             <div className="overflow-x-auto pb-6">
-              <div className="flex gap-[4px] min-w-max items-stretch">
+              <div className="flex gap-[16px] min-w-max items-stretch">
                 {statusList.map((status, index) => (
                   <KanbanColumn key={status} status={status} isFirst={index === 0} />
                 ))}
@@ -1141,7 +1148,7 @@ export default function ContratosDashboard() {
           {/* KANBAN POR SEGMENTO */}
           {viewMode === 'kanban-segmento' && (
             <div className="overflow-x-auto pb-6">
-              <div className="flex gap-[4px] min-w-max items-stretch">
+              <div className="flex gap-[16px] min-w-max items-stretch">
                 {kanbanSegmentoCols.map((col, index) => (
                   <KanbanSegmentoColumn
                     key={col.id}
