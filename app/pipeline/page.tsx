@@ -1087,8 +1087,8 @@ function ProposalsDashboard() {
   };
 
   // ── Lista de cards da coluna ───────────────────────────────────────────────
-  const KanbanColumnCards = ({ label, cards, color, type = 'status', onDropProp }: {
-    label: string; cards: any[]; color?: string; type?: 'status' | 'vendedor'; onDropProp?: (propId: string) => void;
+  const KanbanColumnCards = ({ label, cards, color, type = 'status', onDropProp, isFirst = false }: {
+    label: string; cards: any[]; color?: string; type?: 'status' | 'vendedor'; onDropProp?: (propId: string) => void; isFirst?: boolean;
   }) => {
     const resolvedHex = resolveColorToHex(color);
     const contrast = getContrastYIQ(resolvedHex);
@@ -1097,7 +1097,7 @@ function ProposalsDashboard() {
     
     return (
       <div 
-        className="flex-shrink-0 w-72 flex flex-col min-h-[600px]"
+        className="flex-shrink-0 w-72 flex flex-col items-start min-h-[600px]"
         onDragOver={(e) => {
           e.preventDefault();
           e.currentTarget.classList.add('opacity-80');
@@ -1115,7 +1115,10 @@ function ProposalsDashboard() {
         <div
           className="flex-1 flex flex-col p-3 rounded-b-2xl rounded-t-none"
           style={{
-            width: '274px',
+            width: isFirst ? '274px' : '260px',
+            minWidth: isFirst ? '274px' : '260px',
+            maxWidth: isFirst ? '274px' : '260px',
+            marginLeft: isFirst ? '0px' : '14px',
             alignSelf: 'flex-start',
             backgroundColor: bgRgba,
             borderColor: borderRgba,
@@ -1476,13 +1479,14 @@ function ProposalsDashboard() {
                           onScroll={() => syncScroll('kanban-cards-status', 'kanban-headers-status')}
                         >
                           <div className="flex gap-3 min-w-max pt-0 mt-0">
-                            {orderedStatusCols.map(col => (
+                            {orderedStatusCols.map((col, idx) => (
                               <KanbanColumnCards
                                 key={col.id}
                                 label={col.label}
                                 color={col.color}
                                 type="status"
                                 cards={col.cards}
+                                isFirst={idx === 0}
                                 onDropProp={async (propId) => {
                                   const prop = proposals.find(p => p.id === propId);
                                   if (prop && prop.status !== col.label) {
@@ -1586,7 +1590,7 @@ function ProposalsDashboard() {
                           onScroll={() => syncScroll('kanban-cards-vendedor', 'kanban-headers-vendedor')}
                         >
                           <div className="flex gap-3 min-w-max pt-0 mt-0">
-                            {orderedVendedorCols.map(col => {
+                            {orderedVendedorCols.map((col, idx) => {
                               const vColor = vendedorColors[col.label] || 'emerald';
                               return (
                                 <KanbanColumnCards
@@ -1595,6 +1599,7 @@ function ProposalsDashboard() {
                                   type="vendedor"
                                   color={vColor}
                                   cards={col.cards}
+                                  isFirst={idx === 0}
                                   onDropProp={async (propId) => {
                                     const prop = proposals.find(p => p.id === propId);
                                     if (prop && prop.usuario !== col.label) {
@@ -1702,7 +1707,7 @@ function ProposalsDashboard() {
                           onScroll={() => syncScroll('kanban-cards-segmento', 'kanban-headers-segmento')}
                         >
                           <div className="flex gap-3 min-w-max pt-0 mt-0">
-                            {kanbanSegmentoCols.map(col => {
+                            {kanbanSegmentoCols.map((col, idx) => {
                               const segColor = segmentoColors[col.label] || '#3b82f6';
                               return (
                                 <KanbanColumnCards
@@ -1711,6 +1716,7 @@ function ProposalsDashboard() {
                                   type="vendedor"
                                   color={segColor}
                                   cards={col.cards}
+                                  isFirst={idx === 0}
                                   onDropProp={async (propId) => {
                                     const prop = proposals.find(p => p.id === propId);
                                     if (prop) {

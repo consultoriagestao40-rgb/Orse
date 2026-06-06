@@ -622,7 +622,10 @@ export default function ContratosDashboard() {
         <div 
           className="flex flex-col gap-3 flex-1 min-h-[600px] p-3 border-x border-b rounded-b-2xl"
           style={{
-            width: '306px',
+            width: isFirst ? '306px' : '292px',
+            minWidth: isFirst ? '306px' : '292px',
+            maxWidth: isFirst ? '306px' : '292px',
+            marginLeft: isFirst ? '0px' : '14px',
             alignSelf: 'flex-start',
             backgroundColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18),
             borderColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45),
@@ -901,7 +904,10 @@ export default function ContratosDashboard() {
         <div 
           className="flex flex-col gap-3 flex-1 min-h-[600px] p-3 border-x border-b rounded-b-2xl"
           style={{
-            width: '306px',
+            width: isFirst ? '306px' : '292px',
+            minWidth: isFirst ? '306px' : '292px',
+            maxWidth: isFirst ? '306px' : '292px',
+            marginLeft: isFirst ? '0px' : '14px',
             alignSelf: 'flex-start',
             backgroundColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18),
             borderColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45),

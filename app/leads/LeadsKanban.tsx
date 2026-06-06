@@ -1540,7 +1540,10 @@ export default function LeadsKanban() {
                     <div 
                       className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
                       style={{
-                        width: '274px',
+                        width: isFirst ? '274px' : '260px',
+                        minWidth: isFirst ? '274px' : '260px',
+                        maxWidth: isFirst ? '274px' : '260px',
+                        marginLeft: isFirst ? '0px' : '14px',
                         alignSelf: 'flex-start',
                         backgroundColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18),
                         borderColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45),
@@ -1754,7 +1757,10 @@ export default function LeadsKanban() {
                     <div 
                       className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
                       style={{
-                        width: '274px',
+                        width: isFirst ? '274px' : '260px',
+                        minWidth: isFirst ? '274px' : '260px',
+                        maxWidth: isFirst ? '274px' : '260px',
+                        marginLeft: isFirst ? '0px' : '14px',
                         alignSelf: 'flex-start',
                         backgroundColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18),
                         borderColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45),
@@ -1957,7 +1963,10 @@ export default function LeadsKanban() {
                     <div 
                       className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
                       style={{
-                        width: '274px',
+                        width: isFirst ? '274px' : '260px',
+                        minWidth: isFirst ? '274px' : '260px',
+                        maxWidth: isFirst ? '274px' : '260px',
+                        marginLeft: isFirst ? '0px' : '14px',
                         alignSelf: 'flex-start',
                         backgroundColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18),
                         borderColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45),

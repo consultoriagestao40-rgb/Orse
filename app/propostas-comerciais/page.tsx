@@ -970,8 +970,8 @@ export default function PropostasComerciaisDashboard() {
     return 'bg-slate-100/50 border border-slate-200/50';
   };
 
-  const KanbanColumnCards = ({ label, cards, color, type = 'status', onDropProp }: {
-    label: string; cards: any[]; color?: string; type?: 'status' | 'vendedor' | 'segmento'; onDropProp?: (propId: string) => void;
+  const KanbanColumnCards = ({ label, cards, color, type = 'status', onDropProp, isFirst = false }: {
+    label: string; cards: any[]; color?: string; type?: 'status' | 'vendedor' | 'segmento'; onDropProp?: (propId: string) => void; isFirst?: boolean;
   }) => {
     const resolvedHex = resolveColorToHex(color);
     const contrast = getContrastYIQ(resolvedHex);
@@ -980,7 +980,7 @@ export default function PropostasComerciaisDashboard() {
     
     return (
       <div 
-        className="flex-shrink-0 w-72 flex flex-col min-h-[600px]"
+        className="flex-shrink-0 w-72 flex flex-col items-start min-h-[600px]"
         onDragOver={(e) => {
           e.preventDefault();
           e.currentTarget.classList.add('opacity-80');
@@ -998,7 +998,10 @@ export default function PropostasComerciaisDashboard() {
         <div
           className="flex-1 flex flex-col p-3 rounded-b-2xl rounded-t-none"
           style={{
-            width: '274px',
+            width: isFirst ? '274px' : '260px',
+            minWidth: isFirst ? '274px' : '260px',
+            maxWidth: isFirst ? '274px' : '260px',
+            marginLeft: isFirst ? '0px' : '14px',
             alignSelf: 'flex-start',
             backgroundColor: bgRgba,
             borderColor: borderRgba,
@@ -1361,13 +1364,14 @@ export default function PropostasComerciaisDashboard() {
                           onScroll={() => syncScroll('kanban-cards-status', 'kanban-headers-status')}
                         >
                           <div className="flex gap-3 min-w-max pt-0 mt-0">
-                            {orderedStatusCols.map(col => (
+                            {orderedStatusCols.map((col, idx) => (
                               <KanbanColumnCards
                                 key={col.id}
                                   label={col.label}
                                   color={col.color}
                                   type="status"
                                   cards={col.cards}
+                                  isFirst={idx === 0}
                                   onDropProp={async (propId) => {
                                     const doc = docs.find(d => d.propostaId === propId);
                                     if (doc && doc.status !== col.label) {
@@ -1469,7 +1473,7 @@ export default function PropostasComerciaisDashboard() {
                             onScroll={() => syncScroll('kanban-cards-vendedor', 'kanban-headers-vendedor')}
                           >
                             <div className="flex gap-3 min-w-max pt-0 mt-0">
-                              {orderedVendedorCols.map(col => {
+                              {orderedVendedorCols.map((col, idx) => {
                                 const vColor = vendedorColors[col.label] || 'emerald';
                                 return (
                                   <KanbanColumnCards
@@ -1478,6 +1482,7 @@ export default function PropostasComerciaisDashboard() {
                                     type="vendedor"
                                     color={vColor}
                                     cards={col.cards}
+                                    isFirst={idx === 0}
                                     onDropProp={async (propId) => {
                                       const doc = docs.find(d => d.propostaId === propId);
                                       if (doc && doc.usuario !== col.label) {
@@ -1587,7 +1592,7 @@ export default function PropostasComerciaisDashboard() {
                             onScroll={() => syncScroll('kanban-cards-segmento', 'kanban-headers-segmento')}
                           >
                             <div className="flex gap-3 min-w-max pt-0 mt-0">
-                              {kanbanSegmentoCols.map(col => {
+                              {kanbanSegmentoCols.map((col, idx) => {
                                 const segColor = segmentoColors[col.label] || '#3b82f6';
                                 return (
                                   <KanbanColumnCards
@@ -1596,6 +1601,7 @@ export default function PropostasComerciaisDashboard() {
                                     type="vendedor"
                                     color={segColor}
                                     cards={col.cards}
+                                    isFirst={idx === 0}
                                     onDropProp={async (propId) => {
                                       const doc = docs.find(d => d.propostaId === propId || d.id === propId);
                                       if (doc) {
