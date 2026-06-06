@@ -564,8 +564,9 @@ export default function ContratosDashboard() {
             </>
           )}
         </div>
-        <div 
-          className="flex-1 w-[320px] flex flex-col items-start min-h-[600px]"
+      </div>
+      <div 
+        className="flex-1 w-[320px] flex flex-col items-start min-h-[600px]"
           onDragOver={(e) => { e.preventDefault(); }}
           onDrop={async (e) => {
             e.preventDefault();
@@ -713,45 +714,9 @@ export default function ContratosDashboard() {
                 </div>
               </div>
               <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
-            style={{ color: bgRgba }}
-          >
-            <path 
-              d={isFirst 
-                ? "M 10,0 L 306,0 L 320,28 L 306,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                : "M 0,0 L 306,0 L 320,28 L 306,56 L 0,56 L 14,28 Z"
-              }
-              fill="currentColor"
-              stroke={borderRgba}
-              strokeWidth="1.5"
-            />
-          </svg>
-          <div 
-            className={`absolute inset-0 z-10 flex flex-col justify-center ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
-            style={{ color: textHex }}
-          >
-            <div className="flex items-center justify-between w-full min-w-0">
-              <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                <Building size={14} className="shrink-0" style={{ color: textHex }} />
-                <span className="text-xs font-black uppercase tracking-wider truncate">
-                  {label}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setEditingSegmentoId(label); }}
-                  className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                  style={{ color: textHex }}
-                  title="Editar Cor"
-                >
-                  <Edit2 size={12} />
-                </button>
-              </div>
+                {fmt(total)}/mês • {cards.length} {cards.length === 1 ? 'contrato' : 'contratos'}
+              </span>
             </div>
-            <span className="text-[10px] font-bold mt-0.5 opacity-70 truncate select-none">
-              {fmt(total)}/mês • {cards.length} {cards.length === 1 ? 'contrato' : 'contratos'}
-            </span>
-          </div>
           {editingSegmentoId === label && (
             <>
               <div 
@@ -829,8 +794,9 @@ export default function ContratosDashboard() {
             </>
           )}
         </div>
-        <div 
-          className="flex-1 w-[320px] flex flex-col items-start min-h-[600px]"
+      </div>
+      <div 
+        className="flex-1 w-[320px] flex flex-col items-start min-h-[600px]"
           onDragOver={(e) => { e.preventDefault(); }}
           onDrop={async (e) => {
             e.preventDefault();
@@ -1257,8 +1223,6 @@ export default function ContratosDashboard() {
           </div>
         </div>
       )}
-
-        </div>
       </main>
     </div>
   );
