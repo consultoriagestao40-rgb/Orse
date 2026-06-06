@@ -1084,7 +1084,7 @@ function ProposalsDashboard() {
     
     return (
       <div 
-        className="flex-shrink-0 w-72 flex flex-col items-start min-h-[600px]"
+        className="flex-1 w-72 flex flex-col items-start min-h-[600px]"
         onDragOver={(e) => {
           e.preventDefault();
           e.currentTarget.classList.add('opacity-80');
@@ -1419,7 +1419,7 @@ function ProposalsDashboard() {
 
                         {/* Painel Kanban Unificado */}
                         <div className="overflow-x-auto pb-6 pt-0">
-                          <div className="flex gap-[4px] min-w-max pt-0 mt-0 items-start">
+                          <div className="flex gap-[4px] min-w-max pt-0 mt-0 items-stretch">
                             {orderedStatusCols.map((col, idx) => {
                               const isFirst = idx === 0;
                               return (
@@ -1511,7 +1511,7 @@ function ProposalsDashboard() {
 
                         {/* Painel Kanban Unificado */}
                         <div className="overflow-x-auto pb-6 pt-0">
-                          <div className="flex gap-[4px] min-w-max pt-0 mt-0 items-start">
+                          <div className="flex gap-[4px] min-w-max pt-0 mt-0 items-stretch">
                             {orderedVendedorCols.map((col, idx) => {
                               const vColor = vendedorColors[col.label] || 'emerald';
                               const isFirst = idx === 0;
@@ -1607,7 +1607,7 @@ function ProposalsDashboard() {
 
                         {/* Painel Kanban Unificado */}
                         <div className="overflow-x-auto pb-6 pt-0">
-                          <div className="flex gap-[4px] min-w-max pt-0 mt-0 items-start">
+                          <div className="flex gap-[4px] min-w-max pt-0 mt-0 items-stretch">
                             {kanbanSegmentoCols.map((col, idx) => {
                               const segColor = segmentoColors[col.label] || '#3b82f6';
                               const isFirst = idx === 0;

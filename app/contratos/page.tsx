@@ -587,7 +587,8 @@ export default function ContratosDashboard() {
             backgroundColor: bgRgba,
             borderColor: borderRgba,
             borderWidth: '0 1px 1px 1px',
-            borderStyle: 'solid'
+            borderStyle: 'solid',
+            minHeight: '600px'
           }}
         >
           <div className="flex-1 flex flex-col gap-3">
@@ -831,7 +832,8 @@ export default function ContratosDashboard() {
             backgroundColor: bgRgba,
             borderColor: borderRgba,
             borderWidth: '0 1px 1px 1px',
-            borderStyle: 'solid'
+            borderStyle: 'solid',
+            minHeight: '600px'
           }}
         >
           <div className="flex-1 flex flex-col gap-3">
@@ -1128,7 +1130,7 @@ export default function ContratosDashboard() {
           {/* KANBAN POR STATUS */}
           {viewMode === 'kanban-status' && (
             <div className="overflow-x-auto pb-6">
-              <div className="flex gap-[4px] min-w-max">
+              <div className="flex gap-[4px] min-w-max items-stretch">
                 {statusList.map((status, index) => (
                   <KanbanColumn key={status} status={status} isFirst={index === 0} />
                 ))}
@@ -1139,7 +1141,7 @@ export default function ContratosDashboard() {
           {/* KANBAN POR SEGMENTO */}
           {viewMode === 'kanban-segmento' && (
             <div className="overflow-x-auto pb-6">
-              <div className="flex gap-[4px] min-w-max">
+              <div className="flex gap-[4px] min-w-max items-stretch">
                 {kanbanSegmentoCols.map((col, index) => (
                   <KanbanSegmentoColumn
                     key={col.id}

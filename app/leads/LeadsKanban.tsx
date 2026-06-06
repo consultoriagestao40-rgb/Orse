@@ -1307,7 +1307,7 @@ export default function LeadsKanban() {
         {showMetrics && <PipelineMetrics leads={filteredLeads} stages={stages} />}
         {viewMode === 'kanban-status' && (
           <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
-            <div className="flex gap-[4px] h-[calc(100vh-70px)] shrink-0 pr-1">
+            <div className="flex gap-[4px] h-[calc(100vh-70px)] shrink-0 pr-1 items-stretch">
               {stages.map((stage, idx) => {
                 const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
                 const totalValorEst = stageLeads.reduce((acc, lead) => acc + (lead.valorEst || 0), 0);
@@ -1541,7 +1541,7 @@ export default function LeadsKanban() {
                       </div>
                     </div>
 
-                    <div 
+                     <div 
                       className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
                       style={{
                         width: '274px',
@@ -1553,6 +1553,7 @@ export default function LeadsKanban() {
                         borderColor: borderRgba,
                         borderWidth: '0 1px 1px 1px',
                         borderStyle: 'solid',
+                        minHeight: '600px',
                       }}
                     >
 
@@ -1581,7 +1582,7 @@ export default function LeadsKanban() {
 
         {viewMode === 'kanban-vendedor' && (
           <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
-            <div className="flex gap-[4px] h-[calc(100vh-70px)] shrink-0 pr-1">
+            <div className="flex gap-[4px] h-[calc(100vh-70px)] shrink-0 pr-1 items-stretch">
               {kanbanVendedorCols.map((col, idx) => {
                 const colLeads = col.cards;
                 const isFirst = idx === 0;
@@ -1752,7 +1753,7 @@ export default function LeadsKanban() {
                         )}
                       </div>
 
-                      <div 
+                       <div 
                         className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
                       style={{
                         width: '274px',
@@ -1764,6 +1765,7 @@ export default function LeadsKanban() {
                         borderColor: borderRgba,
                         borderWidth: '0 1px 1px 1px',
                         borderStyle: 'solid',
+                        minHeight: '600px',
                       }}
                     >
 
@@ -1793,7 +1795,7 @@ export default function LeadsKanban() {
 
         {viewMode === 'kanban-segmento' && (
           <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
-            <div className="flex gap-[4px] h-[calc(100vh-70px)] shrink-0 pr-1">
+            <div className="flex gap-[4px] h-[calc(100vh-70px)] shrink-0 pr-1 items-stretch">
               {kanbanSegmentoCols.map((col, idx) => {
                 const colLeads = col.cards;
                 const isFirst = idx === 0;
@@ -1952,7 +1954,7 @@ export default function LeadsKanban() {
                         )}
                       </div>
 
-                      <div 
+                       <div 
                         className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
                       style={{
                         width: '274px',
@@ -1964,6 +1966,7 @@ export default function LeadsKanban() {
                         borderColor: borderRgba,
                         borderWidth: '0 1px 1px 1px',
                         borderStyle: 'solid',
+                        minHeight: '600px',
                       }}
                     >
 
