@@ -658,6 +658,7 @@ export default function ContratosDashboard() {
           </div>
         </div>
       </div>
+      </div>
     );
   };
 
@@ -902,6 +903,7 @@ export default function ContratosDashboard() {
             )}
           </div>
         </div>
+      </div>
       </div>
     );
   };
@@ -1223,6 +1225,7 @@ export default function ContratosDashboard() {
           </div>
         </div>
       )}
+      </div>
       </main>
     </div>
   );

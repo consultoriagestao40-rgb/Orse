@@ -1869,30 +1869,6 @@ export default function LeadsKanban() {
                           <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
                             {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
                           </span>
-                        </div>
-                            {col.id !== 'unassigned' && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingSegmentoId(col.id);
-                                }}
-                                className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                                style={{ color: textHex }}
-                                title="Editar Cor"
-                              >
-                                <Edit2 size={11} />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Subtítulo integrado com o totalizador de volume e leads */}
-                        <span className="text-[10px] font-bold mt-0.5 opacity-70 truncate select-none">
-                          {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
-                        </span>
-                      </div>
-
                         {editingSegmentoId === col.id && (
                           <>
                             <div 
@@ -1979,7 +1955,6 @@ export default function LeadsKanban() {
                         )}
                       </div>
                     </div>
-                  </div>
 
                   <div 
                     className="flex-1 w-72 flex flex-col items-start min-h-[600px]"
