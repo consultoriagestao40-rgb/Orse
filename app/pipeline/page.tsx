@@ -824,12 +824,12 @@ function ProposalsDashboard() {
         
         {/* Cabeçalho Chevron/Seta */}
         <div 
-          className="w-full h-10 relative group/title pointer-events-auto"
+          className="w-full h-9 relative group/title pointer-events-auto"
         >
           {/* Background SVG Custom Shape */}
           <svg 
-            className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[284px]'}`}
-            viewBox={isLast ? "0 0 274 40" : "0 0 284 40"}
+            className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[279px]'}`}
+            viewBox={isLast ? "0 0 274 36" : "0 0 279 36"}
             preserveAspectRatio="none"
             style={{
               color: resolvedHex,
@@ -837,10 +837,10 @@ function ProposalsDashboard() {
           >
             <path 
               d={isFirst 
-                ? "M 8,0 L 274,0 L 284,20 L 274,40 L 0,40 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                ? "M 8,0 L 274,0 L 279,18 L 274,36 L 0,36 L 0,8 A 8,8 0 0,1 8,0 Z" 
                 : isLast 
-                  ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,40 L 0,40 L 10,20 L 0,0 Z"
-                  : "M 0,0 L 274,0 L 284,20 L 274,40 L 0,40 L 10,20 L 0,0 Z"
+                  ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,36 L 0,36 L 5,18 L 0,0 Z"
+                  : "M 0,0 L 274,0 L 279,18 L 274,36 L 0,36 L 5,18 L 0,0 Z"
               }
               fill="currentColor"
               stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -1087,7 +1087,7 @@ function ProposalsDashboard() {
     
     return (
       <div 
-        className="flex-1 w-72 flex flex-col items-start min-h-[600px]"
+        className="flex-1 w-[274px] flex flex-col items-start min-h-[600px]"
         onDragOver={(e) => {
           e.preventDefault();
           e.currentTarget.classList.add('opacity-80');

@@ -395,19 +395,19 @@ export default function ContratosDashboard() {
         className="flex flex-col"
       >
         <div className="flex-shrink-0 w-[306px] shrink-0 relative select-none duration-200">
-          <div className="relative h-10 shrink-0 z-10 w-full group/title pointer-events-auto">
+          <div className="relative h-9 shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
-              className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[306px]' : 'w-[316px]'}`}
-              viewBox={isLast ? "0 0 306 40" : "0 0 316 40"}
+              className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[306px]' : 'w-[311px]'}`}
+              viewBox={isLast ? "0 0 306 36" : "0 0 311 36"}
               preserveAspectRatio="none"
               style={{ color: resolvedHex }}
             >
               <path 
                 d={isFirst 
-                  ? "M 8,0 L 306,0 L 316,20 L 306,40 L 0,40 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                  ? "M 8,0 L 306,0 L 311,18 L 306,36 L 0,36 L 0,8 A 8,8 0 0,1 8,0 Z" 
                   : isLast 
-                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,40 L 0,40 L 10,20 L 0,0 Z"
-                    : "M 0,0 L 306,0 L 316,20 L 306,40 L 0,40 L 10,20 L 0,0 Z"
+                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,36 L 0,36 L 5,18 L 0,0 Z"
+                    : "M 0,0 L 306,0 L 311,18 L 306,36 L 0,36 L 5,18 L 0,0 Z"
                 }
                 fill="currentColor"
                 stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -569,7 +569,7 @@ export default function ContratosDashboard() {
         </div>
       </div>
       <div 
-        className="flex-1 w-[320px] flex flex-col items-start min-h-[600px]"
+        className="flex-1 w-[306px] flex flex-col items-start min-h-[600px]"
           onDragOver={(e) => { e.preventDefault(); }}
           onDrop={async (e) => {
             e.preventDefault();
@@ -678,19 +678,19 @@ export default function ContratosDashboard() {
         className="flex flex-col"
       >
         <div className="flex-shrink-0 w-[306px] shrink-0 relative select-none duration-200">
-          <div className="relative h-10 shrink-0 z-10 w-full group/title pointer-events-auto">
+          <div className="relative h-9 shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
-              className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[306px]' : 'w-[316px]'}`}
-              viewBox={isLast ? "0 0 306 40" : "0 0 316 40"}
+              className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[306px]' : 'w-[311px]'}`}
+              viewBox={isLast ? "0 0 306 36" : "0 0 311 36"}
               preserveAspectRatio="none"
               style={{ color: resolvedHex }}
             >
               <path 
                 d={isFirst 
-                  ? "M 8,0 L 306,0 L 316,20 L 306,40 L 0,40 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                  ? "M 8,0 L 306,0 L 311,18 L 306,36 L 0,36 L 0,8 A 8,8 0 0,1 8,0 Z" 
                   : isLast 
-                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,40 L 0,40 L 10,20 L 0,0 Z"
-                    : "M 0,0 L 306,0 L 316,20 L 306,40 L 0,40 L 10,20 L 0,0 Z"
+                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,36 L 0,36 L 5,18 L 0,0 Z"
+                    : "M 0,0 L 306,0 L 311,18 L 306,36 L 0,36 L 5,18 L 0,0 Z"
                 }
                 fill="currentColor"
                 stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -803,7 +803,7 @@ export default function ContratosDashboard() {
         </div>
       </div>
       <div 
-        className="flex-1 w-[320px] flex flex-col items-start min-h-[600px]"
+        className="flex-1 w-[306px] flex flex-col items-start min-h-[600px]"
           onDragOver={(e) => { e.preventDefault(); }}
           onDrop={async (e) => {
             e.preventDefault();
