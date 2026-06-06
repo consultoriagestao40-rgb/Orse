@@ -355,10 +355,11 @@ export default function ContratosDashboard() {
   const KanbanColumn = ({ status, isFirst = false }: { status: string; isFirst?: boolean }) => {
     const cards = filteredContratos.filter(c => c.status === status);
     const total = cards.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
-
     const resolvedHex = resolveColorToHex(resolveStatusColorToHex(status));
     const contrast = getContrastYIQ(resolvedHex);
-    const badgeClass = contrast === 'white' ? 'bg-white/20 text-white' : 'bg-black/10 text-slate-800';
+    const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
+    const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
+    const textHex = getDarkenedHexForText(resolvedHex);
 
     const [localName, setLocalName] = useState(status);
     useEffect(() => {
@@ -391,7 +392,8 @@ export default function ContratosDashboard() {
 
     return (
       <div 
-        className="flex-shrink-0 w-80 flex flex-col"
+        className="flex-shrink-0 w-80 flex flex-col h-full rounded-2xl relative"
+        style={{ marginLeft: isFirst ? '0px' : '-14px' }}
         onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-slate-200/50', 'rounded-xl'); }}
         onDragLeave={(e) => e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl')}
         onDrop={async (e) => {
@@ -404,314 +406,255 @@ export default function ContratosDashboard() {
           }
         }}
       >
-        <div className="flex flex-col items-center gap-1.5 w-full mb-3 select-none">
-          {/* Cabeçalho Chevron/Seta */}
-          <div className="w-full h-11 relative group/title pointer-events-auto">
-            {/* Background SVG Custom Shape */}
-            <svg 
-              className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200"
-              viewBox="0 0 320 44"
-              preserveAspectRatio="none"
-              style={{
-                color: resolvedHex,
-              }}
-            >
-              <path 
-                d={isFirst 
-                  ? "M 10,0 L 306,0 L 320,22 L 306,44 L 10,44 A 10,10 0 0,1 0,34 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                  : "M 0,0 L 306,0 L 320,22 L 306,44 L 0,44 L 14,22 Z"
-                }
-                fill="currentColor"
-                stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
-                strokeWidth="1.5"
-              />
-            </svg>
-
-            {/* Conteúdo do Cabeçalho */}
-            <div 
-              className={`absolute inset-0 z-10 flex items-center justify-between ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
-              style={{
-                color: contrast === 'white' ? '#ffffff' : '#0f172a'
-              }}
-            >
+        <div className="relative h-14 shrink-0 z-10 w-full group/title">
+          <svg 
+            className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200"
+            viewBox="0 0 320 56"
+            preserveAspectRatio="none"
+            style={{ color: bgRgba }}
+          >
+            <path 
+              d={isFirst 
+                ? "M 10,0 L 306,0 L 320,28 L 306,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                : "M 0,0 L 306,0 L 320,28 L 306,56 L 0,56 L 14,28 Z"
+              }
+              fill="currentColor"
+              stroke={borderRgba}
+              strokeWidth="1.5"
+            />
+          </svg>
+          <div 
+            className={`absolute inset-0 z-10 flex flex-col justify-center ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+            style={{ color: textHex }}
+          >
+            <div className="flex items-center justify-between w-full min-w-0">
               <span className="text-xs font-black uppercase tracking-wider truncate max-w-[170px]">
                 {status}
               </span>
-              
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm ${badgeClass}`}>
-                  {cards.length}
-                </span>
-
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCreateStatus(status);
-                  }}
-                  className={`p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
-                    contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
-                  }`}
+                  onClick={(e) => { e.stopPropagation(); handleCreateStatus(status); }}
+                  className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                  style={{ color: textHex }}
                   title="Criar Nova Etapa"
                 >
                   <Plus size={12} />
                 </button>
-
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditingStatusId(status);
-                  }}
-                  className={`p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
-                    contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
-                  }`}
+                  onClick={(e) => { e.stopPropagation(); setEditingStatusId(status); }}
+                  className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                  style={{ color: textHex }}
                   title="Editar Coluna"
                 >
                   <Edit2 size={12} />
                 </button>
               </div>
-
-              {editingStatusId === status && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-30 cursor-default" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingStatusId(null);
-                    }}
-                  />
-                  <div 
-                    className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
-                    onClick={(e) => e.stopPropagation()}
+            </div>
+            <span className="text-[10px] font-bold mt-0.5 opacity-70 truncate select-none">
+              {fmt(total)}/mês • {cards.length} {cards.length === 1 ? 'contrato' : 'contratos'}
+            </span>
+          </div>
+          {editingStatusId === status && (
+            <>
+              <div 
+                className="fixed inset-0 z-30 cursor-default" 
+                onClick={(e) => { e.stopPropagation(); setEditingStatusId(null); }}
+              />
+              <div 
+                className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Editar Coluna</span>
+                  <button 
+                    onClick={() => setEditingStatusId(null)}
+                    className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
                   >
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                        Editar Coluna
-                      </span>
-                      <button 
-                        onClick={() => setEditingStatusId(null)}
-                        className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Nome do Status</label>
-                      <input
-                        type="text"
-                        value={localName}
-                        onChange={(e) => setLocalName(e.target.value)}
-                        className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-slate-300 outline-none w-full bg-slate-50 font-medium text-slate-800"
-                        placeholder="Nome do status"
-                        onKeyDown={async (e) => {
-                          if (e.key === 'Enter') {
-                            await handleSaveName(localName);
-                            setEditingStatusId(null);
-                          }
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Selecione a Cor</label>
-                      <div className="grid grid-cols-10 gap-1 mt-0.5">
-                        {PRESET_COLORS.map(c => {
-                          const isSelected = resolvedHex.toLowerCase() === c.toLowerCase();
-                          return (
-                            <button
-                              key={c}
-                              onClick={() => {
-                                const newColors = { ...statusColors, [status]: c };
-                                setStatusColors(newColors);
-                                localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
-                              }}
-                              className="w-4 h-4 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer"
-                              style={{
-                                backgroundColor: c,
-                                borderColor: isSelected ? '#0f172a' : 'rgba(0,0,0,0.1)',
-                                borderWidth: isSelected ? '2px' : '1px'
-                              }}
-                              title={c}
-                              type="button"
-                            >
-                              {isSelected && (
-                                <div 
-                                  className="w-1.5 h-1.5 rounded-full" 
-                                  style={{ backgroundColor: getContrastYIQ(c) === 'white' ? '#fff' : '#000' }} 
-                                />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1 pt-1 border-t border-slate-100">
-                      <label className="flex items-center gap-2 cursor-pointer border border-slate-200 rounded-lg px-2.5 py-1.5 hover:bg-slate-50 transition-colors w-full">
-                        <input 
-                          type="color" 
-                          value={resolvedHex}
-                          onChange={(e) => {
-                            const newColor = e.target.value;
-                            const newColors = { ...statusColors, [status]: newColor };
+                    <X size={12} />
+                  </button>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Nome do Status</label>
+                  <input
+                    type="text"
+                    value={localName}
+                    onChange={(e) => setLocalName(e.target.value)}
+                    className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-slate-300 outline-none w-full bg-slate-50 font-medium text-slate-800"
+                    placeholder="Nome do status"
+                    onKeyDown={async (e) => { if (e.key === 'Enter') { await handleSaveName(localName); setEditingStatusId(null); } }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Selecione a Cor</label>
+                  <div className="grid grid-cols-10 gap-1 mt-0.5">
+                    {PRESET_COLORS.map(c => {
+                      const isSelected = resolvedHex.toLowerCase() === c.toLowerCase();
+                      return (
+                        <button
+                          key={c}
+                          onClick={() => {
+                            const newColors = { ...statusColors, [status]: c };
                             setStatusColors(newColors);
                             localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
                           }}
-                          className="w-8 h-5 border-0 p-0 cursor-pointer rounded bg-transparent"
-                        />
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider text-slate-500">Cor personalizada</span>
-                      </label>
-                    </div>
-
-                    <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100 mt-1">
-                      <button
-                        onClick={() => {
-                          if (cards.length > 0) {
-                            showCustomAlert(
-                              'Não é possível excluir',
-                              `Esta coluna possui ${cards.length} contrato(s). Por favor, mova todos os contratos para outra coluna antes de excluí-la.`
-                            );
-                            return;
-                          }
-                          setCustomModal({
-                            isOpen: true,
-                            title: 'Excluir Coluna',
-                            message: `Tem certeza que deseja excluir a coluna "${status}"?`,
-                            type: 'confirm',
-                            onConfirm: () => {
-                              const newStatusesList = statusesList.filter(s => s !== status);
-                              setStatusesList(newStatusesList);
-                              localStorage.setItem('orse_contrato_statuses', JSON.stringify(newStatusesList));
-                              
-                              const newColors = { ...statusColors };
-                              delete newColors[status];
-                              setStatusColors(newColors);
-                              localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
-                              
-                              setEditingStatusId(null);
-                            }
-                          });
-                        }}
-                        className="w-full py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold transition-colors text-center cursor-pointer flex items-center justify-center gap-1.5"
-                        type="button"
-                      >
-                        <Trash2 size={12} />
-                        Excluir Coluna
-                      </button>
-                      
-                      <button
-                        onClick={async () => {
-                          await handleSaveName(localName);
-                          setEditingStatusId(null);
-                        }}
-                        className="w-full py-1.5 bg-[#1B4D3E] hover:bg-[#1B4D3E]/90 text-white rounded-lg text-xs font-bold transition-colors text-center cursor-pointer"
-                        type="button"
-                      >
-                        Concluir
-                      </button>
-                    </div>
+                          className="w-4 h-4 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer"
+                          style={{
+                            backgroundColor: c,
+                            borderColor: isSelected ? '#0f172a' : 'rgba(0,0,0,0.1)',
+                            borderWidth: isSelected ? '2px' : '1px'
+                          }}
+                          title={c}
+                          type="button"
+                        >
+                          {isSelected && (
+                            <div 
+                              className="w-1.5 h-1.5 rounded-full" 
+                              style={{ backgroundColor: getContrastYIQ(c) === 'white' ? '#fff' : '#000' }} 
+                            />
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
-                </>
-              )}
-            </div>
-          </div>
+                </div>
+                <div className="flex flex-col gap-1 pt-1 border-t border-slate-100">
+                  <label className="flex items-center gap-2 cursor-pointer border border-slate-200 rounded-lg px-2.5 py-1.5 hover:bg-slate-50 transition-colors w-full">
+                    <input 
+                      type="color" 
+                      value={resolvedHex}
+                      onChange={(e) => {
+                        const newColor = e.target.value;
+                        const newColors = { ...statusColors, [status]: newColor };
+                        setStatusColors(newColors);
+                        localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
+                      }}
+                      className="w-8 h-5 border-0 p-0 cursor-pointer rounded bg-transparent"
+                    />
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider text-slate-500">Cor personalizada</span>
+                  </label>
+                </div>
+                <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100 mt-1">
+                  <button
+                    onClick={() => {
+                      if (cards.length > 0) {
+                        showCustomAlert('Não é possível excluir', `Esta coluna possui ${cards.length} contrato(s). Por favor, mova todos os contratos para outra coluna antes de excluí-la.`);
+                        return;
+                      }
+                      setCustomModal({
+                        isOpen: true,
+                        title: 'Excluir Coluna',
+                        message: `Tem certeza que deseja excluir a coluna "${status}"?`,
+                        type: 'confirm',
+                        onConfirm: () => {
+                          const newStatusesList = statusesList.filter(s => s !== status);
+                          setStatusesList(newStatusesList);
+                          localStorage.setItem('orse_contrato_statuses', JSON.stringify(newStatusesList));
+                          const newColors = { ...statusColors };
+                          delete newColors[status];
+                          setStatusColors(newColors);
+                          localStorage.setItem('orse_contrato_status_colors', JSON.stringify(newColors));
+                          setEditingStatusId(null);
+                        }
+                      });
+                    }}
+                    className="w-full py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold transition-colors text-center cursor-pointer flex items-center justify-center gap-1.5"
+                    type="button"
+                  >
+                    <Trash2 size={12} /> Excluir Coluna
+                  </button>
+                  <button
+                    onClick={async () => { await handleSaveName(localName); setEditingStatusId(null); }}
+                    className="w-full py-1.5 bg-[#1B4D3E] hover:bg-[#1B4D3E]/90 text-white rounded-lg text-xs font-bold transition-colors text-center cursor-pointer"
+                    type="button"
+                  >
+                    Concluir
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
-
         <div 
-          className="flex flex-col gap-3 flex-1 min-h-[600px] p-3 border-x border-b rounded-b-2xl"
+          className="flex-1 flex flex-col p-3 border-x border-b rounded-b-2xl z-0"
           style={{
-            width: isFirst ? '306px' : '292px',
-            minWidth: isFirst ? '306px' : '292px',
-            maxWidth: isFirst ? '306px' : '292px',
-            marginLeft: isFirst ? '0px' : '14px',
+            width: '306px',
+            minWidth: '306px',
+            maxWidth: '306px',
+            marginLeft: '0px',
             alignSelf: 'flex-start',
-            backgroundColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18),
-            borderColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45),
+            backgroundColor: bgRgba,
+            borderColor: borderRgba,
             borderWidth: '0 1px 1px 1px',
             borderStyle: 'solid'
           }}
         >
-          {/* Totalizador de Volume */}
-          <div className="flex justify-center w-full mb-3 shrink-0 z-10 pointer-events-auto">
-            <div 
-              className="px-3.5 py-1 rounded-full text-xs font-bold shadow-sm select-none text-center border"
-              style={{
-                backgroundColor: hexToRgba(resolvedHex, 0.1),
-                color: getDarkenedHexForText(resolvedHex),
-                borderColor: hexToRgba(resolvedHex, 0.25)
-              }}
-            >
-              {fmt(total)} /mês
-            </div>
-          </div>
-          {cards.length === 0 ? (
-            <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
-              <p className="text-xs text-slate-300 font-medium">Vazio</p>
-            </div>
-          ) : (
-            cards.map(c => (
-              <div
-                key={c.id}
-                draggable
-                onDragStart={(e) => e.dataTransfer.setData('text/plain', c.id)}
-                onClick={() => router.push(`/contratos/${c.id}`)}
-                className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer cursor-grab active:cursor-grabbing"
-              >
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
-                      <FileText size={13} className="text-[#1B4D3E]" />
-                    </div>
-                    <span className="text-xs font-black text-slate-700 tracking-wide">{gerarNumeroContrato(c)}</span>
-                  </div>
-                  <span className="text-[9px] font-black px-2 py-0.5 rounded bg-slate-100 text-slate-500 uppercase tracking-wider">{c.empresaEmissora?.nomeFantasia}</span>
-                </div>
-
-                <p className="text-sm font-bold text-slate-800 leading-tight mb-3 line-clamp-2">{c.client?.razaoSocial || c.client?.nomeFantasia}</p>
-                
-                <div className="grid grid-cols-2 gap-x-2 gap-y-3 mb-3 border-t border-slate-100 pt-3">
-                  <div>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Início</p>
-                    <p className="text-[11px] font-bold text-slate-700">{c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : 'A definir'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Reajuste</p>
-                    <p className="text-[11px] font-bold text-orange-600">{c.dataReajuste ? new Date(c.dataReajuste).toLocaleDateString('pt-BR') : 'Não definido'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Mensal</p>
-                    <span className="text-sm font-black text-[#1B4D3E]">{fmt(c.valorMensal)}</span>
-                  </div>
-                  <div>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Vigência</p>
-                    <span className="text-[11px] font-bold text-slate-600">{c.vigenciaMeses} meses</span>
-                  </div>
-                </div>
-
-                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    {c.proposta?.user?.avatarUrl ? (
-                      <img 
-                        src={c.proposta.user.avatarUrl} 
-                        alt={c.proposta.user.nome} 
-                        className="w-5 h-5 rounded-full object-cover border border-slate-200"
-                      />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
-                        {(c.proposta?.user?.nome || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                      </div>
-                    )}
-                    <span className="text-[10px] text-slate-500 font-medium">{c.proposta?.user?.nome || 'Sistema'}</span>
-                  </div>
-                  <span className="text-[9px] text-slate-400 font-medium" title={`Gerado em ${new Date(c.createdAt).toLocaleString('pt-BR')}`}>
-                    {new Date(c.createdAt).toLocaleDateString('pt-BR')}
-                  </span>
-                </div>
+          <div className="flex-1 flex flex-col gap-3">
+            {cards.length === 0 ? (
+              <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
+                <p className="text-xs text-slate-300 font-medium">Vazio</p>
               </div>
-            ))
-          )}
+            ) : (
+              cards.map(c => (
+                <div
+                  key={c.id}
+                  draggable
+                  onDragStart={(e) => e.dataTransfer.setData('text/plain', c.id)}
+                  onClick={() => router.push(`/contratos/${c.id}`)}
+                  className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer cursor-grab active:cursor-grabbing"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
+                        <FileText size={13} className="text-[#1B4D3E]" />
+                      </div>
+                      <span className="text-xs font-black text-slate-700 tracking-wide">{gerarNumeroContrato(c)}</span>
+                    </div>
+                    <span className="text-[9px] font-black px-2 py-0.5 rounded bg-slate-100 text-slate-500 uppercase tracking-wider">{c.empresaEmissora?.nomeFantasia}</span>
+                  </div>
+                  <p className="text-sm font-bold text-slate-800 leading-tight mb-3 line-clamp-2">{c.client?.razaoSocial || c.client?.nomeFantasia}</p>
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-3 mb-3 border-t border-slate-100 pt-3">
+                    <div>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Início</p>
+                      <p className="text-[11px] font-bold text-slate-700">{c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : 'A definir'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Reajuste</p>
+                      <p className="text-[11px] font-bold text-orange-600">{c.dataReajuste ? new Date(c.dataReajuste).toLocaleDateString('pt-BR') : 'Não definido'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Mensal</p>
+                      <span className="text-sm font-black text-[#1B4D3E]">{fmt(c.valorMensal)}</span>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Vigência</p>
+                      <span className="text-[11px] font-bold text-slate-600">{c.vigenciaMeses} meses</span>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      {c.proposta?.user?.avatarUrl ? (
+                        <img 
+                          src={c.proposta.user.avatarUrl} 
+                          alt={c.proposta.user.nome} 
+                          className="w-5 h-5 rounded-full object-cover border border-slate-200"
+                        />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
+                          {(c.proposta?.user?.nome || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                        </div>
+                      )}
+                      <span className="text-[10px] text-slate-500 font-medium">{c.proposta?.user?.nome || 'Sistema'}</span>
+                    </div>
+                    <span className="text-[9px] text-slate-400 font-medium" title={`Gerado em ${new Date(c.createdAt).toLocaleString('pt-BR')}`}>
+                      {new Date(c.createdAt).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     );
@@ -719,14 +662,16 @@ export default function ContratosDashboard() {
 
   const KanbanSegmentoColumn = ({ label, cards, isFirst = false, color }: { label: string; cards: any[]; isFirst?: boolean; color: string }) => {
     const total = cards.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
-
     const resolvedHex = resolveColorToHex(color);
     const contrast = getContrastYIQ(resolvedHex);
-    const badgeClass = contrast === 'white' ? 'bg-white/20 text-white' : 'bg-black/10 text-slate-800';
+    const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
+    const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
+    const textHex = getDarkenedHexForText(resolvedHex);
 
     return (
       <div 
-        className="flex-shrink-0 w-80 flex flex-col"
+        className="flex-shrink-0 w-80 flex flex-col h-full rounded-2xl relative"
+        style={{ marginLeft: isFirst ? '0px' : '-14px' }}
         onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-slate-200/50', 'rounded-xl'); }}
         onDragLeave={(e) => e.currentTarget.classList.remove('bg-slate-200/50', 'rounded-xl')}
         onDrop={async (e) => {
@@ -737,12 +682,10 @@ export default function ContratosDashboard() {
             const newSegment = label === 'Sem Segmento' ? '' : label;
             const targetContrato = contratos.find(c => c.id === id);
             if (targetContrato) {
-              // Local optimistic update
               setContratos(prev => prev.map(c => c.id === id ? {
                 ...c,
                 client: c.client ? { ...c.client, segmento: newSegment || null } : null
               } : c));
-
               if (targetContrato.clientId) {
                 const res = await updateCliente(targetContrato.clientId, { segmento: newSegment });
                 if (!res.success) {
@@ -756,244 +699,206 @@ export default function ContratosDashboard() {
           }
         }}
       >
-        <div className="flex flex-col items-center gap-1.5 w-full mb-3 select-none">
-          {/* Cabeçalho Chevron/Seta */}
-          <div className="w-full h-11 relative group/title pointer-events-auto">
-            {/* Background SVG Custom Shape */}
-            <svg 
-              className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200"
-              viewBox="0 0 320 44"
-              preserveAspectRatio="none"
-              style={{
-                color: resolvedHex,
-              }}
-            >
-              <path 
-                d={isFirst 
-                  ? "M 10,0 L 306,0 L 320,22 L 306,44 L 10,44 A 10,10 0 0,1 0,34 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                  : "M 0,0 L 306,0 L 320,22 L 306,44 L 0,44 L 14,22 Z"
-                }
-                fill="currentColor"
-                stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
-                strokeWidth="1.5"
-              />
-            </svg>
-
-            {/* Conteúdo do Cabeçalho */}
-            <div 
-              className={`absolute inset-0 z-10 flex items-center justify-between ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
-              style={{
-                color: contrast === 'white' ? '#ffffff' : '#0f172a'
-              }}
-            >
+        <div className="relative h-14 shrink-0 z-10 w-full group/title">
+          <svg 
+            className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200"
+            viewBox="0 0 320 56"
+            preserveAspectRatio="none"
+            style={{ color: bgRgba }}
+          >
+            <path 
+              d={isFirst 
+                ? "M 10,0 L 306,0 L 320,28 L 306,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                : "M 0,0 L 306,0 L 320,28 L 306,56 L 0,56 L 14,28 Z"
+              }
+              fill="currentColor"
+              stroke={borderRgba}
+              strokeWidth="1.5"
+            />
+          </svg>
+          <div 
+            className={`absolute inset-0 z-10 flex flex-col justify-center ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+            style={{ color: textHex }}
+          >
+            <div className="flex items-center justify-between w-full min-w-0">
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                <Building size={14} className={contrast === 'white' ? 'text-white/80 shrink-0' : 'text-slate-900/80 shrink-0'} />
+                <Building size={14} className="shrink-0" style={{ color: textHex }} />
                 <span className="text-xs font-black uppercase tracking-wider truncate">
                   {label}
                 </span>
               </div>
-              
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm ${badgeClass}`}>
-                  {cards.length}
-                </span>
-
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditingSegmentoId(label);
-                  }}
-                  className={`p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
-                    contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
-                  }`}
+                  onClick={(e) => { e.stopPropagation(); setEditingSegmentoId(label); }}
+                  className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                  style={{ color: textHex }}
                   title="Editar Cor"
                 >
                   <Edit2 size={12} />
                 </button>
               </div>
-
-              {editingSegmentoId === label && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-30 cursor-default" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingSegmentoId(null);
-                    }}
-                  />
-                  <div 
-                    className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                        Editar Coluna
-                      </span>
-                      <button 
-                        onClick={() => setEditingSegmentoId(null)}
-                        className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Selecione a Cor</label>
-                      <div className="grid grid-cols-10 gap-1 mt-0.5">
-                        {PRESET_COLORS.map(c => {
-                          const isSelected = resolvedHex.toLowerCase() === c.toLowerCase();
-                          return (
-                            <button
-                              key={c}
-                              onClick={() => {
-                                localStorage.setItem(`kanban-segmento-color-${label}`, c);
-                                setSegmentoColors(prev => ({ ...prev, [label]: c }));
-                              }}
-                              className="w-4 h-4 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center"
-                              style={{
-                                backgroundColor: c,
-                                borderColor: isSelected ? '#0f172a' : 'rgba(0,0,0,0.1)',
-                                borderWidth: isSelected ? '2px' : '1px'
-                              }}
-                              title={c}
-                              type="button"
-                            >
-                              {isSelected && (
-                                <div 
-                                  className="w-1.5 h-1.5 rounded-full" 
-                                  style={{ backgroundColor: getContrastYIQ(c) === 'white' ? '#fff' : '#000' }} 
-                                />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1 pt-1 border-t border-slate-100">
-                      <label className="flex items-center gap-2 cursor-pointer border border-slate-200 rounded-lg px-2.5 py-1.5 hover:bg-slate-50 transition-colors w-full">
-                        <input 
-                          type="color" 
-                          value={resolvedHex}
-                          onChange={(e) => {
-                            const newColor = e.target.value;
-                            localStorage.setItem(`kanban-segmento-color-${label}`, newColor);
-                            setSegmentoColors(prev => ({ ...prev, [label]: newColor }));
-                          }}
-                          className="w-8 h-5 border-0 p-0 cursor-pointer rounded bg-transparent"
-                        />
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cor personalizada</span>
-                      </label>
-                    </div>
-
-                    <button
-                      onClick={() => setEditingSegmentoId(null)}
-                      className="w-full py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-colors text-center cursor-pointer mt-1"
-                      type="button"
-                    >
-                      Concluir
-                    </button>
-                  </div>
-                </>
-              )}
             </div>
+            <span className="text-[10px] font-bold mt-0.5 opacity-70 truncate select-none">
+              {fmt(total)}/mês • {cards.length} {cards.length === 1 ? 'contrato' : 'contratos'}
+            </span>
           </div>
+          {editingSegmentoId === label && (
+            <>
+              <div 
+                className="fixed inset-0 z-30 cursor-default" 
+                onClick={(e) => { e.stopPropagation(); setEditingSegmentoId(null); }}
+              />
+              <div 
+                className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 flex flex-col gap-3.5 cursor-default font-sans text-left normal-case tracking-normal"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Editar Coluna</span>
+                  <button 
+                    onClick={() => setEditingSegmentoId(null)}
+                    className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Selecione a Cor</label>
+                  <div className="grid grid-cols-10 gap-1 mt-0.5">
+                    {PRESET_COLORS.map(c => {
+                      const isSelected = resolvedHex.toLowerCase() === c.toLowerCase();
+                      return (
+                        <button
+                          key={c}
+                          onClick={() => {
+                            localStorage.setItem(`kanban-segmento-color-${label}`, c);
+                            setSegmentoColors(prev => ({ ...prev, [label]: c }));
+                          }}
+                          className="w-4 h-4 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center"
+                          style={{
+                            backgroundColor: c,
+                            borderColor: isSelected ? '#0f172a' : 'rgba(0,0,0,0.1)',
+                            borderWidth: isSelected ? '2px' : '1px'
+                          }}
+                          title={c}
+                          type="button"
+                        >
+                          {isSelected && (
+                            <div 
+                              className="w-1.5 h-1.5 rounded-full" 
+                              style={{ backgroundColor: getContrastYIQ(c) === 'white' ? '#fff' : '#000' }} 
+                            />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1 pt-1 border-t border-slate-100">
+                  <label className="flex items-center gap-2 cursor-pointer border border-slate-200 rounded-lg px-2.5 py-1.5 hover:bg-slate-50 transition-colors w-full">
+                    <input 
+                      type="color" 
+                      value={resolvedHex}
+                      onChange={(e) => {
+                        const newColor = e.target.value;
+                        localStorage.setItem(`kanban-segmento-color-${label}`, newColor);
+                        setSegmentoColors(prev => ({ ...prev, [label]: newColor }));
+                      }}
+                      className="w-8 h-5 border-0 p-0 cursor-pointer rounded bg-transparent"
+                    />
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cor personalizada</span>
+                  </label>
+                </div>
+                <button
+                  onClick={() => setEditingSegmentoId(null)}
+                  className="w-full py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-colors text-center cursor-pointer mt-1"
+                  type="button"
+                >
+                  Concluir
+                </button>
+              </div>
+            </>
+          )}
         </div>
-
         <div 
-          className="flex flex-col gap-3 flex-1 min-h-[600px] p-3 border-x border-b rounded-b-2xl"
+          className="flex-1 flex flex-col p-3 border-x border-b rounded-b-2xl z-0"
           style={{
-            width: isFirst ? '306px' : '292px',
-            minWidth: isFirst ? '306px' : '292px',
-            maxWidth: isFirst ? '306px' : '292px',
-            marginLeft: isFirst ? '0px' : '14px',
+            width: '306px',
+            minWidth: '306px',
+            maxWidth: '306px',
+            marginLeft: '0px',
             alignSelf: 'flex-start',
-            backgroundColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18),
-            borderColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45),
+            backgroundColor: bgRgba,
+            borderColor: borderRgba,
             borderWidth: '0 1px 1px 1px',
             borderStyle: 'solid'
           }}
         >
-          {/* Totalizador de Volume */}
-          <div className="flex justify-center w-full mb-3 shrink-0 z-10 pointer-events-auto">
-            <div 
-              className="px-3.5 py-1 rounded-full text-xs font-bold shadow-sm select-none text-center border"
-              style={{
-                backgroundColor: hexToRgba(resolvedHex, 0.1),
-                color: getDarkenedHexForText(resolvedHex),
-                borderColor: hexToRgba(resolvedHex, 0.25)
-              }}
-            >
-              {fmt(total)} /mês
-            </div>
-          </div>
-          {cards.length === 0 ? (
-            <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
-              <p className="text-xs text-slate-300 font-medium">Vazio</p>
-            </div>
-          ) : (
-            cards.map(c => (
-              <div
-                key={c.id}
-                draggable
-                onDragStart={(e) => e.dataTransfer.setData('text/plain', c.id)}
-                onClick={() => router.push(`/contratos/${c.id}`)}
-                className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer cursor-grab active:cursor-grabbing"
-              >
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
-                      <FileText size={13} className="text-[#1B4D3E]" />
-                    </div>
-                    <span className="text-xs font-black text-slate-700 tracking-wide">{gerarNumeroContrato(c)}</span>
-                  </div>
-                  <span className="text-[9px] font-black px-2 py-0.5 rounded bg-slate-100 text-slate-500 uppercase tracking-wider">{c.empresaEmissora?.nomeFantasia}</span>
-                </div>
-
-                <p className="text-sm font-bold text-slate-800 leading-tight mb-3 line-clamp-2">{c.client?.razaoSocial || c.client?.nomeFantasia}</p>
-                
-                <div className="grid grid-cols-2 gap-x-2 gap-y-3 mb-3 border-t border-slate-100 pt-3">
-                  <div>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Início</p>
-                    <p className="text-[11px] font-bold text-slate-700">{c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : 'A definir'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Reajuste</p>
-                    <p className="text-[11px] font-bold text-orange-600">{c.dataReajuste ? new Date(c.dataReajuste).toLocaleDateString('pt-BR') : 'Não definido'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Mensal</p>
-                    <span className="text-sm font-black text-[#1B4D3E]">{fmt(c.valorMensal)}</span>
-                  </div>
-                  <div>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Vigência</p>
-                    <span className="text-[11px] font-bold text-slate-600">{c.vigenciaMeses} meses</span>
-                  </div>
-                </div>
-
-                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    {c.proposta?.user?.avatarUrl ? (
-                      <img 
-                        src={c.proposta.user.avatarUrl} 
-                        alt={c.proposta.user.nome} 
-                        className="w-5 h-5 rounded-full object-cover border border-slate-200"
-                      />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
-                        {(c.proposta?.user?.nome || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                      </div>
-                    )}
-                    <span className="text-[10px] text-slate-500 font-medium">{c.proposta?.user?.nome || 'Sistema'}</span>
-                  </div>
-                  <span className="text-[9px] text-slate-400 font-medium" title={`Gerado em ${new Date(c.createdAt).toLocaleString('pt-BR')}`}>
-                    {new Date(c.createdAt).toLocaleDateString('pt-BR')}
-                  </span>
-                </div>
+          <div className="flex-1 flex flex-col gap-3">
+            {cards.length === 0 ? (
+              <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
+                <p className="text-xs text-slate-300 font-medium">Vazio</p>
               </div>
-            ))
-          )}
+            ) : (
+              cards.map(c => (
+                <div
+                  key={c.id}
+                  draggable
+                  onDragStart={(e) => e.dataTransfer.setData('text/plain', c.id)}
+                  onClick={() => router.push(`/contratos/${c.id}`)}
+                  className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer cursor-grab active:cursor-grabbing"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
+                        <FileText size={13} className="text-[#1B4D3E]" />
+                      </div>
+                      <span className="text-xs font-black text-slate-700 tracking-wide">{gerarNumeroContrato(c)}</span>
+                    </div>
+                    <span className="text-[9px] font-black px-2 py-0.5 rounded bg-slate-100 text-slate-500 uppercase tracking-wider">{c.empresaEmissora?.nomeFantasia}</span>
+                  </div>
+                  <p className="text-sm font-bold text-slate-800 leading-tight mb-3 line-clamp-2">{c.client?.razaoSocial || c.client?.nomeFantasia}</p>
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-3 mb-3 border-t border-slate-100 pt-3">
+                    <div>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Início</p>
+                      <p className="text-[11px] font-bold text-slate-700">{c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : 'A definir'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Reajuste</p>
+                      <p className="text-[11px] font-bold text-orange-600">{c.dataReajuste ? new Date(c.dataReajuste).toLocaleDateString('pt-BR') : 'Não definido'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Mensal</p>
+                      <span className="text-sm font-black text-[#1B4D3E]">{fmt(c.valorMensal)}</span>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Vigência</p>
+                      <span className="text-[11px] font-bold text-slate-600">{c.vigenciaMeses} meses</span>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      {c.proposta?.user?.avatarUrl ? (
+                        <img 
+                          src={c.proposta.user.avatarUrl} 
+                          alt={c.proposta.user.nome} 
+                          className="w-5 h-5 rounded-full object-cover border border-slate-200"
+                        />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
+                          {(c.proposta?.user?.nome || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                        </div>
+                      )}
+                      <span className="text-[10px] text-slate-500 font-medium">{c.proposta?.user?.nome || 'Sistema'}</span>
+                    </div>
+                    <span className="text-[9px] text-slate-400 font-medium" title={`Gerado em ${new Date(c.createdAt).toLocaleString('pt-BR')}`}>
+                      {new Date(c.createdAt).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     );
@@ -1223,7 +1128,7 @@ export default function ContratosDashboard() {
           {/* KANBAN POR STATUS */}
           {viewMode === 'kanban-status' && (
             <div className="overflow-x-auto pb-6">
-              <div className="flex gap-3 min-w-max">
+              <div className="flex gap-[4px] min-w-max">
                 {statusList.map((status, index) => (
                   <KanbanColumn key={status} status={status} isFirst={index === 0} />
                 ))}
@@ -1234,7 +1139,7 @@ export default function ContratosDashboard() {
           {/* KANBAN POR SEGMENTO */}
           {viewMode === 'kanban-segmento' && (
             <div className="overflow-x-auto pb-6">
-              <div className="flex gap-3 min-w-max">
+              <div className="flex gap-[4px] min-w-max">
                 {kanbanSegmentoCols.map((col, index) => (
                   <KanbanSegmentoColumn
                     key={col.id}

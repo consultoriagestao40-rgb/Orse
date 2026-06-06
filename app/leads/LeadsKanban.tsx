@@ -1307,80 +1307,84 @@ export default function LeadsKanban() {
         {showMetrics && <PipelineMetrics leads={filteredLeads} stages={stages} />}
         {viewMode === 'kanban-status' && (
           <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
-            <div className="flex gap-3 h-[calc(100vh-70px)] shrink-0 pr-1">
+            <div className="flex gap-[4px] h-[calc(100vh-70px)] shrink-0 pr-1">
               {stages.map((stage, idx) => {
                 const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
                 const totalValorEst = stageLeads.reduce((acc, lead) => acc + (lead.valorEst || 0), 0);
                 const isFirst = idx === 0;
                 const resolvedHex = resolveColorToHex(stage.color);
                 const contrast = getContrastYIQ(resolvedHex);
-                const badgeClass = contrast === 'white' ? 'bg-white/20 text-white' : 'bg-black/10 text-slate-800';
+                const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
+                const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
+                const textHex = getDarkenedHexForText(resolvedHex);
 
                 return (
                   <div 
                     key={stage.id} 
                     className="w-72 shrink-0 flex flex-col h-full rounded-2xl relative"
+                    style={{ marginLeft: isFirst ? '0px' : '-14px' }}
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDrop(e, stage.id)}
                   >
-                    <div className="relative h-11 shrink-0 z-10 w-full group/header">
+                    <div className="relative h-14 shrink-0 z-10 w-full group/header">
                       <svg 
-                        className="absolute inset-0 w-full h-full drop-shadow-sm" 
+                        className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200" 
                         preserveAspectRatio="none" 
-                        viewBox="0 0 288 44"
-                        style={{ color: resolvedHex }}
+                        viewBox="0 0 288 56"
+                        style={{ color: bgRgba }}
                       >
                         <path 
                           d={isFirst 
-                            ? "M 10,0 L 274,0 L 288,22 L 274,44 L 10,44 A 10,10 0 0,1 0,34 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                            : "M 0,0 L 274,0 L 288,22 L 274,44 L 0,44 L 14,22 Z"
+                            ? "M 10,0 L 274,0 L 288,28 L 274,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                            : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 L 14,28 Z"
                           }
                           fill="currentColor" 
-                          stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
+                          stroke={borderRgba}
                           strokeWidth="1.5"
                         />
                       </svg>
                       <div 
-                        className={`relative z-10 flex justify-between items-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
-                        style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
+                        className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                        style={{ color: textHex }}
                       >
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <h3 className="font-black uppercase tracking-wider text-xs truncate max-w-[170px]">
-                            {stage.nome}
-                          </h3>
-                          
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingStageName(stage.nome);
-                              setEditingStageId(stage.id);
-                            }}
-                            className={`p-1 rounded-full opacity-60 hover:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
-                              contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
-                            }`}
-                            title="Editar Etapa"
-                          >
-                            <Edit2 size={12} />
-                          </button>
+                        <div className="flex justify-between items-center w-full min-w-0">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <h3 className="font-black uppercase tracking-wider text-xs truncate max-w-[170px]">
+                              {stage.nome}
+                            </h3>
+                            
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingStageName(stage.nome);
+                                setEditingStageId(stage.id);
+                              }}
+                              className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                              style={{ color: textHex }}
+                              title="Editar Etapa"
+                            >
+                              <Edit2 size={11} />
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCreateStage(stage.id);
-                            }}
-                            className={`p-1 rounded-full opacity-60 hover:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
-                              contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
-                            }`}
-                            title="Criar Nova Etapa"
-                          >
-                            <Plus size={12} />
-                          </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCreateStage(stage.id);
+                              }}
+                              className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                              style={{ color: textHex }}
+                              title="Criar Nova Etapa"
+                            >
+                              <Plus size={11} />
+                            </button>
+                          </div>
                         </div>
 
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 shadow-sm ${badgeClass}`}>
-                          {stageLeads.length}
+                        {/* Subtítulo integrado com o totalizador de volume e leads */}
+                        <span className="text-[10px] font-bold mt-0.5 opacity-70 truncate select-none">
+                          {fmt(totalValorEst)} • {stageLeads.length} {stageLeads.length === 1 ? 'lead' : 'leads'}
                         </span>
 
                         {editingStageId === stage.id && (
@@ -1540,30 +1544,17 @@ export default function LeadsKanban() {
                     <div 
                       className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
                       style={{
-                        width: isFirst ? '274px' : '260px',
-                        minWidth: isFirst ? '274px' : '260px',
-                        maxWidth: isFirst ? '274px' : '260px',
-                        marginLeft: isFirst ? '0px' : '14px',
+                        width: '274px',
+                        minWidth: '274px',
+                        maxWidth: '274px',
+                        marginLeft: '0px',
                         alignSelf: 'flex-start',
-                        backgroundColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18),
-                        borderColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45),
+                        backgroundColor: bgRgba,
+                        borderColor: borderRgba,
                         borderWidth: '0 1px 1px 1px',
                         borderStyle: 'solid',
                       }}
                     >
-                      {/* Totalizador de Volume */}
-                      <div className="flex justify-center w-full mb-3 shrink-0 z-10 pointer-events-auto">
-                        <div 
-                          className="px-3 py-0.5 rounded-full text-[11px] font-black shadow-sm select-none border"
-                          style={{
-                            backgroundColor: hexToRgba(resolvedHex, 0.1),
-                            color: getDarkenedHexForText(resolvedHex),
-                            borderColor: hexToRgba(resolvedHex, 0.25)
-                          }}
-                        >
-                          {fmt(totalValorEst)}
-                        </div>
-                      </div>
 
                       <div className="flex-1 flex flex-col gap-3">
                         {stageLeads.map(lead => (
@@ -1590,7 +1581,7 @@ export default function LeadsKanban() {
 
         {viewMode === 'kanban-vendedor' && (
           <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
-            <div className="flex gap-3 h-[calc(100vh-70px)] shrink-0 pr-1">
+            <div className="flex gap-[4px] h-[calc(100vh-70px)] shrink-0 pr-1">
               {kanbanVendedorCols.map((col, idx) => {
                 const colLeads = col.cards;
                 const isFirst = idx === 0;
@@ -1598,74 +1589,82 @@ export default function LeadsKanban() {
                 const colColor = getVendedorColor(col.label, defaultColColor);
                 const resolvedHex = resolveColorToHex(colColor);
                 const contrast = getContrastYIQ(resolvedHex);
-                const badgeClass = contrast === 'white' ? 'bg-white/20 text-white' : 'bg-black/10 text-slate-800';
+                const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
+                const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
+                const textHex = getDarkenedHexForText(resolvedHex);
 
                 return (
                   <div 
                     key={col.id} 
                     className="w-72 shrink-0 flex flex-col h-full rounded-2xl relative"
+                    style={{ marginLeft: isFirst ? '0px' : '-14px' }}
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDropVendedor(e, col.id)}
                   >
-                    <div className="relative h-11 shrink-0 z-10 w-full group/header">
+                    <div className="relative h-14 shrink-0 z-10 w-full group/header">
                       <svg 
-                        className="absolute inset-0 w-full h-full drop-shadow-sm" 
+                        className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200" 
                         preserveAspectRatio="none" 
-                        viewBox="0 0 288 44"
-                        style={{ color: resolvedHex }}
+                        viewBox="0 0 288 56"
+                        style={{ color: bgRgba }}
                       >
                         <path 
                           d={isFirst 
-                            ? "M 10,0 L 274,0 L 288,22 L 274,44 L 10,44 A 10,10 0 0,1 0,34 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                            : "M 0,0 L 274,0 L 288,22 L 274,44 L 0,44 L 14,22 Z"
+                            ? "M 10,0 L 274,0 L 288,28 L 274,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                            : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 L 14,28 Z"
                           }
                           fill="currentColor" 
-                          stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
+                          stroke={borderRgba}
                           strokeWidth="1.5"
                         />
                       </svg>
                       <div 
-                        className={`relative z-10 flex justify-between items-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
-                        style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
+                        className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                        style={{ color: textHex }}
                       >
-                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                          {col.avatarUrl ? (
-                            <img 
-                              src={col.avatarUrl} 
-                              alt={col.label} 
-                              className="w-5 h-5 rounded-full object-cover border border-white/20 shrink-0"
-                            />
-                          ) : col.id !== 'unassigned' ? (
-                            <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-white font-black text-[8px] uppercase border border-white/20 shrink-0">
-                              {col.label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                            </div>
-                          ) : (
-                            <User size={10} className={contrast === 'white' ? 'text-white/80 shrink-0' : 'text-slate-900/80 shrink-0'} />
-                          )}
-                          <h3 className="font-black uppercase tracking-wider text-xs truncate">
-                            {col.label}
-                          </h3>
+                        <div className="flex justify-between items-center w-full min-w-0">
+                          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                            {col.avatarUrl ? (
+                              <img 
+                                src={col.avatarUrl} 
+                                alt={col.label} 
+                                className="w-5 h-5 rounded-full object-cover border border-white/20 shrink-0"
+                              />
+                            ) : col.id !== 'unassigned' ? (
+                              <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center font-black text-[8px] uppercase border border-black/10 shrink-0" style={{ color: textHex }}>
+                                {col.label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                              </div>
+                            ) : (
+                              <User size={10} className="shrink-0" style={{ color: textHex }} />
+                            )}
+                            <h3 className="font-black uppercase tracking-wider text-xs truncate">
+                              {col.label}
+                            </h3>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {col.id !== 'unassigned' && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingVendedorId(col.id);
+                                }}
+                                className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                                style={{ color: textHex }}
+                                title="Editar Cor"
+                              >
+                                <Edit2 size={11} />
+                              </button>
+                            )}
+                          </div>
                         </div>
 
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm ${badgeClass}`}>
-                            {colLeads.length}
-                          </span>
-
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingVendedorId(col.id);
-                            }}
-                            className={`p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
-                              contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
-                            }`}
-                            title="Editar Cor"
-                          >
-                            <Edit2 size={12} />
-                          </button>
-                        </div>
+                        {/* Subtítulo integrado com o totalizador de volume e leads */}
+                        <span className="text-[10px] font-bold mt-0.5 opacity-70 truncate select-none">
+                          {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
+                        </span>
+                      </div>
 
                         {editingVendedorId === col.id && (
                           <>
@@ -1757,30 +1756,17 @@ export default function LeadsKanban() {
                     <div 
                       className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
                       style={{
-                        width: isFirst ? '274px' : '260px',
-                        minWidth: isFirst ? '274px' : '260px',
-                        maxWidth: isFirst ? '274px' : '260px',
-                        marginLeft: isFirst ? '0px' : '14px',
+                        width: '274px',
+                        minWidth: '274px',
+                        maxWidth: '274px',
+                        marginLeft: '0px',
                         alignSelf: 'flex-start',
-                        backgroundColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18),
-                        borderColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45),
+                        backgroundColor: bgRgba,
+                        borderColor: borderRgba,
                         borderWidth: '0 1px 1px 1px',
                         borderStyle: 'solid',
                       }}
                     >
-                      {/* Totalizador de Volume */}
-                      <div className="flex justify-center w-full mb-3 shrink-0 z-10 pointer-events-auto">
-                        <div 
-                          className="px-3 py-0.5 rounded-full text-[11px] font-black shadow-sm select-none border"
-                          style={{
-                            backgroundColor: hexToRgba(resolvedHex, 0.1),
-                            color: getDarkenedHexForText(resolvedHex),
-                            borderColor: hexToRgba(resolvedHex, 0.25)
-                          }}
-                        >
-                          {fmt(col.total)}
-                        </div>
-                      </div>
 
                       <div className="flex-1 flex flex-col gap-3">
                         {colLeads.map(lead => (
@@ -1808,7 +1794,7 @@ export default function LeadsKanban() {
 
         {viewMode === 'kanban-segmento' && (
           <div className="overflow-x-auto pb-4 sticky top-0 z-20 bg-slate-50">
-            <div className="flex gap-3 h-[calc(100vh-70px)] shrink-0 pr-1">
+            <div className="flex gap-[4px] h-[calc(100vh-70px)] shrink-0 pr-1">
               {kanbanSegmentoCols.map((col, idx) => {
                 const colLeads = col.cards;
                 const isFirst = idx === 0;
@@ -1816,62 +1802,70 @@ export default function LeadsKanban() {
                 const colColor = getSegmentColor(col.label, defaultColColor);
                 const resolvedHex = resolveColorToHex(colColor);
                 const contrast = getContrastYIQ(resolvedHex);
-                const badgeClass = contrast === 'white' ? 'bg-white/20 text-white' : 'bg-black/10 text-slate-800';
+                const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
+                const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
+                const textHex = getDarkenedHexForText(resolvedHex);
 
                 return (
                   <div 
                     key={col.id} 
                     className="w-72 shrink-0 flex flex-col h-full rounded-2xl relative"
+                    style={{ marginLeft: isFirst ? '0px' : '-14px' }}
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDropSegmento(e, col.id)}
                   >
-                    <div className="relative h-11 shrink-0 z-10 w-full group/header">
+                    <div className="relative h-14 shrink-0 z-10 w-full group/header">
                       <svg 
-                        className="absolute inset-0 w-full h-full drop-shadow-sm" 
+                        className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200" 
                         preserveAspectRatio="none" 
-                        viewBox="0 0 288 44"
-                        style={{ color: resolvedHex }}
+                        viewBox="0 0 288 56"
+                        style={{ color: bgRgba }}
                       >
                         <path 
                           d={isFirst 
-                            ? "M 10,0 L 274,0 L 288,22 L 274,44 L 10,44 A 10,10 0 0,1 0,34 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                            : "M 0,0 L 274,0 L 288,22 L 274,44 L 0,44 L 14,22 Z"
+                            ? "M 10,0 L 274,0 L 288,28 L 274,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                            : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 L 14,28 Z"
                           }
                           fill="currentColor" 
-                          stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
+                          stroke={borderRgba}
                           strokeWidth="1.5"
                         />
                       </svg>
                       <div 
-                        className={`relative z-10 flex justify-between items-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
-                        style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
+                        className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                        style={{ color: textHex }}
                       >
-                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                          <Building size={10} className={contrast === 'white' ? 'text-white/80 shrink-0' : 'text-slate-900/80 shrink-0'} />
-                          <h3 className="font-black uppercase tracking-wider text-xs truncate">
-                            {col.label}
-                          </h3>
+                        <div className="flex justify-between items-center w-full min-w-0">
+                          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                            <Building size={12} className="shrink-0" style={{ color: textHex }} />
+                            <h3 className="font-black uppercase tracking-wider text-xs truncate">
+                              {col.label}
+                            </h3>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {col.id !== 'unassigned' && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingSegmentoId(col.id);
+                                }}
+                                className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                                style={{ color: textHex }}
+                                title="Editar Cor"
+                              >
+                                <Edit2 size={11} />
+                              </button>
+                            )}
+                          </div>
                         </div>
 
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm ${badgeClass}`}>
-                            {colLeads.length}
-                          </span>
-
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingSegmentoId(col.id);
-                            }}
-                            className={`p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer ${
-                              contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
-                            }`}
-                            title="Editar Cor"
-                          >
-                            <Edit2 size={12} />
-                          </button>
-                        </div>
+                        {/* Subtítulo integrado com o totalizador de volume e leads */}
+                        <span className="text-[10px] font-bold mt-0.5 opacity-70 truncate select-none">
+                          {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
+                        </span>
+                      </div>
 
                         {editingSegmentoId === col.id && (
                           <>
@@ -1963,30 +1957,17 @@ export default function LeadsKanban() {
                     <div 
                       className="flex-1 flex flex-col p-3 overflow-y-auto border-x border-b rounded-b-2xl z-0"
                       style={{
-                        width: isFirst ? '274px' : '260px',
-                        minWidth: isFirst ? '274px' : '260px',
-                        maxWidth: isFirst ? '274px' : '260px',
-                        marginLeft: isFirst ? '0px' : '14px',
+                        width: '274px',
+                        minWidth: '274px',
+                        maxWidth: '274px',
+                        marginLeft: '0px',
                         alignSelf: 'flex-start',
-                        backgroundColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18),
-                        borderColor: hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45),
+                        backgroundColor: bgRgba,
+                        borderColor: borderRgba,
                         borderWidth: '0 1px 1px 1px',
                         borderStyle: 'solid',
                       }}
                     >
-                      {/* Totalizador de Volume */}
-                      <div className="flex justify-center w-full mb-3 shrink-0 z-10 pointer-events-auto">
-                        <div 
-                          className="px-3 py-0.5 rounded-full text-[11px] font-black shadow-sm select-none border"
-                          style={{
-                            backgroundColor: hexToRgba(resolvedHex, 0.1),
-                            color: getDarkenedHexForText(resolvedHex),
-                            borderColor: hexToRgba(resolvedHex, 0.25)
-                          }}
-                        >
-                          {fmt(col.total)}
-                        </div>
-                      </div>
 
                       <div className="flex-1 flex flex-col gap-3">
                         {colLeads.map(lead => (

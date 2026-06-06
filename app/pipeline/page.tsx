@@ -726,6 +726,10 @@ function ProposalsDashboard() {
     const [editNameValue, setEditNameValue] = useState(label);
     const resolvedHex = resolveColorToHex(color);
     const [customColorValue, setCustomColorValue] = useState(resolvedHex);
+    const contrast = getContrastYIQ(resolvedHex);
+    const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
+    const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
+    const textHex = getDarkenedHexForText(resolvedHex);
 
     useEffect(() => {
       setEditNameValue(label);
@@ -739,10 +743,6 @@ function ProposalsDashboard() {
     const colAvatarUrl = userObj?.avatarUrl;
     const isStatus = type === 'status';
     const isSegmento = type === 'segmento';
-
-    const contrast = getContrastYIQ(resolvedHex);
-    const textColorClass = contrast === 'white' ? 'text-white' : 'text-slate-900';
-    const badgeClass = contrast === 'white' ? 'bg-white/20 text-white' : 'bg-black/10 text-slate-800';
 
     return (
       <div 
@@ -821,45 +821,45 @@ function ProposalsDashboard() {
           <div className="absolute bottom-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
         </div>
         
-        <div className="flex flex-col items-center gap-1.5 w-full">
-          {/* Cabeçalho Chevron/Seta */}
-          <div 
-            className="w-full h-11 relative group/title pointer-events-auto"
+        {/* Cabeçalho Chevron/Seta */}
+        <div 
+          className="w-full h-14 relative group/title pointer-events-auto"
+        >
+          {/* Background SVG Custom Shape */}
+          <svg 
+            className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200"
+            viewBox="0 0 288 56"
+            preserveAspectRatio="none"
+            style={{
+              color: bgRgba,
+            }}
           >
-            {/* Background SVG Custom Shape */}
-            <svg 
-              className="absolute inset-0 w-full h-full drop-shadow-sm transition-all duration-200"
-              viewBox="0 0 288 44"
-              preserveAspectRatio="none"
-              style={{
-                color: resolvedHex,
-              }}
-            >
-              <path 
-                d={isFirst 
-                  ? "M 10,0 L 274,0 L 288,22 L 274,44 L 10,44 A 10,10 0 0,1 0,34 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                  : "M 0,0 L 274,0 L 288,22 L 274,44 L 0,44 L 14,22 Z"
-                }
-                fill="currentColor"
-                stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
-                strokeWidth="1.5"
-              />
-            </svg>
+            <path 
+              d={isFirst 
+                ? "M 10,0 L 274,0 L 288,28 L 274,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
+                : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 L 14,28 Z"
+              }
+              fill="currentColor"
+              stroke={borderRgba}
+              strokeWidth="1.5"
+            />
+          </svg>
 
-            {/* Conteúdo do Cabeçalho */}
-            <div 
-              className={`absolute inset-0 z-10 flex items-center justify-between ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
-              style={{
-                color: contrast === 'white' ? '#ffffff' : '#0f172a'
-              }}
-            >
+          {/* Conteúdo do Cabeçalho */}
+          <div 
+            className={`absolute inset-0 z-10 flex flex-col justify-center ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+            style={{
+              color: textHex,
+            }}
+          >
+            <div className="flex items-center justify-between w-full min-w-0">
               {isStatus ? (
                 <span className="text-xs font-black uppercase tracking-wider truncate max-w-[170px]">
                   {label}
                 </span>
               ) : isSegmento ? (
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <Building size={14} className={contrast === 'white' ? 'text-white/80 shrink-0' : 'text-slate-900/80 shrink-0'} />
+                  <Building size={14} className="shrink-0" style={{ color: textHex }} />
                   <span className="text-xs font-black uppercase tracking-wider truncate">
                     {label}
                   </span>
@@ -873,7 +873,7 @@ function ProposalsDashboard() {
                       className="w-6 h-6 rounded-full object-cover border border-white/20"
                     />
                   ) : (
-                    <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white font-black text-[9px] uppercase border border-white/20 flex-shrink-0">
+                    <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center font-black text-[9px] uppercase border border-black/10 flex-shrink-0" style={{ color: textHex }}>
                       {label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                     </div>
                   )}
@@ -884,19 +884,14 @@ function ProposalsDashboard() {
               )}
               
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm ${badgeClass}`}>
-                  {cards.length}
-                </span>
-
                 {isStatus && onCreateStatus && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onCreateStatus(label);
                     }}
-                    className={`p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer ${
-                      contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
-                    }`}
+                    className="p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                    style={{ color: textHex }}
                     title="Criar Nova Etapa"
                     type="button"
                   >
@@ -910,9 +905,8 @@ function ProposalsDashboard() {
                       e.stopPropagation();
                       setShowEditPopover(!showEditPopover);
                     }}
-                    className={`p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer ${
-                      contrast === 'white' ? 'hover:bg-white/20 text-white' : 'hover:bg-black/10 text-slate-800'
-                    }`}
+                    className="p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                    style={{ color: textHex }}
                     title="Editar Coluna"
                     type="button"
                   >
@@ -922,133 +916,126 @@ function ProposalsDashboard() {
               </div>
             </div>
 
-            {/* Popover de Edição Unificado */}
-            {showEditPopover && (
-              <>
-                <div 
-                  className="fixed inset-0 z-30 cursor-default" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowEditPopover(false);
-                  }}
-                  onDragStart={(e) => e.preventDefault()}
-                />
-                <div 
-                  className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 animate-in fade-in slide-in-from-top-2 duration-150 flex flex-col gap-3 cursor-default"
-                  onClick={(e) => e.stopPropagation()}
-                  onDragStart={(e) => e.preventDefault()}
-                >
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                      Editar Coluna
-                    </span>
-                    <button 
-                      onClick={() => setShowEditPopover(false)}
-                      className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
+            {/* Subtítulo integrado com o totalizador de volume e negócios */}
+            <span className="text-[10px] font-bold mt-0.5 opacity-90 truncate select-none">
+              {fmt(total)} • {cards.length} {cards.length === 1 ? 'negócio' : 'negócios'}
+            </span>
+          </div>
 
-                  {isStatus && onRenameColumn && (
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Nome da Coluna</label>
-                      <input
-                        type="text"
-                        value={editNameValue}
-                        onChange={(e) => setEditNameValue(e.target.value)}
-                        className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-slate-300 outline-none w-full bg-slate-50 font-medium"
-                        placeholder="Nome da coluna"
-                        onKeyDown={async (e) => {
-                          if (e.key === 'Enter') {
-                            if (editNameValue.trim() && editNameValue.trim().toUpperCase() !== label.toUpperCase()) {
-                              await onRenameColumn(editNameValue.trim());
-                            }
-                            setShowEditPopover(false);
-                          }
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {onColorChange && (
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Selecione a Cor</label>
-                      <div className="grid grid-cols-10 gap-1 mt-0.5">
-                        {PRESET_COLORS.map(c => {
-                          const isSelected = resolvedHex.toLowerCase() === c.toLowerCase();
-                          return (
-                            <button
-                              key={c}
-                              onClick={async () => {
-                                await onColorChange(c);
-                              }}
-                              className={`w-4 h-4 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center`}
-                              style={{
-                                backgroundColor: c,
-                                borderColor: isSelected ? '#0f172a' : 'rgba(0,0,0,0.1)',
-                                borderWidth: isSelected ? '2px' : '1px'
-                              }}
-                              title={c}
-                            >
-                              {isSelected && (
-                                <div 
-                                  className="w-1.5 h-1.5 rounded-full" 
-                                  style={{ backgroundColor: getContrastYIQ(c) === 'white' ? '#fff' : '#000' }} 
-                                />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Cor Personalizada (HTML Color Input) */}
-                  {onColorChange && (
-                    <div className="flex flex-col gap-1 pt-1 border-t border-slate-100">
-                      <label className="flex items-center gap-2 cursor-pointer border border-slate-200 rounded-lg px-2.5 py-1.5 hover:bg-slate-50 transition-colors w-full">
-                        <input 
-                          type="color" 
-                          value={customColorValue}
-                          onChange={async (e) => {
-                            setCustomColorValue(e.target.value);
-                            await onColorChange(e.target.value);
-                          }}
-                          className="w-8 h-5 border-0 p-0 cursor-pointer rounded bg-transparent"
-                        />
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cor personalizada</span>
-                      </label>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={async () => {
-                      if (isStatus && onRenameColumn && editNameValue.trim() && editNameValue.trim().toUpperCase() !== label.toUpperCase()) {
-                        await onRenameColumn(editNameValue.trim());
-                      }
-                      setShowEditPopover(false);
-                    }}
-                    className="w-full py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-colors text-center"
+          {/* Popover de Edição Unificado */}
+          {showEditPopover && (
+            <>
+              <div 
+                className="fixed inset-0 z-30 cursor-default" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowEditPopover(false);
+                }}
+                onDragStart={(e) => e.preventDefault()}
+              />
+              <div 
+                className="absolute left-1/2 -translate-x-1/2 top-11 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[260px] text-slate-800 animate-in fade-in slide-in-from-top-2 duration-150 flex flex-col gap-3 cursor-default"
+                onClick={(e) => e.stopPropagation()}
+                onDragStart={(e) => e.preventDefault()}
+              >
+                <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    Editar Coluna
+                  </span>
+                  <button 
+                    onClick={() => setShowEditPopover(false)}
+                    className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
                   >
-                    Concluir
+                    <X size={12} />
                   </button>
                 </div>
-              </>
-            )}
-          </div>
 
-          {/* Totalizador de Volume */}
-          <div 
-            className="px-3.5 py-1 rounded-full text-xs font-bold shadow-sm select-none text-center border"
-            style={{
-              backgroundColor: hexToRgba(resolvedHex, 0.1),
-              color: getDarkenedHexForText(resolvedHex),
-              borderColor: hexToRgba(resolvedHex, 0.25)
-            }}
-          >
-            {fmt(total)}
-          </div>
+                {isStatus && onRenameColumn && (
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Nome da Coluna</label>
+                    <input
+                      type="text"
+                      value={editNameValue}
+                      onChange={(e) => setEditNameValue(e.target.value)}
+                      className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-slate-300 outline-none w-full bg-slate-50 font-medium"
+                      placeholder="Nome da coluna"
+                      onKeyDown={async (e) => {
+                        if (e.key === 'Enter') {
+                          if (editNameValue.trim() && editNameValue.trim().toUpperCase() !== label.toUpperCase()) {
+                            await onRenameColumn(editNameValue.trim());
+                          }
+                          setShowEditPopover(false);
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+
+                {onColorChange && (
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Selecione a Cor</label>
+                    <div className="grid grid-cols-10 gap-1 mt-0.5">
+                      {PRESET_COLORS.map(c => {
+                        const isSelected = resolvedHex.toLowerCase() === c.toLowerCase();
+                        return (
+                          <button
+                            key={c}
+                            onClick={async () => {
+                              await onColorChange(c);
+                            }}
+                            className={`w-4 h-4 rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95 flex items-center justify-center`}
+                            style={{
+                              backgroundColor: c,
+                              borderColor: isSelected ? '#0f172a' : 'rgba(0,0,0,0.1)',
+                              borderWidth: isSelected ? '2px' : '1px'
+                            }}
+                            title={c}
+                          >
+                            {isSelected && (
+                              <div 
+                                className="w-1.5 h-1.5 rounded-full" 
+                                style={{ backgroundColor: getContrastYIQ(c) === 'white' ? '#fff' : '#000' }} 
+                              />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Cor Personalizada (HTML Color Input) */}
+                {onColorChange && (
+                  <div className="flex flex-col gap-1 pt-1 border-t border-slate-100">
+                    <label className="flex items-center gap-2 cursor-pointer border border-slate-200 rounded-lg px-2.5 py-1.5 hover:bg-slate-50 transition-colors w-full">
+                      <input 
+                        type="color" 
+                        value={customColorValue}
+                        onChange={async (e) => {
+                          setCustomColorValue(e.target.value);
+                          await onColorChange(e.target.value);
+                        }}
+                        className="w-8 h-5 border-0 p-0 cursor-pointer rounded bg-transparent"
+                      />
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cor personalizada</span>
+                    </label>
+                  </div>
+                )}
+
+                <button
+                  onClick={async () => {
+                    if (isStatus && onRenameColumn && editNameValue.trim() && editNameValue.trim().toUpperCase() !== label.toUpperCase()) {
+                      await onRenameColumn(editNameValue.trim());
+                    }
+                    setShowEditPopover(false);
+                  }}
+                  className="w-full py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-colors text-center"
+                >
+                  Concluir
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     );
@@ -1115,10 +1102,10 @@ function ProposalsDashboard() {
         <div
           className="flex-1 flex flex-col p-3 rounded-b-2xl rounded-t-none"
           style={{
-            width: isFirst ? '274px' : '260px',
-            minWidth: isFirst ? '274px' : '260px',
-            maxWidth: isFirst ? '274px' : '260px',
-            marginLeft: isFirst ? '0px' : '14px',
+            width: '274px',
+            minWidth: '274px',
+            maxWidth: '274px',
+            marginLeft: '0px',
             alignSelf: 'flex-start',
             backgroundColor: bgRgba,
             borderColor: borderRgba,
@@ -1422,81 +1409,61 @@ function ProposalsDashboard() {
                       </>
                     ) : (
                       <div className="space-y-4">
-                        {/* Container Sticky Unificado: Título + Cabeçalhos */}
-                        <div 
-                          className="sticky top-0 z-20 pt-8 pb-0 mb-0 bg-transparent pointer-events-none"
-                          style={{ top: '-32px' }}
-                        >
-                          {/* Opaque background mask only for title + headers (excludes the pb-28/112px popover scroll space) */}
-                          <div className="absolute inset-x-0 top-0 bottom-28 bg-[#F8FAFC] -z-10" />
-                          <div className="flex items-center gap-2 mb-4">
-                            <LayoutGrid size={16} className="text-[#1B4D3E]" />
-                            <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
-                            <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                              {kanbanStatusCols.length} coluna{kanbanStatusCols.length !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-
-                          {/* Cabeçalhos Fixos */}
-                          <div 
-                            id="kanban-headers-status"
-                            className="overflow-x-auto no-scrollbar pb-28 mb-[-112px] animate-in fade-in duration-200 pointer-events-none"
-                            onScroll={() => syncScroll('kanban-headers-status', 'kanban-cards-status')}
-                            style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
-                          >
-                            <div className="flex gap-3 min-w-max pb-0 mb-0">
-                              {orderedStatusCols.map((col, idx) => (
-                                <KanbanColumnHeader
-                                  key={col.id}
-                                  label={col.label}
-                                  color={col.color}
-                                  cards={col.cards}
-                                  total={col.total}
-                                  statusId={col.id}
-                                  isFirst={idx === 0}
-                                  onCreateStatus={handleCreateStatus}
-                                  onColorChange={async (newColor) => {
-                                    await updatePropostaStatusParam(col.id, col.label, newColor);
-                                    setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));
-                                  }}
-                                  onRenameColumn={async (newName) => {
-                                    await updatePropostaStatusParam(col.id, newName);
-                                    setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, nome: newName.toUpperCase().trim() } : s));
-                                  }}
-                                  onDragColumnStart={(e, l) => handleDragColumnStart(e, l, 'status')}
-                                  onDragColumnEnd={handleDragColumnEnd}
-                                  onDropColumn={(e, l) => handleDropColumn(e, l, 'status')}
-                                />
-                              ))}
-                            </div>
-                          </div>
+                        <div className="flex items-center gap-2 mb-4">
+                          <LayoutGrid size={16} className="text-[#1B4D3E]" />
+                          <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Status</h2>
+                          <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                            {kanbanStatusCols.length} coluna{kanbanStatusCols.length !== 1 ? 's' : ''}
+                          </span>
                         </div>
 
-                        {/* Cards Roláveis (Sem qualquer pt ou mt para encostar fisicamente nos cabeçalhos sticky) */}
-                        <div 
-                          id="kanban-cards-status"
-                          className="overflow-x-auto pb-6 pt-0 mt-[-112px]"
-                          onScroll={() => syncScroll('kanban-cards-status', 'kanban-headers-status')}
-                        >
-                          <div className="flex gap-3 min-w-max pt-0 mt-0">
-                            {orderedStatusCols.map((col, idx) => (
-                              <KanbanColumnCards
-                                key={col.id}
-                                label={col.label}
-                                color={col.color}
-                                type="status"
-                                cards={col.cards}
-                                isFirst={idx === 0}
-                                onDropProp={async (propId) => {
-                                  const prop = proposals.find(p => p.id === propId);
-                                  if (prop && prop.status !== col.label) {
-                                    setProposals(prev => prev.map(p => p.id === propId ? { ...p, status: col.label } : p));
-                                    const res = await updatePropostaStatus(propId, col.label);
-                                    if (!res.success) alert(res.error);
-                                  }
-                                }}
-                              />
-                            ))}
+                        {/* Painel Kanban Unificado */}
+                        <div className="overflow-x-auto pb-6 pt-0">
+                          <div className="flex gap-[4px] min-w-max pt-0 mt-0 items-start">
+                            {orderedStatusCols.map((col, idx) => {
+                              const isFirst = idx === 0;
+                              return (
+                                <div key={col.id} className="flex flex-col" style={{ marginLeft: isFirst ? '0px' : '-14px' }}>
+                                  <KanbanColumnHeader
+                                    key={col.id}
+                                    label={col.label}
+                                    color={col.color}
+                                    cards={col.cards}
+                                    total={col.total}
+                                    statusId={col.id}
+                                    isFirst={isFirst}
+                                    onCreateStatus={handleCreateStatus}
+                                    onColorChange={async (newColor) => {
+                                      await updatePropostaStatusParam(col.id, col.label, newColor);
+                                      setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));
+                                    }}
+                                    onRenameColumn={async (newName) => {
+                                      await updatePropostaStatusParam(col.id, newName);
+                                      setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, nome: newName.toUpperCase().trim() } : s));
+                                    }}
+                                    onDragColumnStart={(e, l) => handleDragColumnStart(e, l, 'status')}
+                                    onDragColumnEnd={handleDragColumnEnd}
+                                    onDropColumn={(e, l) => handleDropColumn(e, l, 'status')}
+                                  />
+                                  <KanbanColumnCards
+                                    key={col.id}
+                                    label={col.label}
+                                    color={col.color}
+                                    type="status"
+                                    cards={col.cards}
+                                    isFirst={isFirst}
+                                    onDropProp={async (propId) => {
+                                      const prop = proposals.find(p => p.id === propId);
+                                      if (prop && prop.status !== col.label) {
+                                        setProposals(prev => prev.map(p => p.id === propId ? { ...p, status: col.label } : p));
+                                        const res = await updatePropostaStatus(propId, col.label);
+                                        if (!res.success) alert(res.error);
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       </div>
@@ -1534,32 +1501,22 @@ function ProposalsDashboard() {
                       </>
                     ) : (
                       <div className="space-y-4">
-                        {/* Container Sticky Unificado: Título + Cabeçalhos */}
-                        <div 
-                          className="sticky top-0 z-20 pt-8 pb-0 mb-0 bg-transparent pointer-events-none"
-                          style={{ top: '-32px' }}
-                        >
-                          {/* Opaque background mask only for title + headers (excludes the pb-28/112px popover scroll space) */}
-                          <div className="absolute inset-x-0 top-0 bottom-28 bg-[#F8FAFC] -z-10" />
-                          <div className="flex items-center gap-2 mb-4">
-                            <UserSquare2 size={16} className="text-[#1B4D3E]" />
-                            <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
-                            <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                              {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
-                            </span>
-                          </div>
+                        <div className="flex items-center gap-2 mb-4">
+                          <UserSquare2 size={16} className="text-[#1B4D3E]" />
+                          <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
+                          <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                            {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
+                          </span>
+                        </div>
 
-                          {/* Cabeçalhos Fixos */}
-                          <div 
-                            id="kanban-headers-vendedor"
-                            className="overflow-x-auto no-scrollbar pb-28 mb-[-112px] animate-in fade-in duration-200 pointer-events-none"
-                            onScroll={() => syncScroll('kanban-headers-vendedor', 'kanban-cards-vendedor')}
-                            style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
-                          >
-                            <div className="flex gap-3 min-w-max pb-0 mb-0">
-                              {orderedVendedorCols.map((col, idx) => {
-                                const vColor = vendedorColors[col.label] || 'emerald';
-                                return (
+                        {/* Painel Kanban Unificado */}
+                        <div className="overflow-x-auto pb-6 pt-0">
+                          <div className="flex gap-[4px] min-w-max pt-0 mt-0 items-start">
+                            {orderedVendedorCols.map((col, idx) => {
+                              const vColor = vendedorColors[col.label] || 'emerald';
+                              const isFirst = idx === 0;
+                              return (
+                                <div key={col.id} className="flex flex-col" style={{ marginLeft: isFirst ? '0px' : '-14px' }}>
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}
@@ -1568,7 +1525,7 @@ function ProposalsDashboard() {
                                     cards={col.cards}
                                     total={col.total}
                                     statusId={col.id}
-                                    isFirst={idx === 0}
+                                    isFirst={isFirst}
                                     onColorChange={async (newColor) => {
                                       localStorage.setItem(`kanban-vendedor-color-${col.label}`, newColor);
                                       setVendedorColors(prev => ({ ...prev, [col.label]: newColor }));
@@ -1577,45 +1534,30 @@ function ProposalsDashboard() {
                                     onDragColumnEnd={handleDragColumnEnd}
                                     onDropColumn={(e, l) => handleDropColumn(e, l, 'vendedor')}
                                   />
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Cards Roláveis (Sem qualquer pt ou mt para encostar fisicamente nos cabeçalhos sticky) */}
-                        <div 
-                          id="kanban-cards-vendedor"
-                          className="overflow-x-auto pb-6 pt-0 mt-[-112px]"
-                          onScroll={() => syncScroll('kanban-cards-vendedor', 'kanban-headers-vendedor')}
-                        >
-                          <div className="flex gap-3 min-w-max pt-0 mt-0">
-                            {orderedVendedorCols.map((col, idx) => {
-                              const vColor = vendedorColors[col.label] || 'emerald';
-                              return (
-                                <KanbanColumnCards
-                                  key={col.id}
-                                  label={col.label}
-                                  type="vendedor"
-                                  color={vColor}
-                                  cards={col.cards}
-                                  isFirst={idx === 0}
-                                  onDropProp={async (propId) => {
-                                    const prop = proposals.find(p => p.id === propId);
-                                    if (prop && prop.usuario !== col.label) {
-                                      if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
-                                        alert('Apenas gestores e administradores podem transferir propostas.');
-                                        return;
+                                  <KanbanColumnCards
+                                    key={col.id}
+                                    label={col.label}
+                                    type="vendedor"
+                                    color={vColor}
+                                    cards={col.cards}
+                                    isFirst={isFirst}
+                                    onDropProp={async (propId) => {
+                                      const prop = proposals.find(p => p.id === propId);
+                                      if (prop && prop.usuario !== col.label) {
+                                        if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
+                                          alert('Apenas gestores e administradores podem transferir propostas.');
+                                          return;
+                                        }
+                                        const newUser = usersList.find(u => u.nome === col.label);
+                                        if (newUser) {
+                                          setProposals(prev => prev.map(p => p.id === propId ? { ...p, usuario: newUser.nome } : p));
+                                          const res = await transferirProposta(propId, newUser.id);
+                                          if (!res.success) alert(res.error);
+                                        }
                                       }
-                                      const newUser = usersList.find(u => u.nome === col.label);
-                                      if (newUser) {
-                                        setProposals(prev => prev.map(p => p.id === propId ? { ...p, usuario: newUser.nome } : p));
-                                        const res = await transferirProposta(propId, newUser.id);
-                                        if (!res.success) alert(res.error);
-                                      }
-                                    }
-                                  }}
-                                />
+                                    }}
+                                  />
+                                </div>
                               );
                             })}
                           </div>
@@ -1636,12 +1578,7 @@ function ProposalsDashboard() {
                           <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Segmento</h2>
                           <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
                             {kanbanSegmentoCols.length} segmento{kanbanSegmentoCols.length !== 1 ? 's' : ''}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
-                      </>
-                    ) : kanbanSegmentoCols.length === 0 ? (
-                      <>
+                              <div className="space-y-4">
                         <div className="flex items-center gap-2 mb-4">
                           <Building size={16} className="text-[#1B4D3E]" />
                           <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Segmento</h2>
@@ -1649,37 +1586,15 @@ function ProposalsDashboard() {
                             {kanbanSegmentoCols.length} segmento{kanbanSegmentoCols.length !== 1 ? 's' : ''}
                           </span>
                         </div>
-                        <div className="flex items-center justify-center py-20 text-slate-400 text-sm">
-                          Nenhum segmento configurado.
-                        </div>
-                      </>
-                    ) : (
-                      <div className="space-y-4">
-                        {/* Container Sticky Unificado: Título + Cabeçalhos */}
-                        <div 
-                          className="sticky top-0 z-20 pt-8 pb-0 mb-0 bg-transparent pointer-events-none"
-                          style={{ top: '-32px' }}
-                        >
-                          <div className="absolute inset-x-0 top-0 bottom-28 bg-[#F8FAFC] -z-10" />
-                          <div className="flex items-center gap-2 mb-4">
-                            <Building size={16} className="text-[#1B4D3E]" />
-                            <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Segmento</h2>
-                            <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                              {kanbanSegmentoCols.length} segmento{kanbanSegmentoCols.length !== 1 ? 's' : ''}
-                            </span>
-                          </div>
 
-                          {/* Cabeçalhos Fixos */}
-                          <div 
-                            id="kanban-headers-segmento"
-                            className="overflow-x-auto no-scrollbar pb-28 mb-[-112px] animate-in fade-in duration-200 pointer-events-none"
-                            onScroll={() => syncScroll('kanban-headers-segmento', 'kanban-cards-segmento')}
-                            style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
-                          >
-                            <div className="flex gap-3 min-w-max pb-0 mb-0">
-                              {kanbanSegmentoCols.map((col, idx) => {
-                                const segColor = segmentoColors[col.label] || '#3b82f6';
-                                return (
+                        {/* Painel Kanban Unificado */}
+                        <div className="overflow-x-auto pb-6 pt-0">
+                          <div className="flex gap-[4px] min-w-max pt-0 mt-0 items-start">
+                            {kanbanSegmentoCols.map((col, idx) => {
+                              const segColor = segmentoColors[col.label] || '#3b82f6';
+                              const isFirst = idx === 0;
+                              return (
+                                <div key={col.id} className="flex flex-col" style={{ marginLeft: isFirst ? '0px' : '-14px' }}>
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}
@@ -1688,57 +1603,42 @@ function ProposalsDashboard() {
                                     cards={col.cards}
                                     total={col.total}
                                     statusId={col.id}
-                                    isFirst={idx === 0}
+                                    isFirst={isFirst}
                                     onColorChange={async (newColor) => {
                                       localStorage.setItem(`kanban-segmento-color-${col.label}`, newColor);
                                       setSegmentoColors(prev => ({ ...prev, [col.label]: newColor }));
                                     }}
                                   />
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Cards Roláveis */}
-                        <div 
-                          id="kanban-cards-segmento"
-                          className="overflow-x-auto pb-6 pt-0 mt-[-112px]"
-                          onScroll={() => syncScroll('kanban-cards-segmento', 'kanban-headers-segmento')}
-                        >
-                          <div className="flex gap-3 min-w-max pt-0 mt-0">
-                            {kanbanSegmentoCols.map((col, idx) => {
-                              const segColor = segmentoColors[col.label] || '#3b82f6';
-                              return (
-                                <KanbanColumnCards
-                                  key={col.id}
-                                  label={col.label}
-                                  type="vendedor"
-                                  color={segColor}
-                                  cards={col.cards}
-                                  isFirst={idx === 0}
-                                  onDropProp={async (propId) => {
-                                    const prop = proposals.find(p => p.id === propId);
-                                    if (prop) {
-                                      const newSegment = col.id === 'unassigned' ? '' : col.label;
-                                      if (prop.segmento !== newSegment) {
-                                        // Update local state optimistically
-                                        setProposals(prev => prev.map(p => p.id === propId ? { ...p, segmento: newSegment || 'Sem Segmento' } : p));
-                                        
-                                        // Update client segment in backend
-                                        if (prop.clientId) {
-                                          const res = await updateCliente(prop.clientId, { segmento: newSegment });
-                                          if (!res.success) {
-                                            alert(res.error || 'Erro ao atualizar o segmento do cliente');
-                                            loadData();
+                                  <KanbanColumnCards
+                                    key={col.id}
+                                    label={col.label}
+                                    type="vendedor"
+                                    color={segColor}
+                                    cards={col.cards}
+                                    isFirst={isFirst}
+                                    onDropProp={async (propId) => {
+                                      const prop = proposals.find(p => p.id === propId);
+                                      if (prop) {
+                                        const newSegment = col.id === 'unassigned' ? '' : col.label;
+                                        if (prop.segmento !== newSegment) {
+                                          // Update local state optimistically
+                                          setProposals(prev => prev.map(p => p.id === propId ? { ...p, segmento: newSegment || 'Sem Segmento' } : p));
+                                          
+                                          // Update client segment in backend
+                                          if (prop.clientId) {
+                                            const res = await updateCliente(prop.clientId, { segmento: newSegment });
+                                            if (!res.success) {
+                                              alert(res.error || 'Erro ao atualizar o segmento do cliente');
+                                              loadData();
+                                            }
+                                          } else {
+                                            alert('Esta proposta não tem um cliente associado no banco de dados para salvar o segmento.');
                                           }
-                                        } else {
-                                          alert('Esta proposta não tem um cliente associado no banco de dados para salvar o segmento.');
                                         }
                                       }
-                                    }
-                                  }}
-                                />
+                                    }}
+                                  />
+                                </div>
                               );
                             })}
                           </div>
