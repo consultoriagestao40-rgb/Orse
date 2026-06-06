@@ -504,10 +504,45 @@ export default function PropostasComerciaisDashboard() {
   };
 
   const resolveColorToHex = (color?: string): string => {
-    if (!color) return '#059669';
+    if (!color) return '#1B4D3E';
     const lower = color.toLowerCase().trim();
     if (lower.startsWith('#')) return lower;
-    return tailwindColorMap[lower] || '#059669';
+
+    // Check for exact Tailwind bg-color-100 / bg-color-200 matches
+    if (lower.includes('bg-slate-100')) return '#f1f5f9';
+    if (lower.includes('bg-slate-200')) return '#e2e8f0';
+    if (lower.includes('bg-gray-100')) return '#f3f4f6';
+    if (lower.includes('bg-gray-200')) return '#e5e7eb';
+    if (lower.includes('bg-sky-100')) return '#e0f2fe';
+    if (lower.includes('bg-sky-200')) return '#bae6fd';
+    if (lower.includes('bg-orange-100')) return '#ffedd5';
+    if (lower.includes('bg-orange-200')) return '#fed7aa';
+    if (lower.includes('bg-green-100') || lower.includes('bg-emerald-100')) return '#dcfce7';
+    if (lower.includes('bg-green-200') || lower.includes('bg-emerald-200')) return '#bbf7d0';
+    if (lower.includes('bg-red-100')) return '#fee2e2';
+    if (lower.includes('bg-red-200')) return '#fecaca';
+    if (lower.includes('bg-purple-100')) return '#f3e8ff';
+    if (lower.includes('bg-purple-200')) return '#e9d5ff';
+    if (lower.includes('bg-blue-100')) return '#dbeafe';
+    if (lower.includes('bg-blue-200')) return '#bfdbfe';
+    if (lower.includes('bg-yellow-100')) return '#fef9c3';
+    if (lower.includes('bg-yellow-200')) return '#fef08a';
+    if (lower.includes('bg-amber-100')) return '#fef3c7';
+    if (lower.includes('bg-amber-200')) return '#fde68a';
+    if (lower.includes('bg-teal-100')) return '#ccfbf1';
+    if (lower.includes('bg-teal-200')) return '#99f6e4';
+    if (lower.includes('bg-indigo-100')) return '#e0e7ff';
+    if (lower.includes('bg-indigo-200')) return '#c7d2fe';
+    if (lower.includes('bg-violet-100')) return '#ede9fe';
+    if (lower.includes('bg-violet-200')) return '#ddd6fe';
+    if (lower.includes('bg-pink-100')) return '#fce7f3';
+    if (lower.includes('bg-pink-200')) return '#fbcfe8';
+    if (lower.includes('bg-rose-100')) return '#ffe4e6';
+    if (lower.includes('bg-rose-200')) return '#fecdd3';
+
+    if (tailwindColorMap[lower]) return tailwindColorMap[lower];
+    const stripped = lower.replace('bg-', '').split('-')[0];
+    return tailwindColorMap[stripped] || '#1B4D3E';
   };
 
   const normalizeHex = (hex: string) => {
@@ -940,20 +975,12 @@ export default function PropostasComerciaisDashboard() {
   }) => {
     const resolvedHex = resolveColorToHex(color);
     const contrast = getContrastYIQ(resolvedHex);
-    const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.04 : 0.15);
-    const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.15 : 0.4);
+    const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
+    const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
     
     return (
       <div 
-        className="flex-shrink-0 w-72 flex flex-col min-h-[600px] px-3 pb-3 rounded-b-2xl rounded-t-none border-t-0"
-        style={{
-          backgroundColor: bgRgba,
-          borderColor: borderRgba,
-          borderWidth: '0 1px 1px 1px',
-          borderStyle: 'solid',
-          marginTop: '-22px',
-          paddingTop: '34px'
-        }}
+        className="flex-shrink-0 w-72 flex flex-col min-h-[600px]"
         onDragOver={(e) => {
           e.preventDefault();
           e.currentTarget.classList.add('opacity-80');
@@ -968,14 +995,25 @@ export default function PropostasComerciaisDashboard() {
           if (propId && onDropProp) onDropProp(propId);
         }}
       >
-        <div className="flex flex-col gap-3 flex-1">
-          {cards.length === 0 ? (
-            <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem propostas</p>
-            </div>
-          ) : (
-            cards.map(doc => <ProposalCard key={doc.id} doc={doc} />)
-          )}
+        <div
+          className="flex-1 flex flex-col p-3 rounded-b-2xl rounded-t-none"
+          style={{
+            width: '274px',
+            backgroundColor: bgRgba,
+            borderColor: borderRgba,
+            borderWidth: '0 1px 1px 1px',
+            borderStyle: 'solid',
+          }}
+        >
+          <div className="flex flex-col gap-3 flex-1">
+            {cards.length === 0 ? (
+              <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem propostas</p>
+              </div>
+            ) : (
+              cards.map(doc => <ProposalCard key={doc.id} doc={doc} />)
+            )}
+          </div>
         </div>
       </div>
     );
