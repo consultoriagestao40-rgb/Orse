@@ -1358,7 +1358,10 @@ export default function LeadsKanban() {
                           {/* Subtítulo integrado com o totalizador de volume e leads */}
                           <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
                             {fmt(totalValorEst)} • {stageLeads.length} {stageLeads.length === 1 ? 'lead' : 'leads'}
-                                         <div className="flex items-center gap-2 shrink-0 ml-2">
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -1385,7 +1388,6 @@ export default function LeadsKanban() {
                           >
                             <Plus size={16} />
                           </button>
-                        </div>         </button>
                         </div>
 
                         {editingStageId === stage.id && (
