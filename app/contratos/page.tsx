@@ -395,22 +395,23 @@ export default function ContratosDashboard() {
         className="flex flex-col"
       >
         <div className="flex-shrink-0 w-[306px] shrink-0 relative select-none duration-200">
-          <div className="relative h-14 shrink-0 z-10 w-full group/title pointer-events-auto">
+          <div className="relative h-10 shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
-              className={`absolute inset-0 h-full drop-shadow-sm transition-all duration-200 overflow-visible ${isLast ? 'w-[306px]' : 'w-[320px]'}`}
-              viewBox={isLast ? "0 0 306 56" : "0 0 320 56"}
+              className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[306px]' : 'w-[316px]'}`}
+              viewBox={isLast ? "0 0 306 40" : "0 0 316 40"}
+              preserveAspectRatio="none"
               style={{ color: resolvedHex }}
             >
               <path 
                 d={isFirst 
-                  ? "M 8,0 L 306,0 L 320,28 L 306,56 L 8,56 A 8,8 0 0,1 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                  ? "M 8,0 L 306,0 L 316,20 L 306,40 L 0,40 L 0,8 A 8,8 0 0,1 8,0 Z" 
                   : isLast 
-                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,48 A 8,8 0 0,1 298,56 L 0,56 L 14,28 L 0,0 Z"
-                    : "M 0,0 L 306,0 L 320,28 L 306,56 L 0,56 L 14,28 L 0,0 Z"
+                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,40 L 0,40 L 10,20 L 0,0 Z"
+                    : "M 0,0 L 306,0 L 316,20 L 306,40 L 0,40 L 10,20 L 0,0 Z"
                 }
                 fill="currentColor"
-                stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
-                strokeWidth="1.5"
+                stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
+                strokeWidth="1"
               />
             </svg>
             <div 
@@ -677,22 +678,23 @@ export default function ContratosDashboard() {
         className="flex flex-col"
       >
         <div className="flex-shrink-0 w-[306px] shrink-0 relative select-none duration-200">
-          <div className="relative h-14 shrink-0 z-10 w-full group/title pointer-events-auto">
+          <div className="relative h-10 shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
-              className={`absolute inset-0 h-full drop-shadow-sm transition-all duration-200 overflow-visible ${isLast ? 'w-[306px]' : 'w-[320px]'}`}
-              viewBox={isLast ? "0 0 306 56" : "0 0 320 56"}
+              className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[306px]' : 'w-[316px]'}`}
+              viewBox={isLast ? "0 0 306 40" : "0 0 316 40"}
+              preserveAspectRatio="none"
               style={{ color: resolvedHex }}
             >
               <path 
                 d={isFirst 
-                  ? "M 8,0 L 306,0 L 320,28 L 306,56 L 8,56 A 8,8 0 0,1 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                  ? "M 8,0 L 306,0 L 316,20 L 306,40 L 0,40 L 0,8 A 8,8 0 0,1 8,0 Z" 
                   : isLast 
-                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,48 A 8,8 0 0,1 298,56 L 0,56 L 14,28 L 0,0 Z"
-                    : "M 0,0 L 306,0 L 320,28 L 306,56 L 0,56 L 14,28 L 0,0 Z"
+                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,40 L 0,40 L 10,20 L 0,0 Z"
+                    : "M 0,0 L 306,0 L 316,20 L 306,40 L 0,40 L 10,20 L 0,0 Z"
                 }
                 fill="currentColor"
-                stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
-                strokeWidth="1.5"
+                stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
+                strokeWidth="1"
               />
             </svg>
             <div 

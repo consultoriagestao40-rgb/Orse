@@ -824,12 +824,12 @@ function ProposalsDashboard() {
         
         {/* Cabeçalho Chevron/Seta */}
         <div 
-          className="w-full h-14 relative group/title pointer-events-auto"
+          className="w-full h-10 relative group/title pointer-events-auto"
         >
           {/* Background SVG Custom Shape */}
           <svg 
-            className={`absolute inset-0 h-full drop-shadow-sm transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[288px]'}`}
-            viewBox={isLast ? "0 0 274 56" : "0 0 288 56"}
+            className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[284px]'}`}
+            viewBox={isLast ? "0 0 274 40" : "0 0 284 40"}
             preserveAspectRatio="none"
             style={{
               color: resolvedHex,
@@ -837,14 +837,14 @@ function ProposalsDashboard() {
           >
             <path 
               d={isFirst 
-                ? "M 8,0 L 274,0 L 288,28 L 274,56 L 8,56 A 8,8 0 0,1 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                ? "M 8,0 L 274,0 L 284,20 L 274,40 L 0,40 L 0,8 A 8,8 0 0,1 8,0 Z" 
                 : isLast 
-                  ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,48 A 8,8 0 0,1 266,56 L 0,56 L 14,28 L 0,0 Z"
-                  : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 L 14,28 L 0,0 Z"
+                  ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,40 L 0,40 L 10,20 L 0,0 Z"
+                  : "M 0,0 L 274,0 L 284,20 L 274,40 L 0,40 L 10,20 L 0,0 Z"
               }
               fill="currentColor"
-              stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
-              strokeWidth="1.5"
+              stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
+              strokeWidth="1"
             />
           </svg>
 
