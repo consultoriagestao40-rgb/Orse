@@ -1326,19 +1326,19 @@ export default function LeadsKanban() {
                   onDrop={(e) => handleDrop(e, stage.id)}
                 >
                   <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
-                    <div className="relative h-9 shrink-0 z-10 w-full group/header pointer-events-auto">
+                    <div className="relative h-12 shrink-0 z-10 w-full group/header pointer-events-auto">
                       <svg 
-                        className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[279px]'}`}
-                        viewBox={isLast ? "0 0 274 36" : "0 0 279 36"}
+                        className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
+                        viewBox={isLast ? "0 0 274 48" : "0 0 282 48"}
                         preserveAspectRatio="none"
                         style={{ color: resolvedHex }}
                       >
                         <path 
                           d={isFirst 
-                            ? "M 8,0 L 274,0 L 279,18 L 274,36 L 0,36 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                            ? "M 8,0 L 274,0 L 282,24 L 274,48 L 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
                             : isLast 
-                              ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,36 L 0,36 L 5,18 L 0,0 Z"
-                              : "M 0,0 L 274,0 L 279,18 L 274,36 L 0,36 L 5,18 L 0,0 Z"
+                              ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,48 L 0,48 L 8,24 L 0,0 Z"
+                              : "M 0,0 L 274,0 L 282,24 L 274,48 L 0,48 L 8,24 L 0,0 Z"
                           }
                           fill="currentColor" 
                           stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -1608,19 +1608,19 @@ export default function LeadsKanban() {
                     onDrop={(e) => handleDropVendedor(e, col.id)}
                   >
                     <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
-                      <div className="relative h-9 shrink-0 z-10 w-full group/header pointer-events-auto">
+                      <div className="relative h-12 shrink-0 z-10 w-full group/header pointer-events-auto">
                         <svg 
-                          className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[279px]'}`}
-                          viewBox={isLast ? "0 0 274 36" : "0 0 279 36"}
+                          className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
+                          viewBox={isLast ? "0 0 274 48" : "0 0 282 48"}
                           preserveAspectRatio="none"
                           style={{ color: resolvedHex }}
                         >
                           <path 
                             d={isFirst 
-                              ? "M 8,0 L 274,0 L 279,18 L 274,36 L 0,36 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                              ? "M 8,0 L 274,0 L 282,24 L 274,48 L 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
                               : isLast 
-                                ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,36 L 0,36 L 5,18 L 0,0 Z"
-                                : "M 0,0 L 274,0 L 279,18 L 274,36 L 0,36 L 5,18 L 0,0 Z"
+                                ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,48 L 0,48 L 8,24 L 0,0 Z"
+                                : "M 0,0 L 274,0 L 282,24 L 274,48 L 0,48 L 8,24 L 0,0 Z"
                             }
                             fill="currentColor" 
                             stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -1827,19 +1827,19 @@ export default function LeadsKanban() {
                   onDrop={(e) => handleDropSegmento(e, col.id)}
                 >
                   <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
-                    <div className="relative h-9 shrink-0 z-10 w-full group/header pointer-events-auto">
+                    <div className="relative h-12 shrink-0 z-10 w-full group/header pointer-events-auto">
                       <svg 
-                        className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[279px]'}`}
-                        viewBox={isLast ? "0 0 274 36" : "0 0 279 36"}
+                        className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
+                        viewBox={isLast ? "0 0 274 48" : "0 0 282 48"}
                         preserveAspectRatio="none"
                         style={{ color: resolvedHex }}
                       >
                         <path 
                           d={isFirst 
-                            ? "M 8,0 L 274,0 L 279,18 L 274,36 L 0,36 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                            ? "M 8,0 L 274,0 L 282,24 L 274,48 L 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
                             : isLast 
-                              ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,36 L 0,36 L 5,18 L 0,0 Z"
-                              : "M 0,0 L 274,0 L 279,18 L 274,36 L 0,36 L 5,18 L 0,0 Z"
+                              ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,48 L 0,48 L 8,24 L 0,0 Z"
+                              : "M 0,0 L 274,0 L 282,24 L 274,48 L 0,48 L 8,24 L 0,0 Z"
                           }
                           fill="currentColor" 
                           stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}

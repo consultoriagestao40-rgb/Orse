@@ -656,7 +656,7 @@ export default function PropostasComerciaisDashboard() {
           e.preventDefault();
           const dragged = (window as any).__draggedColumn;
           if (dragged && dragged.type === type && dragged.label !== label) {
-            const parent = e.currentTarget.parentElement;
+            const parent = e.currentTarget.parentElement?.parentElement;
             if (parent) {
               // Hide all sibling indicators first to avoid stickiness
               parent.querySelectorAll('.drag-guide-left, .drag-guide-right').forEach(g => {
@@ -665,8 +665,12 @@ export default function PropostasComerciaisDashboard() {
               });
 
               const children = Array.from(parent.children);
-              const draggedIndex = children.findIndex(child => child.getAttribute('data-col-label') === dragged.label);
-              const targetIndex = children.findIndex(child => child.getAttribute('data-col-label') === label);
+              const draggedIndex = children.findIndex(child => 
+                child.querySelector('[data-col-label]')?.getAttribute('data-col-label') === dragged.label
+              );
+              const targetIndex = children.findIndex(child => 
+                child.querySelector('[data-col-label]')?.getAttribute('data-col-label') === label
+              );
               
               if (draggedIndex !== -1 && targetIndex !== -1) {
                 const isLeft = draggedIndex > targetIndex;
@@ -709,12 +713,12 @@ export default function PropostasComerciaisDashboard() {
         
         {/* Cabeçalho Chevron/Seta */}
         <div 
-          className="w-full h-9 relative group/title pointer-events-auto"
+          className="w-full h-12 relative group/title pointer-events-auto"
         >
           {/* Background SVG Custom Shape */}
           <svg 
-            className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[279px]'}`}
-            viewBox={isLast ? "0 0 274 36" : "0 0 279 36"}
+            className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
+            viewBox={isLast ? "0 0 274 48" : "0 0 282 48"}
             preserveAspectRatio="none"
             style={{
               color: resolvedHex,
@@ -722,10 +726,10 @@ export default function PropostasComerciaisDashboard() {
           >
             <path 
               d={isFirst 
-                ? "M 8,0 L 274,0 L 279,18 L 274,36 L 0,36 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                ? "M 8,0 L 274,0 L 282,24 L 274,48 L 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
                 : isLast 
-                  ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,36 L 0,36 L 5,18 L 0,0 Z"
-                  : "M 0,0 L 274,0 L 279,18 L 274,36 L 0,36 L 5,18 L 0,0 Z"
+                  ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,48 L 0,48 L 8,24 L 0,0 Z"
+                  : "M 0,0 L 274,0 L 282,24 L 274,48 L 0,48 L 8,24 L 0,0 Z"
               }
               fill="currentColor"
               stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
