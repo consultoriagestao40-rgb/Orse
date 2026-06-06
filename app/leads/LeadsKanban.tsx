@@ -1752,13 +1752,14 @@ export default function LeadsKanban() {
                           </>
                         )}
                       </div>
+                    </div>
+                  </div>
 
-                       <div 
-                    <div 
-                      className="flex-1 w-72 flex flex-col items-start min-h-[600px]"
-                      onDragOver={handleDragOver}
-                      onDrop={(e) => handleDropVendedor(e, col.id)}
-                    >
+                  <div 
+                    className="flex-1 w-72 flex flex-col items-start min-h-[600px]"
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDropVendedor(e, col.id)}
+                  >
                       <div
                         className="flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
                         style={{
@@ -1791,8 +1792,8 @@ export default function LeadsKanban() {
                         </div>
                       </div>
                     </div>
-                  </div>
-              })}
+                  );
+                })}
             </div>
           </div>
         )}
@@ -1800,8 +1801,7 @@ export default function LeadsKanban() {
         {viewMode === 'kanban-segmento' && (
           <div className="flex gap-[16px] min-w-max pt-0 mt-0 items-stretch">
             {kanbanSegmentoCols.map((col, idx) => {
-              {kanbanSegmentoCols.map((col, idx) => {
-                const colLeads = col.cards;
+              const colLeads = col.cards;
                 const isFirst = idx === 0;
                 const defaultColColor = col.id === 'unassigned' ? '#64748b' : PRESET_VENDEDOR_COLORS[idx % PRESET_VENDEDOR_COLORS.length];
                 const colColor = getSegmentColor(col.label, defaultColColor);
@@ -1978,9 +1978,11 @@ export default function LeadsKanban() {
                           </>
                         )}
                       </div>
+                    </div>
+                  </div>
 
-                    <div 
-                      className="flex-1 w-72 flex flex-col items-start min-h-[600px]"
+                  <div 
+                    className="flex-1 w-72 flex flex-col items-start min-h-[600px]"
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDropSegmento(e, col.id)}
                     >

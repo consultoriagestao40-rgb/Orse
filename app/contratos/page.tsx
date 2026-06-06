@@ -592,15 +592,28 @@ export default function ContratosDashboard() {
           >
             <div className="flex-1 flex flex-col gap-3">
               {cards.length === 0 ? (
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
-                        <FileText size={13} className="text-[#1B4D3E]" />
+                <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
+                  <p className="text-xs text-slate-300 font-medium">Vazio</p>
+                </div>
+              ) : (
+                cards.map(c => (
+                  <div
+                    key={c.id}
+                    draggable
+                    onDragStart={(e) => e.dataTransfer.setData('text/plain', c.id)}
+                    onClick={() => router.push(`/contratos/${c.id}`)}
+                    className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer cursor-grab active:cursor-grabbing"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
+                          <FileText size={13} className="text-[#1B4D3E]" />
+                        </div>
+                        <span className="text-xs font-black text-slate-700 tracking-wide">{gerarNumeroContrato(c)}</span>
                       </div>
-                      <span className="text-xs font-black text-slate-700 tracking-wide">{gerarNumeroContrato(c)}</span>
+                      <span className="text-[9px] font-black px-2 py-0.5 rounded bg-slate-100 text-slate-500 uppercase tracking-wider">{c.empresaEmissora?.nomeFantasia}</span>
                     </div>
-                    <span className="text-[9px] font-black px-2 py-0.5 rounded bg-slate-100 text-slate-500 uppercase tracking-wider">{c.empresaEmissora?.nomeFantasia}</span>
-                  </div>
-                  <p className="text-sm font-bold text-slate-800 leading-tight mb-3 line-clamp-2">{c.client?.razaoSocial || c.client?.nomeFantasia}</p>
+                    <p className="text-sm font-bold text-slate-800 leading-tight mb-3 line-clamp-2">{c.client?.razaoSocial || c.client?.nomeFantasia}</p>
                   <div className="grid grid-cols-2 gap-x-2 gap-y-3 mb-3 border-t border-slate-100 pt-3">
                     <div>
                       <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Início</p>
@@ -859,14 +872,28 @@ export default function ContratosDashboard() {
           >
             <div className="flex-1 flex flex-col gap-3">
               {cards.length === 0 ? (
-                      <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
-                        <FileText size={13} className="text-[#1B4D3E]" />
+                <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
+                  <p className="text-xs text-slate-300 font-medium">Vazio</p>
+                </div>
+              ) : (
+                cards.map(c => (
+                  <div
+                    key={c.id}
+                    draggable
+                    onDragStart={(e) => e.dataTransfer.setData('text/plain', c.id)}
+                    onClick={() => router.push(`/contratos/${c.id}`)}
+                    className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer cursor-grab active:cursor-grabbing"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
+                          <FileText size={13} className="text-[#1B4D3E]" />
+                        </div>
+                        <span className="text-xs font-black text-slate-700 tracking-wide">{gerarNumeroContrato(c)}</span>
                       </div>
-                      <span className="text-xs font-black text-slate-700 tracking-wide">{gerarNumeroContrato(c)}</span>
+                      <span className="text-[9px] font-black px-2 py-0.5 rounded bg-slate-100 text-slate-500 uppercase tracking-wider">{c.empresaEmissora?.nomeFantasia}</span>
                     </div>
-                    <span className="text-[9px] font-black px-2 py-0.5 rounded bg-slate-100 text-slate-500 uppercase tracking-wider">{c.empresaEmissora?.nomeFantasia}</span>
-                  </div>
-                  <p className="text-sm font-bold text-slate-800 leading-tight mb-3 line-clamp-2">{c.client?.razaoSocial || c.client?.nomeFantasia}</p>
+                    <p className="text-sm font-bold text-slate-800 leading-tight mb-3 line-clamp-2">{c.client?.razaoSocial || c.client?.nomeFantasia}</p>
                   <div className="grid grid-cols-2 gap-x-2 gap-y-3 mb-3 border-t border-slate-100 pt-3">
                     <div>
                       <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Início</p>
