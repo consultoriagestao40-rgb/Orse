@@ -1306,11 +1306,12 @@ export default function LeadsKanban() {
       <div className="flex flex-col flex-1 py-6 pl-2 pr-1 bg-slate-50">
         {showMetrics && <PipelineMetrics leads={filteredLeads} stages={stages} />}
         {viewMode === 'kanban-status' && (
-          <div className="flex gap-[16px] min-w-max pt-0 mt-0 items-stretch">
+          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch">
             {stages.map((stage, idx) => {
               const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
               const totalValorEst = stageLeads.reduce((acc, lead) => acc + (lead.valorEst || 0), 0);
               const isFirst = idx === 0;
+              const isLast = idx === stages.length - 1;
               const resolvedHex = resolveColorToHex(stage.color);
               const contrast = getContrastYIQ(resolvedHex);
               const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
@@ -1327,14 +1328,16 @@ export default function LeadsKanban() {
                   <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
                     <div className="relative h-14 shrink-0 z-10 w-full group/header pointer-events-auto">
                       <svg 
-                        className="absolute inset-0 w-[288px] h-full drop-shadow-sm transition-all duration-200 overflow-visible" 
-                        viewBox="0 0 288 56"
+                        className={`absolute inset-0 h-full drop-shadow-sm transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[288px]'}`}
+                        viewBox={isLast ? "0 0 274 56" : "0 0 288 56"}
                         style={{ color: resolvedHex }}
                       >
                         <path 
                           d={isFirst 
-                            ? "M 10,0 L 274,0 L 288,28 L 274,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                            : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 Z"
+                            ? "M 8,0 L 274,0 L 288,28 L 274,56 L 8,56 A 8,8 0 0,1 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                            : isLast 
+                              ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,48 A 8,8 0 0,1 266,56 L 0,56 L 14,28 L 0,0 Z"
+                              : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 L 14,28 L 0,0 Z"
                           }
                           fill="currentColor" 
                           stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
@@ -1583,10 +1586,11 @@ export default function LeadsKanban() {
           )}
 
         {viewMode === 'kanban-vendedor' && (
-          <div className="flex gap-[16px] min-w-max pt-0 mt-0 items-stretch">
+          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch">
               {kanbanVendedorCols.map((col, idx) => {
                 const colLeads = col.cards;
                 const isFirst = idx === 0;
+                const isLast = idx === kanbanVendedorCols.length - 1;
                 const defaultColColor = col.id === 'unassigned' ? '#64748b' : PRESET_VENDEDOR_COLORS[idx % PRESET_VENDEDOR_COLORS.length];
                 const colColor = getVendedorColor(col.label, defaultColColor);
                 const resolvedHex = resolveColorToHex(colColor);
@@ -1605,14 +1609,16 @@ export default function LeadsKanban() {
                     <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
                       <div className="relative h-14 shrink-0 z-10 w-full group/header pointer-events-auto">
                         <svg 
-                          className="absolute inset-0 w-[288px] h-full drop-shadow-sm transition-all duration-200 overflow-visible" 
-                          viewBox="0 0 288 56"
+                          className={`absolute inset-0 h-full drop-shadow-sm transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[288px]'}`}
+                          viewBox={isLast ? "0 0 274 56" : "0 0 288 56"}
                           style={{ color: resolvedHex }}
                         >
                           <path 
                             d={isFirst 
-                              ? "M 10,0 L 274,0 L 288,28 L 274,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                              : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 Z"
+                              ? "M 8,0 L 274,0 L 288,28 L 274,56 L 8,56 A 8,8 0 0,1 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                              : isLast 
+                                ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,48 A 8,8 0 0,1 266,56 L 0,56 L 14,28 L 0,0 Z"
+                                : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 L 14,28 L 0,0 Z"
                             }
                             fill="currentColor" 
                             stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
@@ -1798,42 +1804,45 @@ export default function LeadsKanban() {
           )}
 
         {viewMode === 'kanban-segmento' && (
-          <div className="flex gap-[16px] min-w-max pt-0 mt-0 items-stretch">
+          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch">
             {kanbanSegmentoCols.map((col, idx) => {
               const colLeads = col.cards;
-                const isFirst = idx === 0;
-                const defaultColColor = col.id === 'unassigned' ? '#64748b' : PRESET_VENDEDOR_COLORS[idx % PRESET_VENDEDOR_COLORS.length];
-                const colColor = getSegmentColor(col.label, defaultColColor);
-                const resolvedHex = resolveColorToHex(colColor);
-                const contrast = getContrastYIQ(resolvedHex);
-                const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
-                const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
-                const textHex = getDarkenedHexForText(resolvedHex);
+              const isFirst = idx === 0;
+              const isLast = idx === kanbanSegmentoCols.length - 1;
+              const defaultColColor = col.id === 'unassigned' ? '#64748b' : PRESET_VENDEDOR_COLORS[idx % PRESET_VENDEDOR_COLORS.length];
+              const colColor = getSegmentColor(col.label, defaultColColor);
+              const resolvedHex = resolveColorToHex(colColor);
+              const contrast = getContrastYIQ(resolvedHex);
+              const bgRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.08 : 0.18);
+              const borderRgba = hexToRgba(resolvedHex, contrast === 'white' ? 0.25 : 0.45);
+              const textHex = getDarkenedHexForText(resolvedHex);
 
-                return (
-                  <div 
-                    key={col.id} 
-                    className="flex flex-col"
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDropSegmento(e, col.id)}
-                  >
-                    <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
-                      <div className="relative h-14 shrink-0 z-10 w-full group/header pointer-events-auto">
-                        <svg 
-                          className="absolute inset-0 w-[288px] h-full drop-shadow-sm transition-all duration-200 overflow-visible" 
-                          viewBox="0 0 288 56"
-                          style={{ color: resolvedHex }}
-                        >
-                          <path 
-                            d={isFirst 
-                              ? "M 10,0 L 274,0 L 288,28 L 274,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                              : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 Z"
-                            }
-                            fill="currentColor" 
-                            stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
-                            strokeWidth="1.5"
-                          />
-                        </svg>
+              return (
+                <div 
+                  key={col.id} 
+                  className="flex flex-col"
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDropSegmento(e, col.id)}
+                >
+                  <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
+                    <div className="relative h-14 shrink-0 z-10 w-full group/header pointer-events-auto">
+                      <svg 
+                        className={`absolute inset-0 h-full drop-shadow-sm transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[288px]'}`}
+                        viewBox={isLast ? "0 0 274 56" : "0 0 288 56"}
+                        style={{ color: resolvedHex }}
+                      >
+                        <path 
+                          d={isFirst 
+                            ? "M 8,0 L 274,0 L 288,28 L 274,56 L 8,56 A 8,8 0 0,1 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                            : isLast 
+                              ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,48 A 8,8 0 0,1 266,56 L 0,56 L 14,28 L 0,0 Z"
+                              : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 L 14,28 L 0,0 Z"
+                          }
+                          fill="currentColor" 
+                          stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
+                          strokeWidth="1.5"
+                        />
+                      </svg>
                         <div 
                           className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
                           style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}

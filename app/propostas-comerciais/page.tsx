@@ -597,7 +597,7 @@ export default function PropostasComerciaisDashboard() {
   ];
 
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
-  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onDragColumnStart, onDragColumnEnd, onDropColumn, onRenameColumn, onCreateStatus, isFirst = false }: {
+  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onDragColumnStart, onDragColumnEnd, onDropColumn, onRenameColumn, onCreateStatus, isFirst = false, isLast = false }: {
     label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor' | 'segmento'; statusId?: string; onColorChange?: (newColor: string) => void;
     onDragColumnStart?: (e: React.DragEvent, label: string) => void;
     onDragColumnEnd?: (e: React.DragEvent) => void;
@@ -605,6 +605,7 @@ export default function PropostasComerciaisDashboard() {
     onRenameColumn?: (newName: string) => Promise<void>;
     onCreateStatus?: (insertAfterLabel: string) => Promise<void>;
     isFirst?: boolean;
+    isLast?: boolean;
   }) => {
     const [showEditPopover, setShowEditPopover] = useState(false);
     const [editNameValue, setEditNameValue] = useState(label);
@@ -712,16 +713,18 @@ export default function PropostasComerciaisDashboard() {
         >
           {/* Background SVG Custom Shape */}
           <svg 
-            className="absolute inset-0 w-[288px] h-full drop-shadow-sm transition-all duration-200 overflow-visible"
-            viewBox="0 0 288 56"
+            className={`absolute inset-0 h-full drop-shadow-sm transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[288px]'}`}
+            viewBox={isLast ? "0 0 274 56" : "0 0 288 56"}
             style={{
               color: resolvedHex,
             }}
           >
             <path 
               d={isFirst 
-                ? "M 10,0 L 274,0 L 288,28 L 274,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 Z"
+                ? "M 8,0 L 274,0 L 288,28 L 274,56 L 8,56 A 8,8 0 0,1 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                : isLast 
+                  ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,48 A 8,8 0 0,1 266,56 L 0,56 L 14,28 L 0,0 Z"
+                  : "M 0,0 L 274,0 L 288,28 L 274,56 L 0,56 L 14,28 L 0,0 Z"
               }
               fill="currentColor"
               stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
@@ -1304,9 +1307,10 @@ export default function PropostasComerciaisDashboard() {
 
                         {/* Painel Kanban Unificado */}
                         <div className="overflow-x-auto pb-6 pt-0">
-                          <div className="flex gap-[16px] min-w-max pt-0 mt-0 items-stretch">
+                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch">
                             {orderedStatusCols.map((col, idx) => {
                               const isFirst = idx === 0;
+                              const isLast = idx === orderedStatusCols.length - 1;
                               return (
                                 <div key={col.id} className="flex flex-col">
                                   <KanbanColumnHeader
@@ -1317,6 +1321,7 @@ export default function PropostasComerciaisDashboard() {
                                     total={col.total}
                                     statusId={col.id}
                                     isFirst={isFirst}
+                                    isLast={isLast}
                                     onCreateStatus={handleCreateStatus}
                                     onColorChange={async (newColor) => {
                                       await updateDocumentoStatusParam(col.id, col.label, newColor);
@@ -1394,10 +1399,11 @@ export default function PropostasComerciaisDashboard() {
 
                         {/* Painel Kanban Unificado */}
                         <div className="overflow-x-auto pb-6 pt-0">
-                          <div className="flex gap-[16px] min-w-max pt-0 mt-0 items-stretch">
+                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch">
                             {orderedVendedorCols.map((col, idx) => {
                               const vColor = vendedorColors[col.label] || 'emerald';
                               const isFirst = idx === 0;
+                              const isLast = idx === orderedVendedorCols.length - 1;
                               return (
                                 <div key={col.id} className="flex flex-col">
                                   <KanbanColumnHeader
@@ -1409,6 +1415,7 @@ export default function PropostasComerciaisDashboard() {
                                     total={col.total}
                                     statusId={col.id}
                                     isFirst={isFirst}
+                                    isLast={isLast}
                                     onColorChange={async (newColor) => {
                                       localStorage.setItem(`kanban-vendedor-color-${col.label}`, newColor);
                                       setVendedorColors(prev => ({ ...prev, [col.label]: newColor }));
@@ -1492,10 +1499,11 @@ export default function PropostasComerciaisDashboard() {
 
                         {/* Painel Kanban Unificado */}
                         <div className="overflow-x-auto pb-6 pt-0">
-                          <div className="flex gap-[16px] min-w-max pt-0 mt-0 items-stretch">
+                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch">
                             {kanbanSegmentoCols.map((col, idx) => {
                               const segColor = segmentoColors[col.label] || '#3b82f6';
                               const isFirst = idx === 0;
+                              const isLast = idx === kanbanSegmentoCols.length - 1;
                               return (
                                 <div key={col.id} className="flex flex-col">
                                   <KanbanColumnHeader
@@ -1507,6 +1515,7 @@ export default function PropostasComerciaisDashboard() {
                                     total={col.total}
                                     statusId={col.id}
                                     isFirst={isFirst}
+                                    isLast={isLast}
                                     onColorChange={async (newColor) => {
                                       localStorage.setItem(`kanban-segmento-color-${col.label}`, newColor);
                                       setSegmentoColors(prev => ({ ...prev, [col.label]: newColor }));

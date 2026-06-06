@@ -352,7 +352,7 @@ export default function ContratosDashboard() {
     '#0369A1', '#0B6623', '#065F46', '#3F6212', '#A16207', '#C2410C', '#B91C1C', '#9D174D', '#581C87', '#334155',
   ];
 
-  const KanbanColumn = ({ status, isFirst = false }: { status: string; isFirst?: boolean }) => {
+  const KanbanColumn = ({ status, isFirst = false, isLast = false }: { status: string; isFirst?: boolean; isLast?: boolean }) => {
     const cards = filteredContratos.filter(c => c.status === status);
     const total = cards.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
     const resolvedHex = resolveColorToHex(resolveStatusColorToHex(status));
@@ -397,14 +397,16 @@ export default function ContratosDashboard() {
         <div className="flex-shrink-0 w-[306px] shrink-0 relative select-none duration-200">
           <div className="relative h-14 shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
-              className="absolute inset-0 w-[320px] h-full drop-shadow-sm transition-all duration-200 overflow-visible"
-              viewBox="0 0 320 56"
+              className={`absolute inset-0 h-full drop-shadow-sm transition-all duration-200 overflow-visible ${isLast ? 'w-[306px]' : 'w-[320px]'}`}
+              viewBox={isLast ? "0 0 306 56" : "0 0 320 56"}
               style={{ color: resolvedHex }}
             >
               <path 
                 d={isFirst 
-                  ? "M 10,0 L 306,0 L 320,28 L 306,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                  : "M 0,0 L 306,0 L 320,28 L 306,56 L 0,56 Z"
+                  ? "M 8,0 L 306,0 L 320,28 L 306,56 L 8,56 A 8,8 0 0,1 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                  : isLast 
+                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,48 A 8,8 0 0,1 298,56 L 0,56 L 14,28 L 0,0 Z"
+                    : "M 0,0 L 306,0 L 320,28 L 306,56 L 0,56 L 14,28 L 0,0 Z"
                 }
                 fill="currentColor"
                 stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
@@ -662,7 +664,7 @@ export default function ContratosDashboard() {
     );
   };
 
-  const KanbanSegmentoColumn = ({ label, cards, isFirst = false, color }: { label: string; cards: any[]; isFirst?: boolean; color: string }) => {
+  const KanbanSegmentoColumn = ({ label, cards, isFirst = false, isLast = false, color }: { label: string; cards: any[]; isFirst?: boolean; isLast?: boolean; color: string }) => {
     const total = cards.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
     const resolvedHex = resolveColorToHex(color);
     const contrast = getContrastYIQ(resolvedHex);
@@ -677,14 +679,16 @@ export default function ContratosDashboard() {
         <div className="flex-shrink-0 w-[306px] shrink-0 relative select-none duration-200">
           <div className="relative h-14 shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
-              className="absolute inset-0 w-[320px] h-full drop-shadow-sm transition-all duration-200 overflow-visible"
-              viewBox="0 0 320 56"
+              className={`absolute inset-0 h-full drop-shadow-sm transition-all duration-200 overflow-visible ${isLast ? 'w-[306px]' : 'w-[320px]'}`}
+              viewBox={isLast ? "0 0 306 56" : "0 0 320 56"}
               style={{ color: resolvedHex }}
             >
               <path 
                 d={isFirst 
-                  ? "M 10,0 L 306,0 L 320,28 L 306,56 L 10,56 A 10,10 0 0,1 0,46 L 0,10 A 10,10 0 0,1 10,0 Z" 
-                  : "M 0,0 L 306,0 L 320,28 L 306,56 L 0,56 Z"
+                  ? "M 8,0 L 306,0 L 320,28 L 306,56 L 8,56 A 8,8 0 0,1 0,48 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                  : isLast 
+                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,48 A 8,8 0 0,1 298,56 L 0,56 L 14,28 L 0,0 Z"
+                    : "M 0,0 L 306,0 L 320,28 L 306,56 L 0,56 L 14,28 L 0,0 Z"
                 }
                 fill="currentColor"
                 stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)'}
@@ -1132,9 +1136,9 @@ export default function ContratosDashboard() {
           {/* KANBAN POR STATUS */}
           {viewMode === 'kanban-status' && (
             <div className="overflow-x-auto pb-6">
-              <div className="flex gap-[16px] min-w-max items-stretch">
+              <div className="flex gap-[3px] min-w-max items-stretch">
                 {statusList.map((status, index) => (
-                  <KanbanColumn key={status} status={status} isFirst={index === 0} />
+                  <KanbanColumn key={status} status={status} isFirst={index === 0} isLast={index === statusList.length - 1} />
                 ))}
               </div>
             </div>
@@ -1143,13 +1147,14 @@ export default function ContratosDashboard() {
           {/* KANBAN POR SEGMENTO */}
           {viewMode === 'kanban-segmento' && (
             <div className="overflow-x-auto pb-6">
-              <div className="flex gap-[16px] min-w-max items-stretch">
+              <div className="flex gap-[3px] min-w-max items-stretch">
                 {kanbanSegmentoCols.map((col, index) => (
                   <KanbanSegmentoColumn
                     key={col.id}
                     label={col.label}
                     cards={col.cards}
                     isFirst={index === 0}
+                    isLast={index === kanbanSegmentoCols.length - 1}
                     color={segmentoColors[col.label] || '#3b82f6'}
                   />
                 ))}
