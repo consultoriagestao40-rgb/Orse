@@ -999,6 +999,7 @@ export default function PropostasComerciaisDashboard() {
           className="flex-1 flex flex-col p-3 rounded-b-2xl rounded-t-none"
           style={{
             width: '274px',
+            alignSelf: 'flex-start',
             backgroundColor: bgRgba,
             borderColor: borderRgba,
             borderWidth: '0 1px 1px 1px',
