@@ -596,55 +596,61 @@ function ProposalsDashboard() {
       }}
       onDragEnd={handleDragEnd}
       onClick={() => router.push(`/propostas/nova?id=${prop.id}`)}
-      className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing"
+      className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing flex flex-col justify-between h-[136px] text-left relative overflow-visible"
     >
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
-            <FileText size={13} className="text-[#1B4D3E]" />
-          </div>
-          <span className="text-xs font-black text-slate-700 tracking-wide">{prop.numero}</span>
-        </div>
-        <div className="flex items-center gap-1 text-slate-400">
-          <FileStack size={11} />
-          <span className="text-[10px] font-bold">v{prop.versao}</span>
-        </div>
-      </div>
-
-      <p className="text-sm font-bold text-slate-800 leading-tight mb-1 line-clamp-2">{prop.cliente}</p>
-      <p className="text-[10px] text-slate-400 font-medium mb-3">📅 {prop.data}</p>
-
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-black text-[#1B4D3E]">{fmt(prop.valor)}</span>
-        <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider ${getStatusStyle(prop.status)}`}>
-          {prop.status || '—'}
-        </span>
-      </div>
-
-      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-        <div 
-          id={`avatar-inline-owner-${prop.id}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            setInlineOwnerAnchorEl(e.currentTarget);
-            setInlineOwnerPropId(prop.id);
-          }}
-          className="flex items-center gap-1.5 hover:bg-slate-50 p-1 rounded-lg transition-colors cursor-pointer"
-        >
-          {prop.avatarUrl ? (
-            <img 
-              src={prop.avatarUrl} 
-              alt={prop.usuario} 
-              className="w-5 h-5 rounded-full object-cover border border-slate-200"
-            />
-          ) : (
-            <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
-              {(prop.usuario || '?').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+      <div>
+        <div className="flex items-start justify-between gap-2 mb-1.5">
+          <div className="flex items-center gap-1.5">
+            <div className="p-1 bg-[#1B4D3E]/8 rounded-md shrink-0">
+              <FileText size={12} className="text-[#1B4D3E]" />
             </div>
-          )}
-          <span className="text-[10px] text-slate-500 font-medium truncate max-w-[100px]">{prop.usuario}</span>
+            <span className="text-xs font-black text-slate-700 tracking-wide">{prop.numero}</span>
+          </div>
+          <div className="flex items-center gap-1 text-slate-400">
+            <FileStack size={10} />
+            <span className="text-[10px] font-bold">v{prop.versao}</span>
+          </div>
         </div>
-        <ActionMenu prop={prop} />
+
+        <p className="text-xs font-bold text-slate-800 leading-snug truncate mb-0.5" title={prop.cliente}>{prop.cliente}</p>
+        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">📅 {prop.data}</p>
+      </div>
+
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-black text-[#1B4D3E]">{fmt(prop.valor)}</span>
+          {viewMode !== 'kanban-status' && (
+            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider ${getStatusStyle(prop.status)}`}>
+              {prop.status || '—'}
+            </span>
+          )}
+        </div>
+
+        <div className="pt-2 border-t border-slate-100 flex items-center justify-between mt-1 shrink-0">
+          <div 
+            id={`avatar-inline-owner-${prop.id}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setInlineOwnerAnchorEl(e.currentTarget);
+              setInlineOwnerPropId(prop.id);
+            }}
+            className="flex items-center gap-1 hover:bg-slate-50 p-0.5 rounded-md transition-colors cursor-pointer min-w-0"
+          >
+            {prop.avatarUrl ? (
+              <img 
+                src={prop.avatarUrl} 
+                alt={prop.usuario} 
+                className="w-4.5 h-4.5 rounded-full object-cover border border-slate-200 shrink-0"
+              />
+            ) : (
+              <div className="w-4.5 h-4.5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200 shrink-0">
+                {(prop.usuario || '?').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+              </div>
+            )}
+            <span className="text-[9px] text-slate-500 font-bold truncate max-w-[120px]">{prop.usuario}</span>
+          </div>
+          <ActionMenu prop={prop} />
+        </div>
       </div>
     </div>
   );
@@ -1209,9 +1215,9 @@ function ProposalsDashboard() {
             overflowY: 'auto',
           }}
         >
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             {!draggedStageId && draggedOverStageId === label && (
-              <div className="bg-slate-100/70 border-2 border-dashed border-[#1B4D3E]/30 rounded-xl h-28 w-full animate-pulse flex items-center justify-center">
+              <div className="bg-slate-100/70 border-2 border-dashed border-[#1B4D3E]/30 rounded-lg h-[136px] w-full animate-pulse flex items-center justify-center">
                 <span className="text-[10px] font-black text-[#1B4D3E]/60 uppercase tracking-widest animate-pulse">Soltar aqui</span>
               </div>
             )}
