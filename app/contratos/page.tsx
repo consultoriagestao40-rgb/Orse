@@ -539,7 +539,7 @@ export default function ContratosDashboard() {
           </span>
         </div>
       </div>
-    </  const KanbanColumn = ({ status, isFirst = false, isLast = false, zIndex }: { status: string; isFirst?: boolean; isLast?: boolean; zIndex: number }) => {
+  const KanbanColumn = ({ status, isFirst = false, isLast = false, zIndex }: { status: string; isFirst?: boolean; isLast?: boolean; zIndex: number }) => {
     const cards = filteredContratos.filter(c => c.status === status);
     const total = cards.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
     const resolvedHex = resolveColorToHex(resolveStatusColorToHex(status));
