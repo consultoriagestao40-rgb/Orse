@@ -52,24 +52,55 @@ function ProposalsDashboard() {
   const [editingSegmentoId, setEditingSegmentoId] = useState<string | null>(null);
   const [statusOrder, setStatusOrder] = useState<string[]>([]);
   const [vendedorOrder, setVendedorOrder] = useState<string[]>([]);
+  const [segmentoOrder, setSegmentoOrder] = useState<string[]>([]);
   const [segmentos, setSegmentos] = useState<any[]>([]);
 
-  const handleDragColumnStart = (e: React.DragEvent, columnLabel: string, type: 'status' | 'vendedor') => {
+  // Drag-and-drop states for columns and cards (mirroring CRM Leads)
+  const [draggedStageId, setDraggedStageId] = useState<string | null>(null); // column label currently being dragged
+  const [draggedOverBeforeStageId, setDraggedOverBeforeStageId] = useState<string | null>(null); // column label before which the dragged column should be placed
+  const [draggedOverStageId, setDraggedOverStageId] = useState<string | null>(null); // column label where card is currently hovered over
+
+  const handleDragColumnStart = (e: React.DragEvent, columnLabel: string, type: 'status' | 'vendedor' | 'segmento') => {
     e.dataTransfer.setData('text/column-id', columnLabel);
     e.dataTransfer.setData('text/column-type', type);
-    e.currentTarget.classList.add('opacity-40');
+    setDraggedStageId(columnLabel);
   };
 
-  const handleDragColumnEnd = (e: React.DragEvent) => {
-    e.currentTarget.classList.remove('opacity-40');
+  const handleDragColumnEnd = () => {
+    setDraggedStageId(null);
+    setDraggedOverBeforeStageId(null);
+    setDraggedOverStageId(null);
   };
 
-  const handleDropColumn = (e: React.DragEvent, targetLabel: string, type: 'status' | 'vendedor') => {
+  const handleDragEnd = () => {
+    setDraggedStageId(null);
+    setDraggedOverBeforeStageId(null);
+    setDraggedOverStageId(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, stageId?: string) => {
     e.preventDefault();
-    const sourceLabel = e.dataTransfer.getData('text/column-id');
-    const sourceType = e.dataTransfer.getData('text/column-type');
-    
-    if (sourceType !== type || sourceLabel === targetLabel) return;
+    if (draggedStageId) {
+      if (stageId && stageId !== draggedStageId) {
+        setDraggedOverBeforeStageId(stageId);
+      }
+    } else {
+      if (stageId) {
+        setDraggedOverStageId(stageId);
+      }
+    }
+  };
+
+  const handleDragLeave = () => {
+    if (!draggedStageId) {
+      setDraggedOverStageId(null);
+    }
+  };
+
+  const handleDropColumnById = (draggedLabel: string, beforeLabel: string, type: 'status' | 'vendedor' | 'segmento') => {
+    setDraggedStageId(null);
+    setDraggedOverBeforeStageId(null);
+    if (draggedLabel === beforeLabel) return;
 
     if (type === 'status') {
       const currentCols = statuses.map(s => s.nome);
@@ -82,33 +113,68 @@ function ProposalsDashboard() {
         if (!order.includes(c)) order.push(c);
       });
 
-      const sourceIdx = order.indexOf(sourceLabel);
-      const targetIdx = order.indexOf(targetLabel);
+      const draggedIndex = order.indexOf(draggedLabel);
+      if (draggedIndex === -1) return;
 
-      if (sourceIdx !== -1 && targetIdx !== -1) {
-        const newOrder = [...order];
-        newOrder.splice(sourceIdx, 1);
-        newOrder.splice(targetIdx, 0, sourceLabel);
-        setStatusOrder(newOrder);
-        localStorage.setItem('kanban-status-order', JSON.stringify(newOrder));
+      order.splice(draggedIndex, 1);
+
+      if (beforeLabel === 'last') {
+        order.push(draggedLabel);
+      } else {
+        const beforeIndex = order.indexOf(beforeLabel);
+        if (beforeIndex !== -1) {
+          order.splice(beforeIndex, 0, draggedLabel);
+        }
       }
-    } else {
+
+      setStatusOrder(order);
+      localStorage.setItem('kanban-status-order', JSON.stringify(order));
+    } else if (type === 'vendedor') {
       const currentCols = Array.from(new Set(proposals.map(p => p.usuario || 'Sem Vendedor')));
       let order = vendedorOrder.length > 0 ? [...vendedorOrder] : [...currentCols];
       currentCols.forEach(c => {
         if (!order.includes(c)) order.push(c);
       });
 
-      const sourceIdx = order.indexOf(sourceLabel);
-      const targetIdx = order.indexOf(targetLabel);
+      const draggedIndex = order.indexOf(draggedLabel);
+      if (draggedIndex === -1) return;
 
-      if (sourceIdx !== -1 && targetIdx !== -1) {
-        const newOrder = [...order];
-        newOrder.splice(sourceIdx, 1);
-        newOrder.splice(targetIdx, 0, sourceLabel);
-        setVendedorOrder(newOrder);
-        localStorage.setItem('kanban-vendedor-order', JSON.stringify(newOrder));
+      order.splice(draggedIndex, 1);
+
+      if (beforeLabel === 'last') {
+        order.push(draggedLabel);
+      } else {
+        const beforeIndex = order.indexOf(beforeLabel);
+        if (beforeIndex !== -1) {
+          order.splice(beforeIndex, 0, draggedLabel);
+        }
       }
+
+      setVendedorOrder(order);
+      localStorage.setItem('kanban-vendedor-order', JSON.stringify(order));
+    } else if (type === 'segmento') {
+      const currentCols = segmentos.map(s => s.nome || s);
+      let order = segmentoOrder.length > 0 ? [...segmentoOrder] : [...currentCols];
+      currentCols.forEach(c => {
+        if (!order.includes(c)) order.push(c);
+      });
+
+      const draggedIndex = order.indexOf(draggedLabel);
+      if (draggedIndex === -1) return;
+
+      order.splice(draggedIndex, 1);
+
+      if (beforeLabel === 'last') {
+        order.push(draggedLabel);
+      } else {
+        const beforeIndex = order.indexOf(beforeLabel);
+        if (beforeIndex !== -1) {
+          order.splice(beforeIndex, 0, draggedLabel);
+        }
+      }
+
+      setSegmentoOrder(order);
+      localStorage.setItem('kanban-segmento-order', JSON.stringify(order));
     }
   };
 
@@ -345,6 +411,14 @@ function ProposalsDashboard() {
           console.error(e);
         }
       }
+      const storedSegmentoOrder = localStorage.getItem('kanban-segmento-order');
+      if (storedSegmentoOrder) {
+        try {
+          setSegmentoOrder(JSON.parse(storedSegmentoOrder));
+        } catch (e) {
+          console.error(e);
+        }
+      }
     }
   }, []);
 
@@ -458,6 +532,7 @@ function ProposalsDashboard() {
       onDragStart={(e) => {
         e.dataTransfer.setData('text/plain', prop.id);
       }}
+      onDragEnd={handleDragEnd}
       onClick={() => router.push(`/propostas/nova?id=${prop.id}`)}
       className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing"
     >
@@ -781,75 +856,9 @@ function ProposalsDashboard() {
             return;
           }
           if (onDragColumnStart) onDragColumnStart(e, label);
-          (window as any).__draggedColumn = { label, type };
         }}
-        onDragEnd={(e) => {
-          if (onDragColumnEnd) onDragColumnEnd(e);
-          (window as any).__draggedColumn = null;
-          document.querySelectorAll('.drag-guide-left, .drag-guide-right').forEach(g => {
-            g.classList.remove('opacity-100');
-            g.classList.add('opacity-0');
-          });
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          const dragged = (window as any).__draggedColumn;
-          if (dragged && dragged.type === type && dragged.label !== label) {
-            const parent = e.currentTarget.parentElement?.parentElement;
-            if (parent) {
-              // Hide all sibling indicators first to avoid stickiness
-              parent.querySelectorAll('.drag-guide-left, .drag-guide-right').forEach(g => {
-                g.classList.remove('opacity-100');
-                g.classList.add('opacity-0');
-              });
-
-              const children = Array.from(parent.children);
-              const draggedIndex = children.findIndex(child => 
-                child.querySelector('[data-col-label]')?.getAttribute('data-col-label') === dragged.label
-              );
-              const targetIndex = children.findIndex(child => 
-                child.querySelector('[data-col-label]')?.getAttribute('data-col-label') === label
-              );
-              
-              if (draggedIndex !== -1 && targetIndex !== -1) {
-                const isLeft = draggedIndex > targetIndex;
-                const leftGuide = e.currentTarget.querySelector('.drag-guide-left') as HTMLElement;
-                const rightGuide = e.currentTarget.querySelector('.drag-guide-right') as HTMLElement;
-                
-                if (leftGuide && rightGuide) {
-                  if (isLeft) {
-                    leftGuide.classList.remove('opacity-0');
-                    leftGuide.classList.add('opacity-100');
-                  } else {
-                    rightGuide.classList.remove('opacity-0');
-                    rightGuide.classList.add('opacity-100');
-                  }
-                }
-              }
-            }
-          }
-        }}
-        onDragLeave={() => {
-          // Do nothing on drag leave of child elements to prevent indicator flickering
-        }}
-        onDrop={(e) => {
-          if (onDropColumn) onDropColumn(e, label);
-          (window as any).__draggedColumn = null;
-          document.querySelectorAll('.drag-guide-left, .drag-guide-right').forEach(g => {
-            g.classList.remove('opacity-100');
-            g.classList.add('opacity-0');
-          });
-        }}
+        onDragEnd={onDragColumnEnd}
       >
-        <div className="drag-guide-left absolute left-[-12px] top-0 bottom-0 w-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)] z-30 pointer-events-none opacity-0 transition-opacity duration-150 flex items-center justify-center">
-          <div className="absolute top-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-          <div className="absolute bottom-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-        </div>
-        <div className="drag-guide-right absolute right-[-12px] top-0 bottom-0 w-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)] z-30 pointer-events-none opacity-0 transition-opacity duration-150 flex items-center justify-center">
-          <div className="absolute top-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-          <div className="absolute bottom-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-        </div>
-        
         {/* Cabeçalho Chevron/Seta */}
         <div 
           className="w-full h-[52px] relative group/title pointer-events-auto"
@@ -1120,14 +1129,18 @@ function ProposalsDashboard() {
         style={{ width: '274px' }}
         onDragOver={(e) => {
           e.preventDefault();
-          e.currentTarget.classList.add('opacity-80');
+          if (!draggedStageId) {
+            handleDragOver(e, label);
+          }
         }}
         onDragLeave={(e) => {
-          e.currentTarget.classList.remove('opacity-80');
+          if (!draggedStageId) {
+            handleDragLeave();
+          }
         }}
         onDrop={(e) => {
           e.preventDefault();
-          e.currentTarget.classList.remove('opacity-80');
+          handleDragLeave();
           const propId = e.dataTransfer.getData('text/plain');
           if (propId && onDropProp) onDropProp(propId);
         }}
@@ -1148,10 +1161,18 @@ function ProposalsDashboard() {
           }}
         >
           <div className="flex flex-col gap-3">
-            {cards.length === 0 ? (
-              <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem propostas</p>
+            {!draggedStageId && draggedOverStageId === label && (
+              <div className="bg-slate-100/70 border-2 border-dashed border-[#1B4D3E]/30 rounded-xl h-28 w-full animate-pulse flex items-center justify-center">
+                <span className="text-[10px] font-black text-[#1B4D3E]/60 uppercase tracking-widest animate-pulse">Soltar aqui</span>
               </div>
+            )}
+            
+            {cards.length === 0 ? (
+              (!draggedStageId && draggedOverStageId === label) ? null : (
+                <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem propostas</p>
+                </div>
+              )
             ) : (
               cards.map(prop => <ProposalCard key={prop.id} prop={prop} />)
             )}
@@ -1452,56 +1473,106 @@ function ProposalsDashboard() {
                         </div>
 
                         {/* Painel Kanban Unificado */}
-                        <div className="py-4 bg-slate-50 min-w-max">
+                        <div className="py-4 bg-slate-50 min-w-max overflow-x-auto min-h-[calc(100vh-170px)] pb-6 px-8 no-scrollbar scroll-smooth">
                           <div className="flex gap-[3px]">
                             {orderedStatusCols.map((col, idx) => {
                               const isFirst = idx === 0;
                               const isLast = idx === orderedStatusCols.length - 1;
                               return (
-                                <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
-                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedStatusCols.length - idx) }}>
-                                  <KanbanColumnHeader
-                                    key={col.id}
-                                    label={col.label}
-                                    color={col.color}
-                                    cards={col.cards}
-                                    total={col.total}
-                                    statusId={col.id}
-                                    isFirst={isFirst}
-                                    isLast={isLast}
-                                    onCreateStatus={handleCreateStatus}
-                                    onColorChange={async (newColor) => {
-                                      await updatePropostaStatusParam(col.id, col.label, newColor);
-                                      setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));
-                                    }}
-                                    onRenameColumn={async (newName) => {
-                                      await updatePropostaStatusParam(col.id, newName);
-                                      setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, nome: newName.toUpperCase().trim() } : s));
-                                    }}
-                                    onDragColumnStart={(e, l) => handleDragColumnStart(e, l, 'status')}
-                                    onDragColumnEnd={handleDragColumnEnd}
-                                    onDropColumn={(e, l) => handleDropColumn(e, l, 'status')}
-                                  />
-                                  </div>
-                                  <KanbanColumnCards
-                                    key={col.id + '-cards'}
-                                    label={col.label}
-                                    color={col.color}
-                                    type="status"
-                                    cards={col.cards}
-                                    isFirst={isFirst}
-                                    onDropProp={async (propId) => {
-                                      const prop = proposals.find(p => p.id === propId);
-                                      if (prop && prop.status !== col.label) {
-                                        setProposals(prev => prev.map(p => p.id === propId ? { ...p, status: col.label } : p));
-                                        const res = await updatePropostaStatus(propId, col.label);
-                                        if (!res.success) alert(res.error);
+                                <React.Fragment key={col.id}>
+                                  {draggedStageId && draggedOverBeforeStageId === col.label && (
+                                    <div 
+                                      className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                                      onDragOver={(e) => e.preventDefault()}
+                                      onDrop={() => handleDropColumnById(draggedStageId, col.label, 'status')}
+                                    >
+                                      <div className="flex flex-col items-center gap-2">
+                                        <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para cá</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  <div 
+                                    className={`flex flex-col flex-shrink-0 transition-opacity duration-200 ${draggedStageId === col.label ? 'opacity-30' : 'opacity-100'}`}
+                                    style={{ width: '274px' }}
+                                    onDragOver={(e) => handleDragOver(e, col.label)}
+                                    onDrop={(e) => {
+                                      e.preventDefault();
+                                      if (draggedStageId) {
+                                        handleDropColumnById(draggedStageId, col.label, 'status');
                                       }
                                     }}
-                                  />
-                                </div>
+                                  >
+                                    <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedStatusCols.length - idx) }}>
+                                      <KanbanColumnHeader
+                                        key={col.id}
+                                        label={col.label}
+                                        color={col.color}
+                                        cards={col.cards}
+                                        total={col.total}
+                                        statusId={col.id}
+                                        isFirst={isFirst}
+                                        isLast={isLast}
+                                        onCreateStatus={handleCreateStatus}
+                                        onColorChange={async (newColor) => {
+                                          await updatePropostaStatusParam(col.id, col.label, newColor);
+                                          setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));
+                                        }}
+                                        onRenameColumn={async (newName) => {
+                                          await updatePropostaStatusParam(col.id, newName);
+                                          setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, nome: newName.toUpperCase().trim() } : s));
+                                        }}
+                                        onDragColumnStart={(e, l) => handleDragColumnStart(e, l, 'status')}
+                                        onDragColumnEnd={handleDragColumnEnd}
+                                      />
+                                    </div>
+                                    <KanbanColumnCards
+                                      key={col.id + '-cards'}
+                                      label={col.label}
+                                      color={col.color}
+                                      type="status"
+                                      cards={col.cards}
+                                      isFirst={isFirst}
+                                      onDropProp={async (propId) => {
+                                        const prop = proposals.find(p => p.id === propId);
+                                        if (prop && prop.status !== col.label) {
+                                          setProposals(prev => prev.map(p => p.id === propId ? { ...p, status: col.label } : p));
+                                          const res = await updatePropostaStatus(propId, col.label);
+                                          if (!res.success) alert(res.error);
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                </React.Fragment>
                               );
                             })}
+
+                            {draggedStageId && draggedOverBeforeStageId === 'last' && (
+                              <div 
+                                className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={() => handleDropColumnById(draggedStageId, 'last', 'status')}
+                              >
+                                <div className="flex flex-col items-center gap-2">
+                                  <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para o fim</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {draggedStageId && draggedOverBeforeStageId !== 'last' && (
+                              <div
+                                className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1 cursor-pointer transition-colors"
+                                onDragOver={(e) => {
+                                  e.preventDefault();
+                                  setDraggedOverBeforeStageId('last');
+                                }}
+                                onDrop={() => handleDropColumnById(draggedStageId, 'last', 'status')}
+                              >
+                                <span className="text-[9px] font-black text-[#1B4D3E]/60 uppercase tracking-wider text-center rotate-180" style={{ writingMode: 'vertical-lr' }}>
+                                  Soltar no fim
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1548,60 +1619,110 @@ function ProposalsDashboard() {
                         </div>
 
                         {/* Painel Kanban Unificado */}
-                        <div className="py-4 bg-slate-50 min-w-max">
+                        <div className="py-4 bg-slate-50 min-w-max overflow-x-auto min-h-[calc(100vh-170px)] pb-6 px-8 no-scrollbar scroll-smooth">
                           <div className="flex gap-[3px]">
                             {orderedVendedorCols.map((col, idx) => {
                               const vColor = vendedorColors[col.label] || 'emerald';
                               const isFirst = idx === 0;
                               const isLast = idx === orderedVendedorCols.length - 1;
                               return (
-                                <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
-                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedVendedorCols.length - idx) }}>
-                                    <KanbanColumnHeader
+                                <React.Fragment key={col.id}>
+                                  {draggedStageId && draggedOverBeforeStageId === col.label && (
+                                    <div 
+                                      className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                                      onDragOver={(e) => e.preventDefault()}
+                                      onDrop={() => handleDropColumnById(draggedStageId, col.label, 'vendedor')}
+                                    >
+                                      <div className="flex flex-col items-center gap-2">
+                                        <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para cá</span>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  <div 
+                                    className={`flex flex-col flex-shrink-0 transition-opacity duration-200 ${draggedStageId === col.label ? 'opacity-30' : 'opacity-100'}`}
+                                    style={{ width: '274px' }}
+                                    onDragOver={(e) => handleDragOver(e, col.label)}
+                                    onDrop={(e) => {
+                                      e.preventDefault();
+                                      if (draggedStageId) {
+                                        handleDropColumnById(draggedStageId, col.label, 'vendedor');
+                                      }
+                                    }}
+                                  >
+                                    <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedVendedorCols.length - idx) }}>
+                                      <KanbanColumnHeader
+                                        key={col.id}
+                                        label={col.label}
+                                        type="vendedor"
+                                        color={vColor}
+                                        cards={col.cards}
+                                        total={col.total}
+                                        statusId={col.id}
+                                        isFirst={isFirst}
+                                        isLast={isLast}
+                                        onColorChange={async (newColor) => {
+                                          localStorage.setItem(`kanban-vendedor-color-${col.label}`, newColor);
+                                          setVendedorColors(prev => ({ ...prev, [col.label]: newColor }));
+                                        }}
+                                        onDragColumnStart={(e, l) => handleDragColumnStart(e, l, 'vendedor')}
+                                        onDragColumnEnd={handleDragColumnEnd}
+                                      />
+                                    </div>
+                                    <KanbanColumnCards
                                       key={col.id}
                                       label={col.label}
                                       type="vendedor"
                                       color={vColor}
                                       cards={col.cards}
-                                      total={col.total}
-                                      statusId={col.id}
                                       isFirst={isFirst}
-                                      isLast={isLast}
-                                      onColorChange={async (newColor) => {
-                                        localStorage.setItem(`kanban-vendedor-color-${col.label}`, newColor);
-                                        setVendedorColors(prev => ({ ...prev, [col.label]: newColor }));
+                                      onDropProp={async (propId) => {
+                                        const prop = proposals.find(p => p.id === propId);
+                                        if (prop && prop.usuario !== col.label) {
+                                          if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
+                                            alert('Apenas gestores e administradores podem transferir propostas.');
+                                            return;
+                                          }
+                                          const newUser = usersList.find(u => u.nome === col.label);
+                                          if (newUser) {
+                                            setProposals(prev => prev.map(p => p.id === propId ? { ...p, usuario: newUser.nome } : p));
+                                            const res = await transferirProposta(propId, newUser.id);
+                                            if (!res.success) alert(res.error);
+                                          }
+                                        }
                                       }}
-                                      onDragColumnStart={(e, l) => handleDragColumnStart(e, l, 'vendedor')}
-                                      onDragColumnEnd={handleDragColumnEnd}
-                                      onDropColumn={(e, l) => handleDropColumn(e, l, 'vendedor')}
                                     />
                                   </div>
-                                  <KanbanColumnCards
-                                    key={col.id}
-                                    label={col.label}
-                                    type="vendedor"
-                                    color={vColor}
-                                    cards={col.cards}
-                                    isFirst={isFirst}
-                                    onDropProp={async (propId) => {
-                                      const prop = proposals.find(p => p.id === propId);
-                                      if (prop && prop.usuario !== col.label) {
-                                        if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
-                                          alert('Apenas gestores e administradores podem transferir propostas.');
-                                          return;
-                                        }
-                                        const newUser = usersList.find(u => u.nome === col.label);
-                                        if (newUser) {
-                                          setProposals(prev => prev.map(p => p.id === propId ? { ...p, usuario: newUser.nome } : p));
-                                          const res = await transferirProposta(propId, newUser.id);
-                                          if (!res.success) alert(res.error);
-                                        }
-                                      }
-                                    }}
-                                  />
-                                </div>
+                                </React.Fragment>
                               );
                             })}
+
+                            {draggedStageId && draggedOverBeforeStageId === 'last' && (
+                              <div 
+                                className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={() => handleDropColumnById(draggedStageId, 'last', 'vendedor')}
+                              >
+                                <div className="flex flex-col items-center gap-2">
+                                  <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para o fim</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {draggedStageId && draggedOverBeforeStageId !== 'last' && (
+                              <div
+                                className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1 cursor-pointer transition-colors"
+                                onDragOver={(e) => {
+                                  e.preventDefault();
+                                  setDraggedOverBeforeStageId('last');
+                                }}
+                                onDrop={() => handleDropColumnById(draggedStageId, 'last', 'vendedor')}
+                              >
+                                <span className="text-[9px] font-black text-[#1B4D3E]/60 uppercase tracking-wider text-center rotate-180" style={{ writingMode: 'vertical-lr' }}>
+                                  Soltar no fim
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1648,66 +1769,134 @@ function ProposalsDashboard() {
                         </div>
 
                         {/* Painel Kanban Unificado */}
-                        <div className="py-4 bg-slate-50 min-w-max">
-                          <div className="flex gap-[3px]">
-                            {kanbanSegmentoCols.map((col, idx) => {
-                              const segColor = segmentoColors[col.label] || '#3b82f6';
-                              const isFirst = idx === 0;
-                              const isLast = idx === kanbanSegmentoCols.length - 1;
-                              return (
-                                <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
-                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (kanbanSegmentoCols.length - idx) }}>
-                                    <KanbanColumnHeader
-                                      key={col.id}
-                                      label={col.label}
-                                      type="segmento"
-                                      color={segColor}
-                                      cards={col.cards}
-                                      total={col.total}
-                                      statusId={col.id}
-                                      isFirst={isFirst}
-                                      isLast={isLast}
-                                      onColorChange={async (newColor) => {
-                                        localStorage.setItem(`kanban-segmento-color-${col.label}`, newColor);
-                                        setSegmentoColors(prev => ({ ...prev, [col.label]: newColor }));
-                                      }}
-                                      onCreateStatus={col.id !== 'unassigned' ? handleCreateSegmento : undefined}
-                                    />
-                                  </div>
-                                  <KanbanColumnCards
-                                    key={col.id}
-                                    label={col.label}
-                                    type="vendedor"
-                                    color={segColor}
-                                    cards={col.cards}
-                                    isFirst={isFirst}
-                                    onDropProp={async (propId) => {
-                                      const prop = proposals.find(p => p.id === propId);
-                                      if (prop) {
-                                        const newSegment = col.id === 'unassigned' ? '' : col.label;
-                                        if (prop.segmento !== newSegment) {
-                                          // Update local state optimistically
-                                          setProposals(prev => prev.map(p => p.id === propId ? { ...p, segmento: newSegment || 'Sem Segmento' } : p));
-                                          
-                                          // Update client segment in backend
-                                          if (prop.clientId) {
-                                            const res = await updateCliente(prop.clientId, { segmento: newSegment });
-                                            if (!res.success) {
-                                              alert(res.error || 'Erro ao atualizar o segmento do cliente');
-                                              loadData();
-                                            }
-                                          } else {
-                                            alert('Esta proposta não tem um cliente associado no banco de dados para salvar o segmento.');
+                        {(() => {
+                          const orderedSegmentoCols = [...kanbanSegmentoCols];
+                          if (segmentoOrder.length > 0) {
+                            orderedSegmentoCols.sort((a, b) => {
+                              let idxA = segmentoOrder.indexOf(a.label);
+                              let idxB = segmentoOrder.indexOf(b.label);
+                              if (idxA === -1) idxA = 999;
+                              if (idxB === -1) idxB = 999;
+                              return idxA - idxB;
+                            });
+                          }
+
+                          return (
+                            <div className="py-4 bg-slate-50 min-w-max overflow-x-auto min-h-[calc(100vh-170px)] pb-6 px-8 no-scrollbar scroll-smooth">
+                              <div className="flex gap-[3px]">
+                                {orderedSegmentoCols.map((col, idx) => {
+                                  const segColor = segmentoColors[col.label] || '#3b82f6';
+                                  const isFirst = idx === 0;
+                                  const isLast = idx === orderedSegmentoCols.length - 1;
+                                  return (
+                                    <React.Fragment key={col.id}>
+                                      {draggedStageId && draggedOverBeforeStageId === col.label && (
+                                        <div 
+                                          className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                                          onDragOver={(e) => e.preventDefault()}
+                                          onDrop={() => handleDropColumnById(draggedStageId, col.label, 'segmento')}
+                                        >
+                                          <div className="flex flex-col items-center gap-2">
+                                            <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para cá</span>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      <div 
+                                        className={`flex flex-col flex-shrink-0 transition-opacity duration-200 ${draggedStageId === col.label ? 'opacity-30' : 'opacity-100'}`}
+                                        style={{ width: '274px' }}
+                                        onDragOver={(e) => handleDragOver(e, col.label)}
+                                        onDrop={(e) => {
+                                          e.preventDefault();
+                                          if (draggedStageId) {
+                                            handleDropColumnById(draggedStageId, col.label, 'segmento');
                                           }
-                                        }
-                                      }
+                                        }}
+                                      >
+                                        <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedSegmentoCols.length - idx) }}>
+                                          <KanbanColumnHeader
+                                            key={col.id}
+                                            label={col.label}
+                                            type="segmento"
+                                            color={segColor}
+                                            cards={col.cards}
+                                            total={col.total}
+                                            statusId={col.id}
+                                            isFirst={isFirst}
+                                            isLast={isLast}
+                                            onColorChange={async (newColor) => {
+                                              localStorage.setItem(`kanban-segmento-color-${col.label}`, newColor);
+                                              setSegmentoColors(prev => ({ ...prev, [col.label]: newColor }));
+                                            }}
+                                            onCreateStatus={col.id !== 'unassigned' ? handleCreateSegmento : undefined}
+                                            onDragColumnStart={(e, l) => handleDragColumnStart(e, l, 'segmento')}
+                                            onDragColumnEnd={handleDragColumnEnd}
+                                          />
+                                        </div>
+                                        <KanbanColumnCards
+                                          key={col.id}
+                                          label={col.label}
+                                          type="vendedor"
+                                          color={segColor}
+                                          cards={col.cards}
+                                          isFirst={isFirst}
+                                          onDropProp={async (propId) => {
+                                            const prop = proposals.find(p => p.id === propId);
+                                            if (prop) {
+                                              const newSegment = col.id === 'unassigned' ? '' : col.label;
+                                              if (prop.segmento !== newSegment) {
+                                                // Update local state optimistically
+                                                setProposals(prev => prev.map(p => p.id === propId ? { ...p, segmento: newSegment || 'Sem Segmento' } : p));
+                                                
+                                                // Update client segment in backend
+                                                if (prop.clientId) {
+                                                  const res = await updateCliente(prop.clientId, { segmento: newSegment });
+                                                  if (!res.success) {
+                                                    alert(res.error || 'Erro ao atualizar o segmento do cliente');
+                                                    loadData();
+                                                  }
+                                                } else {
+                                                  alert('Esta proposta não tem um cliente associado no banco de dados para salvar o segmento.');
+                                                }
+                                              }
+                                            }
+                                          }}
+                                        />
+                                      </div>
+                                    </React.Fragment>
+                                  );
+                                })}
+
+                                {draggedStageId && draggedOverBeforeStageId === 'last' && (
+                                  <div 
+                                    className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={() => handleDropColumnById(draggedStageId, 'last', 'segmento')}
+                                  >
+                                    <div className="flex flex-col items-center gap-2">
+                                      <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para o fim</span>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {draggedStageId && draggedOverBeforeStageId !== 'last' && (
+                                  <div
+                                    className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1 cursor-pointer transition-colors"
+                                    onDragOver={(e) => {
+                                      e.preventDefault();
+                                      setDraggedOverBeforeStageId('last');
                                     }}
-                                  />
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
+                                    onDrop={() => handleDropColumnById(draggedStageId, 'last', 'segmento')}
+                                  >
+                                    <span className="text-[9px] font-black text-[#1B4D3E]/60 uppercase tracking-wider text-center rotate-180" style={{ writingMode: 'vertical-lr' }}>
+                                      Soltar no fim
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>
