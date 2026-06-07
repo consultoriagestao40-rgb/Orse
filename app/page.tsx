@@ -34,7 +34,10 @@ function RadarComercialDashboard() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const data = await getKPIs();
+      const [data] = await Promise.all([
+        getKPIs(),
+        new Promise(resolve => setTimeout(resolve, 4000))
+      ]);
       setKpis(data);
     } catch (e) {
       console.error('Erro ao buscar KPIs:', e);

@@ -777,7 +777,8 @@ export default function LeadsKanban() {
     const [stagesRes, segmentosRes, usersRes] = await Promise.all([
       getLeadStages(),
       getSegmentos(),
-      getUsersForFilter()
+      getUsersForFilter(),
+      !silent ? new Promise(resolve => setTimeout(resolve, 4000)) : Promise.resolve()
     ]);
     if (stagesRes.success) setStages(stagesRes.stages);
     if (Array.isArray(segmentosRes)) setSegmentos(segmentosRes);

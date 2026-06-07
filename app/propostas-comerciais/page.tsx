@@ -400,7 +400,8 @@ export default function PropostasComerciaisDashboard() {
     setLoading(true);
     const [pageData, segmentosRes] = await Promise.all([
       getPropostasComerciaisPageData(),
-      getSegmentos()
+      getSegmentos(),
+      new Promise(resolve => setTimeout(resolve, 4000))
     ]);
     const { docs, role, usersList, statuses } = pageData;
     setDocs(docs);

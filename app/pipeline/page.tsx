@@ -320,7 +320,8 @@ function ProposalsDashboard() {
     setLoading(true);
     const [pageData, segmentosRes] = await Promise.all([
       getPipelinePageData(),
-      getSegmentos()
+      getSegmentos(),
+      new Promise(resolve => setTimeout(resolve, 4000))
     ]);
     const { proposals, statuses, role, usersList } = pageData;
     setProposals(proposals);
