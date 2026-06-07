@@ -1719,7 +1719,7 @@ export default function LeadsKanban() {
                           overflowY: 'auto',
                         }}
                       >
-                        <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-1.5">
                           {stageLeads.length === 0 ? (
                             <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
                               <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem leads</p>
@@ -1944,7 +1944,7 @@ export default function LeadsKanban() {
                           overflowY: 'auto',
                         }}
                       >
-                        <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-1.5">
                           {colLeads.map(lead => (
                             <LeadCard
                               key={lead.id}
@@ -2163,7 +2163,7 @@ export default function LeadsKanban() {
                           overflowY: 'auto',
                         }}
                       >
-                        <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-1.5">
                           {colLeads.length === 0 ? (
                             <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
                               <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem leads</p>
