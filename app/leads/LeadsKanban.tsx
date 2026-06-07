@@ -1303,13 +1303,6 @@ export default function LeadsKanban() {
           </button>
 
 
-          <button 
-            type="button"
-            onClick={() => router.push('/leads/mobile')}
-            className="flex items-center justify-center gap-2 border border-slate-200 bg-white text-slate-600 px-3 py-2 text-xs md:text-sm rounded-xl font-bold hover:bg-slate-50 transition-all w-full sm:w-auto shadow-sm cursor-pointer"
-          >
-            <Smartphone size={16} className="text-slate-500" /> Versão Mobile
-          </button>
 
           <div className="hidden sm:block w-px h-8 bg-slate-200 mx-1"></div>
 
