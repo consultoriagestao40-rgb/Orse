@@ -283,14 +283,7 @@ export default function PropostasComerciaisDashboard() {
       } else {
         const targetIndex = order.indexOf(beforeLabel);
         if (targetIndex !== -1) {
-          const originalDraggedIndex = statusOrder.length > 0 ? statusOrder.indexOf(draggedLabel) : currentCols.indexOf(draggedLabel);
-          const originalTargetIndex = statusOrder.length > 0 ? statusOrder.indexOf(beforeLabel) : currentCols.indexOf(beforeLabel);
-          
-          if (originalDraggedIndex !== -1 && originalTargetIndex !== -1 && originalDraggedIndex < originalTargetIndex) {
-            order.splice(targetIndex + 1, 0, draggedLabel);
-          } else {
-            order.splice(targetIndex, 0, draggedLabel);
-          }
+          order.splice(targetIndex, 0, draggedLabel);
         }
       }
 
@@ -313,14 +306,7 @@ export default function PropostasComerciaisDashboard() {
       } else {
         const targetIndex = order.indexOf(beforeLabel);
         if (targetIndex !== -1) {
-          const originalDraggedIndex = vendedorOrder.length > 0 ? vendedorOrder.indexOf(draggedLabel) : currentCols.indexOf(draggedLabel);
-          const originalTargetIndex = vendedorOrder.length > 0 ? vendedorOrder.indexOf(beforeLabel) : currentCols.indexOf(beforeLabel);
-          
-          if (originalDraggedIndex !== -1 && originalTargetIndex !== -1 && originalDraggedIndex < originalTargetIndex) {
-            order.splice(targetIndex + 1, 0, draggedLabel);
-          } else {
-            order.splice(targetIndex, 0, draggedLabel);
-          }
+          order.splice(targetIndex, 0, draggedLabel);
         }
       }
 
@@ -343,14 +329,7 @@ export default function PropostasComerciaisDashboard() {
       } else {
         const targetIndex = order.indexOf(beforeLabel);
         if (targetIndex !== -1) {
-          const originalDraggedIndex = segmentoOrder.length > 0 ? segmentoOrder.indexOf(draggedLabel) : currentCols.indexOf(draggedLabel);
-          const originalTargetIndex = segmentoOrder.length > 0 ? segmentoOrder.indexOf(beforeLabel) : currentCols.indexOf(beforeLabel);
-          
-          if (originalDraggedIndex !== -1 && originalTargetIndex !== -1 && originalDraggedIndex < originalTargetIndex) {
-            order.splice(targetIndex + 1, 0, draggedLabel);
-          } else {
-            order.splice(targetIndex, 0, draggedLabel);
-          }
+          order.splice(targetIndex, 0, draggedLabel);
         }
       }
 
@@ -1399,7 +1378,10 @@ export default function PropostasComerciaisDashboard() {
                                     <div 
                                       className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                                       onDragOver={(e) => e.preventDefault()}
-                                      onDrop={() => handleDropColumnById(draggedStageId, col.label, 'status')}
+                                      onDrop={(e) => {
+                                        e.preventDefault();
+                                        handleDropColumnById(draggedStageId!, col.label, 'status');
+                                      }}
                                     >
                                       <div className="flex flex-col items-center gap-2">
                                         <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para cá</span>
@@ -1413,8 +1395,9 @@ export default function PropostasComerciaisDashboard() {
                                     onDragOver={(e) => handleDragOver(e, col.label, 'status')}
                                     onDrop={(e) => {
                                       e.preventDefault();
-                                      if (draggedStageId) {
-                                        handleDropColumnById(draggedStageId, col.label, 'status');
+                                      const colId = e.dataTransfer.getData('text/column-id');
+                                      if (colId || draggedStageId) {
+                                        handleDropColumnById(colId || draggedStageId!, draggedOverBeforeStageId || col.label, 'status');
                                       }
                                     }}
                                   >
@@ -1555,7 +1538,10 @@ export default function PropostasComerciaisDashboard() {
                                     <div 
                                       className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                                       onDragOver={(e) => e.preventDefault()}
-                                      onDrop={() => handleDropColumnById(draggedStageId, col.label, 'vendedor')}
+                                      onDrop={(e) => {
+                                        e.preventDefault();
+                                        handleDropColumnById(draggedStageId!, col.label, 'vendedor');
+                                      }}
                                     >
                                       <div className="flex flex-col items-center gap-2">
                                         <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para cá</span>
@@ -1569,8 +1555,9 @@ export default function PropostasComerciaisDashboard() {
                                     onDragOver={(e) => handleDragOver(e, col.label, 'vendedor')}
                                     onDrop={(e) => {
                                       e.preventDefault();
-                                      if (draggedStageId) {
-                                        handleDropColumnById(draggedStageId, col.label, 'vendedor');
+                                      const colId = e.dataTransfer.getData('text/column-id');
+                                      if (colId || draggedStageId) {
+                                        handleDropColumnById(colId || draggedStageId!, draggedOverBeforeStageId || col.label, 'vendedor');
                                       }
                                     }}
                                   >
@@ -1731,7 +1718,10 @@ export default function PropostasComerciaisDashboard() {
                                         <div 
                                           className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                                           onDragOver={(e) => e.preventDefault()}
-                                          onDrop={() => handleDropColumnById(draggedStageId, col.label, 'segmento')}
+                                          onDrop={(e) => {
+                                            e.preventDefault();
+                                            handleDropColumnById(draggedStageId!, col.label, 'segmento');
+                                          }}
                                         >
                                           <div className="flex flex-col items-center gap-2">
                                             <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para cá</span>
@@ -1745,8 +1735,9 @@ export default function PropostasComerciaisDashboard() {
                                         onDragOver={(e) => handleDragOver(e, col.label, 'segmento')}
                                         onDrop={(e) => {
                                           e.preventDefault();
-                                          if (draggedStageId) {
-                                            handleDropColumnById(draggedStageId, col.label, 'segmento');
+                                          const colId = e.dataTransfer.getData('text/column-id');
+                                          if (colId || draggedStageId) {
+                                            handleDropColumnById(colId || draggedStageId!, draggedOverBeforeStageId || col.label, 'segmento');
                                           }
                                         }}
                                       >

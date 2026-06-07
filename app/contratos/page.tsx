@@ -12,6 +12,25 @@ import { getContratos, updateContratoStatus, deleteContrato, renameContratoStatu
 import { getSegmentos } from '@/app/admin/settings/actions';
 import { updateCliente } from '@/app/clientes/actions';
 
+const tailwindColorMap: { [key: string]: string } = {
+  sky: '#0284c7',
+  blue: '#2563eb',
+  orange: '#ea580c',
+  amber: '#d97706',
+  emerald: '#059669',
+  green: '#16a34a',
+  red: '#dc2626',
+  rose: '#e11d48',
+  purple: '#9333ea',
+  violet: '#7c3aed',
+  yellow: '#ca8a04',
+  indigo: '#4f46e5',
+  pink: '#db2777',
+  teal: '#0d9488',
+  slate: '#475569',
+  gray: '#4b5563',
+};
+
 type ViewMode = 'lista' | 'kanban-status' | 'kanban-segmento';
 
 const fmt = (v: number) =>
@@ -452,14 +471,7 @@ export default function ContratosDashboard() {
       } else {
         const targetIdx = currentList.indexOf(targetLabel);
         if (targetIdx !== -1) {
-          const originalSourceIdx = statusesList.indexOf(sourceLabel);
-          const originalTargetIdx = statusesList.indexOf(targetLabel);
-          
-          if (originalSourceIdx !== -1 && originalTargetIdx !== -1 && originalSourceIdx < originalTargetIdx) {
-            currentList.splice(targetIdx + 1, 0, sourceLabel);
-          } else {
-            currentList.splice(targetIdx, 0, sourceLabel);
-          }
+          currentList.splice(targetIdx, 0, sourceLabel);
         } else {
           currentList.push(sourceLabel);
         }
@@ -484,16 +496,7 @@ export default function ContratosDashboard() {
       } else {
         const targetIdx = currentList.indexOf(targetLabel);
         if (targetIdx !== -1) {
-          const defaultList = segmentos.map(s => s.nome || s);
-          const originalSourceList = segmentoOrder.length > 0 ? segmentoOrder : defaultList;
-          const originalSourceIdx = originalSourceList.indexOf(sourceLabel);
-          const originalTargetIdx = originalSourceList.indexOf(targetLabel);
-
-          if (originalSourceIdx !== -1 && originalTargetIdx !== -1 && originalSourceIdx < originalTargetIdx) {
-            currentList.splice(targetIdx + 1, 0, sourceLabel);
-          } else {
-            currentList.splice(targetIdx, 0, sourceLabel);
-          }
+          currentList.splice(targetIdx, 0, sourceLabel);
         } else {
           currentList.push(sourceLabel);
         }
@@ -823,8 +826,9 @@ export default function ContratosDashboard() {
           onDrop={async (e) => {
             e.preventDefault();
             handleDragLeave();
-            if (draggedStageId) {
-              handleDropColumnById(draggedStageId, status, 'status');
+            const colId = e.dataTransfer.getData('text/column-id');
+            if (colId || draggedStageId) {
+              handleDropColumnById(colId || draggedStageId!, draggedOverBeforeStageId || status, 'status');
             } else {
               const id = e.dataTransfer.getData('text/plain');
               if (id) {
@@ -1027,8 +1031,9 @@ export default function ContratosDashboard() {
           onDrop={async (e) => {
             e.preventDefault();
             handleDragLeave();
-            if (draggedStageId) {
-              handleDropColumnById(draggedStageId, label, 'segmento');
+            const colId = e.dataTransfer.getData('text/column-id');
+            if (colId || draggedStageId) {
+              handleDropColumnById(colId || draggedStageId!, draggedOverBeforeStageId || label, 'segmento');
             } else {
               const id = e.dataTransfer.getData('text/plain');
               if (id) {
@@ -1323,7 +1328,10 @@ export default function ContratosDashboard() {
                         <div 
                           className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                           onDragOver={(e) => e.preventDefault()}
-                          onDrop={() => handleDropColumnById(draggedStageId!, status, 'status')}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            handleDropColumnById(draggedStageId!, status, 'status');
+                          }}
                         >
                           <div className="flex flex-col items-center gap-2">
                             <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Soltar aqui</span>
@@ -1337,8 +1345,9 @@ export default function ContratosDashboard() {
                         onDragOver={(e) => handleDragOver(e, status, 'status')}
                         onDrop={(e) => {
                           e.preventDefault();
-                          if (draggedStageId) {
-                            handleDropColumnById(draggedStageId, status, 'status');
+                          const colId = e.dataTransfer.getData('text/column-id');
+                          if (colId || draggedStageId) {
+                            handleDropColumnById(colId || draggedStageId!, draggedOverBeforeStageId || status, 'status');
                           }
                         }}
                       >
@@ -1357,7 +1366,10 @@ export default function ContratosDashboard() {
                   <div 
                     className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                     onDragOver={(e) => e.preventDefault()}
-                    onDrop={() => handleDropColumnById(draggedStageId!, 'last', 'status')}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      handleDropColumnById(draggedStageId!, 'last', 'status');
+                    }}
                   >
                     <div className="flex flex-col items-center gap-2">
                       <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para o fim</span>
@@ -1372,7 +1384,10 @@ export default function ContratosDashboard() {
                       e.preventDefault();
                       setDraggedOverBeforeStageId('last');
                     }}
-                    onDrop={() => handleDropColumnById(draggedStageId!, 'last', 'status')}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      handleDropColumnById(draggedStageId!, 'last', 'status');
+                    }}
                   >
                     <span className="text-[9px] font-black text-[#1B4D3E]/60 uppercase tracking-wider text-center rotate-180" style={{ writingMode: 'vertical-lr' }}>
                       Soltar no fim
@@ -1398,7 +1413,10 @@ export default function ContratosDashboard() {
                         <div 
                           className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                           onDragOver={(e) => e.preventDefault()}
-                          onDrop={() => handleDropColumnById(draggedStageId!, col.label, 'segmento')}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            handleDropColumnById(draggedStageId!, col.label, 'segmento');
+                          }}
                         >
                           <div className="flex flex-col items-center gap-2">
                             <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Soltar aqui</span>
@@ -1412,8 +1430,9 @@ export default function ContratosDashboard() {
                         onDragOver={(e) => handleDragOver(e, col.label, 'segmento')}
                         onDrop={(e) => {
                           e.preventDefault();
-                          if (draggedStageId) {
-                            handleDropColumnById(draggedStageId, col.label, 'segmento');
+                          const colId = e.dataTransfer.getData('text/column-id');
+                          if (colId || draggedStageId) {
+                            handleDropColumnById(colId || draggedStageId!, draggedOverBeforeStageId || col.label, 'segmento');
                           }
                         }}
                       >
@@ -1434,7 +1453,10 @@ export default function ContratosDashboard() {
                   <div 
                     className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                     onDragOver={(e) => e.preventDefault()}
-                    onDrop={() => handleDropColumnById(draggedStageId!, 'last', 'segmento')}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      handleDropColumnById(draggedStageId!, 'last', 'segmento');
+                    }}
                   >
                     <div className="flex flex-col items-center gap-2">
                       <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para o fim</span>
@@ -1449,7 +1471,10 @@ export default function ContratosDashboard() {
                       e.preventDefault();
                       setDraggedOverBeforeStageId('last');
                     }}
-                    onDrop={() => handleDropColumnById(draggedStageId!, 'last', 'segmento')}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      handleDropColumnById(draggedStageId!, 'last', 'segmento');
+                    }}
                   >
                     <span className="text-[9px] font-black text-[#1B4D3E]/60 uppercase tracking-wider text-center rotate-180" style={{ writingMode: 'vertical-lr' }}>
                       Soltar no fim
