@@ -773,6 +773,7 @@ export default function ContratosDashboard() {
             </>
           )}
         </div>
+      </div>
         <div
           className="px-[4px] py-3 rounded-b-2xl rounded-t-none flex-1"
           onDragOver={(e) => e.preventDefault()}
@@ -977,6 +978,7 @@ export default function ContratosDashboard() {
             </>
           )}
         </div>
+      </div>
         <div
           className="px-[4px] py-3 rounded-b-2xl rounded-t-none flex-1"
           onDragOver={(e) => e.preventDefault()}
@@ -1039,6 +1041,7 @@ export default function ContratosDashboard() {
             )}
           </div>
         </div>
+      </div>
     );
   };
 
