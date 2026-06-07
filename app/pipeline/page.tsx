@@ -1112,7 +1112,7 @@ function ProposalsDashboard() {
     
     return (
       <div 
-        className="flex flex-col flex-1 min-h-0"
+        className="flex flex-col flex-shrink-0"
         style={{ width: '274px' }}
         onDragOver={(e) => {
           e.preventDefault();
@@ -1143,8 +1143,7 @@ function ProposalsDashboard() {
             borderColor: borderRgba,
             borderWidth: '0 1px 1px 1px',
             borderStyle: 'solid',
-            flex: '1 1 0%',
-            minHeight: '0',
+            height: 'calc(100vh - 52px)',
             overflowY: 'auto',
           }}
         >
@@ -1179,7 +1178,7 @@ function ProposalsDashboard() {
       `}} />
       <Sidebar />
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-[#F8FAFC]">
+      <main className="flex-1 overflow-auto bg-[#F8FAFC]">
         <div className="w-full">
 
           {/* HEADER */}
@@ -1460,8 +1459,9 @@ function ProposalsDashboard() {
                           </span>
                         </div>
 
-                        <div className="flex-1 py-4 bg-slate-50 min-w-max overflow-x-auto pb-6 px-8 no-scrollbar scroll-smooth min-h-0">
-                          <div className="flex gap-[3px] h-full">
+                        {/* Painel Kanban Unificado */}
+                        <div className="py-4 bg-slate-50 min-w-max">
+                          <div className="flex gap-[3px]">
                             {orderedStatusCols.map((col, idx) => {
                               const isFirst = idx === 0;
                               const isLast = idx === orderedStatusCols.length - 1;
@@ -1469,7 +1469,7 @@ function ProposalsDashboard() {
                                 <React.Fragment key={col.id}>
                                   {draggedStageId && draggedOverBeforeStageId === col.label && (
                                     <div 
-                                      className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-full flex items-center justify-center mx-1.5 transition-all duration-200"
+                                      className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                                       onDragOver={(e) => e.preventDefault()}
                                       onDrop={() => handleDropColumnById(draggedStageId, col.label, 'status')}
                                     >
@@ -1480,7 +1480,7 @@ function ProposalsDashboard() {
                                   )}
                                   
                                   <div 
-                                    className={`flex flex-col flex-shrink-0 h-full transition-opacity duration-200 ${draggedStageId === col.label ? 'opacity-30' : 'opacity-100'}`}
+                                    className={`flex flex-col flex-shrink-0 transition-opacity duration-200 ${draggedStageId === col.label ? 'opacity-30' : 'opacity-100'}`}
                                     style={{ width: '274px' }}
                                     onDragOver={(e) => handleDragOver(e, col.label)}
                                     onDrop={(e) => {
@@ -1491,7 +1491,7 @@ function ProposalsDashboard() {
                                     }}
                                   >
                                     <div 
-                                      className="sticky top-0 bg-slate-50 cursor-grab active:cursor-grabbing z-20 shrink-0" 
+                                      className="sticky top-0 bg-slate-50 cursor-grab active:cursor-grabbing z-20" 
                                       style={{ zIndex: 20 + (orderedStatusCols.length - idx) }}
                                       draggable="true"
                                       onDragStart={(e) => {
@@ -1547,7 +1547,7 @@ function ProposalsDashboard() {
 
                             {draggedStageId && draggedOverBeforeStageId === 'last' && (
                               <div 
-                                className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-full flex items-center justify-center mx-1.5 transition-all duration-200"
+                                className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                                 onDragOver={(e) => e.preventDefault()}
                                 onDrop={() => handleDropColumnById(draggedStageId, 'last', 'status')}
                               >
@@ -1559,7 +1559,7 @@ function ProposalsDashboard() {
 
                             {draggedStageId && draggedOverBeforeStageId !== 'last' && (
                               <div
-                                className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-full flex items-center justify-center mx-1 cursor-pointer transition-colors"
+                                className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1 cursor-pointer transition-colors"
                                 onDragOver={(e) => {
                                   e.preventDefault();
                                   setDraggedOverBeforeStageId('last');
@@ -1617,8 +1617,8 @@ function ProposalsDashboard() {
                         </div>
 
                         {/* Painel Kanban Unificado */}
-                        <div className="flex-1 py-4 bg-slate-50 min-w-max overflow-x-auto pb-6 px-8 no-scrollbar scroll-smooth min-h-0">
-                          <div className="flex gap-[3px] h-full">
+                        <div className="py-4 bg-slate-50 min-w-max">
+                          <div className="flex gap-[3px]">
                             {orderedVendedorCols.map((col, idx) => {
                               const vColor = vendedorColors[col.label] || 'emerald';
                               const isFirst = idx === 0;
@@ -1627,7 +1627,7 @@ function ProposalsDashboard() {
                                 <React.Fragment key={col.id}>
                                   {draggedStageId && draggedOverBeforeStageId === col.label && (
                                     <div 
-                                      className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-full flex items-center justify-center mx-1.5 transition-all duration-200"
+                                      className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                                       onDragOver={(e) => e.preventDefault()}
                                       onDrop={() => handleDropColumnById(draggedStageId, col.label, 'vendedor')}
                                     >
@@ -1638,7 +1638,7 @@ function ProposalsDashboard() {
                                   )}
 
                                   <div 
-                                    className={`flex flex-col flex-shrink-0 h-full transition-opacity duration-200 ${draggedStageId === col.label ? 'opacity-30' : 'opacity-100'}`}
+                                    className={`flex flex-col flex-shrink-0 transition-opacity duration-200 ${draggedStageId === col.label ? 'opacity-30' : 'opacity-100'}`}
                                     style={{ width: '274px' }}
                                     onDragOver={(e) => handleDragOver(e, col.label)}
                                     onDrop={(e) => {
@@ -1649,7 +1649,7 @@ function ProposalsDashboard() {
                                     }}
                                   >
                                     <div 
-                                      className="sticky top-0 bg-slate-50 cursor-grab active:cursor-grabbing z-20 shrink-0" 
+                                      className="sticky top-0 bg-slate-50 cursor-grab active:cursor-grabbing z-20" 
                                       style={{ zIndex: 20 + (orderedVendedorCols.length - idx) }}
                                       draggable="true"
                                       onDragStart={(e) => {
@@ -1708,7 +1708,7 @@ function ProposalsDashboard() {
 
                             {draggedStageId && draggedOverBeforeStageId === 'last' && (
                               <div 
-                                className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-full flex items-center justify-center mx-1.5 transition-all duration-200"
+                                className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                                 onDragOver={(e) => e.preventDefault()}
                                 onDrop={() => handleDropColumnById(draggedStageId, 'last', 'vendedor')}
                               >
@@ -1720,7 +1720,7 @@ function ProposalsDashboard() {
 
                             {draggedStageId && draggedOverBeforeStageId !== 'last' && (
                               <div
-                                className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-full flex items-center justify-center mx-1 cursor-pointer transition-colors"
+                                className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1 cursor-pointer transition-colors"
                                 onDragOver={(e) => {
                                   e.preventDefault();
                                   setDraggedOverBeforeStageId('last');
@@ -1791,8 +1791,8 @@ function ProposalsDashboard() {
                           }
 
                           return (
-                            <div className="flex-1 py-4 bg-slate-50 min-w-max overflow-x-auto pb-6 px-8 no-scrollbar scroll-smooth min-h-0">
-                              <div className="flex gap-[3px] h-full">
+                            <div className="py-4 bg-slate-50 min-w-max">
+                              <div className="flex gap-[3px]">
                                 {orderedSegmentoCols.map((col, idx) => {
                                   const segColor = segmentoColors[col.label] || '#3b82f6';
                                   const isFirst = idx === 0;
@@ -1801,7 +1801,7 @@ function ProposalsDashboard() {
                                     <React.Fragment key={col.id}>
                                       {draggedStageId && draggedOverBeforeStageId === col.label && (
                                         <div 
-                                          className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-full flex items-center justify-center mx-1.5 transition-all duration-200"
+                                          className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                                           onDragOver={(e) => e.preventDefault()}
                                           onDrop={() => handleDropColumnById(draggedStageId, col.label, 'segmento')}
                                         >
@@ -1812,7 +1812,7 @@ function ProposalsDashboard() {
                                       )}
 
                                       <div 
-                                        className={`flex flex-col flex-shrink-0 h-full transition-opacity duration-200 ${draggedStageId === col.label ? 'opacity-30' : 'opacity-100'}`}
+                                        className={`flex flex-col flex-shrink-0 transition-opacity duration-200 ${draggedStageId === col.label ? 'opacity-30' : 'opacity-100'}`}
                                         style={{ width: '274px' }}
                                         onDragOver={(e) => handleDragOver(e, col.label)}
                                         onDrop={(e) => {
@@ -1823,7 +1823,7 @@ function ProposalsDashboard() {
                                         }}
                                       >
                                         <div 
-                                          className="sticky top-0 bg-slate-50 cursor-grab active:cursor-grabbing z-20 shrink-0" 
+                                          className="sticky top-0 bg-slate-50 cursor-grab active:cursor-grabbing z-20" 
                                           style={{ zIndex: 20 + (orderedSegmentoCols.length - idx) }}
                                           draggable="true"
                                           onDragStart={(e) => {
@@ -1889,7 +1889,7 @@ function ProposalsDashboard() {
 
                                 {draggedStageId && draggedOverBeforeStageId === 'last' && (
                                   <div 
-                                    className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-full flex items-center justify-center mx-1.5 transition-all duration-200"
+                                    className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                                     onDragOver={(e) => e.preventDefault()}
                                     onDrop={() => handleDropColumnById(draggedStageId, 'last', 'segmento')}
                                   >
@@ -1901,7 +1901,7 @@ function ProposalsDashboard() {
 
                                 {draggedStageId && draggedOverBeforeStageId !== 'last' && (
                                   <div
-                                    className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-full flex items-center justify-center mx-1 cursor-pointer transition-colors"
+                                    className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1 cursor-pointer transition-colors"
                                     onDragOver={(e) => {
                                       e.preventDefault();
                                       setDraggedOverBeforeStageId('last');
