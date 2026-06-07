@@ -1458,7 +1458,7 @@ function ProposalsDashboard() {
                               const isLast = idx === orderedStatusCols.length - 1;
                               return (
                                 <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
-                                  <div className="sticky top-0 z-20 bg-slate-50">
+                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedStatusCols.length - idx) }}>
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}
@@ -1554,8 +1554,8 @@ function ProposalsDashboard() {
                               const isFirst = idx === 0;
                               const isLast = idx === orderedVendedorCols.length - 1;
                               return (
-                                <div key={col.id} className="flex flex-col h-full w-[274px]">
-                                  <div className="sticky top-0 z-20 bg-slate-50">
+                                <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
+                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedVendedorCols.length - idx) }}>
                                     <KanbanColumnHeader
                                       key={col.id}
                                       label={col.label}
@@ -1654,23 +1654,25 @@ function ProposalsDashboard() {
                               const isFirst = idx === 0;
                               const isLast = idx === kanbanSegmentoCols.length - 1;
                               return (
-                                <div key={col.id} className="flex flex-col h-full">
-                                  <KanbanColumnHeader
-                                    key={col.id}
-                                    label={col.label}
-                                    type="segmento"
-                                    color={segColor}
-                                    cards={col.cards}
-                                    total={col.total}
-                                    statusId={col.id}
-                                    isFirst={isFirst}
-                                    isLast={isLast}
-                                    onColorChange={async (newColor) => {
-                                      localStorage.setItem(`kanban-segmento-color-${col.label}`, newColor);
-                                      setSegmentoColors(prev => ({ ...prev, [col.label]: newColor }));
-                                    }}
-                                    onCreateStatus={col.id !== 'unassigned' ? handleCreateSegmento : undefined}
-                                  />
+                                <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
+                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (kanbanSegmentoCols.length - idx) }}>
+                                    <KanbanColumnHeader
+                                      key={col.id}
+                                      label={col.label}
+                                      type="segmento"
+                                      color={segColor}
+                                      cards={col.cards}
+                                      total={col.total}
+                                      statusId={col.id}
+                                      isFirst={isFirst}
+                                      isLast={isLast}
+                                      onColorChange={async (newColor) => {
+                                        localStorage.setItem(`kanban-segmento-color-${col.label}`, newColor);
+                                        setSegmentoColors(prev => ({ ...prev, [col.label]: newColor }));
+                                      }}
+                                      onCreateStatus={col.id !== 'unassigned' ? handleCreateSegmento : undefined}
+                                    />
+                                  </div>
                                   <KanbanColumnCards
                                     key={col.id}
                                     label={col.label}

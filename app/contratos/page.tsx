@@ -352,7 +352,7 @@ export default function ContratosDashboard() {
     '#0369A1', '#0B6623', '#065F46', '#3F6212', '#A16207', '#C2410C', '#B91C1C', '#9D174D', '#581C87', '#334155',
   ];
 
-  const KanbanColumn = ({ status, isFirst = false, isLast = false }: { status: string; isFirst?: boolean; isLast?: boolean }) => {
+  const KanbanColumn = ({ status, isFirst = false, isLast = false, zIndex }: { status: string; isFirst?: boolean; isLast?: boolean; zIndex: number }) => {
     const cards = filteredContratos.filter(c => c.status === status);
     const total = cards.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
     const resolvedHex = resolveColorToHex(resolveStatusColorToHex(status));
@@ -395,7 +395,7 @@ export default function ContratosDashboard() {
         className="flex flex-col flex-shrink-0"
         style={{ width: '274px' }}
       >
-        <div className="sticky top-0 z-20 select-none duration-200 bg-[#F8FAFC]">
+        <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex }}>
           <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
               className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
@@ -665,7 +665,7 @@ export default function ContratosDashboard() {
     );
   };
 
-  const KanbanSegmentoColumn = ({ label, cards, isFirst = false, isLast = false, color }: { label: string; cards: any[]; isFirst?: boolean; isLast?: boolean; color: string }) => {
+  const KanbanSegmentoColumn = ({ label, cards, isFirst = false, isLast = false, color, zIndex }: { label: string; cards: any[]; isFirst?: boolean; isLast?: boolean; color: string; zIndex: number }) => {
     const total = cards.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
     const resolvedHex = resolveColorToHex(color);
     const contrast = getContrastYIQ(resolvedHex);
@@ -678,7 +678,7 @@ export default function ContratosDashboard() {
         className="flex flex-col flex-shrink-0"
         style={{ width: '274px' }}
       >
-        <div className="sticky top-0 z-20 select-none duration-200 bg-[#F8FAFC]">
+        <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex }}>
           <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
               className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
@@ -1141,7 +1141,7 @@ export default function ContratosDashboard() {
             <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max">
               <div className="flex gap-[3px]">
                 {statusList.map((status, index) => (
-                  <KanbanColumn key={status} status={status} isFirst={index === 0} isLast={index === statusList.length - 1} />
+                  <KanbanColumn key={status} status={status} isFirst={index === 0} isLast={index === statusList.length - 1} zIndex={20 + (statusList.length - index)} />
                 ))}
               </div>
             </div>
@@ -1159,6 +1159,7 @@ export default function ContratosDashboard() {
                     isFirst={index === 0}
                     isLast={index === kanbanSegmentoCols.length - 1}
                     color={segmentoColors[col.label] || '#3b82f6'}
+                    zIndex={20 + (kanbanSegmentoCols.length - index)}
                   />
                 ))}
               </div>
