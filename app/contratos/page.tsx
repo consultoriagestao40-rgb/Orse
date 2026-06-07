@@ -452,7 +452,14 @@ export default function ContratosDashboard() {
       } else {
         const targetIdx = currentList.indexOf(targetLabel);
         if (targetIdx !== -1) {
-          currentList.splice(targetIdx, 0, sourceLabel);
+          const originalSourceIdx = statusesList.indexOf(sourceLabel);
+          const originalTargetIdx = statusesList.indexOf(targetLabel);
+          
+          if (originalSourceIdx !== -1 && originalTargetIdx !== -1 && originalSourceIdx < originalTargetIdx) {
+            currentList.splice(targetIdx + 1, 0, sourceLabel);
+          } else {
+            currentList.splice(targetIdx, 0, sourceLabel);
+          }
         } else {
           currentList.push(sourceLabel);
         }
@@ -477,7 +484,16 @@ export default function ContratosDashboard() {
       } else {
         const targetIdx = currentList.indexOf(targetLabel);
         if (targetIdx !== -1) {
-          currentList.splice(targetIdx, 0, sourceLabel);
+          const defaultList = segmentos.map(s => s.nome || s);
+          const originalSourceList = segmentoOrder.length > 0 ? segmentoOrder : defaultList;
+          const originalSourceIdx = originalSourceList.indexOf(sourceLabel);
+          const originalTargetIdx = originalSourceList.indexOf(targetLabel);
+
+          if (originalSourceIdx !== -1 && originalTargetIdx !== -1 && originalSourceIdx < originalTargetIdx) {
+            currentList.splice(targetIdx + 1, 0, sourceLabel);
+          } else {
+            currentList.splice(targetIdx, 0, sourceLabel);
+          }
         } else {
           currentList.push(sourceLabel);
         }
