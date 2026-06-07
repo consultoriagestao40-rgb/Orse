@@ -596,37 +596,39 @@ function ProposalsDashboard() {
       }}
       onDragEnd={handleDragEnd}
       onClick={() => router.push(`/propostas/nova?id=${prop.id}`)}
-      className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing flex flex-col justify-between h-[136px] text-left relative overflow-visible"
+      className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing flex flex-col justify-between h-[112px] text-left relative overflow-visible"
     >
       <div>
-        <div className="flex items-start justify-between gap-2 mb-1.5">
+        <div className="flex items-start justify-between gap-2 mb-1">
           <div className="flex items-center gap-1.5">
             <div className="p-1 bg-[#1B4D3E]/8 rounded-md shrink-0">
               <FileText size={12} className="text-[#1B4D3E]" />
             </div>
             <span className="text-xs font-black text-slate-700 tracking-wide">{prop.numero}</span>
           </div>
-          <div className="flex items-center gap-1 text-slate-400">
-            <FileStack size={10} />
-            <span className="text-[10px] font-bold">v{prop.versao}</span>
+          <div className="flex items-center gap-1.5 text-slate-400">
+            {viewMode !== 'kanban-status' && (
+              <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0 ${getStatusStyle(prop.status)}`}>
+                {prop.status || '—'}
+              </span>
+            )}
+            <div className="flex items-center gap-0.5 shrink-0">
+              <FileStack size={10} />
+              <span className="text-[10px] font-bold">v{prop.versao}</span>
+            </div>
           </div>
         </div>
 
-        <p className="text-xs font-bold text-slate-800 leading-snug truncate mb-0.5" title={prop.cliente}>{prop.cliente}</p>
-        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">📅 {prop.data}</p>
+        <p className="text-xs font-bold text-slate-800 leading-snug truncate" title={prop.cliente}>{prop.cliente}</p>
       </div>
 
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">📅 {prop.data}</p>
           <span className="text-xs font-black text-[#1B4D3E]">{fmt(prop.valor)}</span>
-          {viewMode !== 'kanban-status' && (
-            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider ${getStatusStyle(prop.status)}`}>
-              {prop.status || '—'}
-            </span>
-          )}
         </div>
 
-        <div className="pt-2 border-t border-slate-100 flex items-center justify-between mt-1 shrink-0">
+        <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between shrink-0">
           <div 
             id={`avatar-inline-owner-${prop.id}`}
             onClick={(e) => {
@@ -1217,7 +1219,7 @@ function ProposalsDashboard() {
         >
           <div className="flex flex-col gap-1.5">
             {!draggedStageId && draggedOverStageId === label && (
-              <div className="bg-slate-100/70 border-2 border-dashed border-[#1B4D3E]/30 rounded-lg h-[136px] w-full animate-pulse flex items-center justify-center">
+              <div className="bg-slate-100/70 border-2 border-dashed border-[#1B4D3E]/30 rounded-lg h-[112px] w-full animate-pulse flex items-center justify-center">
                 <span className="text-[10px] font-black text-[#1B4D3E]/60 uppercase tracking-widest animate-pulse">Soltar aqui</span>
               </div>
             )}
