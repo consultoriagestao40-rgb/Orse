@@ -2,7 +2,7 @@
  
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone, MessageCircle, MessageSquare, UserCog, Send } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone, MessageCircle, MessageSquare, UserCog, Send, Menu } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
@@ -17,6 +17,11 @@ const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTenantBlocked, setIsTenantBlocked] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && pathname) {
@@ -1069,7 +1074,26 @@ const Sidebar = () => {
  
   return (
     <>
-      <aside suppressHydrationWarning={true} className={`sidebar-aside bg-white border-r border-slate-200 h-screen sticky top-0 flex flex-col shadow-sm ${isMounted ? 'transition-all duration-300' : ''}`}>
+      {/* Floating Hamburger Button on Mobile */}
+      {!isMobileOpen && (
+        <button
+          onClick={() => setIsMobileOpen(true)}
+          className="fixed top-4 left-4 z-40 p-2.5 bg-[#1B4D3E] text-white rounded-xl shadow-lg md:hidden hover:bg-[#13382D] transition-all cursor-pointer flex items-center justify-center border border-[#10B981]/25 active:scale-[0.95]"
+          title="Abrir Menu"
+        >
+          <Menu size={20} className="stroke-[2.5]" />
+        </button>
+      )}
+
+      {/* Backdrop for Mobile Drawer */}
+      {isMobileOpen && (
+        <div 
+          onClick={() => setIsMobileOpen(false)}
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 md:hidden animate-in fade-in duration-200"
+        />
+      )}
+
+      <aside suppressHydrationWarning={true} className={`sidebar-aside bg-white border-r border-slate-200 h-screen sticky top-0 flex flex-col shadow-sm ${isMounted ? 'transition-all duration-300' : ''} fixed inset-y-0 left-0 z-50 md:sticky md:translate-x-0 ${isMobileOpen ? 'translate-x-0 shadow-2xl w-64' : '-translate-x-full md:translate-x-0'}`}>
       {/* Header */}
       <div className="p-6 border-b border-slate-50 relative flex items-center justify-between min-h-[96px] gap-2">
         {/* Expanded Header */}
@@ -1115,11 +1139,20 @@ const Sidebar = () => {
             </div>
           )}
         </div>
+
+        {/* Mobile Close Button */}
+        <button
+          onClick={() => setIsMobileOpen(false)}
+          className="md:hidden p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-all cursor-pointer shrink-0 ml-1"
+          title="Fechar Menu"
+        >
+          <X size={18} />
+        </button>
         
         {/* Botão de Recolher Flutuante */}
         <button 
           onClick={toggleCollapse} 
-          className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-[#1B4D3E] hover:border-[#1B4D3E]/40 hover:shadow-md transition-all z-50 cursor-pointer shadow-sm"
+          className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-slate-200 rounded-full hidden md:flex items-center justify-center text-slate-400 hover:text-[#1B4D3E] hover:border-[#1B4D3E]/40 hover:shadow-md transition-all z-50 cursor-pointer shadow-sm"
         >
           <ChevronRight size={12} className="stroke-[3] sidebar-collapsed-only" />
           <ChevronLeft size={12} className="stroke-[3] sidebar-expanded-only" />
