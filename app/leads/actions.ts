@@ -490,14 +490,27 @@ export async function getActivities(leadId?: string) {
   }
 }
 
-export async function createActivity(data: { leadId?: string, titulo: string, descricao?: string, tipo: string, dataInicio: Date, dataFim: Date }) {
+export async function createActivity(data: { 
+  leadId?: string, 
+  titulo: string, 
+  descricao?: string, 
+  tipo: string, 
+  dataInicio: Date | string, 
+  dataFim: Date | string,
+  userId?: string 
+}) {
   const user = await getLoggedUser();
   if (!user) return { success: false, error: 'Unauthorized' };
   try {
     const activity = await prisma.activity.create({
       data: {
-        ...data,
-        userId: user.id,
+        leadId: data.leadId,
+        titulo: data.titulo,
+        descricao: data.descricao,
+        tipo: data.tipo,
+        dataInicio: new Date(data.dataInicio),
+        dataFim: new Date(data.dataFim),
+        userId: data.userId || user.id,
         tenantId: user.tenantId
       }
     });
@@ -562,6 +575,37 @@ export async function completeActivity(activityId: string) {
     revalidatePath('/leads');
     revalidatePath('/calendar');
     return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateActivity(activityId: string, data: {
+  titulo: string,
+  descricao?: string,
+  userId: string,
+  dataInicio: Date | string,
+  dataFim: Date | string,
+  status?: string
+}) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+  try {
+    const activity = await prisma.activity.update({
+      where: { id: activityId },
+      data: {
+        titulo: data.titulo,
+        descricao: data.descricao,
+        userId: data.userId,
+        dataInicio: new Date(data.dataInicio),
+        dataFim: new Date(data.dataFim),
+        status: data.status
+      }
+    });
+
+    revalidatePath('/leads');
+    revalidatePath('/calendar');
+    return { success: true, activity };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

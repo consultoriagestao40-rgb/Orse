@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { getComments, addComment, getFiles, uploadFileBase64, downloadFile, getActivities, createActivity, getLeadShares, addLeadShare, removeLeadShare, getAllUsers, sendLeadEmail } from '../actions';
+import { getComments, addComment, getFiles, uploadFileBase64, downloadFile, getActivities, createActivity, getLeadShares, addLeadShare, removeLeadShare, getAllUsers, sendLeadEmail, deleteActivity, completeActivity, updateActivity } from '../actions';
 import { getWhatsAppMessages } from '../whatsapp-actions';
 import { getSmtpAccounts } from '@/app/emails/actions';
-import { MessageSquare, Paperclip, Calendar, Users, Send, Download, Plus, X, Trash2, MapPin, Navigation, Mail, Phone, Map, MessageCircle, CheckCircle2, AlertCircle, Info, RefreshCw, FileText, Mic, Trash, Clock, Sparkles, Search, ExternalLink } from 'lucide-react';
+import { MessageSquare, Paperclip, Calendar, Users, Send, Download, Plus, X, Trash2, MapPin, Navigation, Mail, Phone, Map, MessageCircle, CheckCircle2, AlertCircle, Info, RefreshCw, FileText, Mic, Trash, Clock, Sparkles, Search, ExternalLink, Edit2 } from 'lucide-react';
 import WhatsAppChat from './WhatsAppChat';
 import EmailTab from './EmailTab';
 
@@ -13,6 +13,14 @@ const safeDate = (val: any, time = false) => {
   if (!val) return 'Data Inválida';
   const d = new Date(val);
   return isNaN(d.getTime()) ? 'Data Inválida' : (time ? d.toLocaleString() : d.toLocaleDateString());
+};
+
+const getInitials = (name: any) => {
+  if (!name || typeof name !== 'string') return 'LD';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'LD';
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
 
 function DynamicWhatsAppMediaFeed({ fileId, messageText }: { fileId: string; messageText: string }) {
@@ -266,7 +274,8 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
 
   // State for Reuniões
   const [showMeetingForm, setShowMeetingForm] = useState(false);
-  const [meetingForm, setMeetingForm] = useState({ titulo: '', data: '', hora: '' });
+  const [isEditingMeeting, setIsEditingMeeting] = useState(false);
+  const [meetingForm, setMeetingForm] = useState({ id: '', titulo: '', data: '', hora: '', userId: '' });
 
   // Função para renderizar texto de comentários e formatar menções (@Nome Completo) como link azul brilhante, ocultando o @
   const renderCommentText = (texto: string) => {
@@ -427,6 +436,71 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
     if (res.success) setAllUsers(res.users);
   };
 
+  const handleEditClick = (act: any) => {
+    const d = new Date(act.dataInicio);
+    if (!isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const timeStr = `${hours}:${minutes}`;
+
+      setMeetingForm({
+        id: act.id,
+        titulo: act.titulo,
+        data: dateStr,
+        hora: timeStr,
+        userId: act.userId || lead.assignedToId || ''
+      });
+      setIsEditingMeeting(true);
+      setShowMeetingForm(true);
+    }
+  };
+
+  const handleDeleteClick = async (activityId: string) => {
+    if (!confirm('Deseja realmente excluir esta atividade?')) return;
+    const res = await deleteActivity(activityId);
+    if (res.success) {
+      loadTimelineData();
+      loadActivities();
+    } else {
+      alert('Erro ao excluir atividade');
+    }
+  };
+
+  const handleToggleStatusClick = async (activityId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'PENDENTE' ? 'CONCLUIDA' : 'PENDENTE';
+    if (newStatus === 'CONCLUIDA') {
+      const res = await completeActivity(activityId);
+      if (res.success) {
+        loadTimelineData();
+        loadActivities();
+      } else {
+        alert('Erro ao concluir atividade');
+      }
+    } else {
+      const act = activities.find(a => a.id === activityId);
+      if (act) {
+        const res = await updateActivity(activityId, {
+          titulo: act.titulo,
+          userId: act.userId,
+          dataInicio: act.dataInicio,
+          dataFim: act.dataFim,
+          status: 'PENDENTE'
+        });
+        if (res.success) {
+          loadTimelineData();
+          loadActivities();
+        } else {
+          alert('Erro ao reativar atividade');
+        }
+      }
+    }
+  };
+
   const handleCreateMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!meetingForm.titulo || !meetingForm.data || !meetingForm.hora) return;
@@ -434,20 +508,39 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
     const dataInicio = new Date(`${meetingForm.data}T${meetingForm.hora}:00`);
     const dataFim = new Date(dataInicio.getTime() + 60 * 60 * 1000); // +1 hora
 
-    const res = await createActivity({
-      leadId: lead.id,
-      titulo: meetingForm.titulo,
-      tipo: 'REUNIAO',
-      dataInicio,
-      dataFim
-    });
-
-    if (res.success) {
-      setMeetingForm({ titulo: '', data: '', hora: '' });
-      setShowMeetingForm(false);
-      loadTimelineData();
+    if (isEditingMeeting && meetingForm.id) {
+      const res = await updateActivity(meetingForm.id, {
+        titulo: meetingForm.titulo,
+        userId: meetingForm.userId || lead.assignedToId || '',
+        dataInicio: dataInicio.toISOString(),
+        dataFim: dataFim.toISOString()
+      });
+      if (res.success) {
+        setMeetingForm({ id: '', titulo: '', data: '', hora: '', userId: '' });
+        setShowMeetingForm(false);
+        setIsEditingMeeting(false);
+        loadTimelineData();
+        loadActivities();
+      } else {
+        alert('Erro ao atualizar atividade');
+      }
     } else {
-      alert('Erro ao agendar reunião');
+      const res = await createActivity({
+        leadId: lead.id,
+        titulo: meetingForm.titulo,
+        tipo: 'REUNIAO',
+        dataInicio: dataInicio.toISOString(),
+        dataFim: dataFim.toISOString(),
+        userId: meetingForm.userId || lead.assignedToId || ''
+      });
+      if (res.success) {
+        setMeetingForm({ id: '', titulo: '', data: '', hora: '', userId: '' });
+        setShowMeetingForm(false);
+        loadTimelineData();
+        loadActivities();
+      } else {
+        alert('Erro ao agendar atividade');
+      }
     }
   };
 
@@ -762,7 +855,7 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
           <MessageSquare size={16}/> Feed
         </button>
         <button onClick={() => setActiveTab('reunioes')} className={`px-4 py-3 text-sm font-bold flex gap-2 items-center border-b-2 whitespace-nowrap transition-colors ${activeTab === 'reunioes' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-          <Calendar size={16}/> Agenda
+          <Calendar size={16}/> Atividade
         </button>
         <button onClick={() => setActiveTab('whatsapp')} className={`px-4 py-3 text-sm font-bold flex gap-2 items-center border-b-2 whitespace-nowrap transition-colors ${activeTab === 'whatsapp' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
           <MessageCircle size={16}/> WhatsApp
@@ -1158,12 +1251,24 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                           )}
 
                           {/* Tipo: REUNIÃO */}
-                          {item.type === 'MEETING' && (
-                            <div className="flex items-center gap-2 text-[#1B4D3E] font-bold">
-                              <Calendar size={14} />
-                              <span>{item.original.titulo}</span>
-                            </div>
-                          )}
+                          {item.type === 'MEETING' && (() => {
+                            const isCompleted = item.original.status === 'CONCLUIDA';
+                            return (
+                              <div className="flex items-center justify-between gap-2">
+                                <div className={`flex items-center gap-2 font-bold ${
+                                  isCompleted ? 'text-slate-400 line-through' : 'text-[#1B4D3E]'
+                                }`}>
+                                  <Calendar size={14} />
+                                  <span>{item.original.titulo}</span>
+                                </div>
+                                {isCompleted && (
+                                  <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-150 px-1.5 py-0.5 rounded-full uppercase">
+                                    Concluída
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
 
                           {/* Tipo: EMAIL */}
                           {(item.type === 'EMAIL_SENT' || item.type === 'EMAIL_RECEIVED') && (() => {
@@ -1231,49 +1336,158 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
               <Calendar className="text-emerald-600 mt-0.5" size={18}/>
               <div>
                 <p className="text-sm font-bold text-emerald-800">Agendamentos</p>
-                <p className="text-xs text-emerald-600">Reuniões marcadas aqui aparecem no Calendário Global do sistema.</p>
+                <p className="text-xs text-emerald-600">Reuniões e tarefas marcadas aqui aparecem no Calendário Global do sistema.</p>
               </div>
             </div>
             
             {!showMeetingForm ? (
-              <button onClick={() => setShowMeetingForm(true)} className="w-full bg-[#1B4D3E] text-white py-2 rounded-xl text-sm font-bold mb-4 shadow-md hover:bg-[#13382d] transition-colors flex items-center justify-center gap-2">
-                <Plus size={16}/> Agendar Reunião
+              <button 
+                onClick={() => {
+                  setMeetingForm({ id: '', titulo: '', data: '', hora: '', userId: lead.assignedToId || '' });
+                  setIsEditingMeeting(false);
+                  setShowMeetingForm(true);
+                }} 
+                className="w-full bg-[#1B4D3E] text-white py-2 rounded-xl text-sm font-bold mb-4 shadow-md hover:bg-[#13382d] transition-colors flex items-center justify-center gap-2"
+              >
+                <Plus size={16}/> Agendar Atividade
               </button>
             ) : (
-              <form onSubmit={handleCreateMeeting} className="bg-white p-4 rounded-xl border border-slate-200 mb-4 shadow-sm">
+              <form onSubmit={handleCreateMeeting} className="bg-white p-4 rounded-xl border border-slate-200 mb-4 shadow-sm space-y-3">
+                <p className="text-xs font-black uppercase text-slate-400 tracking-wider">
+                  {isEditingMeeting ? 'Editar Atividade' : 'Agendar Nova Atividade'}
+                </p>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">Título da Reunião</label>
-                    <input required value={meetingForm.titulo} onChange={e => setMeetingForm({...meetingForm, titulo: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" placeholder="Ex: Apresentação da Proposta" />
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Título da Atividade</label>
+                    <input 
+                      required 
+                      value={meetingForm.titulo} 
+                      onChange={e => setMeetingForm({...meetingForm, titulo: e.target.value})} 
+                      className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-white focus:border-[#1B4D3E] focus:outline-none" 
+                      placeholder="Ex: Enviar apresentação da proposta..." 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Responsável</label>
+                    <select 
+                      required
+                      value={meetingForm.userId} 
+                      onChange={e => setMeetingForm({...meetingForm, userId: e.target.value})} 
+                      className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-white focus:border-[#1B4D3E] focus:outline-none cursor-pointer"
+                    >
+                      <option value="">Selecione um responsável...</option>
+                      {allUsers.map(u => (
+                        <option key={u.id} value={u.id}>{u.nome}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="flex gap-2">
                     <div className="flex-1">
                       <label className="block text-xs font-bold text-slate-600 mb-1">Data</label>
-                      <input type="date" required value={meetingForm.data} onChange={e => setMeetingForm({...meetingForm, data: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
+                      <input type="date" required value={meetingForm.data} onChange={e => setMeetingForm({...meetingForm, data: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm focus:border-[#1B4D3E] focus:outline-none" />
                     </div>
                     <div className="flex-1">
                       <label className="block text-xs font-bold text-slate-600 mb-1">Hora</label>
-                      <input type="time" required value={meetingForm.hora} onChange={e => setMeetingForm({...meetingForm, hora: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
+                      <input type="time" required value={meetingForm.hora} onChange={e => setMeetingForm({...meetingForm, hora: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm focus:border-[#1B4D3E] focus:outline-none" />
                     </div>
                   </div>
                   <div className="flex gap-2 pt-2">
-                    <button type="submit" className="flex-1 bg-[#1B4D3E] text-white p-2 rounded-lg text-sm font-bold">Salvar</button>
-                    <button type="button" onClick={() => setShowMeetingForm(false)} className="flex-1 bg-slate-100 text-slate-600 p-2 rounded-lg text-sm font-bold">Cancelar</button>
+                    <button type="submit" className="flex-1 bg-[#1B4D3E] text-white p-2 rounded-lg text-sm font-bold hover:bg-[#13382d] transition-all">Salvar</button>
+                    <button type="button" onClick={() => setShowMeetingForm(false)} className="flex-1 bg-slate-100 text-slate-600 p-2 rounded-lg text-sm font-bold hover:bg-slate-200 transition-all">Cancelar</button>
                   </div>
                 </div>
               </form>
             )}
 
-            <div className="space-y-3">
-              {activities.map(a => (
-                <div key={a.id} className="bg-white border-l-4 border-[#1B4D3E] p-3 rounded-r-xl shadow-sm">
-                  <p className="text-sm font-bold text-slate-800">{a.titulo}</p>
-                  <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                    <Calendar size={12}/> {safeDate(a.dataInicio, true)}
-                  </p>
-                </div>
-              ))}
-              {activities.length === 0 && !showMeetingForm && <p className="text-slate-400 text-sm text-center">Nenhuma reunião agendada.</p>}
+            <div className="overflow-x-auto bg-white rounded-xl border border-slate-200 shadow-xs">
+              <table className="w-full border-collapse text-xs md:text-sm text-left">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                    <th className="p-3">Atividade</th>
+                    <th className="p-3">Responsável</th>
+                    <th className="p-3">Data/Hora</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                  {activities.map(a => {
+                    const isCompleted = a.status === 'CONCLUIDA';
+                    const dateObj = new Date(a.dataInicio);
+                    const dateFormatted = !isNaN(dateObj.getTime()) 
+                      ? dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+                      : 'Data Inválida';
+
+                    return (
+                      <tr key={a.id} className={`hover:bg-slate-50/50 transition-colors ${isCompleted ? 'bg-slate-50/20' : ''}`}>
+                        <td className="p-3 min-w-[200px]">
+                          <p className={`font-bold text-slate-800 ${isCompleted ? 'line-through text-slate-450' : ''}`}>
+                            {a.titulo}
+                          </p>
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-[#1B4D3E]/10 border border-[#1B4D3E]/20 text-[#1B4D3E] font-black flex items-center justify-center text-[10px] shrink-0">
+                              {a.user?.nome ? getInitials(a.user.nome) : '?'}
+                            </div>
+                            <span className="text-slate-600 truncate max-w-[120px]" title={a.user?.nome || 'Desconhecido'}>
+                              {a.user?.nome || 'Desconhecido'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-3 whitespace-nowrap text-slate-500">
+                          {dateFormatted}
+                        </td>
+                        <td className="p-3">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
+                            isCompleted 
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-150' 
+                              : 'bg-amber-50 text-amber-700 border-amber-150'
+                          }`}>
+                            {isCompleted ? 'Concluída' : 'Pendente'}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right whitespace-nowrap">
+                          <div className="flex justify-end gap-1.5">
+                            <button
+                              onClick={() => handleToggleStatusClick(a.id, a.status)}
+                              className={`p-1.5 rounded-lg border transition-all ${
+                                isCompleted 
+                                  ? 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100' 
+                                  : 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100 hover:text-emerald-700'
+                              }`}
+                              title={isCompleted ? "Marcar como pendente" : "Marcar como concluída"}
+                            >
+                              <CheckCircle2 size={13} strokeWidth={2.5} />
+                            </button>
+                            <button
+                              onClick={() => handleEditClick(a)}
+                              className="p-1.5 rounded-lg border bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-800 transition-all"
+                              title="Editar"
+                            >
+                              <Edit2 size={13} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(a.id)}
+                              className="p-1.5 rounded-lg border bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100 hover:text-rose-700 transition-all"
+                              title="Excluir"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {activities.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-slate-400 font-medium">
+                        Nenhuma atividade registrada.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

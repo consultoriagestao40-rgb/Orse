@@ -271,7 +271,8 @@ const LeadCard = ({
   };
 
   const pendingActivities = lead.activities?.filter((a: any) => a.status === 'PENDENTE' && !completedActivityIds.includes(a.id)) || [];
-  const hasCompleted = lead.activities?.some((a: any) => a.status === 'CONCLUIDA' || completedActivityIds.includes(a.id));
+  const completedActivities = lead.activities?.filter((a: any) => a.status === 'CONCLUIDA' || completedActivityIds.includes(a.id)) || [];
+  const hasCompleted = completedActivities.length > 0;
   const nextActivity = pendingActivities[0];
   const status = nextActivity ? checkActivityStatus(nextActivity) : (hasCompleted ? 'completed' : 'none');
 
@@ -370,7 +371,7 @@ const LeadCard = ({
               onClick={e => e.stopPropagation()} // Prevent clicking popup from opening lead modal
               className="absolute right-0 top-full mt-2 w-64 bg-white border border-slate-200 shadow-xl rounded-xl p-3 z-50 text-left animate-in fade-in-50 zoom-in-95 duration-100"
             >
-              {nextActivity ? (
+              {nextActivity && (
                 <div>
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Próxima Atividade</div>
                   <div className="flex items-start gap-2">
@@ -415,7 +416,33 @@ const LeadCard = ({
                   </div>
                   <div className="my-2 border-t border-slate-100" />
                 </div>
-              ) : (
+              )}
+
+              {/* Atividades Concluídas */}
+              {completedActivities.length > 0 && (
+                <div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Atividades Concluídas</div>
+                  <div className="space-y-2 max-h-32 overflow-y-auto pr-1">
+                    {completedActivities.slice(0, 3).map((act: any) => (
+                      <div key={act.id} className="flex items-start gap-2 opacity-75">
+                        <div className="w-4.5 h-4.5 rounded-full border border-emerald-500 bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5">
+                          <CheckCircle2 size={10} className="text-white" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-slate-450 line-through leading-tight line-clamp-2">{act.titulo}</p>
+                          <p className="text-[9px] text-slate-400 mt-0.5 flex items-center gap-1">
+                            <Clock size={8} />
+                            <span>{safeDate(act.dataInicio)}</span>
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="my-2 border-t border-slate-100" />
+                </div>
+              )}
+
+              {!nextActivity && completedActivities.length === 0 && (
                 <div className="py-2 text-center text-xs text-slate-400 font-medium">
                   Nenhuma atividade pendente
                 </div>

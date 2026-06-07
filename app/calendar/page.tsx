@@ -46,8 +46,8 @@ export default function CalendarPage() {
       titulo: newActivity.titulo,
       descricao: newActivity.descricao,
       tipo: 'REUNIAO',
-      dataInicio,
-      dataFim
+      dataInicio: dataInicio.toISOString(),
+      dataFim: dataFim.toISOString()
     });
 
     if (res.success) {
