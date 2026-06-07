@@ -392,9 +392,10 @@ export default function ContratosDashboard() {
 
     return (
       <div 
-        className="flex flex-col h-full min-h-0"
+        className="flex flex-col flex-shrink-0"
+        style={{ width: '274px' }}
       >
-        <div className="flex-shrink-0 w-[274px] shrink-0 sticky top-0 z-20 select-none duration-200 bg-[#F8FAFC]">
+        <div className="sticky top-0 z-20 select-none duration-200 bg-[#F8FAFC]">
           <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
               className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
@@ -572,7 +573,7 @@ export default function ContratosDashboard() {
         </div>
       </div>
           <div
-            className="w-[274px] flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none min-h-0 overflow-y-auto"
+            className="px-[4px] py-3 rounded-b-2xl rounded-t-none"
             onDragOver={(e) => { e.preventDefault(); }}
             onDrop={async (e) => {
               e.preventDefault();
@@ -591,9 +592,10 @@ export default function ContratosDashboard() {
               borderColor: borderRgba,
               borderWidth: '0 1px 1px 1px',
               borderStyle: 'solid',
+              minHeight: 'calc(100vh - 180px)',
             }}
           >
-            <div className="flex-1 flex flex-col gap-3">
+            <div className="flex flex-col gap-3">
               {cards.length === 0 ? (
                 <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem contratos</p>
@@ -673,9 +675,10 @@ export default function ContratosDashboard() {
 
     return (
       <div 
-        className="flex flex-col h-full min-h-0"
+        className="flex flex-col flex-shrink-0"
+        style={{ width: '274px' }}
       >
-        <div className="flex-shrink-0 w-[274px] shrink-0 sticky top-0 z-20 select-none duration-200 bg-[#F8FAFC]">
+        <div className="sticky top-0 z-20 select-none duration-200 bg-[#F8FAFC]">
           <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
               className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
@@ -805,7 +808,7 @@ export default function ContratosDashboard() {
         </div>
       </div>
           <div
-            className="w-[274px] flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none min-h-0 overflow-y-auto"
+            className="px-[4px] py-3 rounded-b-2xl rounded-t-none"
             onDragOver={(e) => { e.preventDefault(); }}
             onDrop={async (e) => {
               e.preventDefault();
@@ -839,9 +842,10 @@ export default function ContratosDashboard() {
               borderColor: borderRgba,
               borderWidth: '0 1px 1px 1px',
               borderStyle: 'solid',
+              minHeight: 'calc(100vh - 180px)',
             }}
           >
-            <div className="flex-1 flex flex-col gap-3">
+            <div className="flex flex-col gap-3">
               {cards.length === 0 ? (
                 <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem contratos</p>
@@ -915,8 +919,8 @@ export default function ContratosDashboard() {
     <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <Sidebar />
 
-      <main className="flex-1 overflow-hidden h-screen flex flex-col bg-[#F8FAFC]">
-        <div className="flex-1 flex flex-col min-h-0 w-full">
+      <main className="flex-1 overflow-auto bg-[#F8FAFC]">
+        <div className="w-full">
 
           {/* HEADER */}
           <header className="px-8 pt-6 pb-4 flex justify-between items-end border-b border-slate-300 shrink-0 bg-white">
@@ -1134,8 +1138,8 @@ export default function ContratosDashboard() {
 
           {/* KANBAN POR STATUS */}
           {viewMode === 'kanban-status' && (
-            <div className="flex flex-col flex-1 py-6 pl-2 pr-1 bg-slate-50 overflow-x-auto overflow-y-hidden min-h-0">
-              <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch h-full">
+            <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max">
+              <div className="flex gap-[3px]">
                 {statusList.map((status, index) => (
                   <KanbanColumn key={status} status={status} isFirst={index === 0} isLast={index === statusList.length - 1} />
                 ))}
@@ -1145,8 +1149,8 @@ export default function ContratosDashboard() {
 
           {/* KANBAN POR SEGMENTO */}
           {viewMode === 'kanban-segmento' && (
-            <div className="flex flex-col flex-1 py-6 pl-2 pr-1 bg-slate-50 overflow-x-auto overflow-y-hidden min-h-0">
-              <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch h-full">
+            <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max">
+              <div className="flex gap-[3px]">
                 {kanbanSegmentoCols.map((col, index) => (
                   <KanbanSegmentoColumn
                     key={col.id}

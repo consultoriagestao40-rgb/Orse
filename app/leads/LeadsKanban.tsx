@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact } from './actions';
 import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getSegmentos } from '@/app/admin/settings/actions';
+import { getSegmentos, createSegmento } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
 import PipelineMetrics from './components/PipelineMetrics';
 import WhatsAppChat from './components/WhatsAppChat';
@@ -636,6 +636,23 @@ export default function LeadsKanban() {
           fetchData();
         } else {
           showCustomAlert('Erro ao Criar Etapa', res.error || 'Erro desconhecido');
+        }
+      }
+    });
+  };
+  const handleCreateSegmento = () => {
+    setCustomModal({
+      isOpen: true,
+      title: 'Novo Segmento',
+      placeholder: 'Nome do novo segmento (ex: INDUSTRIAS)',
+      type: 'prompt',
+      onConfirm: async (nome) => {
+        if (!nome.trim()) return;
+        const res = await createSegmento(nome.trim());
+        if (res.success) {
+          fetchData();
+        } else {
+          showCustomAlert('Erro ao Criar Segmento', res.error || 'Erro desconhecido');
         }
       }
     });
@@ -1304,10 +1321,11 @@ export default function LeadsKanban() {
         </div>
       </div>
 
-      <div className="flex flex-col flex-1 py-6 pl-2 pr-1 bg-slate-50 overflow-x-auto overflow-y-hidden min-h-0">
+      <div className="flex-1 overflow-auto min-h-0 bg-slate-50">
         {showMetrics && <PipelineMetrics leads={filteredLeads} stages={stages} />}
         {viewMode === 'kanban-status' && (
-          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch h-full">
+          <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max">
+            <div className="flex gap-[3px]">
             {stages.map((stage, idx) => {
               const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
               const totalValorEst = stageLeads.reduce((acc, lead) => acc + (lead.valorEst || 0), 0);
@@ -1322,11 +1340,12 @@ export default function LeadsKanban() {
               return (
                 <div 
                   key={stage.id} 
-                  className="flex flex-col h-full"
+                  className="flex flex-col flex-shrink-0"
+                  style={{ width: '274px' }}
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, stage.id)}
                 >
-                  <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
+                  <div className="sticky top-0 z-20 select-none duration-200 bg-slate-50">
                     <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
                       <svg 
                         className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
@@ -1547,7 +1566,7 @@ export default function LeadsKanban() {
                     </div>
 
                       <div
-                        className="w-[274px] flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none min-h-0 overflow-y-auto"
+                        className="px-[4px] py-3 rounded-b-2xl rounded-t-none"
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDrop(e, stage.id)}
                         style={{
@@ -1555,37 +1574,45 @@ export default function LeadsKanban() {
                           minWidth: '274px',
                           maxWidth: '274px',
                           marginLeft: '0px',
-                          alignSelf: 'flex-start',
                           backgroundColor: bgRgba,
                           borderColor: borderRgba,
                           borderWidth: '0 1px 1px 1px',
                           borderStyle: 'solid',
+                          minHeight: 'calc(100vh - 180px)',
                         }}
                       >
-                        <div className="flex-1 flex flex-col gap-3">
-                          {stageLeads.map(lead => (
-                            <LeadCard
-                              key={lead.id}
-                              lead={lead}
-                              handleDragStart={handleDragStart}
-                              handleDragEnd={handleDragEnd}
-                              setSelectedLead={setSelectedLead}
-                              onOwnerClick={(e, leadId) => {
-                                setInlineOwnerAnchorEl(e.currentTarget);
-                                setInlineOwnerLeadId(leadId);
-                              }}
-                            />
-                          ))}
+                        <div className="flex flex-col gap-3">
+                          {stageLeads.length === 0 ? (
+                            <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
+                              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem leads</p>
+                            </div>
+                          ) : (
+                            stageLeads.map(lead => (
+                              <LeadCard
+                                key={lead.id}
+                                lead={lead}
+                                handleDragStart={handleDragStart}
+                                handleDragEnd={handleDragEnd}
+                                setSelectedLead={setSelectedLead}
+                                onOwnerClick={(e, leadId) => {
+                                  setInlineOwnerAnchorEl(e.currentTarget);
+                                  setInlineOwnerLeadId(leadId);
+                                }}
+                              />
+                            ))
+                          )}
                         </div>
                       </div>
                     </div>
                 );
               })}
             </div>
+          </div>
           )}
 
         {viewMode === 'kanban-vendedor' && (
-          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch h-full">
+          <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max">
+            <div className="flex gap-[3px]">
               {kanbanVendedorCols.map((col, idx) => {
                 const colLeads = col.cards;
                 const isFirst = idx === 0;
@@ -1601,11 +1628,12 @@ export default function LeadsKanban() {
                 return (
                   <div 
                     key={col.id} 
-                    className="flex flex-col h-full"
+                    className="flex flex-col flex-shrink-0"
+                    style={{ width: '274px' }}
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDropVendedor(e, col.id)}
                   >
-                    <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
+                    <div className="sticky top-0 z-20 select-none duration-200 bg-slate-50">
                       <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
                         <svg 
                           className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
@@ -1761,7 +1789,7 @@ export default function LeadsKanban() {
                     </div>
 
                       <div
-                        className="w-[274px] flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none min-h-0 overflow-y-auto"
+                        className="px-[4px] py-3 rounded-b-2xl rounded-t-none"
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDropVendedor(e, col.id)}
                         style={{
@@ -1769,14 +1797,14 @@ export default function LeadsKanban() {
                           minWidth: '274px',
                           maxWidth: '274px',
                           marginLeft: '0px',
-                          alignSelf: 'flex-start',
                           backgroundColor: bgRgba,
                           borderColor: borderRgba,
                           borderWidth: '0 1px 1px 1px',
                           borderStyle: 'solid',
+                          minHeight: 'calc(100vh - 180px)',
                         }}
                       >
-                        <div className="flex-1 flex flex-col gap-3">
+                        <div className="flex flex-col gap-3">
                           {colLeads.map(lead => (
                             <LeadCard
                               key={lead.id}
@@ -1797,10 +1825,12 @@ export default function LeadsKanban() {
                 );
               })}
             </div>
+          </div>
           )}
 
         {viewMode === 'kanban-segmento' && (
-          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch h-full">
+          <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max">
+            <div className="flex gap-[3px]">
             {kanbanSegmentoCols.map((col, idx) => {
               const colLeads = col.cards;
               const isFirst = idx === 0;
@@ -1816,11 +1846,12 @@ export default function LeadsKanban() {
               return (
                 <div 
                   key={col.id} 
-                  className="flex flex-col h-full"
+                  className="flex flex-col flex-shrink-0"
+                  style={{ width: '274px' }}
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDropSegmento(e, col.id)}
                 >
-                  <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
+                  <div className="sticky top-0 z-20 select-none duration-200 bg-slate-50">
                     <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
                         <svg 
                           className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
@@ -1841,39 +1872,51 @@ export default function LeadsKanban() {
                           />
                         </svg>
                         <div 
-                          className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                          className={`relative z-10 flex items-center justify-between h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
                           style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
                         >
-                          <div className="flex items-center justify-between w-full min-w-0 h-6">
-                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          {/* Lado esquerdo: título e subtítulo */}
+                          <div className="flex flex-col min-w-0 justify-center">
+                            <div className="flex items-center gap-1.5 min-w-0">
                               <Building size={12} className="shrink-0" style={{ color: 'inherit' }} />
                               <h3 className="font-black uppercase tracking-wider text-sm truncate leading-none">
                                 {col.label}
                               </h3>
                             </div>
-
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              {col.id !== 'unassigned' && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingSegmentoId(col.id);
-                                  }}
-                                  className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                                  style={{ color: 'inherit' }}
-                                  title="Editar Cor"
-                                >
-                                  <Edit2 size={14} />
-                                </button>
-                              )}
-                            </div>
+                            <span className="text-xs font-bold mt-1 opacity-90 truncate select-none leading-none">
+                              {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
+                            </span>
                           </div>
 
-                          {/* Subtítulo integrado com o totalizador de volume e leads */}
-                          <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
-                            {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
-                          </span>
+                          {/* Lado direito: botões centralizados verticalmente */}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCreateSegmento();
+                              }}
+                              className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                              style={{ color: 'inherit' }}
+                              title="Criar Novo Segmento"
+                            >
+                              <Plus size={14} />
+                            </button>
+                            {col.id !== 'unassigned' && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingSegmentoId(col.id);
+                                }}
+                                className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                                style={{ color: 'inherit' }}
+                                title="Editar Cor"
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                            )}
+                          </div>
                         </div>
                         {editingSegmentoId === col.id && (
                           <>
@@ -1963,7 +2006,7 @@ export default function LeadsKanban() {
                     </div>
 
                       <div
-                        className="w-[274px] flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none min-h-0 overflow-y-auto"
+                        className="px-[4px] py-3 rounded-b-2xl rounded-t-none"
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDropSegmento(e, col.id)}
                         style={{
@@ -1971,34 +2014,41 @@ export default function LeadsKanban() {
                           minWidth: '274px',
                           maxWidth: '274px',
                           marginLeft: '0px',
-                          alignSelf: 'flex-start',
                           backgroundColor: bgRgba,
                           borderColor: borderRgba,
                           borderWidth: '0 1px 1px 1px',
                           borderStyle: 'solid',
+                          minHeight: 'calc(100vh - 180px)',
                         }}
                       >
-                        <div className="flex-1 flex flex-col gap-3">
-                          {colLeads.map(lead => (
-                            <LeadCard
-                              key={lead.id}
-                              lead={lead}
-                              handleDragStart={handleDragStart}
-                              handleDragEnd={handleDragEnd}
-                              setSelectedLead={setSelectedLead}
-                              showStageInFooter={true}
-                              onOwnerClick={(e, leadId) => {
-                                setInlineOwnerAnchorEl(e.currentTarget);
-                                setInlineOwnerLeadId(leadId);
-                              }}
-                            />
-                          ))}
+                        <div className="flex flex-col gap-3">
+                          {colLeads.length === 0 ? (
+                            <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
+                              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem leads</p>
+                            </div>
+                          ) : (
+                            colLeads.map(lead => (
+                              <LeadCard
+                                key={lead.id}
+                                lead={lead}
+                                handleDragStart={handleDragStart}
+                                handleDragEnd={handleDragEnd}
+                                setSelectedLead={setSelectedLead}
+                                showStageInFooter={true}
+                                onOwnerClick={(e, leadId) => {
+                                  setInlineOwnerAnchorEl(e.currentTarget);
+                                  setInlineOwnerLeadId(leadId);
+                                }}
+                              />
+                            ))
+                          )}
                         </div>
                       </div>
                     </div>
                 );
               })}
             </div>
+          </div>
           )}
 
         {viewMode === 'lista' && (
