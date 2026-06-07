@@ -394,20 +394,20 @@ export default function ContratosDashboard() {
       <div 
         className="flex flex-col h-full min-h-0"
       >
-        <div className="flex-shrink-0 w-[306px] shrink-0 sticky top-0 z-20 select-none duration-200 bg-[#F8FAFC]">
+        <div className="flex-shrink-0 w-[274px] shrink-0 sticky top-0 z-20 select-none duration-200 bg-[#F8FAFC]">
           <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
-              className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[306px]' : 'w-[314px]'}`}
-              viewBox={isLast ? "0 0 306 52" : "0 0 314 52"}
+              className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
+              viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
               preserveAspectRatio="none"
               style={{ color: resolvedHex }}
             >
               <path 
                 d={isFirst 
-                  ? "M 8,0 L 306,0 L 314,26 L 306,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                  ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
                   : isLast 
-                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,52 L 0,52 L 8,26 L 0,0 Z"
-                    : "M 0,0 L 306,0 L 314,26 L 306,52 L 0,52 L 8,26 L 0,0 Z"
+                    ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                    : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
                 }
                 fill="currentColor"
                 stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -415,40 +415,40 @@ export default function ContratosDashboard() {
               />
             </svg>
             <div 
-              className={`absolute inset-0 z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+              className={`absolute inset-0 z-10 flex items-center justify-between ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
               style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
             >
-              <div className="flex items-center justify-between w-full min-w-0 h-6">
+              {/* Lado esquerdo: título e subtítulo */}
+              <div className="flex flex-col min-w-0 justify-center">
                 <span className="text-sm font-black uppercase tracking-wider truncate max-w-[160px] leading-none">
                   {status}
                 </span>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); handleCreateStatus(status); }}
-                    className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                    style={{ color: 'inherit' }}
-                    title="Criar Nova Etapa"
-                  >
-                    <Plus size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setEditingStatusId(status); }}
-                    className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                    style={{ color: 'inherit' }}
-                    title="Editar Coluna"
-                  >
-                    <Edit2 size={14} />
-                  </button>
-                </div>
+                <span className="text-xs font-bold mt-1 opacity-90 truncate select-none leading-none">
+                  {fmt(total)}/mês • {cards.length} {cards.length === 1 ? 'contrato' : 'contratos'}
+                </span>
               </div>
 
-              {/* Subtítulo integrado com o totalizador de volume e negócios */}
-              <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
-                {fmt(total)}/mês • {cards.length} {cards.length === 1 ? 'contrato' : 'contratos'}
-              </span>
+              {/* Lado direito: botões centralizados verticalmente */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleCreateStatus(status); }}
+                  className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                  style={{ color: 'inherit' }}
+                  title="Criar Nova Etapa"
+                >
+                  <Plus size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setEditingStatusId(status); }}
+                  className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                  style={{ color: 'inherit' }}
+                  title="Editar Coluna"
+                >
+                  <Edit2 size={14} />
+                </button>
+              </div>
             </div>
           {editingStatusId === status && (
             <>
@@ -572,7 +572,7 @@ export default function ContratosDashboard() {
         </div>
       </div>
           <div
-            className="w-[306px] flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none min-h-0 overflow-y-auto"
+            className="w-[274px] flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none min-h-0 overflow-y-auto"
             onDragOver={(e) => { e.preventDefault(); }}
             onDrop={async (e) => {
               e.preventDefault();
@@ -583,11 +583,10 @@ export default function ContratosDashboard() {
               }
             }}
             style={{
-              width: '306px',
-              minWidth: '306px',
-              maxWidth: '306px',
+              width: '274px',
+              minWidth: '274px',
+              maxWidth: '274px',
               marginLeft: '0px',
-              alignSelf: 'flex-start',
               backgroundColor: bgRgba,
               borderColor: borderRgba,
               borderWidth: '0 1px 1px 1px',
@@ -596,8 +595,8 @@ export default function ContratosDashboard() {
           >
             <div className="flex-1 flex flex-col gap-3">
               {cards.length === 0 ? (
-                <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
-                  <p className="text-xs text-slate-300 font-medium">Vazio</p>
+                <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem contratos</p>
                 </div>
               ) : (
                 cards.map(c => (
@@ -676,20 +675,20 @@ export default function ContratosDashboard() {
       <div 
         className="flex flex-col h-full min-h-0"
       >
-        <div className="flex-shrink-0 w-[306px] shrink-0 sticky top-0 z-20 select-none duration-200 bg-[#F8FAFC]">
+        <div className="flex-shrink-0 w-[274px] shrink-0 sticky top-0 z-20 select-none duration-200 bg-[#F8FAFC]">
           <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
-              className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[306px]' : 'w-[314px]'}`}
-              viewBox={isLast ? "0 0 306 52" : "0 0 314 52"}
+              className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
+              viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
               preserveAspectRatio="none"
               style={{ color: resolvedHex }}
             >
               <path 
                 d={isFirst 
-                  ? "M 8,0 L 306,0 L 314,26 L 306,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                  ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
                   : isLast 
-                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,52 L 0,52 L 8,26 L 0,0 Z"
-                    : "M 0,0 L 306,0 L 314,26 L 306,52 L 0,52 L 8,26 L 0,0 Z"
+                    ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                    : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
                 }
                 fill="currentColor"
                 stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -697,34 +696,34 @@ export default function ContratosDashboard() {
               />
             </svg>
             <div 
-              className={`absolute inset-0 z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+              className={`absolute inset-0 z-10 flex items-center justify-between ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
               style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
             >
-              <div className="flex items-center justify-between w-full min-w-0 h-6">
-                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+              {/* Lado esquerdo: título e subtítulo */}
+              <div className="flex flex-col min-w-0 justify-center">
+                <div className="flex items-center gap-1.5 min-w-0">
                   <Building size={14} className="shrink-0" style={{ color: 'inherit' }} />
                   <span className="text-sm font-black uppercase tracking-wider truncate leading-none">
                     {label}
                   </span>
                 </div>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setEditingSegmentoId(label); }}
-                    className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                    style={{ color: 'inherit' }}
-                    title="Editar Cor"
-                  >
-                    <Edit2 size={14} />
-                  </button>
-                </div>
+                <span className="text-xs font-bold mt-1 opacity-90 truncate select-none leading-none">
+                  {fmt(total)}/mês • {cards.length} {cards.length === 1 ? 'contrato' : 'contratos'}
+                </span>
               </div>
 
-              {/* Subtítulo integrado com o totalizador de volume e negócios */}
-              <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
-                {fmt(total)}/mês • {cards.length} {cards.length === 1 ? 'contrato' : 'contratos'}
-              </span>
+              {/* Lado direito: botões centralizados verticalmente */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setEditingSegmentoId(label); }}
+                  className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                  style={{ color: 'inherit' }}
+                  title="Editar Cor"
+                >
+                  <Edit2 size={14} />
+                </button>
+              </div>
             </div>
 
           {editingSegmentoId === label && (
@@ -806,7 +805,7 @@ export default function ContratosDashboard() {
         </div>
       </div>
           <div
-            className="w-[306px] flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none min-h-0 overflow-y-auto"
+            className="w-[274px] flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none min-h-0 overflow-y-auto"
             onDragOver={(e) => { e.preventDefault(); }}
             onDrop={async (e) => {
               e.preventDefault();
@@ -832,11 +831,10 @@ export default function ContratosDashboard() {
               }
             }}
             style={{
-              width: '306px',
-              minWidth: '306px',
-              maxWidth: '306px',
+              width: '274px',
+              minWidth: '274px',
+              maxWidth: '274px',
               marginLeft: '0px',
-              alignSelf: 'flex-start',
               backgroundColor: bgRgba,
               borderColor: borderRgba,
               borderWidth: '0 1px 1px 1px',
@@ -845,8 +843,8 @@ export default function ContratosDashboard() {
           >
             <div className="flex-1 flex flex-col gap-3">
               {cards.length === 0 ? (
-                <div className="border-2 border-dashed border-slate-200 rounded-xl py-10 flex items-center justify-center">
-                  <p className="text-xs text-slate-300 font-medium">Vazio</p>
+                <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem contratos</p>
                 </div>
               ) : (
                 cards.map(c => (
@@ -914,7 +912,7 @@ export default function ContratosDashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
+    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <Sidebar />
 
       <main className="flex-1 p-8 overflow-hidden h-screen flex flex-col bg-[#F8FAFC]">

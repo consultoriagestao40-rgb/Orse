@@ -1347,48 +1347,49 @@ export default function LeadsKanban() {
                         />
                       </svg>
                       <div 
-                        className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                        className={`relative z-10 flex items-center justify-between h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
                         style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
                       >
-                        <div className="flex items-center justify-between w-full min-w-0 h-6">
+                        {/* Lado esquerdo: título e subtítulo */}
+                        <div className="flex flex-col min-w-0 justify-center">
                           <h3 className="font-black uppercase tracking-wider text-sm truncate max-w-[160px] leading-none">
                             {stage.nome}
                           </h3>
-
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingStageName(stage.nome);
-                                setEditingStageId(stage.id);
-                              }}
-                              className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                              style={{ color: 'inherit' }}
-                              title="Editar Etapa"
-                            >
-                              <Edit2 size={14} />
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCreateStage(stage.id);
-                              }}
-                              className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                              style={{ color: 'inherit' }}
-                              title="Criar Nova Etapa"
-                            >
-                              <Plus size={14} />
-                            </button>
-                          </div>
+                          {/* Subtítulo integrado com o totalizador de volume e leads */}
+                          <span className="text-xs font-bold mt-1 opacity-90 truncate select-none leading-none">
+                            {fmt(totalValorEst)} • {stageLeads.length} {stageLeads.length === 1 ? 'lead' : 'leads'}
+                          </span>
                         </div>
-                        
-                        {/* Subtítulo integrado com o totalizador de volume e leads */}
-                        <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
-                          {fmt(totalValorEst)} • {stageLeads.length} {stageLeads.length === 1 ? 'lead' : 'leads'}
-                        </span>
+
+                        {/* Lado direito: botões centralizados verticalmente */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingStageName(stage.nome);
+                              setEditingStageId(stage.id);
+                            }}
+                            className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                            style={{ color: 'inherit' }}
+                            title="Editar Etapa"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCreateStage(stage.id);
+                            }}
+                            className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                            style={{ color: 'inherit' }}
+                            title="Criar Nova Etapa"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
                       </div>
 
                         {editingStageId === stage.id && (

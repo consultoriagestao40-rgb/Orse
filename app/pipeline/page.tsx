@@ -854,25 +854,26 @@ function ProposalsDashboard() {
 
           {/* Conteúdo do Cabeçalho */}
           <div 
-            className={`absolute inset-0 z-10 flex flex-col justify-center ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+            className={`absolute inset-0 z-10 flex items-center justify-between ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
             style={{
               color: contrast === 'white' ? '#ffffff' : '#0f172a',
             }}
           >
-            <div className="flex items-center justify-between w-full min-w-0 h-6">
+            {/* Lado esquerdo: título e subtítulo */}
+            <div className="flex flex-col min-w-0 justify-center">
               {isStatus ? (
                 <span className="text-sm font-black uppercase tracking-wider truncate max-w-[160px] leading-none">
                   {label}
                 </span>
               ) : isSegmento ? (
-                <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div className="flex items-center gap-2 min-w-0">
                   <Building size={14} className="shrink-0" style={{ color: textHex }} />
                   <span className="text-sm font-black uppercase tracking-wider truncate leading-none">
                     {label}
                   </span>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div className="flex items-center gap-2 min-w-0">
                   {colAvatarUrl ? (
                     <img 
                       src={colAvatarUrl} 
@@ -889,44 +890,44 @@ function ProposalsDashboard() {
                   </span>
                 </div>
               )}
-
-              <div className="flex items-center gap-1.5 shrink-0">
-                {isStatus && onCreateStatus && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onCreateStatus(label);
-                    }}
-                    className="p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                    style={{ color: 'inherit' }}
-                    title="Criar Nova Etapa"
-                    type="button"
-                  >
-                    <Plus size={14} />
-                  </button>
-                )}
-
-                {onColorChange && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowEditPopover(!showEditPopover);
-                    }}
-                    className="p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                    style={{ color: 'inherit' }}
-                    title="Editar Coluna"
-                    type="button"
-                  >
-                    <Edit2 size={14} />
-                  </button>
-                )}
-              </div>
+              {/* Subtítulo integrado com o totalizador de volume e negócios */}
+              <span className="text-xs font-bold mt-1 opacity-90 truncate select-none leading-none">
+                {fmt(total)} • {cards.length} {cards.length === 1 ? 'negócio' : 'negócios'}
+              </span>
             </div>
 
-            {/* Subtítulo integrado com o totalizador de volume e negócios */}
-            <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
-              {fmt(total)} • {cards.length} {cards.length === 1 ? 'negócio' : 'negócios'}
-            </span>
+            {/* Lado direito: botões centralizados verticalmente */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {isStatus && onCreateStatus && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCreateStatus(label);
+                  }}
+                  className="p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                  style={{ color: 'inherit' }}
+                  title="Criar Nova Etapa"
+                  type="button"
+                >
+                  <Plus size={14} />
+                </button>
+              )}
+
+              {onColorChange && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowEditPopover(!showEditPopover);
+                  }}
+                  className="p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                  style={{ color: 'inherit' }}
+                  title="Editar Coluna"
+                  type="button"
+                >
+                  <Edit2 size={14} />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Popover de Edição Unificado */}
@@ -1424,8 +1425,8 @@ function ProposalsDashboard() {
                         </div>
 
                         {/* Painel Kanban Unificado */}
-                        <div className="flex-1 min-h-0 overflow-x-auto pb-4 pt-0">
-                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch h-full">
+                        <div className="flex-1 min-h-0 overflow-x-auto pb-4 pt-0 flex flex-col">
+                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch flex-1">
                             {orderedStatusCols.map((col, idx) => {
                               const isFirst = idx === 0;
                               const isLast = idx === orderedStatusCols.length - 1;
@@ -1518,8 +1519,8 @@ function ProposalsDashboard() {
                         </div>
 
                         {/* Painel Kanban Unificado */}
-                        <div className="flex-1 min-h-0 overflow-x-auto pb-4 pt-0">
-                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch h-full">
+                        <div className="flex-1 min-h-0 overflow-x-auto pb-4 pt-0 flex flex-col">
+                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch flex-1">
                             {orderedVendedorCols.map((col, idx) => {
                               const vColor = vendedorColors[col.label] || 'emerald';
                               const isFirst = idx === 0;
@@ -1616,8 +1617,8 @@ function ProposalsDashboard() {
                         </div>
 
                         {/* Painel Kanban Unificado */}
-                        <div className="flex-1 min-h-0 overflow-x-auto pb-4 pt-0">
-                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch h-full">
+                        <div className="flex-1 min-h-0 overflow-x-auto pb-4 pt-0 flex flex-col">
+                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch flex-1">
                             {kanbanSegmentoCols.map((col, idx) => {
                               const segColor = segmentoColors[col.label] || '#3b82f6';
                               const isFirst = idx === 0;
