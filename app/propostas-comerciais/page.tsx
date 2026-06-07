@@ -1030,7 +1030,10 @@ export default function PropostasComerciaisDashboard() {
           e.preventDefault();
           handleDragLeave();
           if (draggedStageId) {
-            handleDropColumnById(draggedStageId, label, type);
+            // Use draggedOverBeforeStageId when available so L→R moves
+            // insert AFTER the target (matching the visual guide position).
+            // Falls back to `label` only when no guide position is set.
+            handleDropColumnById(draggedStageId, draggedOverBeforeStageId || label, type);
           } else {
             const propId = e.dataTransfer.getData('text/plain');
             if (propId && onDropProp) onDropProp(propId);
