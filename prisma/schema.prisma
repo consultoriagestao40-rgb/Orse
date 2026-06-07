@@ -436,6 +436,7 @@ model LeadStage {
 
 model Lead {
   id           String        @id @default(cuid())
+  codigo       Int           @unique @default(autoincrement())
   nomeFantasia String
   razaoSocial  String?
   cnpj         String?

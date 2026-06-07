@@ -323,7 +323,7 @@ const LeadCard = ({
               <Building size={12} className="text-[#1B4D3E]" />
             </div>
             <span className="text-[10px] font-black text-slate-700 tracking-wide uppercase truncate max-w-[150px]">
-              {lead.segmento || 'SEM SEGMENTO'}
+              {lead.segmento && !/^c[a-z0-9]{24}$/.test(lead.segmento) ? lead.segmento : 'SEM SEGMENTO'}
             </span>
           </div>
           {unreadCount > 0 && (
@@ -333,7 +333,10 @@ const LeadCard = ({
           )}
         </div>
 
-        <p className="text-sm font-bold text-slate-800 leading-tight truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</p>
+        <p className="text-sm font-bold text-slate-800 leading-tight truncate" title={lead.nomeFantasia}>
+          <span className="text-slate-400 font-mono mr-1.5">#{lead.codigo || lead.id.substring(0, 5)}</span>
+          {lead.nomeFantasia}
+        </p>
       </div>
 
       {/* Middle Section */}
@@ -580,14 +583,13 @@ export default function LeadsKanban() {
   const [isObserverPopoverOpen, setIsObserverPopoverOpen] = useState(false);
   const [inlineOwnerAnchorEl, setInlineOwnerAnchorEl] = useState<HTMLElement | null>(null);
   const [inlineOwnerLeadId, setInlineOwnerLeadId] = useState<string | null>(null);
-
   const [newLeadForm, setNewLeadForm] = useState({
     nomeFantasia: '',
     segmento: '',
     telefone: '',
     email: '',
     contatoNome: '',
-    valorEst: 0
+    valorEst: ''
   });
 
   const [datePreset, setDatePreset] = useState('all');
@@ -927,7 +929,7 @@ export default function LeadsKanban() {
       contatoNome: editLeadForm.contatoNome,
       telefone: editLeadForm.telefone,
       email: editLeadForm.email,
-      valorEst: editLeadForm.valorEst !== undefined ? Number(editLeadForm.valorEst) : undefined
+      valorEst: editLeadForm.valorEst !== undefined && editLeadForm.valorEst !== '' ? parseFloat(editLeadForm.valorEst) || 0 : 0
     });
     if (res.success) {
       setSelectedLead(res.lead);
@@ -1076,17 +1078,18 @@ export default function LeadsKanban() {
     const lead = leads.find(l => l.id === leadId);
     if (lead) openConvertModal(lead);
   };
-
   const handleCreateLead = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newLeadForm.nomeFantasia) return;
     
-    await createLead({ ...newLeadForm });
+    await createLead({ 
+      ...newLeadForm,
+      valorEst: newLeadForm.valorEst ? parseFloat(newLeadForm.valorEst) || 0 : 0
+    });
     setShowNewLead(false);
-    setNewLeadForm({ nomeFantasia: '', segmento: '', telefone: '', email: '', contatoNome: '', valorEst: 0 });
+    setNewLeadForm({ nomeFantasia: '', segmento: '', telefone: '', email: '', contatoNome: '', valorEst: '' });
     fetchData();
   };
-
   const openConvertModal = (lead: any) => {
     setConvertForm({
       nomeFantasia: lead.nomeFantasia || '',
@@ -1123,6 +1126,7 @@ export default function LeadsKanban() {
     if (!term) return true;
     return (
       lead.nomeFantasia.toLowerCase().includes(term) ||
+      (lead.codigo && String(lead.codigo).includes(term)) ||
       (lead.segmento && lead.segmento.toLowerCase().includes(term)) ||
       (lead.contatoNome && lead.contatoNome.toLowerCase().includes(term)) ||
       (lead.telefone && lead.telefone.includes(term)) ||
@@ -2213,7 +2217,10 @@ export default function LeadsKanban() {
                   <tr><td colSpan={5} className="px-6 py-12 text-center text-slate-400">Nenhum lead encontrado.</td></tr>
                 ) : filteredLeads.map((lead) => (
                   <tr key={lead.id} className="border-b border-slate-200 hover:bg-slate-50">
-                    <td className="px-3.5 py-3.5 lg:px-5 font-semibold text-slate-700 max-w-[200px] truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</td>
+                    <td className="px-3.5 py-3.5 lg:px-5 font-semibold text-slate-700 max-w-[200px] truncate" title={lead.nomeFantasia}>
+                      <span className="text-slate-400 font-mono mr-1.5">#{lead.codigo || lead.id.substring(0, 5)}</span>
+                      {lead.nomeFantasia}
+                    </td>
                     <td className="px-3.5 py-3.5 lg:px-5">
                       <div className="flex items-center gap-1.5">
                         {lead.assignedTo?.avatarUrl ? (
@@ -2352,7 +2359,7 @@ export default function LeadsKanban() {
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">Valor Estimado (R$)</label>
-                <input type="number" step="any" value={newLeadForm.valorEst || ''} onChange={e => setNewLeadForm({...newLeadForm, valorEst: parseFloat(e.target.value) || 0})} className="w-full p-2.5 border border-slate-200 rounded-xl" placeholder="Ex: 15000" />
+                <input type="number" step="any" value={newLeadForm.valorEst} onChange={e => setNewLeadForm({...newLeadForm, valorEst: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl" placeholder="Ex: 15000" />
               </div>
               <button type="submit" className="w-full bg-[#1B4D3E] text-white p-3 rounded-xl font-bold mt-4">Salvar Lead</button>
             </form>
@@ -2449,14 +2456,24 @@ export default function LeadsKanban() {
                     </div>
                   ) : (
                     <div>
-                      <h2 className="text-xl font-black text-slate-800 leading-tight mb-1 pr-6">{selectedLead.nomeFantasia}</h2>
-                      <p className="text-sm text-slate-500 flex items-center gap-1"><Building size={12}/> {selectedLead.segmento || 'Sem segmento'}</p>
+                      <h2 className="text-xl font-black text-slate-800 leading-tight mb-1 pr-6">
+                        <span className="text-slate-400 font-mono mr-2">#{selectedLead.codigo || selectedLead.id.substring(0, 5)}</span>
+                        {selectedLead.nomeFantasia}
+                      </h2>
+                      <p className="text-sm text-slate-500 flex items-center gap-1"><Building size={12}/> {selectedLead.segmento && !/^c[a-z0-9]{24}$/.test(selectedLead.segmento) ? selectedLead.segmento : 'Sem segmento'}</p>
                     </div>
                   )}
                   
                   {!isEditingLead && (
-                    <button onClick={() => { setIsEditingLead(true); setEditLeadForm(selectedLead); }} className="absolute right-6 top-6 text-slate-300 hover:text-emerald-600 transition-colors hidden md:block group-hover:block"><Edit2 size={14}/></button>
+                    <button onClick={() => { 
+                      setIsEditingLead(true); 
+                      setEditLeadForm({
+                        ...selectedLead,
+                        valorEst: selectedLead.valorEst !== undefined && selectedLead.valorEst !== null ? String(selectedLead.valorEst) : ''
+                      });
+                    }} className="absolute right-6 top-6 text-slate-300 hover:text-emerald-600 transition-colors hidden md:block group-hover:block"><Edit2 size={14}/></button>
                   )}
+
                   <button onClick={() => setSelectedLead(null)} className="md:hidden text-slate-400 hover:text-slate-600 bg-slate-100 p-2 rounded-full absolute right-4 top-4"><X size={16}/></button>
                 </div>
 
@@ -2486,7 +2503,7 @@ export default function LeadsKanban() {
                         </div>
                         <div>
                           <label className="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Valor Estimado (R$)</label>
-                          <input type="number" step="any" value={editLeadForm.valorEst || ''} onChange={e => setEditLeadForm({...editLeadForm, valorEst: parseFloat(e.target.value) || 0})} className="w-full p-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-bold text-[#1B4D3E]" />
+                          <input type="number" step="any" value={editLeadForm.valorEst || ''} onChange={e => setEditLeadForm({...editLeadForm, valorEst: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-bold text-[#1B4D3E]" />
                         </div>
                       </div>
                     ) : (

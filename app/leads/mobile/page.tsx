@@ -753,7 +753,10 @@ export default function MobileCRM() {
                       >
                         <div className="flex justify-between items-start gap-2 mb-1">
                           <div className="min-w-0 flex-1">
-                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight truncate">{lead.nomeFantasia}</h3>
+                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight truncate">
+                              <span className="text-slate-400 font-mono mr-1.5">#{lead.codigo || lead.id.substring(0, 5)}</span>
+                              {lead.nomeFantasia}
+                            </h3>
                             {lead.stage && (
                               <div className="mt-1 flex">
                                 <span 
@@ -772,9 +775,8 @@ export default function MobileCRM() {
 
                         <div className="text-[10px] text-slate-500 font-medium flex items-center gap-1.5 mt-1.5">
                           <span className="shrink-0">💼</span>
-                          <span className="truncate">{lead.segmento || 'Sem segmento'}</span>
+                          <span className="truncate">{lead.segmento && !/^c[a-z0-9]{24}$/.test(lead.segmento) ? lead.segmento : 'Sem segmento'}</span>
                         </div>
-
                         {lead.endereco && (
                           <div className="text-[10px] text-slate-400 font-bold truncate flex items-center gap-1.5 mt-1">
                             <MapPin size={10} className="shrink-0 text-slate-400" />
@@ -1266,7 +1268,7 @@ export default function MobileCRM() {
                 </button>
                 <div className="min-w-0">
                   <h1 className="text-[9px] font-black uppercase text-emerald-400 tracking-wider">Detalhes do Lead</h1>
-                  <h2 className="text-xs font-bold truncate text-white uppercase">{isEditingLead ? 'Editando Dados' : lead.nomeFantasia}</h2>
+                  <h2 className="text-xs font-bold truncate text-white uppercase">{isEditingLead ? 'Editando Dados' : `#${lead.codigo || lead.id.substring(0, 5)} ${lead.nomeFantasia}`}</h2>
                 </div>
               </div>
 
@@ -1552,7 +1554,7 @@ export default function MobileCRM() {
                   <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-xs">
                     <div>
                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Segmento</p>
-                      <p className="text-slate-800 font-bold mt-0.5">{lead.segmento || 'Sem segmento'}</p>
+                      <p className="text-slate-800 font-bold mt-0.5">{lead.segmento && !/^c[a-z0-9]{24}$/.test(lead.segmento) ? lead.segmento : 'Sem segmento'}</p>
                     </div>
                     <div>
                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Valor Est. Contrato</p>
