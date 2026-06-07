@@ -713,12 +713,12 @@ export default function PropostasComerciaisDashboard() {
         
         {/* Cabeçalho Chevron/Seta */}
         <div 
-          className="w-full h-16 relative group/title pointer-events-auto"
+          className="w-full h-[52px] relative group/title pointer-events-auto"
         >
           {/* Background SVG Custom Shape */}
           <svg 
             className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
-            viewBox={isLast ? "0 0 274 64" : "0 0 282 64"}
+            viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
             preserveAspectRatio="none"
             style={{
               color: resolvedHex,
@@ -726,10 +726,10 @@ export default function PropostasComerciaisDashboard() {
           >
             <path 
               d={isFirst 
-                ? "M 8,0 L 274,0 L 282,32 L 274,64 L 0,64 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
                 : isLast 
-                  ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,64 L 0,64 L 8,32 L 0,0 Z"
-                  : "M 0,0 L 274,0 L 282,32 L 274,64 L 0,64 L 8,32 L 0,0 Z"
+                  ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                  : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
               }
               fill="currentColor"
               stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -739,25 +739,25 @@ export default function PropostasComerciaisDashboard() {
 
           {/* Conteúdo do Cabeçalho */}
           <div 
-            className={`absolute inset-0 z-10 flex items-center justify-between ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+            className={`absolute inset-0 z-10 flex flex-col justify-center ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
             style={{
               color: contrast === 'white' ? '#ffffff' : '#0f172a',
             }}
           >
-            <div className="flex flex-col justify-center min-w-0 flex-1">
+            <div className="flex items-center justify-between w-full min-w-0">
               {isStatus ? (
                 <span className="text-sm font-black uppercase tracking-wider truncate max-w-[160px]">
                   {label}
                 </span>
               ) : isSegmento ? (
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                   <Building size={14} className="shrink-0" style={{ color: textHex }} />
                   <span className="text-sm font-black uppercase tracking-wider truncate">
                     {label}
                   </span>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                   {colAvatarUrl ? (
                     <img 
                       src={colAvatarUrl} 
@@ -774,44 +774,44 @@ export default function PropostasComerciaisDashboard() {
                   </span>
                 </div>
               )}
-              
-              {/* Subtítulo integrado com o totalizador de volume e negócios */}
-              <span className="text-base font-black mt-1 opacity-95 truncate select-none">
-                {fmt(total)} • {cards.length} {cards.length === 1 ? 'negócio' : 'negócios'}
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2 shrink-0 ml-2">
-              {isStatus && onCreateStatus && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCreateStatus(label);
-                  }}
-                  className="p-1.5 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                  style={{ color: 'inherit' }}
-                  title="Criar Nova Etapa"
-                  type="button"
-                >
-                  <Plus size={16} />
-                </button>
-              )}
 
-              {onColorChange && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowEditPopover(!showEditPopover);
-                  }}
-                  className="p-1.5 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                  style={{ color: 'inherit' }}
-                  title="Editar Coluna"
-                  type="button"
-                >
-                  <Edit2 size={16} />
-                </button>
-              )}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {isStatus && onCreateStatus && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCreateStatus(label);
+                    }}
+                    className="p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                    style={{ color: 'inherit' }}
+                    title="Criar Nova Etapa"
+                    type="button"
+                  >
+                    <Plus size={14} />
+                  </button>
+                )}
+
+                {onColorChange && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowEditPopover(!showEditPopover);
+                    }}
+                    className="p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                    style={{ color: 'inherit' }}
+                    title="Editar Coluna"
+                    type="button"
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* Subtítulo integrado com o totalizador de volume e negócios */}
+            <span className="text-xs font-bold mt-0.5 opacity-70 truncate select-none">
+              {fmt(total)} • {cards.length} {cards.length === 1 ? 'negócio' : 'negócios'}
+            </span>
           </div>
 
           {/* Popover de Edição Unificado */}

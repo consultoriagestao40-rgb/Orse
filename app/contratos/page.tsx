@@ -395,19 +395,19 @@ export default function ContratosDashboard() {
         className="flex flex-col h-full min-h-0"
       >
         <div className="flex-shrink-0 w-[306px] shrink-0 sticky top-0 z-20 select-none duration-200 bg-[#F8FAFC]">
-          <div className="relative h-16 shrink-0 z-10 w-full group/title pointer-events-auto">
+          <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
               className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[306px]' : 'w-[314px]'}`}
-              viewBox={isLast ? "0 0 306 64" : "0 0 314 64"}
+              viewBox={isLast ? "0 0 306 52" : "0 0 314 52"}
               preserveAspectRatio="none"
               style={{ color: resolvedHex }}
             >
               <path 
                 d={isFirst 
-                  ? "M 8,0 L 306,0 L 314,32 L 306,64 L 0,64 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                  ? "M 8,0 L 306,0 L 314,26 L 306,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
                   : isLast 
-                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,64 L 0,64 L 8,32 L 0,0 Z"
-                    : "M 0,0 L 306,0 L 314,32 L 306,64 L 0,64 L 8,32 L 0,0 Z"
+                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,52 L 0,52 L 8,26 L 0,0 Z"
+                    : "M 0,0 L 306,0 L 314,26 L 306,52 L 0,52 L 8,26 L 0,0 Z"
                 }
                 fill="currentColor"
                 stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -415,40 +415,40 @@ export default function ContratosDashboard() {
               />
             </svg>
             <div 
-              className={`absolute inset-0 z-10 flex items-center justify-between ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+              className={`absolute inset-0 z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
               style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
             >
-              <div className="flex flex-col justify-center min-w-0 flex-1">
+              <div className="flex items-center justify-between w-full min-w-0">
                 <span className="text-sm font-black uppercase tracking-wider truncate max-w-[160px]">
                   {status}
                 </span>
-                
-                {/* Subtítulo integrado com o totalizador de volume e negócios */}
-                <span className="text-base font-black mt-1 opacity-95 truncate select-none">
-                  {fmt(total)}/mês • {cards.length} {cards.length === 1 ? 'contrato' : 'contratos'}
-                </span>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); handleCreateStatus(status); }}
+                    className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                    style={{ color: 'inherit' }}
+                    title="Criar Nova Etapa"
+                  >
+                    <Plus size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setEditingStatusId(status); }}
+                    className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                    style={{ color: 'inherit' }}
+                    title="Editar Coluna"
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                </div>
               </div>
-              
-              <div className="flex items-center gap-2 shrink-0 ml-2">
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); handleCreateStatus(status); }}
-                  className="p-1.5 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                  style={{ color: 'inherit' }}
-                  title="Criar Nova Etapa"
-                >
-                  <Plus size={16} />
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setEditingStatusId(status); }}
-                  className="p-1.5 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                  style={{ color: 'inherit' }}
-                  title="Editar Coluna"
-                >
-                  <Edit2 size={16} />
-                </button>
-              </div>
+
+              {/* Subtítulo integrado com o totalizador de volume e negócios */}
+              <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
+                {fmt(total)}/mês • {cards.length} {cards.length === 1 ? 'contrato' : 'contratos'}
+              </span>
             </div>
           {editingStatusId === status && (
             <>
@@ -681,19 +681,19 @@ export default function ContratosDashboard() {
         className="flex flex-col h-full min-h-0"
       >
         <div className="flex-shrink-0 w-[306px] shrink-0 sticky top-0 z-20 select-none duration-200 bg-[#F8FAFC]">
-          <div className="relative h-16 shrink-0 z-10 w-full group/title pointer-events-auto">
+          <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
               className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[306px]' : 'w-[314px]'}`}
-              viewBox={isLast ? "0 0 306 64" : "0 0 314 64"}
+              viewBox={isLast ? "0 0 306 52" : "0 0 314 52"}
               preserveAspectRatio="none"
               style={{ color: resolvedHex }}
             >
               <path 
                 d={isFirst 
-                  ? "M 8,0 L 306,0 L 314,32 L 306,64 L 0,64 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                  ? "M 8,0 L 306,0 L 314,26 L 306,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
                   : isLast 
-                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,64 L 0,64 L 8,32 L 0,0 Z"
-                    : "M 0,0 L 306,0 L 314,32 L 306,64 L 0,64 L 8,32 L 0,0 Z"
+                    ? "M 0,0 L 298,0 A 8,8 0 0,1 306,8 L 306,52 L 0,52 L 8,26 L 0,0 Z"
+                    : "M 0,0 L 306,0 L 314,26 L 306,52 L 0,52 L 8,26 L 0,0 Z"
                 }
                 fill="currentColor"
                 stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -701,34 +701,34 @@ export default function ContratosDashboard() {
               />
             </svg>
             <div 
-              className={`absolute inset-0 z-10 flex items-center justify-between ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+              className={`absolute inset-0 z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
               style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
             >
-              <div className="flex flex-col justify-center min-w-0 flex-1">
-                <div className="flex items-center gap-1.5 min-w-0">
+              <div className="flex items-center justify-between w-full min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
                   <Building size={14} className="shrink-0" style={{ color: 'inherit' }} />
                   <span className="text-sm font-black uppercase tracking-wider truncate">
                     {label}
                   </span>
                 </div>
-                
-                {/* Subtítulo integrado com o totalizador de volume e negócios */}
-                <span className="text-base font-black mt-1 opacity-95 truncate select-none">
-                  {fmt(total)}/mês • {cards.length} {cards.length === 1 ? 'contrato' : 'contratos'}
-                </span>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setEditingSegmentoId(label); }}
+                    className="p-1 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                    style={{ color: 'inherit' }}
+                    title="Editar Cor"
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                </div>
               </div>
-              
-              <div className="flex items-center gap-2 shrink-0 ml-2">
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setEditingSegmentoId(label); }}
-                  className="p-1.5 rounded-full opacity-0 group-hover/title:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                  style={{ color: 'inherit' }}
-                  title="Editar Cor"
-                >
-                  <Edit2 size={16} />
-                </button>
-              </div>
+
+              {/* Subtítulo integrado com o totalizador de volume e negócios */}
+              <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
+                {fmt(total)}/mês • {cards.length} {cards.length === 1 ? 'contrato' : 'contratos'}
+              </span>
             </div>
 
           {editingSegmentoId === label && (

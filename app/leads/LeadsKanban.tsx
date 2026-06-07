@@ -1327,19 +1327,19 @@ export default function LeadsKanban() {
                   onDrop={(e) => handleDrop(e, stage.id)}
                 >
                   <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
-                    <div className="relative h-16 shrink-0 z-10 w-full group/header pointer-events-auto">
+                    <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
                       <svg 
                         className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
-                        viewBox={isLast ? "0 0 274 64" : "0 0 282 64"}
+                        viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
                         preserveAspectRatio="none"
                         style={{ color: resolvedHex }}
                       >
                         <path 
                           d={isFirst 
-                            ? "M 8,0 L 274,0 L 282,32 L 274,64 L 0,64 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                            ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
                             : isLast 
-                              ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,64 L 0,64 L 8,32 L 0,0 Z"
-                              : "M 0,0 L 274,0 L 282,32 L 274,64 L 0,64 L 8,32 L 0,0 Z"
+                              ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                              : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
                           }
                           fill="currentColor" 
                           stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -1347,48 +1347,49 @@ export default function LeadsKanban() {
                         />
                       </svg>
                       <div 
-                        className={`relative z-10 flex items-center justify-between h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                        className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
                         style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
                       >
-                        <div className="flex flex-col justify-center min-w-0 flex-1">
+                        <div className="flex items-center justify-between w-full min-w-0">
                           <h3 className="font-black uppercase tracking-wider text-sm truncate max-w-[160px]">
                             {stage.nome}
                           </h3>
-                          
-                          {/* Subtítulo integrado com o totalizador de volume e leads */}
-                          <span className="text-base font-black mt-1 opacity-95 truncate select-none">
-                            {fmt(totalValorEst)} • {stageLeads.length} {stageLeads.length === 1 ? 'lead' : 'leads'}
-                          </span>
-                        </div>
 
-                        <div className="flex items-center gap-2 shrink-0 ml-2">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingStageName(stage.nome);
-                              setEditingStageId(stage.id);
-                            }}
-                            className="p-1.5 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                            style={{ color: 'inherit' }}
-                            title="Editar Etapa"
-                          >
-                            <Edit2 size={16} />
-                          </button>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingStageName(stage.nome);
+                                setEditingStageId(stage.id);
+                              }}
+                              className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                              style={{ color: 'inherit' }}
+                              title="Editar Etapa"
+                            >
+                              <Edit2 size={14} />
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCreateStage(stage.id);
-                            }}
-                            className="p-1.5 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                            style={{ color: 'inherit' }}
-                            title="Criar Nova Etapa"
-                          >
-                            <Plus size={16} />
-                          </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCreateStage(stage.id);
+                              }}
+                              className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                              style={{ color: 'inherit' }}
+                              title="Criar Nova Etapa"
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
                         </div>
+                        
+                        {/* Subtítulo integrado com o totalizador de volume e leads */}
+                        <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
+                          {fmt(totalValorEst)} • {stageLeads.length} {stageLeads.length === 1 ? 'lead' : 'leads'}
+                        </span>
+                      </div>
 
                         {editingStageId === stage.id && (
                           <>
@@ -1609,19 +1610,19 @@ export default function LeadsKanban() {
                     onDrop={(e) => handleDropVendedor(e, col.id)}
                   >
                     <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
-                      <div className="relative h-16 shrink-0 z-10 w-full group/header pointer-events-auto">
+                      <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
                         <svg 
                           className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
-                          viewBox={isLast ? "0 0 274 64" : "0 0 282 64"}
+                          viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
                           preserveAspectRatio="none"
                           style={{ color: resolvedHex }}
                         >
                           <path 
                             d={isFirst 
-                              ? "M 8,0 L 274,0 L 282,32 L 274,64 L 0,64 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                              ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
                               : isLast 
-                                ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,64 L 0,64 L 8,32 L 0,0 Z"
-                                : "M 0,0 L 274,0 L 282,32 L 274,64 L 0,64 L 8,32 L 0,0 Z"
+                                ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                                : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
                             }
                             fill="currentColor" 
                             stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -1629,11 +1630,11 @@ export default function LeadsKanban() {
                           />
                         </svg>
                         <div 
-                          className={`relative z-10 flex items-center justify-between h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                          className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
                           style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
                         >
-                          <div className="flex flex-col justify-center min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 min-w-0">
+                          <div className="flex items-center justify-between w-full min-w-0">
+                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
                               {col.avatarUrl ? (
                                 <img 
                                   src={col.avatarUrl} 
@@ -1652,28 +1653,28 @@ export default function LeadsKanban() {
                               </h3>
                             </div>
 
-                            {/* Subtítulo integrado com o totalizador de volume e leads */}
-                            <span className="text-base font-black mt-1 opacity-95 truncate select-none">
-                              {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
-                            </span>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {col.id !== 'unassigned' && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingVendedorId(col.id);
+                                  }}
+                                  className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                                  style={{ color: 'inherit' }}
+                                  title="Editar Cor"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                              )}
+                            </div>
                           </div>
 
-                          <div className="flex items-center gap-2 shrink-0 ml-2">
-                            {col.id !== 'unassigned' && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingVendedorId(col.id);
-                                }}
-                                className="p-1.5 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                                style={{ color: 'inherit' }}
-                                title="Editar Cor"
-                              >
-                                <Edit2 size={16} />
-                              </button>
-                            )}
-                          </div>
+                          {/* Subtítulo integrado com o totalizador de volume e leads */}
+                          <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
+                            {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
+                          </span>
                         </div>
 
                         {editingVendedorId === col.id && (
@@ -1828,59 +1829,60 @@ export default function LeadsKanban() {
                   onDrop={(e) => handleDropSegmento(e, col.id)}
                 >
                   <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
-                    <div className="relative h-16 shrink-0 z-10 w-full group/header pointer-events-auto">
-                      <svg 
-                        className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
-                        viewBox={isLast ? "0 0 274 64" : "0 0 282 64"}
-                        preserveAspectRatio="none"
-                        style={{ color: resolvedHex }}
-                      >
-                        <path 
-                          d={isFirst 
-                            ? "M 8,0 L 274,0 L 282,32 L 274,64 L 0,64 L 0,8 A 8,8 0 0,1 8,0 Z" 
-                            : isLast 
-                              ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,64 L 0,64 L 8,32 L 0,0 Z"
-                              : "M 0,0 L 274,0 L 282,32 L 274,64 L 0,64 L 8,32 L 0,0 Z"
-                          }
-                          fill="currentColor" 
-                          stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
-                          strokeWidth="1"
-                        />
-                      </svg>
+                    <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
+                        <svg 
+                          className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
+                          viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
+                          preserveAspectRatio="none"
+                          style={{ color: resolvedHex }}
+                        >
+                          <path 
+                            d={isFirst 
+                              ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                              : isLast 
+                                ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                                : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                            }
+                            fill="currentColor" 
+                            stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
+                            strokeWidth="1"
+                          />
+                        </svg>
                         <div 
-                          className={`relative z-10 flex items-center justify-between h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                          className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
                           style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
                         >
-                          <div className="flex flex-col justify-center min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 min-w-0">
+                          <div className="flex items-center justify-between w-full min-w-0">
+                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
                               <Building size={12} className="shrink-0" style={{ color: 'inherit' }} />
                               <h3 className="font-black uppercase tracking-wider text-sm truncate">
                                 {col.label}
                               </h3>
                             </div>
 
-                            {/* Subtítulo integrado com o totalizador de volume e leads */}
-                            <span className="text-base font-black mt-1 opacity-95 truncate select-none">
-                              {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
-                            </span>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {col.id !== 'unassigned' && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingSegmentoId(col.id);
+                                  }}
+                                  className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                                  style={{ color: 'inherit' }}
+                                  title="Editar Cor"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                              )}
+                            </div>
                           </div>
 
-                          <div className="flex items-center gap-2 shrink-0 ml-2">
-                            {col.id !== 'unassigned' && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingSegmentoId(col.id);
-                                }}
-                                className="p-1.5 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-150 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                                style={{ color: 'inherit' }}
-                                title="Editar Cor"
-                              >
-                                <Edit2 size={16} />
-                              </button>
-                            )}
-                          </div>
+                          {/* Subtítulo integrado com o totalizador de volume e leads */}
+                          <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
+                            {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
+                          </span>
+                        </div>
                         {editingSegmentoId === col.id && (
                           <>
                             <div 
