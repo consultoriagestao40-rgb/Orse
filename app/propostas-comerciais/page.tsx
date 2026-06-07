@@ -713,12 +713,12 @@ export default function PropostasComerciaisDashboard() {
         
         {/* Cabeçalho Chevron/Seta */}
         <div 
-          className="w-full h-[52px] relative group/title pointer-events-auto"
+          className="w-full h-16 relative group/title pointer-events-auto"
         >
           {/* Background SVG Custom Shape */}
           <svg 
             className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
-            viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
+            viewBox={isLast ? "0 0 274 64" : "0 0 282 64"}
             preserveAspectRatio="none"
             style={{
               color: resolvedHex,
@@ -726,10 +726,10 @@ export default function PropostasComerciaisDashboard() {
           >
             <path 
               d={isFirst 
-                ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                ? "M 8,0 L 274,0 L 282,32 L 274,64 L 0,64 L 0,8 A 8,8 0 0,1 8,0 Z" 
                 : isLast 
-                  ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
-                  : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                  ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,64 L 0,64 L 8,32 L 0,0 Z"
+                  : "M 0,0 L 274,0 L 282,32 L 274,64 L 0,64 L 8,32 L 0,0 Z"
               }
               fill="currentColor"
               stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -776,7 +776,7 @@ export default function PropostasComerciaisDashboard() {
               )}
               
               {/* Subtítulo integrado com o totalizador de volume e negócios */}
-              <span className="text-xs font-bold mt-0.5 opacity-70 truncate select-none">
+              <span className="text-base font-black mt-1 opacity-95 truncate select-none">
                 {fmt(total)} • {cards.length} {cards.length === 1 ? 'negócio' : 'negócios'}
               </span>
             </div>
@@ -975,7 +975,7 @@ export default function PropostasComerciaisDashboard() {
     
     return (
       <div 
-        className="flex-1 w-[274px] flex flex-col items-start min-h-0 overflow-y-auto"
+        className="w-[274px] flex flex-col h-full min-h-0"
         onDragOver={(e) => {
           e.preventDefault();
           e.currentTarget.classList.add('opacity-80');
@@ -991,13 +991,12 @@ export default function PropostasComerciaisDashboard() {
         }}
       >
         <div
-          className="w-full flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+          className="w-full flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none min-h-0 overflow-y-auto"
           style={{
             width: '274px',
             minWidth: '274px',
             maxWidth: '274px',
             marginLeft: '0px',
-            alignSelf: 'flex-start',
             backgroundColor: bgRgba,
             borderColor: borderRgba,
             borderWidth: '0 1px 1px 1px',

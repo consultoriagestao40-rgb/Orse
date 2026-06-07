@@ -1327,19 +1327,19 @@ export default function LeadsKanban() {
                   onDrop={(e) => handleDrop(e, stage.id)}
                 >
                   <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
-                    <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
+                    <div className="relative h-16 shrink-0 z-10 w-full group/header pointer-events-auto">
                       <svg 
                         className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
-                        viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
+                        viewBox={isLast ? "0 0 274 64" : "0 0 282 64"}
                         preserveAspectRatio="none"
                         style={{ color: resolvedHex }}
                       >
                         <path 
                           d={isFirst 
-                            ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                            ? "M 8,0 L 274,0 L 282,32 L 274,64 L 0,64 L 0,8 A 8,8 0 0,1 8,0 Z" 
                             : isLast 
-                              ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
-                              : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                              ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,64 L 0,64 L 8,32 L 0,0 Z"
+                              : "M 0,0 L 274,0 L 282,32 L 274,64 L 0,64 L 8,32 L 0,0 Z"
                           }
                           fill="currentColor" 
                           stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -1356,7 +1356,7 @@ export default function LeadsKanban() {
                           </h3>
                           
                           {/* Subtítulo integrado com o totalizador de volume e leads */}
-                          <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
+                          <span className="text-base font-black mt-1 opacity-95 truncate select-none">
                             {fmt(totalValorEst)} • {stageLeads.length} {stageLeads.length === 1 ? 'lead' : 'leads'}
                           </span>
                         </div>
@@ -1609,19 +1609,19 @@ export default function LeadsKanban() {
                     onDrop={(e) => handleDropVendedor(e, col.id)}
                   >
                     <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
-                      <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
+                      <div className="relative h-16 shrink-0 z-10 w-full group/header pointer-events-auto">
                         <svg 
                           className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
-                          viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
+                          viewBox={isLast ? "0 0 274 64" : "0 0 282 64"}
                           preserveAspectRatio="none"
                           style={{ color: resolvedHex }}
                         >
                           <path 
                             d={isFirst 
-                              ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                              ? "M 8,0 L 274,0 L 282,32 L 274,64 L 0,64 L 0,8 A 8,8 0 0,1 8,0 Z" 
                               : isLast 
-                                ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
-                                : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                                ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,64 L 0,64 L 8,32 L 0,0 Z"
+                                : "M 0,0 L 274,0 L 282,32 L 274,64 L 0,64 L 8,32 L 0,0 Z"
                             }
                             fill="currentColor" 
                             stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -1653,7 +1653,7 @@ export default function LeadsKanban() {
                             </div>
 
                             {/* Subtítulo integrado com o totalizador de volume e leads */}
-                            <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
+                            <span className="text-base font-black mt-1 opacity-95 truncate select-none">
                               {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
                             </span>
                           </div>
@@ -1828,19 +1828,19 @@ export default function LeadsKanban() {
                   onDrop={(e) => handleDropSegmento(e, col.id)}
                 >
                   <div className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200">
-                    <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
+                    <div className="relative h-16 shrink-0 z-10 w-full group/header pointer-events-auto">
                       <svg 
                         className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
-                        viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
+                        viewBox={isLast ? "0 0 274 64" : "0 0 282 64"}
                         preserveAspectRatio="none"
                         style={{ color: resolvedHex }}
                       >
                         <path 
                           d={isFirst 
-                            ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                            ? "M 8,0 L 274,0 L 282,32 L 274,64 L 0,64 L 0,8 A 8,8 0 0,1 8,0 Z" 
                             : isLast 
-                              ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
-                              : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                              ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,64 L 0,64 L 8,32 L 0,0 Z"
+                              : "M 0,0 L 274,0 L 282,32 L 274,64 L 0,64 L 8,32 L 0,0 Z"
                           }
                           fill="currentColor" 
                           stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
@@ -1860,7 +1860,7 @@ export default function LeadsKanban() {
                             </div>
 
                             {/* Subtítulo integrado com o totalizador de volume e leads */}
-                            <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
+                            <span className="text-base font-black mt-1 opacity-95 truncate select-none">
                               {fmt(col.total)} • {colLeads.length} {colLeads.length === 1 ? 'lead' : 'leads'}
                             </span>
                           </div>

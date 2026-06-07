@@ -891,7 +891,7 @@ function ProposalsDashboard() {
               )}
               
               {/* Subtítulo integrado com o totalizador de volume e negócios */}
-              <span className="text-xs font-bold mt-0.5 opacity-90 truncate select-none">
+              <span className="text-base font-black mt-1 opacity-95 truncate select-none">
                 {fmt(total)} • {cards.length} {cards.length === 1 ? 'negócio' : 'negócios'}
               </span>
             </div>
@@ -1091,7 +1091,7 @@ function ProposalsDashboard() {
     
     return (
       <div 
-        className="flex-1 w-[274px] flex flex-col items-start min-h-0 overflow-y-auto"
+        className="w-[274px] flex flex-col h-full min-h-0"
         onDragOver={(e) => {
           e.preventDefault();
           e.currentTarget.classList.add('opacity-80');
@@ -1107,13 +1107,12 @@ function ProposalsDashboard() {
         }}
       >
         <div
-          className="w-full flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+          className="w-full flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none min-h-0 overflow-y-auto"
           style={{
             width: '274px',
             minWidth: '274px',
             maxWidth: '274px',
             marginLeft: '0px',
-            alignSelf: 'flex-start',
             backgroundColor: bgRgba,
             borderColor: borderRgba,
             borderWidth: '0 1px 1px 1px',
