@@ -69,59 +69,191 @@ export default function PropostasComerciaisDashboard() {
   const [editingSegmentoId, setEditingSegmentoId] = useState<string | null>(null);
   const [statusOrder, setStatusOrder] = useState<string[]>([]);
   const [vendedorOrder, setVendedorOrder] = useState<string[]>([]);
+  const [segmentoOrder, setSegmentoOrder] = useState<string[]>([]);
   const [segmentos, setSegmentos] = useState<any[]>([]);
 
-  const handleDragColumnStart = (e: React.DragEvent, columnLabel: string, type: 'status' | 'vendedor') => {
+  // Drag-and-drop states for columns and cards (mirroring CRM Leads and FPV Pipeline)
+  const [draggedStageId, setDraggedStageId] = useState<string | null>(null); // column label currently being dragged
+  const [draggedOverBeforeStageId, setDraggedOverBeforeStageId] = useState<string | null>(null); // column label before which the dragged column should be placed
+  const [draggedOverStageId, setDraggedOverStageId] = useState<string | null>(null); // column label where card is currently hovered over
+
+  const handleDragColumnStart = (e: React.DragEvent, columnLabel: string, type: 'status' | 'vendedor' | 'segmento') => {
     e.dataTransfer.setData('text/column-id', columnLabel);
     e.dataTransfer.setData('text/column-type', type);
-    e.currentTarget.classList.add('opacity-40');
+    setDraggedStageId(columnLabel);
   };
 
-  const handleDragColumnEnd = (e: React.DragEvent) => {
-    e.currentTarget.classList.remove('opacity-40');
+  const handleDragColumnEnd = () => {
+    setDraggedStageId(null);
+    setDraggedOverBeforeStageId(null);
+    setDraggedOverStageId(null);
   };
 
-  const handleDropColumn = (e: React.DragEvent, targetLabel: string, type: 'status' | 'vendedor') => {
+  const handleDragEnd = () => {
+    setDraggedStageId(null);
+    setDraggedOverBeforeStageId(null);
+    setDraggedOverStageId(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, stageId?: string, type?: 'status' | 'vendedor' | 'segmento') => {
     e.preventDefault();
-    const sourceLabel = e.dataTransfer.getData('text/column-id');
-    const sourceType = e.dataTransfer.getData('text/column-type');
-    
-    if (sourceType !== type || sourceLabel === targetLabel) return;
+    if (draggedStageId) {
+      if (stageId && stageId !== draggedStageId) {
+        if (type) {
+          let order: string[] = [];
+          if (type === 'status') {
+            const currentCols = statuses.map(s => s.nome);
+            if (docs.some(p => !p.status || !statuses.find(s => s.nome.toLowerCase() === p.status.toLowerCase()))) {
+              currentCols.push('Sem Status');
+            }
+            order = statusOrder.length > 0 ? [...statusOrder] : [...currentCols];
+            currentCols.forEach(c => {
+              if (!order.includes(c)) order.push(c);
+            });
+          } else if (type === 'vendedor') {
+            const currentCols = Array.from(new Set(docs.map(p => p.usuario || 'Sem Vendedor')));
+            order = vendedorOrder.length > 0 ? [...vendedorOrder] : [...currentCols];
+            currentCols.forEach(c => {
+              if (!order.includes(c)) order.push(c);
+            });
+          } else if (type === 'segmento') {
+            const currentCols = segmentos.map(s => s.nome || s);
+            order = segmentoOrder.length > 0 ? [...segmentoOrder] : [...currentCols];
+            currentCols.forEach(c => {
+              if (!order.includes(c)) order.push(c);
+            });
+          }
+
+          const draggedIdx = order.indexOf(draggedStageId);
+          const targetIdx = order.indexOf(stageId);
+
+          if (draggedIdx !== -1 && targetIdx !== -1) {
+            if (draggedIdx < targetIdx) {
+              if (targetIdx === order.length - 1) {
+                setDraggedOverBeforeStageId('last');
+              } else {
+                setDraggedOverBeforeStageId(order[targetIdx + 1]);
+              }
+            } else {
+              setDraggedOverBeforeStageId(stageId);
+            }
+            return;
+          }
+        }
+        setDraggedOverBeforeStageId(stageId);
+      }
+    } else {
+      if (stageId) {
+        setDraggedOverStageId(stageId);
+      }
+    }
+  };
+
+  const handleDragLeave = () => {
+    if (!draggedStageId) {
+      setDraggedOverStageId(null);
+    }
+  };
+
+  const handleDropColumnById = (draggedLabel: string, beforeLabel: string, type: 'status' | 'vendedor' | 'segmento') => {
+    setDraggedStageId(null);
+    setDraggedOverBeforeStageId(null);
+    if (draggedLabel === beforeLabel) return;
 
     if (type === 'status') {
       const currentCols = statuses.map(s => s.nome);
+      if (docs.some(p => !p.status || !statuses.find(s => s.nome.toLowerCase() === p.status.toLowerCase()))) {
+        currentCols.push('Sem Status');
+      }
+      
       let order = statusOrder.length > 0 ? [...statusOrder] : [...currentCols];
       currentCols.forEach(c => {
         if (!order.includes(c)) order.push(c);
       });
 
-      const sourceIdx = order.indexOf(sourceLabel);
-      const targetIdx = order.indexOf(targetLabel);
+      const draggedIndex = order.indexOf(draggedLabel);
+      if (draggedIndex === -1) return;
 
-      if (sourceIdx !== -1 && targetIdx !== -1) {
-        const newOrder = [...order];
-        newOrder.splice(sourceIdx, 1);
-        newOrder.splice(targetIdx, 0, sourceLabel);
-        setStatusOrder(newOrder);
-        localStorage.setItem('proposta-status-order', JSON.stringify(newOrder));
+      order.splice(draggedIndex, 1);
+
+      if (beforeLabel === 'last') {
+        order.push(draggedLabel);
+      } else {
+        const targetIndex = order.indexOf(beforeLabel);
+        if (targetIndex !== -1) {
+          const originalDraggedIndex = statusOrder.length > 0 ? statusOrder.indexOf(draggedLabel) : currentCols.indexOf(draggedLabel);
+          const originalTargetIndex = statusOrder.length > 0 ? statusOrder.indexOf(beforeLabel) : currentCols.indexOf(beforeLabel);
+          
+          if (originalDraggedIndex !== -1 && originalTargetIndex !== -1 && originalDraggedIndex < originalTargetIndex) {
+            order.splice(targetIndex + 1, 0, draggedLabel);
+          } else {
+            order.splice(targetIndex, 0, draggedLabel);
+          }
+        }
       }
-    } else {
-      const currentCols = Array.from(new Set(docs.map(d => d.usuario || 'Sem Vendedor')));
+
+      setStatusOrder(order);
+      localStorage.setItem('proposta-status-order', JSON.stringify(order));
+    } else if (type === 'vendedor') {
+      const currentCols = Array.from(new Set(docs.map(p => p.usuario || 'Sem Vendedor')));
       let order = vendedorOrder.length > 0 ? [...vendedorOrder] : [...currentCols];
       currentCols.forEach(c => {
         if (!order.includes(c)) order.push(c);
       });
 
-      const sourceIdx = order.indexOf(sourceLabel);
-      const targetIdx = order.indexOf(targetLabel);
+      const draggedIndex = order.indexOf(draggedLabel);
+      if (draggedIndex === -1) return;
 
-      if (sourceIdx !== -1 && targetIdx !== -1) {
-        const newOrder = [...order];
-        newOrder.splice(sourceIdx, 1);
-        newOrder.splice(targetIdx, 0, sourceLabel);
-        setVendedorOrder(newOrder);
-        localStorage.setItem('proposta-vendedor-order', JSON.stringify(newOrder));
+      order.splice(draggedIndex, 1);
+
+      if (beforeLabel === 'last') {
+        order.push(draggedLabel);
+      } else {
+        const targetIndex = order.indexOf(beforeLabel);
+        if (targetIndex !== -1) {
+          const originalDraggedIndex = vendedorOrder.length > 0 ? vendedorOrder.indexOf(draggedLabel) : currentCols.indexOf(draggedLabel);
+          const originalTargetIndex = vendedorOrder.length > 0 ? vendedorOrder.indexOf(beforeLabel) : currentCols.indexOf(beforeLabel);
+          
+          if (originalDraggedIndex !== -1 && originalTargetIndex !== -1 && originalDraggedIndex < originalTargetIndex) {
+            order.splice(targetIndex + 1, 0, draggedLabel);
+          } else {
+            order.splice(targetIndex, 0, draggedLabel);
+          }
+        }
       }
+
+      setVendedorOrder(order);
+      localStorage.setItem('proposta-vendedor-order', JSON.stringify(order));
+    } else if (type === 'segmento') {
+      const currentCols = segmentos.map(s => s.nome || s);
+      let order = segmentoOrder.length > 0 ? [...segmentoOrder] : [...currentCols];
+      currentCols.forEach(c => {
+        if (!order.includes(c)) order.push(c);
+      });
+
+      const draggedIndex = order.indexOf(draggedLabel);
+      if (draggedIndex === -1) return;
+
+      order.splice(draggedIndex, 1);
+
+      if (beforeLabel === 'last') {
+        order.push(draggedLabel);
+      } else {
+        const targetIndex = order.indexOf(beforeLabel);
+        if (targetIndex !== -1) {
+          const originalDraggedIndex = segmentoOrder.length > 0 ? segmentoOrder.indexOf(draggedLabel) : currentCols.indexOf(draggedLabel);
+          const originalTargetIndex = segmentoOrder.length > 0 ? segmentoOrder.indexOf(beforeLabel) : currentCols.indexOf(beforeLabel);
+          
+          if (originalDraggedIndex !== -1 && originalTargetIndex !== -1 && originalDraggedIndex < originalTargetIndex) {
+            order.splice(targetIndex + 1, 0, draggedLabel);
+          } else {
+            order.splice(targetIndex, 0, draggedLabel);
+          }
+        }
+      }
+
+      setSegmentoOrder(order);
+      localStorage.setItem('proposta-segmento-order', JSON.stringify(order));
     }
   };
 
@@ -254,6 +386,14 @@ export default function PropostasComerciaisDashboard() {
           console.error(e);
         }
       }
+      const storedSegmentoOrder = localStorage.getItem('proposta-segmento-order');
+      if (storedSegmentoOrder) {
+        try {
+          setSegmentoOrder(JSON.parse(storedSegmentoOrder));
+        } catch (e) {
+          console.error(e);
+        }
+      }
     }
   }, []);
 
@@ -326,47 +466,59 @@ export default function PropostasComerciaisDashboard() {
           e.dataTransfer.setData('text/plain', doc.propostaId);
         }
       }}
+      onDragEnd={handleDragEnd}
       onClick={() => router.push(`/propostas-comerciais/${doc.id}`)}
-      className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing text-left"
+      className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing flex flex-col justify-between h-[112px] text-left relative overflow-visible"
     >
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
-            <FileText size={13} className="text-[#1B4D3E]" />
-          </div>
-          <span className="text-xs font-black text-slate-700 tracking-wide">
-            {fmtRef(doc.numeroFPV, doc.versaoFPV || 1)}
-          </span>
-        </div>
-        <div className="flex items-center gap-1 text-slate-400 font-mono text-[9px] font-bold">
-          <span>v{doc.versaoFPV || 1}</span>
-        </div>
-      </div>
-
-      <p className="text-sm font-bold text-slate-800 leading-tight mb-1 line-clamp-2">{doc.cliente}</p>
-      <p className="text-[10px] text-slate-400 font-medium mb-3">📅 {doc.data}</p>
-
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-black text-[#1B4D3E]">{fmt(doc.valor)}</span>
-        <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider ${getStatusStyle(doc.status)}`}>
-          {doc.status || '—'}
-        </span>
-      </div>
-
-      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          {doc.avatarUrl ? (
-            <img 
-              src={doc.avatarUrl} 
-              alt={doc.usuario} 
-              className="w-5 h-5 rounded-full object-cover border border-slate-200"
-            />
-          ) : (
-            <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
-              {(doc.usuario || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+      <div>
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <div className="flex items-center gap-1.5">
+            <div className="p-1 bg-[#1B4D3E]/8 rounded-md shrink-0">
+              <FileText size={12} className="text-[#1B4D3E]" />
             </div>
-          )}
-          <span className="text-[11px] font-medium text-slate-600 truncate max-w-[120px]">{doc.usuario || 'Sistema'}</span>
+            <span className="text-xs font-black text-slate-700 tracking-wide">
+              {fmtRef(doc.numeroFPV, doc.versaoFPV || 1)}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 text-slate-400">
+            {viewMode !== 'kanban-status' && (
+              <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0 ${getStatusStyle(doc.status)}`}>
+                {doc.status || '—'}
+              </span>
+            )}
+            <div className="flex items-center gap-0.5 shrink-0">
+              <FileText size={10} />
+              <span className="text-[10px] font-bold">v{doc.versaoFPV || 1}</span>
+            </div>
+          </div>
+        </div>
+
+        <p className="text-xs font-bold text-slate-800 leading-snug truncate" title={doc.cliente}>
+          {doc.cliente}
+        </p>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">📅 {doc.data}</p>
+          <span className="text-xs font-black text-[#1B4D3E]">{fmt(doc.valor)}</span>
+        </div>
+
+        <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-1 min-w-0">
+            {doc.avatarUrl ? (
+              <img 
+                src={doc.avatarUrl} 
+                alt={doc.usuario} 
+                className="w-4.5 h-4.5 rounded-full object-cover border border-slate-200 shrink-0"
+              />
+            ) : (
+              <div className="w-4.5 h-4.5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200 shrink-0">
+                {(doc.usuario || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+              </div>
+            )}
+            <span className="text-[9px] text-slate-500 font-bold truncate max-w-[120px]">{doc.usuario || 'Sistema'}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -484,124 +636,8 @@ export default function PropostasComerciaisDashboard() {
   };
 
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
-  const tailwindColorMap: { [key: string]: string } = {
-    sky: '#0284c7',
-    blue: '#2563eb',
-    orange: '#ea580c',
-    amber: '#d97706',
-    emerald: '#059669',
-    green: '#16a34a',
-    red: '#dc2626',
-    rose: '#e11d48',
-    purple: '#9333ea',
-    violet: '#7c3aed',
-    yellow: '#ca8a04',
-    indigo: '#4f46e5',
-    pink: '#db2777',
-    teal: '#0d9488',
-    slate: '#475569',
-    gray: '#4b5563',
-  };
-
-  const resolveColorToHex = (color?: string): string => {
-    if (!color) return '#1B4D3E';
-    const lower = color.toLowerCase().trim();
-    if (lower.startsWith('#')) return lower;
-
-    // Check for exact Tailwind bg-color-100 / bg-color-200 matches
-    if (lower.includes('bg-slate-100')) return '#f1f5f9';
-    if (lower.includes('bg-slate-200')) return '#e2e8f0';
-    if (lower.includes('bg-gray-100')) return '#f3f4f6';
-    if (lower.includes('bg-gray-200')) return '#e5e7eb';
-    if (lower.includes('bg-sky-100')) return '#e0f2fe';
-    if (lower.includes('bg-sky-200')) return '#bae6fd';
-    if (lower.includes('bg-orange-100')) return '#ffedd5';
-    if (lower.includes('bg-orange-200')) return '#fed7aa';
-    if (lower.includes('bg-green-100') || lower.includes('bg-emerald-100')) return '#dcfce7';
-    if (lower.includes('bg-green-200') || lower.includes('bg-emerald-200')) return '#bbf7d0';
-    if (lower.includes('bg-red-100')) return '#fee2e2';
-    if (lower.includes('bg-red-200')) return '#fecaca';
-    if (lower.includes('bg-purple-100')) return '#f3e8ff';
-    if (lower.includes('bg-purple-200')) return '#e9d5ff';
-    if (lower.includes('bg-blue-100')) return '#dbeafe';
-    if (lower.includes('bg-blue-200')) return '#bfdbfe';
-    if (lower.includes('bg-yellow-100')) return '#fef9c3';
-    if (lower.includes('bg-yellow-200')) return '#fef08a';
-    if (lower.includes('bg-amber-100')) return '#fef3c7';
-    if (lower.includes('bg-amber-200')) return '#fde68a';
-    if (lower.includes('bg-teal-100')) return '#ccfbf1';
-    if (lower.includes('bg-teal-200')) return '#99f6e4';
-    if (lower.includes('bg-indigo-100')) return '#e0e7ff';
-    if (lower.includes('bg-indigo-200')) return '#c7d2fe';
-    if (lower.includes('bg-violet-100')) return '#ede9fe';
-    if (lower.includes('bg-violet-200')) return '#ddd6fe';
-    if (lower.includes('bg-pink-100')) return '#fce7f3';
-    if (lower.includes('bg-pink-200')) return '#fbcfe8';
-    if (lower.includes('bg-rose-100')) return '#ffe4e6';
-    if (lower.includes('bg-rose-200')) return '#fecdd3';
-
-    if (tailwindColorMap[lower]) return tailwindColorMap[lower];
-    const stripped = lower.replace('bg-', '').split('-')[0];
-    return tailwindColorMap[stripped] || '#1B4D3E';
-  };
-
-  const normalizeHex = (hex: string) => {
-    let h = hex.replace('#', '');
-    if (h.length === 3) {
-      h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
-    }
-    return '#' + h;
-  };
-
-  const getContrastYIQ = (hex: string) => {
-    const normalized = normalizeHex(hex);
-    const r = parseInt(normalized.slice(1, 3), 16);
-    const g = parseInt(normalized.slice(3, 5), 16);
-    const b = parseInt(normalized.slice(5, 7), 16);
-    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-    return (yiq >= 140) ? 'black' : 'white';
-  };
-
-  const hexToRgba = (hex: string, alpha: number) => {
-    const normalized = normalizeHex(hex);
-    const r = parseInt(normalized.slice(1, 3), 16);
-    const g = parseInt(normalized.slice(3, 5), 16);
-    const b = parseInt(normalized.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  };
-
-  const getDarkenedHexForText = (hex: string) => {
-    const normalized = normalizeHex(hex);
-    let r = parseInt(normalized.slice(1, 3), 16);
-    let g = parseInt(normalized.slice(3, 5), 16);
-    let b = parseInt(normalized.slice(5, 7), 16);
-    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-    if (yiq > 170) {
-      r = Math.max(0, Math.floor(r * 0.5));
-      g = Math.max(0, Math.floor(g * 0.5));
-      b = Math.max(0, Math.floor(b * 0.5));
-    }
-    const toHexStr = (val: number) => val.toString(16).padStart(2, '0');
-    return `#${toHexStr(r)}${toHexStr(g)}${toHexStr(b)}`;
-  };
-
-  const PRESET_COLORS = [
-    // Row 1: Soft Pastels
-    '#E0F2FE', '#E0F2F1', '#D1FAE5', '#ECFCCB', '#FEF9C3', '#FFEDD5', '#FFE4E6', '#FCE7F3', '#F3E8FF', '#F1F5F9',
-    // Row 2: Standard Vibrant
-    '#38BDF8', '#0D9488', '#10B981', '#84CC16', '#FACC15', '#FB923C', '#F43F5E', '#EC4899', '#8B5CF6', '#64748B',
-    // Row 3: Bright Neon / Vivid
-    '#0EA5E9', '#00B4D8', '#00F5D4', '#39FF14', '#FFD000', '#FF9F1C', '#FF007F', '#D000FF', '#7000FF', '#48CAE4',
-    // Row 4: Deep / Dark
-    '#0369A1', '#0B6623', '#065F46', '#3F6212', '#A16207', '#C2410C', '#B91C1C', '#9D174D', '#581C87', '#334155',
-  ];
-
-  // ── Cabeçalho da coluna ────────────────────────────────────────────────────
-  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onDragColumnStart, onDragColumnEnd, onDropColumn, onRenameColumn, onCreateStatus, isFirst = false, isLast = false }: {
+  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onRenameColumn, onCreateStatus, isFirst = false, isLast = false }: {
     label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor' | 'segmento'; statusId?: string; onColorChange?: (newColor: string) => void;
-    onDragColumnStart?: (e: React.DragEvent, label: string) => void;
-    onDragColumnEnd?: (e: React.DragEvent) => void;
-    onDropColumn?: (e: React.DragEvent, label: string) => void;
     onRenameColumn?: (newName: string) => Promise<void>;
     onCreateStatus?: (insertAfterLabel: string) => Promise<void>;
     isFirst?: boolean;
@@ -632,85 +668,9 @@ export default function PropostasComerciaisDashboard() {
 
     return (
       <div 
-        className="flex-shrink-0 w-[274px] shrink-0 relative cursor-grab active:cursor-grabbing transition-all select-none duration-200 hover:scale-[1.01] pointer-events-auto"
+        className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200 hover:scale-[1.01] pointer-events-auto"
         data-col-label={label}
-        draggable="true"
-        onDragStart={(e) => {
-          const target = e.target as HTMLElement;
-          if (target.closest('button') || target.closest('select') || target.closest('input')) {
-            e.preventDefault();
-            return;
-          }
-          if (onDragColumnStart) onDragColumnStart(e, label);
-          (window as any).__draggedColumn = { label, type };
-        }}
-        onDragEnd={(e) => {
-          if (onDragColumnEnd) onDragColumnEnd(e);
-          (window as any).__draggedColumn = null;
-          document.querySelectorAll('.drag-guide-left, .drag-guide-right').forEach(g => {
-            g.classList.remove('opacity-100');
-            g.classList.add('opacity-0');
-          });
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          const dragged = (window as any).__draggedColumn;
-          if (dragged && dragged.type === type && dragged.label !== label) {
-            const parent = e.currentTarget.parentElement?.parentElement;
-            if (parent) {
-              // Hide all sibling indicators first to avoid stickiness
-              parent.querySelectorAll('.drag-guide-left, .drag-guide-right').forEach(g => {
-                g.classList.remove('opacity-100');
-                g.classList.add('opacity-0');
-              });
-
-              const children = Array.from(parent.children);
-              const draggedIndex = children.findIndex(child => 
-                child.querySelector('[data-col-label]')?.getAttribute('data-col-label') === dragged.label
-              );
-              const targetIndex = children.findIndex(child => 
-                child.querySelector('[data-col-label]')?.getAttribute('data-col-label') === label
-              );
-              
-              if (draggedIndex !== -1 && targetIndex !== -1) {
-                const isLeft = draggedIndex > targetIndex;
-                const leftGuide = e.currentTarget.querySelector('.drag-guide-left') as HTMLElement;
-                const rightGuide = e.currentTarget.querySelector('.drag-guide-right') as HTMLElement;
-                
-                if (leftGuide && rightGuide) {
-                  if (isLeft) {
-                    leftGuide.classList.remove('opacity-0');
-                    leftGuide.classList.add('opacity-100');
-                  } else {
-                    rightGuide.classList.remove('opacity-0');
-                    rightGuide.classList.add('opacity-100');
-                  }
-                }
-              }
-            }
-          }
-        }}
-        onDragLeave={() => {
-          // Do nothing on drag leave of child elements to prevent indicator flickering
-        }}
-        onDrop={(e) => {
-          if (onDropColumn) onDropColumn(e, label);
-          (window as any).__draggedColumn = null;
-          document.querySelectorAll('.drag-guide-left, .drag-guide-right').forEach(g => {
-            g.classList.remove('opacity-100');
-            g.classList.add('opacity-0');
-          });
-        }}
       >
-        <div className="drag-guide-left absolute left-[-12px] top-0 bottom-0 w-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)] z-30 pointer-events-none opacity-0 transition-opacity duration-150 flex items-center justify-center">
-          <div className="absolute top-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-          <div className="absolute bottom-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-        </div>
-        <div className="drag-guide-right absolute right-[-12px] top-0 bottom-0 w-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)] z-30 pointer-events-none opacity-0 transition-opacity duration-150 flex items-center justify-center">
-          <div className="absolute top-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-          <div className="absolute bottom-0 w-2.5 h-2.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-        </div>
-        
         {/* Cabeçalho Chevron/Seta */}
         <div 
           className="w-full h-[52px] relative group/title pointer-events-auto"
@@ -785,14 +745,14 @@ export default function PropostasComerciaisDashboard() {
             <div className="flex items-center gap-1.5 shrink-0">
               {isStatus && onCreateStatus && (
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCreateStatus(label);
-                  }}
-                  className="p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
-                  style={{ color: 'inherit' }}
-                  title="Criar Nova Etapa"
-                  type="button"
+                   onClick={(e) => {
+                     e.stopPropagation();
+                     onCreateStatus(label);
+                   }}
+                   className="p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                   style={{ color: 'inherit' }}
+                   title="Criar Nova Etapa"
+                   type="button"
                 >
                   <Plus size={14} />
                 </button>
@@ -837,7 +797,7 @@ export default function PropostasComerciaisDashboard() {
                   </span>
                   <button 
                     onClick={() => setShowEditPopover(false)}
-                    className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
+                    className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-650 transition-colors"
                   >
                     <X size={12} />
                   </button>
@@ -980,16 +940,20 @@ export default function PropostasComerciaisDashboard() {
         style={{ width: '274px' }}
         onDragOver={(e) => {
           e.preventDefault();
-          e.currentTarget.classList.add('opacity-80');
+          handleDragOver(e, label, type);
         }}
         onDragLeave={(e) => {
-          e.currentTarget.classList.remove('opacity-80');
+          handleDragLeave();
         }}
         onDrop={(e) => {
           e.preventDefault();
-          e.currentTarget.classList.remove('opacity-80');
-          const propId = e.dataTransfer.getData('text/plain');
-          if (propId && onDropProp) onDropProp(propId);
+          handleDragLeave();
+          if (draggedStageId) {
+            handleDropColumnById(draggedStageId, label, type);
+          } else {
+            const propId = e.dataTransfer.getData('text/plain');
+            if (propId && onDropProp) onDropProp(propId);
+          }
         }}
       >
         <div
@@ -1007,11 +971,19 @@ export default function PropostasComerciaisDashboard() {
             overflowY: 'auto',
           }}
         >
-          <div className="flex flex-col gap-3 flex-1">
-            {cards.length === 0 ? (
-              <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem propostas</p>
+          <div className="flex flex-col gap-1.5 flex-1">
+            {!draggedStageId && draggedOverStageId === label && (
+              <div className="bg-slate-100/70 border-2 border-dashed border-[#1B4D3E]/30 rounded-lg h-[112px] w-full animate-pulse flex items-center justify-center">
+                <span className="text-[10px] font-black text-[#1B4D3E]/60 uppercase tracking-widest animate-pulse">Soltar aqui</span>
               </div>
+            )}
+
+            {cards.length === 0 ? (
+              (!draggedStageId && draggedOverStageId === label) ? null : (
+                <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem propostas</p>
+                </div>
+              )
             ) : (
               cards.map(doc => <ProposalCard key={doc.id} doc={doc} />)
             )}
@@ -1323,84 +1295,145 @@ export default function PropostasComerciaisDashboard() {
                               const isFirst = idx === 0;
                               const isLast = idx === orderedStatusCols.length - 1;
                               return (
-                                <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
-                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedStatusCols.length - idx) }}>
-                                  <KanbanColumnHeader
-                                    key={col.id}
-                                    label={col.label}
-                                    color={col.color}
-                                    cards={col.cards}
-                                    total={col.total}
-                                    statusId={col.id}
-                                    isFirst={isFirst}
-                                    isLast={isLast}
-                                    onCreateStatus={handleCreateStatus}
-                                    onColorChange={async (newColor) => {
-                                      await updateDocumentoStatusParam(col.id, col.label, newColor);
-                                      setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));
-                                    }}
-                                    onRenameColumn={async (newName) => {
-                                      await updateDocumentoStatusParam(col.id, newName);
-                                      setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, nome: newName.toUpperCase().trim() } : s));
-                                    }}
-                                    onDragColumnStart={(e, l) => handleDragColumnStart(e, l, 'status')}
-                                    onDragColumnEnd={handleDragColumnEnd}
-                                    onDropColumn={(e, l) => handleDropColumn(e, l, 'status')}
-                                  />
-                                  </div>
-                                  <KanbanColumnCards
-                                    key={col.id}
-                                    label={col.label}
-                                    color={col.color}
-                                    type="status"
-                                    cards={col.cards}
-                                    isFirst={isFirst}
-                                    onDropProp={async (propId) => {
-                                      const doc = docs.find(d => d.propostaId === propId);
-                                      if (doc && doc.status !== col.label) {
-                                        setDocs(prev => prev.map(d => d.propostaId === propId ? { ...d, status: col.label } : d));
-                                        await updateDocumentoStatus(doc.id, col.label);
+                                <React.Fragment key={col.id}>
+                                  {draggedStageId && draggedOverBeforeStageId === col.label && (
+                                    <div 
+                                      className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                                      onDragOver={(e) => e.preventDefault()}
+                                      onDrop={() => handleDropColumnById(draggedStageId, col.label, 'status')}
+                                    >
+                                      <div className="flex flex-col items-center gap-2">
+                                        <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para cá</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  <div 
+                                    className={`flex flex-col flex-shrink-0 transition-opacity duration-200 ${draggedStageId === col.label ? 'opacity-30' : 'opacity-100'}`}
+                                    style={{ width: '274px' }}
+                                    onDragOver={(e) => handleDragOver(e, col.label, 'status')}
+                                    onDrop={(e) => {
+                                      e.preventDefault();
+                                      if (draggedStageId) {
+                                        handleDropColumnById(draggedStageId, col.label, 'status');
                                       }
                                     }}
-                                  />
-                                </div>
+                                  >
+                                    <div 
+                                      className="sticky top-0 bg-slate-50 cursor-grab active:cursor-grabbing z-20" 
+                                      style={{ zIndex: 20 + (orderedStatusCols.length - idx) }}
+                                      draggable="true"
+                                      onDragStart={(e) => {
+                                        const target = e.target as HTMLElement;
+                                        if (target.closest('button') || target.closest('select') || target.closest('input')) {
+                                          e.preventDefault();
+                                          return;
+                                        }
+                                        handleDragColumnStart(e, col.label, 'status');
+                                      }}
+                                      onDragEnd={handleDragColumnEnd}
+                                    >
+                                      <KanbanColumnHeader
+                                        key={col.id}
+                                        label={col.label}
+                                        color={col.color}
+                                        cards={col.cards}
+                                        total={col.total}
+                                        statusId={col.id}
+                                        isFirst={isFirst}
+                                        isLast={isLast}
+                                        onCreateStatus={handleCreateStatus}
+                                        onColorChange={async (newColor) => {
+                                          await updateDocumentoStatusParam(col.id, col.label, newColor);
+                                          setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, color: newColor } : s));
+                                        }}
+                                        onRenameColumn={async (newName) => {
+                                          await updateDocumentoStatusParam(col.id, newName);
+                                          setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, nome: newName.toUpperCase().trim() } : s));
+                                        }}
+                                      />
+                                    </div>
+                                    <KanbanColumnCards
+                                      key={col.id + '-cards'}
+                                      label={col.label}
+                                      color={col.color}
+                                      type="status"
+                                      cards={col.cards}
+                                      isFirst={isFirst}
+                                      onDropProp={async (propId) => {
+                                        const doc = docs.find(d => d.propostaId === propId);
+                                        if (doc && doc.status !== col.label) {
+                                          setDocs(prev => prev.map(d => d.propostaId === propId ? { ...d, status: col.label } : d));
+                                          await updateDocumentoStatus(doc.id, col.label);
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                </React.Fragment>
                               );
                             })}
+
+                            {draggedStageId && draggedOverBeforeStageId === 'last' && (
+                              <div 
+                                className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={() => handleDropColumnById(draggedStageId, 'last', 'status')}
+                              >
+                                <div className="flex flex-col items-center gap-2">
+                                  <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para o fim</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {draggedStageId && draggedOverBeforeStageId !== 'last' && (
+                              <div
+                                className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1 cursor-pointer transition-colors"
+                                onDragOver={(e) => {
+                                  e.preventDefault();
+                                  setDraggedOverBeforeStageId('last');
+                                }}
+                                onDrop={() => handleDropColumnById(draggedStageId, 'last', 'status')}
+                              >
+                                <span className="text-[9px] font-black text-[#1B4D3E]/60 uppercase tracking-wider text-center rotate-180" style={{ writingMode: 'vertical-lr' }}>
+                                  Soltar no fim
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
+                )}
 
-                  {/* ── KANBAN POR VENDEDOR ───────────────────────────────────────────── */}
-                  {viewMode === 'kanban-vendedor' && (
-                    <div className="flex-1 flex flex-col min-h-0">
-                      {loading ? (
-                        <>
-                          <div className="flex items-center gap-2 mb-4">
-                            <UserSquare2 size={16} className="text-[#1B4D3E]" />
-                            <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
-                            <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                              {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
-                        </>
-                      ) : kanbanVendedorCols.length === 0 ? (
-                        <>
-                          <div className="flex items-center gap-2 mb-4">
-                            <UserSquare2 size={16} className="text-[#1B4D3E]" />
-                            <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
-                            <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                              {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-center py-20 text-slate-400 text-sm">
-                            Nenhuma proposta encontrada.
-                          </div>
-                        </>
-                      ) : (
+                {/* ── KANBAN POR VENDEDOR ───────────────────────────────────────────── */}
+                {viewMode === 'kanban-vendedor' && (
+                  <div className="flex-1 flex flex-col min-h-0">
+                    {loading ? (
+                      <>
+                        <div className="flex items-center gap-2 mb-4">
+                          <UserSquare2 size={16} className="text-[#1B4D3E]" />
+                          <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
+                          <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                            {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
+                      </>
+                    ) : kanbanVendedorCols.length === 0 ? (
+                      <>
+                        <div className="flex items-center gap-2 mb-4">
+                          <UserSquare2 size={16} className="text-[#1B4D3E]" />
+                          <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Vendedor</h2>
+                          <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                            {kanbanVendedorCols.length} vendedor{kanbanVendedorCols.length !== 1 ? 'es' : ''}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center py-20 text-slate-400 text-sm">
+                          Nenhuma proposta encontrada.
+                        </div>
+                      </>
+                    ) : (
                       <div className="space-y-4 flex-1 flex flex-col min-h-0">
                         <div className="flex items-center gap-2 mb-4 shrink-0">
                           <UserSquare2 size={16} className="text-[#1B4D3E]" />
@@ -1418,91 +1451,152 @@ export default function PropostasComerciaisDashboard() {
                               const isFirst = idx === 0;
                               const isLast = idx === orderedVendedorCols.length - 1;
                               return (
-                                <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
-                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedVendedorCols.length - idx) }}>
-                                  <KanbanColumnHeader
-                                    key={col.id}
-                                    label={col.label}
-                                    type="vendedor"
-                                    color={vColor}
-                                    cards={col.cards}
-                                    total={col.total}
-                                    statusId={col.id}
-                                    isFirst={isFirst}
-                                    isLast={isLast}
-                                    onColorChange={async (newColor) => {
-                                      localStorage.setItem(`kanban-vendedor-color-${col.label}`, newColor);
-                                      setVendedorColors(prev => ({ ...prev, [col.label]: newColor }));
-                                    }}
-                                    onDragColumnStart={(e, l) => handleDragColumnStart(e, l, 'vendedor')}
-                                    onDragColumnEnd={handleDragColumnEnd}
-                                    onDropColumn={(e, l) => handleDropColumn(e, l, 'vendedor')}
-                                  />
-                                  </div>
-                                  <KanbanColumnCards
-                                    key={col.id}
-                                    label={col.label}
-                                    type="vendedor"
-                                    color={vColor}
-                                    cards={col.cards}
-                                    isFirst={isFirst}
-                                    onDropProp={async (propId) => {
-                                      const doc = docs.find(d => d.propostaId === propId);
-                                      if (doc && doc.usuario !== col.label) {
-                                        if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
-                                          alert('Apenas gestores e administradores podem transferir propostas.');
-                                          return;
-                                        }
-                                        const newUser = usersList.find(u => u.nome === col.label);
-                                        if (newUser) {
-                                          setDocs(prev => prev.map(d => d.propostaId === propId ? { ...d, usuario: newUser.nome, avatarUrl: newUser.avatarUrl } : d));
-                                          const res = await transferirProposta(propId, newUser.id);
-                                          if (!res.success) {
-                                            alert(res.error);
-                                            loadData();
-                                          }
-                                        }
+                                <React.Fragment key={col.id}>
+                                  {draggedStageId && draggedOverBeforeStageId === col.label && (
+                                    <div 
+                                      className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                                      onDragOver={(e) => e.preventDefault()}
+                                      onDrop={() => handleDropColumnById(draggedStageId, col.label, 'vendedor')}
+                                    >
+                                      <div className="flex flex-col items-center gap-2">
+                                        <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para cá</span>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  <div 
+                                    className={`flex flex-col flex-shrink-0 transition-opacity duration-200 ${draggedStageId === col.label ? 'opacity-30' : 'opacity-100'}`}
+                                    style={{ width: '274px' }}
+                                    onDragOver={(e) => handleDragOver(e, col.label, 'vendedor')}
+                                    onDrop={(e) => {
+                                      e.preventDefault();
+                                      if (draggedStageId) {
+                                        handleDropColumnById(draggedStageId, col.label, 'vendedor');
                                       }
                                     }}
-                                  />
-                                </div>
+                                  >
+                                    <div 
+                                      className="sticky top-0 bg-slate-50 cursor-grab active:cursor-grabbing z-20" 
+                                      style={{ zIndex: 20 + (orderedVendedorCols.length - idx) }}
+                                      draggable="true"
+                                      onDragStart={(e) => {
+                                        const target = e.target as HTMLElement;
+                                        if (target.closest('button') || target.closest('select') || target.closest('input')) {
+                                          e.preventDefault();
+                                          return;
+                                        }
+                                        handleDragColumnStart(e, col.label, 'vendedor');
+                                      }}
+                                      onDragEnd={handleDragColumnEnd}
+                                    >
+                                      <KanbanColumnHeader
+                                        key={col.id}
+                                        label={col.label}
+                                        type="vendedor"
+                                        color={vColor}
+                                        cards={col.cards}
+                                        total={col.total}
+                                        statusId={col.id}
+                                        isFirst={isFirst}
+                                        isLast={isLast}
+                                        onColorChange={async (newColor) => {
+                                          localStorage.setItem(`kanban-vendedor-color-${col.label}`, newColor);
+                                          setVendedorColors(prev => ({ ...prev, [col.label]: newColor }));
+                                        }}
+                                      />
+                                    </div>
+                                    <KanbanColumnCards
+                                      key={col.id}
+                                      label={col.label}
+                                      type="vendedor"
+                                      color={vColor}
+                                      cards={col.cards}
+                                      isFirst={isFirst}
+                                      onDropProp={async (propId) => {
+                                        const doc = docs.find(d => d.propostaId === propId);
+                                        if (doc && doc.usuario !== col.label) {
+                                          if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
+                                            alert('Apenas gestores e administradores podem transferir propostas.');
+                                            return;
+                                          }
+                                          const newUser = usersList.find(u => u.nome === col.label);
+                                          if (newUser) {
+                                            setDocs(prev => prev.map(d => d.propostaId === propId ? { ...d, usuario: newUser.nome, avatarUrl: newUser.avatarUrl } : d));
+                                            const res = await transferirProposta(propId, newUser.id);
+                                            if (!res.success) {
+                                              alert(res.error);
+                                              loadData();
+                                            }
+                                          }
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                </React.Fragment>
                               );
                             })}
+
+                            {draggedStageId && draggedOverBeforeStageId === 'last' && (
+                              <div 
+                                className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={() => handleDropColumnById(draggedStageId, 'last', 'vendedor')}
+                              >
+                                <div className="flex flex-col items-center gap-2">
+                                  <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para o fim</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {draggedStageId && draggedOverBeforeStageId !== 'last' && (
+                              <div
+                                className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1 cursor-pointer transition-colors"
+                                onDragOver={(e) => {
+                                  e.preventDefault();
+                                  setDraggedOverBeforeStageId('last');
+                                }}
+                                onDrop={() => handleDropColumnById(draggedStageId, 'last', 'vendedor')}
+                              >
+                                <span className="text-[9px] font-black text-[#1B4D3E]/60 uppercase tracking-wider text-center rotate-180" style={{ writingMode: 'vertical-lr' }}>
+                                  Soltar no fim
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
+                )}
 
-                  {/* ── KANBAN POR SEGMENTO ───────────────────────────────────────────── */}
-                  {viewMode === 'kanban-segmento' && (
-                    <div className="flex-1 flex flex-col min-h-0">
-                      {loading ? (
-                        <>
-                          <div className="flex items-center gap-2 mb-4">
-                            <Building size={16} className="text-[#1B4D3E]" />
-                            <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Segmento</h2>
-                            <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                              {kanbanSegmentoCols.length} segmento{kanbanSegmentoCols.length !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
-                        </>
-                      ) : kanbanSegmentoCols.length === 0 ? (
-                        <>
-                          <div className="flex items-center gap-2 mb-4">
-                            <Building size={16} className="text-[#1B4D3E]" />
-                            <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Segmento</h2>
-                            <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
-                              {kanbanSegmentoCols.length} segmento{kanbanSegmentoCols.length !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-center py-20 text-slate-400 text-sm">
-                            Nenhum segmento configurado.
-                          </div>
-                        </>
-                      ) : (
+                {/* ── KANBAN POR SEGMENTO ───────────────────────────────────────────── */}
+                {viewMode === 'kanban-segmento' && (
+                  <div className="flex-1 flex flex-col min-h-0">
+                    {loading ? (
+                      <>
+                        <div className="flex items-center gap-2 mb-4">
+                          <Building size={16} className="text-[#1B4D3E]" />
+                          <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Segmento</h2>
+                          <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                            {kanbanSegmentoCols.length} segmento{kanbanSegmentoCols.length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center py-20 text-slate-400 text-sm">Carregando...</div>
+                      </>
+                    ) : kanbanSegmentoCols.length === 0 ? (
+                      <>
+                        <div className="flex items-center gap-2 mb-4">
+                          <Building size={16} className="text-[#1B4D3E]" />
+                          <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider">Kanban por Segmento</h2>
+                          <span className="text-[10px] bg-[#1B4D3E]/10 text-[#1B4D3E] px-2 py-0.5 rounded font-bold">
+                            {kanbanSegmentoCols.length} segmento{kanbanSegmentoCols.length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center py-20 text-slate-400 text-sm">
+                          Nenhum segmento configurado.
+                        </div>
+                      </>
+                    ) : (
                       <div className="space-y-4 flex-1 flex flex-col min-h-0">
                         <div className="flex items-center gap-2 mb-4 shrink-0">
                           <Building size={16} className="text-[#1B4D3E]" />
@@ -1513,69 +1607,148 @@ export default function PropostasComerciaisDashboard() {
                         </div>
 
                         {/* Painel Kanban Unificado */}
-                        <div className="py-4 bg-slate-50 min-w-max">
-                          <div className="flex gap-[3px]">
-                            {kanbanSegmentoCols.map((col, idx) => {
-                              const segColor = segmentoColors[col.label] || '#3b82f6';
-                              const isFirst = idx === 0;
-                              const isLast = idx === kanbanSegmentoCols.length - 1;
-                              return (
-                                <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
-                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (kanbanSegmentoCols.length - idx) }}>
-                                  <KanbanColumnHeader
-                                    key={col.id}
-                                    label={col.label}
-                                    type="segmento"
-                                    color={segColor}
-                                    cards={col.cards}
-                                    total={col.total}
-                                    statusId={col.id}
-                                    isFirst={isFirst}
-                                    isLast={isLast}
-                                    onColorChange={async (newColor) => {
-                                      localStorage.setItem(`kanban-segmento-color-${col.label}`, newColor);
-                                      setSegmentoColors(prev => ({ ...prev, [col.label]: newColor }));
-                                    }}
-                                  />
-                                  </div>
-                                  <KanbanColumnCards
-                                    key={col.id}
-                                    label={col.label}
-                                    type="vendedor"
-                                    color={segColor}
-                                    cards={col.cards}
-                                    isFirst={isFirst}
-                                    onDropProp={async (propId) => {
-                                      const doc = docs.find(d => d.propostaId === propId || d.id === propId);
-                                      if (doc) {
-                                        const newSegment = col.id === 'unassigned' ? '' : col.label;
-                                        if (doc.segmento !== newSegment) {
-                                          // Update local state optimistically
-                                          setDocs(prev => prev.map(d => (d.propostaId === propId || d.id === propId) ? { ...d, segmento: newSegment || 'Sem Segmento' } : d));
-                                          
-                                          // Update client segment in backend
-                                          if (doc.clientId) {
-                                            const res = await updateCliente(doc.clientId, { segmento: newSegment });
-                                            if (!res.success) {
-                                              alert(res.error || 'Erro ao atualizar o segmento do cliente');
-                                              loadData();
-                                            }
-                                          } else {
-                                            alert('Esta proposta comercial não tem um cliente cadastrado no banco de dados para salvar o segmento.');
+                        {(() => {
+                          const orderedSegmentoCols = [...kanbanSegmentoCols];
+                          if (segmentoOrder.length > 0) {
+                            orderedSegmentoCols.sort((a, b) => {
+                              let idxA = segmentoOrder.indexOf(a.label);
+                              let idxB = segmentoOrder.indexOf(b.label);
+                              if (idxA === -1) idxA = 999;
+                              if (idxB === -1) idxB = 999;
+                              return idxA - idxB;
+                            });
+                          }
+
+                          return (
+                            <div className="py-4 bg-slate-50 min-w-max">
+                              <div className="flex gap-[3px]">
+                                {orderedSegmentoCols.map((col, idx) => {
+                                  const segColor = segmentoColors[col.label] || '#3b82f6';
+                                  const isFirst = idx === 0;
+                                  const isLast = idx === orderedSegmentoCols.length - 1;
+                                  return (
+                                    <React.Fragment key={col.id}>
+                                      {draggedStageId && draggedOverBeforeStageId === col.label && (
+                                        <div 
+                                          className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                                          onDragOver={(e) => e.preventDefault()}
+                                          onDrop={() => handleDropColumnById(draggedStageId, col.label, 'segmento')}
+                                        >
+                                          <div className="flex flex-col items-center gap-2">
+                                            <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para cá</span>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      <div 
+                                        className={`flex flex-col flex-shrink-0 transition-opacity duration-200 ${draggedStageId === col.label ? 'opacity-30' : 'opacity-100'}`}
+                                        style={{ width: '274px' }}
+                                        onDragOver={(e) => handleDragOver(e, col.label, 'segmento')}
+                                        onDrop={(e) => {
+                                          e.preventDefault();
+                                          if (draggedStageId) {
+                                            handleDropColumnById(draggedStageId, col.label, 'segmento');
                                           }
-                                        }
-                                      }
+                                        }}
+                                      >
+                                        <div 
+                                          className="sticky top-0 bg-slate-50 cursor-grab active:cursor-grabbing z-20" 
+                                          style={{ zIndex: 20 + (orderedSegmentoCols.length - idx) }}
+                                          draggable="true"
+                                          onDragStart={(e) => {
+                                            const target = e.target as HTMLElement;
+                                            if (target.closest('button') || target.closest('select') || target.closest('input')) {
+                                              e.preventDefault();
+                                              return;
+                                            }
+                                            handleDragColumnStart(e, col.label, 'segmento');
+                                          }}
+                                          onDragEnd={handleDragColumnEnd}
+                                        >
+                                          <KanbanColumnHeader
+                                            key={col.id}
+                                            label={col.label}
+                                            type="segmento"
+                                            color={segColor}
+                                            cards={col.cards}
+                                            total={col.total}
+                                            statusId={col.id}
+                                            isFirst={isFirst}
+                                            isLast={isLast}
+                                            onColorChange={async (newColor) => {
+                                              localStorage.setItem(`kanban-segmento-color-${col.label}`, newColor);
+                                              setSegmentoColors(prev => ({ ...prev, [col.label]: newColor }));
+                                            }}
+                                          />
+                                        </div>
+                                        <KanbanColumnCards
+                                          key={col.id}
+                                          label={col.label}
+                                          type="segmento"
+                                          color={segColor}
+                                          cards={col.cards}
+                                          isFirst={isFirst}
+                                          onDropProp={async (propId) => {
+                                            const doc = docs.find(d => d.propostaId === propId || d.id === propId);
+                                            if (doc) {
+                                              const newSegment = col.id === 'unassigned' ? '' : col.label;
+                                              if (doc.segmento !== newSegment) {
+                                                // Update local state optimistically
+                                                setDocs(prev => prev.map(d => (d.propostaId === propId || d.id === propId) ? { ...d, segmento: newSegment || 'Sem Segmento' } : d));
+                                                
+                                                // Update client segment in backend
+                                                if (doc.clientId) {
+                                                  const res = await updateCliente(doc.clientId, { segmento: newSegment });
+                                                  if (!res.success) {
+                                                    alert(res.error || 'Erro ao atualizar o segmento do cliente');
+                                                    loadData();
+                                                  }
+                                                } else {
+                                                  alert('Esta proposta comercial não tem um cliente cadastrado no banco de dados para salvar o segmento.');
+                                                }
+                                              }
+                                            }
+                                          }}
+                                        />
+                                      </div>
+                                    </React.Fragment>
+                                  );
+                                })}
+
+                                {draggedStageId && draggedOverBeforeStageId === 'last' && (
+                                  <div 
+                                    className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={() => handleDropColumnById(draggedStageId, 'last', 'segmento')}
+                                  >
+                                    <div className="flex flex-col items-center gap-2">
+                                      <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para o fim</span>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {draggedStageId && draggedOverBeforeStageId !== 'last' && (
+                                  <div
+                                    className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1 cursor-pointer transition-colors"
+                                    onDragOver={(e) => {
+                                      e.preventDefault();
+                                      setDraggedOverBeforeStageId('last');
                                     }}
-                                  />
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
+                                    onDrop={() => handleDropColumnById(draggedStageId, 'last', 'segmento')}
+                                  >
+                                    <span className="text-[9px] font-black text-[#1B4D3E]/60 uppercase tracking-wider text-center rotate-180" style={{ writingMode: 'vertical-lr' }}>
+                                      Soltar no fim
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
+                )}
                 </>
               );
             })()}
