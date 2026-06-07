@@ -1544,7 +1544,6 @@ export default function LeadsKanban() {
                         )}
                       </div>
                     </div>
-                  </div>
 
                   <div 
                     className="flex-1 w-[274px] flex flex-col items-start min-h-0 overflow-y-auto"
@@ -1969,7 +1968,6 @@ export default function LeadsKanban() {
                         )}
                       </div>
                     </div>
-                  </div>
 
                   <div 
                     className="flex-1 w-[274px] flex flex-col items-start min-h-0 overflow-y-auto"
