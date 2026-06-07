@@ -1056,7 +1056,7 @@ export default function PropostasComerciaisDashboard() {
         <div className="w-full">
 
           {/* HEADER */}
-          <header className="px-8 pt-6 pb-4 flex justify-between items-end border-b border-slate-200 shrink-0 bg-white">
+          <header className="px-8 pt-6 pb-4 flex justify-between items-end border-b border-slate-200 shrink-0 bg-white relative z-30">
             <div>
               <h1 className="text-xl md:text-2xl font-black text-slate-800 flex items-center gap-2">
                 <Presentation size={22} /> Propostas Comerciais
@@ -1324,7 +1324,7 @@ export default function PropostasComerciaisDashboard() {
                               const isLast = idx === orderedStatusCols.length - 1;
                               return (
                                 <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
-                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedStatusCols.length - idx), boxShadow: '0 -16px 0 0 #f8fafc' }}>
+                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedStatusCols.length - idx), boxShadow: '0 -100px 0 0 #f8fafc' }}>
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}
@@ -1419,7 +1419,7 @@ export default function PropostasComerciaisDashboard() {
                               const isLast = idx === orderedVendedorCols.length - 1;
                               return (
                                 <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
-                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedVendedorCols.length - idx), boxShadow: '0 -16px 0 0 #f8fafc' }}>
+                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedVendedorCols.length - idx), boxShadow: '0 -100px 0 0 #f8fafc' }}>
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}
@@ -1521,7 +1521,7 @@ export default function PropostasComerciaisDashboard() {
                               const isLast = idx === kanbanSegmentoCols.length - 1;
                               return (
                                 <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
-                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (kanbanSegmentoCols.length - idx), boxShadow: '0 -16px 0 0 #f8fafc' }}>
+                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (kanbanSegmentoCols.length - idx), boxShadow: '0 -100px 0 0 #f8fafc' }}>
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}

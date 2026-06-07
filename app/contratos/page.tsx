@@ -395,7 +395,7 @@ export default function ContratosDashboard() {
         className="flex flex-col flex-shrink-0"
         style={{ width: '274px' }}
       >
-        <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex, boxShadow: '0 -16px 0 0 #f8fafc' }}>
+        <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex, boxShadow: '0 -100px 0 0 #f8fafc' }}>
           <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
               className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
@@ -679,7 +679,7 @@ export default function ContratosDashboard() {
         className="flex flex-col flex-shrink-0"
         style={{ width: '274px' }}
       >
-        <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex, boxShadow: '0 -16px 0 0 #f8fafc' }}>
+        <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex, boxShadow: '0 -100px 0 0 #f8fafc' }}>
           <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
               className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
@@ -925,7 +925,7 @@ export default function ContratosDashboard() {
         <div className="w-full">
 
           {/* HEADER */}
-          <header className="px-8 pt-6 pb-4 flex justify-between items-end border-b border-slate-300 shrink-0 bg-white">
+          <header className="px-8 pt-6 pb-4 flex justify-between items-end border-b border-slate-300 shrink-0 bg-white relative z-30">
             <div>
               <h1 className="text-xl md:text-2xl font-black text-slate-800">Gestão de Contratos (CLM)</h1>
               <p className="text-slate-500 text-xs md:text-sm mt-1">Ciclo de vida, Reajustes e Aditivos</p>

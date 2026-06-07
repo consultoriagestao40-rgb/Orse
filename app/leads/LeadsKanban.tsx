@@ -1172,7 +1172,7 @@ export default function LeadsKanban() {
   return (
     <div className="flex flex-col h-screen bg-slate-50 overflow-hidden">
       <div className="flex-1 overflow-auto min-h-0 bg-slate-50">
-        <div className="p-4 md:py-6 md:pl-4 md:pr-1 bg-white border-b border-slate-200 flex flex-col lg:flex-row justify-between lg:items-center gap-4 shrink-0">
+        <div className="p-4 md:py-6 md:pl-4 md:pr-1 bg-white border-b border-slate-200 flex flex-col lg:flex-row justify-between lg:items-center gap-4 shrink-0 relative z-30">
         <div>
           <h1 className="text-xl md:text-2xl font-black text-slate-800">Pipeline de Leads</h1>
           <p className="text-xs md:text-sm text-slate-500">Gerencie seus leads e prospectos</p>
@@ -1347,7 +1347,7 @@ export default function LeadsKanban() {
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, stage.id)}
                 >
-                  <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (stages.length - idx), boxShadow: '0 -16px 0 0 #f8fafc' }}>
+                  <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (stages.length - idx), boxShadow: '0 -100px 0 0 #f8fafc' }}>
                     <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
                       <svg 
                         className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
@@ -1636,7 +1636,7 @@ export default function LeadsKanban() {
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDropVendedor(e, col.id)}
                   >
-                    <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (kanbanVendedorCols.length - idx), boxShadow: '0 -16px 0 0 #f8fafc' }}>
+                    <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (kanbanVendedorCols.length - idx), boxShadow: '0 -100px 0 0 #f8fafc' }}>
                       <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
                         <svg 
                           className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
@@ -1855,7 +1855,7 @@ export default function LeadsKanban() {
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDropSegmento(e, col.id)}
                 >
-                  <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (kanbanSegmentoCols.length - idx), boxShadow: '0 -16px 0 0 #f8fafc' }}>
+                  <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (kanbanSegmentoCols.length - idx), boxShadow: '0 -100px 0 0 #f8fafc' }}>
                     <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
                         <svg 
                           className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
