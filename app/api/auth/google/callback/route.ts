@@ -96,11 +96,12 @@ export async function GET(request: Request) {
       where: { id: user.tenantId }
     }) : null
 
-    response.cookies.set('sb_session', 'active', {
+    response.cookies.set('sb_session', user.email, {
       httpOnly: true,
       secure: isProduction,
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7 // 7 dias
+      maxAge: 60 * 60 * 24 * 7, // 7 dias
+      path: '/'
     })
 
     response.cookies.set('sb_user', JSON.stringify({
@@ -114,7 +115,8 @@ export async function GET(request: Request) {
       primaryColor: userTenant?.primaryColor || undefined,
       iniciais: user.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase()
     }), {
-      maxAge: 60 * 60 * 24 * 7
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/'
     })
 
     return response
