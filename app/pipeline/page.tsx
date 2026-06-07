@@ -1647,8 +1647,8 @@ function ProposalsDashboard() {
                         </div>
 
                         {/* Painel Kanban Unificado */}
-                        <div className="flex-1 min-h-0 overflow-x-auto pb-4 pt-0 flex flex-col">
-                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch flex-1">
+                        <div className="py-4 bg-slate-50 min-w-max">
+                          <div className="flex gap-[3px]">
                             {kanbanSegmentoCols.map((col, idx) => {
                               const segColor = segmentoColors[col.label] || '#3b82f6';
                               const isFirst = idx === 0;

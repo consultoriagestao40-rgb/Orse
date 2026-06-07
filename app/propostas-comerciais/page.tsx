@@ -976,7 +976,8 @@ export default function PropostasComerciaisDashboard() {
     
     return (
       <div 
-        className="w-[274px] flex flex-col h-full min-h-0"
+        className="flex flex-col flex-shrink-0"
+        style={{ width: '274px' }}
         onDragOver={(e) => {
           e.preventDefault();
           e.currentTarget.classList.add('opacity-80');
@@ -992,7 +993,7 @@ export default function PropostasComerciaisDashboard() {
         }}
       >
         <div
-          className="w-full flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none min-h-0 overflow-y-auto"
+          className="px-[4px] py-3 rounded-b-2xl rounded-t-none"
           style={{
             width: '274px',
             minWidth: '274px',
@@ -1049,8 +1050,8 @@ export default function PropostasComerciaisDashboard() {
       `}} />
       <Sidebar />
 
-      <main className="flex-1 overflow-hidden h-screen flex flex-col bg-[#F8FAFC]">
-        <div className="flex-1 flex flex-col min-h-0 w-full">
+      <main className="flex-1 overflow-auto bg-[#F8FAFC]">
+        <div className="w-full">
 
           {/* HEADER */}
           <header className="px-8 pt-6 pb-4 flex justify-between items-end border-b border-slate-200 shrink-0 bg-white">
@@ -1314,13 +1315,14 @@ export default function PropostasComerciaisDashboard() {
                         </div>
 
                         {/* Painel Kanban Unificado */}
-                        <div className="flex-1 min-h-0 overflow-x-auto pb-4 pt-0 flex flex-col">
-                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch flex-1">
+                        <div className="py-4 bg-slate-50 min-w-max">
+                          <div className="flex gap-[3px]">
                             {orderedStatusCols.map((col, idx) => {
                               const isFirst = idx === 0;
                               const isLast = idx === orderedStatusCols.length - 1;
                               return (
-                                <div key={col.id} className="flex flex-col h-full">
+                                <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
+                                  <div className="sticky top-0 z-20 bg-slate-50">
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}
@@ -1343,6 +1345,7 @@ export default function PropostasComerciaisDashboard() {
                                     onDragColumnEnd={handleDragColumnEnd}
                                     onDropColumn={(e, l) => handleDropColumn(e, l, 'status')}
                                   />
+                                  </div>
                                   <KanbanColumnCards
                                     key={col.id}
                                     label={col.label}
@@ -1406,14 +1409,15 @@ export default function PropostasComerciaisDashboard() {
                         </div>
 
                         {/* Painel Kanban Unificado */}
-                        <div className="flex-1 min-h-0 overflow-x-auto pb-4 pt-0 flex flex-col">
-                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch flex-1">
+                        <div className="py-4 bg-slate-50 min-w-max">
+                          <div className="flex gap-[3px]">
                             {orderedVendedorCols.map((col, idx) => {
                               const vColor = vendedorColors[col.label] || 'emerald';
                               const isFirst = idx === 0;
                               const isLast = idx === orderedVendedorCols.length - 1;
                               return (
-                                <div key={col.id} className="flex flex-col h-full">
+                                <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
+                                  <div className="sticky top-0 z-20 bg-slate-50">
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}
@@ -1432,6 +1436,7 @@ export default function PropostasComerciaisDashboard() {
                                     onDragColumnEnd={handleDragColumnEnd}
                                     onDropColumn={(e, l) => handleDropColumn(e, l, 'vendedor')}
                                   />
+                                  </div>
                                   <KanbanColumnCards
                                     key={col.id}
                                     label={col.label}
@@ -1506,14 +1511,15 @@ export default function PropostasComerciaisDashboard() {
                         </div>
 
                         {/* Painel Kanban Unificado */}
-                        <div className="flex-1 min-h-0 overflow-x-auto pb-4 pt-0 flex flex-col">
-                          <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch flex-1">
+                        <div className="py-4 bg-slate-50 min-w-max">
+                          <div className="flex gap-[3px]">
                             {kanbanSegmentoCols.map((col, idx) => {
                               const segColor = segmentoColors[col.label] || '#3b82f6';
                               const isFirst = idx === 0;
                               const isLast = idx === kanbanSegmentoCols.length - 1;
                               return (
-                                <div key={col.id} className="flex flex-col h-full">
+                                <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
+                                  <div className="sticky top-0 z-20 bg-slate-50">
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}
@@ -1529,6 +1535,7 @@ export default function PropostasComerciaisDashboard() {
                                       setSegmentoColors(prev => ({ ...prev, [col.label]: newColor }));
                                     }}
                                   />
+                                  </div>
                                   <KanbanColumnCards
                                     key={col.id}
                                     label={col.label}
