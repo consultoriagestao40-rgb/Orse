@@ -395,7 +395,7 @@ export default function ContratosDashboard() {
         className="flex flex-col flex-shrink-0"
         style={{ width: '274px' }}
       >
-        <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex }}>
+        <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex, boxShadow: '0 -16px 0 0 #f8fafc' }}>
           <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
               className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
@@ -679,7 +679,7 @@ export default function ContratosDashboard() {
         className="flex flex-col flex-shrink-0"
         style={{ width: '274px' }}
       >
-        <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex }}>
+        <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex, boxShadow: '0 -16px 0 0 #f8fafc' }}>
           <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
               className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}

@@ -1347,7 +1347,7 @@ export default function LeadsKanban() {
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, stage.id)}
                 >
-                  <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (stages.length - idx) }}>
+                  <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (stages.length - idx), boxShadow: '0 -16px 0 0 #f8fafc' }}>
                     <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
                       <svg 
                         className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
@@ -1636,7 +1636,7 @@ export default function LeadsKanban() {
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDropVendedor(e, col.id)}
                   >
-                    <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (kanbanVendedorCols.length - idx) }}>
+                    <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (kanbanVendedorCols.length - idx), boxShadow: '0 -16px 0 0 #f8fafc' }}>
                       <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
                         <svg 
                           className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
@@ -1855,7 +1855,7 @@ export default function LeadsKanban() {
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDropSegmento(e, col.id)}
                 >
-                  <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (kanbanSegmentoCols.length - idx) }}>
+                  <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (kanbanSegmentoCols.length - idx), boxShadow: '0 -16px 0 0 #f8fafc' }}>
                     <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
                         <svg 
                           className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
