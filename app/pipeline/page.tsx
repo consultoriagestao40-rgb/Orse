@@ -78,10 +78,51 @@ function ProposalsDashboard() {
     setDraggedOverStageId(null);
   };
 
-  const handleDragOver = (e: React.DragEvent, stageId?: string) => {
+  const handleDragOver = (e: React.DragEvent, stageId?: string, type?: 'status' | 'vendedor' | 'segmento') => {
     e.preventDefault();
     if (draggedStageId) {
       if (stageId && stageId !== draggedStageId) {
+        if (type) {
+          let order: string[] = [];
+          if (type === 'status') {
+            const currentCols = statuses.map(s => s.nome);
+            if (proposals.some(p => !p.status || !statuses.find(s => s.nome.toLowerCase() === p.status.toLowerCase()))) {
+              currentCols.push('Sem Status');
+            }
+            order = statusOrder.length > 0 ? [...statusOrder] : [...currentCols];
+            currentCols.forEach(c => {
+              if (!order.includes(c)) order.push(c);
+            });
+          } else if (type === 'vendedor') {
+            const currentCols = Array.from(new Set(proposals.map(p => p.usuario || 'Sem Vendedor')));
+            order = vendedorOrder.length > 0 ? [...vendedorOrder] : [...currentCols];
+            currentCols.forEach(c => {
+              if (!order.includes(c)) order.push(c);
+            });
+          } else if (type === 'segmento') {
+            const currentCols = segmentos.map(s => s.nome || s);
+            order = segmentoOrder.length > 0 ? [...segmentoOrder] : [...currentCols];
+            currentCols.forEach(c => {
+              if (!order.includes(c)) order.push(c);
+            });
+          }
+
+          const draggedIdx = order.indexOf(draggedStageId);
+          const targetIdx = order.indexOf(stageId);
+
+          if (draggedIdx !== -1 && targetIdx !== -1) {
+            if (draggedIdx < targetIdx) {
+              if (targetIdx === order.length - 1) {
+                setDraggedOverBeforeStageId('last');
+              } else {
+                setDraggedOverBeforeStageId(order[targetIdx + 1]);
+              }
+            } else {
+              setDraggedOverBeforeStageId(stageId);
+            }
+            return;
+          }
+        }
         setDraggedOverBeforeStageId(stageId);
       }
     } else {
@@ -121,9 +162,16 @@ function ProposalsDashboard() {
       if (beforeLabel === 'last') {
         order.push(draggedLabel);
       } else {
-        const beforeIndex = order.indexOf(beforeLabel);
-        if (beforeIndex !== -1) {
-          order.splice(beforeIndex, 0, draggedLabel);
+        const targetIndex = order.indexOf(beforeLabel);
+        if (targetIndex !== -1) {
+          const originalDraggedIndex = statusOrder.length > 0 ? statusOrder.indexOf(draggedLabel) : currentCols.indexOf(draggedLabel);
+          const originalTargetIndex = statusOrder.length > 0 ? statusOrder.indexOf(beforeLabel) : currentCols.indexOf(beforeLabel);
+          
+          if (originalDraggedIndex !== -1 && originalTargetIndex !== -1 && originalDraggedIndex < originalTargetIndex) {
+            order.splice(targetIndex + 1, 0, draggedLabel);
+          } else {
+            order.splice(targetIndex, 0, draggedLabel);
+          }
         }
       }
 
@@ -144,9 +192,16 @@ function ProposalsDashboard() {
       if (beforeLabel === 'last') {
         order.push(draggedLabel);
       } else {
-        const beforeIndex = order.indexOf(beforeLabel);
-        if (beforeIndex !== -1) {
-          order.splice(beforeIndex, 0, draggedLabel);
+        const targetIndex = order.indexOf(beforeLabel);
+        if (targetIndex !== -1) {
+          const originalDraggedIndex = vendedorOrder.length > 0 ? vendedorOrder.indexOf(draggedLabel) : currentCols.indexOf(draggedLabel);
+          const originalTargetIndex = vendedorOrder.length > 0 ? vendedorOrder.indexOf(beforeLabel) : currentCols.indexOf(beforeLabel);
+          
+          if (originalDraggedIndex !== -1 && originalTargetIndex !== -1 && originalDraggedIndex < originalTargetIndex) {
+            order.splice(targetIndex + 1, 0, draggedLabel);
+          } else {
+            order.splice(targetIndex, 0, draggedLabel);
+          }
         }
       }
 
@@ -167,9 +222,16 @@ function ProposalsDashboard() {
       if (beforeLabel === 'last') {
         order.push(draggedLabel);
       } else {
-        const beforeIndex = order.indexOf(beforeLabel);
-        if (beforeIndex !== -1) {
-          order.splice(beforeIndex, 0, draggedLabel);
+        const targetIndex = order.indexOf(beforeLabel);
+        if (targetIndex !== -1) {
+          const originalDraggedIndex = segmentoOrder.length > 0 ? segmentoOrder.indexOf(draggedLabel) : currentCols.indexOf(draggedLabel);
+          const originalTargetIndex = segmentoOrder.length > 0 ? segmentoOrder.indexOf(beforeLabel) : currentCols.indexOf(beforeLabel);
+          
+          if (originalDraggedIndex !== -1 && originalTargetIndex !== -1 && originalDraggedIndex < originalTargetIndex) {
+            order.splice(targetIndex + 1, 0, draggedLabel);
+          } else {
+            order.splice(targetIndex, 0, draggedLabel);
+          }
         }
       }
 
@@ -1116,7 +1178,7 @@ function ProposalsDashboard() {
         style={{ width: '274px' }}
         onDragOver={(e) => {
           e.preventDefault();
-          handleDragOver(e, label);
+          handleDragOver(e, label, type);
         }}
         onDragLeave={(e) => {
           handleDragLeave();
@@ -1482,7 +1544,7 @@ function ProposalsDashboard() {
                                   <div 
                                     className={`flex flex-col flex-shrink-0 transition-opacity duration-200 ${draggedStageId === col.label ? 'opacity-30' : 'opacity-100'}`}
                                     style={{ width: '274px' }}
-                                    onDragOver={(e) => handleDragOver(e, col.label)}
+                                    onDragOver={(e) => handleDragOver(e, col.label, 'status')}
                                     onDrop={(e) => {
                                       e.preventDefault();
                                       if (draggedStageId) {
@@ -1640,7 +1702,7 @@ function ProposalsDashboard() {
                                   <div 
                                     className={`flex flex-col flex-shrink-0 transition-opacity duration-200 ${draggedStageId === col.label ? 'opacity-30' : 'opacity-100'}`}
                                     style={{ width: '274px' }}
-                                    onDragOver={(e) => handleDragOver(e, col.label)}
+                                    onDragOver={(e) => handleDragOver(e, col.label, 'vendedor')}
                                     onDrop={(e) => {
                                       e.preventDefault();
                                       if (draggedStageId) {
@@ -1814,7 +1876,7 @@ function ProposalsDashboard() {
                                       <div 
                                         className={`flex flex-col flex-shrink-0 transition-opacity duration-200 ${draggedStageId === col.label ? 'opacity-30' : 'opacity-100'}`}
                                         style={{ width: '274px' }}
-                                        onDragOver={(e) => handleDragOver(e, col.label)}
+                                        onDragOver={(e) => handleDragOver(e, col.label, 'segmento')}
                                         onDrop={(e) => {
                                           e.preventDefault();
                                           if (draggedStageId) {
