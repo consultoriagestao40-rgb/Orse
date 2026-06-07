@@ -672,7 +672,7 @@ export default function ContratosDashboard() {
     const [res, segmentosRes] = await Promise.all([
       getContratos(),
       getSegmentos(),
-      new Promise(resolve => setTimeout(resolve, 4000))
+      new Promise(resolve => setTimeout(resolve, 2000))
     ]);
     if (res.success) setContratos(res.data || []);
     if (segmentosRes && segmentosRes.success) setSegmentos(segmentosRes.segmentos);

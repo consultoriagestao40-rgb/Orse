@@ -401,7 +401,7 @@ export default function PropostasComerciaisDashboard() {
     const [pageData, segmentosRes] = await Promise.all([
       getPropostasComerciaisPageData(),
       getSegmentos(),
-      new Promise(resolve => setTimeout(resolve, 4000))
+      new Promise(resolve => setTimeout(resolve, 2000))
     ]);
     const { docs, role, usersList, statuses } = pageData;
     setDocs(docs);

@@ -36,7 +36,7 @@ function RadarComercialDashboard() {
     try {
       const [data] = await Promise.all([
         getKPIs(),
-        new Promise(resolve => setTimeout(resolve, 4000))
+        new Promise(resolve => setTimeout(resolve, 2000))
       ]);
       setKpis(data);
     } catch (e) {
