@@ -372,7 +372,7 @@ export default function LeadsKanban() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showMetrics, setShowMetrics] = useState(true);
-  const colHeight = showMetrics ? 'calc(100vh - 320px)' : 'calc(100vh - 190px)';
+
   
   const [showModal, setShowModal] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
@@ -1579,7 +1579,7 @@ export default function LeadsKanban() {
                           borderColor: borderRgba,
                           borderWidth: '0 1px 1px 1px',
                           borderStyle: 'solid',
-                          height: colHeight,
+                          height: 'calc(100vh - 120px)',
                           overflowY: 'auto',
                         }}
                       >
@@ -1803,7 +1803,7 @@ export default function LeadsKanban() {
                           borderColor: borderRgba,
                           borderWidth: '0 1px 1px 1px',
                           borderStyle: 'solid',
-                          height: colHeight,
+                          height: 'calc(100vh - 120px)',
                           overflowY: 'auto',
                         }}
                       >
@@ -2021,7 +2021,7 @@ export default function LeadsKanban() {
                           borderColor: borderRgba,
                           borderWidth: '0 1px 1px 1px',
                           borderStyle: 'solid',
-                          height: colHeight,
+                          height: 'calc(100vh - 120px)',
                           overflowY: 'auto',
                         }}
                       >

@@ -592,7 +592,8 @@ export default function ContratosDashboard() {
               borderColor: borderRgba,
               borderWidth: '0 1px 1px 1px',
               borderStyle: 'solid',
-              minHeight: 'calc(100vh - 180px)',
+              height: 'calc(100vh - 120px)',
+              overflowY: 'auto',
             }}
           >
             <div className="flex flex-col gap-3">
@@ -842,7 +843,8 @@ export default function ContratosDashboard() {
               borderColor: borderRgba,
               borderWidth: '0 1px 1px 1px',
               borderStyle: 'solid',
-              minHeight: 'calc(100vh - 180px)',
+              height: 'calc(100vh - 120px)',
+              overflowY: 'auto',
             }}
           >
             <div className="flex flex-col gap-3">

@@ -1003,6 +1003,8 @@ export default function PropostasComerciaisDashboard() {
             borderColor: borderRgba,
             borderWidth: '0 1px 1px 1px',
             borderStyle: 'solid',
+            height: 'calc(100vh - 120px)',
+            overflowY: 'auto',
           }}
         >
           <div className="flex flex-col gap-3 flex-1">
