@@ -564,8 +564,8 @@ export default function PropostasComerciaisDashboard() {
     <div
       draggable
       onDragStart={(e) => {
-        if (doc.propostaId) {
-          e.dataTransfer.setData('text/plain', doc.propostaId);
+        if (doc.id) {
+          e.dataTransfer.setData('text/plain', doc.id);
         }
       }}
       onDragEnd={handleDragEnd}
@@ -1460,9 +1460,9 @@ export default function PropostasComerciaisDashboard() {
                                       cards={col.cards}
                                       isFirst={isFirst}
                                       onDropProp={async (propId) => {
-                                        const doc = docs.find(d => d.propostaId === propId);
+                                        const doc = docs.find(d => d.id === propId);
                                         if (doc && doc.status !== col.label) {
-                                          setDocs(prev => prev.map(d => d.propostaId === propId ? { ...d, status: col.label } : d));
+                                          setDocs(prev => prev.map(d => d.id === propId ? { ...d, status: col.label } : d));
                                           await updateDocumentoStatus(doc.id, col.label);
                                         }
                                       }}
@@ -1612,7 +1612,7 @@ export default function PropostasComerciaisDashboard() {
                                       cards={col.cards}
                                       isFirst={isFirst}
                                       onDropProp={async (propId) => {
-                                        const doc = docs.find(d => d.propostaId === propId);
+                                        const doc = docs.find(d => d.id === propId);
                                         if (doc && doc.usuario !== col.label) {
                                           if (userRole !== 'ADMIN' && userRole !== 'MANAGER') {
                                             alert('Apenas gestores e administradores podem transferir propostas.');
@@ -1620,8 +1620,8 @@ export default function PropostasComerciaisDashboard() {
                                           }
                                           const newUser = usersList.find(u => u.nome === col.label);
                                           if (newUser) {
-                                            setDocs(prev => prev.map(d => d.propostaId === propId ? { ...d, usuario: newUser.nome, avatarUrl: newUser.avatarUrl } : d));
-                                            const res = await transferirProposta(propId, newUser.id);
+                                            setDocs(prev => prev.map(d => d.propostaId === doc.propostaId ? { ...d, usuario: newUser.nome, avatarUrl: newUser.avatarUrl } : d));
+                                            const res = await transferirProposta(doc.propostaId, newUser.id);
                                             if (!res.success) {
                                               alert(res.error);
                                               loadData();
@@ -1788,12 +1788,12 @@ export default function PropostasComerciaisDashboard() {
                                           cards={col.cards}
                                           isFirst={isFirst}
                                           onDropProp={async (propId) => {
-                                            const doc = docs.find(d => d.propostaId === propId || d.id === propId);
+                                            const doc = docs.find(d => d.id === propId);
                                             if (doc) {
                                               const newSegment = col.id === 'unassigned' ? '' : col.label;
                                               if (doc.segmento !== newSegment) {
                                                 // Update local state optimistically
-                                                setDocs(prev => prev.map(d => (d.propostaId === propId || d.id === propId) ? { ...d, segmento: newSegment || 'Sem Segmento' } : d));
+                                                setDocs(prev => prev.map(d => d.clientId === doc.clientId ? { ...d, segmento: newSegment || 'Sem Segmento' } : d));
                                                 
                                                 // Update client segment in backend
                                                 if (doc.clientId) {
