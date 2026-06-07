@@ -820,7 +820,11 @@ export default function ContratosDashboard() {
             )}
           </div>
         </div>
-      </  const KanbanSegmentoColumn = ({ label, cards, isFirst = false, isLast = false, color, zIndex }: { label: string; cards: any[]; isFirst?: boolean; isLast?: boolean; color: string; zIndex: number }) => {
+      </div>
+    );
+  };
+
+  const KanbanSegmentoColumn = ({ label, cards, isFirst = false, isLast = false, color, zIndex }: { label: string; cards: any[]; isFirst?: boolean; isLast?: boolean; color: string; zIndex: number }) => {
     const total = cards.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
     const resolvedHex = resolveColorToHex(color);
     const contrast = getContrastYIQ(resolvedHex);
