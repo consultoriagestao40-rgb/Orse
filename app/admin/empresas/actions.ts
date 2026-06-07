@@ -21,7 +21,7 @@ export async function checkIsSuperAdmin() {
     const sessionEmail = cookieStore.get('sb_session')?.value;
     if (sessionEmail) {
       const emailNormal = sessionEmail.toLowerCase().trim();
-      if (emailNormal === 'cristiano@grupojvsserv.com.br' || emailNormal === 'admin@smartbidhub.com.br') {
+      if (emailNormal === 'cristiano@grupojvsserv.com.br' || emailNormal === 'admin@smartbidhub.com.br' || emailNormal === 'admin@smartbid.com') {
         return true;
       }
       
@@ -33,6 +33,7 @@ export async function checkIsSuperAdmin() {
       if (user) {
         return (
           user.email === 'admin@smartbidhub.com.br' || 
+          user.email === 'admin@smartbid.com' || 
           user.email === 'cristiano@grupojvsserv.com.br' || 
           (user.tenant?.cnpj === '40.180.983/0001-00' && user.role === 'ADMIN')
         );
@@ -392,8 +393,8 @@ export async function getTenantTrialStatus() {
       return { success: false, error: 'Usuário não autenticado.' };
     }
 
-    // Apenas o Super Admin da plataforma master (admin@smartbidhub.com.br) é 100% imune a bloqueios e testes
-    if (emailNormal === 'admin@smartbidhub.com.br') {
+    // Apenas o Super Admin da plataforma master é 100% imune a bloqueios e testes
+    if (emailNormal === 'admin@smartbidhub.com.br' || emailNormal === 'admin@smartbid.com') {
       return { 
         success: true, 
         isSuperAdmin: true, 

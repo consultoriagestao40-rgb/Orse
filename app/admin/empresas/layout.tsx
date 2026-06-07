@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 const SUPER_ADMIN_EMAILS = [
   'cristiano@grupojvsserv.com.br',
   'admin@smartbidhub.com.br',
+  'admin@smartbid.com',
 ];
 
 /**
