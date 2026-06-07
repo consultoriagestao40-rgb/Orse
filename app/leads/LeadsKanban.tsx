@@ -1326,7 +1326,7 @@ export default function LeadsKanban() {
       <div>
         {showMetrics && <PipelineMetrics leads={filteredLeads} stages={stages} />}
         {viewMode === 'kanban-status' && (
-          <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max">
+          <div className="pt-3 pb-6 pl-2 pr-1 bg-slate-50 min-w-max">
             <div className="flex gap-[3px]">
             {stages.map((stage, idx) => {
               const stageLeads = filteredLeads.filter(l => l.stageId === stage.id);
@@ -1614,7 +1614,7 @@ export default function LeadsKanban() {
           )}
 
         {viewMode === 'kanban-vendedor' && (
-          <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max">
+          <div className="pt-3 pb-6 pl-2 pr-1 bg-slate-50 min-w-max">
             <div className="flex gap-[3px]">
               {kanbanVendedorCols.map((col, idx) => {
                 const colLeads = col.cards;
@@ -1833,7 +1833,7 @@ export default function LeadsKanban() {
           )}
 
         {viewMode === 'kanban-segmento' && (
-          <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max">
+          <div className="pt-3 pb-6 pl-2 pr-1 bg-slate-50 min-w-max">
             <div className="flex gap-[3px]">
             {kanbanSegmentoCols.map((col, idx) => {
               const colLeads = col.cards;
