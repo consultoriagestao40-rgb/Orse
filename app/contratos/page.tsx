@@ -396,6 +396,31 @@ export default function ContratosDashboard() {
     e.preventDefault();
     if (draggedStageId) {
       if (stageId && stageId !== draggedStageId) {
+        if (type) {
+          let order: string[] = [];
+          if (type === 'status') {
+            order = statusesList;
+          } else if (type === 'segmento') {
+            order = segmentoOrder.length > 0 
+              ? segmentoOrder 
+              : segmentos.map(s => s.nome || s);
+          }
+          
+          const draggedIdx = order.indexOf(draggedStageId);
+          const targetIdx = order.indexOf(stageId);
+          if (draggedIdx !== -1 && targetIdx !== -1) {
+            if (draggedIdx < targetIdx) {
+              if (targetIdx === order.length - 1) {
+                setDraggedOverBeforeStageId('last');
+              } else {
+                setDraggedOverBeforeStageId(order[targetIdx + 1]);
+              }
+            } else {
+              setDraggedOverBeforeStageId(stageId);
+            }
+            return;
+          }
+        }
         setDraggedOverBeforeStageId(stageId);
       }
     } else {
@@ -1269,7 +1294,7 @@ export default function ContratosDashboard() {
           {/* KANBAN POR STATUS */}
           {viewMode === 'kanban-status' && (
             <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max no-scrollbar" style={{ overflowX: 'auto', height: 'calc(100vh - 120px)' }}>
-              <div className="flex items-start pb-4">
+              <div className="flex items-start pb-4 gap-[3px]">
                 {statusList.map((status, index) => {
                   const isFirst = index === 0;
                   const isLast = index === statusList.length - 1;
@@ -1289,7 +1314,7 @@ export default function ContratosDashboard() {
                         </div>
                       )}
                       
-                      <div className={draggedStageId === status ? 'opacity-20 pointer-events-none' : ''}>
+                      <div className={`w-[274px] shrink-0 ${draggedStageId === status ? 'opacity-20 pointer-events-none' : ''}`}>
                         <KanbanColumn 
                           status={status} 
                           isFirst={isFirst} 
@@ -1334,7 +1359,7 @@ export default function ContratosDashboard() {
           {/* KANBAN POR SEGMENTO */}
           {viewMode === 'kanban-segmento' && (
             <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max no-scrollbar" style={{ overflowX: 'auto', height: 'calc(100vh - 120px)' }}>
-              <div className="flex items-start pb-4">
+              <div className="flex items-start pb-4 gap-[3px]">
                 {kanbanSegmentoCols.map((col, index) => {
                   const isFirst = index === 0;
                   const isLast = index === kanbanSegmentoCols.length - 1;
@@ -1354,7 +1379,7 @@ export default function ContratosDashboard() {
                         </div>
                       )}
                       
-                      <div className={draggedStageId === col.label ? 'opacity-20 pointer-events-none' : ''}>
+                      <div className={`w-[274px] shrink-0 ${draggedStageId === col.label ? 'opacity-20 pointer-events-none' : ''}`}>
                         <KanbanSegmentoColumn
                           label={col.label}
                           cards={col.cards}
