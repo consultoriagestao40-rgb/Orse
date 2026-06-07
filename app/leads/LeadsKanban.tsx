@@ -363,6 +363,65 @@ const LeadCard = ({
   );
 };
 
+const calculateStageDurations = (lead: any, stages: any[]) => {
+  const durations: Record<string, number> = {};
+  stages.forEach(s => {
+    durations[s.id] = 0;
+  });
+
+  if (!lead) return durations;
+
+  const history = lead.history || [];
+  const transitions = history
+    .filter((h: any) => h.tipo === 'MUDANCA_FASE' && h.descricao.includes('Movido para a fase:'))
+    .map((h: any) => {
+      const match = h.descricao.match(/Movido para a fase:\s*(.*?)(?:\s+por\s+|$)/);
+      const stageName = match ? match[1].trim() : '';
+      const targetStage = stages.find(s => s.nome.toLowerCase() === stageName.toLowerCase());
+      return {
+        createdAt: new Date(h.createdAt),
+        stageId: targetStage ? targetStage.id : null
+      };
+    })
+    .filter((t: any) => t.stageId !== null)
+    .sort((a: any, b: any) => a.createdAt.getTime() - b.createdAt.getTime());
+
+  const timeline: { stageId: string; startTime: Date; endTime: Date }[] = [];
+  let lastTime = new Date(lead.createdAt);
+  let currentStageId = stages[0]?.id || lead.stageId;
+
+  for (let i = 0; i < transitions.length; i++) {
+    const t = transitions[i];
+    const tTime = new Date(t.createdAt);
+    if (tTime > lastTime) {
+      timeline.push({
+        stageId: currentStageId,
+        startTime: lastTime,
+        endTime: tTime
+      });
+    }
+    currentStageId = t.stageId;
+    lastTime = tTime;
+  }
+
+  const now = new Date();
+  if (now > lastTime) {
+    timeline.push({
+      stageId: currentStageId,
+      startTime: lastTime,
+      endTime: now
+    });
+  }
+
+  timeline.forEach(p => {
+    if (durations[p.stageId] !== undefined) {
+      durations[p.stageId] += (p.endTime.getTime() - p.startTime.getTime());
+    }
+  });
+
+  return durations;
+};
+
 export default function LeadsKanban() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -2215,43 +2274,74 @@ export default function LeadsKanban() {
           <div className="bg-white w-full max-w-6xl h-full shadow-2xl flex flex-col rounded-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             
             {/* Top Pipeline Bar */}
-            <div className="w-full bg-slate-50 border-b border-slate-200 p-2 shrink-0 flex items-center overflow-x-auto gap-1 hidden md:flex">
-              {stages.map((stage, idx) => {
-                const currentIndex = stages.findIndex(s => s.id === selectedLead.stageId);
-                const currentStageColor = currentIndex >= 0 ? stages[currentIndex].color : 'bg-slate-100';
-                
-                // Mapeamento estático para garantir que o Tailwind gere as classes
-                const darkerColorMap: Record<string, string> = {
-                  'bg-slate-100': 'bg-slate-500',
-                  'bg-blue-100': 'bg-blue-500',
-                  'bg-emerald-100': 'bg-green-500',
-                  'bg-amber-100': 'bg-amber-500',
-                  'bg-rose-100': 'bg-rose-500',
-                  'bg-purple-100': 'bg-purple-500',
-                  'bg-slate-300': 'bg-slate-500',
+            <div className="w-full bg-white border-b border-slate-200 p-2 shrink-0 flex items-center gap-[2px] hidden md:flex relative overflow-visible">
+              {(() => {
+                const durations = calculateStageDurations(selectedLead, stages);
+                const getDaysInStage = (stageId: string) => {
+                  const ms = durations[stageId] || 0;
+                  return Math.floor(ms / (1000 * 60 * 60 * 24));
                 };
+                const currentIndex = stages.findIndex(s => s.id === selectedLead.stageId);
 
-                const darkColor = darkerColorMap[currentStageColor] || 'bg-slate-500';
-                const isPast = idx < currentIndex;
-                const isCurrent = idx === currentIndex;
-                
-                let baseClass = "h-8 px-4 flex items-center justify-center text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-colors flex-1 min-w-[120px] relative cursor-pointer";
-                let colorClass = "bg-slate-200 text-slate-500 hover:bg-slate-300";
-                
-                if (isCurrent) colorClass = `${darkColor} text-white shadow-md border-b-2 border-slate-800`;
-                else if (isPast) colorClass = `${darkColor} text-white`;
+                return stages.map((stage, idx) => {
+                  const days = getDaysInStage(stage.id);
+                  const label = days === 1 ? '1 dia' : `${days} dias`;
+                  
+                  const isCurrent = idx === currentIndex;
+                  const isPast = idx < currentIndex;
 
-                return (
-                  <button 
-                    key={stage.id}
-                    onClick={() => handleStageChangeInModal(stage.id)}
-                    className={`${baseClass} ${colorClass} rounded-lg`}
-                    title={`Mover para ${stage.nome}`}
-                  >
-                    {stage.nome}
-                  </button>
-                )
-              })}
+                  // Clip-path polygon based on position
+                  let clipPath = 'polygon(0% 0%, calc(100% - 10px) 0%, 100% 50%, calc(100% - 10px) 100%, 0% 100%, 10px 50%)';
+                  if (idx === 0) {
+                    clipPath = 'polygon(0% 0%, calc(100% - 10px) 0%, 100% 50%, calc(100% - 10px) 100%, 0% 100%)';
+                  } else if (idx === stages.length - 1) {
+                    clipPath = 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 10px 50%)';
+                  }
+
+                  // Background & text color
+                  // Past or Current: Green (bg-[#2E7D32])
+                  // Future: Grey (bg-[#E5E7EB])
+                  let bgClass = 'bg-[#E5E7EB] hover:bg-slate-300 text-slate-600';
+                  if (isCurrent || isPast) {
+                    bgClass = 'bg-[#2E7D32] hover:bg-[#236026] text-white';
+                  }
+
+                  // Tooltip dynamic description
+                  let tooltipDesc = 'Este negócio ainda não está nessa etapa';
+                  if (isCurrent) {
+                    tooltipDesc = days === 1 ? 'Este negócio está nesta etapa há 1 dia' : `Este negócio está nesta etapa há ${days} dias`;
+                  } else if (isPast) {
+                    tooltipDesc = days === 1 ? 'Ficou nesta etapa por 1 dia' : `Ficou nesta etapa por ${days} dias`;
+                  }
+
+                  let tooltipAlignClass = "left-1/2 -translate-x-1/2";
+                  if (idx === 0) {
+                    tooltipAlignClass = "left-2";
+                  } else if (idx === stages.length - 1) {
+                    tooltipAlignClass = "right-2";
+                  }
+
+                  return (
+                    <div key={stage.id} className="relative flex-1 min-w-[120px] h-10 group">
+                      <button
+                        onClick={() => handleStageChangeInModal(stage.id)}
+                        className={`w-full h-full flex items-center justify-center text-xs font-bold transition-colors cursor-pointer select-none ${bgClass}`}
+                        style={{ clipPath }}
+                      >
+                        <span className="truncate px-4">{label}</span>
+                      </button>
+                      
+                      {/* Tooltip */}
+                      <div className={`absolute ${tooltipAlignClass} top-full mt-2 hidden group-hover:block z-50`}>
+                        <div className="bg-slate-800 text-white text-[11px] rounded-lg px-4 py-2.5 shadow-lg whitespace-nowrap">
+                          <div className="font-bold text-sm text-white mb-0.5">{stage.nome}</div>
+                          <div className="text-xs text-slate-300">{tooltipDesc}</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
             </div>
 
             {/* Main Body */}
