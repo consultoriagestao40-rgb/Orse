@@ -1580,7 +1580,7 @@ export default function LeadsKanban() {
                           borderColor: borderRgba,
                           borderWidth: '0 1px 1px 1px',
                           borderStyle: 'solid',
-                          height: 'calc(100vh - 120px)',
+                          height: 'calc(100vh - 52px)',
                           overflowY: 'auto',
                         }}
                       >
@@ -1804,7 +1804,7 @@ export default function LeadsKanban() {
                           borderColor: borderRgba,
                           borderWidth: '0 1px 1px 1px',
                           borderStyle: 'solid',
-                          height: 'calc(100vh - 120px)',
+                          height: 'calc(100vh - 52px)',
                           overflowY: 'auto',
                         }}
                       >
@@ -2022,7 +2022,7 @@ export default function LeadsKanban() {
                           borderColor: borderRgba,
                           borderWidth: '0 1px 1px 1px',
                           borderStyle: 'solid',
-                          height: 'calc(100vh - 120px)',
+                          height: 'calc(100vh - 52px)',
                           overflowY: 'auto',
                         }}
                       >
