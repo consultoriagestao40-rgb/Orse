@@ -95,12 +95,20 @@ export default function LandingPage() {
   const receitaLiquida = sellingPrice - valorTributos;
   const margemBruta = sellingPrice - valorTributos - baseCost;
 
+  const getPriceValue = (preco: any): number => {
+    if (typeof preco === 'number') return preco;
+    if (!preco) return 0;
+    if (typeof preco.toNumber === 'function') return preco.toNumber();
+    const parsed = parseFloat(preco);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
   };
 
   return (
-    <div className="min-h-screen bg-[#070B19] text-slate-100 selection:bg-[#10B981] selection:text-[#070B19] relative overflow-hidden font-sans antialiased leading-[1.2]">
+    <div className="min-h-screen bg-[#070B19] text-slate-100 selection:bg-[#10B981] selection:text-[#070B19] relative overflow-x-hidden font-sans antialiased leading-[1.2]">
       
       {/* GRID DECORATIVO DE FUNDO */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b12_1px,transparent_1px),linear-gradient(to_bottom,#1e293b12_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none z-0" />
@@ -1398,7 +1406,7 @@ export default function LandingPage() {
                       </div>
                       
                       <div className="py-4 border-y border-white/5">
-                        <span className="text-3xl font-black text-white">R$ {p.preco.toFixed(0)}</span>
+                        <span className="text-3xl font-black text-white">R$ {getPriceValue(p.preco).toFixed(0)}</span>
                         <span className="text-xs text-slate-500 font-bold uppercase tracking-wider"> / mês</span>
                         <p className="text-[10px] text-slate-400 mt-2 font-semibold">{p.descricao}</p>
                       </div>
