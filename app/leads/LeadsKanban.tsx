@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact, reorderStages } from './actions';
+import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact, reorderStages, completeActivity } from './actions';
 import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSegmentos, createSegmento } from '@/app/admin/settings/actions';
@@ -236,6 +236,7 @@ const LeadCard = ({
   refreshData?: () => void;
 }) => {
   const [showActivityPopup, setShowActivityPopup] = useState(false);
+  const [completedActivityIds, setCompletedActivityIds] = useState<string[]>([]);
   const popupRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = lead.whatsappMessages?.filter(
@@ -269,8 +270,10 @@ const LeadCard = ({
     }
   };
 
-  const nextActivity = lead.activities?.[0];
-  const status = checkActivityStatus(nextActivity);
+  const pendingActivities = lead.activities?.filter((a: any) => a.status === 'PENDENTE' && !completedActivityIds.includes(a.id)) || [];
+  const hasCompleted = lead.activities?.some((a: any) => a.status === 'CONCLUIDA' || completedActivityIds.includes(a.id));
+  const nextActivity = pendingActivities[0];
+  const status = nextActivity ? checkActivityStatus(nextActivity) : (hasCompleted ? 'completed' : 'none');
 
   let buttonClass = "border border-dashed border-slate-300 text-slate-400 hover:border-slate-400 hover:bg-slate-50";
   let icon = <Plus size={10} strokeWidth={3} className="shrink-0" />;
@@ -281,6 +284,9 @@ const LeadCard = ({
   } else if (status === 'future') {
     buttonClass = "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20";
     icon = <ChevronRight size={10} strokeWidth={3} className="text-white shrink-0" />;
+  } else if (status === 'completed') {
+    buttonClass = "bg-emerald-50 border border-emerald-250 text-emerald-650 hover:bg-emerald-100 hover:border-emerald-350 hover:text-emerald-750 shadow-sm shadow-emerald-500/5";
+    icon = <CheckCircle2 size={11} strokeWidth={2.5} className="shrink-0 text-emerald-600" />;
   }
 
   const handleActivityButtonClick = (e: React.MouseEvent) => {
@@ -290,14 +296,18 @@ const LeadCard = ({
 
   const handleCompleteActivity = async (e: React.MouseEvent, activityId: string) => {
     e.stopPropagation();
+    if (completedActivityIds.includes(activityId)) return;
+    setCompletedActivityIds(prev => [...prev, activityId]);
     try {
-      await deleteActivity(activityId);
-      setShowActivityPopup(false);
-      if (refreshData) {
-        refreshData();
-      }
+      await completeActivity(activityId);
+      setTimeout(() => {
+        if (refreshData) {
+          refreshData();
+        }
+      }, 600);
     } catch (err) {
       console.error('Erro ao concluir atividade:', err);
+      setCompletedActivityIds(prev => prev.filter(id => id !== activityId));
     }
   };
 
@@ -366,13 +376,31 @@ const LeadCard = ({
                   <div className="flex items-start gap-2">
                     <button
                       onClick={(e) => handleCompleteActivity(e, nextActivity.id)}
-                      className="w-4.5 h-4.5 rounded-full border border-slate-300 flex items-center justify-center hover:border-emerald-500 hover:bg-emerald-50 cursor-pointer shrink-0 mt-0.5 group/check"
+                      className={`w-4.5 h-4.5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 group/check transition-all duration-200 ${
+                        completedActivityIds.includes(nextActivity.id)
+                          ? 'border-emerald-500 bg-emerald-500 text-white cursor-default'
+                          : 'border-slate-300 hover:border-emerald-500 hover:bg-emerald-50 cursor-pointer text-transparent'
+                      }`}
                       title="Concluir atividade"
+                      disabled={completedActivityIds.includes(nextActivity.id)}
                     >
-                      <CheckCircle2 size={10} className="text-transparent group-hover/check:text-emerald-500" />
+                      <CheckCircle2 
+                        size={10} 
+                        className={
+                          completedActivityIds.includes(nextActivity.id)
+                            ? 'text-white'
+                            : 'text-transparent group-hover/check:text-emerald-500'
+                        } 
+                      />
                     </button>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-slate-800 leading-tight line-clamp-2">{nextActivity.titulo}</p>
+                      <p className={`text-xs font-bold leading-tight line-clamp-2 transition-all duration-200 ${
+                        completedActivityIds.includes(nextActivity.id) 
+                          ? 'text-slate-400 line-through' 
+                          : 'text-slate-800'
+                      }`}>
+                        {nextActivity.titulo}
+                      </p>
                       <p className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1">
                         <Clock size={10} />
                         <span>{safeDate(nextActivity.dataInicio)}</span>

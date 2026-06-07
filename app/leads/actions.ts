@@ -42,9 +42,7 @@ export async function getLeads(filters?: { startDate?: string; endDate?: string;
           orderBy: { createdAt: 'desc' }
         },
         activities: {
-          where: { status: 'PENDENTE' },
-          orderBy: { dataInicio: 'asc' },
-          take: 1
+          orderBy: { dataInicio: 'asc' }
         },
         shares: {
           include: { user: true }
@@ -528,6 +526,36 @@ export async function deleteActivity(activityId: string) {
     if (activity.leadId) {
       await prisma.leadHistory.create({
         data: { leadId: activity.leadId, tipo: 'ANOTACAO', descricao: `Atividade "${activity.titulo}" foi removida por ${user.nome}` }
+      });
+    }
+
+    revalidatePath('/leads');
+    revalidatePath('/calendar');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function completeActivity(activityId: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+  try {
+    const activity = await prisma.activity.findUnique({ where: { id: activityId }});
+    if (!activity) return { success: false, error: 'Atividade não encontrada' };
+    
+    await prisma.activity.update({
+      where: { id: activityId },
+      data: { status: 'CONCLUIDA' }
+    });
+    
+    if (activity.leadId) {
+      await prisma.leadHistory.create({
+        data: { 
+          leadId: activity.leadId, 
+          tipo: 'REUNIAO', 
+          descricao: `Atividade "${activity.titulo}" foi concluída por ${user.nome}` 
+        }
       });
     }
 
