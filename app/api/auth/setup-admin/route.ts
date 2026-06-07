@@ -41,6 +41,7 @@ export async function GET() {
       update: {
         nome: 'SmartBidHub Admin',
         role: 'ADMIN',
+        password: '123456', // Garante que a senha seja redefinida para 123456
         tenantId: null // Sem vínculo com empresas clientes
       },
       create: {
@@ -53,8 +54,17 @@ export async function GET() {
     })
 
     // 3. Migrar todas as tabelas órfãs (que possuem tenantId = null) para o Tenant da Silva Consultoria Empresarial LTDA
+    // Nota: Excluímos as contas de operadores do SaaS de serem migradas para o tenant do cliente.
     const updates = await Promise.all([
-      prisma.user.updateMany({ where: { tenantId: null }, data: { tenantId: tenant.id } }),
+      prisma.user.updateMany({
+        where: {
+          tenantId: null,
+          NOT: {
+            email: { in: ['admin@smartbidhub.com.br', 'admin@smartbid.com'] }
+          }
+        },
+        data: { tenantId: tenant.id }
+      }),
       prisma.client.updateMany({ where: { tenantId: null }, data: { tenantId: tenant.id } }),
       prisma.lead.updateMany({ where: { tenantId: null }, data: { tenantId: tenant.id } }),
       prisma.proposta.updateMany({ where: { tenantId: null }, data: { tenantId: tenant.id } }),

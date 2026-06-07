@@ -56,10 +56,12 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (res.ok) {
-        if (data.user?.email === 'admin@smartbidhub.com.br') {
+        const superAdmins = ['cristiano@grupojvsserv.com.br', 'admin@smartbidhub.com.br', 'admin@smartbid.com'];
+        const userEmail = data.user?.email?.toLowerCase()?.trim() || '';
+        if (superAdmins.includes(userEmail)) {
           window.location.href = '/admin/empresas';
         } else {
-          window.location.href = '/propostas/nova'; // Redireciona via window para recarregar o estado
+          window.location.href = '/'; // Redireciona para o Radar Comercial / Dashboard raiz
         }
       } else {
         setError(data.error || 'Credenciais inválidas.');

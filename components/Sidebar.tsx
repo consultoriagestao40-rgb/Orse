@@ -728,11 +728,13 @@ const Sidebar = () => {
     }
 
     const isSaaSArea = pathname.startsWith('/admin/empresas');
-    const color = (isSaaSArea || user?.email === 'admin@smartbidhub.com.br') 
+    const platformAccounts = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
+    const isPlatformAccount = user?.email ? platformAccounts.includes(user.email.toLowerCase().trim()) : false;
+    const color = (isSaaSArea || isPlatformAccount) 
       ? '#1B4D3E' 
       : (user?.primaryColor || '#1B4D3E');
       
-    const hasTenantLogo = user?.tenantLogoUrl && !isSaaSArea && user.email !== 'admin@smartbidhub.com.br';
+    const hasTenantLogo = user?.tenantLogoUrl && !isSaaSArea && !isPlatformAccount;
     
     // Função auxiliar para derivar cores variantes (hover, light bg, text dark)
     const getThemeColors = (hex: string) => {
@@ -952,7 +954,9 @@ const Sidebar = () => {
   ];
 
   const isSaaSArea = pathname.startsWith('/admin/empresas');
-  const showTenantLogo = user?.tenantLogoUrl && !isSaaSArea && user.email !== 'admin@smartbidhub.com.br';
+  const platformAccounts = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
+  const isPlatformAccountGlobally = user?.email ? platformAccounts.includes(user.email.toLowerCase().trim()) : false;
+  const showTenantLogo = user?.tenantLogoUrl && !isSaaSArea && !isPlatformAccountGlobally;
 
   const renderedMenuItems = isSaaSArea
     ? [
@@ -960,8 +964,7 @@ const Sidebar = () => {
         { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
       ]
     : menuItems.filter(item => {
-        const isPlatformAccount = user?.email === 'admin@smartbidhub.com.br';
-        const isSuperAdminUser = user?.email === 'admin@smartbidhub.com.br' || user?.email === 'cristiano@grupojvsserv.com.br';
+        const isPlatformAccount = user?.email ? platformAccounts.includes(user.email.toLowerCase().trim()) : false;
         
         if (isPlatformAccount) {
           // Conta de Operador do SaaS: vê apenas gestão de empresas
@@ -989,8 +992,8 @@ const Sidebar = () => {
           { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
         ]
       : menuItems.filter(item => {
-          const isPlatformAccount = user?.email === 'admin@smartbidhub.com.br';
-          const isSuperAdminUser = user?.email === 'admin@smartbidhub.com.br' || user?.email === 'cristiano@grupojvsserv.com.br';
+          const platformAccounts = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
+          const isPlatformAccount = user?.email ? platformAccounts.includes(user.email.toLowerCase().trim()) : false;
           
           if (isPlatformAccount) {
             return item.href === '/admin/empresas';
