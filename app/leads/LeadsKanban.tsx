@@ -1649,7 +1649,7 @@ export default function LeadsKanban() {
                       }
                     }}
                   >
-                    <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (stages.length - idx), boxShadow: '0 -100px 0 0 #f8fafc' }}>
+                    <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (stages.length - idx) }}>
                       <div 
                         className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto cursor-grab active:cursor-grabbing"
                         draggable={!editingStageId}
@@ -2014,7 +2014,7 @@ export default function LeadsKanban() {
                         }
                       }}
                     >
-                      <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (kanbanVendedorCols.length - idx), boxShadow: '0 -100px 0 0 #f8fafc' }}>
+                      <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (kanbanVendedorCols.length - idx) }}>
                         <div 
                           className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto cursor-grab active:cursor-grabbing"
                           draggable={true}
@@ -2315,7 +2315,7 @@ export default function LeadsKanban() {
                       }
                     }}
                   >
-                    <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (kanbanSegmentoCols.length - idx), boxShadow: '0 -100px 0 0 #f8fafc' }}>
+                    <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (kanbanSegmentoCols.length - idx) }}>
                       <div 
                         className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto cursor-grab active:cursor-grabbing"
                         draggable={true}

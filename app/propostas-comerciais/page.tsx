@@ -1324,7 +1324,7 @@ export default function PropostasComerciaisDashboard() {
                               const isLast = idx === orderedStatusCols.length - 1;
                               return (
                                 <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
-                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedStatusCols.length - idx), boxShadow: '0 -100px 0 0 #f8fafc' }}>
+                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedStatusCols.length - idx) }}>
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}
@@ -1419,7 +1419,7 @@ export default function PropostasComerciaisDashboard() {
                               const isLast = idx === orderedVendedorCols.length - 1;
                               return (
                                 <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
-                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedVendedorCols.length - idx), boxShadow: '0 -100px 0 0 #f8fafc' }}>
+                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedVendedorCols.length - idx) }}>
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}
@@ -1521,7 +1521,7 @@ export default function PropostasComerciaisDashboard() {
                               const isLast = idx === kanbanSegmentoCols.length - 1;
                               return (
                                 <div key={col.id} className="flex flex-col flex-shrink-0" style={{ width: '274px' }}>
-                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (kanbanSegmentoCols.length - idx), boxShadow: '0 -100px 0 0 #f8fafc' }}>
+                                  <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (kanbanSegmentoCols.length - idx) }}>
                                   <KanbanColumnHeader
                                     key={col.id}
                                     label={col.label}
