@@ -30,6 +30,105 @@ const fmt = (v: number) =>
 const fmtRef = (num: number, versao: number) =>
   `FPV-${String(num).padStart(3, '0')}-REV-${String(versao).padStart(2, '0')}`;
 
+const tailwindColorMap: { [key: string]: string } = {
+  sky: '#0284c7',
+  blue: '#2563eb',
+  orange: '#ea580c',
+  amber: '#d97706',
+  emerald: '#059669',
+  green: '#16a34a',
+  red: '#dc2626',
+  rose: '#e11d48',
+  purple: '#9333ea',
+  violet: '#7c3aed',
+  yellow: '#ca8a04',
+  indigo: '#4f46e5',
+  pink: '#db2777',
+  teal: '#0d9488',
+  slate: '#475569',
+  gray: '#4b5563',
+};
+
+const resolveColorToHex = (color?: string): string => {
+  if (!color) return '#1B4D3E';
+  const lower = color.toLowerCase().trim();
+  if (lower.startsWith('#')) return lower;
+
+  if (lower.includes('bg-slate-100')) return '#f1f5f9';
+  if (lower.includes('bg-slate-200')) return '#e2e8f0';
+  if (lower.includes('bg-gray-100')) return '#f3f4f6';
+  if (lower.includes('bg-gray-200')) return '#e5e7eb';
+  if (lower.includes('bg-sky-100')) return '#e0f2fe';
+  if (lower.includes('bg-sky-200')) return '#bae6fd';
+  if (lower.includes('bg-orange-100')) return '#ffedd5';
+  if (lower.includes('bg-orange-200')) return '#fed7aa';
+  if (lower.includes('bg-green-100') || lower.includes('bg-emerald-100')) return '#dcfce7';
+  if (lower.includes('bg-green-200') || lower.includes('bg-emerald-200')) return '#bbf7d0';
+  if (lower.includes('bg-red-100')) return '#fee2e2';
+  if (lower.includes('bg-red-200')) return '#fecaca';
+  if (lower.includes('bg-purple-100')) return '#f3e8ff';
+  if (lower.includes('bg-purple-200')) return '#e9d5ff';
+  if (lower.includes('bg-blue-100')) return '#dbeafe';
+  if (lower.includes('bg-blue-200')) return '#bfdbfe';
+  if (lower.includes('bg-yellow-100')) return '#fef9c3';
+  if (lower.includes('bg-yellow-200')) return '#fef08a';
+  if (lower.includes('bg-amber-100')) return '#fef3c7';
+  if (lower.includes('bg-amber-200')) return '#fde68a';
+  if (lower.includes('bg-teal-100')) return '#ccfbf1';
+  if (lower.includes('bg-teal-200')) return '#99f6e4';
+  if (lower.includes('bg-indigo-100')) return '#e0e7ff';
+  if (lower.includes('bg-indigo-200')) return '#c7d2fe';
+  if (lower.includes('bg-violet-100')) return '#ede9fe';
+  if (lower.includes('bg-violet-200')) return '#ddd6fe';
+  if (lower.includes('bg-pink-100')) return '#fce7f3';
+  if (lower.includes('bg-pink-200')) return '#fbcfe8';
+  if (lower.includes('bg-rose-100')) return '#ffe4e6';
+  if (lower.includes('bg-rose-200')) return '#fecdd3';
+
+  if (tailwindColorMap[lower]) return tailwindColorMap[lower];
+  const stripped = lower.replace('bg-', '').split('-')[0];
+  return tailwindColorMap[stripped] || '#1B4D3E';
+};
+
+const normalizeHex = (hex: string) => {
+  let h = hex.replace('#', '');
+  if (h.length === 3) {
+    h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  }
+  return '#' + h;
+};
+
+const getContrastYIQ = (hex: string) => {
+  const normalized = normalizeHex(hex);
+  const r = parseInt(normalized.slice(1, 3), 16);
+  const g = parseInt(normalized.slice(3, 5), 16);
+  const b = parseInt(normalized.slice(5, 7), 16);
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return (yiq >= 140) ? 'black' : 'white';
+};
+
+const hexToRgba = (hex: string, alpha: number) => {
+  const normalized = normalizeHex(hex);
+  const r = parseInt(normalized.slice(1, 3), 16);
+  const g = parseInt(normalized.slice(3, 5), 16);
+  const b = parseInt(normalized.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const getDarkenedHexForText = (hex: string) => {
+  const normalized = normalizeHex(hex);
+  let r = parseInt(normalized.slice(1, 3), 16);
+  let g = parseInt(normalized.slice(3, 5), 16);
+  let b = parseInt(normalized.slice(5, 7), 16);
+
+  r = Math.max(0, Math.floor(r * 0.7));
+  g = Math.max(0, Math.floor(g * 0.7));
+  b = Math.max(0, Math.floor(b * 0.7));
+
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+};
+
+
 export default function PropostasComerciaisDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
