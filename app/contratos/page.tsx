@@ -581,6 +581,7 @@ function KanbanSegmentoColumn({ label, cards, isFirst = false, isLast = false, c
 export default function ContratosDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [contratos, setContratos] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('lista');
@@ -673,6 +674,7 @@ export default function ContratosDashboard() {
     if (segmentosRes && segmentosRes.success) setSegmentos(segmentosRes.segmentos);
     else if (Array.isArray(segmentosRes)) setSegmentos(segmentosRes);
     setLoading(false);
+    setHasLoadedOnce(true);
   };
 
   useEffect(() => { loadData(); }, []);
@@ -920,6 +922,22 @@ export default function ContratosDashboard() {
   };
 
   // ─── Render ────────────────────────────────────────────────────────────────
+  if (!hasLoadedOnce || !viewModeMounted) {
+    return (
+      <div className="fixed inset-0 z-[9999] bg-[#0F172A] flex items-center justify-center overflow-hidden font-sans">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 z-0">
+          <div className="w-[400px] h-[400px] bg-gradient-to-r from-[#1B4D3E] to-[#10B981] rounded-full blur-[100px] animate-pulse" />
+        </div>
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <div className="w-16 h-16 bg-[#1B4D3E]/30 rounded-2xl border border-[#10B981]/30 flex items-center justify-center animate-spin">
+            <TrendingUp className="text-[#10B981]" size={32} />
+          </div>
+          <span className="text-xs font-black uppercase tracking-[0.25em] text-[#10B981] animate-pulse">Carregando SmartBidHub...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ContratosDnDCtx.Provider value={ctxValue}>
       <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">

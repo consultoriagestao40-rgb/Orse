@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact, reorderStages, completeActivity } from './actions';
-import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign } from 'lucide-react';
+import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign, TrendingUp } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSegmentos, createSegmento } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
@@ -570,6 +570,7 @@ export default function LeadsKanban() {
   const [leads, setLeads] = useState<any[]>([]);
   const [segmentos, setSegmentos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showMetrics, setShowMetrics] = useState(true);
 
@@ -845,7 +846,10 @@ export default function LeadsKanban() {
 
       isFirstLoadRef.current = false;
     }
-    if (!silent) setLoading(false);
+    if (!silent) {
+      setLoading(false);
+      setHasLoadedOnce(true);
+    }
   };
 
   const handleCreateStage = (insertAfterId?: string) => {
@@ -1494,7 +1498,21 @@ export default function LeadsKanban() {
     ).length;
   }, 0);
 
-  if (loading) return <div className="p-8 text-slate-500">Carregando funil...</div>;
+  if (!hasLoadedOnce) {
+    return (
+      <div className="fixed inset-0 z-[9999] bg-[#0F172A] flex items-center justify-center overflow-hidden font-sans">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 z-0">
+          <div className="w-[400px] h-[400px] bg-gradient-to-r from-[#1B4D3E] to-[#10B981] rounded-full blur-[100px] animate-pulse" />
+        </div>
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <div className="w-16 h-16 bg-[#1B4D3E]/30 rounded-2xl border border-[#10B981]/30 flex items-center justify-center animate-spin">
+            <TrendingUp className="text-[#10B981]" size={32} />
+          </div>
+          <span className="text-xs font-black uppercase tracking-[0.25em] text-[#10B981] animate-pulse">Carregando SmartBidHub...</span>
+        </div>
+      </div>
+    );
+  }
 
   // Se não houver estágios, exibe aviso e botão para semear
   if (stages.length === 0) {

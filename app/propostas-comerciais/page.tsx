@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import { 
   FileText, Plus, Search, 
   LayoutList, LayoutGrid, UserSquare2,
-  Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer, Share2, Eye, Palette, Loader2
+  Edit2, Trash2, ArrowRightLeft, X, Building2, Tag, Presentation, Printer, Share2, Eye, Palette, Loader2, TrendingUp
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { transferirProposta, updateDocumentoStatusParam, createDocumentoStatus } from '@/app/propostas/actions';
@@ -132,6 +132,7 @@ const getDarkenedHexForText = (hex: string) => {
 export default function PropostasComerciaisDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [docs, setDocs] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('lista');
@@ -412,6 +413,7 @@ export default function PropostasComerciaisDashboard() {
       setSegmentos(segmentosRes);
     }
     setLoading(false);
+    setHasLoadedOnce(true);
   };
 
   const handleOpenCreateModal = async () => {
@@ -1097,6 +1099,22 @@ export default function PropostasComerciaisDashboard() {
       setCreateModal(prev => ({ ...prev, saving: false }));
     }
   };
+
+  if (!hasLoadedOnce || !viewModeMounted) {
+    return (
+      <div className="fixed inset-0 z-[9999] bg-[#0F172A] flex items-center justify-center overflow-hidden font-sans">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 z-0">
+          <div className="w-[400px] h-[400px] bg-gradient-to-r from-[#1B4D3E] to-[#10B981] rounded-full blur-[100px] animate-pulse" />
+        </div>
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <div className="w-16 h-16 bg-[#1B4D3E]/30 rounded-2xl border border-[#10B981]/30 flex items-center justify-center animate-spin">
+            <TrendingUp className="text-[#10B981]" size={32} />
+          </div>
+          <span className="text-xs font-black uppercase tracking-[0.25em] text-[#10B981] animate-pulse">Carregando SmartBidHub...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
