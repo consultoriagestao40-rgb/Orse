@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact } from './actions';
-import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone } from 'lucide-react';
+import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSegmentos, createSegmento } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
@@ -224,7 +224,8 @@ const LeadCard = ({
   handleDragEnd, 
   setSelectedLead, 
   showStageInFooter = false,
-  onOwnerClick
+  onOwnerClick,
+  refreshData
 }: { 
   lead: any; 
   handleDragStart: (e: React.DragEvent, id: string) => void; 
@@ -232,10 +233,79 @@ const LeadCard = ({
   setSelectedLead: (lead: any) => void; 
   showStageInFooter?: boolean; 
   onOwnerClick?: (e: React.MouseEvent<HTMLElement>, leadId: string) => void;
+  refreshData?: () => void;
 }) => {
+  const [showActivityPopup, setShowActivityPopup] = useState(false);
+  const popupRef = useRef<HTMLDivElement>(null);
+
   const unreadCount = lead.whatsappMessages?.filter(
     (m: any) => m.direction === 'INBOUND' && m.status !== 'READ'
   ).length || 0;
+
+  useEffect(() => {
+    if (!showActivityPopup) return;
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
+        setShowActivityPopup(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [showActivityPopup]);
+
+  const checkActivityStatus = (activity: any) => {
+    if (!activity || !activity.dataInicio) return 'none';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const actDate = new Date(activity.dataInicio);
+    actDate.setHours(0, 0, 0, 0);
+
+    if (actDate.getTime() < today.getTime()) {
+      return 'overdue';
+    } else {
+      return 'future';
+    }
+  };
+
+  const nextActivity = lead.activities?.[0];
+  const status = checkActivityStatus(nextActivity);
+
+  let buttonClass = "border border-dashed border-slate-300 text-slate-400 hover:border-slate-400 hover:bg-slate-50";
+  let icon = <Plus size={10} strokeWidth={3} className="shrink-0" />;
+
+  if (status === 'overdue') {
+    buttonClass = "bg-rose-500 hover:bg-rose-600 text-white shadow-sm shadow-rose-500/20";
+    icon = <ChevronLeft size={10} strokeWidth={3} className="text-white shrink-0" />;
+  } else if (status === 'future') {
+    buttonClass = "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20";
+    icon = <ChevronRight size={10} strokeWidth={3} className="text-white shrink-0" />;
+  }
+
+  const handleActivityButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowActivityPopup(!showActivityPopup);
+  };
+
+  const handleCompleteActivity = async (e: React.MouseEvent, activityId: string) => {
+    e.stopPropagation();
+    try {
+      await deleteActivity(activityId);
+      setShowActivityPopup(false);
+      if (refreshData) {
+        refreshData();
+      }
+    } catch (err) {
+      console.error('Erro ao concluir atividade:', err);
+    }
+  };
+
+  const handleAddActivityClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowActivityPopup(false);
+    setSelectedLead(lead);
+  };
 
   return (
     <div
@@ -243,7 +313,7 @@ const LeadCard = ({
       onDragStart={(e) => handleDragStart(e, lead.id)}
       onDragEnd={handleDragEnd}
       onClick={() => setSelectedLead(lead)}
-      className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing text-left flex flex-col justify-between h-40"
+      className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing text-left flex flex-col justify-between h-32 relative overflow-visible"
     >
       {/* Top Section */}
       <div className="flex flex-col gap-1 min-w-0">
@@ -264,25 +334,75 @@ const LeadCard = ({
         </div>
 
         <p className="text-sm font-bold text-slate-800 leading-tight truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</p>
-        
+      </div>
+
+      {/* Middle Section */}
+      <div className="flex items-center justify-between mt-0.5 relative">
         <span className="text-sm font-black text-[#1B4D3E]">{fmt(lead.valorEst || 0)}</span>
+        
+        {/* Activity Indicator Circle */}
+        <div className="relative">
+          <button
+            onClick={handleActivityButtonClick}
+            className={`w-5 h-5 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 ${buttonClass}`}
+            title={status === 'none' ? 'Agendar atividade' : 'Ver atividades'}
+          >
+            {icon}
+          </button>
+
+          {/* Activity Dropdown Popup */}
+          {showActivityPopup && (
+            <div 
+              ref={popupRef}
+              onClick={e => e.stopPropagation()} // Prevent clicking popup from opening lead modal
+              className="absolute right-0 top-full mt-2 w-64 bg-white border border-slate-200 shadow-xl rounded-xl p-3 z-50 text-left animate-in fade-in-50 zoom-in-95 duration-100"
+            >
+              {nextActivity ? (
+                <div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Próxima Atividade</div>
+                  <div className="flex items-start gap-2">
+                    <button
+                      onClick={(e) => handleCompleteActivity(e, nextActivity.id)}
+                      className="w-4.5 h-4.5 rounded-full border border-slate-300 flex items-center justify-center hover:border-emerald-500 hover:bg-emerald-50 cursor-pointer shrink-0 mt-0.5 group/check"
+                      title="Concluir atividade"
+                    >
+                      <CheckCircle2 size={10} className="text-transparent group-hover/check:text-emerald-500" />
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-slate-800 leading-tight line-clamp-2">{nextActivity.titulo}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1">
+                        <Clock size={10} />
+                        <span>{safeDate(nextActivity.dataInicio)}</span>
+                        {nextActivity.user?.nome && (
+                          <>
+                            <span>&bull;</span>
+                            <span className="truncate max-w-[80px]">{nextActivity.user.nome}</span>
+                          </>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="my-2 border-t border-slate-100" />
+                </div>
+              ) : (
+                <div className="py-2 text-center text-xs text-slate-400 font-medium">
+                  Nenhuma atividade pendente
+                </div>
+              )}
+              
+              <button
+                onClick={handleAddActivityClick}
+                className="text-xs font-bold text-[#1B4D3E] hover:underline flex items-center gap-1 cursor-pointer w-full text-left py-1"
+              >
+                <Plus size={12} /> Agendar uma atividade
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Bottom Section */}
       <div className="flex flex-col gap-2">
-        {lead.activities && lead.activities.length > 0 ? (
-          <div className="bg-amber-50/40 border border-amber-100/60 p-1.5 rounded-md text-[9px] flex items-center gap-1 text-amber-700 h-[26px]">
-            <CalendarDays size={10} className="text-amber-500 shrink-0" />
-            <span className="font-bold shrink-0">{lead.activities[0].tipo}:</span>
-            <span className="truncate flex-1 font-medium">{lead.activities[0].titulo}</span>
-            <span className="text-[8px] text-amber-600 font-bold bg-amber-100/70 px-1 py-0.5 rounded shrink-0">
-              {safeDate(lead.activities[0].dataInicio)}
-            </span>
-          </div>
-        ) : (
-          <div className="h-[26px]" />
-        )}
-
         <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
           <div 
             id={`lead-avatar-inline-owner-${lead.id}`}
@@ -1616,6 +1736,7 @@ export default function LeadsKanban() {
                                   setInlineOwnerAnchorEl(e.currentTarget);
                                   setInlineOwnerLeadId(leadId);
                                 }}
+                                refreshData={() => fetchData(true)}
                               />
                             ))
                           )}
@@ -1836,6 +1957,7 @@ export default function LeadsKanban() {
                                 setInlineOwnerAnchorEl(e.currentTarget);
                                 setInlineOwnerLeadId(leadId);
                               }}
+                              refreshData={() => fetchData(true)}
                             />
                           ))}
                         </div>
@@ -2059,6 +2181,7 @@ export default function LeadsKanban() {
                                   setInlineOwnerAnchorEl(e.currentTarget);
                                   setInlineOwnerLeadId(leadId);
                                 }}
+                                refreshData={() => fetchData(true)}
                               />
                             ))
                           )}
