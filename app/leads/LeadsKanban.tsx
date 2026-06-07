@@ -243,16 +243,16 @@ const LeadCard = ({
       onDragStart={(e) => handleDragStart(e, lead.id)}
       onDragEnd={handleDragEnd}
       onClick={() => setSelectedLead(lead)}
-      className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing text-left flex flex-col justify-between h-[148px]"
+      className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing text-left flex flex-col justify-between h-40"
     >
       {/* Top Section */}
-      <div className="flex flex-col gap-1.5 min-w-0">
+      <div className="flex flex-col gap-1 min-w-0">
         <div className="flex items-start justify-between gap-2 mb-0.5">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg shrink-0">
-              <Building size={13} className="text-[#1B4D3E]" />
+          <div className="flex items-center gap-1.5 min-w-0">
+            <div className="p-1 bg-[#1B4D3E]/8 rounded-md shrink-0">
+              <Building size={12} className="text-[#1B4D3E]" />
             </div>
-            <span className="text-xs font-black text-slate-700 tracking-wide uppercase truncate max-w-[150px]">
+            <span className="text-[10px] font-black text-slate-700 tracking-wide uppercase truncate max-w-[150px]">
               {lead.segmento || 'SEM SEGMENTO'}
             </span>
           </div>
@@ -269,7 +269,7 @@ const LeadCard = ({
       </div>
 
       {/* Bottom Section */}
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-2">
         {lead.activities && lead.activities.length > 0 ? (
           <div className="bg-amber-50/40 border border-amber-100/60 p-1.5 rounded-md text-[9px] flex items-center gap-1 text-amber-700 h-[26px]">
             <CalendarDays size={10} className="text-amber-500 shrink-0" />
@@ -283,7 +283,7 @@ const LeadCard = ({
           <div className="h-[26px]" />
         )}
 
-        <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between">
+        <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
           <div 
             id={`lead-avatar-inline-owner-${lead.id}`}
             onClick={(e) => {
@@ -292,7 +292,7 @@ const LeadCard = ({
                 onOwnerClick(e, lead.id);
               }
             }}
-            className="flex items-center gap-1.5 hover:bg-slate-50 p-1 rounded-lg transition-colors cursor-pointer"
+            className="flex items-center gap-1 hover:bg-slate-50 p-0.5 rounded-md transition-colors cursor-pointer"
           >
             {lead.assignedTo?.avatarUrl ? (
               <img 
