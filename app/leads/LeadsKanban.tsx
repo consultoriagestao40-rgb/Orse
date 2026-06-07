@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact, reorderStages, completeActivity } from './actions';
-import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign, TrendingUp } from 'lucide-react';
+import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact, reorderStages, completeActivity, archiveLead } from './actions';
+import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign, TrendingUp, Archive } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSegmentos, createSegmento } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
@@ -751,7 +751,19 @@ export default function LeadsKanban() {
   useEffect(() => {
     fetchData();
     const interval = setInterval(() => fetchData(true), 5000);
-    return () => clearInterval(interval);
+    
+    const handleGlobalDragEnd = () => {
+      setIsDragging(false);
+      setDraggedStageId(null);
+      setDraggedOverBeforeStageId(null);
+      setDraggedOverStageId(null);
+    };
+    window.addEventListener('dragend', handleGlobalDragEnd);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('dragend', handleGlobalDragEnd);
+    };
   }, []);
 
   useEffect(() => {
@@ -948,6 +960,7 @@ export default function LeadsKanban() {
 
   const handleDrop = async (e: React.DragEvent, stageId: string) => {
     e.preventDefault();
+    setIsDragging(false);
     setDraggedOverStageId(null);
     const leadId = e.dataTransfer.getData('leadId');
     if (!leadId) return;
@@ -1257,6 +1270,22 @@ export default function LeadsKanban() {
 
     const lead = leads.find(l => l.id === leadId);
     if (lead) openConvertModal(lead);
+  };
+  
+  const handleDropArchive = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const leadId = e.dataTransfer.getData('leadId');
+    if (!leadId) return;
+
+    if (confirm('Deseja realmente arquivar este lead? Ele será movido para a coluna Arquivado.')) {
+      const res = await archiveLead(leadId);
+      if (res.success) {
+        fetchData();
+      } else {
+        alert(res.error || 'Erro ao arquivar lead');
+      }
+    }
   };
   const handleCreateLead = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -2754,6 +2783,16 @@ export default function LeadsKanban() {
               <Trash2 size={24} />
             </div>
             <span className="text-white font-bold tracking-widest uppercase text-sm">Excluir Lead</span>
+          </div>
+          <div 
+            className="flex-1 flex flex-col items-center justify-center border-r border-slate-700/50 hover:bg-amber-500/20 group transition-colors cursor-pointer"
+            onDragOver={handleDragOver}
+            onDrop={handleDropArchive}
+          >
+            <div className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
+              <Archive size={24} />
+            </div>
+            <span className="text-white font-bold tracking-widest uppercase text-sm">Arquivar Lead</span>
           </div>
           <div 
             className="flex-1 flex flex-col items-center justify-center hover:bg-emerald-500/20 group transition-colors cursor-pointer"

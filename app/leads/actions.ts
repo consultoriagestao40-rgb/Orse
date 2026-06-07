@@ -834,3 +834,56 @@ export async function reorderStages(stageIds: string[]) {
     return { success: false, error: error.message || String(error) };
   }
 }
+
+export async function archiveLead(leadId: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    // 1. Procurar ou criar a etapa "Arquivado"
+    let archivedStage = await prisma.leadStage.findFirst({
+      where: {
+        nome: {
+          equals: 'Arquivado',
+          mode: 'insensitive'
+        }
+      }
+    });
+
+    if (!archivedStage) {
+      // Obter a maior ordem atual
+      const lastStage = await prisma.leadStage.findFirst({
+        orderBy: { ordem: 'desc' }
+      });
+      const nextOrdem = lastStage ? lastStage.ordem + 1 : 0;
+
+      archivedStage = await prisma.leadStage.create({
+        data: {
+          nome: 'Arquivado',
+          ordem: nextOrdem,
+          color: '#64748B' // slate color
+        }
+      });
+    }
+
+    // 2. Mover o lead para a etapa "Arquivado"
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: { stageId: archivedStage.id }
+    });
+
+    // 3. Registrar no histórico do lead
+    await prisma.leadHistory.create({
+      data: {
+        leadId,
+        tipo: 'MUDANCA_FASE',
+        descricao: `Movido para a fase: Arquivado por ${user.nome}`
+      }
+    });
+
+    revalidatePath('/leads');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || String(error) };
+  }
+}
