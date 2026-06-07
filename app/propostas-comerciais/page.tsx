@@ -570,7 +570,7 @@ export default function PropostasComerciaisDashboard() {
       }}
       onDragEnd={handleDragEnd}
       onClick={() => router.push(`/propostas-comerciais/${doc.id}`)}
-      className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing flex flex-col justify-between h-[112px] text-left relative overflow-visible"
+      className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing flex flex-col justify-between h-[120px] text-left relative overflow-visible"
     >
       <div>
         <div className="flex items-start justify-between gap-2 mb-1">
@@ -1075,7 +1075,7 @@ export default function PropostasComerciaisDashboard() {
         >
           <div className="flex flex-col gap-1.5 flex-1">
             {!draggedStageId && draggedOverStageId === label && (
-              <div className="bg-slate-100/70 border-2 border-dashed border-[#1B4D3E]/30 rounded-lg h-[112px] w-full animate-pulse flex items-center justify-center">
+              <div className="bg-slate-100/70 border-2 border-dashed border-[#1B4D3E]/30 rounded-lg h-[120px] w-full animate-pulse flex items-center justify-center">
                 <span className="text-[10px] font-black text-[#1B4D3E]/60 uppercase tracking-widest animate-pulse">Soltar aqui</span>
               </div>
             )}
