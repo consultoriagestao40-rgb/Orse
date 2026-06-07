@@ -743,3 +743,22 @@ export async function sendLeadEmail(
   }
 }
 
+export async function reorderStages(stageIds: string[]) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    await prisma.$transaction(
+      stageIds.map((id, index) =>
+        prisma.leadStage.update({
+          where: { id },
+          data: { ordem: index }
+        })
+      )
+    );
+    revalidatePath('/leads');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || String(error) };
+  }
+}

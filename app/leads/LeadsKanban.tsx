@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact } from './actions';
+import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact, reorderStages } from './actions';
 import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSegmentos, createSegmento } from '@/app/admin/settings/actions';
@@ -645,6 +645,9 @@ export default function LeadsKanban() {
   const [editingSegmentoId, setEditingSegmentoId] = useState<string | null>(null);
   const [segmentoColors, setSegmentoColors] = useState<Record<string, string>>({});
   const [isDragging, setIsDragging] = useState(false);
+  const [draggedStageId, setDraggedStageId] = useState<string | null>(null);
+  const [draggedOverBeforeStageId, setDraggedOverBeforeStageId] = useState<string | null>(null);
+  const [draggedOverStageId, setDraggedOverStageId] = useState<string | null>(null);
 
   const knownUnreadMessageIdsRef = React.useRef<Set<string>>(new Set());
   const isFirstLoadRef = React.useRef(true);
@@ -839,14 +842,33 @@ export default function LeadsKanban() {
 
   const handleDragEnd = () => {
     setIsDragging(false);
+    setDraggedStageId(null);
+    setDraggedOverBeforeStageId(null);
+    setDraggedOverStageId(null);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault(); // Necessary to allow dropping
+  const handleDragOver = (e: React.DragEvent, stageId?: string) => {
+    e.preventDefault();
+    if (draggedStageId) {
+      if (stageId && stageId !== draggedStageId) {
+        setDraggedOverBeforeStageId(stageId);
+      }
+    } else {
+      if (stageId) {
+        setDraggedOverStageId(stageId);
+      }
+    }
+  };
+
+  const handleDragLeave = () => {
+    if (!draggedStageId) {
+      setDraggedOverStageId(null);
+    }
   };
 
   const handleDrop = async (e: React.DragEvent, stageId: string) => {
     e.preventDefault();
+    setDraggedOverStageId(null);
     const leadId = e.dataTransfer.getData('leadId');
     if (!leadId) return;
 
@@ -858,6 +880,36 @@ export default function LeadsKanban() {
 
     await updateLeadStage(leadId, stageId);
     fetchData(true);
+  };
+
+  const handleDropStage = async (draggedId: string, beforeId: string) => {
+    setDraggedStageId(null);
+    setDraggedOverBeforeStageId(null);
+    if (draggedId === beforeId) return;
+
+    const currentOrder = stages.map(s => s.id);
+    const draggedIndex = currentOrder.indexOf(draggedId);
+    if (draggedIndex === -1) return;
+
+    currentOrder.splice(draggedIndex, 1);
+
+    if (beforeId === 'last') {
+      currentOrder.push(draggedId);
+    } else {
+      const beforeIndex = currentOrder.indexOf(beforeId);
+      if (beforeIndex !== -1) {
+        currentOrder.splice(beforeIndex, 0, draggedId);
+      }
+    }
+
+    const reorderedStages = currentOrder.map(id => stages.find(s => s.id === id)).filter(Boolean);
+    setStages(reorderedStages);
+
+    const res = await reorderStages(currentOrder);
+    if (!res.success) {
+      alert("Erro ao reordenar colunas: " + res.error);
+      fetchData(true);
+    }
   };
 
   const handleStageChangeInModal = async (newStageId: string) => {
@@ -1481,15 +1533,41 @@ export default function LeadsKanban() {
               const textHex = getDarkenedHexForText(resolvedHex);
 
               return (
-                <div 
-                  key={stage.id} 
-                  className="flex flex-col flex-shrink-0"
-                  style={{ width: '274px' }}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, stage.id)}
-                >
-                  <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (stages.length - idx), boxShadow: '0 -100px 0 0 #f8fafc' }}>
-                    <div className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto">
+                <React.Fragment key={stage.id}>
+                  {draggedStageId && draggedOverBeforeStageId === stage.id && (
+                    <div 
+                      className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-slate-300 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => handleDropStage(draggedStageId, stage.id)}
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Mover para cá</span>
+                      </div>
+                    </div>
+                  )}
+                  <div 
+                    className={`flex flex-col flex-shrink-0 transition-opacity duration-200 ${draggedStageId === stage.id ? 'opacity-30' : 'opacity-100'}`}
+                    style={{ width: '274px' }}
+                    onDragOver={(e) => handleDragOver(e, stage.id)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (draggedStageId) {
+                        handleDropStage(draggedStageId, stage.id);
+                      } else {
+                        handleDrop(e, stage.id);
+                      }
+                    }}
+                  >
+                    <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex: 20 + (stages.length - idx), boxShadow: '0 -100px 0 0 #f8fafc' }}>
+                      <div 
+                        className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto cursor-grab active:cursor-grabbing"
+                        draggable={!editingStageId}
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('columnId', stage.id);
+                          setDraggedStageId(stage.id);
+                        }}
+                        onDragEnd={handleDragEnd}
+                      >
                       <svg 
                         className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
                         viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
@@ -1710,8 +1788,16 @@ export default function LeadsKanban() {
 
                       <div
                         className="px-[4px] py-3 rounded-b-2xl rounded-t-none"
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e, stage.id)}
+                        onDragOver={(e) => handleDragOver(e, stage.id)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          if (draggedStageId) {
+                            handleDropStage(draggedStageId, stage.id);
+                          } else {
+                            handleDrop(e, stage.id);
+                          }
+                        }}
                         style={{
                           width: '274px',
                           minWidth: '274px',
@@ -1727,30 +1813,71 @@ export default function LeadsKanban() {
                       >
                         <div className="flex flex-col gap-1.5">
                           {stageLeads.length === 0 ? (
-                            <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
-                              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem leads</p>
-                            </div>
+                            !draggedStageId && draggedOverStageId === stage.id ? (
+                              <div className="bg-slate-100/70 border-2 border-dashed border-[#1B4D3E]/30 rounded-xl h-28 w-full animate-pulse flex items-center justify-center">
+                                <span className="text-[10px] font-black text-[#1B4D3E]/60 uppercase tracking-widest animate-pulse">Soltar aqui</span>
+                              </div>
+                            ) : (
+                              <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem leads</p>
+                              </div>
+                            )
                           ) : (
-                            stageLeads.map(lead => (
-                              <LeadCard
-                                key={lead.id}
-                                lead={lead}
-                                handleDragStart={handleDragStart}
-                                handleDragEnd={handleDragEnd}
-                                setSelectedLead={setSelectedLead}
-                                onOwnerClick={(e, leadId) => {
-                                  setInlineOwnerAnchorEl(e.currentTarget);
-                                  setInlineOwnerLeadId(leadId);
-                                }}
-                                refreshData={() => fetchData(true)}
-                              />
-                            ))
+                            <>
+                              {!draggedStageId && draggedOverStageId === stage.id && (
+                                <div className="bg-slate-100/70 border-2 border-dashed border-[#1B4D3E]/30 rounded-xl h-28 w-full animate-pulse flex items-center justify-center">
+                                  <span className="text-[10px] font-black text-[#1B4D3E]/60 uppercase tracking-widest animate-pulse">Soltar aqui</span>
+                                </div>
+                              )}
+                              {stageLeads.map(lead => (
+                                <LeadCard
+                                  key={lead.id}
+                                  lead={lead}
+                                  handleDragStart={handleDragStart}
+                                  handleDragEnd={handleDragEnd}
+                                  setSelectedLead={setSelectedLead}
+                                  onOwnerClick={(e, leadId) => {
+                                    setInlineOwnerAnchorEl(e.currentTarget);
+                                    setInlineOwnerLeadId(leadId);
+                                  }}
+                                  refreshData={() => fetchData(true)}
+                                />
+                              ))}
+                            </>
                           )}
                         </div>
                       </div>
                     </div>
+                  </React.Fragment>
                 );
               })}
+
+              {draggedStageId && draggedOverBeforeStageId === 'last' && (
+                <div 
+                  className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-slate-300 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => handleDropStage(draggedStageId, 'last')}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Mover para o fim</span>
+                  </div>
+                </div>
+              )}
+
+              {draggedStageId && draggedOverBeforeStageId !== 'last' && (
+                <div
+                  className="w-[60px] shrink-0 border border-dashed border-slate-300 hover:border-slate-400 bg-slate-100/20 hover:bg-slate-100/40 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1 cursor-pointer transition-colors"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDraggedOverBeforeStageId('last');
+                  }}
+                  onDrop={() => handleDropStage(draggedStageId, 'last')}
+                >
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider text-center rotate-180" style={{ writingMode: 'vertical-lr' }}>
+                    Soltar no fim
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           )}
