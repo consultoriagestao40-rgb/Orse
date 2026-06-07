@@ -100,3 +100,15 @@ main {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
 }
+
+/* Sidebar collapsed rules on initial SSR to avoid layout shift */
+body.sidebar-collapsed .sidebar-aside {
+  width: 5rem !important; /* 80px */
+}
+body.sidebar-collapsed .sidebar-topbar {
+  left: 5rem !important; /* 80px */
+}
+body.sidebar-collapsed .sidebar-widget-panel {
+  left: 5rem !important; /* 80px */
+}
+

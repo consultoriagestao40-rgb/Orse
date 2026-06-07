@@ -14,8 +14,22 @@ import { sendInternalMessage, getInternalMessages, markInternalMessagesAsRead, g
  
 const Sidebar = () => {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      const match = document.cookie.match(new RegExp("(^| )sb_sidebar_collapsed=([^;]+)"));
+      if (match) {
+        return match[2] === "true";
+      }
+      try {
+        return localStorage.getItem("sb_sidebar_collapsed") === "true";
+      } catch (_) {
+        return false;
+      }
+    }
+    return false;
+  });
   const [isTenantBlocked, setIsTenantBlocked] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && pathname) {
@@ -374,10 +388,14 @@ const Sidebar = () => {
         setUser({ nome: 'Cristiano Silva', role: 'USER', iniciais: 'CS' });
       }
 
-      const saved = localStorage.getItem('sb_sidebar_collapsed');
-      if (saved === 'true') {
-        setIsCollapsed(true);
+      if (isCollapsed) {
+        document.body.classList.add('sidebar-collapsed');
+      } else {
+        document.body.classList.remove('sidebar-collapsed');
       }
+      requestAnimationFrame(() => {
+        setIsMounted(true);
+      });
 
       // Buscar dados atualizados do usuário diretamente do banco de dados (evita cookies desatualizados)
       const fetchFreshUser = async () => {
@@ -917,6 +935,12 @@ const Sidebar = () => {
     setIsCollapsed(newState);
     if (typeof window !== 'undefined') {
       localStorage.setItem('sb_sidebar_collapsed', String(newState));
+      document.cookie = `sb_sidebar_collapsed=${newState}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+      if (newState) {
+        document.body.classList.add('sidebar-collapsed');
+      } else {
+        document.body.classList.remove('sidebar-collapsed');
+      }
     }
   };
 
@@ -1063,7 +1087,7 @@ const Sidebar = () => {
  
   return (
     <>
-      <aside className={`bg-white border-r border-slate-200 h-screen sticky top-0 flex flex-col shadow-sm transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+      <aside suppressHydrationWarning={true} className={`sidebar-aside bg-white border-r border-slate-200 h-screen sticky top-0 flex flex-col shadow-sm ${isMounted ? 'transition-all duration-300' : ''} ${isCollapsed ? 'w-20' : 'w-64'}`}>
       {/* Header */}
       <div className="p-6 border-b border-slate-50 relative flex items-center justify-between min-h-[96px] gap-2">
         {!isCollapsed ? (
@@ -1528,7 +1552,7 @@ const Sidebar = () => {
 
       {/* FIXED COUNTER BANNER AT THE TOP OF THE SCREEN */}
       {trialStatus?.isTrialActive && !trialStatus?.trialExpired && trialStatus?.hasContact && countdownTime && (
-        <div className={`fixed top-0 right-0 z-[48] bg-gradient-to-r from-[#1B4D3E] via-[#2A6D5A] to-[#1B4D3E] border-b border-emerald-500/20 text-white flex items-center justify-between px-6 py-2 h-14 shadow-lg transition-all duration-300 ${isCollapsed ? 'left-20' : 'left-64'}`}>
+        <div suppressHydrationWarning={true} className={`sidebar-topbar fixed top-0 right-0 z-[48] bg-gradient-to-r from-[#1B4D3E] via-[#2A6D5A] to-[#1B4D3E] border-b border-emerald-500/20 text-white flex items-center justify-between px-6 py-2 h-14 shadow-lg ${isMounted ? 'transition-all duration-300' : ''} ${isCollapsed ? 'left-20' : 'left-64'}`}>
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/10 border border-white/20 text-white/95">
               <Clock size={12} className="animate-pulse" />
@@ -2030,7 +2054,7 @@ const Sidebar = () => {
 
           {/* WIDGET FLUTUANTE DE WHATSAPP (CANTO INFERIOR DIREITO) */}
           {showWhatsAppWidget && (
-            <div className={`fixed top-3 right-14 bottom-0 bg-white shadow-2xl z-[160] flex flex-col transition-all duration-300 animate-in slide-in-from-right duration-300 font-sans border-t border-l border-slate-200 rounded-t-3xl ${
+            <div suppressHydrationWarning={true} className={`sidebar-widget-panel fixed top-3 right-14 bottom-0 bg-white shadow-2xl z-[160] flex flex-col ${isMounted ? 'transition-all duration-300' : ''} animate-in slide-in-from-right duration-300 font-sans border-t border-l border-slate-200 rounded-t-3xl ${
               isCollapsed ? 'left-20' : 'left-64'
             }`}>
               {/* External Close Button Tab on the Left Edge */}
@@ -2369,7 +2393,7 @@ const Sidebar = () => {
 
           {/* WIDGET FLUTUANTE DE CHAT INTERNO (CANTO INFERIOR DIREITO) */}
           {showChatWidget && (
-            <div className={`fixed top-3 right-14 bottom-0 bg-white shadow-2xl z-[160] flex flex-col transition-all duration-300 animate-in slide-in-from-right duration-300 font-sans border-t border-l border-slate-200 rounded-t-3xl border-t-0 border-x-0 border-solid ${
+            <div suppressHydrationWarning={true} className={`sidebar-widget-panel fixed top-3 right-14 bottom-0 bg-white shadow-2xl z-[160] flex flex-col ${isMounted ? 'transition-all duration-300' : ''} animate-in slide-in-from-right duration-300 font-sans border-t border-l border-slate-200 rounded-t-3xl border-t-0 border-x-0 border-solid ${
               isCollapsed ? 'left-20' : 'left-64'
             }`}>
               {/* External Close Button Tab on the Left Edge */}

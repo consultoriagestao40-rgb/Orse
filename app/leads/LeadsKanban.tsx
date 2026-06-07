@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact } from './actions';
-import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone } from 'lucide-react';
+import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSegmentos, createSegmento } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
@@ -586,7 +586,8 @@ export default function LeadsKanban() {
     segmento: '',
     telefone: '',
     email: '',
-    contatoNome: ''
+    contatoNome: '',
+    valorEst: 0
   });
 
   const [datePreset, setDatePreset] = useState('all');
@@ -925,7 +926,8 @@ export default function LeadsKanban() {
       nomeFantasia: editLeadForm.nomeFantasia,
       contatoNome: editLeadForm.contatoNome,
       telefone: editLeadForm.telefone,
-      email: editLeadForm.email
+      email: editLeadForm.email,
+      valorEst: editLeadForm.valorEst !== undefined ? Number(editLeadForm.valorEst) : undefined
     });
     if (res.success) {
       setSelectedLead(res.lead);
@@ -1081,7 +1083,7 @@ export default function LeadsKanban() {
     
     await createLead({ ...newLeadForm });
     setShowNewLead(false);
-    setNewLeadForm({ nomeFantasia: '', segmento: '', telefone: '', email: '', contatoNome: '' });
+    setNewLeadForm({ nomeFantasia: '', segmento: '', telefone: '', email: '', contatoNome: '', valorEst: 0 });
     fetchData();
   };
 
@@ -2348,6 +2350,10 @@ export default function LeadsKanban() {
                   <input value={newLeadForm.contatoNome} onChange={e => setNewLeadForm({...newLeadForm, contatoNome: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl" />
                 </div>
               </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Valor Estimado (R$)</label>
+                <input type="number" step="any" value={newLeadForm.valorEst || ''} onChange={e => setNewLeadForm({...newLeadForm, valorEst: parseFloat(e.target.value) || 0})} className="w-full p-2.5 border border-slate-200 rounded-xl" placeholder="Ex: 15000" />
+              </div>
               <button type="submit" className="w-full bg-[#1B4D3E] text-white p-3 rounded-xl font-bold mt-4">Salvar Lead</button>
             </form>
           </div>
@@ -2478,6 +2484,10 @@ export default function LeadsKanban() {
                           <label className="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">E-mail</label>
                           <input value={editLeadForm.email || ''} onChange={e => setEditLeadForm({...editLeadForm, email: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm text-slate-800" />
                         </div>
+                        <div>
+                          <label className="block text-[10px] text-slate-400 font-bold uppercase mb-0.5">Valor Estimado (R$)</label>
+                          <input type="number" step="any" value={editLeadForm.valorEst || ''} onChange={e => setEditLeadForm({...editLeadForm, valorEst: parseFloat(e.target.value) || 0})} className="w-full p-2 border border-slate-200 rounded-lg text-sm text-slate-800 font-bold text-[#1B4D3E]" />
+                        </div>
                       </div>
                     ) : (
                       <>
@@ -2502,6 +2512,11 @@ export default function LeadsKanban() {
                               <a href={`mailto:${selectedLead.email}`} className="hover:text-emerald-600 transition-colors truncate max-w-[200px] block" title={selectedLead.email}>{selectedLead.email}</a>
                             ) : '-'}
                           </div>
+                        </div>
+
+                        <div>
+                          <div className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 flex items-center gap-1"><DollarSign size={10}/> Valor Estimado</div>
+                          <div className="text-sm font-black text-[#1B4D3E]">{fmt(selectedLead.valorEst || 0)}</div>
                         </div>
                       </>
                     )}

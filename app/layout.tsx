@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+import { cookies } from "next/headers";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -23,11 +25,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const isCollapsed = cookieStore.get("sb_sidebar_collapsed")?.value === "true";
+
   return (
     <html
       lang="pt-BR"
@@ -160,7 +165,7 @@ export default function RootLayout({
           })();
         ` }} />
       </head>
-      <body className="min-h-full bg-[#F8FAFC]">{children}</body>
+      <body className={`min-h-full bg-[#F8FAFC] ${isCollapsed ? "sidebar-collapsed" : ""}`}>{children}</body>
     </html>
   );
 }
