@@ -1049,16 +1049,16 @@ export default function PropostasComerciaisDashboard() {
       `}} />
       <Sidebar />
 
-      <main className="flex-1 p-8 overflow-hidden h-screen flex flex-col bg-[#F8FAFC]">
-        <div className="max-w-full mx-auto space-y-6 flex-1 flex flex-col min-h-0 w-full">
+      <main className="flex-1 overflow-hidden h-screen flex flex-col bg-[#F8FAFC]">
+        <div className="flex-1 flex flex-col min-h-0 w-full">
 
           {/* HEADER */}
-          <header className="flex justify-between items-end border-b border-slate-300 pb-4 shrink-0">
+          <header className="px-8 pt-6 pb-4 flex justify-between items-end border-b border-slate-200 shrink-0 bg-white">
             <div>
-              <h1 className="text-2xl font-bold text-[#1B4D3E] tracking-wider uppercase flex items-center gap-2">
-                <Presentation size={24} /> Propostas Comerciais
+              <h1 className="text-xl md:text-2xl font-black text-slate-800 flex items-center gap-2">
+                <Presentation size={22} /> Propostas Comerciais
               </h1>
-              <p className="text-slate-500 text-sm mt-1">Gerador de documentos comerciais em PDF</p>
+              <p className="text-slate-500 text-xs md:text-sm mt-1">Gerador de documentos comerciais em PDF</p>
             </div>
             <div className="flex items-center gap-3 bell-header-spacing flex-shrink-0">
               <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm gap-1 flex-shrink-0">
@@ -1116,15 +1116,15 @@ export default function PropostasComerciaisDashboard() {
           </header>
 
           {/* KPIs */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
+          <div className="px-8 py-3 grid grid-cols-1 md:grid-cols-3 gap-3 shrink-0 bg-white border-b border-slate-100">
             {[
               { label: 'Propostas Geradas', value: activeCount.toString(), icon: Presentation, color: 'text-blue-600' },
               { label: 'Volume Negociado', value: fmt(totalValue), icon: FileText, color: 'text-[#1B4D3E]' },
               { label: 'Aprovadas', value: approvedCount.toString(), icon: Building2, color: 'text-indigo-600' },
             ].map((stat, i) => (
-              <div key={i} className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
-                <div className="p-3 bg-slate-50 rounded border border-slate-200">
-                  <stat.icon size={20} className={stat.color} />
+              <div key={i} className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center gap-3">
+                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                  <stat.icon size={18} className={stat.color} />
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{stat.label}</p>
@@ -1135,15 +1135,17 @@ export default function PropostasComerciaisDashboard() {
           </div>
 
           {/* BARRA DE BUSCA */}
-          <div className="relative max-w-sm shrink-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-            <input
-              type="text"
-              placeholder="Buscar por cliente ou ID FPV..."
-              className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:ring-1 focus:ring-[#1B4D3E] focus:outline-none shadow-sm"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="px-8 py-3 flex items-center gap-3 shrink-0 bg-white border-b border-slate-200">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input
+                type="text"
+                placeholder="Buscar por cliente ou ID FPV..."
+                className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:outline-none transition-all shadow-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
 
           {viewMode === 'lista' && (

@@ -915,20 +915,20 @@ export default function ContratosDashboard() {
     <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <Sidebar />
 
-      <main className="flex-1 p-8 overflow-hidden h-screen flex flex-col bg-[#F8FAFC]">
-        <div className="max-w-full mx-auto space-y-6 flex-1 flex flex-col min-h-0 w-full">
+      <main className="flex-1 overflow-hidden h-screen flex flex-col bg-[#F8FAFC]">
+        <div className="flex-1 flex flex-col min-h-0 w-full">
 
           {/* HEADER */}
-          <header className="flex justify-between items-end border-b border-slate-300 pb-4 shrink-0">
+          <header className="px-8 pt-6 pb-4 flex justify-between items-end border-b border-slate-300 shrink-0 bg-white">
             <div>
-              <h1 className="text-2xl font-bold text-[#1B4D3E] tracking-wider uppercase">Gestão de Contratos (CLM)</h1>
-              <p className="text-slate-500 text-sm mt-1">Ciclo de vida, Reajustes e Aditivos</p>
+              <h1 className="text-xl md:text-2xl font-black text-slate-800">Gestão de Contratos (CLM)</h1>
+              <p className="text-slate-500 text-xs md:text-sm mt-1">Ciclo de vida, Reajustes e Aditivos</p>
             </div>
             <div className="flex items-center gap-3 bell-header-spacing">
-              <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm gap-1">
+              <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-sm gap-1">
                 <button
                   onClick={() => handleViewModeChange('lista')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                     viewMode === 'lista' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
                   }`}
                 >
@@ -936,77 +936,77 @@ export default function ContratosDashboard() {
                 </button>
                 <button
                   onClick={() => handleViewModeChange('kanban-status')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                     viewMode === 'kanban-status' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
                   }`}
                 >
-                  <LayoutGrid size={14} /> Kanban
+                  <LayoutGrid size={14} /> Por Status
                 </button>
                 <button
                   onClick={() => handleViewModeChange('kanban-segmento')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                     viewMode === 'kanban-segmento' ? 'bg-[#1B4D3E] text-white shadow-sm' : 'text-amber-500 hover:text-amber-600'
                   }`}
                 >
-                  <Building size={14} /> Segmento
+                  <Building size={14} /> Por Segmento
                 </button>
               </div>
 
               <button
                 onClick={() => router.push('/contratos/templates')}
-                className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold py-2.5 px-6 rounded text-sm flex items-center gap-2 shadow-sm transition-colors"
+                className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold py-2 px-4 rounded-xl text-sm flex items-center gap-2 shadow-sm transition-colors"
               >
-                <FileText size={18} /> Minutas (Templates)
+                <FileText size={16} /> Minutas
               </button>
               
               <button
                 onClick={() => router.push('/contratos/novo')}
-                className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold py-2.5 px-6 rounded text-sm flex items-center gap-2 shadow-sm transition-colors"
+                className="bg-[#1B4D3E] hover:bg-[#13382d] text-white font-bold py-2 px-4 rounded-xl text-sm flex items-center gap-2 shadow-sm transition-colors"
               >
-                <Plus size={18} /> Novo Contrato
+                <Plus size={16} /> Novo Contrato
               </button>
             </div>
           </header>
 
           {/* KPIs */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 shrink-0">
-            <div className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
-              <div className="p-3 bg-amber-50 rounded border border-amber-200 text-amber-600"><AlertCircle size={20} /></div>
+          <div className="px-8 py-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 shrink-0 bg-white border-b border-slate-100">
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center gap-3">
+              <div className="p-2.5 bg-amber-50 rounded-lg border border-amber-200 text-amber-600"><AlertCircle size={18} /></div>
               <div>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Em Assinatura</p>
                 <p className="text-lg font-black text-slate-800 leading-none mt-1">{pendentesAssinatura.length}</p>
               </div>
             </div>
-            <div className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
-              <div className="p-3 bg-emerald-50 rounded border border-emerald-200 text-emerald-600"><CheckCircle size={20} /></div>
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center gap-3">
+              <div className="p-2.5 bg-emerald-50 rounded-lg border border-emerald-200 text-emerald-600"><CheckCircle size={18} /></div>
               <div>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Ativos (Vigentes)</p>
                 <p className="text-lg font-black text-slate-800 leading-none mt-1">{ativos.length}</p>
               </div>
             </div>
-            <div className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
-              <div className="p-3 bg-blue-50 rounded border border-blue-200 text-blue-600"><DollarSign size={20} /></div>
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center gap-3">
+              <div className="p-2.5 bg-blue-50 rounded-lg border border-blue-200 text-blue-600"><DollarSign size={18} /></div>
               <div>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Receita Mensal</p>
-                <p className="text-base font-black text-slate-800 leading-none mt-1">{fmt(valorMensalTotal)}</p>
+                <p className="text-sm font-black text-slate-800 leading-none mt-1">{fmt(valorMensalTotal)}</p>
               </div>
             </div>
-            <div className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
-              <div className="p-3 bg-indigo-50 rounded border border-indigo-200 text-indigo-600"><TrendingUp size={20} /></div>
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center gap-3">
+              <div className="p-2.5 bg-indigo-50 rounded-lg border border-indigo-200 text-indigo-600"><TrendingUp size={18} /></div>
               <div>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Valor Global</p>
-                <p className="text-base font-black text-slate-800 leading-none mt-1">{fmt(valorGlobalTotal)}</p>
+                <p className="text-sm font-black text-slate-800 leading-none mt-1">{fmt(valorGlobalTotal)}</p>
               </div>
             </div>
-            <div className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
-              <div className="p-3 bg-orange-50 rounded border border-orange-200 text-orange-600"><AlertCircle size={20} /></div>
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center gap-3">
+              <div className="p-2.5 bg-orange-50 rounded-lg border border-orange-200 text-orange-600"><AlertCircle size={18} /></div>
               <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pendentes de Reajuste</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pend. Reajuste</p>
                 <p className="text-lg font-black text-slate-800 leading-none mt-1">{pendentesReajuste.length}</p>
               </div>
             </div>
-            <div className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
-              <div className="p-3 bg-slate-100 rounded border border-slate-300 text-slate-600"><Calendar size={20} /></div>
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center gap-3">
+              <div className="p-2.5 bg-slate-100 rounded-lg border border-slate-200 text-slate-600"><Calendar size={18} /></div>
               <div>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Encerrados</p>
                 <p className="text-lg font-black text-slate-800 leading-none mt-1">{encerrados.length}</p>
@@ -1015,13 +1015,13 @@ export default function ContratosDashboard() {
           </div>
 
           {/* BARRA DE BUSCA */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="px-8 py-3 flex items-center gap-3 shrink-0 bg-white border-b border-slate-200">
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input
                 type="text"
                 placeholder="Buscar contrato, cliente ou emissora..."
-                className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:ring-1 focus:ring-[#1B4D3E] focus:outline-none shadow-sm"
+                className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:outline-none transition-all shadow-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -1030,7 +1030,7 @@ export default function ContratosDashboard() {
 
           {/* VISUALIZAÇÃO EM LISTA */}
           {viewMode === 'lista' && (
-            <div className="bg-white rounded-md shadow-sm border border-slate-300 overflow-hidden flex-1 flex flex-col min-h-0 w-full">
+            <div className="bg-white overflow-hidden flex-1 flex flex-col min-h-0 w-full">
               <div className="overflow-auto flex-1 min-h-0">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -1134,8 +1134,8 @@ export default function ContratosDashboard() {
 
           {/* KANBAN POR STATUS */}
           {viewMode === 'kanban-status' && (
-            <div className="flex-1 min-h-0 overflow-x-auto pb-4">
-              <div className="flex gap-[3px] min-w-max items-stretch h-full">
+            <div className="flex flex-col flex-1 py-6 pl-2 pr-1 bg-slate-50 overflow-x-auto overflow-y-hidden min-h-0">
+              <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch h-full">
                 {statusList.map((status, index) => (
                   <KanbanColumn key={status} status={status} isFirst={index === 0} isLast={index === statusList.length - 1} />
                 ))}
@@ -1145,8 +1145,8 @@ export default function ContratosDashboard() {
 
           {/* KANBAN POR SEGMENTO */}
           {viewMode === 'kanban-segmento' && (
-            <div className="flex-1 min-h-0 overflow-x-auto pb-4">
-              <div className="flex gap-[3px] min-w-max items-stretch h-full">
+            <div className="flex flex-col flex-1 py-6 pl-2 pr-1 bg-slate-50 overflow-x-auto overflow-y-hidden min-h-0">
+              <div className="flex gap-[3px] min-w-max pt-0 mt-0 items-stretch h-full">
                 {kanbanSegmentoCols.map((col, index) => (
                   <KanbanSegmentoColumn
                     key={col.id}

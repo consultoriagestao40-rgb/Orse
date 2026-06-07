@@ -20,7 +20,7 @@ import {
   updatePropostaStatusParam, getPipelinePageData
 } from '@/app/propostas/actions';
 import UserSelectPopover from '@/components/UserSelectPopover';
-import { getSegmentos } from '@/app/admin/settings/actions';
+import { getSegmentos, createSegmento } from '@/app/admin/settings/actions';
 import { updateCliente } from '@/app/clientes/actions';
 import { Building } from 'lucide-react';
 
@@ -202,6 +202,30 @@ function ProposalsDashboard() {
       setSegmentos(segmentosRes);
     }
     setLoading(false);
+  };
+
+  const handleCreateSegmento = () => {
+    setCustomModal({
+      isOpen: true,
+      title: 'Novo Segmento',
+      placeholder: 'Nome do novo segmento (ex: INDUSTRIAS)',
+      type: 'prompt',
+      onConfirm: async (nome) => {
+        if (!nome.trim()) return;
+        const res = await createSegmento(nome.trim());
+        if (res.success) {
+          loadData();
+        } else {
+          setCustomModal({
+            isOpen: true,
+            title: 'Erro ao Criar Segmento',
+            message: res.error || 'Erro desconhecido',
+            type: 'alert',
+            onConfirm: () => {}
+          });
+        }
+      }
+    });
   };
 
   useEffect(() => { loadData(); }, []);
@@ -898,7 +922,7 @@ function ProposalsDashboard() {
 
             {/* Lado direito: botões centralizados verticalmente */}
             <div className="flex items-center gap-1.5 shrink-0">
-              {isStatus && onCreateStatus && (
+              {(isStatus || isSegmento) && onCreateStatus && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -906,7 +930,7 @@ function ProposalsDashboard() {
                   }}
                   className="p-1 rounded-full transition-all duration-150 opacity-0 group-hover/title:opacity-100 flex items-center justify-center cursor-pointer hover:bg-black/5"
                   style={{ color: 'inherit' }}
-                  title="Criar Nova Etapa"
+                  title={isStatus ? "Criar Nova Etapa" : "Criar Novo Segmento"}
                   type="button"
                 >
                   <Plus size={14} />
@@ -1143,14 +1167,14 @@ function ProposalsDashboard() {
       `}} />
       <Sidebar />
 
-      <main className="flex-1 p-8 overflow-hidden h-screen flex flex-col bg-[#F8FAFC]">
-        <div className="max-w-full mx-auto space-y-6 flex-1 flex flex-col min-h-0 w-full">
+      <main className="flex-1 overflow-hidden h-screen flex flex-col bg-[#F8FAFC]">
+        <div className="flex-1 flex flex-col min-h-0 w-full">
 
           {/* HEADER */}
-          <header className="flex justify-between items-end border-b border-slate-300 pb-4 shrink-0">
+          <header className="px-8 pt-6 pb-4 flex justify-between items-end border-b border-slate-200 shrink-0 bg-white">
             <div>
-              <h1 className="text-2xl font-bold text-[#1B4D3E] tracking-wider uppercase">FPV - Gestão de Formação de Preço de Vendas</h1>
-              <p className="text-slate-500 text-sm mt-1">Engenharia de Custos e Controladoria de Facilities</p>
+              <h1 className="text-xl md:text-2xl font-black text-slate-800">FPV - Gestão de Formação de Preço de Vendas</h1>
+              <p className="text-slate-500 text-xs md:text-sm mt-1">Engenharia de Custos e Controladoria de Facilities</p>
             </div>
             <div className="flex items-center gap-3 bell-header-spacing flex-shrink-0">
               {/* Alternador de visualização */}
@@ -1211,16 +1235,16 @@ function ProposalsDashboard() {
           </header>
 
           {/* KPIs */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
+          <div className="px-8 py-3 grid grid-cols-1 md:grid-cols-4 gap-3 shrink-0 bg-white border-b border-slate-100">
             {[
               { label: 'Propostas Ativas', value: activeCount.toString(), icon: FileText, color: 'text-blue-600' },
               { label: 'Volume Mensal', value: fmt(monthlyVolume), icon: TrendingUp, color: 'text-[#1B4D3E]' },
               { label: 'Clientes Base', value: clientsCount.toString(), icon: Users, color: 'text-indigo-600' },
               { label: 'Aguardando Revisão', value: revisionCount.toString().padStart(2, '0'), icon: Clock, color: 'text-orange-600' },
             ].map((stat, i) => (
-              <div key={i} className="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex items-center gap-4">
-                <div className="p-3 bg-slate-50 rounded border border-slate-200">
-                  <stat.icon size={20} className={stat.color} />
+              <div key={i} className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center gap-3">
+                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                  <stat.icon size={18} className={stat.color} />
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{stat.label}</p>
@@ -1231,13 +1255,13 @@ function ProposalsDashboard() {
           </div>
 
           {/* BARRA DE BUSCA (sempre visível) */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="px-8 py-3 flex items-center gap-3 shrink-0 bg-white border-b border-slate-200">
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input
                 type="text"
                 placeholder="Buscar proposta, cliente ou vendedor..."
-                className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:ring-1 focus:ring-[#1B4D3E] focus:outline-none shadow-sm"
+                className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-emerald-500 focus:outline-none transition-all shadow-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -1639,6 +1663,7 @@ function ProposalsDashboard() {
                                       localStorage.setItem(`kanban-segmento-color-${col.label}`, newColor);
                                       setSegmentoColors(prev => ({ ...prev, [col.label]: newColor }));
                                     }}
+                                    onCreateStatus={col.id !== 'unassigned' ? handleCreateSegmento : undefined}
                                   />
                                   <KanbanColumnCards
                                     key={col.id}
