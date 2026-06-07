@@ -1215,7 +1215,7 @@ function ProposalsDashboard() {
             overflowY: 'auto',
           }}
         >
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
             {!draggedStageId && draggedOverStageId === label && (
               <div className="bg-slate-100/70 border-2 border-dashed border-[#1B4D3E]/30 rounded-lg h-[136px] w-full animate-pulse flex items-center justify-center">
                 <span className="text-[10px] font-black text-[#1B4D3E]/60 uppercase tracking-widest animate-pulse">Soltar aqui</span>
