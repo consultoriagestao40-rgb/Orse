@@ -859,15 +859,15 @@ function ProposalsDashboard() {
               color: contrast === 'white' ? '#ffffff' : '#0f172a',
             }}
           >
-            <div className="flex items-center justify-between w-full min-w-0">
+            <div className="flex items-center justify-between w-full min-w-0 h-6">
               {isStatus ? (
-                <span className="text-sm font-black uppercase tracking-wider truncate max-w-[160px]">
+                <span className="text-sm font-black uppercase tracking-wider truncate max-w-[160px] leading-none">
                   {label}
                 </span>
               ) : isSegmento ? (
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   <Building size={14} className="shrink-0" style={{ color: textHex }} />
-                  <span className="text-sm font-black uppercase tracking-wider truncate">
+                  <span className="text-sm font-black uppercase tracking-wider truncate leading-none">
                     {label}
                   </span>
                 </div>
@@ -884,7 +884,7 @@ function ProposalsDashboard() {
                       {label.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                     </div>
                   )}
-                  <span className="text-sm font-black uppercase tracking-wider truncate">
+                  <span className="text-sm font-black uppercase tracking-wider truncate leading-none">
                     {label}
                   </span>
                 </div>
@@ -1401,7 +1401,7 @@ function ProposalsDashboard() {
               <>
                 {/* ── KANBAN POR STATUS ─────────────────────────────────────────────── */}
                 {viewMode === 'kanban-status' && (
-                  <div>
+                  <div className="flex-1 flex flex-col min-h-0">
                     {loading ? (
                       <>
                         <div className="flex items-center gap-2 mb-4">
@@ -1482,7 +1482,7 @@ function ProposalsDashboard() {
 
                 {/* ── KANBAN POR VENDEDOR ───────────────────────────────────────────── */}
                 {viewMode === 'kanban-vendedor' && (
-                  <div>
+                  <div className="flex-1 flex flex-col min-h-0">
                     {loading ? (
                       <>
                         <div className="flex items-center gap-2 mb-4">
@@ -1580,7 +1580,7 @@ function ProposalsDashboard() {
 
                 {/* ── KANBAN POR SEGMENTO ───────────────────────────────────────────── */}
                 {viewMode === 'kanban-segmento' && (
-                  <div>
+                  <div className="flex-1 flex flex-col min-h-0">
                     {loading ? (
                       <>
                         <div className="flex items-center gap-2 mb-4">

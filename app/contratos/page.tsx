@@ -418,8 +418,8 @@ export default function ContratosDashboard() {
               className={`absolute inset-0 z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
               style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
             >
-              <div className="flex items-center justify-between w-full min-w-0">
-                <span className="text-sm font-black uppercase tracking-wider truncate max-w-[160px]">
+              <div className="flex items-center justify-between w-full min-w-0 h-6">
+                <span className="text-sm font-black uppercase tracking-wider truncate max-w-[160px] leading-none">
                   {status}
                 </span>
 
@@ -571,20 +571,17 @@ export default function ContratosDashboard() {
           )}
         </div>
       </div>
-      <div 
-        className="flex-1 w-[306px] flex flex-col items-start min-h-0 overflow-y-auto"
-          onDragOver={(e) => { e.preventDefault(); }}
-          onDrop={async (e) => {
-            e.preventDefault();
-            const id = e.dataTransfer.getData('text/plain');
-            if (id) {
-              setContratos(prev => prev.map(c => c.id === id ? { ...c, status } : c));
-              await updateContratoStatus(id, status);
-            }
-          }}
-        >
           <div
-            className="w-full flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+            className="w-[306px] flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none min-h-0 overflow-y-auto"
+            onDragOver={(e) => { e.preventDefault(); }}
+            onDrop={async (e) => {
+              e.preventDefault();
+              const id = e.dataTransfer.getData('text/plain');
+              if (id) {
+                setContratos(prev => prev.map(c => c.id === id ? { ...c, status } : c));
+                await updateContratoStatus(id, status);
+              }
+            }}
             style={{
               width: '306px',
               minWidth: '306px',
@@ -664,7 +661,6 @@ export default function ContratosDashboard() {
           </div>
         </div>
       </div>
-      </div>
     );
   };
 
@@ -704,10 +700,10 @@ export default function ContratosDashboard() {
               className={`absolute inset-0 z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
               style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
             >
-              <div className="flex items-center justify-between w-full min-w-0">
+              <div className="flex items-center justify-between w-full min-w-0 h-6">
                 <div className="flex items-center gap-1.5 min-w-0 flex-1">
                   <Building size={14} className="shrink-0" style={{ color: 'inherit' }} />
-                  <span className="text-sm font-black uppercase tracking-wider truncate">
+                  <span className="text-sm font-black uppercase tracking-wider truncate leading-none">
                     {label}
                   </span>
                 </div>
@@ -809,35 +805,32 @@ export default function ContratosDashboard() {
           )}
         </div>
       </div>
-      <div 
-        className="flex-1 w-[306px] flex flex-col items-start min-h-0 overflow-y-auto"
-          onDragOver={(e) => { e.preventDefault(); }}
-          onDrop={async (e) => {
-            e.preventDefault();
-            const id = e.dataTransfer.getData('text/plain');
-            if (id) {
-              const newSegment = label === 'Sem Segmento' ? '' : label;
-              const targetContrato = contratos.find(c => c.id === id);
-              if (targetContrato) {
-                setContratos(prev => prev.map(c => c.id === id ? {
-                  ...c,
-                  client: c.client ? { ...c.client, segmento: newSegment || null } : null
-                } : c));
-                if (targetContrato.clientId) {
-                  const res = await updateCliente(targetContrato.clientId, { segmento: newSegment });
-                  if (!res.success) {
-                    alert(res.error || 'Erro ao atualizar o segmento do cliente');
-                    loadData();
+          <div
+            className="w-[306px] flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none min-h-0 overflow-y-auto"
+            onDragOver={(e) => { e.preventDefault(); }}
+            onDrop={async (e) => {
+              e.preventDefault();
+              const id = e.dataTransfer.getData('text/plain');
+              if (id) {
+                const newSegment = label === 'Sem Segmento' ? '' : label;
+                const targetContrato = contratos.find(c => c.id === id);
+                if (targetContrato) {
+                  setContratos(prev => prev.map(c => c.id === id ? {
+                    ...c,
+                    client: c.client ? { ...c.client, segmento: newSegment || null } : null
+                  } : c));
+                  if (targetContrato.clientId) {
+                    const res = await updateCliente(targetContrato.clientId, { segmento: newSegment });
+                    if (!res.success) {
+                      alert(res.error || 'Erro ao atualizar o segmento do cliente');
+                      loadData();
+                    }
+                  } else {
+                    alert('Este contrato não tem um cliente associado no banco de dados para salvar o segmento.');
                   }
-                } else {
-                  alert('Este contrato não tem um cliente associado no banco de dados para salvar o segmento.');
                 }
               }
-            }
-          }}
-        >
-          <div
-            className="w-full flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+            }}
             style={{
               width: '306px',
               minWidth: '306px',
@@ -916,7 +909,6 @@ export default function ContratosDashboard() {
             )}
           </div>
         </div>
-      </div>
       </div>
     );
   };

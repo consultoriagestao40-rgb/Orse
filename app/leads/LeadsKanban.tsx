@@ -1350,8 +1350,8 @@ export default function LeadsKanban() {
                         className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
                         style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
                       >
-                        <div className="flex items-center justify-between w-full min-w-0">
-                          <h3 className="font-black uppercase tracking-wider text-sm truncate max-w-[160px]">
+                        <div className="flex items-center justify-between w-full min-w-0 h-6">
+                          <h3 className="font-black uppercase tracking-wider text-sm truncate max-w-[160px] leading-none">
                             {stage.nome}
                           </h3>
 
@@ -1545,13 +1545,10 @@ export default function LeadsKanban() {
                       </div>
                     </div>
 
-                  <div 
-                    className="flex-1 w-[274px] flex flex-col items-start min-h-0 overflow-y-auto"
-                      onDragOver={handleDragOver}
-                      onDrop={(e) => handleDrop(e, stage.id)}
-                    >
                       <div
-                        className="w-full flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+                        className="w-[274px] flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none min-h-0 overflow-y-auto"
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, stage.id)}
                         style={{
                           width: '274px',
                           minWidth: '274px',
@@ -1581,7 +1578,6 @@ export default function LeadsKanban() {
                         </div>
                       </div>
                     </div>
-                  </div>
                 );
               })}
             </div>
@@ -1632,7 +1628,7 @@ export default function LeadsKanban() {
                           className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
                           style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
                         >
-                          <div className="flex items-center justify-between w-full min-w-0">
+                          <div className="flex items-center justify-between w-full min-w-0 h-6">
                             <div className="flex items-center gap-1.5 min-w-0 flex-1">
                               {col.avatarUrl ? (
                                 <img 
@@ -1647,7 +1643,7 @@ export default function LeadsKanban() {
                               ) : (
                                 <User size={10} className="shrink-0" style={{ color: 'inherit' }} />
                               )}
-                              <h3 className="font-black uppercase tracking-wider text-sm truncate">
+                              <h3 className="font-black uppercase tracking-wider text-sm truncate leading-none">
                                 {col.label}
                               </h3>
                             </div>
@@ -1763,13 +1759,10 @@ export default function LeadsKanban() {
                       </div>
                     </div>
 
-                  <div 
-                    className="flex-1 w-[274px] flex flex-col items-start min-h-0 overflow-y-auto"
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDropVendedor(e, col.id)}
-                  >
                       <div
-                        className="w-full flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+                        className="w-[274px] flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none min-h-0 overflow-y-auto"
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDropVendedor(e, col.id)}
                         style={{
                           width: '274px',
                           minWidth: '274px',
@@ -1800,7 +1793,6 @@ export default function LeadsKanban() {
                         </div>
                       </div>
                     </div>
-                  </div>
                 );
               })}
             </div>
@@ -1851,10 +1843,10 @@ export default function LeadsKanban() {
                           className={`relative z-10 flex flex-col justify-center h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
                           style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
                         >
-                          <div className="flex items-center justify-between w-full min-w-0">
+                          <div className="flex items-center justify-between w-full min-w-0 h-6">
                             <div className="flex items-center gap-1.5 min-w-0 flex-1">
                               <Building size={12} className="shrink-0" style={{ color: 'inherit' }} />
-                              <h3 className="font-black uppercase tracking-wider text-sm truncate">
+                              <h3 className="font-black uppercase tracking-wider text-sm truncate leading-none">
                                 {col.label}
                               </h3>
                             </div>
@@ -1969,13 +1961,10 @@ export default function LeadsKanban() {
                       </div>
                     </div>
 
-                  <div 
-                    className="flex-1 w-[274px] flex flex-col items-start min-h-0 overflow-y-auto"
-                      onDragOver={handleDragOver}
-                      onDrop={(e) => handleDropSegmento(e, col.id)}
-                    >
                       <div
-                        className="w-full flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none"
+                        className="w-[274px] flex-1 flex flex-col px-[4px] py-3 rounded-b-2xl rounded-t-none min-h-0 overflow-y-auto"
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDropSegmento(e, col.id)}
                         style={{
                           width: '274px',
                           minWidth: '274px',
@@ -2006,7 +1995,6 @@ export default function LeadsKanban() {
                         </div>
                       </div>
                     </div>
-                  </div>
                 );
               })}
             </div>
