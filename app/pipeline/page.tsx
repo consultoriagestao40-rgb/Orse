@@ -812,11 +812,8 @@ function ProposalsDashboard() {
   ];
 
   // ── Cabeçalho da coluna ────────────────────────────────────────────────────
-  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onDragColumnStart, onDragColumnEnd, onDropColumn, onRenameColumn, onCreateStatus, isFirst = false, isLast = false }: {
+  const KanbanColumnHeader = ({ label, color, cards, total, type = 'status', statusId, onColorChange, onRenameColumn, onCreateStatus, isFirst = false, isLast = false }: {
     label: string; color?: string; cards: any[]; total: number; type?: 'status' | 'vendedor' | 'segmento'; statusId?: string; onColorChange?: (newColor: string) => void;
-    onDragColumnStart?: (e: React.DragEvent, label: string) => void;
-    onDragColumnEnd?: (e: React.DragEvent) => void;
-    onDropColumn?: (e: React.DragEvent, label: string) => void;
     onRenameColumn?: (newName: string) => Promise<void>;
     onCreateStatus?: (insertAfterLabel: string) => Promise<void>;
     isFirst?: boolean;
@@ -846,18 +843,8 @@ function ProposalsDashboard() {
 
     return (
       <div 
-        className="flex-shrink-0 w-[274px] shrink-0 relative cursor-grab active:cursor-grabbing transition-all select-none duration-200 hover:scale-[1.01] pointer-events-auto"
+        className="flex-shrink-0 w-[274px] shrink-0 relative select-none duration-200 hover:scale-[1.01] pointer-events-auto"
         data-col-label={label}
-        draggable="true"
-        onDragStart={(e) => {
-          const target = e.target as HTMLElement;
-          if (target.closest('button') || target.closest('select') || target.closest('input')) {
-            e.preventDefault();
-            return;
-          }
-          if (onDragColumnStart) onDragColumnStart(e, label);
-        }}
-        onDragEnd={onDragColumnEnd}
       >
         {/* Cabeçalho Chevron/Seta */}
         <div 
@@ -1503,7 +1490,20 @@ function ProposalsDashboard() {
                                       }
                                     }}
                                   >
-                                    <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedStatusCols.length - idx) }}>
+                                    <div 
+                                      className="sticky top-0 bg-slate-50 cursor-grab active:cursor-grabbing z-20" 
+                                      style={{ zIndex: 20 + (orderedStatusCols.length - idx) }}
+                                      draggable="true"
+                                      onDragStart={(e) => {
+                                        const target = e.target as HTMLElement;
+                                        if (target.closest('button') || target.closest('select') || target.closest('input')) {
+                                          e.preventDefault();
+                                          return;
+                                        }
+                                        handleDragColumnStart(e, col.label, 'status');
+                                      }}
+                                      onDragEnd={handleDragColumnEnd}
+                                    >
                                       <KanbanColumnHeader
                                         key={col.id}
                                         label={col.label}
@@ -1522,8 +1522,6 @@ function ProposalsDashboard() {
                                           await updatePropostaStatusParam(col.id, newName);
                                           setStatuses(prev => prev.map(s => s.id === col.id ? { ...s, nome: newName.toUpperCase().trim() } : s));
                                         }}
-                                        onDragColumnStart={(e, l) => handleDragColumnStart(e, l, 'status')}
-                                        onDragColumnEnd={handleDragColumnEnd}
                                       />
                                     </div>
                                     <KanbanColumnCards
@@ -1650,7 +1648,20 @@ function ProposalsDashboard() {
                                       }
                                     }}
                                   >
-                                    <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedVendedorCols.length - idx) }}>
+                                    <div 
+                                      className="sticky top-0 bg-slate-50 cursor-grab active:cursor-grabbing z-20" 
+                                      style={{ zIndex: 20 + (orderedVendedorCols.length - idx) }}
+                                      draggable="true"
+                                      onDragStart={(e) => {
+                                        const target = e.target as HTMLElement;
+                                        if (target.closest('button') || target.closest('select') || target.closest('input')) {
+                                          e.preventDefault();
+                                          return;
+                                        }
+                                        handleDragColumnStart(e, col.label, 'vendedor');
+                                      }}
+                                      onDragEnd={handleDragColumnEnd}
+                                    >
                                       <KanbanColumnHeader
                                         key={col.id}
                                         label={col.label}
@@ -1665,8 +1676,6 @@ function ProposalsDashboard() {
                                           localStorage.setItem(`kanban-vendedor-color-${col.label}`, newColor);
                                           setVendedorColors(prev => ({ ...prev, [col.label]: newColor }));
                                         }}
-                                        onDragColumnStart={(e, l) => handleDragColumnStart(e, l, 'vendedor')}
-                                        onDragColumnEnd={handleDragColumnEnd}
                                       />
                                     </div>
                                     <KanbanColumnCards
@@ -1813,7 +1822,20 @@ function ProposalsDashboard() {
                                           }
                                         }}
                                       >
-                                        <div className="sticky top-0 bg-slate-50" style={{ zIndex: 20 + (orderedSegmentoCols.length - idx) }}>
+                                        <div 
+                                          className="sticky top-0 bg-slate-50 cursor-grab active:cursor-grabbing z-20" 
+                                          style={{ zIndex: 20 + (orderedSegmentoCols.length - idx) }}
+                                          draggable="true"
+                                          onDragStart={(e) => {
+                                            const target = e.target as HTMLElement;
+                                            if (target.closest('button') || target.closest('select') || target.closest('input')) {
+                                              e.preventDefault();
+                                              return;
+                                            }
+                                            handleDragColumnStart(e, col.label, 'segmento');
+                                          }}
+                                          onDragEnd={handleDragColumnEnd}
+                                        >
                                           <KanbanColumnHeader
                                             key={col.id}
                                             label={col.label}
@@ -1829,8 +1851,6 @@ function ProposalsDashboard() {
                                               setSegmentoColors(prev => ({ ...prev, [col.label]: newColor }));
                                             }}
                                             onCreateStatus={col.id !== 'unassigned' ? handleCreateSegmento : undefined}
-                                            onDragColumnStart={(e, l) => handleDragColumnStart(e, l, 'segmento')}
-                                            onDragColumnEnd={handleDragColumnEnd}
                                           />
                                         </div>
                                         <KanbanColumnCards
