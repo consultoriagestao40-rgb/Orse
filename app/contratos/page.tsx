@@ -72,6 +72,12 @@ export default function ContratosDashboard() {
   const [editingSegmentoId, setEditingSegmentoId] = useState<string | null>(null);
   const [segmentos, setSegmentos] = useState<any[]>([]);
 
+  const [draggedStageId, setDraggedStageId] = useState<string | null>(null);
+  const [draggedOverStageId, setDraggedOverStageId] = useState<string | null>(null);
+  const [draggedOverBeforeStageId, setDraggedOverBeforeStageId] = useState<string | null>(null);
+
+  const [segmentoOrder, setSegmentoOrder] = useState<string[]>([]);
+
   const [statusesList, setStatusesList] = useState<string[]>(['Pendente de Assinatura', 'Vigente', 'Reajuste Pendente', 'Encerrado']);
   const [statusColors, setStatusColors] = useState<Record<string, string>>({
     'Pendente de Assinatura': '#f59e0b',
@@ -171,6 +177,15 @@ export default function ContratosDashboard() {
           console.error(e);
         }
       }
+
+      const storedSegmentoOrder = localStorage.getItem('contrato-segmento-order');
+      if (storedSegmentoOrder) {
+        try {
+          setSegmentoOrder(JSON.parse(storedSegmentoOrder));
+        } catch (e) {
+          console.error(e);
+        }
+      }
     }
   }, []);
 
@@ -246,8 +261,19 @@ export default function ContratosDashboard() {
       });
     });
 
+    if (segmentoOrder.length > 0) {
+      cols.sort((a, b) => {
+        const idxA = segmentoOrder.indexOf(a.label);
+        const idxB = segmentoOrder.indexOf(b.label);
+        if (idxA === -1 && idxB === -1) return 0;
+        if (idxA === -1) return 1;
+        if (idxB === -1) return -1;
+        return idxA - idxB;
+      });
+    }
+
     return cols;
-  }, [filteredContratos, segmentos]);
+  }, [filteredContratos, segmentos, segmentoOrder]);
 
   const pendentesAssinatura = contratos.filter(c => c.status === statusesList[0]);
   const ativos = contratos.filter(c => c.status === statusesList[1]);
@@ -352,7 +378,168 @@ export default function ContratosDashboard() {
     '#0369A1', '#0B6623', '#065F46', '#3F6212', '#A16207', '#C2410C', '#B91C1C', '#9D174D', '#581C87', '#334155',
   ];
 
-  const KanbanColumn = ({ status, isFirst = false, isLast = false, zIndex }: { status: string; isFirst?: boolean; isLast?: boolean; zIndex: number }) => {
+  const handleDragColumnStart = (e: React.DragEvent, columnLabel: string, type: 'status' | 'segmento') => {
+    setDraggedStageId(columnLabel);
+    e.dataTransfer.setData('text/plain', `COL:${columnLabel}`);
+  };
+
+  const handleDragColumnEnd = () => {
+    setDraggedStageId(null);
+    setDraggedOverBeforeStageId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedOverStageId(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, stageId?: string, type?: 'status' | 'segmento') => {
+    e.preventDefault();
+    if (draggedStageId) {
+      if (stageId && stageId !== draggedStageId) {
+        setDraggedOverBeforeStageId(stageId);
+      }
+    } else {
+      if (stageId) {
+        setDraggedOverStageId(stageId);
+      }
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDraggedOverStageId(null);
+  };
+
+  const handleDropColumnById = (sourceLabel: string, targetLabel: string, type: 'status' | 'segmento') => {
+    if (sourceLabel === targetLabel) return;
+
+    if (type === 'status') {
+      const currentList = [...statusesList];
+      const sourceIdx = currentList.indexOf(sourceLabel);
+      if (sourceIdx === -1) return;
+
+      currentList.splice(sourceIdx, 1);
+
+      if (targetLabel === 'last') {
+        currentList.push(sourceLabel);
+      } else {
+        const targetIdx = currentList.indexOf(targetLabel);
+        if (targetIdx !== -1) {
+          currentList.splice(targetIdx, 0, sourceLabel);
+        } else {
+          currentList.push(sourceLabel);
+        }
+      }
+
+      setStatusesList(currentList);
+      localStorage.setItem('orse_contrato_statuses', JSON.stringify(currentList));
+    } else {
+      const currentList = segmentoOrder.length > 0 
+        ? [...segmentoOrder] 
+        : segmentos.map(s => s.nome || s);
+
+      const sourceIdx = currentList.indexOf(sourceLabel);
+      if (sourceIdx === -1) {
+        currentList.push(sourceLabel);
+      } else {
+        currentList.splice(sourceIdx, 1);
+      }
+
+      if (targetLabel === 'last') {
+        currentList.push(sourceLabel);
+      } else {
+        const targetIdx = currentList.indexOf(targetLabel);
+        if (targetIdx !== -1) {
+          currentList.splice(targetIdx, 0, sourceLabel);
+        } else {
+          currentList.push(sourceLabel);
+        }
+      }
+
+      setSegmentoOrder(currentList);
+      localStorage.setItem('contrato-segmento-order', JSON.stringify(currentList));
+    }
+
+    setDraggedStageId(null);
+    setDraggedOverBeforeStageId(null);
+  };
+
+  const ContractCard = ({ c }: { c: any }) => (
+    <div
+      draggable
+      onDragStart={(e) => {
+        if (c.id) {
+          e.dataTransfer.setData('text/plain', c.id);
+        }
+      }}
+      onDragEnd={handleDragEnd}
+      onClick={() => router.push(`/contratos/${c.id}`)}
+      className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing flex flex-col justify-between h-[120px] text-left relative overflow-visible"
+    >
+      <div>
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <div className="p-1 bg-[#1B4D3E]/8 rounded-md shrink-0">
+              <FileText size={12} className="text-[#1B4D3E]" />
+            </div>
+            <span className="text-xs font-black text-slate-700 tracking-wide truncate">
+              {gerarNumeroContrato(c)}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 text-slate-400 shrink-0">
+            {viewMode !== 'kanban-status' && (
+              <span 
+                className="text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0 border"
+                style={{
+                  backgroundColor: hexToRgba(resolveStatusColorToHex(c.status), 0.08),
+                  color: getDarkenedHexForText(resolveStatusColorToHex(c.status)),
+                  borderColor: hexToRgba(resolveStatusColorToHex(c.status), 0.25)
+                }}
+              >
+                {c.status || '—'}
+              </span>
+            )}
+            <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 uppercase tracking-wider">
+              {c.vigenciaMeses}m
+            </span>
+          </div>
+        </div>
+
+        <p className="text-xs font-bold text-slate-800 leading-snug truncate" title={c.client?.razaoSocial || c.client?.nomeFantasia}>
+          {c.client?.razaoSocial || c.client?.nomeFantasia || 'Sem Cliente'}
+        </p>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+            📅 {c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : 'A definir'}
+          </p>
+          <span className="text-xs font-black text-[#1B4D3E]">{fmt(c.valorMensal)}</span>
+        </div>
+
+        <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-1 min-w-0">
+            {c.proposta?.user?.avatarUrl ? (
+              <img 
+                src={c.proposta.user.avatarUrl} 
+                alt={c.proposta.user.nome} 
+                className="w-4.5 h-4.5 rounded-full object-cover border border-slate-200 shrink-0"
+              />
+            ) : (
+              <div className="w-4.5 h-4.5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200 shrink-0">
+                {(c.proposta?.user?.nome || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+              </div>
+            )}
+            <span className="text-[9px] text-slate-500 font-bold truncate max-w-[120px]">
+              {c.proposta?.user?.nome || 'Sistema'}
+            </span>
+          </div>
+          <span className="text-[9px] font-bold text-slate-400">
+            {c.empresaEmissora?.nomeFantasia || 'Grupo'}
+          </span>
+        </div>
+      </div>
+    </  const KanbanColumn = ({ status, isFirst = false, isLast = false, zIndex }: { status: string; isFirst?: boolean; isLast?: boolean; zIndex: number }) => {
     const cards = filteredContratos.filter(c => c.status === status);
     const total = cards.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
     const resolvedHex = resolveColorToHex(resolveStatusColorToHex(status));
@@ -394,8 +581,22 @@ export default function ContratosDashboard() {
       <div 
         className="flex flex-col flex-shrink-0"
         style={{ width: '274px' }}
+        onDragOver={(e) => handleDragOver(e, status, 'status')}
       >
-        <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex }}>
+        <div 
+          draggable
+          onDragStart={(e) => {
+            const target = e.target as HTMLElement;
+            if (target.closest('button') || target.closest('input')) {
+              e.preventDefault();
+              return;
+            }
+            handleDragColumnStart(e, status, 'status');
+          }}
+          onDragEnd={handleDragColumnEnd}
+          className="sticky top-0 select-none duration-200 bg-slate-50" 
+          style={{ zIndex }}
+        >
           <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
               className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
@@ -419,7 +620,6 @@ export default function ContratosDashboard() {
               className={`absolute inset-0 z-10 flex items-center justify-between ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
               style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
             >
-              {/* Lado esquerdo: título e subtítulo */}
               <div className="flex flex-col min-w-0 justify-center">
                 <span className="text-sm font-black uppercase tracking-wider truncate max-w-[160px] leading-none">
                   {status}
@@ -429,7 +629,6 @@ export default function ContratosDashboard() {
                 </span>
               </div>
 
-              {/* Lado direito: botões centralizados verticalmente */}
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
@@ -540,7 +739,7 @@ export default function ContratosDashboard() {
                       setCustomModal({
                         isOpen: true,
                         title: 'Excluir Coluna',
-                        message: `Tem certeza que deseja excluir a coluna "${status}"?`,
+                        message: `Tem certeza que deseja excluir la coluna "${status}"?`,
                         type: 'confirm',
                         onConfirm: () => {
                           const newStatusesList = statusesList.filter(s => s !== status);
@@ -571,102 +770,54 @@ export default function ContratosDashboard() {
             </>
           )}
         </div>
-      </div>
-          <div
-            className="px-[4px] py-3 rounded-b-2xl rounded-t-none"
-            onDragOver={(e) => { e.preventDefault(); }}
-            onDrop={async (e) => {
-              e.preventDefault();
+        <div
+          className="px-[4px] py-3 rounded-b-2xl rounded-t-none flex-1"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={async (e) => {
+            e.preventDefault();
+            handleDragLeave();
+            if (draggedStageId) {
+              handleDropColumnById(draggedStageId, status, 'status');
+            } else {
               const id = e.dataTransfer.getData('text/plain');
               if (id) {
                 setContratos(prev => prev.map(c => c.id === id ? { ...c, status } : c));
                 await updateContratoStatus(id, status);
               }
-            }}
-            style={{
-              width: '274px',
-              minWidth: '274px',
-              maxWidth: '274px',
-              marginLeft: '0px',
-              backgroundColor: bgRgba,
-              borderColor: borderRgba,
-              borderWidth: '0 1px 1px 1px',
-              borderStyle: 'solid',
-              height: 'calc(100vh - 52px)',
-              overflowY: 'auto',
-            }}
-          >
-            <div className="flex flex-col gap-3">
-              {cards.length === 0 ? (
+            }
+          }}
+          style={{
+            width: '274px',
+            minWidth: '274px',
+            maxWidth: '274px',
+            marginLeft: '0px',
+            backgroundColor: bgRgba,
+            borderColor: borderRgba,
+            borderWidth: '0 1px 1px 1px',
+            borderStyle: 'solid',
+            height: 'calc(100vh - 52px)',
+            overflowY: 'auto',
+          }}
+        >
+          <div className="flex flex-col gap-1.5 flex-1">
+            {!draggedStageId && draggedOverStageId === status && (
+              <div className="bg-slate-100/70 border-2 border-dashed border-[#1B4D3E]/30 rounded-lg h-[120px] w-full animate-pulse flex items-center justify-center">
+                <span className="text-[10px] font-black text-[#1B4D3E]/60 uppercase tracking-widest animate-pulse">Soltar aqui</span>
+              </div>
+            )}
+
+            {cards.length === 0 ? (
+              (!draggedStageId && draggedOverStageId === status) ? null : (
                 <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem contratos</p>
                 </div>
-              ) : (
-                cards.map(c => (
-                  <div
-                    key={c.id}
-                    draggable
-                    onDragStart={(e) => e.dataTransfer.setData('text/plain', c.id)}
-                    onClick={() => router.push(`/contratos/${c.id}`)}
-                    className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer cursor-grab active:cursor-grabbing"
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
-                          <FileText size={13} className="text-[#1B4D3E]" />
-                        </div>
-                        <span className="text-xs font-black text-slate-700 tracking-wide">{gerarNumeroContrato(c)}</span>
-                      </div>
-                      <span className="text-[9px] font-black px-2 py-0.5 rounded bg-slate-100 text-slate-500 uppercase tracking-wider">{c.empresaEmissora?.nomeFantasia}</span>
-                    </div>
-                    <p className="text-sm font-bold text-slate-800 leading-tight mb-3 line-clamp-2">{c.client?.razaoSocial || c.client?.nomeFantasia}</p>
-                  <div className="grid grid-cols-2 gap-x-2 gap-y-3 mb-3 border-t border-slate-100 pt-3">
-                    <div>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Início</p>
-                      <p className="text-[11px] font-bold text-slate-700">{c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : 'A definir'}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Reajuste</p>
-                      <p className="text-[11px] font-bold text-orange-600">{c.dataReajuste ? new Date(c.dataReajuste).toLocaleDateString('pt-BR') : 'Não definido'}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Mensal</p>
-                      <span className="text-sm font-black text-[#1B4D3E]">{fmt(c.valorMensal)}</span>
-                    </div>
-                    <div>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Vigência</p>
-                      <span className="text-[11px] font-bold text-slate-600">{c.vigenciaMeses} meses</span>
-                    </div>
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      {c.proposta?.user?.avatarUrl ? (
-                        <img 
-                          src={c.proposta.user.avatarUrl} 
-                          alt={c.proposta.user.nome} 
-                          className="w-5 h-5 rounded-full object-cover border border-slate-200"
-                        />
-                      ) : (
-                        <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
-                          {(c.proposta?.user?.nome || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                        </div>
-                      )}
-                      <span className="text-[10px] text-slate-500 font-medium">{c.proposta?.user?.nome || 'Sistema'}</span>
-                    </div>
-                    <span className="text-[9px] text-slate-400 font-medium" title={`Gerado em ${new Date(c.createdAt).toLocaleString('pt-BR')}`}>
-                      {new Date(c.createdAt).toLocaleDateString('pt-BR')}
-                    </span>
-                  </div>
-                </div>
-              ))
+              )
+            ) : (
+              cards.map(c => <ContractCard key={c.id} c={c} />)
             )}
           </div>
         </div>
-      </div>
-    );
-  };
-
-  const KanbanSegmentoColumn = ({ label, cards, isFirst = false, isLast = false, color, zIndex }: { label: string; cards: any[]; isFirst?: boolean; isLast?: boolean; color: string; zIndex: number }) => {
+      </  const KanbanSegmentoColumn = ({ label, cards, isFirst = false, isLast = false, color, zIndex }: { label: string; cards: any[]; isFirst?: boolean; isLast?: boolean; color: string; zIndex: number }) => {
     const total = cards.reduce((acc, c) => acc + (c.valorMensal || 0), 0);
     const resolvedHex = resolveColorToHex(color);
     const contrast = getContrastYIQ(resolvedHex);
@@ -678,8 +829,22 @@ export default function ContratosDashboard() {
       <div 
         className="flex flex-col flex-shrink-0"
         style={{ width: '274px' }}
+        onDragOver={(e) => handleDragOver(e, label, 'segmento')}
       >
-        <div className="sticky top-0 select-none duration-200 bg-slate-50" style={{ zIndex }}>
+        <div 
+          draggable
+          onDragStart={(e) => {
+            const target = e.target as HTMLElement;
+            if (target.closest('button') || target.closest('input')) {
+              e.preventDefault();
+              return;
+            }
+            handleDragColumnStart(e, label, 'segmento');
+          }}
+          onDragEnd={handleDragColumnEnd}
+          className="sticky top-0 select-none duration-200 bg-slate-50" 
+          style={{ zIndex }}
+        >
           <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
               className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
@@ -703,7 +868,6 @@ export default function ContratosDashboard() {
               className={`absolute inset-0 z-10 flex items-center justify-between ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
               style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
             >
-              {/* Lado esquerdo: título e subtítulo */}
               <div className="flex flex-col min-w-0 justify-center">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <Building size={14} className="shrink-0" style={{ color: 'inherit' }} />
@@ -716,7 +880,6 @@ export default function ContratosDashboard() {
                 </span>
               </div>
 
-              {/* Lado direito: botões centralizados verticalmente */}
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
@@ -744,9 +907,9 @@ export default function ContratosDashboard() {
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Editar Coluna</span>
                   <button 
                     onClick={() => setEditingSegmentoId(null)}
-                    className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
+                    className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-650 transition-colors"
                   >
-                    <X size={12} />
+                    <X size={18} />
                   </button>
                 </div>
                 <div className="flex flex-col gap-1">
@@ -807,12 +970,15 @@ export default function ContratosDashboard() {
             </>
           )}
         </div>
-      </div>
-          <div
-            className="px-[4px] py-3 rounded-b-2xl rounded-t-none"
-            onDragOver={(e) => { e.preventDefault(); }}
-            onDrop={async (e) => {
-              e.preventDefault();
+        <div
+          className="px-[4px] py-3 rounded-b-2xl rounded-t-none flex-1"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={async (e) => {
+            e.preventDefault();
+            handleDragLeave();
+            if (draggedStageId) {
+              handleDropColumnById(draggedStageId, label, 'segmento');
+            } else {
               const id = e.dataTransfer.getData('text/plain');
               if (id) {
                 const newSegment = label === 'Sem Segmento' ? '' : label;
@@ -833,87 +999,39 @@ export default function ContratosDashboard() {
                   }
                 }
               }
-            }}
-            style={{
-              width: '274px',
-              minWidth: '274px',
-              maxWidth: '274px',
-              marginLeft: '0px',
-              backgroundColor: bgRgba,
-              borderColor: borderRgba,
-              borderWidth: '0 1px 1px 1px',
-              borderStyle: 'solid',
-              height: 'calc(100vh - 52px)',
-              overflowY: 'auto',
-            }}
-          >
-            <div className="flex flex-col gap-3">
-              {cards.length === 0 ? (
+            }
+          }}
+          style={{
+            width: '274px',
+            minWidth: '274px',
+            maxWidth: '274px',
+            marginLeft: '0px',
+            backgroundColor: bgRgba,
+            borderColor: borderRgba,
+            borderWidth: '0 1px 1px 1px',
+            borderStyle: 'solid',
+            height: 'calc(100vh - 52px)',
+            overflowY: 'auto',
+          }}
+        >
+          <div className="flex flex-col gap-1.5 flex-1">
+            {!draggedStageId && draggedOverStageId === label && (
+              <div className="bg-slate-100/70 border-2 border-dashed border-[#1B4D3E]/30 rounded-lg h-[120px] w-full animate-pulse flex items-center justify-center">
+                <span className="text-[10px] font-black text-[#1B4D3E]/60 uppercase tracking-widest animate-pulse">Soltar aqui</span>
+              </div>
+            )}
+
+            {cards.length === 0 ? (
+              (!draggedStageId && draggedOverStageId === label) ? null : (
                 <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem contratos</p>
                 </div>
-              ) : (
-                cards.map(c => (
-                  <div
-                    key={c.id}
-                    draggable
-                    onDragStart={(e) => e.dataTransfer.setData('text/plain', c.id)}
-                    onClick={() => router.push(`/contratos/${c.id}`)}
-                    className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer cursor-grab active:cursor-grabbing"
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg">
-                          <FileText size={13} className="text-[#1B4D3E]" />
-                        </div>
-                        <span className="text-xs font-black text-slate-700 tracking-wide">{gerarNumeroContrato(c)}</span>
-                      </div>
-                      <span className="text-[9px] font-black px-2 py-0.5 rounded bg-slate-100 text-slate-500 uppercase tracking-wider">{c.empresaEmissora?.nomeFantasia}</span>
-                    </div>
-                    <p className="text-sm font-bold text-slate-800 leading-tight mb-3 line-clamp-2">{c.client?.razaoSocial || c.client?.nomeFantasia}</p>
-                  <div className="grid grid-cols-2 gap-x-2 gap-y-3 mb-3 border-t border-slate-100 pt-3">
-                    <div>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Início</p>
-                      <p className="text-[11px] font-bold text-slate-700">{c.dataInicio ? new Date(c.dataInicio).toLocaleDateString('pt-BR') : 'A definir'}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Reajuste</p>
-                      <p className="text-[11px] font-bold text-orange-600">{c.dataReajuste ? new Date(c.dataReajuste).toLocaleDateString('pt-BR') : 'Não definido'}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Mensal</p>
-                      <span className="text-sm font-black text-[#1B4D3E]">{fmt(c.valorMensal)}</span>
-                    </div>
-                    <div>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Vigência</p>
-                      <span className="text-[11px] font-bold text-slate-600">{c.vigenciaMeses} meses</span>
-                    </div>
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      {c.proposta?.user?.avatarUrl ? (
-                        <img 
-                          src={c.proposta.user.avatarUrl} 
-                          alt={c.proposta.user.nome} 
-                          className="w-5 h-5 rounded-full object-cover border border-slate-200"
-                        />
-                      ) : (
-                        <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
-                          {(c.proposta?.user?.nome || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                        </div>
-                      )}
-                      <span className="text-[10px] text-slate-500 font-medium">{c.proposta?.user?.nome || 'Sistema'}</span>
-                    </div>
-                    <span className="text-[9px] text-slate-400 font-medium" title={`Gerado em ${new Date(c.createdAt).toLocaleString('pt-BR')}`}>
-                      {new Date(c.createdAt).toLocaleDateString('pt-BR')}
-                    </span>
-                  </div>
-                </div>
-              ))
+              )
+            ) : (
+              cards.map(c => <ContractCard key={c.id} c={c} />)
             )}
           </div>
         </div>
-      </div>
     );
   };
 
@@ -1140,30 +1258,132 @@ export default function ContratosDashboard() {
 
           {/* KANBAN POR STATUS */}
           {viewMode === 'kanban-status' && (
-            <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max">
-              <div className="flex gap-[3px]">
-                {statusList.map((status, index) => (
-                  <KanbanColumn key={status} status={status} isFirst={index === 0} isLast={index === statusList.length - 1} zIndex={20 + (statusList.length - index)} />
-                ))}
+            <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max no-scrollbar" style={{ overflowX: 'auto', height: 'calc(100vh - 120px)' }}>
+              <div className="flex items-start pb-4">
+                {statusList.map((status, index) => {
+                  const isFirst = index === 0;
+                  const isLast = index === statusList.length - 1;
+                  const showBeforePlaceholder = draggedStageId && draggedOverBeforeStageId === status && draggedStageId !== status;
+
+                  return (
+                    <React.Fragment key={status}>
+                      {showBeforePlaceholder && (
+                        <div 
+                          className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={() => handleDropColumnById(draggedStageId!, status, 'status')}
+                        >
+                          <div className="flex flex-col items-center gap-2">
+                            <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Soltar aqui</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className={draggedStageId === status ? 'opacity-20 pointer-events-none' : ''}>
+                        <KanbanColumn 
+                          status={status} 
+                          isFirst={isFirst} 
+                          isLast={isLast} 
+                          zIndex={20 + (statusList.length - index)} 
+                        />
+                      </div>
+                    </React.Fragment>
+                  );
+                })}
+
+                {draggedStageId && draggedOverBeforeStageId === 'last' && (
+                  <div 
+                    className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => handleDropColumnById(draggedStageId!, 'last', 'status')}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para o fim</span>
+                    </div>
+                  </div>
+                )}
+
+                {draggedStageId && draggedOverBeforeStageId !== 'last' && (
+                  <div
+                    className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1 cursor-pointer transition-colors"
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDraggedOverBeforeStageId('last');
+                    }}
+                    onDrop={() => handleDropColumnById(draggedStageId!, 'last', 'status')}
+                  >
+                    <span className="text-[9px] font-black text-[#1B4D3E]/60 uppercase tracking-wider text-center rotate-180" style={{ writingMode: 'vertical-lr' }}>
+                      Soltar no fim
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
           {/* KANBAN POR SEGMENTO */}
           {viewMode === 'kanban-segmento' && (
-            <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max">
-              <div className="flex gap-[3px]">
-                {kanbanSegmentoCols.map((col, index) => (
-                  <KanbanSegmentoColumn
-                    key={col.id}
-                    label={col.label}
-                    cards={col.cards}
-                    isFirst={index === 0}
-                    isLast={index === kanbanSegmentoCols.length - 1}
-                    color={segmentoColors[col.label] || '#3b82f6'}
-                    zIndex={20 + (kanbanSegmentoCols.length - index)}
-                  />
-                ))}
+            <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max no-scrollbar" style={{ overflowX: 'auto', height: 'calc(100vh - 120px)' }}>
+              <div className="flex items-start pb-4">
+                {kanbanSegmentoCols.map((col, index) => {
+                  const isFirst = index === 0;
+                  const isLast = index === kanbanSegmentoCols.length - 1;
+                  const showBeforePlaceholder = draggedStageId && draggedOverBeforeStageId === col.label && draggedStageId !== col.label;
+
+                  return (
+                    <React.Fragment key={col.id}>
+                      {showBeforePlaceholder && (
+                        <div 
+                          className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={() => handleDropColumnById(draggedStageId!, col.label, 'segmento')}
+                        >
+                          <div className="flex flex-col items-center gap-2">
+                            <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Soltar aqui</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className={draggedStageId === col.label ? 'opacity-20 pointer-events-none' : ''}>
+                        <KanbanSegmentoColumn
+                          label={col.label}
+                          cards={col.cards}
+                          isFirst={isFirst}
+                          isLast={isLast}
+                          color={segmentoColors[col.label] || '#3b82f6'}
+                          zIndex={20 + (kanbanSegmentoCols.length - index)}
+                        />
+                      </div>
+                    </React.Fragment>
+                  );
+                })}
+
+                {draggedStageId && draggedOverBeforeStageId === 'last' && (
+                  <div 
+                    className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => handleDropColumnById(draggedStageId!, 'last', 'segmento')}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-[11px] font-black text-[#1B4D3E]/60 uppercase tracking-widest">Mover para o fim</span>
+                    </div>
+                  </div>
+                )}
+
+                {draggedStageId && draggedOverBeforeStageId !== 'last' && (
+                  <div
+                    className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-[calc(100vh-100px)] flex items-center justify-center mx-1 cursor-pointer transition-colors"
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDraggedOverBeforeStageId('last');
+                    }}
+                    onDrop={() => handleDropColumnById(draggedStageId!, 'last', 'segmento')}
+                  >
+                    <span className="text-[9px] font-black text-[#1B4D3E]/60 uppercase tracking-wider text-center rotate-180" style={{ writingMode: 'vertical-lr' }}>
+                      Soltar no fim
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}
