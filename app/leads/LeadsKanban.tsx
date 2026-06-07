@@ -243,14 +243,14 @@ const LeadCard = ({
       onDragStart={(e) => handleDragStart(e, lead.id)}
       onDragEnd={handleDragEnd}
       onClick={() => setSelectedLead(lead)}
-      className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing text-left flex flex-col gap-1.5"
+      className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing text-left flex flex-col gap-2.5"
     >
       <div className="flex items-start justify-between gap-2 mb-0.5">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <div className="p-1 bg-[#1B4D3E]/8 rounded-md shrink-0">
-            <Building size={12} className="text-[#1B4D3E]" />
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg shrink-0">
+            <Building size={13} className="text-[#1B4D3E]" />
           </div>
-          <span className="text-[10px] font-black text-slate-700 tracking-wide uppercase truncate max-w-[150px]">
+          <span className="text-xs font-black text-slate-700 tracking-wide uppercase truncate max-w-[150px]">
             {lead.segmento || 'SEM SEGMENTO'}
           </span>
         </div>
@@ -264,39 +264,6 @@ const LeadCard = ({
       <p className="text-sm font-bold text-slate-800 leading-tight mb-0.5 line-clamp-2">{lead.nomeFantasia}</p>
       
       <div className="flex flex-col gap-1">
-        {(lead.telefone || lead.email) && (
-          <p className="text-[10px] text-slate-400 font-medium truncate" title={`${lead.telefone || ''} | ${lead.email || ''}`}>
-            {lead.telefone && <span>📞 {lead.telefone}</span>}
-            {lead.telefone && lead.email && <span className="mx-1">&bull;</span>}
-            {lead.email && <span>✉️ {lead.email}</span>}
-          </p>
-        )}
-
-        {lead.endereco && (
-          <div className="flex items-center gap-1.5">
-            <a 
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.endereco)}`} 
-              target="_blank" 
-              rel="noreferrer" 
-              onClick={e => e.stopPropagation()} 
-              className="flex-1 bg-blue-50/60 hover:bg-blue-100/80 text-blue-600 text-[8.5px] font-black py-0.5 px-1.5 rounded-md flex items-center justify-center gap-1 transition-colors border border-blue-100/50"
-              title="Abrir no Google Maps"
-            >
-              <MapPin size={8} /> Maps
-            </a>
-            <a 
-              href={`https://waze.com/ul?q=${encodeURIComponent(lead.endereco)}`} 
-              target="_blank" 
-              rel="noreferrer" 
-              onClick={e => e.stopPropagation()} 
-              className="flex-1 bg-cyan-50/60 hover:bg-cyan-100/80 text-cyan-600 text-[8.5px] font-black py-0.5 px-1.5 rounded-md flex items-center justify-center gap-1 transition-colors border border-cyan-100/50"
-              title="Abrir no Waze"
-            >
-              <Navigation size={8} /> Waze
-            </a>
-          </div>
-        )}
-
         {lead.activities && lead.activities.length > 0 && (
           <div className="bg-amber-50/40 border border-amber-100/60 p-1.5 rounded-md text-[9px] flex items-center gap-1 text-amber-700">
             <CalendarDays size={10} className="text-amber-500 shrink-0" />
@@ -311,17 +278,9 @@ const LeadCard = ({
 
       <div className="flex items-center justify-between mt-0.5">
         <span className="text-sm font-black text-[#1B4D3E]">{fmt(lead.valorEst || 0)}</span>
-        {!showStageInFooter && (
-          <span 
-            style={getHighlightedStageColorClass(lead.stage?.color).style} 
-            className="text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider"
-          >
-            {lead.stage?.nome || 'DESCOBERTA'}
-          </span>
-        )}
       </div>
 
-      <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
         <div 
           id={`lead-avatar-inline-owner-${lead.id}`}
           onClick={(e) => {
@@ -330,7 +289,7 @@ const LeadCard = ({
               onOwnerClick(e, lead.id);
             }
           }}
-          className="flex items-center gap-1 hover:bg-slate-50 p-0.5 rounded-md transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 hover:bg-slate-50 p-1 rounded-lg transition-colors cursor-pointer"
         >
           {lead.assignedTo?.avatarUrl ? (
             <img 
