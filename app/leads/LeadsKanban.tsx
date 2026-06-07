@@ -243,29 +243,35 @@ const LeadCard = ({
       onDragStart={(e) => handleDragStart(e, lead.id)}
       onDragEnd={handleDragEnd}
       onClick={() => setSelectedLead(lead)}
-      className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing text-left flex flex-col gap-2.5"
+      className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm hover:shadow-md hover:border-[#1B4D3E]/30 transition-all cursor-pointer group cursor-grab active:cursor-grabbing text-left flex flex-col justify-between h-[148px]"
     >
-      <div className="flex items-start justify-between gap-2 mb-0.5">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg shrink-0">
-            <Building size={13} className="text-[#1B4D3E]" />
+      {/* Top Section */}
+      <div className="flex flex-col gap-1.5 min-w-0">
+        <div className="flex items-start justify-between gap-2 mb-0.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="p-1.5 bg-[#1B4D3E]/8 rounded-lg shrink-0">
+              <Building size={13} className="text-[#1B4D3E]" />
+            </div>
+            <span className="text-xs font-black text-slate-700 tracking-wide uppercase truncate max-w-[150px]">
+              {lead.segmento || 'SEM SEGMENTO'}
+            </span>
           </div>
-          <span className="text-xs font-black text-slate-700 tracking-wide uppercase truncate max-w-[150px]">
-            {lead.segmento || 'SEM SEGMENTO'}
-          </span>
+          {unreadCount > 0 && (
+            <span className="bg-[#25D366] text-white text-[8px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 animate-pulse shadow-sm shadow-[#25D366]/30">
+              <MessageSquare size={8} fill="white" /> {unreadCount}
+            </span>
+          )}
         </div>
-        {unreadCount > 0 && (
-          <span className="bg-[#25D366] text-white text-[8px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 animate-pulse shadow-sm shadow-[#25D366]/30">
-            <MessageSquare size={8} fill="white" /> {unreadCount}
-          </span>
-        )}
+
+        <p className="text-sm font-bold text-slate-800 leading-tight truncate" title={lead.nomeFantasia}>{lead.nomeFantasia}</p>
+        
+        <span className="text-sm font-black text-[#1B4D3E]">{fmt(lead.valorEst || 0)}</span>
       </div>
 
-      <p className="text-sm font-bold text-slate-800 leading-tight mb-0.5 line-clamp-2">{lead.nomeFantasia}</p>
-      
-      <div className="flex flex-col gap-1">
-        {lead.activities && lead.activities.length > 0 && (
-          <div className="bg-amber-50/40 border border-amber-100/60 p-1.5 rounded-md text-[9px] flex items-center gap-1 text-amber-700">
+      {/* Bottom Section */}
+      <div className="flex flex-col gap-2.5">
+        {lead.activities && lead.activities.length > 0 ? (
+          <div className="bg-amber-50/40 border border-amber-100/60 p-1.5 rounded-md text-[9px] flex items-center gap-1 text-amber-700 h-[26px]">
             <CalendarDays size={10} className="text-amber-500 shrink-0" />
             <span className="font-bold shrink-0">{lead.activities[0].tipo}:</span>
             <span className="truncate flex-1 font-medium">{lead.activities[0].titulo}</span>
@@ -273,50 +279,48 @@ const LeadCard = ({
               {safeDate(lead.activities[0].dataInicio)}
             </span>
           </div>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between mt-0.5">
-        <span className="text-sm font-black text-[#1B4D3E]">{fmt(lead.valorEst || 0)}</span>
-      </div>
-
-      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-        <div 
-          id={`lead-avatar-inline-owner-${lead.id}`}
-          onClick={(e) => {
-            if (onOwnerClick) {
-              e.stopPropagation();
-              onOwnerClick(e, lead.id);
-            }
-          }}
-          className="flex items-center gap-1.5 hover:bg-slate-50 p-1 rounded-lg transition-colors cursor-pointer"
-        >
-          {lead.assignedTo?.avatarUrl ? (
-            <img 
-              src={lead.assignedTo.avatarUrl} 
-              alt={lead.assignedTo.nome} 
-              className="w-5 h-5 rounded-full object-cover border border-slate-200"
-            />
-          ) : (
-            <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
-              {(lead.assignedTo?.nome || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-            </div>
-          )}
-          <span className="text-[10px] text-slate-500 font-medium truncate max-w-[100px]" title={lead.assignedTo?.nome || 'Sistema'}>
-            {lead.assignedTo?.nome || 'Sistema'}
-          </span>
-        </div>
-        
-        {showStageInFooter ? (
-          <span 
-            style={getHighlightedStageColorClass(lead.stage?.color).style} 
-            className="text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider"
-          >
-            {lead.stage?.nome || 'DESCOBERTA'}
-          </span>
         ) : (
-          <span className="text-[10px] text-slate-400 font-medium">📅 {safeDate(lead.updatedAt)}</span>
+          <div className="h-[26px]" />
         )}
+
+        <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between">
+          <div 
+            id={`lead-avatar-inline-owner-${lead.id}`}
+            onClick={(e) => {
+              if (onOwnerClick) {
+                e.stopPropagation();
+                onOwnerClick(e, lead.id);
+              }
+            }}
+            className="flex items-center gap-1.5 hover:bg-slate-50 p-1 rounded-lg transition-colors cursor-pointer"
+          >
+            {lead.assignedTo?.avatarUrl ? (
+              <img 
+                src={lead.assignedTo.avatarUrl} 
+                alt={lead.assignedTo.nome} 
+                className="w-5 h-5 rounded-full object-cover border border-slate-200"
+              />
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[8px] font-black text-[#1B4D3E] uppercase border border-slate-200">
+                {(lead.assignedTo?.nome || 'Sistema').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+              </div>
+            )}
+            <span className="text-[10px] text-slate-500 font-medium truncate max-w-[100px]" title={lead.assignedTo?.nome || 'Sistema'}>
+              {lead.assignedTo?.nome || 'Sistema'}
+            </span>
+          </div>
+          
+          {showStageInFooter ? (
+            <span 
+              style={getHighlightedStageColorClass(lead.stage?.color).style} 
+              className="text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider"
+            >
+              {lead.stage?.nome || 'DESCOBERTA'}
+            </span>
+          ) : (
+            <span className="text-[10px] text-slate-400 font-medium">📅 {safeDate(lead.updatedAt)}</span>
+          )}
+        </div>
       </div>
     </div>
   );
