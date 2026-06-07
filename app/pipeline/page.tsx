@@ -1116,7 +1116,7 @@ function ProposalsDashboard() {
 
   // ── Lista de cards da coluna ───────────────────────────────────────────────
   const KanbanColumnCards = ({ label, cards, color, type = 'status', onDropProp, isFirst = false }: {
-    label: string; cards: any[]; color?: string; type?: 'status' | 'vendedor'; onDropProp?: (propId: string) => void; isFirst?: boolean;
+    label: string; cards: any[]; color?: string; type?: 'status' | 'vendedor' | 'segmento'; onDropProp?: (propId: string) => void; isFirst?: boolean;
   }) => {
     const resolvedHex = resolveColorToHex(color);
     const contrast = getContrastYIQ(resolvedHex);
@@ -1129,20 +1129,20 @@ function ProposalsDashboard() {
         style={{ width: '274px' }}
         onDragOver={(e) => {
           e.preventDefault();
-          if (!draggedStageId) {
-            handleDragOver(e, label);
-          }
+          handleDragOver(e, label);
         }}
         onDragLeave={(e) => {
-          if (!draggedStageId) {
-            handleDragLeave();
-          }
+          handleDragLeave();
         }}
         onDrop={(e) => {
           e.preventDefault();
           handleDragLeave();
-          const propId = e.dataTransfer.getData('text/plain');
-          if (propId && onDropProp) onDropProp(propId);
+          if (draggedStageId) {
+            handleDropColumnById(draggedStageId, label, type);
+          } else {
+            const propId = e.dataTransfer.getData('text/plain');
+            if (propId && onDropProp) onDropProp(propId);
+          }
         }}
       >
         <div
@@ -1836,7 +1836,7 @@ function ProposalsDashboard() {
                                         <KanbanColumnCards
                                           key={col.id}
                                           label={col.label}
-                                          type="vendedor"
+                                          type="segmento"
                                           color={segColor}
                                           cards={col.cards}
                                           isFirst={isFirst}
