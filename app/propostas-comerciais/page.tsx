@@ -458,6 +458,9 @@ export default function PropostasComerciaisDashboard() {
     return cols;
   }, [filteredDocs, segmentos]);
 
+  const fmtRef = (num: number, versao: number) =>
+    `FPV-${String(num).padStart(3, '0')}-REV-${String(versao).padStart(2, '0')}`;
+
   const ProposalCard = ({ doc }: { doc: any }) => (
     <div
       draggable
