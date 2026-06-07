@@ -372,6 +372,7 @@ export default function LeadsKanban() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showMetrics, setShowMetrics] = useState(true);
+  const colHeight = showMetrics ? 'calc(100vh - 320px)' : 'calc(100vh - 190px)';
   
   const [showModal, setShowModal] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
@@ -1578,7 +1579,8 @@ export default function LeadsKanban() {
                           borderColor: borderRgba,
                           borderWidth: '0 1px 1px 1px',
                           borderStyle: 'solid',
-                          minHeight: 'calc(100vh - 180px)',
+                          height: colHeight,
+                          overflowY: 'auto',
                         }}
                       >
                         <div className="flex flex-col gap-3">
@@ -1801,7 +1803,8 @@ export default function LeadsKanban() {
                           borderColor: borderRgba,
                           borderWidth: '0 1px 1px 1px',
                           borderStyle: 'solid',
-                          minHeight: 'calc(100vh - 180px)',
+                          height: colHeight,
+                          overflowY: 'auto',
                         }}
                       >
                         <div className="flex flex-col gap-3">
@@ -2018,7 +2021,8 @@ export default function LeadsKanban() {
                           borderColor: borderRgba,
                           borderWidth: '0 1px 1px 1px',
                           borderStyle: 'solid',
-                          minHeight: 'calc(100vh - 180px)',
+                          height: colHeight,
+                          overflowY: 'auto',
                         }}
                       >
                         <div className="flex flex-col gap-3">
