@@ -607,7 +607,7 @@ export default function ContratosDashboard() {
 
     return (
       <div 
-        className="flex flex-col flex-shrink-0 h-full min-h-0"
+        className="flex flex-col flex-shrink-0"
         style={{ width: '274px' }}
         onDragOver={(e) => handleDragOver(e, status, 'status')}
       >
@@ -622,7 +622,7 @@ export default function ContratosDashboard() {
             handleDragColumnStart(e, status, 'status');
           }}
           onDragEnd={handleDragColumnEnd}
-          className="sticky top-0 select-none duration-200 bg-slate-50 shrink-0" 
+          className="sticky top-0 select-none duration-200 bg-slate-50" 
           style={{ zIndex }}
         >
           <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
@@ -800,7 +800,7 @@ export default function ContratosDashboard() {
         </div>
       </div>
         <div
-          className="px-[4px] py-3 rounded-b-2xl rounded-t-none flex-1 min-h-0"
+          className="px-[4px] py-3 rounded-b-2xl rounded-t-none"
           onDragOver={(e) => e.preventDefault()}
           onDrop={async (e) => {
             e.preventDefault();
@@ -824,6 +824,7 @@ export default function ContratosDashboard() {
             borderColor: borderRgba,
             borderWidth: '0 1px 1px 1px',
             borderStyle: 'solid',
+            height: 'calc(100vh - 290px)',
             overflowY: 'auto',
           }}
         >
@@ -859,7 +860,7 @@ export default function ContratosDashboard() {
 
     return (
       <div 
-        className="flex flex-col flex-shrink-0 h-full min-h-0"
+        className="flex flex-col flex-shrink-0"
         style={{ width: '274px' }}
         onDragOver={(e) => handleDragOver(e, label, 'segmento')}
       >
@@ -874,7 +875,7 @@ export default function ContratosDashboard() {
             handleDragColumnStart(e, label, 'segmento');
           }}
           onDragEnd={handleDragColumnEnd}
-          className="sticky top-0 select-none duration-200 bg-slate-50 shrink-0" 
+          className="sticky top-0 select-none duration-200 bg-slate-50" 
           style={{ zIndex }}
         >
           <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
@@ -1004,7 +1005,7 @@ export default function ContratosDashboard() {
         </div>
       </div>
         <div
-          className="px-[4px] py-3 rounded-b-2xl rounded-t-none flex-1 min-h-0"
+          className="px-[4px] py-3 rounded-b-2xl rounded-t-none"
           onDragOver={(e) => e.preventDefault()}
           onDrop={async (e) => {
             e.preventDefault();
@@ -1043,6 +1044,7 @@ export default function ContratosDashboard() {
             borderColor: borderRgba,
             borderWidth: '0 1px 1px 1px',
             borderStyle: 'solid',
+            height: 'calc(100vh - 290px)',
             overflowY: 'auto',
           }}
         >
@@ -1073,7 +1075,7 @@ export default function ContratosDashboard() {
       <Sidebar />
 
       <main className={`flex-1 ${viewMode === 'lista' ? 'overflow-auto' : 'overflow-hidden'} bg-[#F8FAFC]`}>
-        <div className={`w-full ${viewMode === 'lista' ? '' : 'h-full flex flex-col min-h-0'}`}>
+        <div className="w-full">
 
           {/* HEADER */}
           <header className="px-8 pt-6 pb-4 flex justify-between items-end border-b border-slate-300 shrink-0 bg-white relative z-30">
@@ -1291,8 +1293,8 @@ export default function ContratosDashboard() {
 
           {/* KANBAN POR STATUS */}
           {viewMode === 'kanban-status' && (
-            <div className="flex-1 min-h-0 bg-slate-50 min-w-max no-scrollbar" style={{ overflowX: 'auto' }}>
-              <div className="flex gap-[3px] h-full items-stretch pb-4">
+            <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max no-scrollbar" style={{ overflowX: 'auto', height: 'calc(100vh - 240px)' }}>
+              <div className="flex items-start pb-4 gap-[3px]">
                 {statusList.map((status, index) => {
                   const isFirst = index === 0;
                   const isLast = index === statusList.length - 1;
@@ -1302,7 +1304,7 @@ export default function ContratosDashboard() {
                     <React.Fragment key={status}>
                       {showBeforePlaceholder && (
                         <div 
-                          className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-full flex items-center justify-center mx-1.5 transition-all duration-200"
+                          className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-240px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                           onDragOver={(e) => e.preventDefault()}
                           onDrop={() => handleDropColumnById(draggedStageId!, status, 'status')}
                         >
@@ -1312,7 +1314,7 @@ export default function ContratosDashboard() {
                         </div>
                       )}
                       
-                      <div className={`w-[274px] shrink-0 h-full flex flex-col min-h-0 ${draggedStageId === status ? 'opacity-20 pointer-events-none' : ''}`}>
+                      <div className={`w-[274px] shrink-0 ${draggedStageId === status ? 'opacity-20 pointer-events-none' : ''}`}>
                         <KanbanColumn 
                           status={status} 
                           isFirst={isFirst} 
@@ -1326,7 +1328,7 @@ export default function ContratosDashboard() {
 
                 {draggedStageId && draggedOverBeforeStageId === 'last' && (
                   <div 
-                    className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-full flex items-center justify-center mx-1.5 transition-all duration-200"
+                    className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-240px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={() => handleDropColumnById(draggedStageId!, 'last', 'status')}
                   >
@@ -1338,7 +1340,7 @@ export default function ContratosDashboard() {
 
                 {draggedStageId && draggedOverBeforeStageId !== 'last' && (
                   <div
-                    className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-full flex items-center justify-center mx-1 cursor-pointer transition-colors"
+                    className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-[calc(100vh-240px)] flex items-center justify-center mx-1 cursor-pointer transition-colors"
                     onDragOver={(e) => {
                       e.preventDefault();
                       setDraggedOverBeforeStageId('last');
@@ -1356,8 +1358,8 @@ export default function ContratosDashboard() {
 
           {/* KANBAN POR SEGMENTO */}
           {viewMode === 'kanban-segmento' && (
-            <div className="flex-1 min-h-0 bg-slate-50 min-w-max no-scrollbar" style={{ overflowX: 'auto' }}>
-              <div className="flex gap-[3px] h-full items-stretch pb-4">
+            <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max no-scrollbar" style={{ overflowX: 'auto', height: 'calc(100vh - 240px)' }}>
+              <div className="flex items-start pb-4 gap-[3px]">
                 {kanbanSegmentoCols.map((col, index) => {
                   const isFirst = index === 0;
                   const isLast = index === kanbanSegmentoCols.length - 1;
@@ -1367,7 +1369,7 @@ export default function ContratosDashboard() {
                     <React.Fragment key={col.id}>
                       {showBeforePlaceholder && (
                         <div 
-                          className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-full flex items-center justify-center mx-1.5 transition-all duration-200"
+                          className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-240px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                           onDragOver={(e) => e.preventDefault()}
                           onDrop={() => handleDropColumnById(draggedStageId!, col.label, 'segmento')}
                         >
@@ -1377,7 +1379,7 @@ export default function ContratosDashboard() {
                         </div>
                       )}
                       
-                      <div className={`w-[274px] shrink-0 h-full flex flex-col min-h-0 ${draggedStageId === col.label ? 'opacity-20 pointer-events-none' : ''}`}>
+                      <div className={`w-[274px] shrink-0 ${draggedStageId === col.label ? 'opacity-20 pointer-events-none' : ''}`}>
                         <KanbanSegmentoColumn
                           label={col.label}
                           cards={col.cards}
@@ -1393,7 +1395,7 @@ export default function ContratosDashboard() {
 
                 {draggedStageId && draggedOverBeforeStageId === 'last' && (
                   <div 
-                    className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-full flex items-center justify-center mx-1.5 transition-all duration-200"
+                    className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl h-[calc(100vh-240px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={() => handleDropColumnById(draggedStageId!, 'last', 'segmento')}
                   >
@@ -1405,7 +1407,7 @@ export default function ContratosDashboard() {
 
                 {draggedStageId && draggedOverBeforeStageId !== 'last' && (
                   <div
-                    className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-full flex items-center justify-center mx-1 cursor-pointer transition-colors"
+                    className="w-[60px] shrink-0 border border-dashed border-[#1B4D3E]/30 hover:border-[#1B4D3E]/50 bg-[#1B4D3E]/5 hover:bg-[#1B4D3E]/10 rounded-2xl h-[calc(100vh-240px)] flex items-center justify-center mx-1 cursor-pointer transition-colors"
                     onDragOver={(e) => {
                       e.preventDefault();
                       setDraggedOverBeforeStageId('last');
