@@ -14,20 +14,7 @@ import { sendInternalMessage, getInternalMessages, markInternalMessagesAsRead, g
  
 const Sidebar = () => {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window !== "undefined") {
-      const match = document.cookie.match(new RegExp("(^| )sb_sidebar_collapsed=([^;]+)"));
-      if (match) {
-        return match[2] === "true";
-      }
-      try {
-        return localStorage.getItem("sb_sidebar_collapsed") === "true";
-      } catch (_) {
-        return false;
-      }
-    }
-    return false;
-  });
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTenantBlocked, setIsTenantBlocked] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -67,19 +54,10 @@ const Sidebar = () => {
     return 'Logo';
   };
   
-  const [user, setUser] = useState<{ nome: string; role: string; email?: string; tenantId?: string | null; iniciais: string; avatarUrl?: string; tenantLogoUrl?: string; tenantNome?: string; primaryColor?: string } | null>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
-        if (cookie) {
-          const parsed = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
-          return parsed;
-        }
-      } catch (e) {
-        console.error('Erro ao ler cookie sb_user no estado inicial:', e);
-      }
-    }
-    return null;
+  const [user, setUser] = useState<{ nome: string; role: string; email?: string; tenantId?: string | null; iniciais: string; avatarUrl?: string; tenantLogoUrl?: string; tenantNome?: string; primaryColor?: string } | null>({
+    nome: 'Carregando...',
+    role: 'USER',
+    iniciais: 'US'
   });
 
   // Estados para o Enquadramento / Ajuste de Posição da Foto
@@ -377,6 +355,10 @@ const Sidebar = () => {
   // Carrega as informações do usuário e o estado recolhido do localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      const match = document.cookie.match(new RegExp("(^| )sb_sidebar_collapsed=([^;]+)"));
+      const collapsed = match ? match[2] === "true" : localStorage.getItem("sb_sidebar_collapsed") === "true";
+      setIsCollapsed(collapsed);
+
       const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
       if (cookie) {
         try {
@@ -388,7 +370,7 @@ const Sidebar = () => {
         setUser({ nome: 'Cristiano Silva', role: 'USER', iniciais: 'CS' });
       }
 
-      if (isCollapsed) {
+      if (collapsed) {
         document.body.classList.add('sidebar-collapsed');
       } else {
         document.body.classList.remove('sidebar-collapsed');
@@ -1087,59 +1069,60 @@ const Sidebar = () => {
  
   return (
     <>
-      <aside suppressHydrationWarning={true} className={`sidebar-aside bg-white border-r border-slate-200 h-screen sticky top-0 flex flex-col shadow-sm ${isMounted ? 'transition-all duration-300' : ''} ${isCollapsed ? 'w-20' : 'w-64'}`}>
+      <aside suppressHydrationWarning={true} className={`sidebar-aside bg-white border-r border-slate-200 h-screen sticky top-0 flex flex-col shadow-sm ${isMounted ? 'transition-all duration-300' : ''}`}>
       {/* Header */}
       <div className="p-6 border-b border-slate-50 relative flex items-center justify-between min-h-[96px] gap-2">
-        {!isCollapsed ? (
-          <div className="flex-1 flex items-center justify-between min-w-0">
-            <div>
-              {/* Fallback Default Logo */}
-              <div className="sidebar-default-logo">
-                <h1 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                  <div className="w-8 h-8 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-sm font-black shadow-lg shadow-emerald-200 shrink-0">S</div>
-                  SmartBidHub
-                </h1>
-                <p className="text-[9px] text-slate-400 mt-2 font-black uppercase tracking-[0.2em] whitespace-nowrap">Enterprise FM System</p>
-              </div>
+        {/* Expanded Header */}
+        <div className="flex-1 flex items-center justify-between min-w-0 sidebar-expanded-only">
+          <div>
+            {/* Fallback Default Logo */}
+            <div className="sidebar-default-logo">
+              <h1 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                <div className="w-8 h-8 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-sm font-black shadow-lg shadow-emerald-200 shrink-0">S</div>
+                SmartBidHub
+              </h1>
+              <p className="text-[9px] text-slate-400 mt-2 font-black uppercase tracking-[0.2em] whitespace-nowrap">Enterprise FM System</p>
+            </div>
 
-              {/* Dynamic Tenant Logo */}
-              <div className="sidebar-tenant-logo flex flex-col gap-1.5 animate-fadeIn" style={{ display: 'none' }}>
-                <img 
-                  src={user?.tenantLogoUrl || getInitialLogoUrl()} 
-                  alt={user?.tenantNome || getInitialLogoNome()} 
-                  suppressHydrationWarning={true}
-                  className="max-h-11 max-w-[180px] object-contain rounded"
-                />
-                <p className="text-[8px] text-slate-400 font-extrabold uppercase tracking-[0.2em] whitespace-nowrap">Powered by SmartBidHub</p>
-              </div>
+            {/* Dynamic Tenant Logo */}
+            <div className="sidebar-tenant-logo flex flex-col gap-1.5 animate-fadeIn" style={{ display: 'none' }}>
+              <img 
+                src={user?.tenantLogoUrl || getInitialLogoUrl()} 
+                alt={user?.tenantNome || getInitialLogoNome()} 
+                suppressHydrationWarning={true}
+                className="max-h-11 max-w-[180px] object-contain rounded"
+              />
+              <p className="text-[8px] text-slate-400 font-extrabold uppercase tracking-[0.2em] whitespace-nowrap">Powered by SmartBidHub</p>
             </div>
           </div>
-        ) : (
-          <div className="w-full flex flex-col items-center gap-3">
-            {/* SBH Acronym Badge or Small Tenant Logo when collapsed */}
-            {(user?.tenantLogoUrl || getInitialLogoUrl()) ? (
-              <div className="w-10 h-10 bg-white border border-slate-200/80 rounded-xl flex items-center justify-center p-1.5 shadow-2xs transition-all shrink-0 hover:bg-slate-50 relative overflow-hidden" title={user?.tenantNome || getInitialLogoNome()}>
-                <img 
-                  src={user?.tenantLogoUrl || getInitialLogoUrl()} 
-                  alt={user?.tenantNome || getInitialLogoNome()} 
-                  suppressHydrationWarning={true}
-                  className="max-h-full max-w-full object-contain rounded-sm"
-                />
-              </div>
-            ) : (
-              <div className="w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-[11px] font-black shadow-md transition-all shrink-0 tracking-wider">
-                SBH
-              </div>
-            )}
-          </div>
-        )}
+        </div>
+
+        {/* Collapsed Header */}
+        <div className="w-full flex flex-col items-center gap-3 sidebar-collapsed-only">
+          {/* SBH Acronym Badge or Small Tenant Logo when collapsed */}
+          {(user?.tenantLogoUrl || getInitialLogoUrl()) ? (
+            <div className="w-10 h-10 bg-white border border-slate-200/80 rounded-xl flex items-center justify-center p-1.5 shadow-2xs transition-all shrink-0 hover:bg-slate-50 relative overflow-hidden" title={user?.tenantNome || getInitialLogoNome()}>
+              <img 
+                src={user?.tenantLogoUrl || getInitialLogoUrl()} 
+                alt={user?.tenantNome || getInitialLogoNome()} 
+                suppressHydrationWarning={true}
+                className="max-h-full max-w-full object-contain rounded-sm"
+              />
+            </div>
+          ) : (
+            <div className="w-10 h-10 bg-[#1B4D3E] rounded-xl flex items-center justify-center text-white text-[11px] font-black shadow-md transition-all shrink-0 tracking-wider">
+              SBH
+            </div>
+          )}
+        </div>
         
         {/* Botão de Recolher Flutuante */}
         <button 
           onClick={toggleCollapse} 
           className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-[#1B4D3E] hover:border-[#1B4D3E]/40 hover:shadow-md transition-all z-50 cursor-pointer shadow-sm"
         >
-          {isCollapsed ? <ChevronRight size={12} className="stroke-[3]" /> : <ChevronLeft size={12} className="stroke-[3]" />}
+          <ChevronRight size={12} className="stroke-[3] sidebar-collapsed-only" />
+          <ChevronLeft size={12} className="stroke-[3] sidebar-expanded-only" />
         </button>
       </div>
       
@@ -1190,16 +1173,14 @@ const Sidebar = () => {
                         transition: 'background-color 10s ease-out, color 10s ease-out',
                       }
                 }
-                className={`flex items-center gap-3 rounded-2xl transition-all ${
-                  isCollapsed ? 'justify-center p-3.5' : 'px-5 py-4'
-                } ${
+                className={`sidebar-item flex items-center gap-3 rounded-2xl transition-all ${
                   isActive 
                     ? 'bg-slate-900 text-white shadow-xl shadow-slate-200' 
                     : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-bold'
                 }`}
               >
                 <item.icon size={20} className={isActive ? 'text-emerald-400 shrink-0' : 'text-slate-400 shrink-0'} />
-                {!isCollapsed && <span className="text-sm truncate">{item.label}</span>}
+                <span className="text-sm truncate sidebar-expanded-only">{item.label}</span>
               </Link>
             </div>
           );
@@ -1218,38 +1199,26 @@ const Sidebar = () => {
             setShowPasswordModal(true);
           }}
           title="Alterar minha senha"
-          className={`flex items-center gap-3 bg-slate-50 border border-slate-100 group relative cursor-pointer hover:bg-slate-100 hover:border-slate-200 transition-all ${
-            isCollapsed 
-              ? 'justify-center w-12 h-12 rounded-full mx-auto p-0' 
-              : 'p-3 rounded-[1.5rem] w-full'
-          }`}
+          className="sidebar-profile flex items-center gap-3 bg-slate-50 border border-slate-100 group relative cursor-pointer hover:bg-slate-100 hover:border-slate-200 transition-all"
         >
           {user?.avatarUrl ? (
             <img 
               src={user.avatarUrl} 
               alt={user.nome} 
-              className={`object-cover border border-slate-100 shadow-md shrink-0 animate-fadeIn ${
-                isCollapsed ? 'w-9 h-9 rounded-full' : 'w-10 h-10 rounded-full'
-              }`}
+              className="sidebar-avatar object-cover border border-slate-100 shadow-md shrink-0 animate-fadeIn"
             />
           ) : (
-            <div className={`bg-[#1B4D3E] flex items-center justify-center text-white font-black text-xs shadow-md shrink-0 ${
-              isCollapsed ? 'w-9 h-9 rounded-full' : 'w-10 h-10 rounded-full'
-            }`}>
+            <div className="sidebar-avatar bg-[#1B4D3E] flex items-center justify-center text-white font-black text-xs shadow-md shrink-0">
               {user?.iniciais || 'US'}
             </div>
           )}
-          {!isCollapsed && (
-            <div className="overflow-hidden flex-1">
-              <p className="text-xs font-black text-slate-800 truncate">{user?.nome || 'Carregando...'}</p>
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">
-                {user?.role === 'ADMIN' ? 'Administrador' : user?.role === 'MANAGER' ? 'Gestor Comercial' : 'Vendedor'}
-              </p>
-            </div>
-          )}
-          {!isCollapsed && (
-            <KeyRound size={14} className="text-slate-400 group-hover:text-[#1B4D3E] opacity-0 group-hover:opacity-100 transition-all shrink-0 ml-1" />
-          )}
+          <div className="overflow-hidden flex-1 sidebar-expanded-only">
+            <p className="text-xs font-black text-slate-800 truncate">{user?.nome || 'Carregando...'}</p>
+            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">
+              {user?.role === 'ADMIN' ? 'Administrador' : user?.role === 'MANAGER' ? 'Gestor Comercial' : 'Vendedor'}
+            </p>
+          </div>
+          <KeyRound size={14} className="text-slate-400 group-hover:text-[#1B4D3E] opacity-0 group-hover:opacity-100 transition-all shrink-0 ml-1 sidebar-expanded-only" />
         </div>
 
         
@@ -1263,10 +1232,10 @@ const Sidebar = () => {
             window.location.href = '/login';
           }}
           title={isCollapsed ? "Sair do Sistema" : undefined}
-          className={`w-full flex items-center justify-center gap-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all font-bold text-xs uppercase tracking-widest border border-transparent hover:border-red-100 ${isCollapsed ? 'p-3' : 'py-3'}`}
+          className="sidebar-logout w-full flex items-center justify-center gap-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all font-bold text-xs uppercase tracking-widest border border-transparent hover:border-red-100"
         >
           <BarChart2 size={14} className="rotate-90 shrink-0" />
-          {!isCollapsed && <span className="truncate">Sair</span>}
+          <span className="truncate sidebar-expanded-only">Sair</span>
         </button>
       </div>
     </aside>
@@ -1552,7 +1521,7 @@ const Sidebar = () => {
 
       {/* FIXED COUNTER BANNER AT THE TOP OF THE SCREEN */}
       {trialStatus?.isTrialActive && !trialStatus?.trialExpired && trialStatus?.hasContact && countdownTime && (
-        <div suppressHydrationWarning={true} className={`sidebar-topbar fixed top-0 right-0 z-[48] bg-gradient-to-r from-[#1B4D3E] via-[#2A6D5A] to-[#1B4D3E] border-b border-emerald-500/20 text-white flex items-center justify-between px-6 py-2 h-14 shadow-lg ${isMounted ? 'transition-all duration-300' : ''} ${isCollapsed ? 'left-20' : 'left-64'}`}>
+        <div suppressHydrationWarning={true} className={`sidebar-topbar fixed top-0 right-0 z-[48] bg-gradient-to-r from-[#1B4D3E] via-[#2A6D5A] to-[#1B4D3E] border-b border-emerald-500/20 text-white flex items-center justify-between px-6 py-2 h-14 shadow-lg ${isMounted ? 'transition-all duration-300' : ''}`}>
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/10 border border-white/20 text-white/95">
               <Clock size={12} className="animate-pulse" />
@@ -2054,9 +2023,7 @@ const Sidebar = () => {
 
           {/* WIDGET FLUTUANTE DE WHATSAPP (CANTO INFERIOR DIREITO) */}
           {showWhatsAppWidget && (
-            <div suppressHydrationWarning={true} className={`sidebar-widget-panel fixed top-3 right-14 bottom-0 bg-white shadow-2xl z-[160] flex flex-col ${isMounted ? 'transition-all duration-300' : ''} animate-in slide-in-from-right duration-300 font-sans border-t border-l border-slate-200 rounded-t-3xl ${
-              isCollapsed ? 'left-20' : 'left-64'
-            }`}>
+            <div suppressHydrationWarning={true} className={`sidebar-widget-panel fixed top-3 right-14 bottom-0 bg-white shadow-2xl z-[160] flex flex-col ${isMounted ? 'transition-all duration-300' : ''} animate-in slide-in-from-right duration-300 font-sans border-t border-l border-slate-200 rounded-t-3xl`}>
               {/* External Close Button Tab on the Left Edge */}
               <button
                 onClick={() => {
@@ -2393,9 +2360,7 @@ const Sidebar = () => {
 
           {/* WIDGET FLUTUANTE DE CHAT INTERNO (CANTO INFERIOR DIREITO) */}
           {showChatWidget && (
-            <div suppressHydrationWarning={true} className={`sidebar-widget-panel fixed top-3 right-14 bottom-0 bg-white shadow-2xl z-[160] flex flex-col ${isMounted ? 'transition-all duration-300' : ''} animate-in slide-in-from-right duration-300 font-sans border-t border-l border-slate-200 rounded-t-3xl border-t-0 border-x-0 border-solid ${
-              isCollapsed ? 'left-20' : 'left-64'
-            }`}>
+            <div suppressHydrationWarning={true} className={`sidebar-widget-panel fixed top-3 right-14 bottom-0 bg-white shadow-2xl z-[160] flex flex-col ${isMounted ? 'transition-all duration-300' : ''} animate-in slide-in-from-right duration-300 font-sans border-t border-l border-slate-200 rounded-t-3xl border-t-0 border-x-0 border-solid`}>
               {/* External Close Button Tab on the Left Edge */}
               <button
                 onClick={() => {
