@@ -584,6 +584,7 @@ export default function ContratosDashboard() {
   const [contratos, setContratos] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('lista');
+  const [viewModeMounted, setViewModeMounted] = useState(false);
   const [segmentoColors, setSegmentoColors] = useState<Record<string, string>>({});
   const [editingSegmentoId, setEditingSegmentoId] = useState<string | null>(null);
   const [segmentos, setSegmentos] = useState<any[]>([]);
@@ -657,6 +658,7 @@ export default function ContratosDashboard() {
       const storedSegmentoOrder = localStorage.getItem('contrato-segmento-order');
       if (storedSegmentoOrder) { try { setSegmentoOrder(JSON.parse(storedSegmentoOrder)); } catch {} }
     }
+    setViewModeMounted(true);
   }, []);
 
   const handleViewModeChange = (mode: ViewMode) => {
@@ -991,7 +993,16 @@ export default function ContratosDashboard() {
             </div>
 
             {/* LISTA */}
-            {viewMode === 'lista' && (
+            {!viewModeMounted && (
+              <div className="flex-1 flex items-center justify-center bg-slate-50">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-8 h-8 border-3 border-[#1B4D3E]/20 border-t-[#1B4D3E] rounded-full animate-spin" />
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Carregando...</span>
+                </div>
+              </div>
+            )}
+
+            {viewModeMounted && viewMode === 'lista' && (
               <div className="bg-white overflow-hidden flex-1 flex flex-col min-h-0 w-full">
                 <div className="overflow-auto flex-1 min-h-0">
                   <table className="w-full text-left border-collapse">
@@ -1050,7 +1061,7 @@ export default function ContratosDashboard() {
             )}
 
             {/* KANBAN POR STATUS */}
-            {viewMode === 'kanban-status' && (
+            {viewModeMounted && viewMode === 'kanban-status' && (
               <div className="py-4 bg-slate-50 min-w-max">
                 <div className="flex gap-[3px]">
                   {statusList.map((status, index) => {
@@ -1114,7 +1125,7 @@ export default function ContratosDashboard() {
             )}
 
             {/* KANBAN POR SEGMENTO */}
-            {viewMode === 'kanban-segmento' && (
+            {viewModeMounted && viewMode === 'kanban-segmento' && (
               <div className="py-4 bg-slate-50 min-w-max">
                 <div className="flex gap-[3px]">
                   {kanbanSegmentoCols.map((col, index) => {

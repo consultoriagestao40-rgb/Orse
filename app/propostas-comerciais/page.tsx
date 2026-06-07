@@ -135,10 +135,12 @@ export default function PropostasComerciaisDashboard() {
   const [docs, setDocs] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('lista');
+  const [viewModeMounted, setViewModeMounted] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('orse_proposta_view_mode');
     if (saved) setViewMode(saved as any);
+    setViewModeMounted(true);
   }, []);
 
   const handleViewModeChange = (mode: ViewMode) => {
@@ -1204,7 +1206,16 @@ export default function PropostasComerciaisDashboard() {
             </div>
           </div>
 
-          {viewMode === 'lista' && (
+          {!viewModeMounted && (
+            <div className="flex-1 flex items-center justify-center bg-slate-50">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-3 border-[#1B4D3E]/20 border-t-[#1B4D3E] rounded-full animate-spin" />
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Carregando...</span>
+              </div>
+            </div>
+          )}
+
+          {viewModeMounted && viewMode === 'lista' && (
             <div className="bg-white rounded-md shadow-sm border border-slate-300 overflow-hidden flex-1 flex flex-col min-h-0 w-full">
               <div className="overflow-auto flex-1 min-h-0">
                 <table className="w-full text-left border-collapse table-auto">
@@ -1346,7 +1357,7 @@ export default function PropostasComerciaisDashboard() {
             return (
               <>
                 {/* ── KANBAN POR STATUS ───────────────────────────────────────────── */}
-                {viewMode === 'kanban-status' && (
+                {viewModeMounted && viewMode === 'kanban-status' && (
                   <div className="flex-1 flex flex-col min-h-0">
                     {loading ? (
                       <>
@@ -1492,7 +1503,7 @@ export default function PropostasComerciaisDashboard() {
                 )}
 
                 {/* ── KANBAN POR VENDEDOR ───────────────────────────────────────────── */}
-                {viewMode === 'kanban-vendedor' && (
+                {viewModeMounted && viewMode === 'kanban-vendedor' && (
                   <div className="flex-1 flex flex-col min-h-0">
                     {loading ? (
                       <>
@@ -1659,7 +1670,7 @@ export default function PropostasComerciaisDashboard() {
                 )}
 
                 {/* ── KANBAN POR SEGMENTO ───────────────────────────────────────────── */}
-                {viewMode === 'kanban-segmento' && (
+                {viewModeMounted && viewMode === 'kanban-segmento' && (
                   <div className="flex-1 flex flex-col min-h-0">
                     {loading ? (
                       <>

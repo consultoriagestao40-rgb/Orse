@@ -37,10 +37,12 @@ function ProposalsDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [userRole, setUserRole] = useState<string>('USER');
   const [viewMode, setViewMode] = useState<ViewMode>('lista');
+  const [viewModeMounted, setViewModeMounted] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('orse_fpv_view_mode');
     if (saved) setViewMode(saved as any);
+    setViewModeMounted(true);
   }, []);
 
   const handleViewModeChange = (mode: ViewMode) => {
@@ -1354,7 +1356,15 @@ function ProposalsDashboard() {
           </div>
 
           {/* ── VISUALIZAÇÃO EM LISTA ─────────────────────────────────────────── */}
-          {viewMode === 'lista' && (
+          {!viewModeMounted && (
+            <div className="flex-1 flex items-center justify-center bg-slate-50">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-3 border-[#1B4D3E]/20 border-t-[#1B4D3E] rounded-full animate-spin" />
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Carregando...</span>
+              </div>
+            </div>
+          )}
+          {viewModeMounted && viewMode === 'lista' && (
             <div className="bg-white rounded-md shadow-sm border border-slate-300 overflow-hidden flex-1 flex flex-col min-h-0 w-full">
               <div className="p-4 border-b border-slate-300 flex items-center justify-between bg-slate-50 shrink-0">
                 <h2 className="text-sm font-bold text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
@@ -1506,7 +1516,7 @@ function ProposalsDashboard() {
             return (
               <>
                 {/* ── KANBAN POR STATUS ─────────────────────────────────────────────── */}
-                {viewMode === 'kanban-status' && (
+                {viewModeMounted && viewMode === 'kanban-status' && (
                   <div className="flex-1 flex flex-col min-h-0">
                     {loading ? (
                       <>
@@ -1650,7 +1660,7 @@ function ProposalsDashboard() {
 
 
                 {/* ── KANBAN POR VENDEDOR ───────────────────────────────────────────── */}
-                {viewMode === 'kanban-vendedor' && (
+                {viewModeMounted && viewMode === 'kanban-vendedor' && (
                   <div className="flex-1 flex flex-col min-h-0">
                     {loading ? (
                       <>
@@ -1811,7 +1821,7 @@ function ProposalsDashboard() {
 
 
                 {/* ── KANBAN POR SEGMENTO ───────────────────────────────────────────── */}
-                {viewMode === 'kanban-segmento' && (
+                {viewModeMounted && viewMode === 'kanban-segmento' && (
                   <div className="flex-1 flex flex-col min-h-0">
                     {loading ? (
                       <>
