@@ -1171,7 +1171,8 @@ export default function LeadsKanban() {
 
   return (
     <div className="flex flex-col h-screen bg-slate-50 overflow-hidden">
-      <div className="p-4 md:py-6 md:pl-4 md:pr-1 bg-white border-b border-slate-200 flex flex-col lg:flex-row justify-between lg:items-center gap-4 shrink-0">
+      <div className="flex-1 overflow-auto min-h-0 bg-slate-50">
+        <div className="p-4 md:py-6 md:pl-4 md:pr-1 bg-white border-b border-slate-200 flex flex-col lg:flex-row justify-between lg:items-center gap-4 shrink-0">
         <div>
           <h1 className="text-xl md:text-2xl font-black text-slate-800">Pipeline de Leads</h1>
           <p className="text-xs md:text-sm text-slate-500">Gerencie seus leads e prospectos</p>
@@ -1321,8 +1322,8 @@ export default function LeadsKanban() {
           </button>
         </div>
       </div>
-
-      <div className="flex-1 overflow-auto min-h-0 bg-slate-50">
+      
+      <div>
         {showMetrics && <PipelineMetrics leads={filteredLeads} stages={stages} />}
         {viewMode === 'kanban-status' && (
           <div className="py-6 pl-2 pr-1 bg-slate-50 min-w-max">
