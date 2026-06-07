@@ -379,16 +379,19 @@ export default function ContratosDashboard() {
   ];
 
   const handleDragColumnStart = (e: React.DragEvent, columnLabel: string, type: 'status' | 'segmento') => {
+    e.dataTransfer.setData('text/column-id', columnLabel);
+    e.dataTransfer.setData('text/column-type', type);
     setDraggedStageId(columnLabel);
-    e.dataTransfer.setData('text/plain', `COL:${columnLabel}`);
   };
 
   const handleDragColumnEnd = () => {
     setDraggedStageId(null);
     setDraggedOverBeforeStageId(null);
+    setDraggedOverStageId(null);
   };
 
   const handleDragEnd = () => {
+    setDraggedStageId(null);
     setDraggedOverStageId(null);
   };
 
@@ -621,12 +624,12 @@ export default function ContratosDashboard() {
             handleDragColumnStart(e, status, 'status');
           }}
           onDragEnd={handleDragColumnEnd}
-          className="sticky top-0 select-none duration-200 bg-slate-50" 
+          className="sticky top-0 bg-slate-50 cursor-grab active:cursor-grabbing z-20 select-none duration-200" 
           style={{ zIndex }}
         >
           <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
-              className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
+              className={`absolute inset-0 h-full transition-all duration-200 overflow-visible pointer-events-none ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
               viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
               preserveAspectRatio="none"
               style={{ color: resolvedHex }}
@@ -873,12 +876,12 @@ export default function ContratosDashboard() {
             handleDragColumnStart(e, label, 'segmento');
           }}
           onDragEnd={handleDragColumnEnd}
-          className="sticky top-0 select-none duration-200 bg-slate-50" 
+          className="sticky top-0 bg-slate-50 cursor-grab active:cursor-grabbing z-20 select-none duration-200" 
           style={{ zIndex }}
         >
           <div className="relative h-[52px] shrink-0 z-10 w-full group/title pointer-events-auto">
             <svg 
-              className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
+              className={`absolute inset-0 h-full transition-all duration-200 overflow-visible pointer-events-none ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
               viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
               preserveAspectRatio="none"
               style={{ color: resolvedHex }}
