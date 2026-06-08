@@ -626,7 +626,16 @@ export async function getLeadShares(leadId: string) {
 
 export async function getAllUsers() {
   try {
+    const loggedUser = await getLoggedUser();
+    if (!loggedUser) return { success: false, error: 'Unauthorized' };
+
+    const whereClause: any = {};
+    if (loggedUser.tenantId) {
+      whereClause.tenantId = loggedUser.tenantId;
+    }
+
     const users = await prisma.user.findMany({
+      where: whereClause,
       select: { id: true, nome: true, cargo: true, role: true, avatarUrl: true }
     });
     return { success: true, users };
