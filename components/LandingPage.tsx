@@ -155,13 +155,13 @@ export default function LandingPage() {
             >
               Login
             </Link>
-            <a 
-              href="/api/auth/google" 
+            <Link 
+              href="/cadastro" 
               className="text-xs font-black uppercase tracking-widest text-slate-950 px-5 py-2.5 bg-[#10B981] hover:bg-[#059669] rounded-xl transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2 group"
             >
               Acesso Grátis
               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-            </a>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -185,12 +185,12 @@ export default function LandingPage() {
               >
                 Login
               </Link>
-              <a 
-                href="/api/auth/google" 
+              <Link 
+                href="/cadastro" 
                 className="flex-1 text-center text-xs font-black uppercase tracking-wider text-slate-950 py-3 bg-[#10B981] rounded-xl"
               >
                 Criar Conta
-              </a>
+              </Link>
             </div>
           </div>
         )}

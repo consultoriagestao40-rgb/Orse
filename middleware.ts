@@ -11,8 +11,8 @@ export function middleware(request: NextRequest) {
   const sessionValue = session?.value || ''
   const isValidSession = sessionValue.includes('@')
 
-  // Se já está logado (sessão válida com email) e tenta acessar o login → home
-  if (pathname === '/login' && isValidSession) {
+  // Se já está logado (sessão válida com email) e tenta acessar o login ou cadastro → home
+  if ((pathname === '/login' || pathname === '/cadastro') && isValidSession) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
@@ -20,6 +20,7 @@ export function middleware(request: NextRequest) {
   const isPublicRoute =
     pathname === '/' ||
     pathname === '/login' ||
+    pathname === '/cadastro' ||
     pathname.startsWith('/proposta/ver/') ||
     pathname.startsWith('/api/setup') ||
     pathname.startsWith('/_next') ||
