@@ -2654,7 +2654,7 @@ const Sidebar = () => {
                       <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-slate-400 border border-slate-200/80 shadow-sm mb-4 animate-bounce">
                         <MessageSquare size={26} className="text-blue-500" />
                       </div>
-                      <h3 className="text-sm font-black text-slate-800 tracking-tight">Chat Interno da Silva Consultoria</h3>
+                      <h3 className="text-sm font-black text-slate-800 tracking-tight">Chat Interno da {user?.tenantNome || 'sua empresa'}</h3>
                       <p className="text-xs text-slate-400 mt-1 max-w-[280px] font-semibold leading-relaxed">
                         Selecione um colega de equipe na lista ao lado para iniciar um bate-papo em tempo real.
                       </p>
