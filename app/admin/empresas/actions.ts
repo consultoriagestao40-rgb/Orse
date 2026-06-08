@@ -8,12 +8,17 @@ import { revalidatePath } from 'next/cache';
 
 /**
  * Auxiliar de Segurança:
- * Valida se o usuário logado possui privilégios de Super Administrador.
- * Libera acesso apenas para:
- * 1. O email master (cristiano@grupojvsserv.com.br)
- * 2. Ou usuários pertencentes ao tenant com o CNPJ da Silva Consultoria (40.180.983/0001-00)
+ * Valida se o usuário logado possui privilégios de Super Administrador da PLATAFORMA.
+ * Libera acesso apenas para os operadores do SaaS (Silva Consultoria):
+ * - admin@smartbidhub.com.br
+ * - admin@smartbid.com
+ *
+ * IMPORTANTE: cristiano@grupojvsserv.com.br é um CLIENTE do SaaS (Grupo JVS),
+ * não um operador da plataforma. Ele acessa o CRM como usuário comum.
  */
 export async function checkIsSuperAdmin() {
+  const PLATFORM_ADMINS = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
+
   try {
     const cookieStore = await cookies();
     
@@ -21,23 +26,10 @@ export async function checkIsSuperAdmin() {
     const sessionEmail = cookieStore.get('sb_session')?.value;
     if (sessionEmail) {
       const emailNormal = sessionEmail.toLowerCase().trim();
-      if (emailNormal === 'cristiano@grupojvsserv.com.br' || emailNormal === 'admin@smartbidhub.com.br' || emailNormal === 'admin@smartbid.com') {
+      if (PLATFORM_ADMINS.includes(emailNormal)) {
         return true;
       }
-      
-      const user = await prisma.user.findFirst({
-        where: { email: emailNormal },
-        include: { tenant: true }
-      });
-      
-      if (user) {
-        return (
-          user.email === 'admin@smartbidhub.com.br' || 
-          user.email === 'admin@smartbid.com' || 
-          user.email === 'cristiano@grupojvsserv.com.br' || 
-          (user.tenant?.cnpj === '40.180.983/0001-00' && user.role === 'ADMIN')
-        );
-      }
+      return false;
     }
 
     // Fallback para o sb_user antigo se sb_session por algum motivo não existir
@@ -68,28 +60,7 @@ export async function checkIsSuperAdmin() {
     if (!data) return false;
 
     const emailNormal = (data.email || '').toLowerCase().trim();
-    if (emailNormal === 'cristiano@grupojvsserv.com.br' || emailNormal === 'admin@smartbidhub.com.br') {
-      return true;
-    }
-
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: emailNormal },
-          { email: data.email || '___invalid___' },
-          { nome: data.nome || '___invalid___' }
-        ]
-      },
-      include: { tenant: true }
-    });
-
-    if (!user) return false;
-
-    return (
-      user.email === 'admin@smartbidhub.com.br' || 
-      user.email === 'cristiano@grupojvsserv.com.br' || 
-      (user.tenant?.cnpj === '40.180.983/0001-00' && user.role === 'ADMIN')
-    );
+    return PLATFORM_ADMINS.includes(emailNormal);
   } catch (error) {
     console.error('Erro na checagem de Super Admin:', error);
     return false;

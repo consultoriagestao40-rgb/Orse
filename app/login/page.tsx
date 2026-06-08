@@ -56,7 +56,7 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (res.ok) {
-        const superAdmins = ['cristiano@grupojvsserv.com.br', 'admin@smartbidhub.com.br', 'admin@smartbid.com'];
+        const superAdmins = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
         const userEmail = data.user?.email?.toLowerCase()?.trim() || '';
         if (superAdmins.includes(userEmail)) {
           window.location.href = '/admin/empresas';

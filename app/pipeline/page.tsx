@@ -2387,7 +2387,7 @@ export default function Page() {
       .then(data => {
         if (data.loggedIn) {
           setIsLoggedIn(true);
-          const superAdmins = ['cristiano@grupojvsserv.com.br', 'admin@smartbidhub.com.br', 'admin@smartbid.com'];
+          const superAdmins = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
           const userEmail = data.email?.toLowerCase()?.trim() || '';
           if (superAdmins.includes(userEmail)) {
             router.push('/admin/empresas');

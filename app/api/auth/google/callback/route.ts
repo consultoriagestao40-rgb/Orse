@@ -89,7 +89,7 @@ export async function GET(request: Request) {
 
     // 5. Configurar Cookies de Sessão seguros
     const isProduction = process.env.NODE_ENV === 'production'
-    const superAdmins = ['cristiano@grupojvsserv.com.br', 'admin@smartbidhub.com.br', 'admin@smartbid.com']
+    const superAdmins = ['admin@smartbidhub.com.br', 'admin@smartbid.com']
     const userEmail = user.email.toLowerCase().trim()
     const redirectUrl = superAdmins.includes(userEmail) ? '/admin/empresas' : '/'
     const redirectTarget = new URL(redirectUrl, request.url)

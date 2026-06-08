@@ -2,8 +2,8 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 const SUPER_ADMIN_EMAILS = [
-  'cristiano@grupojvsserv.com.br',
   'admin@smartbidhub.com.br',
+  'admin@smartbid.com',
 ];
 
 /**

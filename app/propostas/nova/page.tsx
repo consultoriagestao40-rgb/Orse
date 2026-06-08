@@ -433,7 +433,7 @@ function PropostaEditor() {
         console.log('CCTs, Escalas, Produtos, Tipos de Serviço, Segmentos e Clientes carregados em paralelo via Server Action única.');
 
         setCurrentUser(loggedUser || null);
-        const superAdmins = ['cristiano@grupojvsserv.com.br', 'admin@smartbidhub.com.br', 'admin@smartbid.com'];
+        const superAdmins = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
         const userEmail = loggedUser?.email?.toLowerCase()?.trim() || '';
         if (loggedUser && superAdmins.includes(userEmail)) {
           router.push('/admin/empresas');
