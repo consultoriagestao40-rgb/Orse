@@ -307,24 +307,33 @@ export async function saveProposta(data: any) {
   try {
     let propostaId = id;
 
-    // Encontra o cliente de forma case-insensitive e limpa espaços
-    let dbClient = await prisma.client.findFirst({
-      where: {
-        nomeFantasia: {
-          equals: cliente.cliente.trim(),
-          mode: 'insensitive'
-        }
+    // Encontra o cliente de forma case-insensitive e limpa espaços (filtrando por tenant)
+    const clientWhere: any = {
+      nomeFantasia: {
+        equals: cliente.cliente.trim(),
+        mode: 'insensitive'
       }
+    };
+    if (user?.tenantId) {
+      clientWhere.tenantId = user.tenantId;
+    }
+
+    let dbClient = await prisma.client.findFirst({
+      where: clientWhere
     });
 
     if (!dbClient) {
-      dbClient = await prisma.client.findFirst({
-        where: {
-          nomeFantasia: {
-            contains: cliente.cliente.trim(),
-            mode: 'insensitive'
-          }
+      const clientWhereContains: any = {
+        nomeFantasia: {
+          contains: cliente.cliente.trim(),
+          mode: 'insensitive'
         }
+      };
+      if (user?.tenantId) {
+        clientWhereContains.tenantId = user.tenantId;
+      }
+      dbClient = await prisma.client.findFirst({
+        where: clientWhereContains
       });
     }
 
@@ -680,6 +689,11 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
 
     if (!proposta || !proposta.versoes.length) return null;
 
+    // Validação rígida de isolamento de inquilino (Tenant)
+    if (!isPublic && loggedUser && loggedUser.tenantId && proposta.tenantId !== loggedUser.tenantId) {
+      return null;
+    }
+
     // Validação de segurança por perfil
     if (!isPublic && loggedUser && loggedUser.role !== 'ADMIN') {
       const isShared = (proposta as any).shares?.some((s: any) => s.userId === loggedUser.id) || false;
@@ -889,21 +903,18 @@ export async function getKPIs() {
     let whereClause: any = {};
     let usersWhereClause: any = {};
 
+    if (loggedUser.tenantId) {
+      whereClause.tenantId = loggedUser.tenantId;
+      usersWhereClause.tenantId = loggedUser.tenantId;
+    }
+
     if (loggedUser.role === 'MANAGER') {
       const subordinateIds = await getSubordinateIds(loggedUser.id);
-      whereClause = {
-        userId: { in: [loggedUser.id, ...subordinateIds] }
-      };
-      usersWhereClause = {
-        id: { in: [loggedUser.id, ...subordinateIds] }
-      };
+      whereClause.userId = { in: [loggedUser.id, ...subordinateIds] };
+      usersWhereClause.id = { in: [loggedUser.id, ...subordinateIds] };
     } else if (loggedUser.role === 'USER') {
-      whereClause = {
-        userId: loggedUser.id
-      };
-      usersWhereClause = {
-        id: loggedUser.id
-      };
+      whereClause.userId = loggedUser.id;
+      usersWhereClause.id = loggedUser.id;
     }
 
     const propostas = await prisma.proposta.findMany({

@@ -59,11 +59,7 @@ const Sidebar = () => {
     return 'Logo';
   };
   
-  const [user, setUser] = useState<{ nome: string; role: string; email?: string; tenantId?: string | null; iniciais: string; avatarUrl?: string; tenantLogoUrl?: string; tenantNome?: string; primaryColor?: string } | null>({
-    nome: 'Carregando...',
-    role: 'USER',
-    iniciais: 'US'
-  });
+  const [user, setUser] = useState<{ nome: string; role: string; email?: string; tenantId?: string | null; iniciais: string; avatarUrl?: string; tenantLogoUrl?: string; tenantNome?: string; primaryColor?: string } | null>(null);
 
   // Estados para o Enquadramento / Ajuste de Posição da Foto
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -164,14 +160,15 @@ const Sidebar = () => {
       
       const res = await changeMyAvatar(dataUrl);
       if (res.success && res.avatarUrl) {
-        setUser(prev => prev ? { ...prev, avatarUrl: '/api/user/avatar' } : null);
+        const timestamp = Date.now();
+        setUser(prev => prev ? { ...prev, avatarUrl: `/api/user/avatar?email=${encodeURIComponent(prev.email || '')}&v=${timestamp}` } : null);
         
         const cookiesList = document.cookie.split(';');
         const userCookie = cookiesList.find(c => c.trim().startsWith('sb_user='));
         if (userCookie) {
           try {
             const decoded = JSON.parse(decodeURIComponent(userCookie.split('=')[1]));
-            decoded.avatarUrl = '/api/user/avatar';
+            decoded.avatarUrl = `/api/user/avatar?email=${encodeURIComponent(decoded.email || '')}&v=${timestamp}`;
             const encoded = encodeURIComponent(JSON.stringify(decoded));
             document.cookie = `sb_user=${encoded}; path=/; max-age=${60 * 60 * 24 * 7}; Secure; SameSite=Lax`;
           } catch (err) {
@@ -369,10 +366,10 @@ const Sidebar = () => {
         try {
           setUser(JSON.parse(decodeURIComponent(cookie.split('=')[1])));
         } catch (e) {
-          setUser({ nome: 'Cristiano Silva', role: 'USER', iniciais: 'CS' });
+          setUser(null);
         }
       } else {
-        setUser({ nome: 'Cristiano Silva', role: 'USER', iniciais: 'CS' });
+        setUser(null);
       }
 
       if (collapsed) {
@@ -394,7 +391,7 @@ const Sidebar = () => {
               role: freshUser.role,
               email: freshUser.email,
               tenantId: freshUser.tenantId,
-              avatarUrl: freshUser.avatarUrl ? '/api/user/avatar' : undefined,
+              avatarUrl: freshUser.avatarUrl ? `/api/user/avatar?email=${encodeURIComponent(freshUser.email)}&v=${freshUser.avatarUrl.length > 30 ? encodeURIComponent(freshUser.avatarUrl.substring(freshUser.avatarUrl.length - 10)) : encodeURIComponent(freshUser.avatarUrl.substring(0, 10))}` : undefined,
               tenantLogoUrl: (freshUser as any).tenant?.logoUrl ? '/api/tenant/logo' : undefined,
               tenantNome: (freshUser as any).tenant?.nomeFantasia || undefined,
               primaryColor: (freshUser as any).tenant?.primaryColor || undefined,
