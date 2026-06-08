@@ -166,6 +166,7 @@ export async function getChatList() {
 
   await ensureInternalMessageTableExists();
 
+  try {
     // 1. Get all system users in the same tenant
     const usersWhere: any = {
       id: { not: user.id }
