@@ -959,10 +959,16 @@ const Sidebar = () => {
   const showTenantLogo = user?.tenantLogoUrl && !isSaaSArea && !isPlatformAccountGlobally;
 
   const renderedMenuItems = isSaaSArea
-    ? [
-        { icon: Home, label: 'Voltar ao CRM', href: '/' },
-        { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
-      ]
+    ? isPlatformAccountGlobally
+      ? [
+          // Operador do SaaS: sem "Voltar ao CRM" pois não possui CRM
+          { icon: ShieldCheck, label: 'Gest\u00e3o SaaS (Tenants)', href: '/admin/empresas' },
+        ]
+      : [
+          // Caso outro perfil acesse a área admin, oferece opção de voltar
+          { icon: Home, label: 'Voltar ao CRM', href: '/' },
+          { icon: ShieldCheck, label: 'Gest\u00e3o SaaS (Tenants)', href: '/admin/empresas' },
+        ]
     : menuItems.filter(item => {
         const isPlatformAccount = user?.email ? platformAccounts.includes(user.email.toLowerCase().trim()) : false;
         
@@ -987,10 +993,14 @@ const Sidebar = () => {
   // Sincroniza e ordena os itens do menu
   useEffect(() => {
     const baseItems = isSaaSArea
-      ? [
-          { icon: Home, label: 'Voltar ao CRM', href: '/' },
-          { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
-        ]
+      ? isPlatformAccountGlobally
+        ? [
+            { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
+          ]
+        : [
+            { icon: Home, label: 'Voltar ao CRM', href: '/' },
+            { icon: ShieldCheck, label: 'Gestão SaaS (Tenants)', href: '/admin/empresas' },
+          ]
       : menuItems.filter(item => {
           const platformAccounts = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
           const isPlatformAccount = user?.email ? platformAccounts.includes(user.email.toLowerCase().trim()) : false;
