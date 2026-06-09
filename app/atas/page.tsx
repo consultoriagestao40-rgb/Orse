@@ -26,7 +26,6 @@ interface Participante {
   departamento?: string;
   email?: string;
   presente: boolean;
-  avatarUrl?: string;
 }
 
 interface PautaItem {
@@ -226,15 +225,6 @@ export default function AtasPage() {
       consideracoesEditorRef.current.innerHTML = consideracoes;
     }
   }, [consideracoes, viewMode]);
-
-  useEffect(() => {
-    // Auto-resize action description textareas
-    const textareas = document.querySelectorAll('.acao-descricao-textarea');
-    textareas.forEach((ta: any) => {
-      ta.style.height = 'auto';
-      ta.style.height = ta.scrollHeight + 'px';
-    });
-  }, [acoes, viewMode]);
 
   // Executa formatação de texto rico no editor em foco
   const execEditorCmd = (ref: React.RefObject<HTMLDivElement | null>, cmd: string, val: string = '') => {
@@ -840,8 +830,7 @@ export default function AtasPage() {
         nome: matchedUser.nome,
         departamento: matchedUser.cargo || 'Comercial',
         email: matchedUser.email || '',
-        presente: true,
-        avatarUrl: matchedUser.avatarUrl || undefined
+        presente: true
       }]);
     }
   };
@@ -1087,13 +1076,7 @@ export default function AtasPage() {
       
       {/* Estilos CSS para Impressão de PDF Técnico e Formal */}
       <style dangerouslySetInnerHTML={{__html: `
-        .print-visible-only {
-          display: none !important;
-        }
         @media print {
-          .print-visible-only {
-            display: inline-block !important;
-          }
           /* Remove cabeçalho e rodapé padrão do navegador */
           @page {
             size: A4;
@@ -1610,28 +1593,27 @@ export default function AtasPage() {
                 className="document-canvas w-full max-w-4xl bg-white border border-slate-300 shadow-xl p-8 mx-auto font-sans relative text-slate-800"
               >
                 {/* ESTRUTURA TÉCNICA EM TABELA (IDÊNTICA AO WORD DO USUÁRIO) */}
-                <div className="w-full">
-                  {/* TABELA 1: CABEÇALHO, METADADOS E PARTICIPANTES */}
-                  <table className="w-full border-2 border-slate-900 border-collapse text-xs select-text table-fixed">
-                    <colgroup>
-                      <col style={{ width: '42%' }} />
-                      <col style={{ width: '8%' }} />
-                      <col style={{ width: '35%' }} />
-                      <col style={{ width: '10%' }} />
-                      <col style={{ width: '5%' }} />
-                    </colgroup>
+                <table className="w-full border-2 border-slate-900 border-collapse text-xs select-text table-fixed">
+                  <colgroup>
+                    <col style={{ width: '3%' }} />
+                    <col style={{ width: '45%' }} />
+                    <col style={{ width: '16%' }} />
+                    <col style={{ width: '18%' }} />
+                    <col style={{ width: '12%' }} />
+                    <col style={{ width: '6%' }} />
+                  </colgroup>
                   
                   {/* CABEÇALHO DA ATA */}
                   <thead>
                     <tr>
-                      <th colspan="5" className="bg-[#1E4663] text-white font-black text-center text-sm py-3 border-b-2 border-slate-900 tracking-wider">
+                      <th colspan="6" className="bg-[#1E4663] text-white font-black text-center text-sm py-3 border-b-2 border-slate-900 tracking-wider">
                         {titulo ? titulo.toUpperCase() : 'ATA DE REUNIÃO – COMERCIAL'}
                       </th>
                     </tr>
                     
                     {/* METADADOS (DATA, HORA E LOCAL) */}
                     <tr className="bg-white border-b border-slate-900 text-slate-800">
-                      <td colspan="2" className="p-2.5 border-r border-slate-900 font-bold w-1/2">
+                      <td colspan="3" className="p-2.5 border-r border-slate-900 font-bold">
                         <div className="flex gap-4 items-center flex-wrap">
                           <div className="flex items-center gap-1.5">
                             <span className="text-slate-800 font-black">DATA:</span>
@@ -1653,7 +1635,7 @@ export default function AtasPage() {
                           </div>
                         </div>
                       </td>
-                      <td colspan="3" className="p-2.5 font-bold w-1/2">
+                      <td colspan="3" className="p-2.5 font-bold">
                         <div className="flex items-center gap-1.5">
                           <span className="text-slate-800 font-black">LOCAL:</span>
                           <input 
@@ -1668,7 +1650,7 @@ export default function AtasPage() {
 
                     {/* METADADOS 2 (PASTA/CATEGORIA E STATUS) */}
                     <tr className="bg-white border-b-2 border-slate-900 text-slate-800">
-                      <td colspan="2" className="p-2.5 border-r border-slate-900 font-bold w-1/2">
+                      <td colspan="3" className="p-2.5 border-r border-slate-900 font-bold">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-slate-800 font-black">PASTA/CATEGORIA:</span>
                           <select
@@ -1699,7 +1681,7 @@ export default function AtasPage() {
                           )}
                         </div>
                       </td>
-                      <td colspan="3" className="p-2.5 font-bold w-1/2">
+                      <td colspan="3" className="p-2.5 font-bold">
                         <div className="flex items-center justify-between flex-wrap gap-2">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-slate-800 font-black">STATUS:</span>
@@ -1745,18 +1727,18 @@ export default function AtasPage() {
 
                     {/* TÍTULO PARTICIPANTES */}
                     <tr>
-                      <th colspan="5" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
+                      <th colspan="6" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
                         PARTICIPANTES:
                       </th>
                     </tr>
 
                     {/* COLUNAS PARTICIPANTES */}
                     <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-left">
-                      <th className="py-1 px-3 border-r border-slate-900 w-[42%]">Nome</th>
-                      <th className="py-1 px-3 border-r border-slate-900 w-[8%]">Cargo</th>
-                      <th className="py-1 px-3 border-r border-slate-900 w-[35%]">E-mail</th>
-                      <th className="py-1 px-3 border-r border-slate-900 w-[10%] text-center">Presente</th>
-                      <th className="py-1 px-3 w-[5%] text-center no-print">Ações</th>
+                      <th colspan="2" className="py-1 px-3 border-r border-slate-900">Nome</th>
+                      <th className="py-1 px-3 border-r border-slate-900">Cargo</th>
+                      <th className="py-1 px-3 border-r border-slate-900">E-mail</th>
+                      <th className="py-1 px-3 border-r border-slate-900 text-center">Presente</th>
+                      <th className="py-1 px-3 text-center no-print">Ações</th>
                     </tr>
                   </thead>
                   
@@ -1764,7 +1746,7 @@ export default function AtasPage() {
                   <tbody className="divide-y divide-slate-900">
                     {participantes.length === 0 ? (
                       <tr className="bg-white">
-                        <td colspan="5" className="py-4 text-center text-slate-400 font-medium bg-slate-50/20 italic border-b border-slate-900">
+                        <td colspan="6" className="py-4 text-center text-slate-400 font-medium bg-slate-50/20 italic border-b border-slate-900">
                           Nenhum participante adicionado. Adicione colaboradores abaixo no painel.
                         </td>
                       </tr>
@@ -1774,7 +1756,7 @@ export default function AtasPage() {
                         const avatarUrl = matchedUser?.avatarUrl || p.avatarUrl;
                         return (
                           <tr key={idx} className="bg-white hover:bg-slate-50/10">
-                            <td className="py-1 px-3 border-r border-slate-900 font-bold text-slate-800">
+                            <td colspan="2" className="py-1 px-3 border-r border-slate-900 font-bold text-slate-800">
                               <div className="flex items-center gap-2">
                                 {avatarUrl ? (
                                   <img 
@@ -1855,7 +1837,7 @@ export default function AtasPage() {
 
                     {/* CONTROLES PARTICIPANTES (BOTOES) - Ocultados na impressão */}
                     <tr className="bg-slate-50/50 no-print border-b border-slate-900">
-                      <td colspan="5" className="p-3">
+                      <td colspan="6" className="p-3">
                         <div className="flex justify-end gap-2">
                           <button
                             type="button"
@@ -1883,22 +1865,17 @@ export default function AtasPage() {
                         </div>
                       </td>
                     </tr>
-                  </tbody>
-                </table>
 
-                {/* TABELA 2: PAUTAS PRINCIPAIS */}
-                <table className="w-full border-x-2 border-b-2 border-slate-900 border-collapse text-xs select-text" style={{ marginTop: '-2px' }}>
-                  <tbody>
                     {/* SEÇÃO PAUTAS */}
                     <tr>
-                      <th className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
+                      <th colspan="6" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
                         PAUTAS:
                       </th>
                     </tr>
 
                     {/* LISTA DE PAUTAS PRINCIPAIS COM CHECKBOX E INPUT */}
                     <tr className="bg-white border-b-2 border-slate-900">
-                      <td colspan="5" className="p-4 text-slate-800">
+                      <td colspan="6" className="p-4 text-slate-800">
                         <div className="space-y-3">
                           {pautas.map((p, idx) => (
                             <div key={idx} className="flex items-center gap-2">
@@ -1952,22 +1929,17 @@ export default function AtasPage() {
                         </div>
                       </td>
                     </tr>
-                  </tbody>
-                </table>
 
-                {/* TABELA 3: RELATÓRIO DA REUNIÃO */}
-                <table className="w-full border-x-2 border-b-2 border-slate-900 border-collapse text-xs select-text" style={{ marginTop: '-2px' }}>
-                  <tbody>
                     {/* SEÇÃO RELATÓRIO DA REUNIÃO */}
                     <tr>
-                      <th className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
+                      <th colspan="6" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
                         RELATÓRIO DA REUNIÃO:
                       </th>
                     </tr>
 
                     {/* EDITOR PRINCIPAL DO RELATÓRIO / RELAÇÃO DE ATIVIDADES */}
                     <tr className="bg-white border-b-2 border-slate-900">
-                      <td colspan="5" className="p-4 text-slate-800">
+                      <td colspan="6" className="p-4 text-slate-800">
                         {/* Rich Text Editor Toolbar para o Relatório Principal - Ocultada na Impressão */}
                         <div className="border border-slate-200 rounded-t-xl bg-slate-50 p-2 flex flex-wrap gap-1 items-center divide-x divide-slate-200 select-none no-print mb-2">
                           <div className="flex gap-0.5 pr-2">
@@ -2116,45 +2088,33 @@ export default function AtasPage() {
                         />
                       </td>
                     </tr>
-                  </tbody>
-                </table>
 
-                {/* TABELA 4: PAUTAS DELIBERATIVAS */}
-                <table className="w-full border-x-2 border-b-2 border-slate-900 border-collapse text-xs select-text table-fixed" style={{ marginTop: '-2px' }}>
-                  <colgroup>
-                    <col style={{ width: '4%' }} />
-                    <col style={{ width: '28%' }} />
-                    <col style={{ width: '28%' }} />
-                    <col style={{ width: '15%' }} />
-                    <col style={{ width: '25%' }} />
-                  </colgroup>
-                  <tbody>
                     {/* SEÇÃO PUATAS DELIBERATIVAS (Mantido idêntico ao Word do Usuário) */}
                     <tr>
-                      <th colspan="5" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
+                      <th colspan="6" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
                         PUATAS DELIBERATIVAS
                       </th>
                     </tr>
 
                     {/* COLUNAS PUATAS DELIBERATIVAS */}
                     <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-left">
-                      <th className="py-1 px-1 border-r border-slate-900 w-[4%] text-center">Item</th>
-                      <th colspan="2" className="py-1 px-3 border-r border-slate-900 w-[56%]">Descrição</th>
-                      <th className="py-1 px-3 border-r border-slate-900 w-[15%] text-center">Status</th>
-                      <th className="py-1 px-3 w-[25%]">Anotação</th>
+                      <th className="py-1 px-3 border-r border-slate-900 text-center">Item</th>
+                      <th colspan="2" className="py-1 px-3 border-r border-slate-900">Descrição</th>
+                      <th className="py-1 px-3 border-r border-slate-900 text-center">Status</th>
+                      <th colspan="2" className="py-1 px-3">Anotação</th>
                     </tr>
 
                     {/* CORPO PUATAS DELIBERATIVAS */}
                     {pautasDeliberativas.length === 0 ? (
                       <tr className="bg-white">
-                        <td colspan="5" className="py-4 text-center text-slate-400 font-medium bg-slate-50/20 italic border-b border-slate-900">
+                        <td colspan="6" className="py-4 text-center text-slate-400 font-medium bg-slate-50/20 italic border-b border-slate-900">
                           Nenhuma pauta deliberada listada. Adicione itens abaixo.
                         </td>
                       </tr>
                     ) : (
                       pautasDeliberativas.map((pd, idx) => (
                         <tr key={idx} className="bg-white hover:bg-slate-50/10">
-                          <td className="py-1 px-1 border-r border-slate-900 text-center font-bold text-slate-500">
+                          <td className="py-1 px-3 border-r border-slate-900 text-center font-bold text-slate-500">
                             {pd.item}
                           </td>
                           <td colspan="2" className="py-1 px-3 border-r border-slate-900">
@@ -2198,7 +2158,7 @@ export default function AtasPage() {
                               </button>
                             </div>
                           </td>
-                          <td className="py-1 px-3 flex items-center justify-between gap-1">
+                          <td colspan="2" className="py-1 px-3 flex items-center justify-between gap-1">
                             <input 
                               type="text"
                               value={pd.anotacao || ''}
@@ -2220,7 +2180,7 @@ export default function AtasPage() {
 
                     {/* CONTROLES PUATAS DELIBERATIVAS - Ocultados na Impressão */}
                     <tr className="bg-slate-50/50 no-print border-b border-slate-900">
-                      <td colspan="5" className="p-3">
+                      <td colspan="6" className="p-3">
                         <div className="flex justify-end">
                           <button
                             type="button"
@@ -2232,22 +2192,17 @@ export default function AtasPage() {
                         </div>
                       </td>
                     </tr>
-                  </tbody>
-                </table>
 
-                {/* TABELA 5: CONSIDERAÇÕES */}
-                <table className="w-full border-x-2 border-b-2 border-slate-900 border-collapse text-xs select-text" style={{ marginTop: '-2px' }}>
-                  <tbody>
                     {/* SEÇÃO CONSIDERAÇÕES */}
                     <tr className="bg-[#DCE6F1] border-b border-slate-900 font-black text-slate-800">
-                      <td className="py-1.5 px-3 text-left uppercase text-xs tracking-wider">
+                      <td colspan="6" className="py-1.5 px-3 text-left uppercase text-xs tracking-wider">
                         Considerações:
                       </td>
                     </tr>
 
                     {/* EDITOR DE CONSIDERAÇÕES FINAIS */}
                     <tr className="bg-white border-b-2 border-slate-900">
-                      <td className="p-4 text-slate-800">
+                      <td colspan="6" className="p-4 text-slate-800">
                         {/* Rich Text Editor Toolbar para Considerações - Ocultada na Impressão */}
                         <div className="border border-slate-200 rounded-t-xl bg-slate-50 p-2 flex flex-wrap gap-1 items-center divide-x divide-slate-200 select-none no-print mb-2">
                           <div className="flex gap-0.5 pr-2">
@@ -2392,43 +2347,31 @@ export default function AtasPage() {
                           onKeyUp={e => handleEditorKeyUp(e, consideracoesEditorRef)}
                           className="min-h-[140px] p-4 bg-white border border-slate-200 focus:bg-slate-50/10 focus:border-slate-300 outline-none text-slate-800 text-xs font-semibold leading-relaxed"
                           style={{ whiteSpace: 'pre-wrap' }}
-                                title="Digite aqui as considerações finais e observações..."
+                          placeholder="Digite aqui as considerações finais e observações..."
                         />
                       </td>
                     </tr>
-                  </tbody>
-                </table>
 
-                {/* TABELA 6: AÇÕES */}
-                <table className="w-full border-x-2 border-b-2 border-slate-900 border-collapse text-xs select-text table-fixed" style={{ marginTop: '-2px' }}>
-                  <colgroup>
-                    <col style={{ width: '3%' }} />
-                    <col style={{ width: '68%' }} />
-                    <col style={{ width: '5%' }} />
-                    <col style={{ width: '12%' }} />
-                    <col style={{ width: '12%' }} />
-                  </colgroup>
-                  <tbody>
                     {/* SEÇÃO AÇÕES */}
                     <tr>
-                      <th colspan="5" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
+                      <th colspan="6" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
                         AÇÕES:
                       </th>
                     </tr>
 
                     {/* COLUNAS AÇÕES */}
                     <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-center">
-                      <th className="py-1 px-1 border-r border-slate-900 w-[3%]">Item</th>
-                      <th className="py-1 px-3 border-r border-slate-900 w-[68%] text-left">Descrição</th>
-                      <th className="py-1 px-1 border-r border-slate-900 w-[5%] text-center" title="Responsável">Resp.</th>
-                      <th className="py-1 px-2 border-r border-slate-900 w-[12%]">Prazo</th>
-                      <th className="py-1 px-1 w-[12%] text-center">Status</th>
+                      <th className="py-1 px-3 border-r border-slate-900">Item</th>
+                      <th className="py-1 px-3 border-r border-slate-900 text-left">Descrição</th>
+                      <th className="py-1 px-3 border-r border-slate-900 text-center">Resp.</th>
+                      <th className="py-1 px-3 border-r border-slate-900">Prazo</th>
+                      <th colspan="2" className="py-1 px-3 text-center">Status</th>
                     </tr>
 
                     {/* CORPO AÇÕES */}
                     {acoes.length === 0 ? (
                       <tr className="bg-white">
-                        <td colspan="5" className="py-4 text-center text-slate-400 font-medium bg-slate-50/20 italic border-b border-slate-900">
+                        <td colspan="6" className="py-4 text-center text-slate-400 font-medium bg-slate-50/20 italic border-b border-slate-900">
                           Nenhuma ação cadastrada. Adicione prazos de execução.
                         </td>
                       </tr>
@@ -2436,10 +2379,10 @@ export default function AtasPage() {
                       acoes.map((a, idx) => {
                         const respUser = a.responsavelId ? systemUsers.find(u => u.id === a.responsavelId) : null;
                         const avatarUrl = respUser?.avatarUrl;
-                        const nome = a.responsavelNome || respUser?.nome || 'Não identificado';
+                        const nome = a.responsavelNome || respUser?.nome || 'Selecionar';
                         return (
                           <tr key={idx} className="bg-white hover:bg-slate-50/10">
-                            <td className="py-1 px-1 border-r border-slate-900 text-center font-bold text-slate-500">
+                            <td className="py-1 px-3 border-r border-slate-900 text-center font-bold text-slate-500">
                               {a.item || (idx + 1)}
                             </td>
                             <td className="py-1 px-3 border-r border-slate-900">
@@ -2449,17 +2392,21 @@ export default function AtasPage() {
                                   placeholder="Descreva a ação a ser executada..."
                                   onChange={e => {
                                     handleAcaoFieldChange(idx, 'descricao', e.target.value);
-                                    e.target.style.height = 'auto';
-                                    e.target.style.height = `${e.target.scrollHeight}px`;
                                   }}
                                   rows={1}
-                                  className="acao-descricao-textarea flex-1 bg-transparent border-none outline-none focus:ring-0 font-medium resize-none overflow-hidden py-1.5 leading-relaxed text-slate-800 text-sm"
+                                  ref={el => {
+                                    if (el) {
+                                      el.style.height = 'auto';
+                                      el.style.height = `${el.scrollHeight}px`;
+                                    }
+                                  }}
+                                  className="flex-1 bg-transparent border-none outline-none focus:ring-0 font-medium resize-none overflow-hidden py-1 leading-normal text-slate-800 text-xs"
                                   style={{ height: 'auto' }}
                                 />
                                 <button
                                   type="button"
                                   onClick={() => handleOpenCommentsModal(idx)}
-                                  className="flex items-center gap-1 p-1 rounded transition-colors text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100 no-print cursor-pointer shrink-0 mt-1"
+                                  className="flex items-center gap-1 p-1 rounded transition-colors text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100 no-print cursor-pointer shrink-0 mt-0.5"
                                   title={a.id ? "Comentários da ação" : "Salve o documento para habilitar comentários"}
                                   disabled={!a.id}
                                   style={{ opacity: a.id ? 1 : 0.4 }}
@@ -2503,15 +2450,15 @@ export default function AtasPage() {
                                 </span>
                               </div>
                             </td>
-                            <td className="py-1 px-2 border-r border-slate-900 text-center">
+                            <td className="py-1 px-3 border-r border-slate-900 text-center">
                               <input 
                                 type="date"
                                 value={a.dataLimite}
                                 onChange={e => handleAcaoFieldChange(idx, 'dataLimite', e.target.value)}
-                                className="w-full bg-transparent border-none outline-none focus:ring-0 text-center text-xs"
+                                className="w-full bg-transparent border-none outline-none focus:ring-0 text-center"
                               />
                             </td>
-                            <td className="py-1 px-2 text-center">
+                            <td colspan="2" className="py-1 px-3 text-center">
                               <div className="flex items-center justify-center gap-1.5">
                                 {/* Toggle Conclusão */}
                                 <button
@@ -2534,14 +2481,22 @@ export default function AtasPage() {
                                 </button>
 
                                 {/* Status Badge */}
-                                <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider whitespace-nowrap ${
-                                  a.concluida 
-                                    ? 'bg-green-100 text-green-700 border border-green-200' 
-                                    : getAcaoStatusText(a) === 'ATRASADA'
-                                      ? 'bg-red-100 text-red-700 border border-red-200'
-                                      : 'bg-blue-100 text-blue-700 border border-blue-200'
-                                }`}>
-                                  {getAcaoStatusText(a)}
+                                <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+                                  {/* Status Badge inline style logic */}
+                                  {(() => {
+                                    const statusText = getAcaoStatusText(a);
+                                    let colorClass = 'bg-blue-100 text-blue-700 border-blue-200';
+                                    if (a.concluida) {
+                                      colorClass = 'bg-green-100 text-green-700 border-green-200';
+                                    } else if (statusText === 'ATRASADA') {
+                                      colorClass = 'bg-red-100 text-red-700 border-red-200';
+                                    }
+                                    return (
+                                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${colorClass}`}>
+                                        {statusText}
+                                      </span>
+                                    );
+                                  })()}
                                 </span>
 
                                 {/* Delete Action Button */}
@@ -2562,7 +2517,7 @@ export default function AtasPage() {
 
                     {/* CONTROLES AÇÕES - Ocultados na Impressão */}
                     <tr className="bg-slate-50/50 no-print border-b border-slate-900">
-                      <td colspan="5" className="p-3">
+                      <td colspan="6" className="p-3">
                         <div className="flex justify-end">
                           <button
                             type="button"
@@ -2574,26 +2529,17 @@ export default function AtasPage() {
                         </div>
                       </td>
                     </tr>
-                  </tbody>
-                </table>
 
-                {/* TABELA 7: PRÓXIMA REUNIÃO */}
-                <table className="w-full border-x-2 border-b-2 border-slate-900 border-collapse text-xs select-text table-fixed" style={{ marginTop: '-2px' }}>
-                  <colgroup>
-                    <col style={{ width: '50%' }} />
-                    <col style={{ width: '50%' }} />
-                  </colgroup>
-                  <tbody>
                     {/* SEÇÃO PRÓXIMA REUNIÃO */}
                     <tr className="bg-[#DCE6F1] border-b border-slate-900 font-black text-slate-800 text-center">
-                      <th colspan="2" className="py-1.5 px-3 text-xs tracking-wider uppercase">
+                      <th colspan="6" className="py-1.5 px-3 text-xs tracking-wider uppercase">
                         PRÓXIMA REUNIÃO
                       </th>
                     </tr>
 
                     {/* METADADOS PRÓXIMA REUNIÃO */}
                     <tr className="bg-white text-slate-800 font-bold">
-                      <td className="p-2.5 border-r border-slate-900 w-1/2">
+                      <td colspan="3" className="p-2.5 border-r border-slate-900">
                         <div className="flex gap-4 items-center flex-wrap">
                           <div className="flex items-center gap-1">
                             <span className="text-slate-500 font-black">Data:</span>
@@ -2615,7 +2561,7 @@ export default function AtasPage() {
                           </div>
                         </div>
                       </td>
-                      <td colspan="3" className="p-2.5 w-1/2">
+                      <td colspan="3" className="p-2.5">
                         <div className="flex items-center gap-1.5">
                           <span className="text-slate-500 font-black">Local:</span>
                           <input 
@@ -2628,9 +2574,9 @@ export default function AtasPage() {
                         </div>
                       </td>
                     </tr>
+
                   </tbody>
                 </table>
-                </div>
               </div>
 
             </div>
