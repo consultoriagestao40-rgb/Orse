@@ -2174,7 +2174,7 @@ export default function SettingsPage() {
                             preco: 149.00,
                             limiteUsuarios: 3,
                             descricao: "Ideal para pequenas imobiliárias e corretores autônomos.",
-                            features: "Até 3 Usuários ativos,Acesso ao Pipeline de CRM,Prospecção de empresas,Suporte via e-mail"
+                            features: "Até 3 Usuários ativos,Acesso ao Pipeline de CRM,Prospecção Básica (30 novas buscas Google/mês),Até 1.000 buscas em cache local (gratuitas),Suporte via e-mail"
                           },
                           {
                             nome: "PRO",
@@ -2182,7 +2182,7 @@ export default function SettingsPage() {
                             preco: 299.00,
                             limiteUsuarios: 10,
                             descricao: "Perfeito para construtoras e equipes comerciais em expansão.",
-                            features: "Até 10 Usuários ativos,Acesso ilimitado a FPVs,Prospecção Inteligente IA,Calendário Global,Auditoria e logs"
+                            features: "Até 10 Usuários ativos,Acesso ilimitado a FPVs,Prospecção Inteligente (150 novas buscas Google/mês),Buscas em cache local ilimitadas,Calendário Global,Auditoria e logs"
                           },
                           {
                             nome: "ENTERPRISE",
@@ -2190,7 +2190,7 @@ export default function SettingsPage() {
                             preco: 599.00,
                             limiteUsuarios: 100,
                             descricao: "Customização e poder ilimitado para grandes corporações.",
-                            features: "Até 100 Usuários ativos,Suporte 24/7 com Executivo,Integração e APIs Liberadas,SLA Avançado,Treinamento de equipe"
+                            features: "Até 100 Usuários ativos,Prospecção Avançada (400 novas buscas Google/mês),Buscas em cache local ilimitadas,Suporte 24/7 com Executivo,Integração e APIs Liberadas,SLA Avançado,Treinamento de equipe"
                           }
                         ];
 
@@ -2260,6 +2260,29 @@ export default function SettingsPage() {
                         });
                       })()}
                     </div>
+                  </div>
+
+                  {/* Recargas Adicionais de Busca */}
+                  <div className="bg-gradient-to-r from-emerald-50/60 to-teal-50/60 border border-emerald-100/70 rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-sm">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">
+                          Cotas Extras
+                        </span>
+                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Pacote de Recarga Avulsa</h4>
+                      </div>
+                      <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                        Precisa de mais buscas inéditas ao Google este mês? Adquira um pacote avulso de **+100 buscas** no Google Places por apenas **R$ 49,90** e recarregue o seu saldo de prospecção instantaneamente.
+                      </p>
+                    </div>
+                    <a
+                      href={`https://wa.me/5541999999999?text=Olá! Gostaria de adquirir uma recarga avulsa de +100 buscas na Máquina de Prospecção para a minha empresa: ${billingInfo?.nomeFantasia || 'SmartBid'}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-md shadow-emerald-100 active:scale-[0.98] shrink-0"
+                    >
+                      Adquirir Recarga
+                    </a>
                   </div>
 
                   {/* Histórico de Faturas - Elegante Tabela */}

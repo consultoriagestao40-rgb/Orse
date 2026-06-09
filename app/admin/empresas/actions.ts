@@ -746,50 +746,50 @@ export async function manuallyCreateInvoiceAction(tenantId: string, plano: strin
  * Helper interno para inicializar os planos se o banco estiver vazio.
  */
 async function getOrCreatePlanConfigs() {
-  let configs = await prisma.planoConfig.findMany({
-    orderBy: { preco: 'asc' }
-  });
-
-  if (configs.length === 0) {
-    const defaults = [
-      {
-        nome: "BASICO",
-        label: "Básico",
-        preco: 149.00,
-        limiteUsuarios: 3,
-        descricao: "Ideal para pequenas imobiliárias e corretores autônomos.",
-        features: "Até 3 Usuários ativos,Acesso ao Pipeline de Leads CRM,Prospecção básica de empresas,1.000 buscas em cache local,Suporte via e-mail"
-      },
-      {
-        nome: "PRO",
-        label: "Profissional (PRO)",
-        preco: 299.00,
-        limiteUsuarios: 10,
-        descricao: "Perfeito para construtoras e equipes comerciais em expansão.",
-        features: "Até 10 Usuários ativos,Acesso ilimitado a FPVs e CCTs,Prospecção Inteligente Ativa via IA,Calendário Global de prazos e escalas,Auditoria completa (Audit Trail) de logs,Suporte premium prioritário 24/7"
-      },
-      {
-        nome: "ENTERPRISE",
-        label: "Enterprise",
-        preco: 599.00,
-        limiteUsuarios: 100,
-        descricao: "Customização e poder ilimitado para grandes corporações.",
-        features: "Até 100 Usuários ativos,Suporte 24/7 com Executivo de Conta,Integração e APIs Liberadas,SLA de Disponibilidade Avançado,Treinamento de equipe em vídeo"
-      }
-    ];
-
-    for (const d of defaults) {
-      await prisma.planoConfig.upsert({
-        where: { nome: d.nome },
-        update: {},
-        create: d
-      });
+  const defaults = [
+    {
+      nome: "BASICO",
+      label: "Básico",
+      preco: 149.00,
+      limiteUsuarios: 3,
+      descricao: "Ideal para pequenas imobiliárias e corretores autônomos.",
+      features: "Até 3 Usuários ativos,Acesso ao Pipeline de Leads CRM,Prospecção Básica (30 novas buscas Google/mês),Até 1.000 buscas em cache local (gratuitas),Suporte via e-mail"
+    },
+    {
+      nome: "PRO",
+      label: "Profissional (PRO)",
+      preco: 299.00,
+      limiteUsuarios: 10,
+      descricao: "Perfeito para construtoras e equipes comerciais em expansão.",
+      features: "Até 10 Usuários ativos,Acesso ilimitado a FPVs e CCTs,Prospecção Inteligente (150 novas buscas Google/mês),Buscas em cache local ilimitadas,Calendário Global de prazos e escalas,Auditoria completa (Audit Trail) de logs,Suporte premium prioritário 24/7"
+    },
+    {
+      nome: "ENTERPRISE",
+      label: "Enterprise",
+      preco: 599.00,
+      limiteUsuarios: 100,
+      descricao: "Customização e poder ilimitado para grandes corporações.",
+      features: "Até 100 Usuários ativos,Prospecção Avançada (400 novas buscas Google/mês),Buscas em cache local ilimitadas,Suporte 24/7 com Executivo de Conta,Integração e APIs Liberadas,SLA de Disponibilidade Avançado,Treinamento de equipe em vídeo"
     }
+  ];
 
-    configs = await prisma.planoConfig.findMany({
-      orderBy: { preco: 'asc' }
+  for (const d of defaults) {
+    await prisma.planoConfig.upsert({
+      where: { nome: d.nome },
+      update: {
+        features: d.features,
+        descricao: d.descricao,
+        preco: d.preco,
+        limiteUsuarios: d.limiteUsuarios,
+        label: d.label
+      },
+      create: d
     });
   }
+
+  const configs = await prisma.planoConfig.findMany({
+    orderBy: { preco: 'asc' }
+  });
 
   return configs;
 }
