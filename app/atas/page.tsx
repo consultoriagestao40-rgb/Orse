@@ -2372,10 +2372,10 @@ export default function AtasPage() {
                 <table className="w-full border-x-2 border-b-2 border-slate-900 border-collapse text-xs select-text table-fixed mt-0 border-t-0">
                   <colgroup>
                     <col style={{ width: '5%' }} />
-                    <col style={{ width: '55%' }} />
-                    <col style={{ width: '8%' }} />
-                    <col style={{ width: '15%' }} />
-                    <col style={{ width: '17%' }} />
+                    <col style={{ width: '45%' }} />
+                    <col style={{ width: '7%' }} />
+                    <col style={{ width: '18%' }} />
+                    <col style={{ width: '25%' }} />
                   </colgroup>
                   <tbody className="divide-y divide-slate-900">
                     {/* CABEÇALHO AÇÕES */}
@@ -2391,7 +2391,7 @@ export default function AtasPage() {
                       <th className="py-1 px-3 border-r border-slate-900 text-left">Descrição</th>
                       <th className="py-1 px-3 border-r border-slate-900 text-center">Resp.</th>
                       <th className="py-1 px-3 border-r border-slate-900">Prazo</th>
-                      <th className="py-1 px-3 text-center">Status</th>
+                      <th className="py-1 px-1.5 text-center">Status</th>
                     </tr>
 
                     {/* CORPO AÇÕES */}
@@ -2485,7 +2485,7 @@ export default function AtasPage() {
                                 className="w-full bg-transparent border-none outline-none focus:ring-0 text-center text-xs py-0.5 h-6 min-w-0 font-medium text-slate-800"
                               />
                             </td>
-                            <td className="py-1 px-3 text-center">
+                            <td className="py-1 px-1.5 text-center">
                               <div className="flex items-center justify-center gap-1.5">
                                 {/* Toggle Conclusão */}
                                 <button
