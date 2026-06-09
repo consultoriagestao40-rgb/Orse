@@ -10,9 +10,7 @@ export async function getLeads(filters?: { startDate?: string; endDate?: string;
 
   try {
     const where: any = {};
-    if (user.tenantId) {
-      where.tenantId = user.tenantId;
-    }
+    where.tenantId = user.tenantId;
     if (user.role === 'USER') {
       where.OR = [
         { assignedToId: user.id },
@@ -74,9 +72,7 @@ export async function getUsersForFilter() {
   const user = await getLoggedUser();
   try {
     const where: any = {};
-    if (user?.tenantId) {
-      where.tenantId = user.tenantId;
-    }
+    where.tenantId = user?.tenantId;
     const users = await prisma.user.findMany({
       where,
       select: { id: true, nome: true, avatarUrl: true, cargo: true },
@@ -476,9 +472,7 @@ export async function getActivities(leadId?: string) {
   if (!user) return { success: false, error: 'Unauthorized' };
   try {
     const whereClause: any = leadId ? { leadId } : {};
-    if (user.tenantId) {
-      whereClause.tenantId = user.tenantId;
-    }
+    whereClause.tenantId = user.tenantId;
     const activities = await prisma.activity.findMany({
       where: whereClause,
       include: { user: { select: { nome: true } }, lead: { select: { nomeFantasia: true } } },
@@ -630,9 +624,7 @@ export async function getAllUsers() {
     if (!loggedUser) return { success: false, error: 'Unauthorized' };
 
     const whereClause: any = {};
-    if (loggedUser.tenantId) {
-      whereClause.tenantId = loggedUser.tenantId;
-    }
+    whereClause.tenantId = loggedUser.tenantId;
 
     const users = await prisma.user.findMany({
       where: whereClause,

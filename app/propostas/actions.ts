@@ -314,9 +314,7 @@ export async function saveProposta(data: any) {
         mode: 'insensitive'
       }
     };
-    if (user?.tenantId) {
-      clientWhere.tenantId = user.tenantId;
-    }
+    clientWhere.tenantId = user?.tenantId;
 
     let dbClient = await prisma.client.findFirst({
       where: clientWhere
@@ -329,9 +327,7 @@ export async function saveProposta(data: any) {
           mode: 'insensitive'
         }
       };
-      if (user?.tenantId) {
-        clientWhereContains.tenantId = user.tenantId;
-      }
+      clientWhereContains.tenantId = user?.tenantId;
       dbClient = await prisma.client.findFirst({
         where: clientWhereContains
       });
@@ -555,9 +551,7 @@ export async function getPropostas(preFetchedUser?: any) {
     if (!loggedUser) return [];
 
     let whereClause: any = {};
-    if (loggedUser.tenantId) {
-      whereClause.tenantId = loggedUser.tenantId;
-    }
+    whereClause.tenantId = loggedUser.tenantId;
     
     if (loggedUser.role === 'MANAGER') {
       const subordinateIds = await getSubordinateIds(loggedUser.id);
@@ -690,7 +684,7 @@ export async function getPropostaCompleta(id: string, versionId?: string, isPubl
     if (!proposta || !proposta.versoes.length) return null;
 
     // Validação rígida de isolamento de inquilino (Tenant)
-    if (!isPublic && loggedUser && loggedUser.tenantId && proposta.tenantId !== loggedUser.tenantId) {
+    if (!isPublic && loggedUser && proposta.tenantId !== loggedUser.tenantId) {
       return null;
     }
 
@@ -903,10 +897,8 @@ export async function getKPIs() {
     let whereClause: any = {};
     let usersWhereClause: any = {};
 
-    if (loggedUser.tenantId) {
-      whereClause.tenantId = loggedUser.tenantId;
-      usersWhereClause.tenantId = loggedUser.tenantId;
-    }
+    whereClause.tenantId = loggedUser.tenantId;
+    usersWhereClause.tenantId = loggedUser.tenantId;
 
     if (loggedUser.role === 'MANAGER') {
       const subordinateIds = await getSubordinateIds(loggedUser.id);
@@ -975,9 +967,7 @@ export async function getUsersList(preFetchedUser?: any) {
     if (!loggedUser) return [];
 
     const whereClause: any = {};
-    if (loggedUser.tenantId) {
-      whereClause.tenantId = loggedUser.tenantId;
-    }
+    whereClause.tenantId = loggedUser.tenantId;
 
     const users = await prisma.user.findMany({
       where: whereClause,
@@ -1201,7 +1191,7 @@ export async function getProposalPageInitData(propostaId?: string, versionId?: s
     if (!loggedUser) return { success: false, error: 'Não autorizado.' };
 
     const tenantId = loggedUser.tenantId;
-    const whereClause = tenantId ? { tenantId } : {};
+    const whereClause = { tenantId };
 
     const [
       ccts,

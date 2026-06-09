@@ -62,14 +62,12 @@ export async function sendInternalMessage(receiverId: string, content: string) {
 
   try {
     // Validação rígida: garantir que o destinatário pertence ao mesmo tenant
-    if (user.tenantId) {
-      const receiver = await prisma.user.findUnique({
-        where: { id: receiverId },
-        select: { tenantId: true }
-      });
-      if (!receiver || receiver.tenantId !== user.tenantId) {
-        return { success: false, error: 'Acesso não autorizado ou usuário de outro inquilino.' };
-      }
+    const receiver = await prisma.user.findUnique({
+      where: { id: receiverId },
+      select: { tenantId: true }
+    });
+    if (!receiver || receiver.tenantId !== user.tenantId) {
+      return { success: false, error: 'Acesso não autorizado ou usuário de outro inquilino.' };
     }
 
     const message = await prisma.internalMessage.create({
@@ -107,14 +105,12 @@ export async function getInternalMessages(otherUserId: string) {
 
   try {
     // Validação rígida: garantir que o outro usuário pertence ao mesmo tenant
-    if (user.tenantId) {
-      const otherUser = await prisma.user.findUnique({
-        where: { id: otherUserId },
-        select: { tenantId: true }
-      });
-      if (!otherUser || otherUser.tenantId !== user.tenantId) {
-        return { success: false, error: 'Acesso não autorizado ou usuário de outro inquilino.' };
-      }
+    const otherUser = await prisma.user.findUnique({
+      where: { id: otherUserId },
+      select: { tenantId: true }
+    });
+    if (!otherUser || otherUser.tenantId !== user.tenantId) {
+      return { success: false, error: 'Acesso não autorizado ou usuário de outro inquilino.' };
     }
 
     const messages = await prisma.internalMessage.findMany({
@@ -171,9 +167,7 @@ export async function getChatList() {
     const usersWhere: any = {
       id: { not: user.id }
     };
-    if (user.tenantId) {
-      usersWhere.tenantId = user.tenantId;
-    }
+    usersWhere.tenantId = user.tenantId;
 
     const users = await prisma.user.findMany({
       where: usersWhere,

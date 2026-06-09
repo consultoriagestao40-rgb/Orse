@@ -8,9 +8,7 @@ export async function getUsuarios() {
   const user = await getLoggedUser();
   try {
     const whereClause: any = {};
-    if (user?.tenantId) {
-      whereClause.tenantId = user.tenantId;
-    }
+    whereClause.tenantId = user?.tenantId;
     return await prisma.user.findMany({
       where: whereClause,
       include: {

@@ -10,9 +10,7 @@ export async function getProdutos() {
   const user = await getLoggedUser();
   try {
     const whereClause: any = { ativo: true };
-    if (user?.tenantId) {
-      whereClause.tenantId = user.tenantId;
-    }
+    whereClause.tenantId = user?.tenantId;
     return await prisma.produto.findMany({
       where: whereClause,
       orderBy: { codigo: 'asc' },

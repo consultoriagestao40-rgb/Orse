@@ -137,7 +137,12 @@ export async function deleteTipoServico(id: string) {
 
 export async function getSellers() {
   try {
+    const { getLoggedUser } = await import('@/app/propostas/actions');
+    const user = await getLoggedUser();
+    if (!user) return [];
+
     const users = await prisma.user.findMany({
+      where: { tenantId: user.tenantId },
       orderBy: { nome: 'asc' },
       select: { nome: true }
     });
