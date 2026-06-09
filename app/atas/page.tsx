@@ -1597,11 +1597,11 @@ export default function AtasPage() {
                   <colgroup>
                     <col style={{ width: '5%' }} />
                     <col style={{ width: '43%' }} />
-                    <col style={{ width: '8%' }} />
-                    <col style={{ width: '12%' }} />
-                    <col style={{ width: '24%' }} />
                     <col style={{ width: '6%' }} />
-                    <col style={{ width: '2%' }} />
+                    <col style={{ width: '12%' }} />
+                    <col style={{ width: '20%' }} />
+                    <col style={{ width: '9%' }} />
+                    <col style={{ width: '5%' }} />
                   </colgroup>
                   
                   {/* CABEÇALHO DA ATA */}
@@ -2449,7 +2449,7 @@ export default function AtasPage() {
                                 </button>
 
                                 {/* Nome do Responsável - Visível apenas na Impressão/PDF */}
-                                <span className="print-visible-only font-semibold text-slate-800 text-[11px] leading-tight">
+                                <span className="hidden print:inline-block font-semibold text-slate-800 text-[11px] leading-tight ml-2">
                                   {nome}
                                 </span>
                               </div>
