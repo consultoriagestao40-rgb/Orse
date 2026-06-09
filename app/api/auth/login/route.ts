@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       tenantId: user.tenantId,
       iniciais: user.nome.split(' ').filter(Boolean).map((n: string) => n[0]).join('').toUpperCase().substring(0, 2),
       ...(user.avatarUrl ? { avatarUrl: `/api/user/avatar?email=${encodeURIComponent(user.email)}&v=${user.avatarUrl.length > 30 ? encodeURIComponent(user.avatarUrl.substring(user.avatarUrl.length - 10)) : encodeURIComponent(user.avatarUrl.substring(0, 10))}` } : {}),
-      ...(user.tenant?.logoUrl ? { tenantLogoUrl: '/api/tenant/logo' } : {}),
+      ...(user.tenant?.logoUrl ? { tenantLogoUrl: `/api/tenant/logo?tenantId=${user.tenantId}` } : {}),
       ...(user.tenant?.nomeFantasia ? { tenantNome: user.tenant.nomeFantasia } : {}),
       ...(user.tenant?.primaryColor ? { primaryColor: user.tenant.primaryColor } : {}),
     }
