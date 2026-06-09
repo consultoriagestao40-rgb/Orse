@@ -2100,8 +2100,8 @@ export default function AtasPage() {
                     {/* COLUNAS PAUTAS DELIBERATIVAS */}
                     <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-left">
                       <th className="py-1 px-1 border-r border-slate-900 text-center">Item</th>
-                      <th colspan="2" className="py-1 px-3 border-r border-slate-900">Descrição</th>
-                      <th className="py-1 px-3 border-r border-slate-900 text-center">Status</th>
+                      <th className="py-1 px-3 border-r border-slate-900">Descrição</th>
+                      <th colspan="2" className="py-1 px-3 border-r border-slate-900 text-center">Status</th>
                       <th colspan="3" className="py-1 px-3">Anotação</th>
                     </tr>
 
@@ -2118,7 +2118,7 @@ export default function AtasPage() {
                           <td className="py-1 px-1 border-r border-slate-900 text-center font-bold text-slate-500">
                             {pd.item}
                           </td>
-                          <td colspan="2" className="py-1 px-3 border-r border-slate-900">
+                          <td className="py-1 px-3 border-r border-slate-900">
                             <input 
                               type="text"
                               value={pd.descricao}
@@ -2135,7 +2135,7 @@ export default function AtasPage() {
                               </div>
                             )}
                           </td>
-                          <td className="py-1 px-3 border-r border-slate-900 text-center">
+                          <td colspan="2" className="py-1 px-3 border-r border-slate-900 text-center">
                             <div className="flex items-center justify-center gap-1.5">
                               <select
                                 value={pd.status}
