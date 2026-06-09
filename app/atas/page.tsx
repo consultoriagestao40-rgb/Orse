@@ -1087,7 +1087,13 @@ export default function AtasPage() {
       
       {/* Estilos CSS para Impressão de PDF Técnico e Formal */}
       <style dangerouslySetInnerHTML={{__html: `
+        .print-visible-only {
+          display: none !important;
+        }
         @media print {
+          .print-visible-only {
+            display: inline-block !important;
+          }
           /* Remove cabeçalho e rodapé padrão do navegador */
           @page {
             size: A4;
@@ -1737,8 +1743,8 @@ export default function AtasPage() {
 
                     {/* COLUNAS PARTICIPANTES */}
                     <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-left">
-                      <th className="py-1 px-3 border-r border-slate-900 w-[35%]">Nome</th>
-                      <th className="py-1 px-3 border-r border-slate-900 w-[15%]">Cargo</th>
+                      <th className="py-1 px-3 border-r border-slate-900 w-[42%]">Nome</th>
+                      <th className="py-1 px-3 border-r border-slate-900 w-[8%]">Cargo</th>
                       <th className="py-1 px-3 border-r border-slate-900 w-[35%]">E-mail</th>
                       <th className="py-1 px-3 border-r border-slate-900 w-[10%] text-center">Presente</th>
                       <th className="py-1 px-3 w-[5%] text-center no-print">Ações</th>
@@ -2101,8 +2107,8 @@ export default function AtasPage() {
 
                     {/* COLUNAS PUATAS DELIBERATIVAS */}
                     <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-left">
-                      <th className="py-1 px-3 border-r border-slate-900 w-[10%] text-center">Item</th>
-                      <th colspan="2" className="py-1 px-3 border-r border-slate-900 w-[50%]">Descrição</th>
+                      <th className="py-1 px-1 border-r border-slate-900 w-[4%] text-center">Item</th>
+                      <th colspan="2" className="py-1 px-3 border-r border-slate-900 w-[56%]">Descrição</th>
                       <th className="py-1 px-3 border-r border-slate-900 w-[15%] text-center">Status</th>
                       <th className="py-1 px-3 w-[25%]">Anotação</th>
                     </tr>
@@ -2117,7 +2123,7 @@ export default function AtasPage() {
                     ) : (
                       pautasDeliberativas.map((pd, idx) => (
                         <tr key={idx} className="bg-white hover:bg-slate-50/10">
-                          <td className="py-1 px-3 border-r border-slate-900 text-center font-bold text-slate-500">
+                          <td className="py-1 px-1 border-r border-slate-900 text-center font-bold text-slate-500">
                             {pd.item}
                           </td>
                           <td colspan="2" className="py-1 px-3 border-r border-slate-900">
@@ -2350,7 +2356,7 @@ export default function AtasPage() {
                           onKeyUp={e => handleEditorKeyUp(e, consideracoesEditorRef)}
                           className="min-h-[140px] p-4 bg-white border border-slate-200 focus:bg-slate-50/10 focus:border-slate-300 outline-none text-slate-800 text-xs font-semibold leading-relaxed"
                           style={{ whiteSpace: 'pre-wrap' }}
-                          placeholder="Digite aqui as considerações finais e observações..."
+                                title="Digite aqui as considerações finais e observações..."
                         />
                       </td>
                     </tr>
@@ -2364,11 +2370,11 @@ export default function AtasPage() {
 
                     {/* COLUNAS AÇÕES */}
                     <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-center">
-                      <th className="py-1 px-3 border-r border-slate-900 w-[8%]">Item</th>
-                      <th className="py-1 px-3 border-r border-slate-900 w-[47%] text-left">Descrição</th>
-                      <th className="py-1 px-3 border-r border-slate-900 w-[20%] text-left">Responsável</th>
-                      <th className="py-1 px-3 border-r border-slate-900 w-[15%]">Prazo</th>
-                      <th className="py-1 px-3 w-[10%] text-center">Status</th>
+                      <th className="py-1 px-1 border-r border-slate-900 w-[3%]">Item</th>
+                      <th className="py-1 px-3 border-r border-slate-900 w-[68%] text-left">Descrição</th>
+                      <th className="py-1 px-1 border-r border-slate-900 w-[5%] text-center" title="Responsável">Resp.</th>
+                      <th className="py-1 px-2 border-r border-slate-900 w-[12%]">Prazo</th>
+                      <th className="py-1 px-1 w-[12%] text-center">Status</th>
                     </tr>
 
                     {/* CORPO AÇÕES */}
@@ -2379,106 +2385,131 @@ export default function AtasPage() {
                         </td>
                       </tr>
                     ) : (
-                      acoes.map((a, idx) => (
-                        <tr key={idx} className="bg-white hover:bg-slate-50/10">
-                          <td className="py-1 px-3 border-r border-slate-900 text-center font-bold text-slate-500">
-                            {a.item || (idx + 1)}
-                          </td>
-                          <td className="py-1 px-3 border-r border-slate-900">
-                            <div className="flex items-start justify-between gap-2">
-                              <textarea
-                                value={a.descricao}
-                                placeholder="Descreva a ação a ser executada..."
-                                onChange={e => {
-                                  handleAcaoFieldChange(idx, 'descricao', e.target.value);
-                                  e.target.style.height = 'auto';
-                                  e.target.style.height = `${e.target.scrollHeight}px`;
-                                }}
-                                rows={1}
-                                className="acao-descricao-textarea flex-1 bg-transparent border-none outline-none focus:ring-0 font-medium resize-none overflow-hidden py-1.5 leading-relaxed text-slate-800 text-sm"
-                                style={{ height: 'auto' }}
+                      acoes.map((a, idx) => {
+                        const respUser = a.responsavelId ? systemUsers.find(u => u.id === a.responsavelId) : null;
+                        const avatarUrl = respUser?.avatarUrl;
+                        const nome = a.responsavelNome || respUser?.nome || 'Não identificado';
+                        return (
+                          <tr key={idx} className="bg-white hover:bg-slate-50/10">
+                            <td className="py-1 px-1 border-r border-slate-900 text-center font-bold text-slate-500">
+                              {a.item || (idx + 1)}
+                            </td>
+                            <td className="py-1 px-3 border-r border-slate-900">
+                              <div className="flex items-start justify-between gap-2">
+                                <textarea
+                                  value={a.descricao}
+                                  placeholder="Descreva a ação a ser executada..."
+                                  onChange={e => {
+                                    handleAcaoFieldChange(idx, 'descricao', e.target.value);
+                                    e.target.style.height = 'auto';
+                                    e.target.style.height = `${e.target.scrollHeight}px`;
+                                  }}
+                                  rows={1}
+                                  className="acao-descricao-textarea flex-1 bg-transparent border-none outline-none focus:ring-0 font-medium resize-none overflow-hidden py-1.5 leading-relaxed text-slate-800 text-sm"
+                                  style={{ height: 'auto' }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenCommentsModal(idx)}
+                                  className="flex items-center gap-1 p-1 rounded transition-colors text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100 no-print cursor-pointer shrink-0 mt-1"
+                                  title={a.id ? "Comentários da ação" : "Salve o documento para habilitar comentários"}
+                                  disabled={!a.id}
+                                  style={{ opacity: a.id ? 1 : 0.4 }}
+                                >
+                                  <MessageSquare size={14} />
+                                  {a.comentarios && a.comentarios.length > 0 && (
+                                    <span className="bg-[#1B4D3E] text-white text-[9px] px-1 rounded-full font-bold">
+                                      {a.comentarios.length}
+                                    </span>
+                                  )}
+                                </button>
+                              </div>
+                            </td>
+                            <td className="py-1 px-1 border-r border-slate-900 text-center">
+                              <div className="flex flex-col items-center justify-center min-h-[32px]">
+                                {/* Botão do Avatar - Visível apenas na tela */}
+                                <button
+                                  type="button"
+                                  onClick={e => handleOpenAcaoResponsavelSelect(e, idx)}
+                                  className="bg-transparent border-none outline-none flex items-center justify-center cursor-pointer no-print focus:outline-none focus:ring-2 focus:ring-[#1B4D3E]/20 rounded-full"
+                                  title={nome}
+                                >
+                                  {avatarUrl ? (
+                                    <img 
+                                      src={avatarUrl} 
+                                      alt={nome} 
+                                      className="w-6 h-6 rounded-full object-cover border border-slate-200"
+                                    />
+                                  ) : (
+                                    <div className="w-6 h-6 rounded-full bg-[#1E4663]/10 flex items-center justify-center text-[10px] font-black text-[#1E4663] uppercase border border-slate-200">
+                                      {nome !== 'Não identificado' && nome !== 'Selecionar' 
+                                        ? nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2) 
+                                        : <User size={12} />}
+                                    </div>
+                                  )}
+                                </button>
+
+                                {/* Nome do Responsável - Visível apenas na Impressão/PDF */}
+                                <span className="print-visible-only font-semibold text-slate-800 text-[11px] leading-tight">
+                                  {nome}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-1 px-2 border-r border-slate-900 text-center">
+                              <input 
+                                type="date"
+                                value={a.dataLimite}
+                                onChange={e => handleAcaoFieldChange(idx, 'dataLimite', e.target.value)}
+                                className="w-full bg-transparent border-none outline-none focus:ring-0 text-center text-xs"
                               />
-                              <button
-                                type="button"
-                                onClick={() => handleOpenCommentsModal(idx)}
-                                className="flex items-center gap-1 p-1 rounded transition-colors text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100 no-print cursor-pointer shrink-0 mt-1"
-                                title={a.id ? "Comentários da ação" : "Salve o documento para habilitar comentários"}
-                                disabled={!a.id}
-                                style={{ opacity: a.id ? 1 : 0.4 }}
-                              >
-                                <MessageSquare size={14} />
-                                {a.comentarios && a.comentarios.length > 0 && (
-                                  <span className="bg-[#1B4D3E] text-white text-[9px] px-1 rounded-full font-bold">
-                                    {a.comentarios.length}
-                                  </span>
-                                )}
-                              </button>
-                            </div>
-                          </td>
-                          <td className="py-1 px-3 border-r border-slate-900">
-                            <button
-                              type="button"
-                              onClick={e => handleOpenAcaoResponsavelSelect(e, idx)}
-                              className="w-full text-left bg-transparent border-none outline-none font-bold text-slate-700 flex items-center justify-between cursor-pointer"
-                            >
-                              <span className="truncate max-w-[115px]">{a.responsavelNome || 'Selecionar'}</span>
-                              <User size={10} className="text-slate-400 shrink-0 no-print" />
-                            </button>
-                          </td>
-                          <td className="py-1 px-3 border-r border-slate-900 text-center">
-                            <input 
-                              type="date"
-                              value={a.dataLimite}
-                              onChange={e => handleAcaoFieldChange(idx, 'dataLimite', e.target.value)}
-                              className="w-full bg-transparent border-none outline-none focus:ring-0 text-center"
-                            />
-                          </td>
-                          <td className="py-1 px-2 text-center">
-                            <div className="flex items-center justify-center gap-1.5">
-                              {/* Toggle Conclusão */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (a.id) {
-                                    handleToggleAcaoClick(a.id, !a.concluida);
-                                  } else {
-                                    handleAcaoFieldChange(idx, 'concluida', !a.concluida);
-                                  }
-                                }}
-                                className="text-slate-400 hover:text-[#1B4D3E] transition-colors cursor-pointer no-print shrink-0"
-                                title={a.concluida ? "Marcar como pendente" : "Marcar como concluída"}
-                              >
-                                {a.concluida ? (
-                                  <CheckSquare size={15} className="text-green-600" />
-                                ) : (
-                                  <Square size={15} />
-                                )}
-                              </button>
+                            </td>
+                            <td className="py-1 px-2 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                {/* Toggle Conclusão */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (a.id) {
+                                      handleToggleAcaoClick(a.id, !a.concluida);
+                                    } else {
+                                      handleAcaoFieldChange(idx, 'concluida', !a.concluida);
+                                    }
+                                  }}
+                                  className="text-slate-400 hover:text-[#1B4D3E] transition-colors cursor-pointer no-print shrink-0"
+                                  title={a.concluida ? "Marcar como pendente" : "Marcar como concluída"}
+                                >
+                                  {a.concluida ? (
+                                    <CheckSquare size={15} className="text-green-600" />
+                                  ) : (
+                                    <Square size={15} />
+                                  )}
+                                </button>
 
-                              {/* Status Badge */}
-                              <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider whitespace-nowrap ${
-                                a.concluida 
-                                  ? 'bg-green-100 text-green-700 border border-green-200' 
-                                  : getAcaoStatusText(a) === 'ATRASADA'
-                                    ? 'bg-red-100 text-red-700 border border-red-200'
-                                    : 'bg-blue-100 text-blue-700 border border-blue-200'
-                              }`}>
-                                {getAcaoStatusText(a)}
-                              </span>
+                                {/* Status Badge */}
+                                <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider whitespace-nowrap ${
+                                  a.concluida 
+                                    ? 'bg-green-100 text-green-700 border border-green-200' 
+                                    : getAcaoStatusText(a) === 'ATRASADA'
+                                      ? 'bg-red-100 text-red-700 border border-red-200'
+                                      : 'bg-blue-100 text-blue-700 border border-blue-200'
+                                }`}>
+                                  {getAcaoStatusText(a)}
+                                </span>
 
-                              {/* Delete Action Button */}
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveAcaoRow(idx)}
-                                className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors cursor-pointer no-print shrink-0"
-                                title="Excluir Ação"
-                              >
-                                <X size={13} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
+                                {/* Delete Action Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveAcaoRow(idx)}
+                                  className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors cursor-pointer no-print shrink-0"
+                                  title="Excluir Ação"
+                                >
+                                  <X size={13} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
 
                     {/* CONTROLES AÇÕES - Ocultados na Impressão */}
