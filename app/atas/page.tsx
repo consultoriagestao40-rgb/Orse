@@ -227,6 +227,15 @@ export default function AtasPage() {
     }
   }, [consideracoes, viewMode]);
 
+  useEffect(() => {
+    // Auto-resize action description textareas
+    const textareas = document.querySelectorAll('.acao-descricao-textarea');
+    textareas.forEach((ta: any) => {
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
+    });
+  }, [acoes, viewMode]);
+
   // Executa formatação de texto rico no editor em foco
   const execEditorCmd = (ref: React.RefObject<HTMLDivElement | null>, cmd: string, val: string = '') => {
     if (ref.current) {
@@ -2376,18 +2385,23 @@ export default function AtasPage() {
                             {a.item || (idx + 1)}
                           </td>
                           <td className="py-1 px-3 border-r border-slate-900">
-                            <div className="flex items-center justify-between gap-2">
-                              <input 
-                                type="text"
+                            <div className="flex items-start justify-between gap-2">
+                              <textarea
                                 value={a.descricao}
                                 placeholder="Descreva a ação a ser executada..."
-                                onChange={e => handleAcaoFieldChange(idx, 'descricao', e.target.value)}
-                                className="flex-1 bg-transparent border-none outline-none focus:ring-0 font-medium"
+                                onChange={e => {
+                                  handleAcaoFieldChange(idx, 'descricao', e.target.value);
+                                  e.target.style.height = 'auto';
+                                  e.target.style.height = `${e.target.scrollHeight}px`;
+                                }}
+                                rows={1}
+                                className="acao-descricao-textarea flex-1 bg-transparent border-none outline-none focus:ring-0 font-medium resize-none overflow-hidden py-1.5 leading-relaxed text-slate-800 text-sm"
+                                style={{ height: 'auto' }}
                               />
                               <button
                                 type="button"
                                 onClick={() => handleOpenCommentsModal(idx)}
-                                className="flex items-center gap-1 p-1 rounded transition-colors text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100 no-print cursor-pointer shrink-0"
+                                className="flex items-center gap-1 p-1 rounded transition-colors text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100 no-print cursor-pointer shrink-0 mt-1"
                                 title={a.id ? "Comentários da ação" : "Salve o documento para habilitar comentários"}
                                 disabled={!a.id}
                                 style={{ opacity: a.id ? 1 : 0.4 }}
@@ -2442,7 +2456,7 @@ export default function AtasPage() {
                               </button>
 
                               {/* Status Badge */}
-                              <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
+                              <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider whitespace-nowrap ${
                                 a.concluida 
                                   ? 'bg-green-100 text-green-700 border border-green-200' 
                                   : getAcaoStatusText(a) === 'ATRASADA'
