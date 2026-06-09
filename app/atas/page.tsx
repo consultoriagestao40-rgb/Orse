@@ -1596,12 +1596,12 @@ export default function AtasPage() {
                 <table className="w-full border-2 border-slate-900 border-collapse text-xs select-text table-fixed">
                   <colgroup>
                     <col style={{ width: '5%' }} />
-                    <col style={{ width: '28%' }} />
-                    <col style={{ width: '7%' }} />
-                    <col style={{ width: '12%' }} />
-                    <col style={{ width: '32%' }} />
-                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '35%' }} />
                     <col style={{ width: '6%' }} />
+                    <col style={{ width: '12%' }} />
+                    <col style={{ width: '27%' }} />
+                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '5%' }} />
                   </colgroup>
                   
                   {/* CABEÇALHO DA ATA */}
