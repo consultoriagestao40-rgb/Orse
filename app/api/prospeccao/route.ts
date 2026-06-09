@@ -60,7 +60,20 @@ export async function POST(req: Request) {
     let limitCount = 30;
     
     if (tenantId && !isSuperAdmin) {
-      limitCount = user.tenant?.limitePesquisasProspeccao ?? 30;
+      // Determina a cota padrão com base no plano configurado do Tenant
+      let defaultLimit = 30; // STARTER
+      if (user.tenant?.plano === 'PRO') {
+        defaultLimit = 150;
+      } else if (user.tenant?.plano === 'ENTERPRISE') {
+        defaultLimit = 400;
+      }
+
+      limitCount = user.tenant?.limitePesquisasProspeccao ?? defaultLimit;
+
+      // Se o limite gravado no banco for o padrão (30) mas o plano for maior, assume o novo limite dinâmico
+      if (limitCount === 30 && defaultLimit > 30) {
+        limitCount = defaultLimit;
+      }
       
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -249,7 +262,20 @@ export async function GET() {
       return NextResponse.json({ success: true, isSuperAdmin: true, searchesCount: 0, limitCount: 9999 });
     }
 
-    const limitCount = user.tenant?.limitePesquisasProspeccao ?? 30;
+    // Determina a cota padrão com base no plano configurado do Tenant
+    let defaultLimit = 30; // STARTER
+    if (user.tenant?.plano === 'PRO') {
+      defaultLimit = 150;
+    } else if (user.tenant?.plano === 'ENTERPRISE') {
+      defaultLimit = 400;
+    }
+
+    let limitCount = user.tenant?.limitePesquisasProspeccao ?? defaultLimit;
+
+    // Se o limite gravado no banco for o padrão (30) mas o plano for maior, assume o novo limite dinâmico
+    if (limitCount === 30 && defaultLimit > 30) {
+      limitCount = defaultLimit;
+    }
 
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
