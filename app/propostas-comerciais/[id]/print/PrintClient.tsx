@@ -209,14 +209,16 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
 
   if (!isSlide) {
     return (
-      <>
-        <DocumentoA4
-          proposta={mergedProposta}
-          resultado={versao?.resultado}
-          empresaEmissora={doc.empresaEmissora}
-          isPublicView={true}
-        />
-      </>
+      <div className="bg-slate-200 min-h-screen py-8 flex justify-center print:bg-white print:py-0 w-full">
+        <div className="w-[210mm] max-w-full bg-white shadow-2xl p-0 print:shadow-none print:w-full">
+          <DocumentoA4
+            proposta={mergedProposta}
+            resultado={versao?.resultado}
+            empresaEmissora={doc.empresaEmissora}
+            isPublicView={true}
+          />
+        </div>
+      </div>
     );
   }
 
