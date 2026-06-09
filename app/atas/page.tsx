@@ -1739,7 +1739,7 @@ export default function AtasPage() {
                       <th colspan="2" className="py-1 px-3 border-r border-slate-900">Cargo</th>
                       <th className="py-1 px-3 border-r border-slate-900">E-mail</th>
                       <th className="py-1 px-3 border-r border-slate-900 text-center">Presente</th>
-                      <th className="py-1 px-3 text-center no-print">Ações</th>
+                      <th className="py-1 px-1 text-center no-print">Ações</th>
                     </tr>
                   </thead>
                   
@@ -1825,7 +1825,7 @@ export default function AtasPage() {
                                 <option value="Não">Não</option>
                               </select>
                             </td>
-                            <td className="py-1 px-3 text-center no-print">
+                            <td className="py-1 px-1 text-center no-print">
                               <button
                                 type="button"
                                 onClick={() => handleRemoveParticipante(idx)}
@@ -2377,7 +2377,7 @@ export default function AtasPage() {
                     <col style={{ width: '15%' }} />
                     <col style={{ width: '17%' }} />
                   </colgroup>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-900">
                     {/* CABEÇALHO AÇÕES */}
                     <tr>
                       <th colspan="5" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
