@@ -1864,7 +1864,8 @@ export default function AtasPage() {
                               <select
                                 value={pd.status}
                                 onChange={e => handlePautaDeliberativaChange(idx, 'status', e.target.value)}
-                                className="bg-transparent border-none outline-none font-bold text-center text-slate-700 cursor-pointer text-xs"
+                                disabled={!!(pd.votos && pd.votos.length > 0)}
+                                className="bg-transparent border-none outline-none font-bold text-center text-slate-700 cursor-pointer text-xs disabled:opacity-75 disabled:cursor-not-allowed"
                               >
                                 <option value="Tratado">Tratado</option>
                                 <option value="Pendente">Pendente</option>
