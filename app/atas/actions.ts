@@ -519,3 +519,116 @@ export async function addAcaoComentario(acaoId: string, texto: string) {
   }
 }
 
+// 8. Renomeia uma categoria de ata em todas as atas do inquilino
+export async function renameAtaCategory(oldName: string, newName: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Não autorizado' };
+
+  try {
+    await prisma.ata.updateMany({
+      where: {
+        tenantId: user.tenantId,
+        categoria: oldName
+      },
+      data: {
+        categoria: newName
+      }
+    });
+
+    revalidatePath('/atas');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao renomear categoria:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// 9. Exclui uma categoria de ata (move as atas associadas para 'Geral')
+export async function deleteAtaCategory(catName: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Não autorizado' };
+
+  try {
+    await prisma.ata.updateMany({
+      where: {
+        tenantId: user.tenantId,
+        categoria: catName
+      },
+      data: {
+        categoria: 'Geral'
+      }
+    });
+
+    revalidatePath('/atas');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Erro ao excluir categoria:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// 10. Clona uma ata e suas respectivas ações
+export async function cloneAta(id: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Não autorizado' };
+
+  try {
+    const existing = await prisma.ata.findUnique({
+      where: { id },
+      include: {
+        acoes: true
+      }
+    });
+
+    if (!existing || existing.tenantId !== user.tenantId) {
+      return { success: false, error: 'Ata não encontrada ou acesso negado.' };
+    }
+
+    // Cria nova ata com dados copiados
+    const clonedAta = await prisma.ata.create({
+      data: {
+        titulo: `${existing.titulo} - Cópia`,
+        dataReuniou: new Date(),
+        horaReuniou: existing.horaReuniou,
+        local: existing.local,
+        pautas: existing.pautas || [],
+        participantesPresentes: existing.participantesPresentes || [],
+        pautasDeliberativas: existing.pautasDeliberativas || [],
+        relatorio: existing.relatorio,
+        consideracoes: existing.consideracoes,
+        proximaReuniaoData: existing.proximaReuniaoData,
+        proximaReuniaoHora: existing.proximaReuniaoHora,
+        proximaReuniaoLocal: existing.proximaReuniaoLocal,
+        categoria: existing.categoria || 'Geral',
+        status: 'Rascunho', // começa como rascunho
+        versao: 1,
+        tenantId: user.tenantId
+      }
+    });
+
+    // Copia as ações associadas
+    if (existing.acoes && existing.acoes.length > 0) {
+      for (const acao of existing.acoes) {
+        await prisma.ataAcao.create({
+          data: {
+            ataId: clonedAta.id,
+            item: acao.item,
+            descricao: acao.descricao,
+            responsavelId: acao.responsavelId,
+            dataLimite: acao.dataLimite,
+            numBitrix: acao.numBitrix,
+            concluida: false // começa pendente na cópia
+          }
+        });
+      }
+    }
+
+    revalidatePath('/atas');
+    return { success: true, clonedId: clonedAta.id };
+  } catch (error: any) {
+    console.error('Erro ao clonar ata:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+

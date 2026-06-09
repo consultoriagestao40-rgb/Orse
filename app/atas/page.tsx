@@ -9,11 +9,12 @@ import {
   CheckCircle2, Edit3, ArrowLeft, Printer,
   Bold, Italic, Underline, Strikethrough, AlignLeft, 
   AlignCenter, AlignRight, AlignJustify, Type, Palette, Clock,
-  History, X, MessageSquare, CheckSquare, Square, List, ListOrdered, FileSymlink
+  History, X, MessageSquare, CheckSquare, Square, List, ListOrdered, FileSymlink, Copy
 } from 'lucide-react';
 import { 
   getAtas, getAtaCompleta, saveAta, deleteAta, 
-  toggleAcaoConclusao, getAcoesStats, addAcaoComentario, getLoggedUser
+  toggleAcaoConclusao, getAcoesStats, addAcaoComentario, getLoggedUser,
+  renameAtaCategory, deleteAtaCategory, cloneAta
 } from './actions';
 import { getUsersForFilter } from '@/app/leads/actions';
 
@@ -304,6 +305,72 @@ export default function AtasPage() {
         }
       } catch (e) {
         console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // Renomeia uma categoria/pasta
+  const handleRenameCategory = async (oldName: string) => {
+    const newName = prompt(`Renomear a pasta "${oldName}" para:`, oldName);
+    if (newName && newName.trim() !== '' && newName.trim() !== oldName) {
+      setLoading(true);
+      try {
+        const res = await renameAtaCategory(oldName.trim(), newName.trim());
+        if (res.success) {
+          loadDashboardData();
+        } else {
+          alert(`Erro ao renomear: ${res.error}`);
+        }
+      } catch (e) {
+        console.error(e);
+        alert('Erro ao processar alteração.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // Exclui uma categoria/pasta (atas voltam para 'Geral')
+  const handleDeleteCategory = async (catName: string) => {
+    if (confirm(`Deseja realmente excluir a pasta "${catName}"? As atas contidas nela serão movidas para a pasta "Geral".`)) {
+      setLoading(true);
+      try {
+        const res = await deleteAtaCategory(catName);
+        if (res.success) {
+          if (selectedCategory === catName) {
+            setSelectedCategory(null);
+          }
+          loadDashboardData();
+        } else {
+          alert(`Erro ao excluir: ${res.error}`);
+        }
+      } catch (e) {
+        console.error(e);
+        alert('Erro ao processar exclusão.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // Clona uma ata existente
+  const handleCloneAtaClick = async (id: string) => {
+    if (confirm('Deseja realmente clonar esta ata? Uma nova ata como Rascunho será criada baseada nos dados dela.')) {
+      setLoading(true);
+      try {
+        const res = await cloneAta(id);
+        if (res.success && res.clonedId) {
+          await loadDashboardData();
+          // Já abre a ata clonada para edição
+          handleOpenEditAta(res.clonedId);
+        } else {
+          alert(`Erro ao clonar ata: ${res.error}`);
+        }
+      } catch (e) {
+        console.error(e);
+        alert('Erro ao processar clonagem.');
       } finally {
         setLoading(false);
       }
@@ -1019,19 +1086,47 @@ export default function AtasPage() {
                   {Array.from(new Set(['Comercial', 'Operação', ...categoriesList])).map(cat => {
                     const count = atas.filter(a => a.categoria === cat).length;
                     return (
-                      <button
+                      <div
                         key={cat}
                         onClick={() => setSelectedCategory(cat)}
-                        className={`flex flex-col items-center justify-center p-4 rounded-xl border text-center transition-all cursor-pointer group ${
+                        className={`relative group/folder flex flex-col items-center justify-center p-4 rounded-xl border text-center transition-all cursor-pointer group ${
                           selectedCategory === cat
                             ? 'bg-[#1B4D3E]/10 border-[#1B4D3E]/20 text-[#1B4D3E] shadow-sm'
                             : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:border-slate-300'
                         }`}
                       >
-                        <span className="text-3xl mb-1 group-hover:scale-110 transition-transform">📁</span>
+                        {/* Ações de Pasta (Ocultadas por padrão, exibidas no hover) */}
+                        {cat !== 'Geral' && (
+                          <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover/folder:opacity-100 transition-opacity no-print">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRenameCategory(cat);
+                              }}
+                              className="p-1 bg-white hover:bg-slate-100 text-slate-500 hover:text-[#1B4D3E] rounded border border-slate-200 transition-all cursor-pointer"
+                              title="Renomear Pasta"
+                            >
+                              <Edit3 size={10} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteCategory(cat);
+                              }}
+                              className="p-1 bg-white hover:bg-red-50 text-slate-500 hover:text-red-600 rounded border border-slate-200 transition-all cursor-pointer"
+                              title="Excluir Pasta"
+                            >
+                              <Trash2 size={10} />
+                            </button>
+                          </div>
+                        )}
+
+                        <span className="text-3xl mb-1 group-hover/folder:scale-110 transition-transform">📁</span>
                         <span className="text-xs font-bold truncate w-full">{cat}</span>
                         <span className="text-[10px] text-slate-400 mt-1 font-semibold">{count} documentos</span>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -1134,6 +1229,13 @@ export default function AtasPage() {
                               </div>
                             </td>
                             <td className="py-4 px-5 text-right space-x-1">
+                              <button
+                                onClick={() => handleCloneAtaClick(ata.id)}
+                                className="p-1.5 hover:bg-[#1B4D3E]/10 hover:text-[#1B4D3E] text-slate-400 rounded-lg transition-colors cursor-pointer"
+                                title="Clonar Ata"
+                              >
+                                <Copy size={15} />
+                              </button>
                               <button
                                 onClick={() => handleOpenEditAta(ata.id)}
                                 className="p-1.5 hover:bg-[#1B4D3E]/10 hover:text-[#1B4D3E] text-slate-400 rounded-lg transition-colors cursor-pointer"
