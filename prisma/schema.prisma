@@ -712,6 +712,10 @@ model Ata {
   proximaReuniaoHora      String?
   proximaReuniaoLocal     String?
   
+  categoria               String?     @default("Geral")
+  status                  String      @default("Rascunho")
+  justificativaFinalizacao String?    @db.Text
+  
   acoes                   AtaAcao[]
   
   versao                  Int         @default(1)

@@ -20,6 +20,7 @@ interface PautaDeliberativa {
   descricao: string;
   status: string; // Ex: "Tratado", "Pendente", "Adiado"
   anotacao?: string;
+  votos?: { nome: string; voto: 'Sim' | 'Não' }[];
 }
 
 // 1. Busca todas as atas do tenant ativo com indicadores básicos
@@ -56,6 +57,9 @@ export async function getAtas() {
         local: ata.local || 'Não especificado',
         versao: ata.versao,
         parentAtaId: ata.parentAtaId,
+        categoria: ata.categoria || 'Geral',
+        status: ata.status || 'Rascunho',
+        justificativaFinalizacao: ata.justificativaFinalizacao || null,
         totalAcoes,
         concluidas,
         progressoAcoes,
@@ -164,6 +168,9 @@ export async function saveAta(data: {
   titulo: string;
   dataReuniou: string | Date;
   horaReuniou?: string | null;
+  categoria?: string | null;
+  status?: string;
+  justificativaFinalizacao?: string | null;
   local?: string;
   pautas: any[];
   participantesPresentes: Participante[];
@@ -219,6 +226,9 @@ export async function saveAta(data: {
           titulo: data.titulo,
           dataReuniou: dataReuniouDate,
           horaReuniou: data.horaReuniou || null,
+          categoria: data.categoria || 'Geral',
+          status: data.status || 'Rascunho',
+          justificativaFinalizacao: data.justificativaFinalizacao || null,
           local: data.local || null,
           pautas: data.pautas,
           participantesPresentes: data.participantesPresentes as any,
@@ -310,6 +320,9 @@ export async function saveAta(data: {
           titulo: data.titulo,
           dataReuniou: dataReuniouDate,
           horaReuniou: data.horaReuniou || null,
+          categoria: data.categoria || 'Geral',
+          status: data.status || 'Rascunho',
+          justificativaFinalizacao: data.justificativaFinalizacao || null,
           local: data.local || null,
           pautas: data.pautas,
           participantesPresentes: data.participantesPresentes as any,

@@ -35,6 +35,7 @@ interface PautaDeliberativa {
   descricao: string;
   status: string; // "Tratado", "Pendente", "Adiado"
   anotacao?: string;
+  votos?: { nome: string; voto: 'Sim' | 'Não' }[];
 }
 
 interface Acao {
@@ -52,6 +53,21 @@ interface Acao {
 export default function AtasPage() {
   // Controle de Visualização: 'LIST' (Listagem) ou 'FORM' (Documento Técnico Centralizado)
   const [viewMode, setViewMode] = useState<'LIST' | 'FORM'>('LIST');
+
+  // Helper para calcular e exibir o status da ata
+  const getAtaStatusDisplay = (ata: any) => {
+    if (ata.status === 'Rascunho') {
+      return { label: 'Rascunho', color: 'bg-slate-100 text-slate-600 border-slate-200' };
+    }
+    if (ata.status === 'Finalizada') {
+      return { label: 'Finalizada', color: 'bg-green-50 text-green-700 border-green-200/50' };
+    }
+    // Se está publicada, mas possui alguma ação pendente (concluidas < totalAcoes), então está em aberto
+    if (ata.totalAcoes > 0 && ata.concluidas < ata.totalAcoes) {
+      return { label: 'Em aberto', color: 'bg-amber-50 text-amber-700 border-amber-200/50' };
+    }
+    return { label: 'Publicada', color: 'bg-blue-50 text-blue-700 border-blue-200/50' };
+  };
 
   // Estados de listagem e estatísticas
   const [atas, setAtas] = useState<any[]>([]);
@@ -87,6 +103,12 @@ export default function AtasPage() {
   // Ações corretivas
   const [acoes, setAcoes] = useState<Acao[]>([]);
 
+  // Novos campos: Categoria, Status, Justificativa de Finalização e Categoria Selecionada para Filtro
+  const [categoria, setCategoria] = useState('Geral');
+  const [status, setStatus] = useState('Rascunho');
+  const [justificativaFinalizacao, setJustificativaFinalizacao] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
   // Versões da ATA
   const [versoesHistorico, setVersoesHistorico] = useState<any[]>([]);
   const [activeVersaoIndex, setActiveVersaoIndex] = useState<number | null>(null);
@@ -96,6 +118,10 @@ export default function AtasPage() {
   const [activeAcao, setActiveAcao] = useState<Acao | null>(null);
   const [novoComentario, setNovoComentario] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // Estados para Modal de Finalização de Ata (com Justificativa Precoce)
+  const [finalizeModalOpen, setFinalizeModalOpen] = useState(false);
+  const [justificativaInput, setJustificativaInput] = useState('');
 
   // Estados para sistema de menções @
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
@@ -108,6 +134,11 @@ export default function AtasPage() {
   const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
   const [popoverTargetType, setPopoverTargetType] = useState<'PARTICIPANTE' | 'ACAO_RESPONSAVEL'>('PARTICIPANTE');
   const [activeAcaoIndex, setActiveAcaoIndex] = useState<number | null>(null);
+
+  // Estados de Votação
+  const [votingModalOpen, setVotingModalOpen] = useState(false);
+  const [activeDeliberativaIndex, setActiveDeliberativaIndex] = useState<number | null>(null);
+  const [currentVotos, setCurrentVotos] = useState<{ nome: string; voto: 'Sim' | 'Não' }[]>([]);
 
   // Referências dos editores de texto rico contentEditable
   const relatorioEditorRef = useRef<HTMLDivElement>(null);
@@ -198,6 +229,9 @@ export default function AtasPage() {
     setVersoesHistorico([]);
     setActiveVersaoIndex(null);
     setViewMode('FORM');
+    setCategoria('Geral');
+    setStatus('Rascunho');
+    setJustificativaFinalizacao(null);
   };
 
   // Carrega ATA existente para edição
@@ -245,6 +279,9 @@ export default function AtasPage() {
           comentarios: Array.isArray(a.comentarios) ? a.comentarios : []
         })));
         setVersoesHistorico(ata.versoesHistorico || []);
+        setCategoria(ata.categoria || 'Geral');
+        setStatus(ata.status || 'Rascunho');
+        setJustificativaFinalizacao(ata.justificativaFinalizacao || null);
         setViewMode('FORM');
       }
     } catch (e) {
@@ -274,7 +311,11 @@ export default function AtasPage() {
   };
 
   // Salva ATA (cria nova ou edita)
-  const handleSaveAtaClick = async (criarNovaVersao: boolean = false) => {
+  const handleSaveAtaClick = async (
+    criarNovaVersao: boolean = false,
+    statusOverride?: string,
+    justificationOverride?: string | null
+  ) => {
     if (!titulo.trim()) {
       alert('O título da ata é obrigatório.');
       return;
@@ -305,11 +346,17 @@ export default function AtasPage() {
       const htmlRelatorio = relatorioEditorRef.current ? relatorioEditorRef.current.innerHTML : relatorio;
       const htmlConsideracoes = consideracoesEditorRef.current ? consideracoesEditorRef.current.innerHTML : consideracoes;
 
+      const nextStatus = statusOverride !== undefined ? statusOverride : status;
+      const nextJust = justificationOverride !== undefined ? justificationOverride : justificativaFinalizacao;
+
       const res = await saveAta({
         id: selectedAtaId || undefined,
         titulo: titulo.trim(),
         dataReuniou,
         horaReuniou: horaReuniou || null,
+        categoria: categoria || 'Geral',
+        status: nextStatus,
+        justificativaFinalizacao: nextJust,
         local: local.trim(),
         pautas: cleanPautas,
         participantesPresentes: participantes,
@@ -342,6 +389,29 @@ export default function AtasPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Abre diálogo de finalização (com verificação de pendências)
+  const handleOpenFinalizeDialog = () => {
+    const hasPendingActions = acoes.some(a => !a.concluida);
+    if (hasPendingActions && acoes.length > 0) {
+      setJustificativaInput('');
+      setFinalizeModalOpen(true);
+    } else {
+      if (confirm('Deseja realmente finalizar esta Ata? Todas as ações geradas nela foram concluídas.')) {
+        handleSaveAtaClick(false, 'Finalizada', null);
+      }
+    }
+  };
+
+  // Confirma finalização com justificativa
+  const handleConfirmFinalize = () => {
+    if (!justificativaInput.trim()) {
+      alert('Por favor, digite a justificativa para finalizar a ata com ações pendentes.');
+      return;
+    }
+    setFinalizeModalOpen(false);
+    handleSaveAtaClick(false, 'Finalizada', justificativaInput.trim());
   };
 
   // Alterna o status de ações
@@ -643,8 +713,42 @@ export default function AtasPage() {
     });
   };
 
-  const handlePautaDeliberativaChange = (idx: number, key: keyof PautaDeliberativa, val: string) => {
+  const handlePautaDeliberativaChange = (idx: number, key: keyof PautaDeliberativa, val: any) => {
     setPautasDeliberativas(prev => prev.map((p, i) => i === idx ? { ...p, [key]: val } : p));
+  };
+
+  const handleOpenVotingModal = (idx: number) => {
+    setActiveDeliberativaIndex(idx);
+    const pd = pautasDeliberativas[idx];
+    if (pd) {
+      if (pd.votos && pd.votos.length > 0) {
+        setCurrentVotos(pd.votos);
+      } else {
+        const initialVotos = participantes
+          .filter(p => p.presente && p.nome.trim())
+          .map(p => ({ nome: p.nome.trim(), voto: 'Sim' as const }));
+        setCurrentVotos(initialVotos);
+      }
+      setVotingModalOpen(true);
+    }
+  };
+
+  const handleConfirmVoting = () => {
+    if (activeDeliberativaIndex === null) return;
+    if (currentVotos.length === 0) {
+      alert('Adicione pelo menos um votante para realizar a votação.');
+      return;
+    }
+    const simCount = currentVotos.filter(v => v.voto === 'Sim').length;
+    const naoCount = currentVotos.filter(v => v.voto === 'Não').length;
+    const nextStatus = simCount > naoCount ? 'Aprovada' : 'Não aprovada';
+    setPautasDeliberativas(prev => prev.map((pd, i) => i === activeDeliberativaIndex ? {
+      ...pd,
+      status: nextStatus,
+      votos: currentVotos
+    } : pd));
+    setVotingModalOpen(false);
+    setActiveDeliberativaIndex(null);
   };
 
   // Manipuladores de Ações
@@ -690,11 +794,16 @@ export default function AtasPage() {
     } : a));
   };
 
-  // Filtra atas por busca
-  const filteredAtas = atas.filter(a => 
-    a.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (a.local && a.local.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Filtra atas por busca e categoria
+  const filteredAtas = atas.filter(a => {
+    const matchesSearch = a.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (a.local && a.local.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesCategory = selectedCategory === null ? true : a.categoria === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Obter categorias únicas existentes nas atas
+  const categoriesList = Array.from(new Set(atas.map(a => a.categoria || 'Geral')));
 
   // Filtra candidatos para menção no autocomplete
   const mentionCandidates = participantes.filter(p => 
@@ -718,12 +827,20 @@ export default function AtasPage() {
           .sidebar-aside, .no-print, header, .top-bar-actions, button, svg {
             display: none !important;
           }
-          main {
-            padding: 0 !important;
-            margin: 0 !important;
+          html, body, main, .flex, .min-h-screen, .space-y-6 {
+            float: none !important;
+            position: relative !important;
+            display: block !important;
             width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
           }
           #print-document-container {
+            display: block !important;
             border: 2px solid #000000 !important;
             box-shadow: none !important;
             width: 100% !important;
@@ -877,6 +994,49 @@ export default function AtasPage() {
                 </div>
               </section>
 
+              {/* PASTAS / CATEGORIAS DE ATAS */}
+              <section className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-4 no-print">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-bold text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                    <span className="text-lg">📁</span> Pastas de Reuniões
+                  </h2>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  <button
+                    onClick={() => setSelectedCategory(null)}
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl border text-center transition-all cursor-pointer group ${
+                      selectedCategory === null
+                        ? 'bg-[#1B4D3E]/10 border-[#1B4D3E]/20 text-[#1B4D3E] shadow-sm'
+                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:border-slate-300'
+                    }`}
+                  >
+                    <span className="text-3xl mb-1 group-hover:scale-110 transition-transform">📂</span>
+                    <span className="text-xs font-bold truncate w-full">Todas as Atas</span>
+                    <span className="text-[10px] text-slate-400 mt-1 font-semibold">{atas.length} documentos</span>
+                  </button>
+
+                  {/* Pastas dinâmicas baseadas nas categorias existentes mais sugestões padrão */}
+                  {Array.from(new Set(['Comercial', 'Operação', ...categoriesList])).map(cat => {
+                    const count = atas.filter(a => a.categoria === cat).length;
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`flex flex-col items-center justify-center p-4 rounded-xl border text-center transition-all cursor-pointer group ${
+                          selectedCategory === cat
+                            ? 'bg-[#1B4D3E]/10 border-[#1B4D3E]/20 text-[#1B4D3E] shadow-sm'
+                            : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:border-slate-300'
+                        }`}
+                      >
+                        <span className="text-3xl mb-1 group-hover:scale-110 transition-transform">📁</span>
+                        <span className="text-xs font-bold truncate w-full">{cat}</span>
+                        <span className="text-[10px] text-slate-400 mt-1 font-semibold">{count} documentos</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
               {/* LISTAGEM DE HISTÓRICO */}
               <section className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-4 no-print">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -915,6 +1075,7 @@ export default function AtasPage() {
                         <tr>
                           <th className="py-4 px-5">Título da Reunião</th>
                           <th className="py-4 px-4">Data</th>
+                          <th className="py-4 px-4 text-center">Status</th>
                           <th className="py-4 px-4">Local</th>
                           <th className="py-4 px-3 text-center">Versão</th>
                           <th className="py-4 px-4">Progresso Ações</th>
@@ -925,13 +1086,28 @@ export default function AtasPage() {
                         {filteredAtas.map(ata => (
                           <tr key={ata.id} className="hover:bg-slate-50/50 transition-colors">
                             <td className="py-4 px-5">
-                              <p className="text-slate-800 font-bold text-xs">
-                                {ata.titulo}
-                              </p>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-slate-800 font-bold text-xs">
+                                  {ata.titulo}
+                                </span>
+                                <span className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 text-slate-500 text-[9px] font-black rounded uppercase">
+                                  {ata.categoria || 'Geral'}
+                                </span>
+                              </div>
                               <p className="text-[9px] text-slate-400 mt-0.5">{ata.pautasCount} pautas listadas</p>
                             </td>
                             <td className="py-4 px-4 text-slate-500 font-medium">
                               {new Date(ata.dataReuniou).toLocaleDateString('pt-BR')}
+                            </td>
+                            <td className="py-4 px-4 text-center">
+                              {(() => {
+                                const statusDisp = getAtaStatusDisplay(ata);
+                                return (
+                                  <span className={`px-2.5 py-0.5 border text-[9px] font-black rounded-full uppercase tracking-wider ${statusDisp.color}`}>
+                                    {statusDisp.label}
+                                  </span>
+                                );
+                              })()}
                             </td>
                             <td className="py-4 px-4 text-slate-500 font-medium">
                               <span className="flex items-center gap-1">
@@ -1047,12 +1223,53 @@ export default function AtasPage() {
                     <Printer size={13} /> Compartilhar (PDF)
                   </button>
 
-                  <button
-                    onClick={() => handleSaveAtaClick(false)}
-                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-bold text-[10px] py-2.5 px-6 rounded-xl transition-all uppercase tracking-wider cursor-pointer shadow-md hover:shadow-lg"
-                  >
-                    Salvar Documento
-                  </button>
+                  {status === 'Rascunho' && (
+                    <>
+                      <button
+                        onClick={() => handleSaveAtaClick(false, 'Rascunho')}
+                        className="bg-slate-500 hover:bg-slate-600 text-white font-bold text-[10px] py-2.5 px-4 rounded-xl transition-all uppercase tracking-wider cursor-pointer shadow-md hover:shadow-lg"
+                        title="Salva o documento mantendo o status de rascunho privado"
+                      >
+                        Salvar Rascunho
+                      </button>
+                      <button
+                        onClick={() => handleSaveAtaClick(false, 'Publicada')}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] py-2.5 px-4 rounded-xl transition-all uppercase tracking-wider cursor-pointer shadow-md hover:shadow-lg"
+                        title="Publica a ata permitindo que todos vejam e comentem"
+                      >
+                        Publicar Ata
+                      </button>
+                    </>
+                  )}
+
+                  {status === 'Publicada' && (
+                    <>
+                      <button
+                        onClick={() => handleSaveAtaClick(false, 'Publicada')}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] py-2.5 px-4 rounded-xl transition-all uppercase tracking-wider cursor-pointer shadow-md hover:shadow-lg"
+                        title="Salva alterações na ata publicada"
+                      >
+                        Salvar Alterações
+                      </button>
+                      <button
+                        onClick={handleOpenFinalizeDialog}
+                        className="bg-green-600 hover:bg-green-700 text-white font-bold text-[10px] py-2.5 px-5 rounded-xl transition-all uppercase tracking-wider cursor-pointer shadow-md hover:shadow-lg"
+                        title="Finaliza a ata (solicita justificativa se houver ações pendentes)"
+                      >
+                        Finalizar Ata
+                      </button>
+                    </>
+                  )}
+
+                  {status === 'Finalizada' && (
+                    <button
+                      onClick={() => handleSaveAtaClick(false, 'Finalizada')}
+                      className="bg-green-700 hover:bg-green-800 text-white font-bold text-[10px] py-2.5 px-6 rounded-xl transition-all uppercase tracking-wider cursor-pointer shadow-md hover:shadow-lg"
+                      title="Salva alterações no documento finalizado"
+                    >
+                      Salvar Alterações
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1073,7 +1290,7 @@ export default function AtasPage() {
                     </tr>
                     
                     {/* METADADOS (DATA, HORA E LOCAL) */}
-                    <tr className="bg-white border-b-2 border-slate-900 text-slate-800">
+                    <tr className="bg-white border-b border-slate-900 text-slate-800">
                       <td colspan="2" className="p-2.5 border-r border-slate-900 font-bold w-1/2">
                         <div className="flex gap-4 items-center flex-wrap">
                           <div className="flex items-center gap-1.5">
@@ -1105,6 +1322,78 @@ export default function AtasPage() {
                             onChange={e => setLocal(e.target.value)}
                             className="bg-transparent border-none outline-none font-bold text-slate-800 w-full focus:ring-0"
                           />
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* METADADOS 2 (PASTA/CATEGORIA E STATUS) */}
+                    <tr className="bg-white border-b-2 border-slate-900 text-slate-800">
+                      <td colspan="2" className="p-2.5 border-r border-slate-900 font-bold w-1/2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-slate-800 font-black">PASTA/CATEGORIA:</span>
+                          <select
+                            value={['Comercial', 'Operação', 'Geral', 'Administrativo', 'Diretoria'].includes(categoria) ? categoria : 'Outro'}
+                            onChange={e => {
+                              const val = e.target.value;
+                              if (val === 'Outro') {
+                                setCategoria('');
+                              } else {
+                                setCategoria(val);
+                              }
+                            }}
+                            className="bg-transparent border-none outline-none font-bold text-slate-800 focus:ring-0 cursor-pointer"
+                          >
+                            <option value="Comercial">Comercial</option>
+                            <option value="Operação">Operação</option>
+                            <option value="Geral">Geral</option>
+                            <option value="Administrativo">Administrativo</option>
+                            <option value="Diretoria">Diretoria</option>
+                            <option value="Outro">Outra (Personalizada)...</option>
+                          </select>
+                          {!['Comercial', 'Operação', 'Geral', 'Administrativo', 'Diretoria'].includes(categoria) && (
+                            <input
+                              type="text"
+                              value={categoria}
+                              onChange={e => setCategoria(e.target.value)}
+                              placeholder="Nome da pasta..."
+                              className="bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 text-xs font-bold text-slate-800 w-28 focus:ring-0 focus:bg-white"
+                            />
+                          )}
+                        </div>
+                      </td>
+                      <td colspan="3" className="p-2.5 font-bold w-1/2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-slate-800 font-black">STATUS:</span>
+                          {(() => {
+                            let label = status;
+                            let color = 'bg-slate-100 text-slate-600 border-slate-200';
+                            if (status === 'Rascunho') {
+                              label = 'Rascunho';
+                              color = 'bg-slate-100 text-slate-600';
+                            } else if (status === 'Finalizada') {
+                              label = 'Finalizada';
+                              color = 'bg-green-100 text-green-700';
+                            } else {
+                              const hasPending = acoes.some(a => !a.concluida);
+                              if (hasPending && acoes.length > 0) {
+                                label = 'Em aberto';
+                                color = 'bg-amber-100 text-amber-700';
+                              } else {
+                                label = 'Publicada';
+                                color = 'bg-blue-100 text-blue-700';
+                              }
+                            }
+                            return (
+                              <span className={`px-2 py-0.5 text-[9px] font-black rounded-full uppercase tracking-wider ${color}`}>
+                                {label}
+                              </span>
+                            );
+                          })()}
+                          {status === 'Finalizada' && justificativaFinalizacao && (
+                            <span className="text-[9px] text-slate-500 font-bold italic">
+                              (Justificado: {justificativaFinalizacao})
+                            </span>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1457,19 +1746,39 @@ export default function AtasPage() {
                               value={pd.descricao}
                               placeholder="Descrição da deliberação..."
                               onChange={e => handlePautaDeliberativaChange(idx, 'descricao', e.target.value)}
-                              className="w-full bg-transparent border-none outline-none focus:ring-0 font-medium"
+                              className="w-full bg-transparent border-none outline-none focus:ring-0 font-medium text-xs text-slate-800"
                             />
+                            {pd.votos && pd.votos.length > 0 && (
+                              <div className="text-[9px] text-slate-500 mt-1 font-bold print:text-black">
+                                Votação: Sim: {pd.votos.filter(v => v.voto === 'Sim').length} | Não: {pd.votos.filter(v => v.voto === 'Não').length} 
+                                <span className="text-[8px] font-normal ml-1 italic text-slate-400 print:text-slate-600">
+                                  ({pd.votos.map(v => `${v.nome} (${v.voto})`).join(', ')})
+                                </span>
+                              </div>
+                            )}
                           </td>
                           <td className="py-1 px-3 border-r border-slate-800 text-center">
-                            <select
-                              value={pd.status}
-                              onChange={e => handlePautaDeliberativaChange(idx, 'status', e.target.value)}
-                              className="bg-transparent border-none outline-none font-bold text-center text-slate-700 cursor-pointer"
-                            >
-                              <option value="Tratado">Tratado</option>
-                              <option value="Pendente">Pendente</option>
-                              <option value="Adiado">Adiado</option>
-                            </select>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <select
+                                value={pd.status}
+                                onChange={e => handlePautaDeliberativaChange(idx, 'status', e.target.value)}
+                                className="bg-transparent border-none outline-none font-bold text-center text-slate-700 cursor-pointer text-xs"
+                              >
+                                <option value="Tratado">Tratado</option>
+                                <option value="Pendente">Pendente</option>
+                                <option value="Adiado">Adiado</option>
+                                <option value="Aprovada">Aprovada</option>
+                                <option value="Não aprovada">Não aprovada</option>
+                              </select>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenVotingModal(idx)}
+                                className="p-1 text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100 rounded transition-colors cursor-pointer no-print shrink-0"
+                                title="Registrar votação"
+                              >
+                                <Users size={12} />
+                              </button>
+                            </div>
                           </td>
                           <td className="py-1 px-3 flex items-center justify-between gap-1">
                             <input 
@@ -1477,7 +1786,7 @@ export default function AtasPage() {
                               value={pd.anotacao || ''}
                               placeholder="Notas..."
                               onChange={e => handlePautaDeliberativaChange(idx, 'anotacao', e.target.value)}
-                              className="w-full bg-transparent border-none outline-none focus:ring-0 text-slate-500 font-medium"
+                              className="w-full bg-transparent border-none outline-none focus:ring-0 text-slate-500 font-medium text-xs"
                             />
                             <button
                               type="button"
@@ -1836,6 +2145,56 @@ export default function AtasPage() {
         </div>
       </main>
 
+      {/* MODAL DE FINALIZAÇÃO COM JUSTIFICATIVA PRECOCE */}
+      {finalizeModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in no-print">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4 transform scale-100 transition-all duration-300">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500 shrink-0">
+                <AlertCircle size={22} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Finalizar Ata com Pendências</h3>
+                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">
+                  Existem ações nesta ata que ainda não foram concluídas.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+                Justificativa para Finalização Precoce
+              </label>
+              <textarea
+                value={justificativaInput}
+                onChange={e => setJustificativaInput(e.target.value)}
+                placeholder="Explique o motivo de finalizar esta ata mesmo com ações em aberto..."
+                rows={4}
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:border-[#1B4D3E]/40 focus:bg-white text-slate-700 transition-all resize-none"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setFinalizeModalOpen(false)}
+                className="px-4 py-2 border border-slate-200 text-slate-500 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-slate-50 transition-all cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmFinalize}
+                disabled={!justificativaInput.trim()}
+                className="px-5 py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm hover:shadow transition-all cursor-pointer"
+              >
+                Confirmar Finalização
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL DE COMENTÁRIOS DA AÇÃO */}
       {commentModalOpen && activeAcao && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in no-print">
@@ -1923,6 +2282,174 @@ export default function AtasPage() {
                   Enviar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE VOTAÇÃO DA PAUTA DELIBERATIVA */}
+      {votingModalOpen && activeDeliberativaIndex !== null && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in no-print">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full flex flex-col max-h-[85vh] overflow-hidden transform scale-100 transition-all duration-300">
+            {/* Header */}
+            <div className="p-5 border-b border-slate-100 flex justify-between items-start">
+              <div>
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <Users size={16} className="text-[#1B4D3E]" /> Votação de Pauta Deliberativa
+                </h3>
+                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter line-clamp-2">
+                  Item {pautasDeliberativas[activeDeliberativaIndex]?.item}: {pautasDeliberativas[activeDeliberativaIndex]?.descricao || 'Sem descrição'}
+                </p>
+              </div>
+              <button
+                onClick={() => setVotingModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Content / Voters list */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 max-h-[400px] min-h-[150px] bg-slate-50">
+              <div className="space-y-2">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+                  Lista de Votantes
+                </label>
+                
+                {currentVotos.length === 0 ? (
+                  <div className="text-center py-6 text-slate-400 text-xs font-semibold italic">
+                    Nenhum votante adicionado. Adicione votantes abaixo.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {currentVotos.map((v, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200/60 shadow-xs">
+                        <span className="text-xs font-bold text-slate-700">{v.nome}</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCurrentVotos(prev => prev.map((item, i) => i === idx ? { ...item, voto: 'Sim' } : item));
+                            }}
+                            className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer border ${
+                              v.voto === 'Sim'
+                                ? 'bg-green-500 text-white border-green-600'
+                                : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
+                            }`}
+                          >
+                            Sim
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCurrentVotos(prev => prev.map((item, i) => i === idx ? { ...item, voto: 'Não' } : item));
+                            }}
+                            className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer border ${
+                              v.voto === 'Não'
+                                ? 'bg-red-500 text-white border-red-600'
+                                : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
+                            }`}
+                          >
+                            Não
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCurrentVotos(prev => prev.filter((_, i) => i !== idx));
+                            }}
+                            className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors cursor-pointer ml-1"
+                            title="Remover votante"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Add voters form */}
+              <div className="space-y-2 pt-2 border-t border-slate-200">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+                  Adicionar Votante
+                </label>
+                <div className="flex flex-col gap-2">
+                  <select
+                    value=""
+                    onChange={e => {
+                      const name = e.target.value;
+                      if (name && !currentVotos.some(cv => cv.nome === name)) {
+                        setCurrentVotos(prev => [...prev, { nome: name, voto: 'Sim' }]);
+                      }
+                    }}
+                    className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:border-[#1B4D3E] text-slate-700 cursor-pointer"
+                  >
+                    <option value="">Selecione um participante presente...</option>
+                    {participantes
+                      .filter(p => p.nome.trim() && !currentVotos.some(cv => cv.nome === p.nome.trim()))
+                      .map((p, i) => (
+                        <option key={i} value={p.nome.trim()}>{p.nome.trim()}</option>
+                      ))
+                    }
+                  </select>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Ou digite outro nome e pressione Enter..."
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const target = e.target as HTMLInputElement;
+                          const name = target.value.trim();
+                          if (name) {
+                            if (!currentVotos.some(cv => cv.nome === name)) {
+                              setCurrentVotos(prev => [...prev, { nome: name, voto: 'Sim' }]);
+                            }
+                            target.value = '';
+                          }
+                        }
+                      }}
+                      className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:border-[#1B4D3E] text-slate-700"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Placar parcial */}
+              <div className="bg-[#DCE6F1]/50 border border-[#DCE6F1] rounded-xl p-3 flex justify-between items-center text-xs font-bold text-slate-700">
+                <span>Placar Parcial:</span>
+                <div className="flex gap-4">
+                  <span className="text-green-700 font-black">Sim: {currentVotos.filter(v => v.voto === 'Sim').length}</span>
+                  <span className="text-red-700 font-black">Não: {currentVotos.filter(v => v.voto === 'Não').length}</span>
+                  <span className="text-slate-500 font-black">Resultado: {
+                    currentVotos.length === 0
+                      ? 'Nenhum voto'
+                      : currentVotos.filter(v => v.voto === 'Sim').length > currentVotos.filter(v => v.voto === 'Não').length
+                        ? 'Aprovada'
+                        : 'Não aprovada'
+                  }</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-slate-100 bg-white flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setVotingModalOpen(false)}
+                className="px-4 py-2 border border-slate-200 text-slate-500 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-slate-50 transition-all cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmVoting}
+                disabled={currentVotos.length === 0}
+                className="px-5 py-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm hover:shadow transition-all cursor-pointer"
+              >
+                Confirmar Resultado
+              </button>
             </div>
           </div>
         </div>
