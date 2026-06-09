@@ -2173,7 +2173,7 @@ export default function SettingsPage() {
                             label: "Básico",
                             preco: 149.00,
                             limiteUsuarios: 3,
-                            descricao: "Ideal para pequenas imobiliárias e corretores autônomos.",
+                            descricao: "Ideal para pequenas imobiliárias e corretores autônomos. Inclui 30 novas buscas/mês no Google e 1.000 buscas no cache.",
                             features: "Até 3 Usuários ativos,Acesso ao Pipeline de CRM,Prospecção Básica (30 novas buscas Google/mês),Até 1.000 buscas em cache local (gratuitas),Suporte via e-mail"
                           },
                           {
@@ -2181,7 +2181,7 @@ export default function SettingsPage() {
                             label: "Profissional (PRO)",
                             preco: 299.00,
                             limiteUsuarios: 10,
-                            descricao: "Perfeito para construtoras e equipes comerciais em expansão.",
+                            descricao: "Perfeito para construtoras e equipes comerciais em expansão. Inclui 150 novas buscas/mês no Google e buscas no cache ilimitadas.",
                             features: "Até 10 Usuários ativos,Acesso ilimitado a FPVs,Prospecção Inteligente (150 novas buscas Google/mês),Buscas em cache local ilimitadas,Calendário Global,Auditoria e logs"
                           },
                           {
@@ -2189,7 +2189,7 @@ export default function SettingsPage() {
                             label: "Enterprise",
                             preco: 599.00,
                             limiteUsuarios: 100,
-                            descricao: "Customização e poder ilimitado para grandes corporações.",
+                            descricao: "Customização e poder ilimitado para grandes corporações. Inclui 400 novas buscas/mês no Google e buscas no cache ilimitadas.",
                             features: "Até 100 Usuários ativos,Prospecção Avançada (400 novas buscas Google/mês),Buscas em cache local ilimitadas,Suporte 24/7 com Executivo,Integração e APIs Liberadas,SLA Avançado,Treinamento de equipe"
                           }
                         ];

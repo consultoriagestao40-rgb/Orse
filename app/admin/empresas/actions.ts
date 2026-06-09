@@ -752,7 +752,7 @@ async function getOrCreatePlanConfigs() {
       label: "Básico",
       preco: 149.00,
       limiteUsuarios: 3,
-      descricao: "Ideal para pequenas imobiliárias e corretores autônomos.",
+      descricao: "Ideal para pequenas imobiliárias e corretores autônomos. Inclui 30 novas buscas/mês no Google e 1.000 buscas no cache.",
       features: "Até 3 Usuários ativos,Acesso ao Pipeline de Leads CRM,Prospecção Básica (30 novas buscas Google/mês),Até 1.000 buscas em cache local (gratuitas),Suporte via e-mail"
     },
     {
@@ -760,7 +760,7 @@ async function getOrCreatePlanConfigs() {
       label: "Profissional (PRO)",
       preco: 299.00,
       limiteUsuarios: 10,
-      descricao: "Perfeito para construtoras e equipes comerciais em expansão.",
+      descricao: "Perfeito para construtoras e equipes comerciais em expansão. Inclui 150 novas buscas/mês no Google e buscas no cache ilimitadas.",
       features: "Até 10 Usuários ativos,Acesso ilimitado a FPVs e CCTs,Prospecção Inteligente (150 novas buscas Google/mês),Buscas em cache local ilimitadas,Calendário Global de prazos e escalas,Auditoria completa (Audit Trail) de logs,Suporte premium prioritário 24/7"
     },
     {
@@ -768,7 +768,7 @@ async function getOrCreatePlanConfigs() {
       label: "Enterprise",
       preco: 599.00,
       limiteUsuarios: 100,
-      descricao: "Customização e poder ilimitado para grandes corporações.",
+      descricao: "Customização e poder ilimitado para grandes corporações. Inclui 400 novas buscas/mês no Google e buscas no cache ilimitadas.",
       features: "Até 100 Usuários ativos,Prospecção Avançada (400 novas buscas Google/mês),Buscas em cache local ilimitadas,Suporte 24/7 com Executivo de Conta,Integração e APIs Liberadas,SLA de Disponibilidade Avançado,Treinamento de equipe em vídeo"
     }
   ];
