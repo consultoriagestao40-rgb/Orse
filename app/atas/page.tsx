@@ -1595,8 +1595,8 @@ export default function AtasPage() {
                 {/* ESTRUTURA TÉCNICA EM TABELA (IDÊNTICA AO WORD DO USUÁRIO) */}
                 <table className="w-full border-2 border-slate-900 border-collapse text-xs select-text table-fixed">
                   <colgroup>
-                    <col style={{ width: '3%' }} />
-                    <col style={{ width: '45%' }} />
+                    <col style={{ width: '5%' }} />
+                    <col style={{ width: '43%' }} />
                     <col style={{ width: '16%' }} />
                     <col style={{ width: '18%' }} />
                     <col style={{ width: '12%' }} />
@@ -2098,7 +2098,7 @@ export default function AtasPage() {
 
                     {/* COLUNAS PUATAS DELIBERATIVAS */}
                     <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-left">
-                      <th className="py-1 px-3 border-r border-slate-900 text-center">Item</th>
+                      <th className="py-1 px-1 border-r border-slate-900 text-center">Item</th>
                       <th colspan="2" className="py-1 px-3 border-r border-slate-900">Descrição</th>
                       <th className="py-1 px-3 border-r border-slate-900 text-center">Status</th>
                       <th colspan="2" className="py-1 px-3">Anotação</th>
@@ -2114,7 +2114,7 @@ export default function AtasPage() {
                     ) : (
                       pautasDeliberativas.map((pd, idx) => (
                         <tr key={idx} className="bg-white hover:bg-slate-50/10">
-                          <td className="py-1 px-3 border-r border-slate-900 text-center font-bold text-slate-500">
+                          <td className="py-1 px-1 border-r border-slate-900 text-center font-bold text-slate-500">
                             {pd.item}
                           </td>
                           <td colspan="2" className="py-1 px-3 border-r border-slate-900">
@@ -2361,7 +2361,7 @@ export default function AtasPage() {
 
                     {/* COLUNAS AÇÕES */}
                     <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-center">
-                      <th className="py-1 px-3 border-r border-slate-900">Item</th>
+                      <th className="py-1 px-1 border-r border-slate-900">Item</th>
                       <th className="py-1 px-3 border-r border-slate-900 text-left">Descrição</th>
                       <th className="py-1 px-3 border-r border-slate-900 text-center">Resp.</th>
                       <th className="py-1 px-3 border-r border-slate-900">Prazo</th>
@@ -2382,7 +2382,7 @@ export default function AtasPage() {
                         const nome = a.responsavelNome || respUser?.nome || 'Selecionar';
                         return (
                           <tr key={idx} className="bg-white hover:bg-slate-50/10">
-                            <td className="py-1 px-3 border-r border-slate-900 text-center font-bold text-slate-500">
+                            <td className="py-1 px-1 border-r border-slate-900 text-center font-bold text-slate-500">
                               {a.item || (idx + 1)}
                             </td>
                             <td className="py-1 px-3 border-r border-slate-900">
