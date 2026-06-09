@@ -2104,9 +2104,9 @@ export default function AtasPage() {
                     {/* COLUNAS PAUTAS DELIBERATIVAS */}
                     <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-left">
                       <th className="py-1 px-1 border-r border-slate-900 text-center">Item</th>
-                      <th className="py-1 px-3 border-r border-slate-900">Descrição</th>
-                      <th colspan="2" className="py-1 px-3 border-r border-slate-900 text-center">Status</th>
-                      <th colspan="3" className="py-1 px-3">Anotação</th>
+                      <th colspan="3" className="py-1 px-3 border-r border-slate-900">Descrição</th>
+                      <th className="py-1 px-3 border-r border-slate-900 text-center">Status</th>
+                      <th colspan="2" className="py-1 px-3">Anotação</th>
                     </tr>
 
                     {/* CORPO PAUTAS DELIBERATIVAS */}
@@ -2122,13 +2122,20 @@ export default function AtasPage() {
                           <td className="py-1 px-1 border-r border-slate-900 text-center font-bold text-slate-500">
                             {pd.item}
                           </td>
-                          <td className="py-1 px-3 border-r border-slate-900">
-                            <input 
-                              type="text"
+                          <td colspan="3" className="py-1 px-3 border-r border-slate-900">
+                            <textarea 
                               value={pd.descricao}
                               placeholder="Descrição da deliberação..."
                               onChange={e => handlePautaDeliberativaChange(idx, 'descricao', e.target.value)}
-                              className="w-full bg-transparent border-none outline-none focus:ring-0 font-medium text-xs text-slate-800 py-0.5 min-w-0"
+                              rows={1}
+                              ref={el => {
+                                if (el) {
+                                  el.style.height = 'auto';
+                                  el.style.height = `${el.scrollHeight}px`;
+                                }
+                              }}
+                              className="w-full bg-transparent border-none outline-none focus:ring-0 font-medium text-xs text-slate-800 py-0.5 min-w-0 resize-none overflow-hidden leading-normal"
+                              style={{ height: 'auto' }}
                             />
                             {pd.votos && pd.votos.length > 0 && (
                               <div className="text-[9px] text-slate-500 mt-1 font-bold print:text-black">
@@ -2139,7 +2146,7 @@ export default function AtasPage() {
                               </div>
                             )}
                           </td>
-                          <td colspan="2" className="py-1 px-3 border-r border-slate-900 text-center">
+                          <td className="py-1 px-3 border-r border-slate-900 text-center">
                             <div className="flex items-center justify-center gap-1.5">
                               <select
                                 value={pd.status}
@@ -2163,19 +2170,26 @@ export default function AtasPage() {
                               </button>
                             </div>
                           </td>
-                          <td colspan="3" className="py-1 px-3">
-                            <div className="flex items-center justify-between gap-1 w-full">
-                              <input 
-                                type="text"
+                          <td colspan="2" className="py-1 px-3">
+                            <div className="flex items-start justify-between gap-1 w-full">
+                              <textarea 
                                 value={pd.anotacao || ''}
                                 placeholder="Notas..."
                                 onChange={e => handlePautaDeliberativaChange(idx, 'anotacao', e.target.value)}
-                                className="w-full bg-transparent border-none outline-none focus:ring-0 text-slate-500 font-medium text-xs py-0.5 min-w-0"
+                                rows={1}
+                                ref={el => {
+                                  if (el) {
+                                    el.style.height = 'auto';
+                                    el.style.height = `${el.scrollHeight}px`;
+                                  }
+                                }}
+                                className="w-full bg-transparent border-none outline-none focus:ring-0 text-slate-500 font-medium text-xs py-0.5 min-w-0 resize-none overflow-hidden leading-normal"
+                                style={{ height: 'auto' }}
                               />
                               <button
                                 type="button"
                                 onClick={() => handleRemovePautaDeliberativaRow(idx)}
-                                className="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors cursor-pointer no-print"
+                                className="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors cursor-pointer no-print mt-0.5"
                               >
                                 <X size={12} />
                               </button>
