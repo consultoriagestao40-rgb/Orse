@@ -1597,23 +1597,24 @@ export default function AtasPage() {
                   <colgroup>
                     <col style={{ width: '5%' }} />
                     <col style={{ width: '43%' }} />
-                    <col style={{ width: '16%' }} />
-                    <col style={{ width: '18%' }} />
+                    <col style={{ width: '8%' }} />
                     <col style={{ width: '12%' }} />
+                    <col style={{ width: '24%' }} />
                     <col style={{ width: '6%' }} />
+                    <col style={{ width: '2%' }} />
                   </colgroup>
                   
                   {/* CABEÇALHO DA ATA */}
                   <thead>
                     <tr>
-                      <th colspan="6" className="bg-[#1E4663] text-white font-black text-center text-sm py-3 border-b-2 border-slate-900 tracking-wider">
+                      <th colspan="7" className="bg-[#1E4663] text-white font-black text-center text-sm py-3 border-b-2 border-slate-900 tracking-wider">
                         {titulo ? titulo.toUpperCase() : 'ATA DE REUNIÃO – COMERCIAL'}
                       </th>
                     </tr>
                     
                     {/* METADADOS (DATA, HORA E LOCAL) */}
                     <tr className="bg-white border-b border-slate-900 text-slate-800">
-                      <td colspan="3" className="p-2.5 border-r border-slate-900 font-bold">
+                      <td colspan="4" className="p-2.5 border-r border-slate-900 font-bold">
                         <div className="flex gap-4 items-center flex-wrap">
                           <div className="flex items-center gap-1.5">
                             <span className="text-slate-800 font-black">DATA:</span>
@@ -1650,7 +1651,7 @@ export default function AtasPage() {
 
                     {/* METADADOS 2 (PASTA/CATEGORIA E STATUS) */}
                     <tr className="bg-white border-b-2 border-slate-900 text-slate-800">
-                      <td colspan="3" className="p-2.5 border-r border-slate-900 font-bold">
+                      <td colspan="4" className="p-2.5 border-r border-slate-900 font-bold">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-slate-800 font-black">PASTA/CATEGORIA:</span>
                           <select
@@ -1727,7 +1728,7 @@ export default function AtasPage() {
 
                     {/* TÍTULO PARTICIPANTES */}
                     <tr>
-                      <th colspan="6" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
+                      <th colspan="7" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
                         PARTICIPANTES:
                       </th>
                     </tr>
@@ -1735,7 +1736,7 @@ export default function AtasPage() {
                     {/* COLUNAS PARTICIPANTES */}
                     <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-left">
                       <th colspan="2" className="py-1 px-3 border-r border-slate-900">Nome</th>
-                      <th className="py-1 px-3 border-r border-slate-900">Cargo</th>
+                      <th colspan="2" className="py-1 px-3 border-r border-slate-900">Cargo</th>
                       <th className="py-1 px-3 border-r border-slate-900">E-mail</th>
                       <th className="py-1 px-3 border-r border-slate-900 text-center">Presente</th>
                       <th className="py-1 px-3 text-center no-print">Ações</th>
@@ -1746,7 +1747,7 @@ export default function AtasPage() {
                   <tbody className="divide-y divide-slate-900">
                     {participantes.length === 0 ? (
                       <tr className="bg-white">
-                        <td colspan="6" className="py-4 text-center text-slate-400 font-medium bg-slate-50/20 italic border-b border-slate-900">
+                        <td colspan="7" className="py-4 text-center text-slate-400 font-medium bg-slate-50/20 italic border-b border-slate-900">
                           Nenhum participante adicionado. Adicione colaboradores abaixo no painel.
                         </td>
                       </tr>
@@ -1778,13 +1779,13 @@ export default function AtasPage() {
                                       value={p.nome}
                                       placeholder="Nome do convidado..."
                                       onChange={e => handleParticipanteInfoChange(idx, 'nome', e.target.value)}
-                                      className="w-full bg-transparent border-none outline-none focus:ring-0"
+                                      className="w-full bg-transparent border-none outline-none focus:ring-0 text-xs py-0.5 min-w-0 font-bold text-slate-800"
                                     />
                                   )}
                                 </div>
                               </div>
                             </td>
-                            <td className="py-1 px-3 border-r border-slate-900 text-slate-600 font-medium">
+                            <td colspan="2" className="py-1 px-3 border-r border-slate-900 text-slate-600 font-medium">
                               {p.userId ? (
                                 p.departamento
                               ) : (
@@ -1793,7 +1794,7 @@ export default function AtasPage() {
                                   value={p.departamento}
                                   placeholder="Cargo..."
                                   onChange={e => handleParticipanteInfoChange(idx, 'departamento', e.target.value)}
-                                  className="w-full bg-transparent border-none outline-none focus:ring-0"
+                                  className="w-full bg-transparent border-none outline-none focus:ring-0 text-xs py-0.5 min-w-0 font-medium text-slate-600"
                                 />
                               )}
                             </td>
@@ -1806,7 +1807,7 @@ export default function AtasPage() {
                                   value={p.email}
                                   placeholder="E-mail..."
                                   onChange={e => handleParticipanteInfoChange(idx, 'email', e.target.value)}
-                                  className="w-full bg-transparent border-none outline-none focus:ring-0"
+                                  className="w-full bg-transparent border-none outline-none focus:ring-0 text-xs py-0.5 min-w-0 font-medium text-slate-600"
                                 />
                               )}
                             </td>
@@ -1814,7 +1815,7 @@ export default function AtasPage() {
                               <select
                                 value={p.presente ? 'Sim' : 'Não'}
                                 onChange={e => handleParticipanteInfoChange(idx, 'presente', e.target.value === 'Sim')}
-                                className="bg-transparent border-none outline-none font-bold text-center text-slate-700 cursor-pointer"
+                                className="bg-transparent border-none outline-none font-bold text-center text-slate-700 cursor-pointer text-xs py-0.5 h-auto min-w-0"
                               >
                                 <option value="Sim">Sim</option>
                                 <option value="Não">Não</option>
@@ -1824,7 +1825,7 @@ export default function AtasPage() {
                               <button
                                 type="button"
                                 onClick={() => handleRemoveParticipante(idx)}
-                                className="p-1 text-slate-400 hover:text-red-500 rounded transition-colors cursor-pointer border-none bg-transparent"
+                                className="p-0 text-slate-400 hover:text-red-500 rounded transition-colors cursor-pointer border-none bg-transparent"
                                 title="Remover Participante"
                               >
                                 <Trash2 size={13} />
@@ -1837,7 +1838,7 @@ export default function AtasPage() {
 
                     {/* CONTROLES PARTICIPANTES (BOTOES) - Ocultados na impressão */}
                     <tr className="bg-slate-50/50 no-print border-b border-slate-900">
-                      <td colspan="6" className="p-3">
+                      <td colspan="7" className="p-3">
                         <div className="flex justify-end gap-2">
                           <button
                             type="button"
@@ -1868,14 +1869,14 @@ export default function AtasPage() {
 
                     {/* SEÇÃO PAUTAS */}
                     <tr>
-                      <th colspan="6" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
+                      <th colspan="7" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
                         PAUTAS:
                       </th>
                     </tr>
 
                     {/* LISTA DE PAUTAS PRINCIPAIS COM CHECKBOX E INPUT */}
                     <tr className="bg-white border-b-2 border-slate-900">
-                      <td colspan="6" className="p-4 text-slate-800">
+                      <td colspan="7" className="p-4 text-slate-800">
                         <div className="space-y-3">
                           {pautas.map((p, idx) => (
                             <div key={idx} className="flex items-center gap-2">
@@ -1932,14 +1933,14 @@ export default function AtasPage() {
 
                     {/* SEÇÃO RELATÓRIO DA REUNIÃO */}
                     <tr>
-                      <th colspan="6" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
+                      <th colspan="7" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
                         RELATÓRIO DA REUNIÃO:
                       </th>
                     </tr>
 
                     {/* EDITOR PRINCIPAL DO RELATÓRIO / RELAÇÃO DE ATIVIDADES */}
                     <tr className="bg-white border-b-2 border-slate-900">
-                      <td colspan="6" className="p-4 text-slate-800">
+                      <td colspan="7" className="p-4 text-slate-800">
                         {/* Rich Text Editor Toolbar para o Relatório Principal - Ocultada na Impressão */}
                         <div className="border border-slate-200 rounded-t-xl bg-slate-50 p-2 flex flex-wrap gap-1 items-center divide-x divide-slate-200 select-none no-print mb-2">
                           <div className="flex gap-0.5 pr-2">
@@ -2089,25 +2090,25 @@ export default function AtasPage() {
                       </td>
                     </tr>
 
-                    {/* SEÇÃO PUATAS DELIBERATIVAS (Mantido idêntico ao Word do Usuário) */}
+                    {/* SEÇÃO PAUTAS DELIBERATIVAS */}
                     <tr>
-                      <th colspan="6" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
-                        PUATAS DELIBERATIVAS
+                      <th colspan="7" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
+                        PAUTAS DELIBERATIVAS
                       </th>
                     </tr>
 
-                    {/* COLUNAS PUATAS DELIBERATIVAS */}
+                    {/* COLUNAS PAUTAS DELIBERATIVAS */}
                     <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-left">
                       <th className="py-1 px-1 border-r border-slate-900 text-center">Item</th>
                       <th colspan="2" className="py-1 px-3 border-r border-slate-900">Descrição</th>
                       <th className="py-1 px-3 border-r border-slate-900 text-center">Status</th>
-                      <th colspan="2" className="py-1 px-3">Anotação</th>
+                      <th colspan="3" className="py-1 px-3">Anotação</th>
                     </tr>
 
-                    {/* CORPO PUATAS DELIBERATIVAS */}
+                    {/* CORPO PAUTAS DELIBERATIVAS */}
                     {pautasDeliberativas.length === 0 ? (
                       <tr className="bg-white">
-                        <td colspan="6" className="py-4 text-center text-slate-400 font-medium bg-slate-50/20 italic border-b border-slate-900">
+                        <td colspan="7" className="py-4 text-center text-slate-400 font-medium bg-slate-50/20 italic border-b border-slate-900">
                           Nenhuma pauta deliberada listada. Adicione itens abaixo.
                         </td>
                       </tr>
@@ -2123,7 +2124,7 @@ export default function AtasPage() {
                               value={pd.descricao}
                               placeholder="Descrição da deliberação..."
                               onChange={e => handlePautaDeliberativaChange(idx, 'descricao', e.target.value)}
-                              className="w-full bg-transparent border-none outline-none focus:ring-0 font-medium text-xs text-slate-800"
+                              className="w-full bg-transparent border-none outline-none focus:ring-0 font-medium text-xs text-slate-800 py-0.5 min-w-0"
                             />
                             {pd.votos && pd.votos.length > 0 && (
                               <div className="text-[9px] text-slate-500 mt-1 font-bold print:text-black">
@@ -2134,13 +2135,13 @@ export default function AtasPage() {
                               </div>
                             )}
                           </td>
-                          <td className="py-1 px-3 border-r border-slate-800 text-center">
+                          <td className="py-1 px-3 border-r border-slate-900 text-center">
                             <div className="flex items-center justify-center gap-1.5">
                               <select
                                 value={pd.status}
                                 onChange={e => handlePautaDeliberativaChange(idx, 'status', e.target.value)}
                                 disabled={!!(pd.votos && pd.votos.length > 0)}
-                                className="bg-transparent border-none outline-none font-bold text-center text-slate-700 cursor-pointer text-xs disabled:opacity-75 disabled:cursor-not-allowed"
+                                className="bg-transparent border-none outline-none font-bold text-center text-slate-700 cursor-pointer text-xs disabled:opacity-75 disabled:cursor-not-allowed py-0.5 min-w-0 h-auto"
                               >
                                 <option value="Tratado">Tratado</option>
                                 <option value="Pendente">Pendente</option>
@@ -2158,29 +2159,31 @@ export default function AtasPage() {
                               </button>
                             </div>
                           </td>
-                          <td colspan="2" className="py-1 px-3 flex items-center justify-between gap-1">
-                            <input 
-                              type="text"
-                              value={pd.anotacao || ''}
-                              placeholder="Notas..."
-                              onChange={e => handlePautaDeliberativaChange(idx, 'anotacao', e.target.value)}
-                              className="w-full bg-transparent border-none outline-none focus:ring-0 text-slate-500 font-medium text-xs"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleRemovePautaDeliberativaRow(idx)}
-                              className="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors cursor-pointer no-print"
-                            >
-                              <X size={12} />
-                            </button>
+                          <td colspan="3" className="py-1 px-3">
+                            <div className="flex items-center justify-between gap-1 w-full">
+                              <input 
+                                type="text"
+                                value={pd.anotacao || ''}
+                                placeholder="Notas..."
+                                onChange={e => handlePautaDeliberativaChange(idx, 'anotacao', e.target.value)}
+                                className="w-full bg-transparent border-none outline-none focus:ring-0 text-slate-500 font-medium text-xs py-0.5 min-w-0"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleRemovePautaDeliberativaRow(idx)}
+                                className="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors cursor-pointer no-print"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
                     )}
 
-                    {/* CONTROLES PUATAS DELIBERATIVAS - Ocultados na Impressão */}
+                    {/* CONTROLES PAUTAS DELIBERATIVAS - Ocultados na Impressão */}
                     <tr className="bg-slate-50/50 no-print border-b border-slate-900">
-                      <td colspan="6" className="p-3">
+                      <td colspan="7" className="p-3">
                         <div className="flex justify-end">
                           <button
                             type="button"
@@ -2195,14 +2198,14 @@ export default function AtasPage() {
 
                     {/* SEÇÃO CONSIDERAÇÕES */}
                     <tr className="bg-[#DCE6F1] border-b border-slate-900 font-black text-slate-800">
-                      <td colspan="6" className="py-1.5 px-3 text-left uppercase text-xs tracking-wider">
+                      <td colspan="7" className="py-1.5 px-3 text-left uppercase text-xs tracking-wider">
                         Considerações:
                       </td>
                     </tr>
 
                     {/* EDITOR DE CONSIDERAÇÕES FINAIS */}
                     <tr className="bg-white border-b-2 border-slate-900">
-                      <td colspan="6" className="p-4 text-slate-800">
+                      <td colspan="7" className="p-4 text-slate-800">
                         {/* Rich Text Editor Toolbar para Considerações - Ocultada na Impressão */}
                         <div className="border border-slate-200 rounded-t-xl bg-slate-50 p-2 flex flex-wrap gap-1 items-center divide-x divide-slate-200 select-none no-print mb-2">
                           <div className="flex gap-0.5 pr-2">
@@ -2354,24 +2357,24 @@ export default function AtasPage() {
 
                     {/* SEÇÃO AÇÕES */}
                     <tr>
-                      <th colspan="6" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
+                      <th colspan="7" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
                         AÇÕES:
                       </th>
                     </tr>
 
                     {/* COLUNAS AÇÕES */}
                     <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-center">
-                      <th className="py-1 px-1 border-r border-slate-900">Item</th>
+                      <th className="py-1 px-1 border-r border-slate-900 text-center whitespace-nowrap select-none">Item</th>
                       <th className="py-1 px-3 border-r border-slate-900 text-left">Descrição</th>
                       <th className="py-1 px-3 border-r border-slate-900 text-center">Resp.</th>
                       <th className="py-1 px-3 border-r border-slate-900">Prazo</th>
-                      <th colspan="2" className="py-1 px-3 text-center">Status</th>
+                      <th colspan="3" className="py-1 px-3 text-center">Status</th>
                     </tr>
 
                     {/* CORPO AÇÕES */}
                     {acoes.length === 0 ? (
                       <tr className="bg-white">
-                        <td colspan="6" className="py-4 text-center text-slate-400 font-medium bg-slate-50/20 italic border-b border-slate-900">
+                        <td colspan="7" className="py-4 text-center text-slate-400 font-medium bg-slate-50/20 italic border-b border-slate-900">
                           Nenhuma ação cadastrada. Adicione prazos de execução.
                         </td>
                       </tr>
@@ -2382,7 +2385,7 @@ export default function AtasPage() {
                         const nome = a.responsavelNome || respUser?.nome || 'Selecionar';
                         return (
                           <tr key={idx} className="bg-white hover:bg-slate-50/10">
-                            <td className="py-1 px-1 border-r border-slate-900 text-center font-bold text-slate-500">
+                            <td className="py-1 px-1 border-r border-slate-900 text-center font-bold text-slate-500 whitespace-nowrap">
                               {a.item || (idx + 1)}
                             </td>
                             <td className="py-1 px-3 border-r border-slate-900">
@@ -2400,7 +2403,7 @@ export default function AtasPage() {
                                       el.style.height = `${el.scrollHeight}px`;
                                     }
                                   }}
-                                  className="flex-1 bg-transparent border-none outline-none focus:ring-0 font-medium resize-none overflow-hidden py-1 leading-normal text-slate-800 text-xs"
+                                  className="flex-1 bg-transparent border-none outline-none focus:ring-0 font-medium resize-none overflow-hidden py-0.5 leading-normal text-slate-800 text-xs min-h-0"
                                   style={{ height: 'auto' }}
                                 />
                                 <button
@@ -2421,7 +2424,7 @@ export default function AtasPage() {
                               </div>
                             </td>
                             <td className="py-1 px-1 border-r border-slate-900 text-center">
-                              <div className="flex flex-col items-center justify-center min-h-[32px]">
+                              <div className="flex items-center justify-center">
                                 {/* Botão do Avatar - Visível apenas na tela */}
                                 <button
                                   type="button"
@@ -2434,9 +2437,10 @@ export default function AtasPage() {
                                       src={avatarUrl} 
                                       alt={nome} 
                                       className="w-6 h-6 rounded-full object-cover border border-slate-200"
+                                      title={nome}
                                     />
                                   ) : (
-                                    <div className="w-6 h-6 rounded-full bg-[#1E4663]/10 flex items-center justify-center text-[10px] font-black text-[#1E4663] uppercase border border-slate-200">
+                                    <div className="w-6 h-6 rounded-full bg-[#1E4663]/10 flex items-center justify-center text-[10px] font-black text-[#1E4663] uppercase border border-slate-200" title={nome}>
                                       {nome !== 'Não identificado' && nome !== 'Selecionar' 
                                         ? nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2) 
                                         : <User size={12} />}
@@ -2450,15 +2454,15 @@ export default function AtasPage() {
                                 </span>
                               </div>
                             </td>
-                            <td className="py-1 px-3 border-r border-slate-900 text-center">
+                            <td className="py-1 px-1 border-r border-slate-900 text-center">
                               <input 
                                 type="date"
                                 value={a.dataLimite}
                                 onChange={e => handleAcaoFieldChange(idx, 'dataLimite', e.target.value)}
-                                className="w-full bg-transparent border-none outline-none focus:ring-0 text-center"
+                                className="w-full bg-transparent border-none outline-none focus:ring-0 text-center text-xs py-0.5 h-6 min-w-0 font-medium text-slate-800"
                               />
                             </td>
-                            <td colspan="2" className="py-1 px-3 text-center">
+                            <td colspan="3" className="py-1 px-3 text-center">
                               <div className="flex items-center justify-center gap-1.5">
                                 {/* Toggle Conclusão */}
                                 <button
@@ -2517,7 +2521,7 @@ export default function AtasPage() {
 
                     {/* CONTROLES AÇÕES - Ocultados na Impressão */}
                     <tr className="bg-slate-50/50 no-print border-b border-slate-900">
-                      <td colspan="6" className="p-3">
+                      <td colspan="7" className="p-3">
                         <div className="flex justify-end">
                           <button
                             type="button"
@@ -2532,14 +2536,14 @@ export default function AtasPage() {
 
                     {/* SEÇÃO PRÓXIMA REUNIÃO */}
                     <tr className="bg-[#DCE6F1] border-b border-slate-900 font-black text-slate-800 text-center">
-                      <th colspan="6" className="py-1.5 px-3 text-xs tracking-wider uppercase">
+                      <th colspan="7" className="py-1.5 px-3 text-xs tracking-wider uppercase">
                         PRÓXIMA REUNIÃO
                       </th>
                     </tr>
 
                     {/* METADADOS PRÓXIMA REUNIÃO */}
                     <tr className="bg-white text-slate-800 font-bold">
-                      <td colspan="3" className="p-2.5 border-r border-slate-900">
+                      <td colspan="4" className="p-2.5 border-r border-slate-900">
                         <div className="flex gap-4 items-center flex-wrap">
                           <div className="flex items-center gap-1">
                             <span className="text-slate-500 font-black">Data:</span>
