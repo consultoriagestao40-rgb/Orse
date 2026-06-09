@@ -36,12 +36,23 @@ export default function UserSelectPopover({
   const [search, setSearch] = useState('');
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [popoverHeight, setPopoverHeight] = useState(300);
   const popoverRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
   }, []);
+
+  // Remeasure popover height dynamically when mounted, when search updates, or users change
+  useEffect(() => {
+    if (isOpen && popoverRef.current) {
+      const height = popoverRef.current.offsetHeight;
+      if (height !== popoverHeight && height > 0) {
+        setPopoverHeight(height);
+      }
+    }
+  }, [isOpen, popoverHeight, coords, search, users]);
 
   // Position popover relative to anchor element
   useEffect(() => {
@@ -55,9 +66,21 @@ export default function UserSelectPopover({
       const rect = resolvedAnchor.getBoundingClientRect();
       const popoverWidth = 280;
       const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
 
       let left = rect.left + window.scrollX;
-      let top = rect.bottom + window.scrollY + 8;
+      
+      const spaceBelow = windowHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      let top;
+      if (spaceBelow < popoverHeight && spaceAbove > spaceBelow) {
+        // Open upwards
+        top = rect.top + window.scrollY - popoverHeight - 8;
+      } else {
+        // Open downwards
+        top = rect.bottom + window.scrollY + 8;
+      }
 
       // Adjust horizontally if going off-screen
       if (left + popoverWidth > windowWidth) {
@@ -69,7 +92,7 @@ export default function UserSelectPopover({
     } else {
       setCoords(null);
     }
-  }, [isOpen, anchorEl]);
+  }, [isOpen, anchorEl, popoverHeight]);
 
   // Click outside to close
   useEffect(() => {
@@ -95,9 +118,12 @@ export default function UserSelectPopover({
     };
   }, [isOpen, onClose, anchorEl]);
 
-  // Close on scroll anywhere in the application
+  // Close on scroll anywhere in the application (except inside the popover itself)
   useEffect(() => {
-    function handleScroll() {
+    function handleScroll(event: Event) {
+      if (popoverRef.current && popoverRef.current.contains(event.target as Node)) {
+        return; // Ignore scroll events inside the popover list
+      }
       onClose();
     }
     if (isOpen) {
