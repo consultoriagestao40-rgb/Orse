@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getLoggedUser } from '@/app/propostas/actions';
 export { getLoggedUser };
 import { revalidatePath } from 'next/cache';
+import { sendInternalMessage } from '@/app/leads/chat-actions';
 
 // Tipagem dos participantes salvos no JSON
 interface Participante {
@@ -60,6 +61,7 @@ export async function getAtas() {
         categoria: ata.categoria || 'Geral',
         status: ata.status || 'Rascunho',
         justificativaFinalizacao: ata.justificativaFinalizacao || null,
+        criadorNome: ata.criadorNome || 'Não especificado',
         totalAcoes,
         concluidas,
         progressoAcoes,
@@ -334,7 +336,8 @@ export async function saveAta(data: {
           proximaReuniaoLocal: data.proximaReuniaoLocal || null,
           versao: nextVersion,
           parentAtaId: parentId,
-          tenantId: user.tenantId
+          tenantId: user.tenantId,
+          criadorNome: user.nome
         }
       });
 
@@ -602,7 +605,8 @@ export async function cloneAta(id: string) {
         categoria: existing.categoria || 'Geral',
         status: 'Rascunho', // começa como rascunho
         versao: 1,
-        tenantId: user.tenantId
+        tenantId: user.tenantId,
+        criadorNome: user.nome
       }
     });
 
@@ -630,5 +634,95 @@ export async function cloneAta(id: string) {
     return { success: false, error: error.message };
   }
 }
+
+// 11. Notifica todos os participantes no chat interno quando a ata é publicada
+export async function notifyAtaPublish(ataId: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Não autorizado' };
+
+  try {
+    const ata = await prisma.ata.findUnique({
+      where: { id: ataId },
+      include: {
+        acoes: {
+          include: {
+            responsavel: {
+              select: {
+                id: true,
+                nome: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!ata || ata.tenantId !== user.tenantId) {
+      return { success: false, error: 'Ata não encontrada.' };
+    }
+
+    const participantesList = Array.isArray(ata.participantesPresentes)
+      ? (ata.participantesPresentes as any[])
+      : [];
+
+    const pautasDelib = Array.isArray(ata.pautasDeliberativas)
+      ? (ata.pautasDeliberativas as any[])
+      : [];
+
+    // Filtra participantes que possuem conta no sistema (userId) e não são o próprio remetente
+    const targetUsers = participantesList.filter(p => p.userId && p.userId !== user.id);
+
+    if (targetUsers.length === 0) {
+      return { success: true, count: 0 };
+    }
+
+    // Formata o resumo de pautas deliberativas
+    let delibSummary = '';
+    if (pautasDelib.length > 0) {
+      delibSummary = '\n📝 *PAUTAS DELIBERADAS:*\n';
+      pautasDelib.forEach(d => {
+        delibSummary += `- Item ${d.item}: ${d.descricao} [${d.status}]\n`;
+        if (d.votos && d.votos.length > 0) {
+          const sim = d.votos.filter((v: any) => v.voto === 'Sim').length;
+          const nao = d.votos.filter((v: any) => v.voto === 'Não').length;
+          delibSummary += `  (Votação: Sim: ${sim} | Não: ${nao})\n`;
+        }
+      });
+    }
+
+    for (const part of targetUsers) {
+      // Filtra as ações sob responsabilidade deste participante
+      const partAcoes = ata.acoes.filter(a => a.responsavelId === part.userId);
+      let acoesSummary = '';
+      if (partAcoes.length > 0) {
+        acoesSummary = '\n✅ *SUAS AÇÕES E PRAZOS:*\n';
+        partAcoes.forEach(a => {
+          const limitDate = new Date(a.dataLimite).toLocaleDateString('pt-BR');
+          acoesSummary += `- Ação: ${a.descricao} (Prazo: ${limitDate})\n`;
+        });
+      } else {
+        acoesSummary = '\nℹ️ Você não possui ações pendentes atribuídas nesta ata.\n';
+      }
+
+      // Monta a mensagem final para este participante
+      const msg = `📢 *ATA DE REUNIÃO PUBLICADA:*
+*${ata.titulo}*
+📅 Data: ${new Date(ata.dataReuniou).toLocaleDateString('pt-BR')} ${ata.horaReuniou ? `às ${ata.horaReuniou}` : ''}
+📍 Local: ${ata.local || 'Não especificado'}
+👤 Criada por: ${ata.criadorNome || user.nome}
+${delibSummary}${acoesSummary}
+🔗 Visualize a ata completa no menu *Atas de Reunião*.`;
+
+      // Envia a mensagem direta via chat interno
+      await sendInternalMessage(part.userId, msg);
+    }
+
+    return { success: true, count: targetUsers.length };
+  } catch (error: any) {
+    console.error('Erro ao notificar publicação da ata:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 
 

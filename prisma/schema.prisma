@@ -715,6 +715,7 @@ model Ata {
   categoria               String?     @default("Geral")
   status                  String      @default("Rascunho")
   justificativaFinalizacao String?    @db.Text
+  criadorNome             String?
   
   acoes                   AtaAcao[]
   

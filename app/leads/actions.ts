@@ -75,7 +75,7 @@ export async function getUsersForFilter() {
     where.tenantId = user?.tenantId;
     const users = await prisma.user.findMany({
       where,
-      select: { id: true, nome: true, avatarUrl: true, cargo: true },
+      select: { id: true, nome: true, avatarUrl: true, cargo: true, email: true },
       orderBy: { nome: 'asc' }
     });
     return { success: true, users };

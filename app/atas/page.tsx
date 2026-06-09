@@ -14,7 +14,7 @@ import {
 import { 
   getAtas, getAtaCompleta, saveAta, deleteAta, 
   toggleAcaoConclusao, getAcoesStats, addAcaoComentario, getLoggedUser,
-  renameAtaCategory, deleteAtaCategory, cloneAta
+  renameAtaCategory, deleteAtaCategory, cloneAta, notifyAtaPublish
 } from './actions';
 import { getUsersForFilter } from '@/app/leads/actions';
 
@@ -141,6 +141,13 @@ export default function AtasPage() {
   const [activeDeliberativaIndex, setActiveDeliberativaIndex] = useState<number | null>(null);
   const [currentVotos, setCurrentVotos] = useState<{ nome: string; voto: 'Sim' | 'Não' }[]>([]);
 
+  // Criador e Paleta de Cores Customizada
+  const [criadorNome, setCriadorNome] = useState('');
+  const [activeColorPicker, setActiveColorPicker] = useState<'relatorio' | 'consideracoes' | null>(null);
+  const [relatorioColor, setRelatorioColor] = useState('#000000');
+  const [consideracoesColor, setConsideracoesColor] = useState('#000000');
+  const colorPickerRef = useRef<HTMLDivElement>(null);
+
   // Referências dos editores de texto rico contentEditable
   const relatorioEditorRef = useRef<HTMLDivElement>(null);
   const consideracoesEditorRef = useRef<HTMLDivElement>(null);
@@ -183,6 +190,21 @@ export default function AtasPage() {
   useEffect(() => {
     loadDashboardData();
   }, []);
+
+  // Fecha a paleta de cores ao clicar fora dela
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(event.target as Node)) {
+        setActiveColorPicker(null);
+      }
+    }
+    if (activeColorPicker !== null) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [activeColorPicker]);
 
   // Sincroniza os HTMLs dos editores contentEditable com os respectivos estados
   useEffect(() => {
@@ -233,6 +255,9 @@ export default function AtasPage() {
     setCategoria('Geral');
     setStatus('Rascunho');
     setJustificativaFinalizacao(null);
+    setCriadorNome(currentUser?.nome || '');
+    setRelatorioColor('#000000');
+    setConsideracoesColor('#000000');
   };
 
   // Carrega ATA existente para edição
@@ -283,6 +308,9 @@ export default function AtasPage() {
         setCategoria(ata.categoria || 'Geral');
         setStatus(ata.status || 'Rascunho');
         setJustificativaFinalizacao(ata.justificativaFinalizacao || null);
+        setCriadorNome(ata.criadorNome || 'Não especificado');
+        setRelatorioColor('#000000');
+        setConsideracoesColor('#000000');
         setViewMode('FORM');
       }
     } catch (e) {
@@ -446,6 +474,13 @@ export default function AtasPage() {
       });
 
       if (res.success) {
+        if (nextStatus === 'Publicada') {
+          try {
+            await notifyAtaPublish(res.ataId!);
+          } catch (notifyErr) {
+            console.error('Erro ao enviar notificações de publicação:', notifyErr);
+          }
+        }
         setViewMode('LIST');
         loadDashboardData();
       } else {
@@ -871,11 +906,114 @@ export default function AtasPage() {
 
   // Obter categorias únicas existentes nas atas
   const categoriesList = Array.from(new Set(atas.map(a => a.categoria || 'Geral')));
+  const activeCategories = Array.from(new Set(['Geral', ...atas.map(a => a.categoria).filter(Boolean)]));
 
   // Filtra candidatos para menção no autocomplete
   const mentionCandidates = participantes.filter(p => 
     p.nome.toLowerCase().includes(mentionSearch.toLowerCase())
   );
+
+  const themeColorsGrid = [
+    ['#ffffff', '#000000', '#eeece1', '#1f497d', '#4f81bd', '#c0504d', '#9bbb59', '#8064a2', '#4bacc6', '#f79646'],
+    ['#f2f2f2', '#7f7f7f', '#f4f3ed', '#dce6f1', '#e9edf4', '#f2dbdb', '#ebf1de', '#e8e5ee', '#e5f3f5', '#fdeada'],
+    ['#d9d9d9', '#595959', '#ebe9df', '#b8cce4', '#cfdae8', '#e6b8b7', '#d7e3bc', '#ccc1da', '#c3e6ec', '#fbd5b5'],
+    ['#bfbfbf', '#3f3f3f', '#dddcd2', '#95b3d7', '#b5c7e0', '#d99694', '#c3d69b', '#b2a1c7', '#a3d8e2', '#fac090'],
+    ['#a6a6a6', '#262626', '#c4c3b9', '#16365c', '#3b618e', '#903c39', '#748c41', '#604a7b', '#388194', '#b97034'],
+    ['#7f7f7f', '#0d0d0d', '#a2a29a', '#0f243e', '#27415f', '#602826', '#4e5d2b', '#403152', '#255663', '#7c4b22']
+  ];
+
+  const standardColors = [
+    '#c00000', '#ff0000', '#ffc000', '#ffff00', '#92d050', '#00b050', '#00b0f0', '#0070c0', '#002060', '#7030a0'
+  ];
+
+  const renderColorPicker = (ref: React.RefObject<HTMLDivElement | null>, type: 'relatorio' | 'consideracoes') => {
+    const hiddenInputId = `hidden-color-input-${type}`;
+    
+    const onColorSelect = (color: string) => {
+      execEditorCmd(ref, 'foreColor', color);
+      if (type === 'relatorio') {
+        setRelatorioColor(color);
+      } else {
+        setConsideracoesColor(color);
+      }
+      setActiveColorPicker(null);
+    };
+
+    return (
+      <div 
+        ref={colorPickerRef}
+        className="absolute top-8 left-0 z-50 bg-white border border-slate-200 rounded-lg shadow-xl p-3 w-[240px] no-print"
+      >
+        {/* Input de cor nativo oculto */}
+        <input 
+          id={hiddenInputId}
+          type="color"
+          className="hidden"
+          onChange={(e) => onColorSelect(e.target.value)}
+        />
+
+        {/* 1. Grid de Cores do Tema */}
+        <div className="grid grid-cols-10 gap-[2px] mb-2">
+          {themeColorsGrid.map((row, rIdx) => 
+            row.map((color, cIdx) => (
+              <button
+                key={`theme-${rIdx}-${cIdx}`}
+                type="button"
+                onClick={() => onColorSelect(color)}
+                className="w-[18px] h-[18px] rounded-[1px] border border-slate-200 hover:scale-110 transition-transform cursor-pointer"
+                style={{ backgroundColor: color }}
+                title={color}
+              />
+            ))
+          )}
+        </div>
+
+        {/* 2. Cores Padrão */}
+        <div className="mb-2">
+          <div className="text-[10px] font-semibold text-slate-500 mb-1">Cores Padrão</div>
+          <div className="grid grid-cols-10 gap-[2px]">
+            {standardColors.map((color, idx) => (
+              <button
+                key={`std-${idx}`}
+                type="button"
+                onClick={() => onColorSelect(color)}
+                className="w-[18px] h-[18px] rounded-[1px] border border-slate-200 hover:scale-110 transition-transform cursor-pointer"
+                style={{ backgroundColor: color }}
+                title={color}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* 3. Divisor */}
+        <div className="border-t border-slate-100 my-2" />
+
+        {/* 4. Opções Extras */}
+        <div className="flex flex-col gap-0.5">
+          <button
+            type="button"
+            onClick={() => document.getElementById(hiddenInputId)?.click()}
+            className="flex items-center gap-2 w-full text-left px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-50 rounded transition-colors cursor-pointer"
+          >
+            <Palette size={14} className="text-slate-500" />
+            <span>Mais Cores...</span>
+          </button>
+          
+          <button
+            type="button"
+            className="flex items-center justify-between w-full text-left px-2 py-1.5 text-xs text-slate-400 cursor-not-allowed"
+            disabled
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-[14px] h-[14px] rounded-[1px] bg-gradient-to-tr from-slate-200 to-slate-400 border border-slate-200" />
+              <span>Gradiente</span>
+            </div>
+            <span className="text-[10px]">▶</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
@@ -891,9 +1029,6 @@ export default function AtasPage() {
             color: #000000 !important;
             font-family: Arial, sans-serif !important;
           }
-          .sidebar-aside, .no-print, header, .top-bar-actions, button, svg {
-            display: none !important;
-          }
           html, body, main, .flex, .min-h-screen, .space-y-6 {
             float: none !important;
             position: relative !important;
@@ -908,7 +1043,7 @@ export default function AtasPage() {
           }
           #print-document-container {
             display: block !important;
-            border: 2px solid #000000 !important;
+            border: none !important;
             box-shadow: none !important;
             width: 100% !important;
             max-width: 100% !important;
@@ -962,6 +1097,12 @@ export default function AtasPage() {
             width: auto !important;
             margin-right: 5px !important;
           }
+          /* Oculta ícone do Webkit nos inputs de tempo/data */
+          input[type="time"]::-webkit-calendar-picker-indicator,
+          input[type="date"]::-webkit-calendar-picker-indicator {
+            display: none !important;
+            -webkit-appearance: none !important;
+          }
           /* Garante cores de background no PDF */
           * {
             -webkit-print-color-adjust: exact !important;
@@ -970,6 +1111,10 @@ export default function AtasPage() {
           @page {
             size: A4;
             margin: 1.2cm;
+          }
+          /* Ocultação de elementos no final para evitar overrides de seletores flex/grid */
+          .sidebar-aside, .no-print, header, .top-bar-actions, button, svg {
+            display: none !important;
           }
         }
         /* Estilos do Editor de Texto Rico na Tela e Impressão */
@@ -1189,7 +1334,11 @@ export default function AtasPage() {
                                   {ata.categoria || 'Geral'}
                                 </span>
                               </div>
-                              <p className="text-[9px] text-slate-400 mt-0.5">{ata.pautasCount} pautas listadas</p>
+                              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                <p className="text-[9px] text-slate-400">{ata.pautasCount} pautas listadas</p>
+                                <span className="text-[9px] text-slate-300">•</span>
+                                <p className="text-[9px] text-slate-500 font-medium">Criada por: {ata.criadorNome || 'Não especificado'}</p>
+                              </div>
                             </td>
                             <td className="py-4 px-4 text-slate-500 font-medium">
                               {new Date(ata.dataReuniou).toLocaleDateString('pt-BR')}
@@ -1410,7 +1559,7 @@ export default function AtasPage() {
                               type="time"
                               value={horaReuniou}
                               onChange={e => setHoraReuniou(e.target.value)}
-                              className="bg-transparent border-none outline-none font-bold text-slate-800 w-16 focus:ring-0"
+                              className="bg-transparent border-none outline-none font-bold text-slate-800 w-20 focus:ring-0"
                             />
                           </div>
                         </div>
@@ -1434,7 +1583,7 @@ export default function AtasPage() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-slate-800 font-black">PASTA/CATEGORIA:</span>
                           <select
-                            value={['Comercial', 'Operação', 'Geral', 'Administrativo', 'Diretoria'].includes(categoria) ? categoria : 'Outro'}
+                            value={activeCategories.includes(categoria) ? categoria : 'Outro'}
                             onChange={e => {
                               const val = e.target.value;
                               if (val === 'Outro') {
@@ -1443,16 +1592,14 @@ export default function AtasPage() {
                                 setCategoria(val);
                               }
                             }}
-                            className="bg-transparent border-none outline-none font-bold text-slate-800 focus:ring-0 cursor-pointer"
+                            className="bg-transparent border-none outline-none font-bold text-slate-800 focus:ring-0 cursor-pointer text-xs"
                           >
-                            <option value="Comercial">Comercial</option>
-                            <option value="Operação">Operação</option>
-                            <option value="Geral">Geral</option>
-                            <option value="Administrativo">Administrativo</option>
-                            <option value="Diretoria">Diretoria</option>
+                            {activeCategories.map(cat => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
                             <option value="Outro">Outra (Personalizada)...</option>
                           </select>
-                          {!['Comercial', 'Operação', 'Geral', 'Administrativo', 'Diretoria'].includes(categoria) && (
+                          {!activeCategories.includes(categoria) && (
                             <input
                               type="text"
                               value={categoria}
@@ -1464,36 +1611,43 @@ export default function AtasPage() {
                         </div>
                       </td>
                       <td colspan="3" className="p-2.5 font-bold w-1/2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-slate-800 font-black">STATUS:</span>
-                          {(() => {
-                            let label = status;
-                            let color = 'bg-slate-100 text-slate-600 border-slate-200';
-                            if (status === 'Rascunho') {
-                              label = 'Rascunho';
-                              color = 'bg-slate-100 text-slate-600';
-                            } else if (status === 'Finalizada') {
-                              label = 'Finalizada';
-                              color = 'bg-green-100 text-green-700';
-                            } else {
-                              const hasPending = acoes.some(a => !a.concluida);
-                              if (hasPending && acoes.length > 0) {
-                                label = 'Em aberto';
-                                color = 'bg-amber-100 text-amber-700';
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-slate-800 font-black">STATUS:</span>
+                            {(() => {
+                              let label = status;
+                              let color = 'bg-slate-100 text-slate-600 border-slate-200';
+                              if (status === 'Rascunho') {
+                                label = 'Rascunho';
+                                color = 'bg-slate-100 text-slate-600';
+                              } else if (status === 'Finalizada') {
+                                label = 'Finalizada';
+                                color = 'bg-green-100 text-green-700';
                               } else {
-                                label = 'Publicada';
-                                color = 'bg-blue-100 text-blue-700';
+                                const hasPending = acoes.some(a => !a.concluida);
+                                if (hasPending && acoes.length > 0) {
+                                  label = 'Em aberto';
+                                  color = 'bg-amber-100 text-amber-700';
+                                } else {
+                                  label = 'Publicada';
+                                  color = 'bg-blue-100 text-blue-700';
+                                }
                               }
-                            }
-                            return (
-                              <span className={`px-2 py-0.5 text-[9px] font-black rounded-full uppercase tracking-wider ${color}`}>
-                                {label}
+                              return (
+                                <span className={`px-2 py-0.5 text-[9px] font-black rounded-full uppercase tracking-wider ${color}`}>
+                                  {label}
+                                </span>
+                              );
+                            })()}
+                            {status === 'Finalizada' && justificativaFinalizacao && (
+                              <span className="text-[9px] text-slate-500 font-bold italic">
+                                (Justificado: {justificativaFinalizacao})
                               </span>
-                            );
-                          })()}
-                          {status === 'Finalizada' && justificativaFinalizacao && (
-                            <span className="text-[9px] text-slate-500 font-bold italic">
-                              (Justificado: {justificativaFinalizacao})
+                            )}
+                          </div>
+                          {criadorNome && (
+                            <span className="text-[10px] text-slate-500 font-medium">
+                              Criada por: <strong className="text-slate-700 font-bold">{criadorNome}</strong>
                             </span>
                           )}
                         </div>
@@ -1773,16 +1927,17 @@ export default function AtasPage() {
                             </button>
                           </div>
 
-                          <div className="flex gap-1.5 px-2 items-center">
-                            <span className="text-slate-400" title="Cor do Texto">
+                          <div className="relative flex gap-1.5 px-2 items-center">
+                            <button
+                              type="button"
+                              onClick={() => setActiveColorPicker(activeColorPicker === 'relatorio' ? null : 'relatorio')}
+                              className="p-1 hover:bg-slate-100 rounded-md text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
+                              title="Cor do Texto"
+                            >
                               <Palette size={13} />
-                            </span>
-                            <input
-                              type="color"
-                              onChange={e => execEditorCmd(relatorioEditorRef, 'foreColor', e.target.value)}
-                              className="w-5 h-5 p-0 border-0 rounded-md cursor-pointer outline-none bg-transparent"
-                              title="Escolher Cor"
-                            />
+                              <div className="w-3.5 h-3.5 rounded border border-slate-300" style={{ backgroundColor: relatorioColor }} />
+                            </button>
+                            {activeColorPicker === 'relatorio' && renderColorPicker(relatorioEditorRef, 'relatorio')}
                             
                             <span className="text-slate-400 pl-1" title="Tamanho do Texto">
                               <Type size={13} />
@@ -2016,16 +2171,17 @@ export default function AtasPage() {
                             </button>
                           </div>
 
-                          <div className="flex gap-1.5 px-2 items-center">
-                            <span className="text-slate-400" title="Cor do Texto">
+                          <div className="relative flex gap-1.5 px-2 items-center">
+                            <button
+                              type="button"
+                              onClick={() => setActiveColorPicker(activeColorPicker === 'consideracoes' ? null : 'consideracoes')}
+                              className="p-1 hover:bg-slate-100 rounded-md text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
+                              title="Cor do Texto"
+                            >
                               <Palette size={13} />
-                            </span>
-                            <input
-                              type="color"
-                              onChange={e => execEditorCmd(consideracoesEditorRef, 'foreColor', e.target.value)}
-                              className="w-5 h-5 p-0 border-0 rounded-md cursor-pointer outline-none bg-transparent"
-                              title="Escolher Cor"
-                            />
+                              <div className="w-3.5 h-3.5 rounded border border-slate-300" style={{ backgroundColor: consideracoesColor }} />
+                            </button>
+                            {activeColorPicker === 'consideracoes' && renderColorPicker(consideracoesEditorRef, 'consideracoes')}
                             
                             <span className="text-slate-400 pl-1" title="Tamanho do Texto">
                               <Type size={13} />
