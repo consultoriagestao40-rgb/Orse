@@ -738,7 +738,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
               display: table-footer-group !important;
             }
             @page { margin: 0 !important; size: auto; }
-            .no-print, [class*="no-print"] { display: none !important; }
+            .no-print { display: none !important; }
             * {
                -webkit-print-color-adjust: exact !important;
                print-color-adjust: exact !important;
@@ -1083,7 +1083,7 @@ export default function DocumentoA4({ proposta, resultado, empresaEmissora, temp
           @page { margin: 0 !important; size: auto; }
           
           /* Oculta completamente a barra de controle superior */
-          .no-print, [class*="no-print"] {
+          .no-print {
             display: none !important;
           }
           

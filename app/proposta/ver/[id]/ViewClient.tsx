@@ -947,7 +947,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
           @page { margin: 0 !important; size: auto; }
-          .no-print, [class*="no-print"] { display: none !important; }
+          .no-print { display: none !important; }
           * {
              -webkit-print-color-adjust: exact !important;
              print-color-adjust: exact !important;
