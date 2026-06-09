@@ -209,7 +209,17 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
 
   if (!isSlide) {
     return (
-      <div className="bg-slate-200 min-h-screen py-8 flex justify-center print:bg-white print:py-0 w-full">
+      <div className="bg-slate-200 min-h-screen py-8 flex flex-col items-center print:bg-white print:py-0 w-full animate-fadeIn">
+        {/* Controle superior (Back & Print) - Oculto na Impressão */}
+        <div className="w-full max-w-[210mm] px-4 mb-4 flex justify-between items-center no-print">
+          <button onClick={() => window.history.back()} className="px-4 py-2 bg-white rounded-lg shadow text-sm font-bold text-slate-600 hover:bg-slate-50 shrink-0 cursor-pointer">
+            ← Voltar
+          </button>
+          <button onClick={() => window.print()} className="px-6 py-2 bg-[#1B4D3E] hover:bg-[#143d31] rounded-lg shadow text-sm font-black text-white cursor-pointer transition-all">
+            🖨️ Imprimir PDF
+          </button>
+        </div>
+
         <div className="w-[210mm] max-w-full bg-white shadow-2xl p-0 print:shadow-none print:w-full">
           <DocumentoA4
             proposta={mergedProposta}
