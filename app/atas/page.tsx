@@ -1227,9 +1227,11 @@ export default function AtasPage() {
                     <span className="text-[10px] text-slate-400 mt-1 font-semibold">{atas.length} documentos</span>
                   </button>
 
-                  {/* Pastas dinâmicas baseadas nas categorias existentes mais sugestões padrão */}
-                  {Array.from(new Set(['Comercial', 'Operação', ...categoriesList])).map(cat => {
-                    const count = atas.filter(a => a.categoria === cat).length;
+                  {/* Pastas dinâmicas baseadas nas categorias existentes e reais */}
+                  {activeCategories.map(cat => {
+                    const count = cat === 'Geral'
+                      ? atas.filter(a => !a.categoria || a.categoria === 'Geral').length
+                      : atas.filter(a => a.categoria === cat).length;
                     return (
                       <div
                         key={cat}
