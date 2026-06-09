@@ -214,6 +214,7 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
           proposta={mergedProposta}
           resultado={versao?.resultado}
           empresaEmissora={doc.empresaEmissora}
+          isPublicView={true}
         />
       </>
     );
@@ -428,6 +429,7 @@ export default function PrintClient({ doc, fullProposta }: { doc: any, fullPropo
                 proposta={mergedProposta} 
                 resultado={versao?.resultado} 
                 empresaEmissora={doc.empresaEmissora} 
+                isPublicView={true}
               />
             </div>
           </div>
