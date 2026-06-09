@@ -1596,12 +1596,12 @@ export default function AtasPage() {
                 <table className="w-full border-2 border-slate-900 border-collapse text-xs select-text table-fixed">
                   <colgroup>
                     <col style={{ width: '5%' }} />
-                    <col style={{ width: '35%' }} />
+                    <col style={{ width: '31%' }} />
                     <col style={{ width: '6%' }} />
                     <col style={{ width: '12%' }} />
-                    <col style={{ width: '27%' }} />
+                    <col style={{ width: '24%' }} />
                     <col style={{ width: '10%' }} />
-                    <col style={{ width: '5%' }} />
+                    <col style={{ width: '12%' }} />
                   </colgroup>
                   
                   {/* CABEÇALHO DA ATA */}
@@ -1739,7 +1739,7 @@ export default function AtasPage() {
                       <th colspan="2" className="py-1 px-3 border-r border-slate-900">Cargo</th>
                       <th className="py-1 px-3 border-r border-slate-900">E-mail</th>
                       <th className="py-1 px-3 border-r border-slate-900 text-center">Presente</th>
-                      <th className="py-1 px-1 text-center no-print">Ações</th>
+                      <th className="py-1 px-2 text-center no-print">Ações</th>
                     </tr>
                   </thead>
                   
@@ -1825,7 +1825,7 @@ export default function AtasPage() {
                                 <option value="Não">Não</option>
                               </select>
                             </td>
-                            <td className="py-1 px-1 text-center no-print">
+                            <td className="py-1 px-2 text-center no-print">
                               <button
                                 type="button"
                                 onClick={() => handleRemoveParticipante(idx)}
