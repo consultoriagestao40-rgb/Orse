@@ -333,6 +333,45 @@ export async function saveProposta(data: any) {
       });
     }
 
+    // Se ainda não encontrar, divide por delimitadores comuns (| ou -) e tenta buscar cada parte
+    if (!dbClient) {
+      const parts = cliente.cliente.split(/[|\-]/).map((p: string) => p.trim()).filter(Boolean);
+      for (const part of parts) {
+        dbClient = await prisma.client.findFirst({
+          where: {
+            nomeFantasia: {
+              equals: part,
+              mode: 'insensitive'
+            },
+            tenantId: user?.tenantId || null
+          }
+        });
+        if (!dbClient) {
+          dbClient = await prisma.client.findFirst({
+            where: {
+              nomeFantasia: {
+                contains: part,
+                mode: 'insensitive'
+              },
+              tenantId: user?.tenantId || null
+            }
+          });
+        }
+        if (dbClient) break;
+      }
+    }
+
+    // Se ainda não encontrar, tenta busca reversa (se o nome de algum cliente cadastrado está contido no nome digitado)
+    if (!dbClient) {
+      const allClients = await prisma.client.findMany({
+        where: { tenantId: user?.tenantId || null }
+      });
+      dbClient = allClients.find((c: any) => 
+        cliente.cliente.toLowerCase().includes(c.nomeFantasia.trim().toLowerCase()) ||
+        (c.razaoSocial && cliente.cliente.toLowerCase().includes(c.razaoSocial.trim().toLowerCase()))
+      ) || null;
+    }
+
     if (propostaId) {
       // Editar proposta existente - verifica se tem acesso
       const existingProposta = await prisma.proposta.findUnique({

@@ -156,6 +156,7 @@ export async function getDocumentoPropostaById(id: string) {
 
 export async function createDocumentoProposta(propostaId: string, templateId: string, empresaId: string) {
   try {
+    const user = await getLoggedUser();
     // Busca a proposta (FPV) e sua versão mais recente para pegar o valor e o cliente
     const fpv = await prisma.proposta.findUnique({
       where: { id: propostaId },
@@ -199,6 +200,43 @@ export async function createDocumentoProposta(propostaId: string, templateId: st
           });
         }
 
+        // Se ainda não encontrar, divide por delimitadores comuns (| ou -) e tenta buscar cada parte
+        if (!dbClient) {
+          const parts = clienteNome.split(/[|\-]/).map(p => p.trim()).filter(Boolean);
+          for (const part of parts) {
+            dbClient = await prisma.client.findFirst({
+              where: {
+                nomeFantasia: {
+                  equals: part,
+                  mode: 'insensitive'
+                }
+              }
+            });
+            if (!dbClient) {
+              dbClient = await prisma.client.findFirst({
+                where: {
+                  nomeFantasia: {
+                    contains: part,
+                    mode: 'insensitive'
+                  }
+                }
+              });
+            }
+            if (dbClient) break;
+          }
+        }
+
+        // Se ainda não encontrar, tenta busca reversa (se o nome de algum cliente cadastrado está contido no nome digitado)
+        if (!dbClient) {
+          const allClients = await prisma.client.findMany({
+            where: { tenantId: user?.tenantId || null }
+          });
+          dbClient = allClients.find(c => 
+            clienteNome.toLowerCase().includes(c.nomeFantasia.trim().toLowerCase()) ||
+            (c.razaoSocial && clienteNome.toLowerCase().includes(c.razaoSocial.trim().toLowerCase()))
+          ) || null;
+        }
+
         if (dbClient) {
           // Atualiza a proposta com o ID do cliente encontrado para curar os dados
           await prisma.proposta.update({
@@ -224,8 +262,6 @@ export async function createDocumentoProposta(propostaId: string, templateId: st
     });
 
     if (!template) throw new Error('Template não encontrado');
-
-    const user = await getLoggedUser();
     
     let configApresentacao: any = null;
 
