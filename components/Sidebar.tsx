@@ -1089,7 +1089,7 @@ const Sidebar = () => {
       {!isMobileOpen && (
         <button
           onClick={() => setIsMobileOpen(true)}
-          className="fixed top-4 left-4 z-40 p-2.5 bg-[#1B4D3E] text-white rounded-xl shadow-lg md:hidden hover:bg-[#13382D] transition-all cursor-pointer flex items-center justify-center border border-[#10B981]/25 active:scale-[0.95]"
+          className="fixed top-4 left-4 z-40 p-2.5 bg-[#1B4D3E] text-white rounded-xl shadow-lg md:hidden hover:bg-[#13382D] transition-all cursor-pointer flex items-center justify-center border border-[#10B981]/25 active:scale-[0.95] no-print"
           title="Abrir Menu"
         >
           <Menu size={20} className="stroke-[2.5]" />
@@ -1100,7 +1100,7 @@ const Sidebar = () => {
       {isMobileOpen && (
         <div 
           onClick={() => setIsMobileOpen(false)}
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 md:hidden animate-in fade-in duration-200"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 md:hidden animate-in fade-in duration-200 no-print"
         />
       )}
 
@@ -1346,7 +1346,7 @@ const Sidebar = () => {
 
       {/* MODAL MEU PERFIL E SEGURANÇA */}
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fadeIn">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fadeIn no-print">
           <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="bg-[#1B4D3E] p-8 text-white relative">
               <h3 className="text-xl font-black tracking-tighter uppercase flex items-center gap-2">
@@ -1565,7 +1565,7 @@ const Sidebar = () => {
 
       {/* FIXED COUNTER BANNER AT THE TOP OF THE SCREEN */}
       {trialStatus?.isTrialActive && !trialStatus?.trialExpired && trialStatus?.hasContact && countdownTime && (
-        <div suppressHydrationWarning={true} className={`sidebar-topbar fixed top-0 right-0 z-[48] bg-gradient-to-r from-[#1B4D3E] via-[#2A6D5A] to-[#1B4D3E] border-b border-emerald-500/20 text-white flex items-center justify-between px-6 py-2 h-14 shadow-lg ${isMounted ? 'transition-all duration-300' : ''}`}>
+        <div suppressHydrationWarning={true} className={`sidebar-topbar fixed top-0 right-0 z-[48] bg-gradient-to-r from-[#1B4D3E] via-[#2A6D5A] to-[#1B4D3E] border-b border-emerald-500/20 text-white flex items-center justify-between px-6 py-2 h-14 shadow-lg ${isMounted ? 'transition-all duration-300' : ''} no-print`}>
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/10 border border-white/20 text-white/95">
               <Clock size={12} className="animate-pulse" />
@@ -1768,7 +1768,7 @@ const Sidebar = () => {
             }
           `}} />
           {/* Barra Vertical de Atalhos (Extrema Direita) */}
-          <div className="fixed top-0 right-0 h-screen w-12 bg-white border-l border-slate-200/80 z-[170] flex flex-col py-5 items-center font-sans shadow-lg select-none">
+          <div className="fixed top-0 right-0 h-screen w-12 bg-white border-l border-slate-200/80 z-[170] flex flex-col py-5 items-center font-sans shadow-lg select-none no-print">
             {/* Atalhos Superiores */}
             <div className="flex flex-col items-center gap-4 w-full">
               {/* Sino de Notificações */}
@@ -1893,7 +1893,7 @@ const Sidebar = () => {
             <>
               {/* Backdrop Escurecido com Blur */}
               <div 
-                className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-[150] transition-opacity duration-300 animate-in fade-in"
+                className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-[150] transition-opacity duration-300 animate-in fade-in no-print"
                 onClick={() => {
                   setShowNotifications(false);
                   setNotificationSearch('');
@@ -1901,7 +1901,7 @@ const Sidebar = () => {
               />
               
               {/* Painel Lateral (Deslocado 48px / right-12 para manter a barra direita livre) */}
-              <div className="fixed top-0 right-12 h-screen w-full max-w-[480px] bg-slate-50 shadow-[0_0_50px_rgba(0,0,0,0.18)] z-[160] flex flex-col animate-in slide-in-from-right duration-300 font-sans border-l border-slate-200">
+              <div className="fixed top-0 right-12 h-screen w-full max-w-[480px] bg-slate-50 shadow-[0_0_50px_rgba(0,0,0,0.18)] z-[160] flex flex-col animate-in slide-in-from-right duration-300 font-sans border-l border-slate-200 no-print">
                 {/* Header do Drawer */}
                 <div className="bg-white p-6 border-b border-slate-200/80 flex flex-col gap-4 shrink-0">
                   <div className="flex items-center justify-between">
@@ -2067,7 +2067,7 @@ const Sidebar = () => {
 
           {/* WIDGET FLUTUANTE DE WHATSAPP (CANTO INFERIOR DIREITO) */}
           {showWhatsAppWidget && (
-            <div suppressHydrationWarning={true} className={`sidebar-widget-panel fixed top-3 right-14 bottom-0 bg-white shadow-2xl z-[160] flex flex-col ${isMounted ? 'transition-all duration-300' : ''} animate-in slide-in-from-right duration-300 font-sans border-t border-l border-slate-200 rounded-t-3xl`}>
+            <div suppressHydrationWarning={true} className={`sidebar-widget-panel fixed top-3 right-14 bottom-0 bg-white shadow-2xl z-[160] flex flex-col ${isMounted ? 'transition-all duration-300' : ''} animate-in slide-in-from-right duration-300 font-sans border-t border-l border-slate-200 rounded-t-3xl no-print`}>
               {/* External Close Button Tab on the Left Edge */}
               <button
                 onClick={() => {
@@ -2404,7 +2404,7 @@ const Sidebar = () => {
 
           {/* WIDGET FLUTUANTE DE CHAT INTERNO (CANTO INFERIOR DIREITO) */}
           {showChatWidget && (
-            <div suppressHydrationWarning={true} className={`sidebar-widget-panel fixed top-3 right-14 bottom-0 bg-white shadow-2xl z-[160] flex flex-col ${isMounted ? 'transition-all duration-300' : ''} animate-in slide-in-from-right duration-300 font-sans border-t border-l border-slate-200 rounded-t-3xl border-t-0 border-x-0 border-solid`}>
+            <div suppressHydrationWarning={true} className={`sidebar-widget-panel fixed top-3 right-14 bottom-0 bg-white shadow-2xl z-[160] flex flex-col ${isMounted ? 'transition-all duration-300' : ''} animate-in slide-in-from-right duration-300 font-sans border-t border-l border-slate-200 rounded-t-3xl border-t-0 border-x-0 border-solid no-print`}>
               {/* External Close Button Tab on the Left Edge */}
               <button
                 onClick={() => {

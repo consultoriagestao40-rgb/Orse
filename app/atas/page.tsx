@@ -14,7 +14,8 @@ import {
 import { 
   getAtas, getAtaCompleta, saveAta, deleteAta, 
   toggleAcaoConclusao, getAcoesStats, addAcaoComentario, getLoggedUser,
-  renameAtaCategory, deleteAtaCategory, cloneAta, notifyAtaPublish
+  renameAtaCategory, deleteAtaCategory, cloneAta, notifyAtaPublish,
+  getPendingActionsDetailed
 } from './actions';
 import { getUsersForFilter } from '@/app/leads/actions';
 
@@ -140,6 +141,11 @@ export default function AtasPage() {
   const [votingModalOpen, setVotingModalOpen] = useState(false);
   const [activeDeliberativaIndex, setActiveDeliberativaIndex] = useState<number | null>(null);
   const [currentVotos, setCurrentVotos] = useState<{ nome: string; voto: 'Sim' | 'Não' }[]>([]);
+
+  // Estados para Modal de Ações Pendentes Geral
+  const [pendingActionsModalOpen, setPendingActionsModalOpen] = useState(false);
+  const [detailedPendingActions, setDetailedPendingActions] = useState<any[]>([]);
+  const [loadingPendingActions, setLoadingPendingActions] = useState(false);
 
   // Criador e Paleta de Cores Customizada
   const [criadorNome, setCriadorNome] = useState('');
@@ -548,6 +554,24 @@ export default function AtasPage() {
       console.error(e);
     }
     return 'EM DIA';
+  };
+
+  // Abre modal de ações pendentes geral
+  const handleOpenPendingActionsModal = async () => {
+    setLoadingPendingActions(true);
+    setPendingActionsModalOpen(true);
+    try {
+      const res = await getPendingActionsDetailed();
+      if (res.success && res.actions) {
+        setDetailedPendingActions(res.actions);
+      } else {
+        console.error('Erro ao carregar ações pendentes:', res.error);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar ações pendentes:', err);
+    } finally {
+      setLoadingPendingActions(false);
+    }
   };
 
   // Abre modal de comentários
@@ -1023,6 +1047,11 @@ export default function AtasPage() {
       {/* Estilos CSS para Impressão de PDF Técnico e Formal */}
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
+          /* Remove cabeçalho e rodapé padrão do navegador */
+          @page {
+            size: A4;
+            margin: 0mm !important;
+          }
           /* Oculta tudo que não for o documento */
           body {
             background: #ffffff !important;
@@ -1041,13 +1070,16 @@ export default function AtasPage() {
             border: none !important;
             box-shadow: none !important;
           }
+          main {
+            margin-right: 0 !important;
+          }
           #print-document-container {
             display: block !important;
             border: none !important;
             box-shadow: none !important;
             width: 100% !important;
             max-width: 100% !important;
-            padding: 0 !important;
+            padding: 1.8cm !important; /* Margem física nas bordas da página impressa */
             margin: 0 !important;
           }
           /* Formatação de células da tabela */
@@ -1108,12 +1140,8 @@ export default function AtasPage() {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          @page {
-            size: A4;
-            margin: 1.2cm;
-          }
           /* Ocultação de elementos no final para evitar overrides de seletores flex/grid */
-          .sidebar-aside, .no-print, header, .top-bar-actions, button, svg {
+          .sidebar-aside, .sidebar-topbar, .sidebar-widget-panel, .no-print, [class*="backdrop-blur"], header, .top-bar-actions, button, svg {
             display: none !important;
           }
         }
@@ -1177,7 +1205,10 @@ export default function AtasPage() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between group hover:shadow-md transition-all">
+                <div 
+                  onClick={handleOpenPendingActionsModal}
+                  className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between group hover:shadow-md transition-all cursor-pointer"
+                >
                   <div>
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Ações Pendentes</span>
                     <span className="text-3xl font-black text-orange-500 block mt-1">{stats.pendentes}</span>
@@ -2450,6 +2481,132 @@ export default function AtasPage() {
                 className="px-5 py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm hover:shadow transition-all cursor-pointer"
               >
                 Confirmar Finalização
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE AÇÕES PENDENTES GERAL */}
+      {pendingActionsModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in no-print">
+          <div className="bg-white rounded-[2rem] border border-slate-200 shadow-2xl max-w-4xl w-full flex flex-col max-h-[85vh] overflow-hidden transform scale-100 transition-all duration-300">
+            {/* Header */}
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-[#F8FAFC]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600">
+                  <Clock size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Ações Pendentes do Time</h3>
+                  <p className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-tighter">
+                    Acompanhamento de pendências e prazos de todas as atas
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setPendingActionsModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Content Area */}
+            <div className="flex-1 overflow-y-auto p-6 bg-slate-50 space-y-4">
+              {loadingPendingActions ? (
+                <div className="py-20 flex flex-col items-center justify-center space-y-3">
+                  <div className="w-8 h-8 border-4 border-[#1B4D3E]/30 border-t-[#1B4D3E] rounded-full animate-spin"></div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Carregando ações...</p>
+                </div>
+              ) : detailedPendingActions.length === 0 ? (
+                <div className="py-20 flex flex-col items-center justify-center text-center space-y-3 text-slate-400">
+                  <CheckCircle2 size={40} className="text-emerald-500 opacity-60" />
+                  <p className="text-[10px] font-bold uppercase tracking-widest">Tudo em dia!</p>
+                  <p className="text-xs text-slate-400">Não existem ações pendentes cadastradas no momento.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {detailedPendingActions.map((acao) => {
+                    const isOverdue = getAcaoStatusText({ concluida: false, dataLimite: acao.dataLimite, descricao: acao.descricao, responsavelId: '' }) === 'ATRASADA';
+                    const formattedDate = acao.dataLimite ? new Date(acao.dataLimite + 'T12:00:00').toLocaleDateString('pt-BR') : '';
+
+                    return (
+                      <div 
+                        key={acao.id} 
+                        className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-xs hover:shadow-md transition-all space-y-4 text-left"
+                      >
+                        {/* Upper Section */}
+                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                          <div className="space-y-2 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="bg-[#1B4D3E]/10 text-[#1B4D3E] text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md">
+                                {acao.categoria}
+                              </span>
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                                Ata: {acao.ataTitulo}
+                              </span>
+                              <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                                isOverdue ? 'bg-rose-50 text-rose-600' : 'bg-orange-50 text-orange-600'
+                              }`}>
+                                {isOverdue ? 'Atrasada' : 'No Prazo'}
+                              </span>
+                            </div>
+                            <h4 className="text-xs font-bold text-slate-700 leading-relaxed">
+                              {acao.descricao}
+                            </h4>
+                          </div>
+
+                          <div className="flex flex-col md:items-end gap-1.5 shrink-0 text-left md:text-right">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Responsável:</span>
+                              <span className="text-[10px] font-black text-slate-700 uppercase">{acao.responsavelNome}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Prazo:</span>
+                              <span className={`text-[10px] font-black ${isOverdue ? 'text-rose-600' : 'text-slate-600'}`}>
+                                {formattedDate}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Comments section if comments exist */}
+                        {acao.comentarios && acao.comentarios.length > 0 && (
+                          <div className="border-t border-slate-100 pt-3 space-y-2.5">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+                              Histórico de Comentários ({acao.comentarios.length})
+                            </span>
+                            <div className="max-h-[150px] overflow-y-auto space-y-2 pr-1">
+                              {acao.comentarios.map((comment: any, cidx: number) => (
+                                <div key={comment.id || cidx} className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[11px] space-y-1">
+                                  <div className="flex justify-between items-baseline">
+                                    <span className="font-bold text-slate-700">{comment.autor}</span>
+                                    <span className="text-[9px] text-slate-400">
+                                      {new Date(comment.data).toLocaleString('pt-BR')}
+                                    </span>
+                                  </div>
+                                  <p className="text-slate-600 whitespace-pre-wrap">{comment.texto}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setPendingActionsModalOpen(false)}
+                className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer shadow-md"
+              >
+                Fechar
               </button>
             </div>
           </div>

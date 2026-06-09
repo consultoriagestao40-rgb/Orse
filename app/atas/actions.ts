@@ -263,6 +263,10 @@ export async function saveAta(data: {
 
       // Upsert das ações restantes
       for (const a of newAcoes) {
+        const isAtaFinalized = data.status === 'Finalizada';
+        const isConcluida = isAtaFinalized ? true : (a.concluida || false);
+        const concluidaEmVal = isConcluida ? (a.concluidaEm || new Date()) : null;
+
         if (a.id && currentIds.includes(a.id)) {
           // Atualiza a ação existente
           await prisma.ataAcao.update({
@@ -273,8 +277,8 @@ export async function saveAta(data: {
               responsavelId: a.responsavelId,
               dataLimite: new Date(a.dataLimite),
               numBitrix: a.numBitrix || null,
-              concluida: a.concluida || false,
-              concluidaEm: a.concluida ? new Date() : null
+              concluida: isConcluida,
+              concluidaEm: concluidaEmVal
             }
           });
         } else {
@@ -287,8 +291,8 @@ export async function saveAta(data: {
               responsavelId: a.responsavelId,
               dataLimite: new Date(a.dataLimite),
               numBitrix: a.numBitrix || null,
-              concluida: a.concluida || false,
-              concluidaEm: a.concluida ? new Date() : null
+              concluida: isConcluida,
+              concluidaEm: concluidaEmVal
             }
           });
         }
@@ -348,6 +352,10 @@ export async function saveAta(data: {
           const oldAcao = a.id ? oldAcoes.find(oa => oa.id === a.id) : null;
           const comentariosToCopy = oldAcao ? oldAcao.comentarios : null;
 
+          const isAtaFinalized = data.status === 'Finalizada';
+          const isConcluida = isAtaFinalized ? true : (a.concluida || false);
+          const concluidaEmVal = isConcluida ? new Date() : null;
+
           await prisma.ataAcao.create({
             data: {
               ataId: newAta.id,
@@ -356,8 +364,8 @@ export async function saveAta(data: {
               responsavelId: a.responsavelId,
               dataLimite: new Date(a.dataLimite),
               numBitrix: a.numBitrix || null,
-              concluida: a.concluida || false,
-              concluidaEm: a.concluida ? new Date() : null,
+              concluida: isConcluida,
+              concluidaEm: concluidaEmVal,
               comentarios: comentariosToCopy || null
             }
           });
@@ -723,6 +731,51 @@ ${delibSummary}${acoesSummary}
     return { success: false, error: error.message };
   }
 }
+export async function getPendingActionsDetailed() {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Não autorizado' };
 
+  try {
+    const pendingActions = await prisma.ataAcao.findMany({
+      where: {
+        concluida: false,
+        ata: {
+          tenantId: user.tenantId
+        }
+      },
+      include: {
+        responsavel: {
+          select: {
+            nome: true
+          }
+        },
+        ata: {
+          select: {
+            titulo: true,
+            categoria: true
+          }
+        }
+      },
+      orderBy: {
+        dataLimite: 'asc'
+      }
+    });
 
-
+    return {
+      success: true,
+      actions: pendingActions.map(a => ({
+        id: a.id,
+        item: a.item || 'S/N',
+        descricao: a.descricao,
+        responsavelNome: a.responsavel?.nome || 'Não identificado',
+        ataTitulo: a.ata.titulo,
+        categoria: a.ata.categoria || 'Geral',
+        dataLimite: a.dataLimite.toISOString().split('T')[0],
+        comentarios: Array.isArray(a.comentarios) ? a.comentarios : []
+      }))
+    };
+  } catch (error: any) {
+    console.error('Erro ao buscar ações pendentes detalhadas:', error);
+    return { success: false, error: error.message };
+  }
+}
