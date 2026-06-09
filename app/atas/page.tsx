@@ -1728,8 +1728,9 @@ export default function AtasPage() {
                     <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-left">
                       <th className="py-1 px-3 border-r border-slate-900 w-[25%]">Nome</th>
                       <th className="py-1 px-3 border-r border-slate-900 w-[25%]">Departamento</th>
-                      <th className="py-1 px-3 border-r border-slate-900 w-[40%]">E-mail</th>
-                      <th colspan="2" className="py-1 px-3 w-[10%] text-center">Presente</th>
+                      <th className="py-1 px-3 border-r border-slate-900 w-[35%]">E-mail</th>
+                      <th className="py-1 px-3 border-r border-slate-900 w-[10%] text-center">Presente</th>
+                      <th className="py-1 px-3 w-[5%] text-center no-print">Ações</th>
                     </tr>
                   </thead>
                   
@@ -1783,7 +1784,7 @@ export default function AtasPage() {
                               />
                             )}
                           </td>
-                          <td colspan="2" className="py-1 px-3 text-center">
+                          <td className="py-1 px-3 border-r border-slate-900 text-center">
                             <select
                               value={p.presente ? 'Sim' : 'Não'}
                               onChange={e => handleParticipanteInfoChange(idx, 'presente', e.target.value === 'Sim')}
@@ -1792,6 +1793,16 @@ export default function AtasPage() {
                               <option value="Sim">Sim</option>
                               <option value="Não">Não</option>
                             </select>
+                          </td>
+                          <td className="py-1 px-3 text-center no-print">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveParticipante(idx)}
+                              className="p-1 text-slate-400 hover:text-red-500 rounded transition-colors cursor-pointer border-none bg-transparent"
+                              title="Remover Participante"
+                            >
+                              <Trash2 size={13} />
+                            </button>
                           </td>
                         </tr>
                       ))
