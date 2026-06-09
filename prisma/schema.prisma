@@ -702,8 +702,9 @@ model Ata {
   participantesPresentes  Json        // Array de participantes: [{ userId: "...", nome: "...", departamento: "...", email: "...", presente: boolean }]
   
   // Relatório da Reunião
+  relatorio               String?     @db.Text // Texto formatado do Rich Text Editor do relatório
   pautasDeliberativas     Json?       // [{ item: "...", descricao: "...", status: "...", anotacao: "..." }]
-  consideracoes           String      @db.Text // Texto formatado do Rich Text Editor
+  consideracoes           String      @db.Text // Texto formatado do Rich Text Editor das considerações
   
   // Próxima Reunião
   proximaReuniaoData      DateTime?

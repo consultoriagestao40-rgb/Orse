@@ -163,9 +163,10 @@ export async function saveAta(data: {
   titulo: string;
   dataReuniou: string | Date;
   local?: string;
-  pautas: string[];
+  pautas: any[];
   participantesPresentes: Participante[];
   pautasDeliberativas?: PautaDeliberativa[];
+  relatorio?: string;
   consideracoes: string;
   proximaReuniaoData?: string | Date | null;
   proximaReuniaoHora?: string | null;
@@ -211,6 +212,7 @@ export async function saveAta(data: {
           pautas: data.pautas,
           participantesPresentes: data.participantesPresentes as any,
           pautasDeliberativas: (data.pautasDeliberativas || []) as any,
+          relatorio: data.relatorio || null,
           consideracoes: data.consideracoes,
           proximaReuniaoData: proxData,
           proximaReuniaoHora: data.proximaReuniaoHora || null,
@@ -263,6 +265,7 @@ export async function saveAta(data: {
           pautas: data.pautas,
           participantesPresentes: data.participantesPresentes as any,
           pautasDeliberativas: (data.pautasDeliberativas || []) as any,
+          relatorio: data.relatorio || null,
           consideracoes: data.consideracoes,
           proximaReuniaoData: proxData,
           proximaReuniaoHora: data.proximaReuniaoHora || null,
