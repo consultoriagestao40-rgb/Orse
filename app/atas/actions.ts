@@ -643,6 +643,20 @@ export async function cloneAta(id: string) {
   }
 }
 
+function stripHtml(html: string) {
+  if (!html) return '';
+  let text = html
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<li>/gi, '- ')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<\/?[^>]+(>|$)/g, ''); // Remove todas as tags HTML
+  
+  // Limpa quebras de linha repetidas
+  text = text.replace(/\n\s*\n+/g, '\n').trim();
+  return text;
+}
+
 // 11. Notifica todos os participantes no chat interno quando a ata é publicada
 export async function notifyAtaPublish(ataId: string) {
   const user = await getLoggedUser();
@@ -684,6 +698,15 @@ export async function notifyAtaPublish(ataId: string) {
       return { success: true, count: 0 };
     }
 
+    // Formata o resumo do relatório
+    let relatorioSummary = '';
+    if (ata.relatorio) {
+      const plainRelatorio = stripHtml(ata.relatorio);
+      if (plainRelatorio) {
+        relatorioSummary = `\n📖 *RELATÓRIO DA REUNIÃO:*\n${plainRelatorio}\n`;
+      }
+    }
+
     // Formata o resumo de pautas deliberativas
     let delibSummary = '';
     if (pautasDelib.length > 0) {
@@ -718,7 +741,7 @@ export async function notifyAtaPublish(ataId: string) {
 📅 Data: ${new Date(ata.dataReuniou).toLocaleDateString('pt-BR')} ${ata.horaReuniou ? `às ${ata.horaReuniou}` : ''}
 📍 Local: ${ata.local || 'Não especificado'}
 👤 Criada por: ${ata.criadorNome || user.nome}
-${delibSummary}${acoesSummary}
+${relatorioSummary}${delibSummary}${acoesSummary}
 🔗 Visualize a ata completa no menu *Atas de Reunião*.`;
 
       // Envia a mensagem direta via chat interno

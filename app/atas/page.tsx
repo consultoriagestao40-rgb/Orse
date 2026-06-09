@@ -9,7 +9,8 @@ import {
   CheckCircle2, Edit3, ArrowLeft, Printer,
   Bold, Italic, Underline, Strikethrough, AlignLeft, 
   AlignCenter, AlignRight, AlignJustify, Type, Palette, Clock,
-  History, X, MessageSquare, CheckSquare, Square, List, ListOrdered, FileSymlink, Copy
+  History, X, MessageSquare, CheckSquare, Square, List, ListOrdered, FileSymlink, Copy,
+  Indent, Outdent
 } from 'lucide-react';
 import { 
   getAtas, getAtaCompleta, saveAta, deleteAta, 
@@ -1989,6 +1990,25 @@ export default function AtasPage() {
                             </button>
                           </div>
 
+                          <div className="flex gap-0.5 px-2">
+                            <button
+                              type="button"
+                              onClick={() => execEditorCmd(relatorioEditorRef, 'outdent')}
+                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                              title="Diminuir Recuo"
+                            >
+                              <Outdent size={13} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => execEditorCmd(relatorioEditorRef, 'indent')}
+                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                              title="Aumentar Recuo"
+                            >
+                              <Indent size={13} />
+                            </button>
+                          </div>
+
                           <div className="relative flex gap-1.5 px-2 items-center">
                             <button
                               type="button"
@@ -2230,6 +2250,25 @@ export default function AtasPage() {
                               title="Justificar"
                             >
                               <AlignJustify size={13} />
+                            </button>
+                          </div>
+
+                          <div className="flex gap-0.5 px-2">
+                            <button
+                              type="button"
+                              onClick={() => execEditorCmd(consideracoesEditorRef, 'outdent')}
+                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                              title="Diminuir Recuo"
+                            >
+                              <Outdent size={13} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => execEditorCmd(consideracoesEditorRef, 'indent')}
+                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                              title="Aumentar Recuo"
+                            >
+                              <Indent size={13} />
                             </button>
                           </div>
 
