@@ -2361,7 +2361,26 @@ export default function AtasPage() {
 
                     {/* SEÇÃO AÇÕES */}
                     <tr>
-                      <th colspan="7" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
+                      <td colspan="7" className="p-0 border-none">
+                        {/* Fecha a tabela 1 */}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                {/* TABELA 2: AÇÕES E PRÓXIMA REUNIÃO (COM DESIGN E COLGROUP INDEPENDENTES) */}
+                <table className="w-full border-x-2 border-b-2 border-slate-900 border-collapse text-xs select-text table-fixed mt-0 border-t-0">
+                  <colgroup>
+                    <col style={{ width: '5%' }} />
+                    <col style={{ width: '55%' }} />
+                    <col style={{ width: '8%' }} />
+                    <col style={{ width: '15%' }} />
+                    <col style={{ width: '17%' }} />
+                  </colgroup>
+                  <tbody>
+                    {/* CABEÇALHO AÇÕES */}
+                    <tr>
+                      <th colspan="5" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
                         AÇÕES:
                       </th>
                     </tr>
@@ -2372,13 +2391,13 @@ export default function AtasPage() {
                       <th className="py-1 px-3 border-r border-slate-900 text-left">Descrição</th>
                       <th className="py-1 px-3 border-r border-slate-900 text-center">Resp.</th>
                       <th className="py-1 px-3 border-r border-slate-900">Prazo</th>
-                      <th colspan="3" className="py-1 px-3 text-center">Status</th>
+                      <th className="py-1 px-3 text-center">Status</th>
                     </tr>
 
                     {/* CORPO AÇÕES */}
                     {acoes.length === 0 ? (
                       <tr className="bg-white">
-                        <td colspan="7" className="py-4 text-center text-slate-400 font-medium bg-slate-50/20 italic border-b border-slate-900">
+                        <td colspan="5" className="py-4 text-center text-slate-400 font-medium bg-slate-50/20 italic border-b border-slate-900">
                           Nenhuma ação cadastrada. Adicione prazos de execução.
                         </td>
                       </tr>
@@ -2466,7 +2485,7 @@ export default function AtasPage() {
                                 className="w-full bg-transparent border-none outline-none focus:ring-0 text-center text-xs py-0.5 h-6 min-w-0 font-medium text-slate-800"
                               />
                             </td>
-                            <td colspan="3" className="py-1 px-3 text-center">
+                            <td className="py-1 px-3 text-center">
                               <div className="flex items-center justify-center gap-1.5">
                                 {/* Toggle Conclusão */}
                                 <button
@@ -2525,7 +2544,7 @@ export default function AtasPage() {
 
                     {/* CONTROLES AÇÕES - Ocultados na Impressão */}
                     <tr className="bg-slate-50/50 no-print border-b border-slate-900">
-                      <td colspan="7" className="p-3">
+                      <td colspan="5" className="p-3">
                         <div className="flex justify-end">
                           <button
                             type="button"
@@ -2540,14 +2559,14 @@ export default function AtasPage() {
 
                     {/* SEÇÃO PRÓXIMA REUNIÃO */}
                     <tr className="bg-[#DCE6F1] border-b border-slate-900 font-black text-slate-800 text-center">
-                      <th colspan="7" className="py-1.5 px-3 text-xs tracking-wider uppercase">
+                      <th colspan="5" className="py-1.5 px-3 text-xs tracking-wider uppercase">
                         PRÓXIMA REUNIÃO
                       </th>
                     </tr>
 
                     {/* METADADOS PRÓXIMA REUNIÃO */}
                     <tr className="bg-white text-slate-800 font-bold">
-                      <td colspan="4" className="p-2.5 border-r border-slate-900">
+                      <td colspan="3" className="p-2.5 border-r border-slate-900">
                         <div className="flex gap-4 items-center flex-wrap">
                           <div className="flex items-center gap-1">
                             <span className="text-slate-500 font-black">Data:</span>
@@ -2569,7 +2588,7 @@ export default function AtasPage() {
                           </div>
                         </div>
                       </td>
-                      <td colspan="3" className="p-2.5">
+                      <td colspan="2" className="p-2.5">
                         <div className="flex items-center gap-1.5">
                           <span className="text-slate-500 font-black">Local:</span>
                           <input 
