@@ -48,6 +48,7 @@ model Tenant {
   cobrancas                 Cobranca[]
   faqs                      FaqPadrao[]
   prospectSearchLogs        ProspectSearchLog[]
+  atas                      Ata[]
 }
 
 model EmpresaEmissora {
@@ -94,6 +95,7 @@ model User {
   sentInternalMessages     InternalMessage[] @relation("SentInternalMessages")
   receivedInternalMessages InternalMessage[] @relation("ReceivedInternalMessages")
   prospectSearchLogs       ProspectSearchLog[]
+  ataAcoes                 AtaAcao[]
 }
 
 model Client {
@@ -689,4 +691,52 @@ model ProspectSearchLog {
 
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Ata {
+  id                      String      @id @default(cuid())
+  titulo                  String
+  dataReuniou             DateTime
+  local                   String?
+  pautas                  Json        // Array de pautas principais: ["Pauta 1", "Pauta 2"]
+  participantesPresentes  Json        // Array de participantes: [{ userId: "...", nome: "...", departamento: "...", email: "...", presente: boolean }]
+  
+  // Relatório da Reunião
+  pautasDeliberativas     Json?       // [{ item: "...", descricao: "...", status: "...", anotacao: "..." }]
+  consideracoes           String      @db.Text // Texto formatado do Rich Text Editor
+  
+  // Próxima Reunião
+  proximaReuniaoData      DateTime?
+  proximaReuniaoHora      String?
+  proximaReuniaoLocal     String?
+  
+  acoes                   AtaAcao[]
+  
+  versao                  Int         @default(1)
+  parentAtaId             String?
+  parentAta               Ata?        @relation("AtaVersoes", fields: [parentAtaId], references: [id], onDelete: Cascade)
+  versoes                 Ata[]       @relation("AtaVersoes")
+  
+  tenantId                String?
+  tenant                  Tenant?     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+}
+
+model AtaAcao {
+  id            String      @id @default(cuid())
+  ataId         String
+  ata           Ata         @relation(fields: [ataId], references: [id], onDelete: Cascade)
+  item          String?     // Número do item, ex: "1", "2"
+  descricao     String
+  responsavelId String
+  responsavel   User        @relation(fields: [responsavelId], references: [id], onDelete: Cascade)
+  dataLimite    DateTime
+  numBitrix     String?     // Número do Bitrix
+  concluida     Boolean     @default(false)
+  concluidaEm   DateTime?
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
