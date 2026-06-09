@@ -1596,10 +1596,10 @@ export default function AtasPage() {
                 <table className="w-full border-2 border-slate-900 border-collapse text-xs select-text table-fixed">
                   <colgroup>
                     <col style={{ width: '5%' }} />
-                    <col style={{ width: '43%' }} />
-                    <col style={{ width: '6%' }} />
+                    <col style={{ width: '38%' }} />
+                    <col style={{ width: '5%' }} />
                     <col style={{ width: '12%' }} />
-                    <col style={{ width: '20%' }} />
+                    <col style={{ width: '26%' }} />
                     <col style={{ width: '9%' }} />
                     <col style={{ width: '5%' }} />
                   </colgroup>
@@ -1787,7 +1787,9 @@ export default function AtasPage() {
                             </td>
                             <td colspan="2" className="py-1 px-3 border-r border-slate-900 text-slate-600 font-medium">
                               {p.userId ? (
-                                p.departamento
+                                <span className="block truncate w-full" title={p.departamento}>
+                                  {p.departamento}
+                                </span>
                               ) : (
                                 <input 
                                   type="text"
@@ -1800,7 +1802,9 @@ export default function AtasPage() {
                             </td>
                             <td className="py-1 px-3 border-r border-slate-900 text-slate-600 font-medium">
                               {p.userId ? (
-                                p.email
+                                <span className="block truncate w-full" title={p.email}>
+                                  {p.email}
+                                </span>
                               ) : (
                                 <input 
                                   type="text"
