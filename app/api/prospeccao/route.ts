@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { cookies } from 'next/headers';
 
 export async function POST(req: Request) {
   try {
@@ -11,6 +12,25 @@ export async function POST(req: Request) {
 
     const normalizedTermo = termo.trim().toLowerCase();
     const normalizedLocalizacao = localizacao.trim().toLowerCase();
+
+    // Obter dados do usuário autenticado para controle de limites e cota mensal do SaaS
+    const cookieStore = await cookies();
+    const sessionEmail = cookieStore.get('sb_session')?.value;
+    if (!sessionEmail) {
+      return NextResponse.json({ success: false, error: 'Sessão inválida ou expirada. Faça login novamente.' }, { status: 401 });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { email: sessionEmail.toLowerCase().trim() },
+      include: { tenant: true }
+    });
+
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Usuário não encontrado no sistema.' }, { status: 404 });
+    }
+
+    const tenantId = user.tenantId;
+    const isSuperAdmin = user.role === 'ADMIN' && !tenantId;
 
     // 1. Verificar se já temos esse termo e localização cacheados no banco de dados local
     const cachedProspects = await prisma.prospectCache.findMany({
@@ -35,7 +55,35 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, results });
     }
 
-    // 2. Se não estiver cacheado, buscamos na API real do Google
+    // 2. Se não estiver cacheado, validamos a cota do Tenant antes de fazer a busca real no Google
+    let searchesCount = 0;
+    let limitCount = 30;
+    
+    if (tenantId && !isSuperAdmin) {
+      limitCount = user.tenant?.limitePesquisasProspeccao ?? 30;
+      
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+      searchesCount = await prisma.prospectSearchLog.count({
+        where: {
+          tenantId,
+          createdAt: {
+            gte: startOfMonth,
+            lte: endOfMonth
+          }
+        }
+      });
+
+      if (searchesCount >= limitCount) {
+        return NextResponse.json({ 
+          success: false, 
+          error: `Você atingiu o limite de novas pesquisas do seu plano mensal (${searchesCount} de ${limitCount}). A cota será reiniciada no primeiro dia do próximo mês.` 
+        }, { status: 403 });
+      }
+    }
+
     const API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 
     // Fallback de contingência caso a chave não esteja configurada no servidor
@@ -79,7 +127,11 @@ export async function POST(req: Request) {
 
         if (data.error) {
           console.error('Erro na API do Google Places:', data.error);
-          break; 
+          let userFriendlyMsg = data.error.message;
+          if (data.error.status === 'PERMISSION_DENIED' || data.error.message?.includes('permission')) {
+            userFriendlyMsg = 'Acesso Negado à API do Google (PERMISSION_DENIED). Por favor, certifique-se de que a Places API (New) está ativa no seu Console do Google Cloud e que o faturamento (billing) está ativado e configurado corretamente.';
+          }
+          throw new Error(userFriendlyMsg || 'Erro desconhecido na API do Google Places');
         }
 
         if (data.places) {
@@ -149,6 +201,20 @@ export async function POST(req: Request) {
           skipDuplicates: true
         });
         console.log(`[Cache Write] Salvos ${results.length} novos prospectos no banco local para pesquisas futuras.`);
+
+        // Gravar log de consumo de cota para o Tenant (caso não seja superadmin)
+        if (tenantId && !isSuperAdmin) {
+          await prisma.prospectSearchLog.create({
+            data: {
+              tenantId,
+              userId: user.id,
+              termo: normalizedTermo,
+              localizacao: normalizedLocalizacao,
+              resultados: results.length
+            }
+          });
+          console.log(`[Cota Consumida] Gravado log de pesquisa para o Tenant: ${tenantId}`);
+        }
       } catch (dbErr) {
         console.error('Erro ao salvar cache de prospectos no banco:', dbErr);
       }
@@ -157,6 +223,56 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, results });
   } catch (error: any) {
     console.error('Erro interno na API de Prospecção:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+export async function GET() {
+  try {
+    const cookieStore = await cookies();
+    const sessionEmail = cookieStore.get('sb_session')?.value;
+    if (!sessionEmail) {
+      return NextResponse.json({ success: false, error: 'Não autenticado' }, { status: 401 });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { email: sessionEmail.toLowerCase().trim() },
+      include: { tenant: true }
+    });
+
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Usuário não encontrado' }, { status: 404 });
+    }
+
+    const tenantId = user.tenantId;
+    if (!tenantId) {
+      return NextResponse.json({ success: true, isSuperAdmin: true, searchesCount: 0, limitCount: 9999 });
+    }
+
+    const limitCount = user.tenant?.limitePesquisasProspeccao ?? 30;
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    const searchesCount = await prisma.prospectSearchLog.count({
+      where: {
+        tenantId,
+        createdAt: {
+          gte: startOfMonth,
+          lte: endOfMonth
+        }
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      searchesCount,
+      limitCount,
+      isSuperAdmin: false
+    });
+  } catch (error: any) {
+    console.error('Erro ao buscar limites de prospecção:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

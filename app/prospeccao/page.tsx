@@ -14,6 +14,27 @@ export default function ProspeccaoPage() {
   const [results, setResults] = useState<any[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [injecting, setInjecting] = useState(false);
+  const [limits, setLimits] = useState<{ searchesCount: number; limitCount: number; isSuperAdmin: boolean } | null>(null);
+
+  const fetchLimits = async () => {
+    try {
+      const res = await fetch('/api/prospeccao');
+      const data = await res.json();
+      if (data.success) {
+        setLimits({
+          searchesCount: data.searchesCount,
+          limitCount: data.limitCount,
+          isSuperAdmin: data.isSuperAdmin
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao buscar limites de prospecção', err);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchLimits();
+  }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,8 +53,10 @@ export default function ProspeccaoPage() {
       const data = await res.json();
       if (data.success) {
         setResults(data.results);
+        fetchLimits();
       } else {
         alert('Erro: ' + data.error);
+        fetchLimits();
       }
     } catch (err) {
       alert('Erro na busca');
@@ -90,9 +113,26 @@ export default function ProspeccaoPage() {
       <main className="flex-1 overflow-y-auto p-8">
         <div className="max-w-5xl mx-auto space-y-8">
           
-          <div>
-            <h1 className="text-3xl font-black text-slate-800">Máquina de Prospecção</h1>
-            <p className="text-slate-500 mt-2">Extraia empresas do Google e injete no seu Funil de Vendas.</p>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-black text-slate-800">Máquina de Prospecção</h1>
+              <p className="text-slate-500 mt-2">Extraia empresas do Google e injete no seu Funil de Vendas.</p>
+            </div>
+            {limits && !limits.isSuperAdmin && (
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col items-end shadow-sm shrink-0">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cota de novas buscas este Mês</span>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span className="text-2xl font-black text-slate-800">{limits.searchesCount}</span>
+                  <span className="text-xs text-slate-400">/ {limits.limitCount} buscas</span>
+                </div>
+                <div className="w-40 bg-slate-100 h-2 rounded-full overflow-hidden mt-2 border border-slate-50">
+                  <div 
+                    className={`h-full transition-all duration-500 ${limits.searchesCount >= limits.limitCount ? 'bg-rose-500' : limits.searchesCount > limits.limitCount * 0.8 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                    style={{ width: `${Math.min((limits.searchesCount / limits.limitCount) * 100, 100)}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">

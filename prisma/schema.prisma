@@ -25,27 +25,29 @@ model Tenant {
   whatsappClientToken String?
   whatsappConnected   Boolean                   @default(false)
   whatsappPhone       String?
-  plano               String                    @default("STARTER") // STARTER, PRO, ENTERPRISE
-  limiteUsuarios      Int                       @default(3)
-  trialStartedAt      DateTime?
-  taxaWhatsapp        Float                     @default(130.0)
-  asaasCustomerId     String?                   @unique
-  users               User[]
-  clients             Client[]
-  leads               Lead[]
-  propostas           Proposta[]
-  contratos           Contrato[]
-  produtos            Produto[]
-  documentos          DocumentoProposta[]
-  ccts                CCT[]
-  composicoes         EquipeTecnicaComposicao[]
-  templatesProposta   TemplatePropostaComercial[]
-  templatesContrato   TemplateContrato[]
-  escalas             Escala[]
-  activities          Activity[]
-  comments            Comment[]
-  cobrancas           Cobranca[]
-  faqs                FaqPadrao[]
+  plano                     String                    @default("STARTER") // STARTER, PRO, ENTERPRISE
+  limiteUsuarios            Int                       @default(3)
+  limitePesquisasProspeccao Int                       @default(30)
+  trialStartedAt            DateTime?
+  taxaWhatsapp              Float                     @default(130.0)
+  asaasCustomerId           String?                   @unique
+  users                     User[]
+  clients                   Client[]
+  leads                     Lead[]
+  propostas                 Proposta[]
+  contratos                 Contrato[]
+  produtos                  Produto[]
+  documentos                DocumentoProposta[]
+  ccts                      CCT[]
+  composicoes               EquipeTecnicaComposicao[]
+  templatesProposta         TemplatePropostaComercial[]
+  templatesContrato         TemplateContrato[]
+  escalas                   Escala[]
+  activities                Activity[]
+  comments                  Comment[]
+  cobrancas                 Cobranca[]
+  faqs                      FaqPadrao[]
+  prospectSearchLogs        ProspectSearchLog[]
 }
 
 model EmpresaEmissora {
@@ -87,10 +89,11 @@ model User {
   smtpAccounts   SmtpAccount[]
   avatarUrl      String?
   color          String?         @default("slate")
-  tenantId       String?
-  tenant         Tenant?         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId                 String?
+  tenant                   Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   sentInternalMessages     InternalMessage[] @relation("SentInternalMessages")
   receivedInternalMessages InternalMessage[] @relation("ReceivedInternalMessages")
+  prospectSearchLogs       ProspectSearchLog[]
 }
 
 model Client {
@@ -673,4 +676,17 @@ model InternalMessage {
 
   sender      User     @relation("SentInternalMessages", fields: [senderId], references: [id], onDelete: Cascade)
   receiver    User     @relation("ReceivedInternalMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+}
+
+model ProspectSearchLog {
+  id          String   @id @default(cuid())
+  tenantId    String
+  userId      String
+  termo       String
+  localizacao String
+  resultados  Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
