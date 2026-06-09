@@ -9,11 +9,11 @@ import {
   CheckCircle2, Edit3, ArrowLeft, Printer,
   Bold, Italic, Underline, Strikethrough, AlignLeft, 
   AlignCenter, AlignRight, AlignJustify, Type, Palette, Clock,
-  History, X
+  History, X, MessageSquare, CheckSquare, Square
 } from 'lucide-react';
 import { 
   getAtas, getAtaCompleta, saveAta, deleteAta, 
-  toggleAcaoConclusao, getAcoesStats 
+  toggleAcaoConclusao, getAcoesStats, addAcaoComentario, getLoggedUser
 } from './actions';
 import { getUsersForFilter } from '@/app/leads/actions';
 
@@ -46,6 +46,7 @@ interface Acao {
   dataLimite: string;
   numBitrix?: string;
   concluida?: boolean;
+  comentarios?: any[];
 }
 
 export default function AtasPage() {
@@ -89,6 +90,12 @@ export default function AtasPage() {
   const [versoesHistorico, setVersoesHistorico] = useState<any[]>([]);
   const [activeVersaoIndex, setActiveVersaoIndex] = useState<number | null>(null);
 
+  // Estados para Modal de Comentários
+  const [commentModalOpen, setCommentModalOpen] = useState(false);
+  const [activeAcao, setActiveAcao] = useState<Acao | null>(null);
+  const [novoComentario, setNovoComentario] = useState('');
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
   // Estados de controle do Popover de Seleção de Usuários
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
@@ -115,16 +122,18 @@ export default function AtasPage() {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const [atasList, statsData, usersRes] = await Promise.all([
+      const [atasList, statsData, usersRes, loggedUser] = await Promise.all([
         getAtas(),
         getAcoesStats(),
-        getUsersForFilter()
+        getUsersForFilter(),
+        getLoggedUser()
       ]);
       setAtas(atasList);
       setStats(statsData);
       if (usersRes.success && usersRes.users) {
         setSystemUsers(usersRes.users);
       }
+      setCurrentUser(loggedUser);
     } catch (error) {
       console.error('Erro ao carregar dados do dashboard:', error);
     } finally {
@@ -223,7 +232,8 @@ export default function AtasPage() {
           responsavelNome: a.responsavel?.nome || 'Não identificado',
           dataLimite: parseDateString(a.dataLimite),
           numBitrix: a.numBitrix || '',
-          concluida: a.concluida
+          concluida: a.concluida,
+          comentarios: Array.isArray(a.comentarios) ? a.comentarios : []
         })));
         setVersoesHistorico(ata.versoesHistorico || []);
         setViewMode('FORM');
@@ -323,6 +333,58 @@ export default function AtasPage() {
       }
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  // Status da ação calculado
+  const getAcaoStatusText = (acao: Acao) => {
+    if (acao.concluida) return 'CONCLUÍDO';
+    if (!acao.dataLimite) return 'EM DIA';
+    
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const deadline = new Date(acao.dataLimite + 'T00:00:00');
+      if (today > deadline) {
+        return 'ATRASADA';
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return 'EM DIA';
+  };
+
+  // Abre modal de comentários
+  const handleOpenCommentsModal = (idx: number) => {
+    const acao = acoes[idx];
+    if (acao) {
+      setActiveAcao(acao);
+      setNovoComentario('');
+      setCommentModalOpen(true);
+    }
+  };
+
+  // Adiciona comentário
+  const handleAddComment = async () => {
+    if (!activeAcao || !activeAcao.id || !novoComentario.trim()) return;
+
+    try {
+      const res = await addAcaoComentario(activeAcao.id, novoComentario.trim());
+      if (res.success && res.comment) {
+        const updatedComments = [...(activeAcao.comentarios || []), res.comment];
+        const updatedAcao = { ...activeAcao, comentarios: updatedComments };
+        setActiveAcao(updatedAcao);
+        
+        // Atualiza a lista de ações local
+        setAcoes(prev => prev.map(a => a.id === activeAcao.id ? updatedAcao : a));
+        setNovoComentario('');
+      } else {
+        alert(res.error || 'Erro ao adicionar comentário');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao processar comentário.');
     }
   };
 
@@ -812,7 +874,7 @@ export default function AtasPage() {
                   <thead>
                     <tr>
                       <th colspan="5" className="bg-[#1E4663] text-white font-black text-center text-sm py-3 border-b-2 border-slate-900 tracking-wider">
-                        ATA DE REUNIÃO – COMERCIAL
+                        {titulo ? titulo.toUpperCase() : 'ATA DE REUNIÃO – COMERCIAL'}
                       </th>
                     </tr>
                     
@@ -1342,11 +1404,11 @@ export default function AtasPage() {
 
                     {/* COLUNAS AÇÕES */}
                     <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-center">
-                      <th className="py-1 px-3 border-r border-slate-900 w-[10%]">Item</th>
-                      <th className="py-1 px-3 border-r border-slate-900 w-[45%] text-left">Descrição</th>
+                      <th className="py-1 px-3 border-r border-slate-900 w-[8%]">Item</th>
+                      <th className="py-1 px-3 border-r border-slate-900 w-[47%] text-left">Descrição</th>
                       <th className="py-1 px-3 border-r border-slate-900 w-[20%] text-left">Responsável</th>
                       <th className="py-1 px-3 border-r border-slate-900 w-[15%]">Prazo</th>
-                      <th className="py-1 px-3 w-[10%]">Nº Bitrix</th>
+                      <th className="py-1 px-3 w-[10%] text-center">Status</th>
                     </tr>
 
                     {/* CORPO AÇÕES */}
@@ -1363,13 +1425,30 @@ export default function AtasPage() {
                             {a.item || (idx + 1)}
                           </td>
                           <td className="py-1 px-3 border-r border-slate-900">
-                            <input 
-                              type="text"
-                              value={a.descricao}
-                              placeholder="Descreva a ação a ser executada..."
-                              onChange={e => handleAcaoFieldChange(idx, 'descricao', e.target.value)}
-                              className="w-full bg-transparent border-none outline-none focus:ring-0 font-medium"
-                            />
+                            <div className="flex items-center justify-between gap-2">
+                              <input 
+                                type="text"
+                                value={a.descricao}
+                                placeholder="Descreva a ação a ser executada..."
+                                onChange={e => handleAcaoFieldChange(idx, 'descricao', e.target.value)}
+                                className="flex-1 bg-transparent border-none outline-none focus:ring-0 font-medium"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleOpenCommentsModal(idx)}
+                                className="flex items-center gap-1 p-1 rounded transition-colors text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100 no-print cursor-pointer shrink-0"
+                                title={a.id ? "Comentários da ação" : "Salve o documento para habilitar comentários"}
+                                disabled={!a.id}
+                                style={{ opacity: a.id ? 1 : 0.4 }}
+                              >
+                                <MessageSquare size={14} />
+                                {a.comentarios && a.comentarios.length > 0 && (
+                                  <span className="bg-[#1B4D3E] text-white text-[9px] px-1 rounded-full font-bold">
+                                    {a.comentarios.length}
+                                  </span>
+                                )}
+                              </button>
+                            </div>
                           </td>
                           <td className="py-1 px-3 border-r border-slate-900">
                             <button
@@ -1389,21 +1468,49 @@ export default function AtasPage() {
                               className="w-full bg-transparent border-none outline-none focus:ring-0 text-center"
                             />
                           </td>
-                          <td className="py-1 px-3 flex items-center justify-between gap-1">
-                            <input 
-                              type="text"
-                              value={a.numBitrix || ''}
-                              placeholder="Nº..."
-                              onChange={e => handleAcaoFieldChange(idx, 'numBitrix', e.target.value)}
-                              className="w-full bg-transparent border-none outline-none focus:ring-0 text-center font-semibold"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveAcaoRow(idx)}
-                              className="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors cursor-pointer no-print"
-                            >
-                              <X size={12} />
-                            </button>
+                          <td className="py-1 px-2 text-center">
+                            <div className="flex items-center justify-center gap-1.5">
+                              {/* Toggle Conclusão */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (a.id) {
+                                    handleToggleAcaoClick(a.id, !a.concluida);
+                                  } else {
+                                    handleAcaoFieldChange(idx, 'concluida', !a.concluida);
+                                  }
+                                }}
+                                className="text-slate-400 hover:text-[#1B4D3E] transition-colors cursor-pointer no-print shrink-0"
+                                title={a.concluida ? "Marcar como pendente" : "Marcar como concluída"}
+                              >
+                                {a.concluida ? (
+                                  <CheckSquare size={15} className="text-green-600" />
+                                ) : (
+                                  <Square size={15} />
+                                )}
+                              </button>
+
+                              {/* Status Badge */}
+                              <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
+                                a.concluida 
+                                  ? 'bg-green-100 text-green-700 border border-green-200' 
+                                  : getAcaoStatusText(a) === 'ATRASADA'
+                                    ? 'bg-red-100 text-red-700 border border-red-200'
+                                    : 'bg-blue-100 text-blue-700 border border-blue-200'
+                              }`}>
+                                {getAcaoStatusText(a)}
+                              </span>
+
+                              {/* Delete Action Button */}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveAcaoRow(idx)}
+                                className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors cursor-pointer no-print shrink-0"
+                                title="Excluir Ação"
+                              >
+                                <X size={13} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -1478,6 +1585,98 @@ export default function AtasPage() {
 
         </div>
       </main>
+
+      {/* MODAL DE COMENTÁRIOS DA AÇÃO */}
+      {commentModalOpen && activeAcao && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in no-print">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full flex flex-col max-h-[85vh] overflow-hidden transform scale-100 transition-all duration-300">
+            {/* Header */}
+            <div className="p-5 border-b border-slate-100 flex justify-between items-start">
+              <div>
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <MessageSquare size={16} className="text-[#1B4D3E]" /> Comentários da Ação
+                </h3>
+                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter line-clamp-2">
+                  Ação: {activeAcao.descricao}
+                </p>
+              </div>
+              <button
+                onClick={() => setCommentModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* List of Comments */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 max-h-[400px] min-h-[150px] bg-slate-50">
+              {!activeAcao.comentarios || activeAcao.comentarios.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center py-10 space-y-2 text-slate-400">
+                  <MessageSquare size={32} className="opacity-30" />
+                  <p className="text-[10px] font-bold uppercase tracking-widest">Nenhum comentário cadastrado</p>
+                  <p className="text-[9px]">Seja o primeiro a deixar considerações para esta ação.</p>
+                </div>
+              ) : (
+                activeAcao.comentarios.map((comment: any) => (
+                  <div key={comment.id} className="flex gap-3 items-start bg-white p-3.5 rounded-xl border border-slate-200/60 shadow-xs">
+                    {comment.autorAvatar ? (
+                      <img
+                        src={comment.autorAvatar}
+                        alt={comment.autor}
+                        className="w-7 h-7 rounded-full shrink-0 border border-slate-100"
+                      />
+                    ) : (
+                      <div className="w-7 h-7 bg-[#1B4D3E]/10 text-[#1B4D3E] font-black text-[10px] rounded-full flex items-center justify-center uppercase shrink-0 border border-[#1B4D3E]/20">
+                        {comment.autor ? comment.autor.split(' ').map((n: string) => n[0]).slice(0, 2).join('') : '?'}
+                      </div>
+                    )}
+                    <div className="flex-1 space-y-1">
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-[10px] font-bold text-slate-800">{comment.autor}</span>
+                        <span className="text-[8px] font-bold text-slate-400 font-medium">
+                          {new Date(comment.data).toLocaleString('pt-BR')}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 font-medium whitespace-pre-wrap">{comment.texto}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Input area */}
+            <div className="p-4 border-t border-slate-100 bg-white space-y-3">
+              <textarea
+                value={novoComentario}
+                onChange={e => setNovoComentario(e.target.value)}
+                placeholder="Escreva um comentário ou consideração sobre esta ação..."
+                className="w-full p-3 border border-slate-200 rounded-xl text-xs font-semibold focus:border-[#1B4D3E] focus:ring-0 outline-none resize-none min-h-[60px]"
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddComment();
+                  }
+                }}
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setCommentModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 text-slate-500 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-slate-50 transition-all cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleAddComment}
+                  disabled={!novoComentario.trim()}
+                  className="px-5 py-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm hover:shadow transition-all cursor-pointer"
+                >
+                  Enviar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* POPOVER PARA SELEÇÃO DE PARTICIPANTES / RESPONSÁVEIS */}
       <UserSelectPopover

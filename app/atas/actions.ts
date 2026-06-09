@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { getLoggedUser } from '@/app/propostas/actions';
+export { getLoggedUser };
 import { revalidatePath } from 'next/cache';
 
 // Tipagem dos participantes salvos no JSON
@@ -220,30 +221,62 @@ export async function saveAta(data: {
         }
       });
 
-      // Atualiza ações: deleta as antigas e insere as novas para evitar desalinhamento
-      await prisma.ataAcao.deleteMany({
-        where: { ataId: data.id }
+      // Atualiza ações de forma inteligente (para preservar comentários!)
+      const currentAcoes = await prisma.ataAcao.findMany({
+        where: { ataId: data.id },
+        select: { id: true }
       });
+      const currentIds = currentAcoes.map(a => a.id);
+      
+      const newAcoes = data.acoes || [];
+      const newAcoesIds = newAcoes.map(a => a.id).filter(Boolean) as string[];
 
-      if (data.acoes && data.acoes.length > 0) {
-        await prisma.ataAcao.createMany({
-          data: data.acoes.map(a => ({
-            ataId: data.id!,
-            item: a.item || null,
-            descricao: a.descricao,
-            responsavelId: a.responsavelId,
-            dataLimite: new Date(a.dataLimite),
-            numBitrix: a.numBitrix || null,
-            concluida: a.concluida || false,
-            concluidaEm: a.concluida ? new Date() : null
-          }))
+      // Deleta as ações que foram removidas
+      const idsToDelete = currentIds.filter(id => !newAcoesIds.includes(id));
+      if (idsToDelete.length > 0) {
+        await prisma.ataAcao.deleteMany({
+          where: { id: { in: idsToDelete } }
         });
+      }
+
+      // Upsert das ações restantes
+      for (const a of newAcoes) {
+        if (a.id && currentIds.includes(a.id)) {
+          // Atualiza a ação existente
+          await prisma.ataAcao.update({
+            where: { id: a.id },
+            data: {
+              item: a.item || null,
+              descricao: a.descricao,
+              responsavelId: a.responsavelId,
+              dataLimite: new Date(a.dataLimite),
+              numBitrix: a.numBitrix || null,
+              concluida: a.concluida || false,
+              concluidaEm: a.concluida ? new Date() : null
+            }
+          });
+        } else {
+          // Cria nova ação
+          await prisma.ataAcao.create({
+            data: {
+              ataId: data.id!,
+              item: a.item || null,
+              descricao: a.descricao,
+              responsavelId: a.responsavelId,
+              dataLimite: new Date(a.dataLimite),
+              numBitrix: a.numBitrix || null,
+              concluida: a.concluida || false,
+              concluidaEm: a.concluida ? new Date() : null
+            }
+          });
+        }
       }
 
     } else {
       // 2. CRIAR NOVA ATA OU REVISÃO
       let nextVersion = 1;
       let parentId: string | null = null;
+      let oldAcoes: any[] = [];
 
       if (data.id && data.criarNovaVersao) {
         // É uma revisão/nova versão de uma ata existente
@@ -254,6 +287,11 @@ export async function saveAta(data: {
         if (oldAta) {
           nextVersion = oldAta.versao + 1;
           parentId = oldAta.parentAtaId || oldAta.id; // Mantém a raiz original
+          
+          // Buscar ações antigas para herdar comentários
+          oldAcoes = await prisma.ataAcao.findMany({
+            where: { ataId: data.id }
+          });
         }
       }
 
@@ -279,18 +317,24 @@ export async function saveAta(data: {
       ataId = newAta.id;
 
       if (data.acoes && data.acoes.length > 0) {
-        await prisma.ataAcao.createMany({
-          data: data.acoes.map(a => ({
-            ataId: newAta.id,
-            item: a.item || null,
-            descricao: a.descricao,
-            responsavelId: a.responsavelId,
-            dataLimite: new Date(a.dataLimite),
-            numBitrix: a.numBitrix || null,
-            concluida: a.concluida || false,
-            concluidaEm: a.concluida ? new Date() : null
-          }))
-        });
+        for (const a of data.acoes) {
+          const oldAcao = a.id ? oldAcoes.find(oa => oa.id === a.id) : null;
+          const comentariosToCopy = oldAcao ? oldAcao.comentarios : null;
+
+          await prisma.ataAcao.create({
+            data: {
+              ataId: newAta.id,
+              item: a.item || null,
+              descricao: a.descricao,
+              responsavelId: a.responsavelId,
+              dataLimite: new Date(a.dataLimite),
+              numBitrix: a.numBitrix || null,
+              concluida: a.concluida || false,
+              concluidaEm: a.concluida ? new Date() : null,
+              comentarios: comentariosToCopy || null
+            }
+          });
+        }
       }
     }
 
@@ -401,3 +445,53 @@ export async function getAcoesStats() {
     return { total: 0, concluidas: 0, pendentes: 0, taxaEficacia: 0 };
   }
 }
+
+// 7. Adiciona um comentário a uma ação com validação de tenant
+export async function addAcaoComentario(acaoId: string, texto: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Não autorizado' };
+
+  if (!texto.trim()) return { success: false, error: 'Comentário vazio' };
+
+  try {
+    const acao = await prisma.ataAcao.findUnique({
+      where: { id: acaoId },
+      include: {
+        ata: {
+          select: { tenantId: true }
+        }
+      }
+    });
+
+    if (!acao || acao.ata.tenantId !== user.tenantId) {
+      return { success: false, error: 'Ação não encontrada ou acesso negado.' };
+    }
+
+    // Parse dos comentários existentes
+    const oldComments = Array.isArray(acao.comentarios) ? (acao.comentarios as any[]) : [];
+    
+    const newComment = {
+      id: Math.random().toString(36).substring(2, 9),
+      autor: user.nome,
+      autorAvatar: user.avatarUrl || null,
+      texto: texto.trim(),
+      data: new Date().toISOString()
+    };
+
+    const updatedComments = [...oldComments, newComment];
+
+    await prisma.ataAcao.update({
+      where: { id: acaoId },
+      data: {
+        comentarios: updatedComments as any
+      }
+    });
+
+    revalidatePath('/atas');
+    return { success: true, comment: newComment };
+  } catch (error: any) {
+    console.error('Erro ao adicionar comentário:', error);
+    return { success: false, error: error.message || 'Erro ao processar requisição' };
+  }
+}
+

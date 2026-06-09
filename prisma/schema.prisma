@@ -737,6 +737,7 @@ model AtaAcao {
   numBitrix     String?     // Número do Bitrix
   concluida     Boolean     @default(false)
   concluidaEm   DateTime?
+  comentarios   Json?       // Array de comentários: [{ id: "...", autor: "...", autorAvatar: "...", texto: "...", data: "..." }]
   
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
