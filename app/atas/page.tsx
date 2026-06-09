@@ -650,12 +650,41 @@ export default function AtasPage() {
     }
   };
 
-  // Puxa pauta selecionada para o editor de relatório
+  // Puxa pauta selecionada para o editor de relatório (anexando sempre ao final do texto e de seus parágrafos)
   const handlePullPautaToReport = (idx: number) => {
     const pauta = pautas[idx];
     if (pauta && pauta.descricao.trim()) {
       const pautaHtml = `<p><strong>Item ${String(idx + 1).padStart(2, '0')}: ${pauta.descricao.trim()}</strong></p>`;
-      insertHtmlAtCursor(relatorioEditorRef, pautaHtml);
+      
+      if (relatorioEditorRef.current) {
+        let currentHtml = relatorioEditorRef.current.innerHTML.trim();
+        
+        // Limpa quebras de linhas redundantes caso esteja vazio
+        if (currentHtml === '<br>' || currentHtml === '<p><br></p>' || currentHtml === '') {
+          currentHtml = '';
+        }
+        
+        let newHtml = currentHtml;
+        if (newHtml !== '') {
+          newHtml += pautaHtml;
+        } else {
+          newHtml = pautaHtml;
+        }
+        
+        relatorioEditorRef.current.innerHTML = newHtml;
+        setRelatorio(newHtml);
+        
+        // Foca e coloca o cursor de digitação no final do editor
+        relatorioEditorRef.current.focus();
+        const selection = window.getSelection();
+        if (selection) {
+          const range = document.createRange();
+          range.selectNodeContents(relatorioEditorRef.current);
+          range.collapse(false);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      }
     }
   };
 
