@@ -113,7 +113,7 @@ export async function GET(request: Request) {
       email: user.email,
       tenantId: user.tenantId,
       avatarUrl: user.avatarUrl ? '/api/user/avatar' : undefined,
-      tenantLogoUrl: userTenant?.logoUrl ? '/api/tenant/logo' : undefined,
+      tenantLogoUrl: userTenant?.logoUrl ? `/api/tenant/logo?tenantId=${user.tenantId}&v=${userTenant.logoUrl.length > 30 ? encodeURIComponent(userTenant.logoUrl.substring(userTenant.logoUrl.length - 10)) : encodeURIComponent(userTenant.logoUrl.substring(0, 10))}` : undefined,
       tenantNome: userTenant?.nomeFantasia || undefined,
       primaryColor: userTenant?.primaryColor || undefined,
       iniciais: user.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase()

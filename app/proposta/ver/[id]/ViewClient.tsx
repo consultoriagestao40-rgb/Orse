@@ -260,7 +260,7 @@ export default function ViewClient({ doc, fullProposta }: { doc: any, fullPropos
     if (typeof window !== 'undefined' && doc?.tenant) {
       try {
         const userObj = {
-          tenantLogoUrl: doc.tenant.logoUrl ? `/api/tenant/logo?tenantId=${doc.tenant.id}` : undefined,
+          tenantLogoUrl: doc.tenant.logoUrl ? `/api/tenant/logo?tenantId=${doc.tenant.id}&v=${doc.tenant.logoUrl.length > 30 ? encodeURIComponent(doc.tenant.logoUrl.substring(doc.tenant.logoUrl.length - 10)) : encodeURIComponent(doc.tenant.logoUrl.substring(0, 10))}` : undefined,
           tenantNome: doc.tenant.nomeFantasia || undefined
         };
         const encoded = encodeURIComponent(JSON.stringify(userObj));

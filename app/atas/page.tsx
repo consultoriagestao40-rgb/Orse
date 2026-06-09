@@ -26,6 +26,7 @@ interface Participante {
   departamento?: string;
   email?: string;
   presente: boolean;
+  avatarUrl?: string;
 }
 
 interface PautaItem {
@@ -830,7 +831,8 @@ export default function AtasPage() {
         nome: matchedUser.nome,
         departamento: matchedUser.cargo || 'Comercial',
         email: matchedUser.email || '',
-        presente: true
+        presente: true,
+        avatarUrl: matchedUser.avatarUrl || undefined
       }]);
     }
   };
@@ -1726,8 +1728,8 @@ export default function AtasPage() {
 
                     {/* COLUNAS PARTICIPANTES */}
                     <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-left">
-                      <th className="py-1 px-3 border-r border-slate-900 w-[25%]">Nome</th>
-                      <th className="py-1 px-3 border-r border-slate-900 w-[25%]">Departamento</th>
+                      <th className="py-1 px-3 border-r border-slate-900 w-[35%]">Nome</th>
+                      <th className="py-1 px-3 border-r border-slate-900 w-[15%]">Cargo</th>
                       <th className="py-1 px-3 border-r border-slate-900 w-[35%]">E-mail</th>
                       <th className="py-1 px-3 border-r border-slate-900 w-[10%] text-center">Presente</th>
                       <th className="py-1 px-3 w-[5%] text-center no-print">Ações</th>
@@ -1743,69 +1745,88 @@ export default function AtasPage() {
                         </td>
                       </tr>
                     ) : (
-                      participantes.map((p, idx) => (
-                        <tr key={idx} className="bg-white hover:bg-slate-50/10">
-                          <td className="py-1 px-3 border-r border-slate-900 font-bold text-slate-800">
-                            {p.userId ? (
-                              p.nome
-                            ) : (
-                              <input 
-                                type="text"
-                                value={p.nome}
-                                placeholder="Nome do convidado..."
-                                onChange={e => handleParticipanteInfoChange(idx, 'nome', e.target.value)}
-                                className="w-full bg-transparent border-none outline-none focus:ring-0"
-                              />
-                            )}
-                          </td>
-                          <td className="py-1 px-3 border-r border-slate-900 text-slate-600 font-medium">
-                            {p.userId ? (
-                              p.departamento
-                            ) : (
-                              <input 
-                                type="text"
-                                value={p.departamento}
-                                placeholder="Cargo..."
-                                onChange={e => handleParticipanteInfoChange(idx, 'departamento', e.target.value)}
-                                className="w-full bg-transparent border-none outline-none focus:ring-0"
-                              />
-                            )}
-                          </td>
-                          <td className="py-1 px-3 border-r border-slate-900 text-slate-600 font-medium">
-                            {p.userId ? (
-                              p.email
-                            ) : (
-                              <input 
-                                type="email"
-                                value={p.email}
-                                placeholder="E-mail..."
-                                onChange={e => handleParticipanteInfoChange(idx, 'email', e.target.value)}
-                                className="w-full bg-transparent border-none outline-none focus:ring-0"
-                              />
-                            )}
-                          </td>
-                          <td className="py-1 px-3 border-r border-slate-900 text-center">
-                            <select
-                              value={p.presente ? 'Sim' : 'Não'}
-                              onChange={e => handleParticipanteInfoChange(idx, 'presente', e.target.value === 'Sim')}
-                              className="bg-transparent border-none outline-none font-bold text-center text-slate-700 cursor-pointer"
-                            >
-                              <option value="Sim">Sim</option>
-                              <option value="Não">Não</option>
-                            </select>
-                          </td>
-                          <td className="py-1 px-3 text-center no-print">
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveParticipante(idx)}
-                              className="p-1 text-slate-400 hover:text-red-500 rounded transition-colors cursor-pointer border-none bg-transparent"
-                              title="Remover Participante"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </td>
-                        </tr>
-                      ))
+                      participantes.map((p, idx) => {
+                        const matchedUser = p.userId ? systemUsers.find(u => u.id === p.userId) : null;
+                        const avatarUrl = matchedUser?.avatarUrl || p.avatarUrl;
+                        return (
+                          <tr key={idx} className="bg-white hover:bg-slate-50/10">
+                            <td className="py-1 px-3 border-r border-slate-900 font-bold text-slate-800">
+                              <div className="flex items-center gap-2">
+                                {avatarUrl ? (
+                                  <img 
+                                    src={avatarUrl} 
+                                    alt={p.nome || 'Avatar'} 
+                                    className="w-6 h-6 rounded-full object-cover border border-slate-200 shrink-0"
+                                  />
+                                ) : (
+                                  <div className="w-6 h-6 rounded-full bg-[#1E4663]/10 flex items-center justify-center text-[10px] font-black text-[#1E4663] uppercase border border-slate-200 shrink-0">
+                                    {p.nome ? p.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2) : '?'}
+                                  </div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  {p.userId ? (
+                                    p.nome
+                                  ) : (
+                                    <input 
+                                      type="text"
+                                      value={p.nome}
+                                      placeholder="Nome do convidado..."
+                                      onChange={e => handleParticipanteInfoChange(idx, 'nome', e.target.value)}
+                                      className="w-full bg-transparent border-none outline-none focus:ring-0"
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-1 px-3 border-r border-slate-900 text-slate-600 font-medium">
+                              {p.userId ? (
+                                p.departamento
+                              ) : (
+                                <input 
+                                  type="text"
+                                  value={p.departamento}
+                                  placeholder="Cargo..."
+                                  onChange={e => handleParticipanteInfoChange(idx, 'departamento', e.target.value)}
+                                  className="w-full bg-transparent border-none outline-none focus:ring-0"
+                                />
+                              )}
+                            </td>
+                            <td className="py-1 px-3 border-r border-slate-900 text-slate-600 font-medium">
+                              {p.userId ? (
+                                p.email
+                              ) : (
+                                <input 
+                                  type="text"
+                                  value={p.email}
+                                  placeholder="E-mail..."
+                                  onChange={e => handleParticipanteInfoChange(idx, 'email', e.target.value)}
+                                  className="w-full bg-transparent border-none outline-none focus:ring-0"
+                                />
+                              )}
+                            </td>
+                            <td className="py-1 px-3 border-r border-slate-900 text-center">
+                              <select
+                                value={p.presente ? 'Sim' : 'Não'}
+                                onChange={e => handleParticipanteInfoChange(idx, 'presente', e.target.value === 'Sim')}
+                                className="bg-transparent border-none outline-none font-bold text-center text-slate-700 cursor-pointer"
+                              >
+                                <option value="Sim">Sim</option>
+                                <option value="Não">Não</option>
+                              </select>
+                            </td>
+                            <td className="py-1 px-3 text-center no-print">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveParticipante(idx)}
+                                className="p-1 text-slate-400 hover:text-red-500 rounded transition-colors cursor-pointer border-none bg-transparent"
+                                title="Remover Participante"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
 
                     {/* CONTROLES PARTICIPANTES (BOTOES) - Ocultados na impressão */}

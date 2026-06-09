@@ -392,7 +392,7 @@ const Sidebar = () => {
               email: freshUser.email,
               tenantId: freshUser.tenantId,
               avatarUrl: freshUser.avatarUrl ? `/api/user/avatar?email=${encodeURIComponent(freshUser.email)}&v=${freshUser.avatarUrl.length > 30 ? encodeURIComponent(freshUser.avatarUrl.substring(freshUser.avatarUrl.length - 10)) : encodeURIComponent(freshUser.avatarUrl.substring(0, 10))}` : undefined,
-              tenantLogoUrl: (freshUser as any).tenant?.logoUrl ? `/api/tenant/logo?tenantId=${freshUser.tenantId}` : undefined,
+              tenantLogoUrl: (freshUser as any).tenant?.logoUrl ? `/api/tenant/logo?tenantId=${freshUser.tenantId}&v=${(freshUser as any).tenant.logoUrl.length > 30 ? encodeURIComponent((freshUser as any).tenant.logoUrl.substring((freshUser as any).tenant.logoUrl.length - 10)) : encodeURIComponent((freshUser as any).tenant.logoUrl.substring(0, 10))}` : undefined,
               tenantNome: (freshUser as any).tenant?.nomeFantasia || undefined,
               primaryColor: (freshUser as any).tenant?.primaryColor || undefined,
               iniciais: freshUser.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase()
