@@ -1610,7 +1610,16 @@ export default function AtasPage() {
                 className="document-canvas w-full max-w-4xl bg-white border border-slate-300 shadow-xl p-8 mx-auto font-sans relative text-slate-800"
               >
                 {/* ESTRUTURA TÉCNICA EM TABELA (IDÊNTICA AO WORD DO USUÁRIO) */}
-                <table className="w-full border-2 border-slate-900 border-collapse text-xs select-text">
+                <div className="w-full">
+                  {/* TABELA 1: CABEÇALHO, METADADOS E PARTICIPANTES */}
+                  <table className="w-full border-2 border-slate-900 border-collapse text-xs select-text table-fixed">
+                    <colgroup>
+                      <col style={{ width: '42%' }} />
+                      <col style={{ width: '8%' }} />
+                      <col style={{ width: '35%' }} />
+                      <col style={{ width: '10%' }} />
+                      <col style={{ width: '5%' }} />
+                    </colgroup>
                   
                   {/* CABEÇALHO DA ATA */}
                   <thead>
@@ -1874,10 +1883,15 @@ export default function AtasPage() {
                         </div>
                       </td>
                     </tr>
+                  </tbody>
+                </table>
 
+                {/* TABELA 2: PAUTAS PRINCIPAIS */}
+                <table className="w-full border-x-2 border-b-2 border-slate-900 border-collapse text-xs select-text" style={{ marginTop: '-2px' }}>
+                  <tbody>
                     {/* SEÇÃO PAUTAS */}
                     <tr>
-                      <th colspan="5" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
+                      <th className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
                         PAUTAS:
                       </th>
                     </tr>
@@ -1938,10 +1952,15 @@ export default function AtasPage() {
                         </div>
                       </td>
                     </tr>
+                  </tbody>
+                </table>
 
+                {/* TABELA 3: RELATÓRIO DA REUNIÃO */}
+                <table className="w-full border-x-2 border-b-2 border-slate-900 border-collapse text-xs select-text" style={{ marginTop: '-2px' }}>
+                  <tbody>
                     {/* SEÇÃO RELATÓRIO DA REUNIÃO */}
                     <tr>
-                      <th colspan="5" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
+                      <th className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
                         RELATÓRIO DA REUNIÃO:
                       </th>
                     </tr>
@@ -2097,7 +2116,19 @@ export default function AtasPage() {
                         />
                       </td>
                     </tr>
+                  </tbody>
+                </table>
 
+                {/* TABELA 4: PAUTAS DELIBERATIVAS */}
+                <table className="w-full border-x-2 border-b-2 border-slate-900 border-collapse text-xs select-text table-fixed" style={{ marginTop: '-2px' }}>
+                  <colgroup>
+                    <col style={{ width: '4%' }} />
+                    <col style={{ width: '28%' }} />
+                    <col style={{ width: '28%' }} />
+                    <col style={{ width: '15%' }} />
+                    <col style={{ width: '25%' }} />
+                  </colgroup>
+                  <tbody>
                     {/* SEÇÃO PUATAS DELIBERATIVAS (Mantido idêntico ao Word do Usuário) */}
                     <tr>
                       <th colspan="5" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
@@ -2201,17 +2232,22 @@ export default function AtasPage() {
                         </div>
                       </td>
                     </tr>
+                  </tbody>
+                </table>
 
+                {/* TABELA 5: CONSIDERAÇÕES */}
+                <table className="w-full border-x-2 border-b-2 border-slate-900 border-collapse text-xs select-text" style={{ marginTop: '-2px' }}>
+                  <tbody>
                     {/* SEÇÃO CONSIDERAÇÕES */}
                     <tr className="bg-[#DCE6F1] border-b border-slate-900 font-black text-slate-800">
-                      <td colspan="5" className="py-1.5 px-3 text-left uppercase text-xs tracking-wider">
+                      <td className="py-1.5 px-3 text-left uppercase text-xs tracking-wider">
                         Considerações:
                       </td>
                     </tr>
 
                     {/* EDITOR DE CONSIDERAÇÕES FINAIS */}
                     <tr className="bg-white border-b-2 border-slate-900">
-                      <td colspan="5" className="p-4 text-slate-800">
+                      <td className="p-4 text-slate-800">
                         {/* Rich Text Editor Toolbar para Considerações - Ocultada na Impressão */}
                         <div className="border border-slate-200 rounded-t-xl bg-slate-50 p-2 flex flex-wrap gap-1 items-center divide-x divide-slate-200 select-none no-print mb-2">
                           <div className="flex gap-0.5 pr-2">
@@ -2360,7 +2396,19 @@ export default function AtasPage() {
                         />
                       </td>
                     </tr>
+                  </tbody>
+                </table>
 
+                {/* TABELA 6: AÇÕES */}
+                <table className="w-full border-x-2 border-b-2 border-slate-900 border-collapse text-xs select-text table-fixed" style={{ marginTop: '-2px' }}>
+                  <colgroup>
+                    <col style={{ width: '3%' }} />
+                    <col style={{ width: '68%' }} />
+                    <col style={{ width: '5%' }} />
+                    <col style={{ width: '12%' }} />
+                    <col style={{ width: '12%' }} />
+                  </colgroup>
+                  <tbody>
                     {/* SEÇÃO AÇÕES */}
                     <tr>
                       <th colspan="5" className="bg-[#1E4663] text-white font-black text-center text-xs py-1.5 border-b border-slate-900 tracking-wider uppercase">
@@ -2526,17 +2574,26 @@ export default function AtasPage() {
                         </div>
                       </td>
                     </tr>
+                  </tbody>
+                </table>
 
+                {/* TABELA 7: PRÓXIMA REUNIÃO */}
+                <table className="w-full border-x-2 border-b-2 border-slate-900 border-collapse text-xs select-text table-fixed" style={{ marginTop: '-2px' }}>
+                  <colgroup>
+                    <col style={{ width: '50%' }} />
+                    <col style={{ width: '50%' }} />
+                  </colgroup>
+                  <tbody>
                     {/* SEÇÃO PRÓXIMA REUNIÃO */}
                     <tr className="bg-[#DCE6F1] border-b border-slate-900 font-black text-slate-800 text-center">
-                      <th colspan="5" className="py-1.5 px-3 text-xs tracking-wider uppercase">
+                      <th colspan="2" className="py-1.5 px-3 text-xs tracking-wider uppercase">
                         PRÓXIMA REUNIÃO
                       </th>
                     </tr>
 
                     {/* METADADOS PRÓXIMA REUNIÃO */}
                     <tr className="bg-white text-slate-800 font-bold">
-                      <td colspan="2" className="p-2.5 border-r border-slate-900 w-1/2">
+                      <td className="p-2.5 border-r border-slate-900 w-1/2">
                         <div className="flex gap-4 items-center flex-wrap">
                           <div className="flex items-center gap-1">
                             <span className="text-slate-500 font-black">Data:</span>
@@ -2571,9 +2628,9 @@ export default function AtasPage() {
                         </div>
                       </td>
                     </tr>
-
                   </tbody>
                 </table>
+                </div>
               </div>
 
             </div>
