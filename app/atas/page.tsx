@@ -9,7 +9,7 @@ import {
   CheckCircle2, Edit3, ArrowLeft, Printer,
   Bold, Italic, Underline, Strikethrough, AlignLeft, 
   AlignCenter, AlignRight, AlignJustify, Type, Palette, Clock,
-  History, X, MessageSquare, CheckSquare, Square
+  History, X, MessageSquare, CheckSquare, Square, List, ListOrdered, FileSymlink
 } from 'lucide-react';
 import { 
   getAtas, getAtaCompleta, saveAta, deleteAta, 
@@ -69,6 +69,7 @@ export default function AtasPage() {
   // Campos do formulário da ATA (Seguindo fielmente o layout físico JVS do Word)
   const [titulo, setTitulo] = useState('');
   const [dataReuniou, setDataReuniou] = useState(() => new Date().toISOString().split('T')[0]);
+  const [horaReuniou, setHoraReuniou] = useState('');
   const [local, setLocal] = useState('');
   const [pautas, setPautas] = useState<PautaItem[]>([{ descricao: '', abordada: false }]);
   const [participantes, setParticipantes] = useState<Participante[]>([]);
@@ -95,6 +96,12 @@ export default function AtasPage() {
   const [activeAcao, setActiveAcao] = useState<Acao | null>(null);
   const [novoComentario, setNovoComentario] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // Estados para sistema de menções @
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState('');
+  const [mentionCoords, setMentionCoords] = useState({ top: 0, left: 0 });
+  const [activeEditorForMention, setActiveEditorForMention] = useState<React.RefObject<HTMLDivElement | null> | null>(null);
 
   // Estados de controle do Popover de Seleção de Usuários
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -177,6 +184,7 @@ export default function AtasPage() {
     setSelectedAtaId(null);
     setTitulo(`Ata de Reunião Comercial - ${new Date().toLocaleDateString('pt-BR')}`);
     setDataReuniou(new Date().toISOString().split('T')[0]);
+    setHoraReuniou(new Date().toTimeString().slice(0, 5));
     setLocal('Sala de Operações JVS FAC');
     setPautas([{ descricao: '', abordada: false }]);
     setParticipantes([]);
@@ -202,6 +210,7 @@ export default function AtasPage() {
         setSelectedAtaId(ata.id);
         setTitulo(ata.titulo);
         setDataReuniou(parseDateString(ata.dataReuniou));
+        setHoraReuniou(ata.horaReuniou || '');
         setLocal(ata.local || '');
         
         // Mapeamento seguro de pauta legada (string[]) ou estruturada
@@ -271,6 +280,19 @@ export default function AtasPage() {
       return;
     }
 
+    // Validação das ações corretivas antes de salvar
+    const invalidAcaoResp = acoes.find(a => !a.responsavelId || a.responsavelId.trim() === '');
+    if (invalidAcaoResp) {
+      alert(`Por favor, selecione um responsável para a Ação ${invalidAcaoResp.item || ''}.`);
+      return;
+    }
+
+    const invalidAcaoDesc = acoes.find(a => !a.descricao.trim());
+    if (invalidAcaoDesc) {
+      alert(`Por favor, preencha a descrição para a Ação ${invalidAcaoDesc.item || ''}.`);
+      return;
+    }
+
     setLoading(true);
     try {
       const cleanPautas = pautas
@@ -287,6 +309,7 @@ export default function AtasPage() {
         id: selectedAtaId || undefined,
         titulo: titulo.trim(),
         dataReuniou,
+        horaReuniou: horaReuniou || null,
         local: local.trim(),
         pautas: cleanPautas,
         participantesPresentes: participantes,
@@ -387,6 +410,160 @@ export default function AtasPage() {
       alert('Erro ao processar comentário.');
     }
   };
+
+  // Insere HTML no cursor atual de um editor contentEditable
+  const insertHtmlAtCursor = (ref: React.RefObject<HTMLDivElement | null>, html: string) => {
+    if (ref.current) {
+      ref.current.focus();
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        if (ref.current.contains(range.commonAncestorContainer)) {
+          range.deleteContents();
+          
+          const el = document.createElement('div');
+          el.innerHTML = html;
+          const frag = document.createDocumentFragment();
+          let node;
+          while ((node = el.firstChild)) {
+            frag.appendChild(node);
+          }
+          range.insertNode(frag);
+          
+          // Move cursor para o final
+          range.collapse(false);
+          selection.removeAllRanges();
+          selection.addRange(range);
+          
+          // Atualiza estado respectivo
+          if (ref === relatorioEditorRef) {
+            setRelatorio(ref.current.innerHTML);
+          } else if (ref === consideracoesEditorRef) {
+            setConsideracoes(ref.current.innerHTML);
+          }
+          return;
+        }
+      }
+      // Se não tiver seleção ou cursor focado no editor, apenas anexa
+      ref.current.innerHTML += html;
+      if (ref === relatorioEditorRef) {
+        setRelatorio(ref.current.innerHTML);
+      } else if (ref === consideracoesEditorRef) {
+        setConsideracoes(ref.current.innerHTML);
+      }
+    }
+  };
+
+  // Puxa pauta selecionada para o editor de relatório
+  const handlePullPautaToReport = (idx: number) => {
+    const pauta = pautas[idx];
+    if (pauta && pauta.descricao.trim()) {
+      const pautaHtml = `<p><strong>Item ${String(idx + 1).padStart(2, '0')}: ${pauta.descricao.trim()}</strong></p>`;
+      insertHtmlAtCursor(relatorioEditorRef, pautaHtml);
+    }
+  };
+
+  // Monitora digitação do caractere @ para autocomplete
+  const handleEditorKeyUp = (e: React.KeyboardEvent<HTMLDivElement>, ref: React.RefObject<HTMLDivElement | null>) => {
+    setActiveEditorForMention(ref);
+    
+    if (e.key === 'Escape') {
+      setShowMentionDropdown(false);
+      return;
+    }
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    const range = selection.getRangeAt(0);
+    
+    const node = range.startContainer;
+    if (node.nodeType !== Node.TEXT_NODE) {
+      setShowMentionDropdown(false);
+      return;
+    }
+    
+    const text = node.textContent || '';
+    const offset = range.startOffset;
+    
+    const textBeforeCursor = text.substring(0, offset);
+    const atIndex = textBeforeCursor.lastIndexOf('@');
+    
+    if (atIndex !== -1 && atIndex >= textBeforeCursor.length - 15) {
+      const charBeforeAt = atIndex > 0 ? textBeforeCursor[atIndex - 1] : ' ';
+      if (/\s/.test(charBeforeAt)) {
+        const query = textBeforeCursor.substring(atIndex + 1);
+        setMentionSearch(query);
+        
+        try {
+          const rect = range.getBoundingClientRect();
+          setMentionCoords({
+            top: rect.bottom + window.scrollY,
+            left: rect.left + window.scrollX
+          });
+          setShowMentionDropdown(true);
+          return;
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    }
+    setShowMentionDropdown(false);
+  };
+
+  // Seleciona menção e insere no editor de forma estilizada
+  const handleSelectMention = (pNome: string) => {
+    if (!activeEditorForMention || !activeEditorForMention.current) return;
+    
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    const range = selection.getRangeAt(0);
+    
+    const node = range.startContainer;
+    const text = node.textContent || '';
+    const offset = range.startOffset;
+    
+    const textBeforeCursor = text.substring(0, offset);
+    const atIndex = textBeforeCursor.lastIndexOf('@');
+    
+    if (atIndex !== -1) {
+      range.setStart(node, atIndex);
+      range.setEnd(node, offset);
+      range.deleteContents();
+      
+      const span = document.createElement('span');
+      span.className = 'text-blue-600 font-bold';
+      span.style.color = '#1d4ed8';
+      span.style.fontWeight = 'bold';
+      span.textContent = pNome;
+      
+      range.insertNode(span);
+      
+      const space = document.createTextNode(' ');
+      span.parentNode?.insertBefore(space, span.nextSibling);
+      
+      const newRange = document.createRange();
+      newRange.setStartAfter(space);
+      newRange.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+      
+      if (activeEditorForMention === relatorioEditorRef) {
+        setRelatorio(activeEditorForMention.current.innerHTML);
+      } else if (activeEditorForMention === consideracoesEditorRef) {
+        setConsideracoes(activeEditorForMention.current.innerHTML);
+      }
+    }
+    setShowMentionDropdown(false);
+  };
+
+  // Fecha popup de menções ao clicar fora
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setShowMentionDropdown(false);
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, []);
 
   // Manipuladores de Pautas
   const handleAddPautaRow = () => setPautas(prev => [...prev, { descricao: '', abordada: false }]);
@@ -519,6 +696,11 @@ export default function AtasPage() {
     (a.local && a.local.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  // Filtra candidatos para menção no autocomplete
+  const mentionCandidates = participantes.filter(p => 
+    p.nome.toLowerCase().includes(mentionSearch.toLowerCase())
+  );
+
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
       {/* Sidebar - Ocultada na impressão */}
@@ -605,6 +787,18 @@ export default function AtasPage() {
             size: A4;
             margin: 1.2cm;
           }
+        }
+        /* Estilos do Editor de Texto Rico na Tela e Impressão */
+        .document-canvas ul, .document-canvas ol {
+          padding-left: 20px !important;
+          margin-top: 4px !important;
+          margin-bottom: 4px !important;
+        }
+        .document-canvas ul {
+          list-style-type: disc !important;
+        }
+        .document-canvas ol {
+          list-style-type: decimal !important;
         }
       `}} />
 
@@ -878,17 +1072,28 @@ export default function AtasPage() {
                       </th>
                     </tr>
                     
-                    {/* METADADOS (DATA E LOCAL) */}
+                    {/* METADADOS (DATA, HORA E LOCAL) */}
                     <tr className="bg-white border-b-2 border-slate-900 text-slate-800">
                       <td colspan="2" className="p-2.5 border-r border-slate-900 font-bold w-1/2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-slate-800 font-black">DATA:</span>
-                          <input 
-                            type="date"
-                            value={dataReuniou}
-                            onChange={e => setDataReuniou(e.target.value)}
-                            className="bg-transparent border-none outline-none font-bold text-slate-800 w-full focus:ring-0"
-                          />
+                        <div className="flex gap-4 items-center flex-wrap">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-slate-800 font-black">DATA:</span>
+                            <input 
+                              type="date"
+                              value={dataReuniou}
+                              onChange={e => setDataReuniou(e.target.value)}
+                              className="bg-transparent border-none outline-none font-bold text-slate-800 w-28 focus:ring-0"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1.5 border-l border-slate-300 pl-4">
+                            <span className="text-slate-800 font-black">HORA:</span>
+                            <input 
+                              type="time"
+                              value={horaReuniou}
+                              onChange={e => setHoraReuniou(e.target.value)}
+                              className="bg-transparent border-none outline-none font-bold text-slate-800 w-16 focus:ring-0"
+                            />
+                          </div>
                         </div>
                       </td>
                       <td colspan="3" className="p-2.5 font-bold w-1/2">
@@ -1044,6 +1249,17 @@ export default function AtasPage() {
                                 placeholder="Digite a pauta principal da reunião..."
                                 className={`flex-1 bg-transparent border-none outline-none font-semibold text-xs focus:ring-0 focus:outline-none ${p.abordada ? 'line-through text-slate-400 font-medium' : 'text-slate-800'}`}
                               />
+                              {p.descricao.trim() && (
+                                <button
+                                  type="button"
+                                  onClick={() => handlePullPautaToReport(idx)}
+                                  className="p-1.5 text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-50 rounded-lg transition-all cursor-pointer no-print flex items-center gap-1 text-[10px] font-bold shrink-0"
+                                  title="Puxar Pauta para o Relatório"
+                                >
+                                  <FileSymlink size={12} className="text-[#1B4D3E]" />
+                                  <span>Puxar</span>
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => handleRemovePautaRow(idx)}
@@ -1112,6 +1328,22 @@ export default function AtasPage() {
                               title="Tachado"
                             >
                               <Strikethrough size={13} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => execEditorCmd(relatorioEditorRef, 'insertUnorderedList')}
+                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                              title="Marcadores"
+                            >
+                              <List size={13} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => execEditorCmd(relatorioEditorRef, 'insertOrderedList')}
+                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                              title="Numeração"
+                            >
+                              <ListOrdered size={13} />
                             </button>
                           </div>
 
@@ -1183,6 +1415,7 @@ export default function AtasPage() {
                           ref={relatorioEditorRef}
                           contentEditable
                           onInput={e => setRelatorio(e.currentTarget.innerHTML)}
+                          onKeyUp={e => handleEditorKeyUp(e, relatorioEditorRef)}
                           className="min-h-[220px] p-4 bg-white border border-slate-200 focus:bg-slate-50/10 focus:border-slate-300 outline-none text-slate-800 text-xs font-semibold leading-relaxed"
                           style={{ whiteSpace: 'pre-wrap' }}
                           placeholder="Digite aqui as atividades tratadas na reunião (Ex: RELAÇÃO DE ATIVIDADES da equipe...)"
@@ -1318,6 +1551,22 @@ export default function AtasPage() {
                             >
                               <Strikethrough size={13} />
                             </button>
+                            <button
+                              type="button"
+                              onClick={() => execEditorCmd(consideracoesEditorRef, 'insertUnorderedList')}
+                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                              title="Marcadores"
+                            >
+                              <List size={13} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => execEditorCmd(consideracoesEditorRef, 'insertOrderedList')}
+                              className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                              title="Numeração"
+                            >
+                              <ListOrdered size={13} />
+                            </button>
                           </div>
 
                           <div className="flex gap-0.5 px-2">
@@ -1388,6 +1637,7 @@ export default function AtasPage() {
                           ref={consideracoesEditorRef}
                           contentEditable
                           onInput={e => setConsideracoes(e.currentTarget.innerHTML)}
+                          onKeyUp={e => handleEditorKeyUp(e, consideracoesEditorRef)}
                           className="min-h-[140px] p-4 bg-white border border-slate-200 focus:bg-slate-50/10 focus:border-slate-300 outline-none text-slate-800 text-xs font-semibold leading-relaxed"
                           style={{ whiteSpace: 'pre-wrap' }}
                           placeholder="Digite aqui as considerações finais e observações..."
@@ -1674,6 +1924,32 @@ export default function AtasPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* DROPDOWN DE MENÇÕES @ */}
+      {showMentionDropdown && mentionCandidates.length > 0 && (
+        <div 
+          className="fixed bg-white border border-slate-200 rounded-xl shadow-xl z-[9999] overflow-hidden max-h-[200px] w-64 divide-y divide-slate-100 no-print"
+          style={{ top: `${mentionCoords.top}px`, left: `${mentionCoords.left}px` }}
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="bg-slate-50 p-2 text-[9px] font-black text-slate-400 uppercase tracking-wider">Mencionar Participante</div>
+          <div className="overflow-y-auto max-h-[160px] divide-y divide-slate-100">
+            {mentionCandidates.map((p, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => handleSelectMention(p.nome)}
+                className="w-full text-left px-3.5 py-2 hover:bg-[#1B4D3E]/10 hover:text-[#1B4D3E] text-xs font-bold text-slate-700 transition-colors flex items-center gap-2 cursor-pointer"
+              >
+                <div className="w-5 h-5 bg-[#1B4D3E]/10 text-[#1B4D3E] font-black text-[9px] rounded-full flex items-center justify-center uppercase shrink-0">
+                  {p.nome ? p.nome.split(' ').map((n) => n ? n[0] : '').slice(0, 2).join('').toUpperCase() : '?'}
+                </div>
+                <span className="truncate font-semibold">{p.nome || 'Convidado Sem Nome'}</span>
+              </button>
+            ))}
           </div>
         </div>
       )}

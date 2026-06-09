@@ -697,6 +697,7 @@ model Ata {
   id                      String      @id @default(cuid())
   titulo                  String
   dataReuniou             DateTime
+  horaReuniou             String?     // Horário da reunião (ex: "10:30")
   local                   String?
   pautas                  Json        // Array de pautas principais: ["Pauta 1", "Pauta 2"]
   participantesPresentes  Json        // Array de participantes: [{ userId: "...", nome: "...", departamento: "...", email: "...", presente: boolean }]

@@ -163,6 +163,7 @@ export async function saveAta(data: {
   id?: string;
   titulo: string;
   dataReuniou: string | Date;
+  horaReuniou?: string | null;
   local?: string;
   pautas: any[];
   participantesPresentes: Participante[];
@@ -185,6 +186,14 @@ export async function saveAta(data: {
 }) {
   const user = await getLoggedUser();
   if (!user) return { success: false, error: 'Não autenticado' };
+
+  // Validação backend de responsáveis nas ações
+  if (data.acoes && data.acoes.length > 0) {
+    const invalid = data.acoes.some(a => !a.responsavelId || a.responsavelId.trim() === '');
+    if (invalid) {
+      return { success: false, error: 'Todas as ações cadastradas precisam ter um responsável selecionado.' };
+    }
+  }
 
   try {
     const dataReuniouDate = new Date(data.dataReuniou);
@@ -209,6 +218,7 @@ export async function saveAta(data: {
         data: {
           titulo: data.titulo,
           dataReuniou: dataReuniouDate,
+          horaReuniou: data.horaReuniou || null,
           local: data.local || null,
           pautas: data.pautas,
           participantesPresentes: data.participantesPresentes as any,
@@ -299,6 +309,7 @@ export async function saveAta(data: {
         data: {
           titulo: data.titulo,
           dataReuniou: dataReuniouDate,
+          horaReuniou: data.horaReuniou || null,
           local: data.local || null,
           pautas: data.pautas,
           participantesPresentes: data.participantesPresentes as any,

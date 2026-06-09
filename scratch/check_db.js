@@ -1,19 +1,22 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+
 async function main() {
-  const p = await prisma.proposta.findFirst({
-    where: { numero: 10 },
-    include: {
-      versoes: true
-    }
+  console.log('--- BUSCANDO TENANTS ---');
+  const tenants = await prisma.tenant.findMany({
+    select: { id: true, nomeFantasia: true, cnpj: true }
   });
-  if (p) {
-    console.log("Proposta:", p.id, p.numero);
-    p.versoes.forEach(v => {
-      console.log(`Versao ${v.versao}: id=${v.id}, precoVenda=${v.precoVenda}, dataCriacao=${v.dataCriacao}`);
-    });
-  } else {
-    console.log("Proposta 10 nao encontrada");
-  }
+  console.log(JSON.stringify(tenants, null, 2));
+
+  console.log('\n--- BUSCANDO USUÁRIOS ---');
+  const users = await prisma.user.findMany({
+    select: { id: true, nome: true, email: true, tenantId: true, role: true }
+  });
+  console.log(JSON.stringify(users, null, 2));
 }
-main().catch(console.error).finally(() => prisma.$disconnect());
+
+main()
+  .catch(e => console.error(e))
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
