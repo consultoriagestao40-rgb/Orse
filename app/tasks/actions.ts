@@ -598,6 +598,9 @@ export async function toggleTaskActivity(activityId: string, concluida: boolean)
 
     revalidatePath('/tasks');
     return { success: true, activity };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
 }
 
 export async function updateTaskActivity(
