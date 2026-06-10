@@ -445,19 +445,64 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
   todayDate.setHours(0, 0, 0, 0);
 
   const getDeadlineStatus = (venc: string | null, status: string) => {
-    if (!venc) return { text: 'Sem prazo', color: 'text-slate-400' };
+    if (!venc) return { 
+      text: 'Sem prazo', 
+      color: 'text-slate-400',
+      badgeClass: 'bg-slate-50 text-slate-400 border-slate-200/50'
+    };
+    
     const date = new Date(venc);
+    const dateCompare = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const todayCompare = new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate());
+    
     if (status === 'CONCLUIDA' || status === 'CONCLUÍDO') {
-      return { text: 'Concluída', color: 'text-emerald-500 font-bold' };
+      return { 
+        text: 'Concluída', 
+        color: 'text-emerald-500 font-bold',
+        badgeClass: 'bg-emerald-50 text-emerald-600 border-emerald-100 font-semibold'
+      };
     }
-    if (date < todayDate) {
-      return { text: `Atrasada (${date.toLocaleDateString('pt-BR')})`, color: 'text-rose-600 font-bold' };
+    
+    if (dateCompare < todayCompare) {
+      return { 
+        text: `Atrasada (${date.toLocaleDateString('pt-BR')})`, 
+        color: 'text-rose-600 font-bold',
+        badgeClass: 'bg-rose-50 text-rose-600 border-rose-100 font-semibold animate-pulse'
+      };
     }
-    const diffDays = Math.ceil((date.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return { text: 'Hoje', color: 'text-amber-500 font-black' };
-    if (diffDays === 1) return { text: 'Amanhã', color: 'text-blue-500 font-bold' };
-    if (diffDays <= 7) return { text: `Esta semana (${date.toLocaleDateString('pt-BR')})`, color: 'text-slate-600' };
-    return { text: date.toLocaleDateString('pt-BR'), color: 'text-slate-500' };
+    
+    if (dateCompare.getTime() === todayCompare.getTime()) {
+      return { 
+        text: 'Hoje', 
+        color: 'text-amber-500 font-black',
+        badgeClass: 'bg-amber-50 text-amber-600 border-amber-100 font-semibold'
+      };
+    }
+    
+    const diffTime = dateCompare.getTime() - todayCompare.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) {
+      return { 
+        text: 'Amanhã', 
+        color: 'text-blue-500 font-bold',
+        badgeClass: 'bg-blue-50 text-blue-600 border-blue-100 font-semibold'
+      };
+    }
+    
+    if (diffDays <= 7) {
+      return { 
+        text: `Esta semana (${date.toLocaleDateString('pt-BR')})`, 
+        color: 'text-slate-600',
+        badgeClass: 'bg-slate-50 text-slate-650 border-slate-200/50 font-semibold'
+      };
+    }
+    
+    return { 
+      text: date.toLocaleDateString('pt-BR'), 
+      color: 'text-slate-500',
+      badgeClass: 'bg-slate-50 text-slate-550 border-slate-200/40 font-semibold'
+    };
   };
 
   // Create Task Submit
@@ -716,8 +761,11 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                             {t.prioridade}
                           </span>
                         </td>
-                        <td className={`py-3.5 px-4 text-xs font-bold ${dl.color}`}>
-                          {dl.text}
+                        <td className="py-3.5 px-4">
+                          <span className={`px-2 py-0.5 rounded-lg border text-[9px] font-bold flex items-center gap-1 w-fit transition-all ${dl.badgeClass}`}>
+                            <Calendar size={10} />
+                            <span>{dl.text}</span>
+                          </span>
                         </td>
                       </tr>
                     );
@@ -1169,9 +1217,9 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                                           )}
 
                                           <div className="flex justify-between items-center border-t border-slate-100 pt-2 text-[10px] font-semibold text-slate-500">
-                                            <span className={`flex items-center gap-1 ${dl.color}`}>
-                                              <Calendar size={11} />
-                                              <span className="text-[9px] font-bold">{dl.text}</span>
+                                            <span className={`px-2 py-0.5 rounded-lg border text-[9px] font-bold flex items-center gap-1 transition-all ${dl.badgeClass}`}>
+                                              <Calendar size={10} />
+                                              <span>{dl.text}</span>
                                             </span>
                                             <div className="flex items-center gap-1 text-slate-550 shrink-0">
                                               {t.responsavel?.avatarUrl ? (
