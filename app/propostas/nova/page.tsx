@@ -1305,14 +1305,8 @@ function PropostaEditor() {
                        </td>
                        <td className="py-2 px-4 text-right w-24">
                           <div className="flex items-center justify-end gap-1">
-                             {viewMode === 'document' ? (
-                                <span className="font-bold text-slate-800">{val}%</span>
-                             ) : (
-                                <>
-                                  <input type="number" step="0.01" className="w-16 bg-white border border-slate-300 text-right font-medium text-slate-800 focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] outline-none rounded px-1 py-0.5" value={val} onChange={(e) => setDados({...dados, [key]: (e.target.value === '' ? '' : Number(e.target.value))})} />
-                                  <span className="text-slate-500">%</span>
-                                </>
-                             )}
+                             <input type="number" step="0.01" className="w-16 bg-white border border-slate-300 text-right font-medium text-slate-800 focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E] outline-none rounded px-1 py-0.5" value={val} onChange={(e) => setDados({...dados, [key]: (e.target.value === '' ? '' : Number(e.target.value))})} />
+                             <span className="text-slate-500">%</span>
                           </div>
                        </td>
                     </tr>
