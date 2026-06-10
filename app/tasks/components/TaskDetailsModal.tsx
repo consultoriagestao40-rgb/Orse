@@ -637,6 +637,20 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
 
           {/* Sidebar Metadata (Col Right) */}
           <div className="w-full lg:w-72 space-y-5 bg-slate-50 p-5 rounded-2xl border border-slate-200 shrink-0 h-fit">
+            {/* Criador & Data de Criação */}
+            <div className="bg-white border border-slate-250/60 rounded-xl p-3 space-y-2.5 shadow-2xs">
+              <div className="flex justify-between items-center text-[10px] font-semibold text-slate-500">
+                <span className="font-bold text-slate-400 uppercase tracking-wider">Criada Por</span>
+                <span className="font-bold text-slate-700">{task.criador?.nome || 'Sistema'}</span>
+              </div>
+              <div className="flex justify-between items-center text-[10px] font-semibold text-slate-500 border-t border-slate-100 pt-2.5">
+                <span className="font-bold text-slate-400 uppercase tracking-wider">Criada Em</span>
+                <span className="font-bold text-slate-700">
+                  {task.createdAt ? new Date(task.createdAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
+                </span>
+              </div>
+            </div>
+
             {/* Stage */}
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Etapa no Kanban</label>
@@ -911,6 +925,41 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Complete / Reopen Task Button */}
+            <div className="pt-2">
+              {task.status === 'CONCLUIDA' ? (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const res = await updateTask(task.id, { status: 'EM_ANDAMENTO' });
+                    if (res.success) {
+                      refreshData(true);
+                    } else {
+                      showCustomAlert('Erro', res.error || 'Erro ao reabrir tarefa');
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 border border-[#1B4D3E]/30 bg-[#1B4D3E]/5 text-[#1B4D3E] rounded-xl text-xs font-bold hover:bg-[#1B4D3E]/10 transition-colors border-dashed cursor-pointer"
+                >
+                  <Plus size={13} /> Reabrir Tarefa
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const res = await updateTask(task.id, { status: 'CONCLUIDA' });
+                    if (res.success) {
+                      refreshData(true);
+                    } else {
+                      showCustomAlert('Erro', res.error || 'Erro ao concluir tarefa');
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 border border-emerald-300 bg-emerald-50/20 text-emerald-650 rounded-xl text-xs font-bold hover:bg-emerald-50 transition-colors border-dashed cursor-pointer"
+                >
+                  <Check size={13} className="stroke-[3]" /> Concluir Tarefa
+                </button>
+              )}
             </div>
 
             {/* Delete Task Button */}
