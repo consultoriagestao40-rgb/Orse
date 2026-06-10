@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact, reorderStages, completeActivity, archiveLead } from './actions';
-import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign, TrendingUp, Archive } from 'lucide-react';
+import { getLeads, getLeadStages, updateLeadStage, createLead, convertLeadToClient, addLeadHistory, updateLeadStageColor, createLeadStage, deleteLeadStage, getUsersForFilter, updateLeadStageName, deleteLead, updateLeadData, changeLeadOwner, addLeadShare, removeLeadShare, addLeadContact, removeLeadContact, reorderStages, completeActivity, archiveLead, getPipelines, createPipeline, renamePipeline, deletePipeline } from './actions';
+import { Plus, User, Users, Phone, Mail, Building, Clock, ChevronRight, ChevronLeft, CheckCircle2, X, Trash2, MapPin, Navigation, CalendarDays, Edit2, Save, Search, MessageSquare, MessageCircle, UserCog, Target, LayoutList, LayoutGrid, Eye, Smartphone, DollarSign, TrendingUp, Archive, ChevronDown } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSegmentos, createSegmento } from '@/app/admin/settings/actions';
 import LeadDetailsTabs from './components/LeadDetailsTabs';
@@ -569,6 +569,13 @@ export default function LeadsKanban() {
   const [stages, setStages] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
   const [segmentos, setSegmentos] = useState<any[]>([]);
+  const [pipelines, setPipelines] = useState<any[]>([]);
+  const [activePipelineId, setActivePipelineId] = useState<string>('');
+  const [isPipelineDropdownOpen, setIsPipelineDropdownOpen] = useState(false);
+  const [showPipelineModal, setShowPipelineModal] = useState(false);
+  const [pipelineModalType, setPipelineModalType] = useState<'create' | 'rename'>('create');
+  const [pipelineModalVal, setPipelineModalVal] = useState('');
+  const [targetPipelineId, setTargetPipelineId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -768,14 +775,36 @@ export default function LeadsKanban() {
 
   useEffect(() => {
     if (stages.length > 0) {
-      fetchFilteredLeads();
+      fetchFilteredLeads(false, activePipelineId);
     }
-  }, [datePreset, startDate, endDate, userFilter]);
+  }, [datePreset, startDate, endDate, userFilter, activePipelineId]);
 
-  const fetchData = async (silent = false) => {
+  const fetchData = async (silent = false, customActivePipelineId?: string) => {
     if (!silent) setLoading(true);
+
+    let pipeId = customActivePipelineId || activePipelineId;
+
+    let pipes = pipelines;
+    if (pipes.length === 0 || customActivePipelineId) {
+      const pipesRes = await getPipelines();
+      if (pipesRes.success && pipesRes.pipelines) {
+        pipes = pipesRes.pipelines;
+        setPipelines(pipes);
+        
+        if (!pipeId) {
+          const savedPipeId = localStorage.getItem('orse_active_pipeline_id');
+          const hasSaved = pipes.some((p: any) => p.id === savedPipeId);
+          pipeId = hasSaved ? (savedPipeId || '') : (pipes[0]?.id || '');
+          setActivePipelineId(pipeId);
+          if (pipeId) {
+            localStorage.setItem('orse_active_pipeline_id', pipeId);
+          }
+        }
+      }
+    }
+
     const [stagesRes, segmentosRes, usersRes] = await Promise.all([
-      getLeadStages(),
+      getLeadStages(pipeId || undefined),
       getSegmentos(),
       getUsersForFilter(),
       !silent ? new Promise(resolve => setTimeout(resolve, 2000)) : Promise.resolve()
@@ -785,13 +814,15 @@ export default function LeadsKanban() {
     else if (segmentosRes && segmentosRes.success) setSegmentos(segmentosRes.segmentos);
     if (usersRes.success) setFilterUsers(usersRes.users);
     
-    await fetchFilteredLeads(silent);
+    await fetchFilteredLeads(silent, pipeId);
   };
 
-  const fetchFilteredLeads = async (silent = false) => {
+  const fetchFilteredLeads = async (silent = false, pipeId?: string) => {
     if (!silent) setLoading(true);
     let sDate = startDate;
     let eDate = endDate;
+
+    const currentPipeId = pipeId || activePipelineId;
 
     if (datePreset !== 'custom' && datePreset !== 'all') {
       const today = new Date();
@@ -817,7 +848,7 @@ export default function LeadsKanban() {
       eDate = '';
     }
 
-    const res = await getLeads({ startDate: sDate, endDate: eDate, userId: userFilter });
+    const res = await getLeads({ startDate: sDate, endDate: eDate, userId: userFilter, pipelineId: currentPipeId || undefined });
     if (res.success) {
       setLeads(res.leads);
 
@@ -873,7 +904,7 @@ export default function LeadsKanban() {
       type: 'prompt',
       onConfirm: async (nome) => {
         if (!nome.trim()) return;
-        const res = await createLeadStage(nome.trim(), insertAfterId);
+        const res = await createLeadStage(nome.trim(), activePipelineId, insertAfterId);
         if (res.success) {
           fetchData();
         } else {
@@ -1294,6 +1325,7 @@ export default function LeadsKanban() {
     
     await createLead({ 
       ...newLeadForm,
+      pipelineId: activePipelineId,
       valorEst: newLeadForm.valorEst ? parseFloat(newLeadForm.valorEst) || 0 : 0
     });
     setShowNewLead(false);
@@ -1567,9 +1599,104 @@ export default function LeadsKanban() {
     <div className="flex flex-col h-screen bg-slate-50 overflow-hidden">
       <div className="flex-1 overflow-auto min-h-0 bg-slate-50">
         <div className="p-4 md:py-6 md:pl-4 md:pr-1 bg-white border-b border-slate-200 flex flex-col lg:flex-row justify-between lg:items-center gap-4 shrink-0 relative z-30">
-        <div>
-          <h1 className="text-xl md:text-2xl font-black text-slate-800">Pipeline de Leads</h1>
+        <div className="relative">
+          <button
+            onClick={() => setIsPipelineDropdownOpen(!isPipelineDropdownOpen)}
+            className="flex items-center gap-2 text-xl md:text-2xl font-black text-slate-800 hover:text-[#1B4D3E] transition-colors group cursor-pointer focus:outline-none bg-transparent border-none p-0 text-left"
+          >
+            <span>{pipelines.find(p => p.id === activePipelineId)?.nome || 'Pipeline de Leads'}</span>
+            <ChevronDown size={20} className="text-slate-400 group-hover:text-[#1B4D3E] transition-colors" />
+          </button>
           <p className="text-xs md:text-sm text-slate-500">Gerencie seus leads e prospectos</p>
+
+          {isPipelineDropdownOpen && (
+            <>
+              <div 
+                className="fixed inset-0 z-40 bg-transparent" 
+                onClick={() => setIsPipelineDropdownOpen(false)}
+              />
+              <div className="absolute left-0 top-full mt-2 w-[280px] bg-white border border-slate-200 rounded-xl shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="px-2.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 mb-1">
+                  Seus Funis
+                </div>
+                <div className="max-h-[200px] overflow-y-auto space-y-0.5">
+                  {pipelines.map((p) => (
+                    <div
+                      key={p.id}
+                      onClick={() => {
+                        setActivePipelineId(p.id);
+                        localStorage.setItem('orse_active_pipeline_id', p.id);
+                        setIsPipelineDropdownOpen(false);
+                      }}
+                      className={`flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer transition-colors group/item ${
+                        p.id === activePipelineId
+                          ? 'bg-[#1B4D3E]/5 text-[#1B4D3E] font-bold'
+                          : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                      }`}
+                    >
+                      <span className="truncate text-xs flex-1">{p.nome}</span>
+                      <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 focus-within:opacity-100 hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPipelineModalType('rename');
+                            setTargetPipelineId(p.id);
+                            setPipelineModalVal(p.nome);
+                            setShowPipelineModal(true);
+                            setIsPipelineDropdownOpen(false);
+                          }}
+                          title="Renomear funil"
+                          className="p-1 text-slate-400 hover:text-slate-600 rounded hover:bg-slate-100 border-none bg-transparent cursor-pointer"
+                        >
+                          <Edit2 size={12} />
+                        </button>
+                        {pipelines.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (confirm(`Deseja realmente excluir o funil "${p.nome}"? Esta ação não pode ser desfeita.`)) {
+                                const res = await deletePipeline(p.id);
+                                if (res.success) {
+                                  const otherPipe = pipelines.find(other => other.id !== p.id);
+                                  if (otherPipe) {
+                                    setActivePipelineId(otherPipe.id);
+                                    localStorage.setItem('orse_active_pipeline_id', otherPipe.id);
+                                    fetchData(true, otherPipe.id);
+                                  } else {
+                                    fetchData(true);
+                                  }
+                                } else {
+                                  alert(res.error || 'Erro ao excluir pipeline');
+                                }
+                              }
+                            }}
+                            title="Excluir funil"
+                            className="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 border-none bg-transparent cursor-pointer"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t border-slate-100 mt-1.5 pt-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPipelineModalType('create');
+                      setPipelineModalVal('');
+                      setShowPipelineModal(true);
+                      setIsPipelineDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-bold text-[#1B4D3E] hover:bg-slate-50 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
+                  >
+                    <Plus size={14} /> Novo funil
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-start lg:justify-end bell-header-spacing">
           {/* Alternador de visualização */}
@@ -2804,6 +2931,71 @@ export default function LeadsKanban() {
               <CheckCircle2 size={24} />
             </div>
             <span className="text-white font-bold tracking-widest uppercase text-sm">Converter para FPV</span>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Pipeline CRUD (Criar/Renomear Funil) */}
+      {showPipelineModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-black text-slate-800">
+                {pipelineModalType === 'create' ? 'Novo Funil' : 'Renomear Funil'}
+              </h3>
+              <button onClick={() => setShowPipelineModal(false)} className="text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Nome do Funil *</label>
+                <input 
+                  required 
+                  value={pipelineModalVal} 
+                  onChange={e => setPipelineModalVal(e.target.value)} 
+                  className="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#1B4D3E]" 
+                  placeholder="Ex: Funil de Parcerias" 
+                />
+              </div>
+              <div className="flex gap-2 justify-end mt-4">
+                <button 
+                  onClick={() => setShowPipelineModal(false)} 
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 font-bold hover:bg-slate-50 cursor-pointer bg-white"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={async () => {
+                    if (!pipelineModalVal.trim()) return;
+                    if (pipelineModalType === 'create') {
+                      const res = await createPipeline(pipelineModalVal.trim());
+                      if (res.success && res.pipeline) {
+                        setShowPipelineModal(false);
+                        setPipelineModalVal('');
+                        setActivePipelineId(res.pipeline.id);
+                        localStorage.setItem('orse_active_pipeline_id', res.pipeline.id);
+                        fetchData(false, res.pipeline.id);
+                      } else {
+                        alert(res.error || 'Erro ao criar pipeline');
+                      }
+                    } else {
+                      const res = await renamePipeline(targetPipelineId, pipelineModalVal.trim());
+                      if (res.success) {
+                        setShowPipelineModal(false);
+                        setPipelineModalVal('');
+                        fetchData(true);
+                      } else {
+                        alert(res.error || 'Erro ao renomear pipeline');
+                      }
+                    }
+                  }} 
+                  className="px-4 py-2 bg-[#1B4D3E] text-white rounded-xl font-bold hover:bg-[#13382d] cursor-pointer border-none"
+                >
+                  Salvar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

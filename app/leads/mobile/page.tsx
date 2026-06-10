@@ -11,7 +11,11 @@ import {
   getComments,
   updateLeadData,
   changeLeadOwner,
-  getUsersForFilter
+  getUsersForFilter,
+  getPipelines,
+  createPipeline,
+  renamePipeline,
+  deletePipeline
 } from '../actions';
 import { 
   getChatList, 
@@ -41,7 +45,8 @@ import {
   RefreshCw,
   Plus,
   LogOut,
-  Target
+  Target,
+  ChevronDown
 } from 'lucide-react';
 
 const tailwindColorMap: { [key: string]: string } = {
@@ -139,6 +144,9 @@ export default function MobileCRM() {
   const [stages, setStages] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
   const [filteredLeads, setFilteredLeads] = useState<any[]>([]);
+  const [pipelines, setPipelines] = useState<any[]>([]);
+  const [activePipelineId, setActivePipelineId] = useState<string>('');
+  const [isPipelineDropdownOpen, setIsPipelineDropdownOpen] = useState(false);
   const [selectedStageId, setSelectedStageId] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingLeads, setLoadingLeads] = useState(true);
@@ -209,11 +217,31 @@ export default function MobileCRM() {
   }, [router]);
 
   // Load CRM Data (Leads, Stages, Segments)
-  const loadCRMData = async () => {
+  const loadCRMData = async (pipeId?: string) => {
     setLoadingLeads(true);
     try {
-      const stagesRes = await getLeadStages();
-      const leadsRes = await getLeads();
+      let currentPipeId = pipeId || activePipelineId;
+
+      let pipes = pipelines;
+      if (pipes.length === 0) {
+        const pipesRes = await getPipelines();
+        if (pipesRes.success && pipesRes.pipelines) {
+          pipes = pipesRes.pipelines;
+          setPipelines(pipes);
+          if (!currentPipeId) {
+            const savedPipeId = localStorage.getItem('orse_active_pipeline_id');
+            const hasSaved = pipes.some((p: any) => p.id === savedPipeId);
+            currentPipeId = hasSaved ? (savedPipeId || '') : (pipes[0]?.id || '');
+            setActivePipelineId(currentPipeId);
+            if (currentPipeId) {
+              localStorage.setItem('orse_active_pipeline_id', currentPipeId);
+            }
+          }
+        }
+      }
+
+      const stagesRes = await getLeadStages(currentPipeId || undefined);
+      const leadsRes = await getLeads({ pipelineId: currentPipeId || undefined });
       const segmentsRes = await getSegmentos();
       const usersRes = await getUsersForFilter();
 
@@ -246,9 +274,9 @@ export default function MobileCRM() {
 
   useEffect(() => {
     if (currentUser) {
-      loadCRMData();
+      loadCRMData(activePipelineId);
     }
-  }, [currentUser]);
+  }, [currentUser, activePipelineId]);
 
   // Filter leads dynamically based on search query
   useEffect(() => {
@@ -460,7 +488,8 @@ export default function MobileCRM() {
         valorEst: newLeadForm.valorEst ? parseFloat(newLeadForm.valorEst) : 0,
         endereco: newLeadForm.endereco,
         cidade: newLeadForm.cidade,
-        uf: newLeadForm.uf
+        uf: newLeadForm.uf,
+        pipelineId: activePipelineId
       });
 
       if (res.success) {
@@ -590,7 +619,8 @@ export default function MobileCRM() {
           segmento: lead.segmento,
           site: lead.site,
           porte: lead.porte,
-          avaliacoes: lead.avaliacoes
+          avaliacoes: lead.avaliacoes,
+          pipelineId: activePipelineId
         });
         if (res.success) injectedCount++;
       }
@@ -634,8 +664,47 @@ export default function MobileCRM() {
             >
               <ArrowLeft size={18} />
             </button>
-            <div>
-              <h1 className="text-sm font-black tracking-tight uppercase">SmartBid</h1>
+            <div className="relative">
+              <button 
+                onClick={() => setIsPipelineDropdownOpen(!isPipelineDropdownOpen)}
+                className="flex items-center gap-1.5 text-sm font-black tracking-tight uppercase text-white hover:text-emerald-450 bg-transparent border-none p-0 cursor-pointer text-left"
+              >
+                <span>{pipelines.find(p => p.id === activePipelineId)?.nome || 'SmartBid'}</span>
+                <ChevronDown size={14} className="text-slate-400" />
+              </button>
+
+              {isPipelineDropdownOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40 bg-transparent" 
+                    onClick={() => setIsPipelineDropdownOpen(false)}
+                  />
+                  <div className="absolute left-0 top-full mt-2 w-[240px] bg-slate-900 border border-slate-800 rounded-xl shadow-xl p-2 z-50 text-slate-200">
+                    <div className="px-2 py-1 text-[9px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 mb-1">
+                      Seus Funis
+                    </div>
+                    <div className="max-h-[160px] overflow-y-auto space-y-0.5">
+                      {pipelines.map((p) => (
+                        <div
+                          key={p.id}
+                          onClick={() => {
+                            setActivePipelineId(p.id);
+                            localStorage.setItem('orse_active_pipeline_id', p.id);
+                            setIsPipelineDropdownOpen(false);
+                          }}
+                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors ${
+                            p.id === activePipelineId
+                              ? 'bg-emerald-500/10 text-emerald-400 font-bold'
+                              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                          }`}
+                        >
+                          <span className="truncate text-xs flex-1">{p.nome}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
           

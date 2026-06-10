@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { ensureDefaultPipeline } from '@/app/leads/actions';
  
 export async function POST(req: Request) {
   try {
@@ -171,27 +172,33 @@ export async function POST(req: Request) {
           formattedPhone = `+${phone}`;
         }
  
-        // Buscar a primeira etapa do funil (com menor ordem)
+        // Garantir que a empresa possui pelo menos um pipeline e obter o pipeline
+        const pipeline = await ensureDefaultPipeline(tenantId);
+
+        // Buscar a primeira etapa desse pipeline (com menor ordem)
         let firstStage = await prisma.leadStage.findFirst({
+          where: { pipelineId: pipeline.id },
           orderBy: { ordem: 'asc' }
         });
- 
+  
         if (!firstStage) {
           firstStage = await prisma.leadStage.create({
             data: {
               nome: 'Sem Contato',
               ordem: 0,
-              color: 'bg-slate-100'
+              color: 'bg-slate-100',
+              pipelineId: pipeline.id
             }
           });
         }
- 
+  
         // Criar o Lead automaticamente no funil vinculado ao tenantId correto!
         const newLead = await prisma.lead.create({
           data: {
             nomeFantasia: `WhatsApp: ${formattedPhone}`,
             telefone: formattedPhone,
             stageId: firstStage.id,
+            pipelineId: pipeline.id,
             tenantId: tenantId
           }
         });

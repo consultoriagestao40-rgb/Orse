@@ -34,6 +34,7 @@ model Tenant {
   users                     User[]
   clients                   Client[]
   leads                     Lead[]
+  pipelines                 Pipeline[]
   propostas                 Proposta[]
   contratos                 Contrato[]
   produtos                  Produto[]
@@ -430,13 +431,26 @@ model SecaoDocumentoProposta {
   documento  DocumentoProposta @relation(fields: [documentoId], references: [id], onDelete: Cascade)
 }
 
-model LeadStage {
-  id        String   @id @default(cuid())
+model Pipeline {
+  id        String      @id @default(cuid())
   nome      String
-  ordem     Int      @default(0)
-  color     String   @default("bg-slate-100")
-  createdAt DateTime @default(now())
+  tenantId  String?
+  tenant    Tenant?     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  stages    LeadStage[]
   leads     Lead[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model LeadStage {
+  id         String    @id @default(cuid())
+  nome       String
+  ordem      Int       @default(0)
+  color      String    @default("bg-slate-100")
+  createdAt  DateTime  @default(now())
+  pipelineId String?
+  pipeline   Pipeline? @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  leads      Lead[]
 }
 
 model Lead {
@@ -454,6 +468,7 @@ model Lead {
   contatoNome  String?
   valorEst     Float         @default(0)
   stageId      String
+  pipelineId   String?
   assignedToId String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
@@ -461,6 +476,7 @@ model Lead {
   typingUpdatedAt DateTime?
 
   stage        LeadStage     @relation(fields: [stageId], references: [id])
+  pipeline     Pipeline?     @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
   assignedTo   User?         @relation(fields: [assignedToId], references: [id])
   history      LeadHistory[]
   shares       LeadShare[]
