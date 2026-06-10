@@ -36,6 +36,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
   const [actRespId, setActRespId] = useState('');
   const [actVencimento, setActVencimento] = useState('');
   const [isAddingActivity, setIsAddingActivity] = useState(false);
+  const [atividades, setAtividades] = useState<any[]>(task.atividades || []);
 
   // Participant/Observer select states
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>(
@@ -78,6 +79,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
     setSelectedParticipants(task.participantes?.map((p: any) => p.userId) || []);
     setSelectedObservers(task.observadores?.map((o: any) => o.userId) || []);
     setSelectedTags(task.tags?.map((t: any) => t.tagId) || []);
+    setAtividades(task.atividades || []);
   }, [task]);
 
   const loadTags = async () => {
@@ -157,8 +159,15 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
   };
 
   const handleToggleActivity = async (id: string, concluida: boolean) => {
-    await toggleTaskActivity(id, concluida);
-    refreshData(true);
+    // Optimistic update
+    setAtividades(prev => prev.map(act => act.id === id ? { ...act, concluida } : act));
+    try {
+      await toggleTaskActivity(id, concluida);
+      refreshData(true);
+    } catch (err) {
+      setAtividades(prev => prev.map(act => act.id === id ? { ...act, concluida: !concluida } : act));
+      alert('Erro ao atualizar atividade');
+    }
   };
 
   const handleDeleteActivity = async (id: string) => {
@@ -212,22 +221,36 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
 
   // Parse @mentions for display styling (removes @ and styles name blue)
   const renderCommentText = (texto: string) => {
-    const tokens = texto.split(/(@[a-zA-Z0-9À-ÿ\s]+?)(?=\s|$)/g);
-    return tokens.map((token, i) => {
-      if (token.startsWith('@')) {
-        const nome = token.substring(1);
-        // Validate if it is a real user in the system
-        const exists = users.some(u => u.nome.toLowerCase() === nome.toLowerCase());
-        if (exists) {
-          return (
-            <span key={i} className="text-blue-600 font-bold hover:underline cursor-pointer">
-              {nome}
-            </span>
-          );
+    if (!texto) return '';
+
+    const sortedUsers = [...users].sort((a, b) => b.nome.length - a.nome.length);
+    let parts: any[] = [texto];
+
+    for (const u of sortedUsers) {
+      const mention = `@${u.nome}`;
+      const newParts: any[] = [];
+
+      for (const part of parts) {
+        if (typeof part === 'string') {
+          const subparts = part.split(mention);
+          for (let i = 0; i < subparts.length; i++) {
+            newParts.push(subparts[i]);
+            if (i < subparts.length - 1) {
+              newParts.push(
+                <span key={`${u.id}-${i}`} className="text-blue-600 font-bold hover:underline cursor-pointer">
+                  {u.nome}
+                </span>
+              );
+            }
+          }
+        } else {
+          newParts.push(part);
         }
       }
-      return token;
-    });
+      parts = newParts;
+    }
+
+    return parts;
   };
 
   // File attachments handlers
@@ -378,7 +401,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                 </form>
               )}
 
-              {task.atividades && task.atividades.length > 0 ? (
+              {atividades && atividades.length > 0 ? (
                 <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
@@ -390,7 +413,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
-                      {task.atividades.map((act: any) => (
+                      {atividades.map((act: any) => (
                         <tr key={act.id} className="hover:bg-slate-50/50">
                           <td className="py-2.5 px-3 text-center">
                             <input 
