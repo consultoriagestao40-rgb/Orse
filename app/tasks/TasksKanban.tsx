@@ -750,6 +750,7 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
             <RefreshCw className="animate-spin text-[#1B4D3E] mb-3" size={36} />
             <span className="text-xs font-bold uppercase tracking-widest">Carregando tarefas...</span>
           </div>
+        ) : viewMode === 'lista' ? (
           /* ================= LIST VIEW ================= */
           <div className="p-4">
             <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-x-auto">
