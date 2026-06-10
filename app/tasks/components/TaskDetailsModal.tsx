@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, Calendar, User, Plus, Trash2, Paperclip, Send, 
   Tag, AlertTriangle, Users, Eye, History, MessageSquare,
-  CheckCircle2, AlertCircle, FileText, Download, Check, Edit2
+  CheckCircle2, AlertCircle, FileText, Download, Check, Edit2,
+  FileSpreadsheet, FileImage, File, Reply, CornerDownRight
 } from 'lucide-react';
 import { 
   updateTask, deleteTask, updateTaskParticipants, 
@@ -24,6 +25,23 @@ const themeColorsGrid = [
 const standardColors = [
   '#c00000', '#ff0000', '#ffc000', '#ffff00', '#92d050', '#00b050', '#00b0f0', '#0070c0', '#002060', '#7030a0'
 ];
+
+const getFileIcon = (filename: string, contentType: string) => {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  if (contentType.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext || '')) {
+    return { icon: <FileImage size={18} className="text-blue-500" />, bg: 'bg-blue-50 border-blue-100' };
+  }
+  if (ext === 'pdf') {
+    return { icon: <FileText size={18} className="text-rose-500" />, bg: 'bg-rose-50 border-rose-100' };
+  }
+  if (['xls', 'xlsx', 'csv'].includes(ext || '')) {
+    return { icon: <FileSpreadsheet size={18} className="text-emerald-600" />, bg: 'bg-emerald-50 border-emerald-100' };
+  }
+  if (['doc', 'docx', 'txt', 'rtf'].includes(ext || '')) {
+    return { icon: <FileText size={18} className="text-blue-600" />, bg: 'bg-blue-50/50 border-blue-100' };
+  }
+  return { icon: <File size={18} className="text-slate-400" />, bg: 'bg-slate-50 border-slate-200' };
+};
 
 interface TaskDetailsModalProps {
   task: any;
@@ -52,6 +70,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
   const [actVencimento, setActVencimento] = useState('');
   const [isAddingActivity, setIsAddingActivity] = useState(false);
   const [atividades, setAtividades] = useState<any[]>(task.atividades || []);
+  const [replyingTo, setReplyingTo] = useState<any>(null);
 
   // Participant/Observer select states
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>(
@@ -323,14 +342,28 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
     commentInputRef.current?.focus();
   };
 
+  const parseComment = (texto: string) => {
+    const match = texto.match(/^\[reply:([^\]]+)\]\s*(.*)$/s);
+    if (match) {
+      return { parentId: match[1], cleanText: match[2] };
+    }
+    return { parentId: null, cleanText: texto };
+  };
+
   const handleAddCommentSubmit = async (e: React.FormEvent) => {
     if (isCompleted) return;
     e.preventDefault();
     if (!commentText.trim()) return;
 
-    const res = await addTaskComment(task.id, commentText.trim());
+    let finalVal = commentText.trim();
+    if (replyingTo) {
+      finalVal = `[reply:${replyingTo.id}] ${commentText.trim()}`;
+    }
+
+    const res = await addTaskComment(task.id, finalVal);
     if (res.success) {
       setCommentText('');
+      setReplyingTo(null);
       refreshData(true);
     } else {
       showCustomAlert('Erro', res.error || 'Erro ao adicionar comentário');
@@ -741,17 +774,20 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
               </div>
 
               {task.attachments && task.attachments.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-2">
                   {task.attachments.map((file: any) => {
                     const isImg = file.tipo.startsWith('image/');
+                    const fileMeta = getFileIcon(file.nome, file.tipo);
+                    const hasBase64 = task.attachments.find((f: any) => f.id === file.id)?.base64Data;
+                    
                     return (
-                      <div key={file.id} className="p-3 border border-slate-200 rounded-2xl flex items-center justify-between bg-white hover:border-[#1B4D3E]/30 transition-colors shadow-xs">
+                      <div key={file.id} className="p-2.5 border border-slate-200 rounded-xl flex items-center justify-between bg-white hover:border-[#1B4D3E]/30 transition-colors shadow-xs">
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 shrink-0 overflow-hidden border border-slate-200">
-                            {isImg && task.attachments.find((f: any) => f.id === file.id)?.base64Data ? (
+                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 overflow-hidden border ${isImg && hasBase64 ? 'border-slate-200 bg-slate-100' : fileMeta.bg}`}>
+                            {isImg && hasBase64 ? (
                               <img src={task.attachments.find((f: any) => f.id === file.id).base64Data} className="w-full h-full object-cover" />
                             ) : (
-                              <FileText size={18} />
+                              fileMeta.icon
                             )}
                           </div>
                           <div className="min-w-0">
@@ -783,21 +819,100 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                 <MessageSquare size={14} /> Comentários e Menções
               </h4>
 
+              {task.comments && task.comments.length > 0 ? (
+                <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1 mb-4">
+                  {task.comments.map((comment: any) => {
+                    const { parentId, cleanText } = parseComment(comment.texto);
+                    const parentComment = parentId ? task.comments.find((c: any) => c.id === parentId) : null;
+                    
+                    return (
+                      <div key={comment.id} className="p-3 border border-slate-100 bg-slate-50/50 rounded-xl shadow-xs">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wide flex items-center gap-1">
+                            {comment.user?.nome}
+                            {parentId && (
+                              <span className="text-[9px] text-slate-400 font-semibold normal-case flex items-center gap-0.5">
+                                <CornerDownRight size={10} className="text-slate-400" /> em resposta a <strong className="font-bold text-slate-500">{parentComment?.user?.nome || 'Comentário'}</strong>
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-[9px] text-slate-400 font-semibold">
+                            {new Date(comment.createdAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                          </span>
+                        </div>
+                        
+                        {/* Parent Quote Bubble */}
+                        {parentId && (
+                          <div className="border-l-2 border-slate-300 bg-slate-100/60 p-2 rounded-r-lg mb-2 text-[10px] text-slate-650 font-medium">
+                            <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                              {parentComment?.user?.nome || 'Usuário'} escreveu:
+                            </span>
+                            <span className="line-clamp-2 italic">
+                              {parentComment ? parseComment(parentComment.texto).cleanText : 'Mensagem original indisponível'}
+                            </span>
+                          </div>
+                        )}
+                        
+                        <p className="text-xs font-semibold text-slate-700 leading-relaxed break-words whitespace-pre-wrap">
+                          {renderCommentText(cleanText)}
+                        </p>
+                        
+                        {/* Reply Link */}
+                        {!isCompleted && (
+                          <div className="flex justify-end mt-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setReplyingTo(comment);
+                                commentInputRef.current?.focus();
+                              }}
+                              className="text-[9px] font-bold text-[#1B4D3E] hover:underline flex items-center gap-0.5 border-none bg-transparent cursor-pointer p-0"
+                            >
+                              <Reply size={10} /> Responder
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-[10px] text-slate-400 font-semibold italic mb-4">Nenhum comentário registrado.</p>
+              )}
+
               {!isCompleted && (
                 <form onSubmit={handleAddCommentSubmit} className="relative mb-4">
-                  <textarea
-                    ref={commentInputRef}
-                    value={commentText}
-                    onChange={handleCommentChange}
-                    placeholder="Escreva um comentário... Use @ para mencionar alguém de sua equipe"
-                    className="w-full min-h-[72px] p-3 pr-12 border border-slate-200 rounded-2xl outline-none focus:border-[#1B4D3E] text-xs font-semibold text-slate-700 resize-none"
-                  />
-                  <button
-                    type="submit"
-                    className="absolute right-3 bottom-3 p-2 bg-[#1B4D3E] text-white rounded-xl hover:bg-[#13382d] transition-colors border-none cursor-pointer"
-                  >
-                    <Send size={14} />
-                  </button>
+                  {replyingTo && (
+                    <div className="bg-[#1B4D3E]/5 border-t border-x border-slate-200 px-3 py-1.5 rounded-t-xl flex justify-between items-center text-[10px] font-bold text-slate-600">
+                      <span className="flex items-center gap-1.5">
+                        <Reply size={11} className="text-[#1B4D3E]" />
+                        Respondendo a <span className="text-[#1B4D3E] font-black">{replyingTo.user?.nome}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setReplyingTo(null)}
+                        className="text-slate-400 hover:text-rose-600 border-none bg-transparent cursor-pointer p-0.5"
+                        title="Cancelar resposta"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  )}
+                  <div className="relative">
+                    <textarea
+                      ref={commentInputRef}
+                      value={commentText}
+                      onChange={handleCommentChange}
+                      placeholder="Escreva um comentário... Use @ para mencionar alguém de sua equipe"
+                      className={`w-full min-h-[72px] p-3 pr-12 border border-slate-200 outline-none focus:border-[#1B4D3E] text-xs font-semibold text-slate-700 resize-none ${replyingTo ? 'rounded-b-xl border-t-0' : 'rounded-2xl'}`}
+                    />
+                    <button
+                      type="submit"
+                      className="absolute right-3 bottom-3 p-2 bg-[#1B4D3E] text-white rounded-xl hover:bg-[#13382d] transition-colors border-none cursor-pointer"
+                    >
+                      <Send size={14} />
+                    </button>
+                  </div>
 
                   {/* Autocomplete Dropdown */}
                   {showMentionDropdown && (
@@ -819,28 +934,6 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                     </div>
                   )}
                 </form>
-              )}
-
-              {task.comments && task.comments.length > 0 ? (
-                <div className="space-y-3 max-h-[200px] overflow-y-auto pr-1">
-                  {task.comments.map((comment: any) => (
-                    <div key={comment.id} className="p-3 border border-slate-100 bg-slate-50/50 rounded-2xl shadow-xs">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wide">
-                          {comment.user?.nome}
-                        </span>
-                        <span className="text-[9px] text-slate-400 font-semibold">
-                          {new Date(comment.createdAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
-                        </span>
-                      </div>
-                      <p className="text-xs font-semibold text-slate-700 leading-relaxed break-words whitespace-pre-wrap">
-                        {renderCommentText(comment.texto)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-[10px] text-slate-400 font-semibold italic">Nenhum comentário registrado.</p>
               )}
             </div>
           </div>
