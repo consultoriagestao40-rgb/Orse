@@ -750,54 +750,195 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
             <RefreshCw className="animate-spin text-[#1B4D3E] mb-3" size={36} />
             <span className="text-xs font-bold uppercase tracking-widest">Carregando tarefas...</span>
           </div>
-        ) : viewMode === 'lista' ? (
           /* ================= LIST VIEW ================= */
           <div className="p-4">
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-              <table className="w-full text-left border-collapse text-xs md:text-sm">
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs md:text-sm min-w-[850px]">
                 <thead>
                   <tr className="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200">
-                    <th className="py-3 px-4 w-20">Cód</th>
-                    <th className="py-3 px-4">Tarefa</th>
-                    <th className="py-3 px-4">Etapa</th>
+                    <th className="py-3 px-4">Nome</th>
+                    <th className="py-3 px-4">Etapa Kanban</th>
+                    <th className="py-3 px-4">Atividade</th>
+                    <th className="py-3 px-4">Prazo final</th>
+                    <th className="py-3 px-4">Criado por</th>
                     <th className="py-3 px-4">Responsável</th>
-                    <th className="py-3 px-4">Prioridade</th>
-                    <th className="py-3 px-4">Prazo</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
                   {filteredTasks.map(t => {
-                    const dl = getDeadlineStatus(t.vencimento, t.status);
+                    // Subtasks logic
+                    const totalAct = t.atividades?.length || 0;
+                    const pendingAct = t.atividades?.filter((a: any) => !a.concluida).length || 0;
+                    const nextActWithDate = t.atividades?.filter((a: any) => !a.concluida && a.vencimento).sort((a: any, b: any) => new Date(a.vencimento).getTime() - new Date(b.vencimento).getTime())[0];
+                    const dateToDisplay = nextActWithDate 
+                      ? new Date(nextActWithDate.vencimento).toLocaleString('pt-BR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) 
+                      : t.updatedAt 
+                        ? new Date(t.updatedAt).toLocaleString('pt-BR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) 
+                        : '';
+
+                    // Deadline pill logic
+                    const renderPrazoPill = () => {
+                      if (t.status === 'CONCLUIDA') {
+                        return (
+                          <span className="px-3 py-1 bg-slate-100/70 border border-slate-200 text-slate-400 font-bold rounded-full text-[10px] uppercase tracking-wider">
+                            Concluída
+                          </span>
+                        );
+                      }
+                      if (!t.vencimento) {
+                        return (
+                          <span className="px-3 py-1 bg-slate-50 border border-slate-200/50 text-slate-400 font-bold rounded-full text-[10px]">
+                            Sem prazo
+                          </span>
+                        );
+                      }
+                      const date = new Date(t.vencimento);
+                      const dateCompare = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                      const today = new Date();
+                      const todayCompare = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                      
+                      if (dateCompare < todayCompare) {
+                        const diffTime = todayCompare.getTime() - dateCompare.getTime();
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        let timeText = `-${diffDays}d`;
+                        if (diffDays >= 30) {
+                          timeText = `-${Math.round(diffDays/30)} meses`;
+                        } else if (diffDays >= 7) {
+                          const weeks = Math.round(diffDays/7);
+                          timeText = `-${weeks} ${weeks === 1 ? 'semana' : 'semanas'}`;
+                        }
+                        return (
+                          <span className="px-3 py-1 bg-rose-50 border border-rose-200/50 text-rose-600 font-bold rounded-full text-[10px]">
+                            {timeText}
+                          </span>
+                        );
+                      }
+                      
+                      if (dateCompare.getTime() === todayCompare.getTime()) {
+                        return (
+                          <span className="px-3 py-1 bg-amber-50 border border-amber-250 text-amber-600 font-bold rounded-full text-[10px]">
+                            Hoje
+                          </span>
+                        );
+                      }
+                      
+                      const diffTime = dateCompare.getTime() - todayCompare.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      if (diffDays === 1) {
+                        return (
+                          <span className="px-3 py-1 bg-blue-50 border border-blue-200 text-blue-600 font-bold rounded-full text-[10px]">
+                            Amanhã
+                          </span>
+                        );
+                      }
+                      if (diffDays <= 7) {
+                        return (
+                          <span className="px-3 py-1 bg-slate-100 border border-slate-250 text-slate-600 font-bold rounded-full text-[10px]">
+                            {diffDays} dias
+                          </span>
+                        );
+                      }
+                      return (
+                        <span className="px-3 py-1 bg-slate-50 border border-slate-200 text-slate-500 font-bold rounded-full text-[10px]">
+                          {date.toLocaleDateString('pt-BR')}
+                        </span>
+                      );
+                    };
+
                     return (
                       <tr 
                         key={t.id} 
                         onClick={() => setSelectedTask(t)}
                         className="hover:bg-slate-50/50 cursor-pointer transition-colors"
                       >
-                        <td className="py-3.5 px-4 font-mono font-bold text-slate-400">
-                          #{t.codigo || t.id.substring(0, 5)}
-                        </td>
-                        <td className="py-3.5 px-4 font-bold text-slate-800">
-                          {t.titulo}
-                        </td>
+                        {/* Nome Column */}
                         <td className="py-3.5 px-4">
-                          <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg text-xs font-bold">
-                            {t.stage?.nome}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md">
+                              T-{t.codigo || t.id.substring(0, 5)}
+                            </span>
+                            <span className={`font-bold text-slate-800 ${t.status === 'CONCLUIDA' ? 'line-through text-slate-400/80 font-semibold' : ''}`}>
+                              {t.titulo}
+                            </span>
+                            {/* Tags/Badges */}
+                            {t.prioridade === 'ALTA' && (
+                              <span className="text-amber-600" title="Alta prioridade">🔥</span>
+                            )}
+                            {t.attachments && t.attachments.length > 0 && (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-400 font-mono text-[9px] font-bold" title="Anexos">
+                                <Paperclip size={9} /> {t.attachments.length}
+                              </span>
+                            )}
+                            {totalAct > 0 && (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-[#1B4D3E]/5 text-[#1B4D3E]/70 font-mono text-[9px] font-bold" title="Subtarefas concluídas / total">
+                                <CheckCircle2 size={9} /> {t.atividades.filter((a: any) => a.concluida).length}/{totalAct}
+                              </span>
+                            )}
+                          </div>
                         </td>
-                        <td className="py-3.5 px-4 text-slate-500">
-                          {t.responsavel?.nome || 'Não delegado'}
-                        </td>
+
+                        {/* Etapa Kanban Column */}
                         <td className="py-3.5 px-4">
-                          <span className={`px-2.5 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-wider ${getPriorityBadgeClass(t.prioridade)}`}>
-                            {t.prioridade}
-                          </span>
+                          <div className="flex flex-col gap-1 w-32">
+                            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden flex">
+                              {t.status === 'CONCLUIDA' && <div className="bg-emerald-500 h-full w-full rounded-full" />}
+                              {t.status === 'EM_ANDAMENTO' && <div className="bg-amber-500 h-full w-1/2 rounded-full" />}
+                              {t.status === 'PENDENTE' && <div className="bg-rose-500 h-full w-1/3 rounded-full" />}
+                              {t.status === 'CANCELADA' && <div className="bg-slate-300 h-full w-full rounded-full" />}
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                              {t.stage?.nome || 'Sem etapa'}
+                            </span>
+                          </div>
                         </td>
+
+                        {/* Atividade Column */}
                         <td className="py-3.5 px-4">
-                          <span className={`px-2 py-0.5 rounded-lg border text-[9px] font-bold flex items-center gap-1 w-fit transition-all ${dl.badgeClass}`}>
-                            <Calendar size={10} />
-                            <span>{dl.text}</span>
-                          </span>
+                          <div className="flex items-center gap-2">
+                            {totalAct > 0 && (
+                              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white shrink-0 ${
+                                pendingAct === 0 
+                                  ? 'bg-emerald-500' 
+                                  : t.atividades.some((a: any) => !a.concluida && a.vencimento && new Date(a.vencimento).getTime() < Date.now())
+                                    ? 'bg-rose-500'
+                                    : 'bg-slate-400'
+                              }`}>
+                                {pendingAct}
+                              </span>
+                            )}
+                            <span className="text-xs text-slate-500 font-semibold">
+                              {dateToDisplay}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Prazo Final Column */}
+                        <td className="py-3.5 px-4">
+                          {renderPrazoPill()}
+                        </td>
+
+                        {/* Criado Por Column */}
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[9px] font-black text-[#1B4D3E] border border-slate-200">
+                              {t.criador?.nome ? t.criador.nome.substring(0, 2).toUpperCase() : '?'}
+                            </div>
+                            <span className="text-xs font-semibold text-slate-700 whitespace-nowrap">
+                              {t.criador?.nome || 'Desconhecido'}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Responsável Column */}
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-[#1E3A8A]/10 flex items-center justify-center text-[9px] font-black text-[#1E3A8A] border border-slate-200">
+                              {t.responsavel?.nome ? t.responsavel.nome.substring(0, 2).toUpperCase() : '?'}
+                            </div>
+                            <span className="text-xs font-semibold text-slate-700 whitespace-nowrap">
+                              {t.responsavel?.nome || 'Não delegado'}
+                            </span>
+                          </div>
                         </td>
                       </tr>
                     );

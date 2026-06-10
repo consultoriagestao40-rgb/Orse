@@ -598,6 +598,34 @@ export async function toggleTaskActivity(activityId: string, concluida: boolean)
 
     revalidatePath('/tasks');
     return { success: true, activity };
+}
+
+export async function updateTaskActivity(
+  activityId: string,
+  data: {
+    titulo?: string;
+    responsavelId?: string | null;
+    vencimento?: string | Date | null;
+  }
+) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const updateData: any = {};
+    if (data.titulo !== undefined) updateData.titulo = data.titulo;
+    if (data.responsavelId !== undefined) updateData.responsavelId = data.responsavelId;
+    if (data.vencimento !== undefined) {
+      updateData.vencimento = data.vencimento ? new Date(data.vencimento) : null;
+    }
+
+    const activity = await prisma.taskActivity.update({
+      where: { id: activityId },
+      data: updateData
+    });
+
+    revalidatePath('/tasks');
+    return { success: true, activity };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

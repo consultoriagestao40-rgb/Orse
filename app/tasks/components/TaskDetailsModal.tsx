@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, Calendar, User, Plus, Trash2, Paperclip, Send, 
   Tag, AlertTriangle, Users, Eye, History, MessageSquare,
-  CheckCircle2, AlertCircle, FileText, Download, Check
+  CheckCircle2, AlertCircle, FileText, Download, Check, Edit2
 } from 'lucide-react';
 import { 
   updateTask, deleteTask, updateTaskParticipants, 
   updateTaskObservers, updateTaskTags, createTenantTag, 
   deleteTenantTag, getTenantTags, createTaskActivity, 
-  toggleTaskActivity, deleteTaskActivity, addTaskComment, 
+  toggleTaskActivity, deleteTaskActivity, updateTaskActivity, addTaskComment, 
   uploadTaskAttachment, downloadTaskAttachment 
 } from '../actions';
 
@@ -89,6 +89,14 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
   const [showDelegarPopover, setShowDelegarPopover] = useState(false);
   const delegarPopoverRef = useRef<HTMLDivElement>(null);
 
+  // Inline activity editing states
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
+  const [editingActivityTitulo, setEditingActivityTitulo] = useState('');
+  const [editingActivityVencId, setEditingActivityVencId] = useState<string | null>(null);
+  const [editingActivityVencimento, setEditingActivityVencimento] = useState('');
+  const [actRespPopoverId, setActRespPopoverId] = useState<string | null>(null);
+  const actRespPopoverRef = useRef<HTMLDivElement>(null);
+
   // Custom alert/prompt/confirm modal (CRM-style)
   const [customModal, setCustomModal] = useState<{
     isOpen: boolean;
@@ -135,6 +143,9 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
       }
       if (delegarPopoverRef.current && !delegarPopoverRef.current.contains(event.target as Node)) {
         setShowDelegarPopover(false);
+      }
+      if (actRespPopoverRef.current && !actRespPopoverRef.current.contains(event.target as Node)) {
+        setActRespPopoverId(null);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -261,6 +272,26 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
         refreshData(true);
       }
     );
+  };
+
+  const handleSaveActivityTitulo = async (activityId: string) => {
+    if (!editingActivityTitulo.trim()) return;
+    const res = await updateTaskActivity(activityId, { titulo: editingActivityTitulo.trim() });
+    if (res.success) {
+      setEditingActivityId(null);
+      refreshData(true);
+    } else {
+      showCustomAlert('Erro', res.error || 'Erro ao salvar subtarefa');
+    }
+  };
+
+  const handleSaveActivityField = async (activityId: string, data: { responsavelId?: string | null, vencimento?: string | null }) => {
+    const res = await updateTaskActivity(activityId, data);
+    if (res.success) {
+      refreshData(true);
+    } else {
+      showCustomAlert('Erro', res.error || 'Erro ao atualizar subtarefa');
+    }
   };
 
   // Comment mentions parsing
@@ -541,16 +572,75 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                               className="w-4 h-4 text-[#1B4D3E] rounded border-slate-300 focus:ring-[#1B4D3E] disabled:opacity-50 disabled:cursor-default"
                             />
                           </td>
-                          <td className={`py-2.5 px-3 ${act.concluida ? 'line-through text-slate-400' : ''}`}>
-                            {act.titulo}
-                          </td>
-                          <td className={`py-2.5 px-3 text-slate-500 ${act.concluida ? 'line-through text-slate-400/70' : ''}`}>
-                            {act.vencimento ? new Date(act.vencimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Sem prazo'}
+                          <td className="py-2.5 px-3">
+                            {editingActivityId === act.id ? (
+                              <input
+                                value={editingActivityTitulo}
+                                onChange={e => setEditingActivityTitulo(e.target.value)}
+                                onBlur={() => handleSaveActivityTitulo(act.id)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') handleSaveActivityTitulo(act.id);
+                                  if (e.key === 'Escape') setEditingActivityId(null);
+                                }}
+                                className="p-1 text-xs border border-slate-200 rounded-lg w-full outline-none focus:border-[#1B4D3E] font-semibold text-slate-700 bg-white"
+                                autoFocus
+                              />
+                            ) : (
+                              <div 
+                                className={`group/item flex items-center gap-1.5 cursor-pointer ${act.concluida ? 'line-through text-slate-400' : ''}`}
+                                onClick={() => {
+                                  if (isCompleted) return;
+                                  setEditingActivityId(act.id);
+                                  setEditingActivityTitulo(act.titulo);
+                                }}
+                                title="Clique para editar o título"
+                              >
+                                <span className="truncate">{act.titulo}</span>
+                                {!isCompleted && (
+                                  <Edit2 size={10} className="text-slate-400 opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                                )}
+                              </div>
+                            )}
                           </td>
                           <td className="py-2.5 px-3">
+                            {editingActivityVencId === act.id ? (
+                              <input
+                                type="date"
+                                value={editingActivityVencimento}
+                                onChange={async e => {
+                                  const val = e.target.value;
+                                  setEditingActivityVencimento(val);
+                                  await handleSaveActivityField(act.id, { vencimento: val || null });
+                                  setEditingActivityVencId(null);
+                                }}
+                                onBlur={() => setEditingActivityVencId(null)}
+                                className="p-1 text-xs border border-slate-200 rounded-lg outline-none cursor-pointer font-semibold text-slate-700 bg-white"
+                                autoFocus
+                              />
+                            ) : (
+                              <span
+                                onClick={() => {
+                                  if (isCompleted) return;
+                                  setEditingActivityVencId(act.id);
+                                  setEditingActivityVencimento(act.vencimento ? new Date(act.vencimento).toISOString().split('T')[0] : '');
+                                }}
+                                className={`cursor-pointer hover:underline text-slate-500 font-semibold ${act.concluida ? 'line-through text-slate-400/70' : ''}`}
+                                title="Clique para editar o prazo"
+                              >
+                                {act.vencimento ? new Date(act.vencimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Sem prazo'}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3 relative">
                             {act.responsavel ? (
                               <div className="group relative w-fit">
-                                <div className="w-6 h-6 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[9px] font-black text-[#1B4D3E] border border-slate-200 cursor-default hover:bg-[#1B4D3E]/20 transition-colors">
+                                <div 
+                                  onClick={() => {
+                                    if (isCompleted) return;
+                                    setActRespPopoverId(actRespPopoverId === act.id ? null : act.id);
+                                  }}
+                                  className="w-6 h-6 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[9px] font-black text-[#1B4D3E] border border-slate-200 cursor-pointer hover:bg-[#1B4D3E]/20 transition-colors"
+                                >
                                   {act.responsavel.nome.substring(0, 2).toUpperCase()}
                                 </div>
                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded-md whitespace-nowrap shadow-md z-50 pointer-events-none">
@@ -559,12 +649,51 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                               </div>
                             ) : (
                               <div className="group relative w-fit">
-                                <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-black text-slate-400 border border-slate-200 border-dashed cursor-default">
+                                <div 
+                                  onClick={() => {
+                                    if (isCompleted) return;
+                                    setActRespPopoverId(actRespPopoverId === act.id ? null : act.id);
+                                  }}
+                                  className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-black text-slate-400 border border-slate-200 border-dashed cursor-pointer hover:bg-slate-200 transition-colors"
+                                >
                                   -
                                 </div>
                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded-md whitespace-nowrap shadow-md z-50 pointer-events-none">
                                   Não delegado
                                 </div>
+                              </div>
+                            )}
+
+                            {/* Custom Assignee Popover */}
+                            {actRespPopoverId === act.id && (
+                              <div 
+                                ref={actRespPopoverRef}
+                                className="absolute bottom-full left-0 mb-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl p-2 z-50 text-slate-800"
+                              >
+                                <div className="px-2 py-1 text-[8px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
+                                  Delegar para...
+                                </div>
+                                <div 
+                                  onClick={async () => {
+                                    await handleSaveActivityField(act.id, { responsavelId: null });
+                                    setActRespPopoverId(null);
+                                  }}
+                                  className="px-2.5 py-1.5 hover:bg-slate-50 rounded-lg text-xs cursor-pointer font-semibold"
+                                >
+                                  Sem responsável
+                                </div>
+                                {users.map(u => (
+                                  <div
+                                    key={u.id}
+                                    onClick={async () => {
+                                      await handleSaveActivityField(act.id, { responsavelId: u.id });
+                                      setActRespPopoverId(null);
+                                    }}
+                                    className="px-2.5 py-1.5 hover:bg-slate-50 rounded-lg text-xs cursor-pointer font-semibold"
+                                  >
+                                    {u.nome}
+                                  </div>
+                                ))}
                               </div>
                             )}
                           </td>
