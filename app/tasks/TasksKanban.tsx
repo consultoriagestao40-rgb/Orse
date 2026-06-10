@@ -63,8 +63,8 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
     fetchData();
   }, [filterStage, filterResp, filterPriority, filterVencimento]);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const stagesRes = await getTaskStages();
       const tagsRes = await getTenantTags();
@@ -913,7 +913,7 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
       {/* Modal: Task Details (Trello Modal) */}
       {selectedTask && (
         <TaskDetailsModal
-          task={selectedTask}
+          task={tasks.find(t => t.id === selectedTask.id) || selectedTask}
           stages={stages}
           users={initialUsers}
           onClose={() => setSelectedTask(null)}

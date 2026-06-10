@@ -17,7 +17,7 @@ interface TaskDetailsModalProps {
   stages: any[];
   users: any[];
   onClose: () => void;
-  refreshData: () => void;
+  refreshData: (silent?: boolean) => void;
 }
 
 export default function TaskDetailsModal({ task, stages, users, onClose, refreshData }: TaskDetailsModalProps) {
@@ -68,6 +68,18 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
     loadTags();
   }, []);
 
+  useEffect(() => {
+    setTitulo(task.titulo);
+    setDescricao(task.descricao || '');
+    setPrioridade(task.prioridade);
+    setVencimento(task.vencimento ? new Date(task.vencimento).toISOString().split('T')[0] : '');
+    setStageId(task.stageId);
+    setResponsavelId(task.responsavelId || '');
+    setSelectedParticipants(task.participantes?.map((p: any) => p.userId) || []);
+    setSelectedObservers(task.observadores?.map((o: any) => o.userId) || []);
+    setSelectedTags(task.tags?.map((t: any) => t.tagId) || []);
+  }, [task]);
+
   const loadTags = async () => {
     const res = await getTenantTags();
     if (res.success && res.tags) {
@@ -80,7 +92,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
     setIsSaving(true);
     await updateTask(task.id, fields);
     setIsSaving(false);
-    refreshData();
+    refreshData(true);
   };
 
   // Add tag relation
@@ -93,7 +105,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
     }
     setSelectedTags(updated);
     await updateTaskTags(task.id, updated);
-    refreshData();
+    refreshData(true);
   };
 
   // Add participant
@@ -106,7 +118,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
     }
     setSelectedParticipants(updated);
     await updateTaskParticipants(task.id, updated);
-    refreshData();
+    refreshData(true);
   };
 
   // Add observer
@@ -119,7 +131,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
     }
     setSelectedObservers(updated);
     await updateTaskObservers(task.id, updated);
-    refreshData();
+    refreshData(true);
   };
 
   // Subtask Activity CRUD
@@ -138,7 +150,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
       setActRespId('');
       setActVencimento('');
       setIsAddingActivity(false);
-      refreshData();
+      refreshData(true);
     } else {
       alert(res.error || 'Erro ao adicionar atividade');
     }
@@ -146,13 +158,13 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
 
   const handleToggleActivity = async (id: string, concluida: boolean) => {
     await toggleTaskActivity(id, concluida);
-    refreshData();
+    refreshData(true);
   };
 
   const handleDeleteActivity = async (id: string) => {
     if (confirm('Deseja remover esta atividade?')) {
       await deleteTaskActivity(id);
-      refreshData();
+      refreshData(true);
     }
   };
 
@@ -192,7 +204,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
     const res = await addTaskComment(task.id, commentText.trim());
     if (res.success) {
       setCommentText('');
-      refreshData();
+      refreshData(true);
     } else {
       alert(res.error || 'Erro ao adicionar comentário');
     }
@@ -228,7 +240,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
       const base64 = event.target?.result as string;
       const res = await uploadTaskAttachment(task.id, file.name, file.size, file.type, base64);
       if (res.success) {
-        refreshData();
+        refreshData(true);
       } else {
         alert(res.error || 'Erro ao anexar arquivo');
       }
@@ -761,7 +773,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                     const res = await deleteTask(task.id);
                     if (res.success) {
                       onClose();
-                      refreshData();
+                      refreshData(true);
                     } else {
                       alert(res.error || 'Erro ao deletar tarefa');
                     }
