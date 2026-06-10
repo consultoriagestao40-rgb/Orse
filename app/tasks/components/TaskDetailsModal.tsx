@@ -549,21 +549,21 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
               )}
 
               {atividades && atividades.length > 0 ? (
-                <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white">
-                  <table className="w-full text-left text-xs border-collapse">
+                <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white w-full">
+                  <table className="w-full text-left text-xs border-collapse table-fixed">
                     <thead>
                       <tr className="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-200">
-                        <th className="py-2.5 px-3 w-10">Ok</th>
+                        <th className="py-2.5 px-3 w-10 shrink-0">Ok</th>
                         <th className="py-2.5 px-3">Subtarefa</th>
-                        <th className="py-2.5 px-3">Prazo</th>
-                        <th className="py-2.5 px-3 w-24">Responsável</th>
-                        {!isCompleted && <th className="py-2.5 px-3 w-12 text-center">Excluir</th>}
+                        <th className="py-2.5 px-3 w-28 shrink-0">Prazo</th>
+                        <th className="py-2.5 px-3 w-24 shrink-0">Responsável</th>
+                        {!isCompleted && <th className="py-2.5 px-3 w-12 text-center shrink-0">Excluir</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
                       {atividades.map((act: any) => (
                         <tr key={act.id} className="hover:bg-slate-50/50">
-                          <td className="py-2.5 px-3 text-center">
+                          <td className="py-2.5 px-3 text-center shrink-0">
                             <input 
                               type="checkbox" 
                               checked={act.concluida} 
@@ -572,7 +572,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                               className="w-4 h-4 text-[#1B4D3E] rounded border-slate-300 focus:ring-[#1B4D3E] disabled:opacity-50 disabled:cursor-default"
                             />
                           </td>
-                          <td className="py-2.5 px-3">
+                          <td className="py-2.5 px-3 min-w-0">
                             {editingActivityId === act.id ? (
                               <input
                                 value={editingActivityTitulo}
@@ -587,7 +587,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                               />
                             ) : (
                               <div 
-                                className={`group/item flex items-center gap-1.5 cursor-pointer ${act.concluida ? 'line-through text-slate-400' : ''}`}
+                                className={`group/item flex items-center gap-1.5 cursor-pointer w-full overflow-hidden ${act.concluida ? 'line-through text-slate-400' : ''}`}
                                 onClick={() => {
                                   if (isCompleted) return;
                                   setEditingActivityId(act.id);
@@ -595,9 +595,9 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                                 }}
                                 title="Clique para editar o título"
                               >
-                                <span className="truncate">{act.titulo}</span>
+                                <span className="truncate flex-1">{act.titulo}</span>
                                 {!isCompleted && (
-                                  <Edit2 size={10} className="text-slate-400 opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                                  <Edit2 size={10} className="text-slate-400 opacity-0 group-hover/item:opacity-100 transition-opacity shrink-0" />
                                 )}
                               </div>
                             )}
