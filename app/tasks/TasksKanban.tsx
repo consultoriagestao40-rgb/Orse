@@ -165,6 +165,11 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
   const [newPriority, setNewPriority] = useState('MEDIA');
   const [newVencimento, setNewVencimento] = useState('');
 
+  // Quick Task Create state
+  const [showQuickCreate, setShowQuickCreate] = useState(false);
+  const [quickCreateStageId, setQuickCreateStageId] = useState('');
+  const [quickCreateTitle, setQuickCreateTitle] = useState('');
+
   // Custom alert/prompt/confirm modal (CRM-style)
   const [customModal, setCustomModal] = useState<{
     isOpen: boolean;
@@ -505,6 +510,11 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
     };
   };
 
+  const handleOpenQuickCreate = (stageId: string) => {
+    setQuickCreateStageId(stageId);
+    setShowQuickCreate(true);
+  };
+
   // Create Task Submit
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -693,12 +703,7 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
               </select>
             </div>
 
-            <button
-              onClick={() => handleCreateStage()}
-              className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-3 py-2 text-xs font-bold rounded-xl transition-all shadow-sm flex-shrink-0 cursor-pointer"
-            >
-              Adicionar Coluna
-            </button>
+
 
             <button
               onClick={() => setShowNewTask(true)}
@@ -1161,14 +1166,30 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                               }}
                             >
                               <div className="flex flex-col gap-1.5">
+                                {/* Botão de Tarefa Rápida no topo da coluna */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenQuickCreate(col.id === 'unassigned' || col.id === 'no_tag' ? '' : col.id)}
+                                  className="w-full py-1.5 bg-slate-50 hover:bg-white text-slate-600 hover:text-slate-800 border border-slate-200 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all mb-1.5 cursor-pointer shadow-2xs hover:shadow-xs"
+                                >
+                                  <Plus size={11} className="text-[#1B4D3E] stroke-[3]" />
+                                  <span>Tarefa Rápida</span>
+                                </button>
+
                                 {col.tasks.length === 0 ? (
                                   !draggedStageId && draggedOverStageId === col.id ? (
                                     <div className="bg-slate-100/70 border-2 border-dashed border-[#1E3A8A]/30 rounded-xl h-28 w-full animate-pulse flex items-center justify-center">
                                       <span className="text-[10px] font-black text-[#1E3A8A]/60 uppercase tracking-widest animate-pulse">Soltar aqui</span>
                                     </div>
                                   ) : (
-                                    <div className="border border-dashed border-slate-300/40 rounded-xl py-12 flex items-center justify-center flex-1">
-                                      <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sem tarefas</p>
+                                    <div 
+                                      onClick={() => handleOpenQuickCreate(col.id === 'unassigned' || col.id === 'no_tag' ? '' : col.id)}
+                                      className="border border-dashed border-slate-300 hover:border-[#1B4D3E]/40 rounded-xl py-10 flex flex-col items-center justify-center gap-2 flex-1 cursor-pointer transition-all hover:bg-white/50 group/empty"
+                                    >
+                                      <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center group-hover/empty:bg-[#1B4D3E]/10 group-hover/empty:text-[#1B4D3E] transition-colors">
+                                        <Plus size={16} />
+                                      </div>
+                                      <p className="text-[10px] text-slate-450 font-bold uppercase tracking-wider group-hover/empty:text-[#1B4D3E] transition-colors">Sem tarefas</p>
                                     </div>
                                   )
                                 ) : (
@@ -1378,6 +1399,91 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                   className="px-4 py-2 bg-[#1B4D3E] text-white rounded-xl text-xs font-bold hover:bg-[#13382d] border-none cursor-pointer"
                 >
                   Salvar Tarefa
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Quick Create Task Form */}
+      {showQuickCreate && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50">
+          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-5 border border-slate-100 flex flex-col gap-4 text-slate-800 animate-fade-in">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
+              <h3 className="text-sm font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <Plus size={16} className="text-[#1B4D3E]" /> Criar Tarefa Rápida
+              </h3>
+              <button 
+                onClick={() => {
+                  setShowQuickCreate(false);
+                  setQuickCreateTitle('');
+                  setQuickCreateStageId('');
+                }} 
+                className="text-slate-400 hover:text-slate-650 border-none bg-transparent cursor-pointer p-0.5 rounded hover:bg-slate-100 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            <form 
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!quickCreateTitle.trim()) return;
+                
+                const res = await createTask({
+                  titulo: quickCreateTitle.trim(),
+                  stageId: quickCreateStageId,
+                  prioridade: 'MEDIA'
+                });
+                
+                if (res.success && res.task) {
+                  await fetchData(true);
+                  setSelectedTask(res.task);
+                  setShowQuickCreate(false);
+                  setQuickCreateTitle('');
+                  setQuickCreateStageId('');
+                } else {
+                  setCustomModal({
+                    isOpen: true,
+                    title: 'Erro',
+                    message: res?.error || 'Erro ao criar tarefa rápida',
+                    type: 'alert',
+                    onConfirm: () => {}
+                  });
+                }
+              }} 
+              className="flex flex-col gap-4"
+            >
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1.5">Nome da Tarefa *</label>
+                <input 
+                  required 
+                  value={quickCreateTitle} 
+                  onChange={e => setQuickCreateTitle(e.target.value)} 
+                  className="w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:border-[#1B4D3E] text-xs font-semibold bg-slate-50 focus:bg-white transition-all"
+                  placeholder="Digite o título da tarefa..." 
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex gap-2 justify-end pt-2 border-t border-slate-100">
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setShowQuickCreate(false);
+                    setQuickCreateTitle('');
+                    setQuickCreateStageId('');
+                  }} 
+                  className="px-3.5 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-50 transition-colors cursor-pointer bg-white"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  className="px-4 py-2 bg-[#1B4D3E] text-white rounded-xl text-xs font-black hover:bg-[#13382d] border-none cursor-pointer"
+                >
+                  Criar e Abrir
                 </button>
               </div>
             </form>
