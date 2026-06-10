@@ -1598,7 +1598,7 @@ export default function LeadsKanban() {
   return (
     <div className="flex flex-col h-screen bg-slate-50 overflow-hidden">
       <div className="flex-1 overflow-auto min-h-0 bg-slate-50">
-        <div className="p-4 md:py-6 md:pl-4 md:pr-1 bg-white border-b border-slate-200 flex flex-col lg:flex-row justify-between lg:items-center gap-4 shrink-0 relative z-30">
+        <div className="p-4 md:py-6 md:pl-4 md:pr-1 bg-white border-b border-slate-200 flex flex-col lg:flex-row justify-between lg:items-center gap-4 shrink-0 relative z-40">
         <div className="relative">
           <button
             onClick={() => setIsPipelineDropdownOpen(!isPipelineDropdownOpen)}
