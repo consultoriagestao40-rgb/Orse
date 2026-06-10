@@ -574,10 +574,14 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                   setStageId(e.target.value);
                   saveField({ stageId: e.target.value });
                 }}
-                className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] bg-white cursor-pointer"
+                className={`w-full p-2.5 border rounded-xl text-xs font-bold outline-none cursor-pointer transition-all ${
+                  stages.find(s => s.id === stageId)?.color || 'bg-white border-slate-200 text-slate-700'
+                }`}
               >
                 {stages.map(s => (
-                  <option key={s.id} value={s.id}>{s.nome}</option>
+                  <option key={s.id} value={s.id} className="bg-white text-slate-700 font-semibold">
+                    {s.nome}
+                  </option>
                 ))}
               </select>
             </div>
