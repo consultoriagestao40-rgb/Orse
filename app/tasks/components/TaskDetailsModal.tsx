@@ -456,9 +456,9 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
         </div>
 
         {/* Body Container */}
-        <div className="flex-1 overflow-y-auto p-6 flex flex-col lg:flex-row gap-6 min-h-0">
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col lg:flex-row gap-6 min-h-0 max-w-full">
           {/* Main Details (Col Left) */}
-          <div className="flex-1 space-y-6">
+          <div className="flex-1 min-w-0 space-y-6">
             {/* Description */}
             <div>
               <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
