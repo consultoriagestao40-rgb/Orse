@@ -555,8 +555,8 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                       <tr className="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-200">
                         <th className="py-2.5 px-3 w-10 shrink-0">Ok</th>
                         <th className="py-2.5 px-3">Subtarefa</th>
-                        <th className="py-2.5 px-3 w-28 shrink-0">Prazo</th>
-                        <th className="py-2.5 px-3 w-24 shrink-0">Responsável</th>
+                        <th className="py-2.5 px-3 w-32 shrink-0">Prazo</th>
+                        <th className="py-2.5 px-3 w-24 text-center shrink-0">Responsável</th>
                         {!isCompleted && <th className="py-2.5 px-3 w-20 text-center shrink-0">Excluir</th>}
                       </tr>
                     </thead>
@@ -614,7 +614,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                                   setEditingActivityVencId(null);
                                 }}
                                 onBlur={() => setEditingActivityVencId(null)}
-                                className="p-1 text-xs border border-slate-200 rounded-lg outline-none cursor-pointer font-semibold text-slate-700 bg-white"
+                                className="p-1 text-xs border border-slate-200 rounded-lg outline-none cursor-pointer font-semibold text-slate-700 bg-white w-full max-w-full"
                                 autoFocus
                               />
                             ) : (
@@ -633,7 +633,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                           </td>
                           <td className="py-2.5 px-3 relative">
                             {act.responsavel ? (
-                              <div className="group relative w-fit">
+                              <div className="group relative w-fit mx-auto">
                                 <div 
                                   onClick={() => {
                                     if (isCompleted) return;
@@ -656,7 +656,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                                 </div>
                               </div>
                             ) : (
-                              <div className="group relative w-fit">
+                              <div className="group relative w-fit mx-auto">
                                 <div 
                                   onClick={() => {
                                     if (isCompleted) return;
@@ -676,7 +676,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                             {actRespPopoverId === act.id && (
                               <div 
                                 ref={actRespPopoverRef}
-                                className="absolute bottom-full left-0 mb-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl p-2 z-50 text-slate-800"
+                                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl p-2 z-50 text-slate-800"
                               >
                                 <div className="px-2 py-1 text-[8px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
                                   Delegar para...
