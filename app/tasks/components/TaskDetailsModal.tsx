@@ -3,10 +3,10 @@ import {
   X, Calendar, User, Plus, Trash2, Paperclip, Send, 
   Tag, AlertTriangle, Users, Eye, History, MessageSquare,
   CheckCircle2, AlertCircle, FileText, Download, Check, Edit2,
-  FileSpreadsheet, FileImage, File, Reply, CornerDownRight
+  FileSpreadsheet, FileImage, File, Reply, CornerDownRight, FilePlus2
 } from 'lucide-react';
 import { 
-  updateTask, deleteTask, updateTaskParticipants, 
+  createTask, updateTask, deleteTask, updateTaskParticipants, 
   updateTaskObservers, updateTaskTags, createTenantTag, 
   deleteTenantTag, getTenantTags, createTaskActivity, 
   toggleTaskActivity, deleteTaskActivity, updateTaskActivity, addTaskComment, 
@@ -71,6 +71,10 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
   const [isAddingActivity, setIsAddingActivity] = useState(false);
   const [atividades, setAtividades] = useState<any[]>(task.atividades || []);
   const [replyingTo, setReplyingTo] = useState<any>(null);
+
+  const totalActivities = atividades.length;
+  const completedActivities = atividades.filter((act: any) => act.concluida).length;
+  const percentComplete = totalActivities > 0 ? Math.round((completedActivities / totalActivities) * 100) : 0;
 
   // Participant/Observer select states
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>(
@@ -187,6 +191,56 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
     setIsEditing(false);
   }, [task]);
 
+  const commentsEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [task.comments]);
+
+  const handleTransformIntoTask = async (act: any) => {
+    if (isCompleted) return;
+    
+    showCustomConfirm(
+      'Transformar em Tarefa',
+      `Deseja transformar a subtarefa "${act.titulo}" em uma tarefa independente no Kanban? Ela será removida desta lista.`,
+      async () => {
+        const firstStageId = stages[0]?.id;
+        if (!firstStageId) {
+          showCustomAlert('Erro', 'Não foi possível encontrar as etapas do Kanban.');
+          return;
+        }
+        
+        setIsSaving(true);
+        const resCreate = await createTask({
+          titulo: act.titulo,
+          descricao: `Criada a partir de uma subtarefa da tarefa: "${task.titulo}"`,
+          stageId: firstStageId,
+          responsavelId: act.responsavelId || undefined,
+          vencimento: act.vencimento || undefined,
+          prioridade: task.prioridade
+        });
+        
+        if (resCreate.success) {
+          const resDelete = await deleteTaskActivity(act.id);
+          if (resDelete.success) {
+            showCustomAlert('Sucesso', 'Subtarefa transformada em tarefa independente com sucesso!');
+            refreshData(true);
+          } else {
+            showCustomAlert('Aviso', 'Tarefa criada, mas não foi possível remover a subtarefa da lista.');
+            refreshData(true);
+          }
+        } else {
+          showCustomAlert('Erro', resCreate.error || 'Erro ao criar tarefa independente.');
+        }
+        setIsSaving(false);
+      }
+    );
+  };
+
   const loadTags = async () => {
     const res = await getTenantTags();
     if (res.success && res.tags) {
@@ -246,9 +300,9 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
   };
 
   // Subtask Activity CRUD
-  const handleAddActivity = async (e: React.FormEvent) => {
+  const handleAddActivity = async (e?: React.FormEvent) => {
     if (isCompleted) return;
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!actTitulo.trim()) return;
 
     const res = await createTaskActivity(task.id, {
@@ -509,79 +563,31 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                   {descricao || <span className="text-slate-400 italic">Sem descrição.</span>}
                 </div>
               )}
-            </div>
-
-            {/* Subtasks (Atividades) */}
+                     {/* Subtasks (Atividades) */}
             <div>
               <div className="flex justify-between items-center mb-2">
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                   <CheckCircle2 size={14} /> Subtarefas / Atividades
                 </h4>
-                {!isCompleted && (
-                  <button
-                    onClick={() => setIsAddingActivity(true)}
-                    className="flex items-center gap-1 text-[11px] font-bold text-[#1B4D3E] hover:underline bg-transparent border-none cursor-pointer"
-                  >
-                    <Plus size={12} /> Adicionar
-                  </button>
-                )}
               </div>
 
-              {isAddingActivity && (
-                <form onSubmit={handleAddActivity} className="bg-slate-50 p-4 border border-slate-200 rounded-2xl mb-3 space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 mb-1">Título da Subtarefa *</label>
-                      <input 
-                        required 
-                        value={actTitulo} 
-                        onChange={e => setActTitulo(e.target.value)} 
-                        className="w-full p-2 text-xs border border-slate-200 rounded-xl"
-                        placeholder="Ex: Revisar escopo comercial" 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 mb-1">Responsável</label>
-                      <select 
-                        value={actRespId} 
-                        onChange={e => setActRespId(e.target.value)} 
-                        className="w-full p-2 text-xs border border-slate-200 rounded-xl cursor-pointer"
-                      >
-                        <option value="">Delegar para...</option>
-                        {users.map(u => (
-                          <option key={u.id} value={u.id}>{u.nome}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 mb-1">Prazo / Vencimento</label>
-                      <input 
-                        type="date"
-                        value={actVencimento} 
-                        onChange={e => setActVencimento(e.target.value)} 
-                        className="w-full p-2 text-xs border border-slate-200 rounded-xl text-slate-700 font-semibold cursor-pointer"
-                      />
-                    </div>
+              {/* Barra de Progresso */}
+              {atividades.length > 0 && (
+                <div className="mb-4 bg-slate-50 border border-slate-200 rounded-2xl p-3 shadow-2xs">
+                  <div className="flex justify-between items-center mb-1 text-[11px] font-bold text-slate-650">
+                    <span>Progresso das subtarefas ({percentComplete}%)</span>
+                    <span>{completedActivities}/{totalActivities}</span>
                   </div>
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button 
-                      type="button" 
-                      onClick={() => setIsAddingActivity(false)}
-                      className="px-3 py-1.5 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 bg-white"
-                    >
-                      Cancelar
-                    </button>
-                    <button 
-                      type="submit" 
-                      className="px-3 py-1.5 bg-[#1B4D3E] text-white rounded-xl text-[10px] font-bold"
-                    >
-                      Criar
-                    </button>
+                  <div className="w-full h-2 bg-slate-200/60 rounded-full overflow-hidden border border-slate-250/30">
+                    <div 
+                      style={{ width: `${percentComplete}%` }} 
+                      className="h-full bg-[#1B4D3E] transition-all duration-500 rounded-full"
+                    />
                   </div>
-                </form>
+                </div>
               )}
 
-              {atividades && atividades.length > 0 ? (
+              {(atividades && atividades.length > 0) || isAddingActivity ? (
                 <div className="border border-slate-200 rounded-xl overflow-hidden bg-white w-full">
                   <table className="w-full text-left text-xs border-collapse table-fixed">
                     <thead>
@@ -590,7 +596,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                         <th className="py-2.5 px-3">Subtarefa</th>
                         <th className="py-2.5 px-3 w-32 shrink-0">Prazo</th>
                         <th className="py-2.5 px-3 w-24 text-center shrink-0">Responsável</th>
-                        {!isCompleted && <th className="py-2.5 px-3 w-20 text-center shrink-0">Excluir</th>}
+                        {!isCompleted && <th className="py-2.5 px-3 w-20 text-center shrink-0">Ações</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
@@ -740,24 +746,122 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                           </td>
                           {!isCompleted && (
                             <td className="py-2.5 px-3 text-center">
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteActivity(act.id)}
-                                className="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 border-none bg-transparent cursor-pointer"
-                              >
-                                <Trash2 size={13} />
-                              </button>
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleTransformIntoTask(act)}
+                                  className="text-slate-400 hover:text-blue-600 p-1 rounded hover:bg-blue-50 border-none bg-transparent cursor-pointer"
+                                  title="Transformar em Tarefa Independente"
+                                >
+                                  <FilePlus2 size={13} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteActivity(act.id)}
+                                  className="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 border-none bg-transparent cursor-pointer"
+                                  title="Excluir"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
                             </td>
                           )}
                         </tr>
                       ))}
+
+                      {/* Adição inline dentro da tabela */}
+                      {isAddingActivity && (
+                        <tr className="bg-slate-50/70 border-t border-slate-200">
+                          <td className="py-2 px-3 text-center">
+                            <input 
+                              type="checkbox" 
+                              disabled 
+                              className="w-4 h-4 text-[#1B4D3E]/50 rounded border-slate-300 opacity-60"
+                            />
+                          </td>
+                          <td className="py-2 px-3">
+                            <input 
+                              required 
+                              value={actTitulo} 
+                              onChange={e => setActTitulo(e.target.value)} 
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') handleAddActivity();
+                                if (e.key === 'Escape') {
+                                  setIsAddingActivity(false);
+                                  setActTitulo('');
+                                  setActRespId('');
+                                  setActVencimento('');
+                                }
+                              }}
+                              className="p-1 text-xs border border-slate-200 rounded-lg w-full outline-none focus:border-[#1B4D3E] font-semibold text-slate-700 bg-white"
+                              placeholder="Nome da subtarefa..."
+                              autoFocus 
+                            />
+                          </td>
+                          <td className="py-2 px-3">
+                            <input 
+                              type="date"
+                              value={actVencimento} 
+                              onChange={e => setActVencimento(e.target.value)} 
+                              className="p-1 text-xs border border-slate-200 rounded-lg outline-none cursor-pointer font-semibold text-slate-700 bg-white w-full"
+                            />
+                          </td>
+                          <td className="py-2 px-3">
+                            <select 
+                              value={actRespId} 
+                              onChange={e => setActRespId(e.target.value)} 
+                              className="p-1 text-xs border border-slate-200 rounded-lg outline-none cursor-pointer font-semibold text-slate-700 bg-white w-full"
+                            >
+                              <option value="">Delegar...</option>
+                              {users.map(u => (
+                                <option key={u.id} value={u.id}>{u.nome}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="py-2 px-3 text-center">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button 
+                                type="button" 
+                                onClick={() => handleAddActivity()}
+                                className="text-emerald-600 hover:text-emerald-800 p-1 rounded hover:bg-emerald-50 border-none bg-transparent cursor-pointer"
+                                title="Criar Atividade"
+                              >
+                                <Check size={14} className="stroke-[3]" />
+                              </button>
+                              <button 
+                                type="button" 
+                                onClick={() => {
+                                  setIsAddingActivity(false);
+                                  setActTitulo('');
+                                  setActRespId('');
+                                  setActVencimento('');
+                                }}
+                                className="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 border-none bg-transparent cursor-pointer"
+                                title="Cancelar"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
               ) : (
                 <p className="text-[10px] text-slate-400 font-semibold italic">Nenhuma subtarefa registrada.</p>
               )}
-            </div>
+
+              {/* Botão + Adicionar Atividade abaixo da tabela */}
+              {!isCompleted && !isAddingActivity && (
+                <button
+                  onClick={() => setIsAddingActivity(true)}
+                  className="mt-3 flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 text-[#1B4D3E] rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                >
+                  <Plus size={14} /> Adicionar Atividade
+                </button>
+              )}
+            </div>           </div>
 
             {/* Attachments (Anexos) */}
             <div>
@@ -875,6 +979,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                       </div>
                     );
                   })}
+                  <div ref={commentsEndRef} />
                 </div>
               ) : (
                 <p className="text-[10px] text-slate-400 font-semibold italic mb-4">Nenhum comentário registrado.</p>
