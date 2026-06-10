@@ -84,6 +84,11 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
   const [showColorPicker, setShowColorPicker] = useState(false);
   const colorPickerRef = useRef<HTMLDivElement>(null);
 
+  // Editing and delegation states
+  const [isEditing, setIsEditing] = useState(false);
+  const [showDelegarPopover, setShowDelegarPopover] = useState(false);
+  const delegarPopoverRef = useRef<HTMLDivElement>(null);
+
   // Custom alert/prompt/confirm modal (CRM-style)
   const [customModal, setCustomModal] = useState<{
     isOpen: boolean;
@@ -128,6 +133,9 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
       if (colorPickerRef.current && !colorPickerRef.current.contains(event.target as Node)) {
         setShowColorPicker(false);
       }
+      if (delegarPopoverRef.current && !delegarPopoverRef.current.contains(event.target as Node)) {
+        setShowDelegarPopover(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
@@ -146,6 +154,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
     setSelectedObservers(task.observadores?.map((o: any) => o.userId) || []);
     setSelectedTags(task.tags?.map((t: any) => t.tagId) || []);
     setAtividades(task.atividades || []);
+    setIsEditing(false);
   }, [task]);
 
   const loadTags = async () => {
@@ -397,13 +406,18 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
             <span className="text-xs font-mono font-bold bg-[#1B4D3E]/10 text-[#1B4D3E] px-2.5 py-1 rounded-lg">
               T-{task.codigo || task.id.substring(0, 5)}
             </span>
-            <input 
-              value={titulo}
-              onChange={e => setTitulo(e.target.value)}
-              onBlur={() => saveField({ titulo })}
-              disabled={isCompleted}
-              className="text-lg font-black text-slate-800 bg-transparent border-none outline-none focus:bg-white focus:ring-1 focus:ring-[#1B4D3E] px-2 py-0.5 rounded-xl w-[260px] sm:w-[450px] disabled:opacity-85 disabled:cursor-default"
-            />
+            {isEditing ? (
+              <input 
+                value={titulo}
+                onChange={e => setTitulo(e.target.value)}
+                className="text-lg font-black text-slate-800 bg-white border border-slate-200 focus:ring-1 focus:ring-[#1B4D3E] focus:border-[#1B4D3E] px-3 py-1 rounded-xl w-[260px] sm:w-[450px] outline-none"
+                placeholder="Título da tarefa..."
+              />
+            ) : (
+              <h3 className="text-lg font-black text-slate-800 px-2 py-1">
+                {titulo}
+              </h3>
+            )}
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-650 p-1 rounded-xl hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer">
             <X size={20} />
@@ -419,14 +433,18 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
               <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
                 <FileText size={14} /> Descrição
               </h4>
-              <textarea
-                value={descricao}
-                onChange={e => setDescricao(e.target.value)}
-                onBlur={() => saveField({ descricao })}
-                placeholder={isCompleted ? "Sem descrição" : "Insira detalhes adicionais sobre esta tarefa..."}
-                disabled={isCompleted}
-                className="w-full min-h-[90px] max-h-[160px] p-3 border border-slate-200 rounded-2xl outline-none focus:border-[#1B4D3E] text-xs font-semibold text-slate-700 bg-slate-50/50 focus:bg-white transition-all resize-y disabled:bg-slate-50/20 disabled:cursor-default"
-              />
+              {isEditing ? (
+                <textarea
+                  value={descricao}
+                  onChange={e => setDescricao(e.target.value)}
+                  placeholder="Insira detalhes adicionais sobre esta tarefa..."
+                  className="w-full min-h-[90px] max-h-[160px] p-3 border border-slate-200 rounded-2xl outline-none focus:border-[#1B4D3E] text-xs font-semibold text-slate-700 bg-slate-50 focus:bg-white transition-all resize-y"
+                />
+              ) : (
+                <div className="w-full min-h-[90px] p-3.5 border border-transparent bg-slate-50/50 rounded-2xl text-xs font-semibold text-slate-700 whitespace-pre-wrap leading-relaxed">
+                  {descricao || <span className="text-slate-400 italic">Sem descrição.</span>}
+                </div>
+              )}
             </div>
 
             {/* Subtasks (Atividades) */}
@@ -700,20 +718,19 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
             {/* Assignee */}
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Responsável</label>
-              <select
-                value={responsavelId}
-                disabled={isCompleted}
-                onChange={e => {
-                  setResponsavelId(e.target.value);
-                  saveField({ responsavelId: e.target.value });
-                }}
-                className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] bg-white cursor-pointer disabled:bg-slate-100 disabled:cursor-default"
-              >
-                <option value="">Não delegado</option>
-                {users.map(u => (
-                  <option key={u.id} value={u.id}>{u.nome}</option>
-                ))}
-              </select>
+              {(() => {
+                const currentResp = users.find(u => u.id === responsavelId);
+                return (
+                  <div className="flex items-center gap-2.5 p-2.5 border border-slate-200 bg-white rounded-xl">
+                    <div className="w-7 h-7 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[10px] font-bold text-[#1B4D3E]">
+                      {currentResp ? currentResp.nome.substring(0, 2).toUpperCase() : '?'}
+                    </div>
+                    <span className="text-xs font-bold text-slate-700 truncate">
+                      {currentResp ? currentResp.nome : 'Não delegado'}
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Due Date */}
@@ -958,92 +975,190 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                     ))}
                   </div>
                 </div>
+          </div>
+        </div>
 
-            {/* Complete / Reopen Task Button */}
-            <div className="pt-2">
-              {task.status === 'CONCLUIDA' ? (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const updateData: any = { status: 'EM_ANDAMENTO' };
-                    const concluidoStage = stages.find(s => 
-                      s.nome.toLowerCase() === 'concluído' || 
-                      s.nome.toLowerCase() === 'concluido' || 
-                      s.nome.toLowerCase() === 'concluída' || 
-                      s.nome.toLowerCase() === 'concluida'
-                    );
-                    if (concluidoStage && task.stageId === concluidoStage.id) {
-                      const firstNonCompleted = stages.find(s => s.id !== concluidoStage.id);
-                      if (firstNonCompleted) {
-                        updateData.stageId = firstNonCompleted.id;
-                        setStageId(firstNonCompleted.id);
+        {/* Fixed Footer Bar */}
+        <div className="h-16 px-6 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0 z-10">
+          {/* Left Side: Delete (if not completed) */}
+          <div>
+            {!isCompleted && (
+              <button
+                type="button"
+                onClick={() => {
+                  showCustomConfirm(
+                    'Excluir Tarefa',
+                    'Deseja realmente remover esta tarefa?',
+                    async () => {
+                      const res = await deleteTask(task.id);
+                      if (res.success) {
+                        onClose();
+                        refreshData(true);
+                      } else {
+                        showCustomAlert('Erro', res.error || 'Erro ao deletar tarefa');
                       }
                     }
-                    const res = await updateTask(task.id, updateData);
-                    if (res.success) {
-                      refreshData(true);
-                    } else {
-                      showCustomAlert('Erro', res.error || 'Erro ao reabrir tarefa');
-                    }
-                  }}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 border border-[#1B4D3E]/30 bg-[#1B4D3E]/5 text-[#1B4D3E] rounded-xl text-xs font-bold hover:bg-[#1B4D3E]/10 transition-colors border-dashed cursor-pointer"
-                >
-                  <Plus size={13} /> Reabrir Tarefa
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const updateData: any = { status: 'CONCLUIDA' };
-                    const concluidoStage = stages.find(s => 
-                      s.nome.toLowerCase() === 'concluído' || 
-                      s.nome.toLowerCase() === 'concluido' || 
-                      s.nome.toLowerCase() === 'concluída' || 
-                      s.nome.toLowerCase() === 'concluida'
-                    );
-                    if (concluidoStage) {
-                      updateData.stageId = concluidoStage.id;
-                      setStageId(concluidoStage.id);
-                    }
-                    const res = await updateTask(task.id, updateData);
-                    if (res.success) {
-                      refreshData(true);
-                    } else {
-                      showCustomAlert('Erro', res.error || 'Erro ao concluir tarefa');
-                    }
-                  }}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 border border-emerald-300 bg-emerald-50/20 text-emerald-650 rounded-xl text-xs font-bold hover:bg-emerald-50 transition-colors border-dashed cursor-pointer"
-                >
-                  <Check size={13} className="stroke-[3]" /> Concluir Tarefa
-                </button>
-              )}
-            </div>
+                  );
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 border border-rose-200 bg-white text-rose-600 rounded-xl text-xs font-bold hover:bg-rose-50 transition-colors border-dashed cursor-pointer"
+              >
+                <Trash2 size={13} /> Excluir Tarefa
+              </button>
+            )}
+          </div>
 
-            {/* Delete Task Button */}
-            {!isCompleted && (
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    showCustomConfirm(
-                      'Excluir Tarefa',
-                      'Deseja realmente remover esta tarefa?',
-                      async () => {
-                        const res = await deleteTask(task.id);
+          {/* Right Side: Actions */}
+          <div className="flex items-center gap-2.5 relative">
+            {isCompleted ? (
+              <button
+                type="button"
+                onClick={async () => {
+                  const updateData: any = { status: 'EM_ANDAMENTO' };
+                  const concluidoStage = stages.find(s => 
+                    s.nome.toLowerCase() === 'concluído' || 
+                    s.nome.toLowerCase() === 'concluido' || 
+                    s.nome.toLowerCase() === 'concluída' || 
+                    s.nome.toLowerCase() === 'concluida'
+                  );
+                  if (concluidoStage && task.stageId === concluidoStage.id) {
+                    const firstNonCompleted = stages.find(s => s.id !== concluidoStage.id);
+                    if (firstNonCompleted) {
+                      updateData.stageId = firstNonCompleted.id;
+                      setStageId(firstNonCompleted.id);
+                    }
+                  }
+                  const res = await updateTask(task.id, updateData);
+                  if (res.success) {
+                    refreshData(true);
+                  } else {
+                    showCustomAlert('Erro', res.error || 'Erro ao reabrir tarefa');
+                  }
+                }}
+                className="flex items-center gap-1.5 px-5 py-2 bg-[#1B4D3E] hover:bg-[#13382d] text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+              >
+                <Plus size={13} /> Reabrir Tarefa
+              </button>
+            ) : (
+              <>
+                {isEditing ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTitulo(task.titulo);
+                        setDescricao(task.descricao || '');
+                        setIsEditing(false);
+                      }}
+                      className="px-4 py-2 border border-slate-200 bg-white text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!titulo.trim()) {
+                          showCustomAlert('Erro', 'O título da tarefa não pode ficar vazio.');
+                          return;
+                        }
+                        setIsSaving(true);
+                        const res = await updateTask(task.id, { titulo, descricao });
+                        setIsSaving(false);
                         if (res.success) {
-                          onClose();
+                          setIsEditing(false);
                           refreshData(true);
                         } else {
-                          showCustomAlert('Erro', res.error || 'Erro ao deletar tarefa');
+                          showCustomAlert('Erro', res.error || 'Erro ao salvar tarefa');
                         }
-                      }
-                    );
-                  }}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 border border-rose-200 bg-rose-50/20 text-rose-600 rounded-xl text-xs font-bold hover:bg-rose-50 transition-colors border-dashed cursor-pointer"
-                >
-                  <Trash2 size={13} /> Excluir Tarefa
-                </button>
-              </div>
+                      }}
+                      className="px-5 py-2 bg-[#1B4D3E] hover:bg-[#13382d] text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Salvar
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(true)}
+                      className="px-5 py-2 bg-[#1B4D3E] hover:bg-[#13382d] text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Editar Tarefa
+                    </button>
+
+                    {/* Delegate Popover Dropdown */}
+                    <div className="relative" ref={delegarPopoverRef}>
+                      <button
+                        type="button"
+                        onClick={() => setShowDelegarPopover(!showDelegarPopover)}
+                        className="flex items-center gap-1.5 px-5 py-2 border border-slate-200 bg-white text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer"
+                      >
+                        <User size={13} /> Delegar
+                      </button>
+
+                      {showDelegarPopover && (
+                        <div className="absolute bottom-full right-0 mb-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-2.5 z-50 text-slate-800 animate-fade-in max-h-56 overflow-y-auto">
+                          <div className="px-2 py-1 text-[9px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
+                            Transferir para...
+                          </div>
+                          <div 
+                            onClick={async () => {
+                              setResponsavelId('');
+                              await saveField({ responsavelId: null });
+                              setShowDelegarPopover(false);
+                            }}
+                            className={`px-2.5 py-1.5 hover:bg-slate-50 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                              !responsavelId ? 'text-[#1B4D3E] font-bold bg-slate-50' : 'text-slate-650'
+                            }`}
+                          >
+                            Sem responsável
+                          </div>
+                          {users.map(u => (
+                            <div
+                              key={u.id}
+                              onClick={async () => {
+                                setResponsavelId(u.id);
+                                await saveField({ responsavelId: u.id });
+                                setShowDelegarPopover(false);
+                              }}
+                              className={`px-2.5 py-1.5 hover:bg-slate-50 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                                responsavelId === u.id ? 'text-[#1B4D3E] font-bold bg-slate-50' : 'text-slate-650'
+                              }`}
+                            >
+                              {u.nome}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const updateData: any = { status: 'CONCLUIDA' };
+                        const concluidoStage = stages.find(s => 
+                          s.nome.toLowerCase() === 'concluído' || 
+                          s.nome.toLowerCase() === 'concluido' || 
+                          s.nome.toLowerCase() === 'concluída' || 
+                          s.nome.toLowerCase() === 'concluida'
+                        );
+                        if (concluidoStage) {
+                          updateData.stageId = concluidoStage.id;
+                          setStageId(concluidoStage.id);
+                        }
+                        const res = await updateTask(task.id, updateData);
+                        if (res.success) {
+                          refreshData(true);
+                        } else {
+                          showCustomAlert('Erro', res.error || 'Erro ao concluir tarefa');
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-5 py-2 border border-emerald-350 bg-emerald-50 text-emerald-650 rounded-xl text-xs font-bold hover:bg-emerald-100 transition-colors cursor-pointer"
+                    >
+                      <Check size={13} className="stroke-[3]" /> Concluir Tarefa
+                    </button>
+                  </>
+                )}
+              </>
             )}
           </div>
         </div>
