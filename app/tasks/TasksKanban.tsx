@@ -426,10 +426,10 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
         }
         await updateTask(taskId, { vencimento: newDate });
       }
-      fetchData();
+      fetchData(true);
     } catch (err) {
       console.error(err);
-      fetchData();
+      fetchData(true);
     }
   };
 
