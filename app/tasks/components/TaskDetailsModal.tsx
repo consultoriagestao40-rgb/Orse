@@ -549,7 +549,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
               )}
 
               {atividades && atividades.length > 0 ? (
-                <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white w-full">
+                <div className="border border-slate-200 rounded-xl overflow-hidden bg-white w-full">
                   <table className="w-full text-left text-xs border-collapse table-fixed">
                     <thead>
                       <tr className="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-200">
@@ -557,7 +557,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                         <th className="py-2.5 px-3">Subtarefa</th>
                         <th className="py-2.5 px-3 w-28 shrink-0">Prazo</th>
                         <th className="py-2.5 px-3 w-24 shrink-0">Responsável</th>
-                        {!isCompleted && <th className="py-2.5 px-3 w-12 text-center shrink-0">Excluir</th>}
+                        {!isCompleted && <th className="py-2.5 px-3 w-20 text-center shrink-0">Excluir</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
@@ -639,9 +639,17 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                                     if (isCompleted) return;
                                     setActRespPopoverId(actRespPopoverId === act.id ? null : act.id);
                                   }}
-                                  className="w-6 h-6 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[9px] font-black text-[#1B4D3E] border border-slate-200 cursor-pointer hover:bg-[#1B4D3E]/20 transition-colors"
+                                  className="w-6 h-6 rounded-full overflow-hidden bg-[#1B4D3E]/10 flex items-center justify-center text-[9px] font-black text-[#1B4D3E] border border-slate-200 cursor-pointer hover:bg-[#1B4D3E]/20 transition-colors"
                                 >
-                                  {act.responsavel.nome.substring(0, 2).toUpperCase()}
+                                  {act.responsavel.avatarUrl ? (
+                                    <img 
+                                      src={act.responsavel.avatarUrl} 
+                                      alt={act.responsavel.nome} 
+                                      className="w-full h-full object-cover" 
+                                    />
+                                  ) : (
+                                    act.responsavel.nome.substring(0, 2).toUpperCase()
+                                  )}
                                 </div>
                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded-md whitespace-nowrap shadow-md z-50 pointer-events-none">
                                   {act.responsavel.nome}

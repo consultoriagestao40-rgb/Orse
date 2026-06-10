@@ -241,7 +241,7 @@ export async function getTasks(filters?: {
         responsavel: { select: { id: true, nome: true, avatarUrl: true, email: true } },
         participantes: { include: { user: { select: { id: true, nome: true, avatarUrl: true } } } },
         observadores: { include: { user: { select: { id: true, nome: true, avatarUrl: true } } } },
-        atividades: { include: { responsavel: { select: { id: true, nome: true } } }, orderBy: { createdAt: 'asc' } },
+        atividades: { include: { responsavel: { select: { id: true, nome: true, avatarUrl: true } } }, orderBy: { createdAt: 'asc' } },
         tags: { include: { tag: true } },
         attachments: { select: { id: true, nome: true, tamanho: true, tipo: true, createdAt: true, user: { select: { nome: true } } }, orderBy: { createdAt: 'desc' } },
         comments: { include: { user: { select: { id: true, nome: true, avatarUrl: true } } }, orderBy: { createdAt: 'desc' } },

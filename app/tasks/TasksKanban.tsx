@@ -922,8 +922,16 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                         {/* Criado Por Column */}
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[9px] font-black text-[#1B4D3E] border border-slate-200">
-                              {t.criador?.nome ? t.criador.nome.substring(0, 2).toUpperCase() : '?'}
+                            <div className="w-6 h-6 rounded-full overflow-hidden bg-[#1B4D3E]/10 flex items-center justify-center text-[9px] font-black text-[#1B4D3E] border border-slate-200 shrink-0">
+                              {t.criador?.avatarUrl ? (
+                                <img 
+                                  src={t.criador.avatarUrl} 
+                                  alt={t.criador.nome} 
+                                  className="w-full h-full object-cover" 
+                                />
+                              ) : (
+                                t.criador?.nome ? t.criador.nome.substring(0, 2).toUpperCase() : '?'
+                              )}
                             </div>
                             <span className="text-xs font-semibold text-slate-700 whitespace-nowrap">
                               {t.criador?.nome || 'Desconhecido'}
@@ -934,8 +942,16 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                         {/* Responsável Column */}
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-[#1E3A8A]/10 flex items-center justify-center text-[9px] font-black text-[#1E3A8A] border border-slate-200">
-                              {t.responsavel?.nome ? t.responsavel.nome.substring(0, 2).toUpperCase() : '?'}
+                            <div className="w-6 h-6 rounded-full overflow-hidden bg-[#1E3A8A]/10 flex items-center justify-center text-[9px] font-black text-[#1E3A8A] border border-slate-200 shrink-0">
+                              {t.responsavel?.avatarUrl ? (
+                                <img 
+                                  src={t.responsavel.avatarUrl} 
+                                  alt={t.responsavel.nome} 
+                                  className="w-full h-full object-cover" 
+                                />
+                              ) : (
+                                t.responsavel?.nome ? t.responsavel.nome.substring(0, 2).toUpperCase() : '?'
+                              )}
                             </div>
                             <span className="text-xs font-semibold text-slate-700 whitespace-nowrap">
                               {t.responsavel?.nome || 'Não delegado'}
