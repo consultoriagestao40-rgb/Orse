@@ -12,6 +12,19 @@ import {
   uploadTaskAttachment, downloadTaskAttachment 
 } from '../actions';
 
+const themeColorsGrid = [
+  ['#ffffff', '#000000', '#eeece1', '#1f497d', '#4f81bd', '#c0504d', '#9bbb59', '#8064a2', '#4bacc6', '#f79646'],
+  ['#f2f2f2', '#7f7f7f', '#f4f3ed', '#dce6f1', '#e9edf4', '#f2dbdb', '#ebf1de', '#e8e5ee', '#e5f3f5', '#fdeada'],
+  ['#d9d9d9', '#595959', '#ebe9df', '#b8cce4', '#cfdae8', '#e6b8b7', '#d7e3bc', '#ccc1da', '#c3e6ec', '#fbd5b5'],
+  ['#bfbfbf', '#3f3f3f', '#dddcd2', '#95b3d7', '#b5c7e0', '#d99694', '#c3d69b', '#b2a1c7', '#a3d8e2', '#fac090'],
+  ['#a6a6a6', '#262626', '#c4c3b9', '#16365c', '#3b618e', '#903c39', '#748c41', '#604a7b', '#388194', '#b97034'],
+  ['#7f7f7f', '#0d0d0d', '#a2a29a', '#0f243e', '#27415f', '#602826', '#4e5d2b', '#403152', '#255663', '#7c4b22']
+];
+
+const standardColors = [
+  '#c00000', '#ff0000', '#ffc000', '#ffff00', '#92d050', '#00b050', '#00b0f0', '#0070c0', '#002060', '#7030a0'
+];
+
 interface TaskDetailsModalProps {
   task: any;
   stages: any[];
@@ -65,8 +78,59 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
   // Saving states
   const [isSaving, setIsSaving] = useState(false);
 
+  // Color picker states
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const colorPickerRef = useRef<HTMLDivElement>(null);
+
+  // Custom alert/prompt/confirm modal (CRM-style)
+  const [customModal, setCustomModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message?: string;
+    type: 'alert' | 'confirm';
+    onConfirm: () => void;
+    onCancel?: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    type: 'alert',
+    onConfirm: () => {}
+  });
+
+  const showCustomConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setCustomModal({
+      isOpen: true,
+      title,
+      message,
+      type: 'confirm',
+      onConfirm
+    });
+  };
+
+  const showCustomAlert = (title: string, message: string) => {
+    setCustomModal({
+      isOpen: true,
+      title,
+      message,
+      type: 'alert',
+      onConfirm: () => {}
+    });
+  };
+
   useEffect(() => {
     loadTags();
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(event.target as Node)) {
+        setShowColorPicker(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   useEffect(() => {
@@ -154,7 +218,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
       setIsAddingActivity(false);
       refreshData(true);
     } else {
-      alert(res.error || 'Erro ao adicionar atividade');
+      showCustomAlert('Erro', res.error || 'Erro ao adicionar atividade');
     }
   };
 
@@ -166,15 +230,19 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
       refreshData(true);
     } catch (err) {
       setAtividades(prev => prev.map(act => act.id === id ? { ...act, concluida: !concluida } : act));
-      alert('Erro ao atualizar atividade');
+      showCustomAlert('Erro', 'Erro ao atualizar atividade');
     }
   };
 
   const handleDeleteActivity = async (id: string) => {
-    if (confirm('Deseja remover esta atividade?')) {
-      await deleteTaskActivity(id);
-      refreshData(true);
-    }
+    showCustomConfirm(
+      'Remover Atividade',
+      'Deseja realmente remover esta subtarefa/atividade?',
+      async () => {
+        await deleteTaskActivity(id);
+        refreshData(true);
+      }
+    );
   };
 
   // Comment mentions parsing
@@ -215,7 +283,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
       setCommentText('');
       refreshData(true);
     } else {
-      alert(res.error || 'Erro ao adicionar comentário');
+      showCustomAlert('Erro', res.error || 'Erro ao adicionar comentário');
     }
   };
 
@@ -265,7 +333,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
       if (res.success) {
         refreshData(true);
       } else {
-        alert(res.error || 'Erro ao anexar arquivo');
+        showCustomAlert('Erro', res.error || 'Erro ao anexar arquivo');
       }
     };
     reader.readAsDataURL(file);
@@ -279,7 +347,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
       link.download = name;
       link.click();
     } else {
-      alert('Erro ao carregar arquivo para download');
+      showCustomAlert('Erro', 'Erro ao carregar arquivo para download');
     }
   };
 
@@ -294,13 +362,17 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
   };
 
   const handleDeleteTag = async (id: string) => {
-    if (confirm('Deseja excluir esta tag do sistema?')) {
-      const res = await deleteTenantTag(id);
-      if (res.success) {
-        setAllTags(allTags.filter(t => t.id !== id));
-        setSelectedTags(selectedTags.filter(t => t !== id));
+    showCustomConfirm(
+      'Excluir Tag',
+      'Deseja realmente excluir esta tag do sistema?',
+      async () => {
+        const res = await deleteTenantTag(id);
+        if (res.success) {
+          setAllTags(allTags.filter(t => t.id !== id));
+          setSelectedTags(selectedTags.filter(t => t !== id));
+        }
       }
-    }
+    );
   };
 
   return (
@@ -651,22 +723,71 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
 
               {showTagManager ? (
                 <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-2.5 mb-2.5">
-                  <div className="flex gap-1.5">
+                  <div className="flex gap-1.5 items-center relative">
                     <input 
                       value={newTagName}
                       onChange={e => setNewTagName(e.target.value)}
                       placeholder="Nome da tag"
                       className="text-xs p-1.5 border border-slate-200 rounded-lg flex-1 outline-none"
                     />
-                    <input 
-                      type="color" 
-                      value={newTagColor}
-                      onChange={e => setNewTagColor(e.target.value)}
-                      className="w-8 h-8 rounded border border-slate-200 cursor-pointer p-0"
-                    />
+                    
+                    {/* Seletor de cor customizado (paleta ATA) */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowColorPicker(!showColorPicker)}
+                        style={{ backgroundColor: newTagColor }}
+                        className="w-8 h-8 rounded-lg border border-slate-350 cursor-pointer shadow-sm hover:scale-105 transition-transform"
+                        title="Selecionar cor"
+                      />
+                      
+                      {showColorPicker && (
+                        <div 
+                          ref={colorPickerRef}
+                          className="absolute bottom-full right-0 mb-2 z-50 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[220px]"
+                        >
+                          <div className="text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Cores do Tema</div>
+                          <div className="grid grid-cols-10 gap-1 mb-3">
+                            {themeColorsGrid.map((row, rIdx) => 
+                              row.map((color, cIdx) => (
+                                <button
+                                  key={`theme-${rIdx}-${cIdx}`}
+                                  type="button"
+                                  onClick={() => {
+                                    setNewTagColor(color);
+                                    setShowColorPicker(false);
+                                  }}
+                                  className="w-[16px] h-[16px] rounded-[3px] border border-slate-200 hover:scale-120 transition-transform cursor-pointer"
+                                  style={{ backgroundColor: color }}
+                                  title={color}
+                                />
+                              ))
+                            )}
+                          </div>
+
+                          <div className="text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider border-t border-slate-100 pt-2">Cores Padrão</div>
+                          <div className="grid grid-cols-10 gap-1">
+                            {standardColors.map((color, idx) => (
+                              <button
+                                key={`std-${idx}`}
+                                type="button"
+                                onClick={() => {
+                                  setNewTagColor(color);
+                                  setShowColorPicker(false);
+                                }}
+                                className="w-[16px] h-[16px] rounded-[3px] border border-slate-200 hover:scale-120 transition-transform cursor-pointer"
+                                style={{ backgroundColor: color }}
+                                title={color}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     <button 
                       onClick={handleCreateTag}
-                      className="px-2 bg-[#1B4D3E] text-white rounded-lg text-xs font-bold hover:bg-[#13382d] border-none cursor-pointer"
+                      className="px-3 py-1.5 bg-[#1B4D3E] text-white rounded-lg text-xs font-bold hover:bg-[#13382d] border-none cursor-pointer h-8 flex items-center justify-center"
                     >
                       Ok
                     </button>
@@ -795,16 +916,21 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
             {/* Delete Task Button */}
             <div className="pt-2">
               <button
-                onClick={async () => {
-                  if (confirm('Deseja realmente remover esta tarefa?')) {
-                    const res = await deleteTask(task.id);
-                    if (res.success) {
-                      onClose();
-                      refreshData(true);
-                    } else {
-                      alert(res.error || 'Erro ao deletar tarefa');
+                type="button"
+                onClick={() => {
+                  showCustomConfirm(
+                    'Excluir Tarefa',
+                    'Deseja realmente remover esta tarefa?',
+                    async () => {
+                      const res = await deleteTask(task.id);
+                      if (res.success) {
+                        onClose();
+                        refreshData(true);
+                      } else {
+                        showCustomAlert('Erro', res.error || 'Erro ao deletar tarefa');
+                      }
                     }
-                  }
+                  );
                 }}
                 className="w-full flex items-center justify-center gap-1.5 py-2 border border-rose-200 bg-rose-50/20 text-rose-600 rounded-xl text-xs font-bold hover:bg-rose-50 transition-colors border-dashed cursor-pointer"
               >
@@ -814,6 +940,54 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
           </div>
         </div>
       </div>
+
+      {/* CRM-style Custom Modal for Prompts, Confirms, and Alerts */}
+      {customModal.isOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+          <div 
+            className="bg-white rounded-2xl shadow-2xl p-5 w-full max-w-sm border border-slate-100 flex flex-col gap-4 text-slate-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <h4 className="font-black text-sm uppercase tracking-wider text-slate-700">
+                {customModal.title}
+              </h4>
+              <button 
+                onClick={() => setCustomModal(prev => ({ ...prev, isOpen: false }))}
+                className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-650 transition-colors border-none bg-transparent cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <p className="text-xs font-semibold text-slate-600 leading-relaxed">
+              {customModal.message}
+            </p>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              {customModal.type !== 'alert' && (
+                <button
+                  type="button"
+                  onClick={() => setCustomModal(prev => ({ ...prev, isOpen: false }))}
+                  className="px-3.5 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-50 transition-colors cursor-pointer bg-white"
+                >
+                  Cancelar
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  customModal.onConfirm();
+                  setCustomModal(prev => ({ ...prev, isOpen: false }));
+                }}
+                className="px-4 py-2 bg-[#1B4D3E] text-white rounded-xl text-xs font-black hover:bg-[#13382d] transition-colors cursor-pointer border-none"
+              >
+                {customModal.type === 'alert' ? 'OK' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
