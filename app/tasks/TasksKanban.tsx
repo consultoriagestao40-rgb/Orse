@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   LayoutList, Kanban, Plus, Search, Filter, Calendar, 
   User, CheckSquare, RefreshCw, X, ChevronDown, Edit2, 
-  Trash2, AlertTriangle, Users, Eye, Tag as TagIcon, Check
+  Trash2, AlertTriangle, Users, Eye, Tag as TagIcon, Check,
+  Paperclip, CheckCircle2
 } from 'lucide-react';
 import { 
   getTasks, getTaskStages, createTaskStage, updateTaskStage, 
