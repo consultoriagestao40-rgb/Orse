@@ -50,6 +50,9 @@ model Tenant {
   faqs                      FaqPadrao[]
   prospectSearchLogs        ProspectSearchLog[]
   atas                      Ata[]
+  tasks                     Task[]
+  taskStages                TaskStage[]
+  tags                      Tag[]
 }
 
 model EmpresaEmissora {
@@ -97,6 +100,13 @@ model User {
   receivedInternalMessages InternalMessage[] @relation("ReceivedInternalMessages")
   prospectSearchLogs       ProspectSearchLog[]
   ataAcoes                 AtaAcao[]
+  createdTasks             Task[]            @relation("TaskCreator")
+  assignedTasks            Task[]            @relation("TaskAssignee")
+  taskParticipants         TaskParticipant[]
+  taskObservers            TaskObserver[]
+  taskComments             TaskComment[]
+  taskAttachments          TaskAttachment[]
+  taskActivities           TaskActivity[]
 }
 
 model Client {
@@ -763,4 +773,133 @@ model AtaAcao {
   
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+}
+
+model TaskStage {
+  id         String    @id @default(cuid())
+  nome       String
+  ordem      Int       @default(0)
+  color      String    @default("bg-slate-100")
+  tenantId   String?
+  tenant     Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tasks      Task[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Task {
+  id            String             @id @default(cuid())
+  codigo        Int                @unique @default(autoincrement())
+  titulo        String
+  descricao     String?            @db.Text
+  status        String             @default("PENDENTE") // PENDENTE, EM_ANDAMENTO, CONCLUIDA, CANCELADA
+  prioridade    String             @default("MEDIA") // BAIXA, MEDIA, ALTA
+  vencimento    DateTime?
+  stageId       String
+  stage         TaskStage          @relation(fields: [stageId], references: [id])
+  criadorId     String
+  criador       User               @relation("TaskCreator", fields: [criadorId], references: [id])
+  responsavelId String?
+  responsavel   User?              @relation("TaskAssignee", fields: [responsavelId], references: [id])
+  
+  participantes TaskParticipant[]
+  observadores  TaskObserver[]
+  atividades    TaskActivity[]
+  comments      TaskComment[]
+  attachments   TaskAttachment[]
+  history       TaskHistory[]
+  tags          TaskTag[]
+  
+  tenantId      String?
+  tenant        Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+}
+
+model TaskParticipant {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([taskId, userId])
+}
+
+model TaskObserver {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([taskId, userId])
+}
+
+model TaskActivity {
+  id            String    @id @default(cuid())
+  taskId        String
+  task          Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  titulo        String
+  descricao     String?   @db.Text
+  concluida     Boolean   @default(false)
+  responsavelId String?
+  responsavel   User?     @relation(fields: [responsavelId], references: [id])
+  vencimento    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model TaskComment {
+  id         String   @id @default(cuid())
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  texto      String   @db.Text
+  createdAt  DateTime @default(now())
+}
+
+model TaskAttachment {
+  id         String   @id @default(cuid())
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nome       String
+  tamanho    Int      // bytes
+  tipo       String   // mimetype
+  base64Data String   @db.Text
+  createdAt  DateTime @default(now())
+}
+
+model TaskHistory {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tipo      String   // Ex: 'CRIACAO', 'MUDANCA_ETAPA', 'COMENTARIO', 'ATIVIDADE', 'ANEXO', 'ALTERACAO_DADOS'
+  descricao String   @db.Text
+  createdAt DateTime @default(now())
+}
+
+model Tag {
+  id        String    @id @default(cuid())
+  nome      String
+  color     String    @default("#64748B")
+  tenantId  String?
+  tenant    Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tasks     TaskTag[]
+  createdAt DateTime  @default(now())
+}
+
+model TaskTag {
+  id     String @id @default(cuid())
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tagId  String
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, tagId])
 }

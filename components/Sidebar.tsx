@@ -2,7 +2,7 @@
  
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone, MessageCircle, MessageSquare, UserCog, Send, Menu, ClipboardList } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone, MessageCircle, MessageSquare, UserCog, Send, Menu, ClipboardList, CheckSquare } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
@@ -936,6 +936,7 @@ const Sidebar = () => {
     { icon: Search, label: 'Prospecção Inteligente', href: '/prospeccao', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Calendar, label: 'Calendário Global', href: '/calendar', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Target, label: 'Pipeline de Leads', href: '/leads', roles: ['ADMIN', 'MANAGER', 'USER'] },
+    { icon: CheckSquare, label: 'Gestão de Tarefas', href: '/tasks', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Mail, label: 'Gestão de E-mails', href: '/emails', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Home, label: 'Pipeline de FVP', href: '/pipeline', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Presentation, label: 'Proposta Comercial', href: '/propostas-comerciais', roles: ['ADMIN', 'MANAGER', 'USER'] },
