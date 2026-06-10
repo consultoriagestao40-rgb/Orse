@@ -365,7 +365,18 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
     setTasks(prev => prev.map(t => {
       if (t.id === taskId) {
         if (columnType === 'etapa') {
-          return { ...t, stageId: targetValue };
+          const isConcluidoStage = stages.some(s => 
+            s.id === targetValue && 
+            (s.nome.toLowerCase() === 'concluído' || 
+             s.nome.toLowerCase() === 'concluido' || 
+             s.nome.toLowerCase() === 'concluída' || 
+             s.nome.toLowerCase() === 'concluida')
+          );
+          return { 
+            ...t, 
+            stageId: targetValue,
+            status: isConcluidoStage ? 'CONCLUIDA' : (t.status === 'CONCLUIDA' ? 'EM_ANDAMENTO' : t.status)
+          };
         } else if (columnType === 'responsavel') {
           return { ...t, responsavelId: targetValue || null };
         } else if (columnType === 'prazo') {
@@ -392,7 +403,23 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
 
     try {
       if (columnType === 'etapa') {
-        await updateTask(taskId, { stageId: targetValue });
+        const isConcluidoStage = stages.some(s => 
+          s.id === targetValue && 
+          (s.nome.toLowerCase() === 'concluído' || 
+           s.nome.toLowerCase() === 'concluido' || 
+           s.nome.toLowerCase() === 'concluída' || 
+           s.nome.toLowerCase() === 'concluida')
+        );
+        const updateData: any = { stageId: targetValue };
+        if (isConcluidoStage) {
+          updateData.status = 'CONCLUIDA';
+        } else {
+          const taskObj = tasks.find(t => t.id === taskId);
+          if (taskObj && taskObj.status === 'CONCLUIDA') {
+            updateData.status = 'EM_ANDAMENTO';
+          }
+        }
+        await updateTask(taskId, updateData);
       } else if (columnType === 'responsavel') {
         await updateTask(taskId, { responsavelId: targetValue || '' });
       } else if (columnType === 'etiqueta') {

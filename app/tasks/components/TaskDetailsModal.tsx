@@ -34,6 +34,8 @@ interface TaskDetailsModalProps {
 }
 
 export default function TaskDetailsModal({ task, stages, users, onClose, refreshData }: TaskDetailsModalProps) {
+  const isCompleted = task.status === 'CONCLUIDA';
+
   // Task info states
   const [titulo, setTitulo] = useState(task.titulo);
   const [descricao, setDescricao] = useState(task.descricao || '');
@@ -155,6 +157,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
 
   // Auto-save basic changes
   const saveField = async (fields: any) => {
+    if (isCompleted) return;
     setIsSaving(true);
     await updateTask(task.id, fields);
     setIsSaving(false);
@@ -163,6 +166,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
 
   // Add tag relation
   const handleTagToggle = async (tagId: string) => {
+    if (isCompleted) return;
     let updated: string[];
     if (selectedTags.includes(tagId)) {
       updated = selectedTags.filter(id => id !== tagId);
@@ -176,6 +180,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
 
   // Add participant
   const handleParticipantToggle = async (userId: string) => {
+    if (isCompleted) return;
     let updated: string[];
     if (selectedParticipants.includes(userId)) {
       updated = selectedParticipants.filter(id => id !== userId);
@@ -189,6 +194,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
 
   // Add observer
   const handleObserverToggle = async (userId: string) => {
+    if (isCompleted) return;
     let updated: string[];
     if (selectedObservers.includes(userId)) {
       updated = selectedObservers.filter(id => id !== userId);
@@ -202,6 +208,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
 
   // Subtask Activity CRUD
   const handleAddActivity = async (e: React.FormEvent) => {
+    if (isCompleted) return;
     e.preventDefault();
     if (!actTitulo.trim()) return;
 
@@ -223,6 +230,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
   };
 
   const handleToggleActivity = async (id: string, concluida: boolean) => {
+    if (isCompleted) return;
     // Optimistic update
     setAtividades(prev => prev.map(act => act.id === id ? { ...act, concluida } : act));
     try {
@@ -235,6 +243,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
   };
 
   const handleDeleteActivity = async (id: string) => {
+    if (isCompleted) return;
     showCustomConfirm(
       'Remover Atividade',
       'Deseja realmente remover esta subtarefa/atividade?',
@@ -275,6 +284,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
   };
 
   const handleAddCommentSubmit = async (e: React.FormEvent) => {
+    if (isCompleted) return;
     e.preventDefault();
     if (!commentText.trim()) return;
 
@@ -323,6 +333,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
 
   // File attachments handlers
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isCompleted) return;
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -353,6 +364,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
 
   // Create Tag in tag manager
   const handleCreateTag = async () => {
+    if (isCompleted) return;
     if (!newTagName.trim()) return;
     const res = await createTenantTag(newTagName.trim(), newTagColor);
     if (res.success && res.tag) {
@@ -362,6 +374,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
   };
 
   const handleDeleteTag = async (id: string) => {
+    if (isCompleted) return;
     showCustomConfirm(
       'Excluir Tag',
       'Deseja realmente excluir esta tag do sistema?',
@@ -388,7 +401,8 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
               value={titulo}
               onChange={e => setTitulo(e.target.value)}
               onBlur={() => saveField({ titulo })}
-              className="text-lg font-black text-slate-800 bg-transparent border-none outline-none focus:bg-white focus:ring-1 focus:ring-[#1B4D3E] px-2 py-0.5 rounded-xl w-[260px] sm:w-[450px]"
+              disabled={isCompleted}
+              className="text-lg font-black text-slate-800 bg-transparent border-none outline-none focus:bg-white focus:ring-1 focus:ring-[#1B4D3E] px-2 py-0.5 rounded-xl w-[260px] sm:w-[450px] disabled:opacity-85 disabled:cursor-default"
             />
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-650 p-1 rounded-xl hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer">
@@ -409,8 +423,9 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                 value={descricao}
                 onChange={e => setDescricao(e.target.value)}
                 onBlur={() => saveField({ descricao })}
-                placeholder="Insira detalhes adicionais sobre esta tarefa..."
-                className="w-full min-h-[90px] max-h-[160px] p-3 border border-slate-200 rounded-2xl outline-none focus:border-[#1B4D3E] text-xs font-semibold text-slate-700 bg-slate-50/50 focus:bg-white transition-all resize-y"
+                placeholder={isCompleted ? "Sem descrição" : "Insira detalhes adicionais sobre esta tarefa..."}
+                disabled={isCompleted}
+                className="w-full min-h-[90px] max-h-[160px] p-3 border border-slate-200 rounded-2xl outline-none focus:border-[#1B4D3E] text-xs font-semibold text-slate-700 bg-slate-50/50 focus:bg-white transition-all resize-y disabled:bg-slate-50/20 disabled:cursor-default"
               />
             </div>
 
@@ -420,12 +435,14 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                   <CheckCircle2 size={14} /> Subtarefas / Atividades
                 </h4>
-                <button
-                  onClick={() => setIsAddingActivity(true)}
-                  className="flex items-center gap-1 text-[11px] font-bold text-[#1B4D3E] hover:underline bg-transparent border-none cursor-pointer"
-                >
-                  <Plus size={12} /> Adicionar
-                </button>
+                {!isCompleted && (
+                  <button
+                    onClick={() => setIsAddingActivity(true)}
+                    className="flex items-center gap-1 text-[11px] font-bold text-[#1B4D3E] hover:underline bg-transparent border-none cursor-pointer"
+                  >
+                    <Plus size={12} /> Adicionar
+                  </button>
+                )}
               </div>
 
               {isAddingActivity && (
@@ -481,7 +498,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                         <th className="py-2.5 px-3 w-10">Ok</th>
                         <th className="py-2.5 px-3">Subtarefa</th>
                         <th className="py-2.5 px-3">Responsável</th>
-                        <th className="py-2.5 px-3 w-12 text-center">Excluir</th>
+                        {!isCompleted && <th className="py-2.5 px-3 w-12 text-center">Excluir</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
@@ -491,8 +508,9 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                             <input 
                               type="checkbox" 
                               checked={act.concluida} 
+                              disabled={isCompleted}
                               onChange={e => handleToggleActivity(act.id, e.target.checked)}
-                              className="w-4 h-4 text-[#1B4D3E] rounded border-slate-300 focus:ring-[#1B4D3E]"
+                              className="w-4 h-4 text-[#1B4D3E] rounded border-slate-300 focus:ring-[#1B4D3E] disabled:opacity-50 disabled:cursor-default"
                             />
                           </td>
                           <td className={`py-2.5 px-3 ${act.concluida ? 'line-through text-slate-400' : ''}`}>
@@ -501,15 +519,17 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                           <td className="py-2.5 px-3 text-slate-500">
                             {act.responsavel?.nome || 'Não delegado'}
                           </td>
-                          <td className="py-2.5 px-3 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteActivity(act.id)}
-                              className="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 border-none bg-transparent cursor-pointer"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </td>
+                          {!isCompleted && (
+                            <td className="py-2.5 px-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteActivity(act.id)}
+                                className="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 border-none bg-transparent cursor-pointer"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -526,10 +546,12 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                   <Paperclip size={14} /> Anexar Arquivos
                 </h4>
-                <label className="flex items-center gap-1 text-[11px] font-bold text-[#1B4D3E] hover:underline cursor-pointer">
-                  <Plus size={12} /> Adicionar
-                  <input type="file" onChange={handleFileUpload} className="hidden" />
-                </label>
+                {!isCompleted && (
+                  <label className="flex items-center gap-1 text-[11px] font-bold text-[#1B4D3E] hover:underline cursor-pointer">
+                    <Plus size={12} /> Adicionar
+                    <input type="file" onChange={handleFileUpload} className="hidden" />
+                  </label>
+                )}
               </div>
 
               {task.attachments && task.attachments.length > 0 ? (
@@ -575,41 +597,43 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                 <MessageSquare size={14} /> Comentários e Menções
               </h4>
 
-              <form onSubmit={handleAddCommentSubmit} className="relative mb-4">
-                <textarea
-                  ref={commentInputRef}
-                  value={commentText}
-                  onChange={handleCommentChange}
-                  placeholder="Escreva um comentário... Use @ para mencionar alguém de sua equipe"
-                  className="w-full min-h-[72px] p-3 pr-12 border border-slate-200 rounded-2xl outline-none focus:border-[#1B4D3E] text-xs font-semibold text-slate-700 resize-none"
-                />
-                <button
-                  type="submit"
-                  className="absolute right-3 bottom-3 p-2 bg-[#1B4D3E] text-white rounded-xl hover:bg-[#13382d] transition-colors border-none cursor-pointer"
-                >
-                  <Send size={14} />
-                </button>
+              {!isCompleted && (
+                <form onSubmit={handleAddCommentSubmit} className="relative mb-4">
+                  <textarea
+                    ref={commentInputRef}
+                    value={commentText}
+                    onChange={handleCommentChange}
+                    placeholder="Escreva um comentário... Use @ para mencionar alguém de sua equipe"
+                    className="w-full min-h-[72px] p-3 pr-12 border border-slate-200 rounded-2xl outline-none focus:border-[#1B4D3E] text-xs font-semibold text-slate-700 resize-none"
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-3 bottom-3 p-2 bg-[#1B4D3E] text-white rounded-xl hover:bg-[#13382d] transition-colors border-none cursor-pointer"
+                  >
+                    <Send size={14} />
+                  </button>
 
-                {/* Autocomplete Dropdown */}
-                {showMentionDropdown && (
-                  <div className="absolute left-0 bottom-full mb-1 w-56 bg-slate-900 border border-slate-800 rounded-xl shadow-xl p-1 z-50 text-slate-200 max-h-40 overflow-y-auto">
-                    <div className="px-2.5 py-1 text-[8px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-800 mb-1">
-                      Mencionar Membro da Equipe
+                  {/* Autocomplete Dropdown */}
+                  {showMentionDropdown && (
+                    <div className="absolute left-0 bottom-full mb-1 w-56 bg-slate-900 border border-slate-800 rounded-xl shadow-xl p-1 z-50 text-slate-200 max-h-40 overflow-y-auto">
+                      <div className="px-2.5 py-1 text-[8px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-800 mb-1">
+                        Mencionar Membro da Equipe
+                      </div>
+                      {users
+                        .filter(u => u.nome.toLowerCase().includes(mentionSearch.toLowerCase()))
+                        .map(u => (
+                          <div
+                            key={u.id}
+                            onClick={() => handleSelectMention(u.nome)}
+                            className="px-2.5 py-1.5 hover:bg-slate-800 rounded-lg text-xs font-bold cursor-pointer transition-colors truncate"
+                          >
+                            {u.nome} <span className="text-[10px] text-slate-500 font-medium">({u.cargo || 'Membro'})</span>
+                          </div>
+                        ))}
                     </div>
-                    {users
-                      .filter(u => u.nome.toLowerCase().includes(mentionSearch.toLowerCase()))
-                      .map(u => (
-                        <div
-                          key={u.id}
-                          onClick={() => handleSelectMention(u.nome)}
-                          className="px-2.5 py-1.5 hover:bg-slate-800 rounded-lg text-xs font-bold cursor-pointer transition-colors truncate"
-                        >
-                          {u.nome} <span className="text-[10px] text-slate-500 font-medium">({u.cargo || 'Membro'})</span>
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </form>
+                  )}
+                </form>
+              )}
 
               {task.comments && task.comments.length > 0 ? (
                 <div className="space-y-3 max-h-[200px] overflow-y-auto pr-1">
@@ -656,11 +680,12 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Etapa no Kanban</label>
               <select
                 value={stageId}
+                disabled={isCompleted}
                 onChange={e => {
                   setStageId(e.target.value);
                   saveField({ stageId: e.target.value });
                 }}
-                className={`w-full p-2.5 border rounded-xl text-xs font-bold outline-none cursor-pointer transition-all ${
+                className={`w-full p-2.5 border rounded-xl text-xs font-bold outline-none cursor-pointer transition-all disabled:opacity-85 disabled:cursor-default ${
                   stages.find(s => s.id === stageId)?.color || 'bg-white border-slate-200 text-slate-700'
                 }`}
               >
@@ -677,11 +702,12 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Responsável</label>
               <select
                 value={responsavelId}
+                disabled={isCompleted}
                 onChange={e => {
                   setResponsavelId(e.target.value);
                   saveField({ responsavelId: e.target.value });
                 }}
-                className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] bg-white cursor-pointer"
+                className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] bg-white cursor-pointer disabled:bg-slate-100 disabled:cursor-default"
               >
                 <option value="">Não delegado</option>
                 {users.map(u => (
@@ -697,11 +723,12 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                 <input
                   type="date"
                   value={vencimento}
+                  disabled={isCompleted}
                   onChange={e => {
                     setVencimento(e.target.value);
                     saveField({ vencimento: e.target.value || null });
                   }}
-                  className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] bg-white"
+                  className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] bg-white disabled:bg-slate-100 disabled:cursor-default"
                 />
               </div>
             </div>
@@ -711,11 +738,12 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Prioridade</label>
               <select
                 value={prioridade}
+                disabled={isCompleted}
                 onChange={e => {
                   setPrioridade(e.target.value);
                   saveField({ prioridade: e.target.value });
                 }}
-                className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] bg-white cursor-pointer"
+                className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] bg-white cursor-pointer disabled:bg-slate-100 disabled:cursor-default"
               >
                 <option value="BAIXA">Baixa</option>
                 <option value="MEDIA">Média</option>
@@ -723,209 +751,213 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
               </select>
             </div>
 
-            {/* Tags (Labels) */}
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Etiquetas / Tags</label>
-                <button
-                  onClick={() => setShowTagManager(!showTagManager)}
-                  className="text-[9px] font-bold text-[#1B4D3E] hover:underline bg-transparent border-none cursor-pointer"
-                >
-                  {showTagManager ? 'Fechar' : 'Gerenciar'}
-                </button>
-              </div>
-
-              {showTagManager ? (
-                <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-2.5 mb-2.5">
-                  <div className="flex gap-1.5 items-center relative">
-                    <input 
-                      value={newTagName}
-                      onChange={e => setNewTagName(e.target.value)}
-                      placeholder="Nome da tag"
-                      className="text-xs p-1.5 border border-slate-200 rounded-lg flex-1 outline-none"
-                    />
-                    
-                    {/* Seletor de cor customizado (paleta ATA) */}
-                    <div className="relative">
+                {/* Tags (Labels) */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Etiquetas / Tags</label>
+                    {!isCompleted && (
                       <button
-                        type="button"
-                        onClick={() => setShowColorPicker(!showColorPicker)}
-                        style={{ backgroundColor: newTagColor }}
-                        className="w-8 h-8 rounded-lg border border-slate-350 cursor-pointer shadow-sm hover:scale-105 transition-transform"
-                        title="Selecionar cor"
-                      />
-                      
-                      {showColorPicker && (
-                        <div 
-                          ref={colorPickerRef}
-                          className="absolute bottom-full right-0 mb-2 z-50 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[220px]"
-                        >
-                          <div className="text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Cores do Tema</div>
-                          <div className="grid grid-cols-10 gap-1 mb-3">
-                            {themeColorsGrid.map((row, rIdx) => 
-                              row.map((color, cIdx) => (
-                                <button
-                                  key={`theme-${rIdx}-${cIdx}`}
-                                  type="button"
-                                  onClick={() => {
-                                    setNewTagColor(color);
-                                    setShowColorPicker(false);
-                                  }}
-                                  className="w-[16px] h-[16px] rounded-[3px] border border-slate-200 hover:scale-120 transition-transform cursor-pointer"
-                                  style={{ backgroundColor: color }}
-                                  title={color}
-                                />
-                              ))
-                            )}
-                          </div>
-
-                          <div className="text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider border-t border-slate-100 pt-2">Cores Padrão</div>
-                          <div className="grid grid-cols-10 gap-1">
-                            {standardColors.map((color, idx) => (
-                              <button
-                                key={`std-${idx}`}
-                                type="button"
-                                onClick={() => {
-                                  setNewTagColor(color);
-                                  setShowColorPicker(false);
-                                }}
-                                className="w-[16px] h-[16px] rounded-[3px] border border-slate-200 hover:scale-120 transition-transform cursor-pointer"
-                                style={{ backgroundColor: color }}
-                                title={color}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <button 
-                      onClick={handleCreateTag}
-                      className="px-3 py-1.5 bg-[#1B4D3E] text-white rounded-lg text-xs font-bold hover:bg-[#13382d] border-none cursor-pointer h-8 flex items-center justify-center"
-                    >
-                      Ok
-                    </button>
+                        onClick={() => setShowTagManager(!showTagManager)}
+                        className="text-[9px] font-bold text-[#1B4D3E] hover:underline bg-transparent border-none cursor-pointer"
+                      >
+                        {showTagManager ? 'Fechar' : 'Gerenciar'}
+                      </button>
+                    )}
                   </div>
-                  <div className="max-h-24 overflow-y-auto space-y-1 pr-1">
-                    {allTags.map(tag => (
-                      <div key={tag.id} className="flex justify-between items-center gap-1.5">
-                        <span 
-                          style={{ backgroundColor: tag.color }}
-                          className="text-[9px] font-bold text-white px-2 py-0.5 rounded truncate flex-1"
+
+                  {showTagManager && !isCompleted ? (
+                    <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-2.5 mb-2.5">
+                      <div className="flex gap-1.5 items-center relative">
+                        <input 
+                          value={newTagName}
+                          onChange={e => setNewTagName(e.target.value)}
+                          placeholder="Nome da tag"
+                          className="text-xs p-1.5 border border-slate-200 rounded-lg flex-1 outline-none"
+                        />
+                        
+                        {/* Seletor de cor customizado (paleta ATA) */}
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setShowColorPicker(!showColorPicker)}
+                            style={{ backgroundColor: newTagColor }}
+                            className="w-8 h-8 rounded-lg border border-slate-350 cursor-pointer shadow-sm hover:scale-105 transition-transform animate-fade-in"
+                            title="Selecionar cor"
+                          />
+                          
+                          {showColorPicker && (
+                            <div 
+                              ref={colorPickerRef}
+                              className="absolute bottom-full right-0 mb-2 z-50 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[220px]"
+                            >
+                              <div className="text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Cores do Tema</div>
+                              <div className="grid grid-cols-10 gap-1 mb-3">
+                                {themeColorsGrid.map((row, rIdx) => 
+                                  row.map((color, cIdx) => (
+                                    <button
+                                      key={`theme-${rIdx}-${cIdx}`}
+                                      type="button"
+                                      onClick={() => {
+                                        setNewTagColor(color);
+                                        setShowColorPicker(false);
+                                      }}
+                                      className="w-[16px] h-[16px] rounded-[3px] border border-slate-200 hover:scale-120 transition-transform cursor-pointer"
+                                      style={{ backgroundColor: color }}
+                                      title={color}
+                                    />
+                                  ))
+                                )}
+                              </div>
+
+                              <div className="text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider border-t border-slate-100 pt-2">Cores Padrão</div>
+                              <div className="grid grid-cols-10 gap-1">
+                                {standardColors.map((color, idx) => (
+                                  <button
+                                    key={`std-${idx}`}
+                                    type="button"
+                                    onClick={() => {
+                                      setNewTagColor(color);
+                                      setShowColorPicker(false);
+                                    }}
+                                    className="w-[16px] h-[16px] rounded-[3px] border border-slate-200 hover:scale-120 transition-transform cursor-pointer"
+                                    style={{ backgroundColor: color }}
+                                    title={color}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <button 
+                          onClick={handleCreateTag}
+                          className="px-3 py-1.5 bg-[#1B4D3E] text-white rounded-lg text-xs font-bold hover:bg-[#13382d] border-none cursor-pointer h-8 flex items-center justify-center"
                         >
-                          {tag.nome}
-                        </span>
-                        <button
-                          onClick={() => handleDeleteTag(tag.id)}
-                          className="text-slate-400 hover:text-rose-600 border-none bg-transparent cursor-pointer"
-                        >
-                          <X size={10} />
+                          Ok
                         </button>
+                      </div>
+                      <div className="max-h-24 overflow-y-auto space-y-1 pr-1">
+                        {allTags.map(tag => (
+                          <div key={tag.id} className="flex justify-between items-center gap-1.5">
+                            <span 
+                              style={{ backgroundColor: tag.color }}
+                              className="text-[9px] font-bold text-white px-2 py-0.5 rounded truncate flex-1"
+                            >
+                              {tag.nome}
+                            </span>
+                            <button
+                              onClick={() => handleDeleteTag(tag.id)}
+                              className="text-slate-400 hover:text-rose-600 border-none bg-transparent cursor-pointer"
+                            >
+                              <X size={10} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {allTags.map(tag => {
+                      const active = selectedTags.includes(tag.id);
+                      return (
+                        <div 
+                          key={tag.id}
+                          onClick={() => !isCompleted && handleTagToggle(tag.id)}
+                          style={{ 
+                            backgroundColor: active ? tag.color : '#F1F5F9',
+                            color: active ? '#FFFFFF' : '#475569',
+                            borderColor: active ? tag.color : '#E2E8F0'
+                          }}
+                          className={`text-[9px] font-bold border px-2 py-0.5 rounded-lg cursor-pointer transition-colors hover:scale-102 flex items-center gap-1 ${
+                            isCompleted ? 'pointer-events-none opacity-85' : ''
+                          }`}
+                        >
+                          {active && <Check size={8} className="stroke-[3]" />}
+                          {tag.nome}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Participants & Observers */}
+                <div className={`space-y-4 pt-1 ${isCompleted ? 'pointer-events-none opacity-85' : ''}`}>
+                  {/* Participants */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                      <Users size={12} /> Participantes
+                    </label>
+                    <div className="border border-slate-200 bg-white rounded-xl p-2.5 max-h-32 overflow-y-auto space-y-1">
+                      {users.map(u => {
+                        const active = selectedParticipants.includes(u.id);
+                        return (
+                          <div
+                            key={u.id}
+                            onClick={() => handleParticipantToggle(u.id)}
+                            className={`flex items-center gap-2 p-1 rounded-lg cursor-pointer transition-colors ${
+                              active ? 'bg-slate-100' : 'hover:bg-slate-50'
+                            }`}
+                          >
+                            <input 
+                              type="checkbox" 
+                              checked={active} 
+                              onChange={() => {}}
+                              className="w-3.5 h-3.5 text-[#1B4D3E] rounded border-slate-300 pointer-events-none"
+                            />
+                            <span className="text-xs font-semibold text-slate-700 truncate">{u.nome}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Observers */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                      <Eye size={12} /> Observadores
+                    </label>
+                    <div className="border border-slate-200 bg-white rounded-xl p-2.5 max-h-32 overflow-y-auto space-y-1">
+                      {users.map(u => {
+                        const active = selectedObservers.includes(u.id);
+                        return (
+                          <div
+                            key={u.id}
+                            onClick={() => handleObserverToggle(u.id)}
+                            className={`flex items-center gap-2 p-1 rounded-lg cursor-pointer transition-colors ${
+                              active ? 'bg-slate-100' : 'hover:bg-slate-50'
+                            }`}
+                          >
+                            <input 
+                              type="checkbox" 
+                              checked={active} 
+                              onChange={() => {}}
+                              className="w-3.5 h-3.5 text-[#1B4D3E] rounded border-slate-300 pointer-events-none"
+                            />
+                            <span className="text-xs font-semibold text-slate-700 truncate">{u.nome}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Audit History Log */}
+                <div className="pt-2 border-t border-slate-200">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                    <History size={12} /> Histórico de Alterações
+                  </label>
+                  <div className="space-y-2.5 max-h-36 overflow-y-auto pr-1">
+                    {task.history?.map((log: any) => (
+                      <div key={log.id} className="text-[10px] leading-relaxed text-slate-500 font-semibold">
+                        <span className="text-slate-400 font-bold block">
+                          {new Date(log.createdAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                        </span>
+                        {log.descricao}
                       </div>
                     ))}
                   </div>
                 </div>
-              ) : null}
-
-              <div className="flex flex-wrap gap-1 mb-2">
-                {allTags.map(tag => {
-                  const active = selectedTags.includes(tag.id);
-                  return (
-                    <div 
-                      key={tag.id}
-                      onClick={() => handleTagToggle(tag.id)}
-                      style={{ 
-                        backgroundColor: active ? tag.color : '#F1F5F9',
-                        color: active ? '#FFFFFF' : '#475569',
-                        borderColor: active ? tag.color : '#E2E8F0'
-                      }}
-                      className="text-[9px] font-bold border px-2 py-0.5 rounded-lg cursor-pointer transition-colors hover:scale-102 flex items-center gap-1"
-                    >
-                      {active && <Check size={8} className="stroke-[3]" />}
-                      {tag.nome}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Participants & Observers */}
-            <div className="space-y-4 pt-1">
-              {/* Participants */}
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-                  <Users size={12} /> Participantes
-                </label>
-                <div className="border border-slate-200 bg-white rounded-xl p-2.5 max-h-32 overflow-y-auto space-y-1">
-                  {users.map(u => {
-                    const active = selectedParticipants.includes(u.id);
-                    return (
-                      <div
-                        key={u.id}
-                        onClick={() => handleParticipantToggle(u.id)}
-                        className={`flex items-center gap-2 p-1 rounded-lg cursor-pointer transition-colors ${
-                          active ? 'bg-slate-100' : 'hover:bg-slate-50'
-                        }`}
-                      >
-                        <input 
-                          type="checkbox" 
-                          checked={active} 
-                          onChange={() => {}}
-                          className="w-3.5 h-3.5 text-[#1B4D3E] rounded border-slate-300 pointer-events-none"
-                        />
-                        <span className="text-xs font-semibold text-slate-700 truncate">{u.nome}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Observers */}
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-                  <Eye size={12} /> Observadores
-                </label>
-                <div className="border border-slate-200 bg-white rounded-xl p-2.5 max-h-32 overflow-y-auto space-y-1">
-                  {users.map(u => {
-                    const active = selectedObservers.includes(u.id);
-                    return (
-                      <div
-                        key={u.id}
-                        onClick={() => handleObserverToggle(u.id)}
-                        className={`flex items-center gap-2 p-1 rounded-lg cursor-pointer transition-colors ${
-                          active ? 'bg-slate-100' : 'hover:bg-slate-50'
-                        }`}
-                      >
-                        <input 
-                          type="checkbox" 
-                          checked={active} 
-                          onChange={() => {}}
-                          className="w-3.5 h-3.5 text-[#1B4D3E] rounded border-slate-300 pointer-events-none"
-                        />
-                        <span className="text-xs font-semibold text-slate-700 truncate">{u.nome}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Audit History Log */}
-            <div className="pt-2 border-t border-slate-200">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                <History size={12} /> Histórico de Alterações
-              </label>
-              <div className="space-y-2.5 max-h-36 overflow-y-auto pr-1">
-                {task.history?.map((log: any) => (
-                  <div key={log.id} className="text-[10px] leading-relaxed text-slate-500 font-semibold">
-                    <span className="text-slate-400 font-bold block">
-                      {new Date(log.createdAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
-                    </span>
-                    {log.descricao}
-                  </div>
-                ))}
-              </div>
-            </div>
 
             {/* Complete / Reopen Task Button */}
             <div className="pt-2">
@@ -933,7 +965,21 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                 <button
                   type="button"
                   onClick={async () => {
-                    const res = await updateTask(task.id, { status: 'EM_ANDAMENTO' });
+                    const updateData: any = { status: 'EM_ANDAMENTO' };
+                    const concluidoStage = stages.find(s => 
+                      s.nome.toLowerCase() === 'concluído' || 
+                      s.nome.toLowerCase() === 'concluido' || 
+                      s.nome.toLowerCase() === 'concluída' || 
+                      s.nome.toLowerCase() === 'concluida'
+                    );
+                    if (concluidoStage && task.stageId === concluidoStage.id) {
+                      const firstNonCompleted = stages.find(s => s.id !== concluidoStage.id);
+                      if (firstNonCompleted) {
+                        updateData.stageId = firstNonCompleted.id;
+                        setStageId(firstNonCompleted.id);
+                      }
+                    }
+                    const res = await updateTask(task.id, updateData);
                     if (res.success) {
                       refreshData(true);
                     } else {
@@ -948,7 +994,18 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                 <button
                   type="button"
                   onClick={async () => {
-                    const res = await updateTask(task.id, { status: 'CONCLUIDA' });
+                    const updateData: any = { status: 'CONCLUIDA' };
+                    const concluidoStage = stages.find(s => 
+                      s.nome.toLowerCase() === 'concluído' || 
+                      s.nome.toLowerCase() === 'concluido' || 
+                      s.nome.toLowerCase() === 'concluída' || 
+                      s.nome.toLowerCase() === 'concluida'
+                    );
+                    if (concluidoStage) {
+                      updateData.stageId = concluidoStage.id;
+                      setStageId(concluidoStage.id);
+                    }
+                    const res = await updateTask(task.id, updateData);
                     if (res.success) {
                       refreshData(true);
                     } else {
@@ -963,29 +1020,31 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
             </div>
 
             {/* Delete Task Button */}
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  showCustomConfirm(
-                    'Excluir Tarefa',
-                    'Deseja realmente remover esta tarefa?',
-                    async () => {
-                      const res = await deleteTask(task.id);
-                      if (res.success) {
-                        onClose();
-                        refreshData(true);
-                      } else {
-                        showCustomAlert('Erro', res.error || 'Erro ao deletar tarefa');
+            {!isCompleted && (
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    showCustomConfirm(
+                      'Excluir Tarefa',
+                      'Deseja realmente remover esta tarefa?',
+                      async () => {
+                        const res = await deleteTask(task.id);
+                        if (res.success) {
+                          onClose();
+                          refreshData(true);
+                        } else {
+                          showCustomAlert('Erro', res.error || 'Erro ao deletar tarefa');
+                        }
                       }
-                    }
-                  );
-                }}
-                className="w-full flex items-center justify-center gap-1.5 py-2 border border-rose-200 bg-rose-50/20 text-rose-600 rounded-xl text-xs font-bold hover:bg-rose-50 transition-colors border-dashed cursor-pointer"
-              >
-                <Trash2 size={13} /> Excluir Tarefa
-              </button>
-            </div>
+                    );
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 border border-rose-200 bg-rose-50/20 text-rose-600 rounded-xl text-xs font-bold hover:bg-rose-50 transition-colors border-dashed cursor-pointer"
+                >
+                  <Trash2 size={13} /> Excluir Tarefa
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
