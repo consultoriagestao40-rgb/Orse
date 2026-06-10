@@ -75,28 +75,46 @@ export async function getTaskStages() {
 }
 
 // Create Task Stage
-export async function createTaskStage(nome: string, color?: string) {
+export async function createTaskStage(nome: string, color?: string, insertAfterId?: string) {
   const user = await getLoggedUser();
   if (!user) return { success: false, error: 'Unauthorized' };
 
   try {
-    const lastStage = await prisma.taskStage.findFirst({
+    const allStages = await prisma.taskStage.findMany({
       where: { tenantId: user.tenantId },
-      orderBy: { ordem: 'desc' }
+      orderBy: { ordem: 'asc' }
     });
-    const ordem = lastStage ? lastStage.ordem + 1 : 1;
 
-    const stage = await prisma.taskStage.create({
+    const newStage = await prisma.taskStage.create({
       data: {
         nome,
-        ordem,
-        color: color || 'bg-slate-100',
+        ordem: 9999,
+        color: color || '#E2E8F0',
         tenantId: user.tenantId
       }
     });
 
+    let newOrderIds = allStages.map(s => s.id);
+    if (insertAfterId) {
+      const idx = newOrderIds.indexOf(insertAfterId);
+      if (idx !== -1) {
+        newOrderIds.splice(idx + 1, 0, newStage.id);
+      } else {
+        newOrderIds.push(newStage.id);
+      }
+    } else {
+      newOrderIds.push(newStage.id);
+    }
+
+    for (let i = 0; i < newOrderIds.length; i++) {
+      await prisma.taskStage.update({
+        where: { id: newOrderIds[i], tenantId: user.tenantId },
+        data: { ordem: i + 1 }
+      });
+    }
+
     revalidatePath('/tasks');
-    return { success: true, stage };
+    return { success: true, stage: newStage };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
