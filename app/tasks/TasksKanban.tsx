@@ -624,7 +624,7 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                     : 'text-amber-500 hover:text-amber-600'
                 }`}
               >
-                <Users size={14} /> Por Vendedor
+                <Users size={14} /> Por Responsável
               </button>
               <button
                 type="button"
@@ -636,7 +636,7 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                     : 'text-amber-500 hover:text-amber-600'
                 }`}
               >
-                <TagIcon size={14} /> Por Segmento
+                <TagIcon size={14} /> Por Etiqueta
               </button>
               <button
                 type="button"

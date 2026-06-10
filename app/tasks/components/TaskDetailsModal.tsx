@@ -465,7 +465,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
 
               {isAddingActivity && (
                 <form onSubmit={handleAddActivity} className="bg-slate-50 p-4 border border-slate-200 rounded-2xl mb-3 space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-[10px] font-bold text-slate-500 mb-1">Título da Subtarefa *</label>
                       <input 
@@ -481,13 +481,22 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                       <select 
                         value={actRespId} 
                         onChange={e => setActRespId(e.target.value)} 
-                        className="w-full p-2 text-xs border border-slate-200 rounded-xl"
+                        className="w-full p-2 text-xs border border-slate-200 rounded-xl cursor-pointer"
                       >
                         <option value="">Delegar para...</option>
                         {users.map(u => (
                           <option key={u.id} value={u.id}>{u.nome}</option>
                         ))}
                       </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 mb-1">Prazo / Vencimento</label>
+                      <input 
+                        type="date"
+                        value={actVencimento} 
+                        onChange={e => setActVencimento(e.target.value)} 
+                        className="w-full p-2 text-xs border border-slate-200 rounded-xl text-slate-700 font-semibold cursor-pointer"
+                      />
                     </div>
                   </div>
                   <div className="flex justify-end gap-2 pt-2">
@@ -515,7 +524,8 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                       <tr className="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-200">
                         <th className="py-2.5 px-3 w-10">Ok</th>
                         <th className="py-2.5 px-3">Subtarefa</th>
-                        <th className="py-2.5 px-3">Responsável</th>
+                        <th className="py-2.5 px-3">Prazo</th>
+                        <th className="py-2.5 px-3 w-24">Responsável</th>
                         {!isCompleted && <th className="py-2.5 px-3 w-12 text-center">Excluir</th>}
                       </tr>
                     </thead>
@@ -534,8 +544,29 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                           <td className={`py-2.5 px-3 ${act.concluida ? 'line-through text-slate-400' : ''}`}>
                             {act.titulo}
                           </td>
-                          <td className="py-2.5 px-3 text-slate-500">
-                            {act.responsavel?.nome || 'Não delegado'}
+                          <td className={`py-2.5 px-3 text-slate-500 ${act.concluida ? 'line-through text-slate-400/70' : ''}`}>
+                            {act.vencimento ? new Date(act.vencimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Sem prazo'}
+                          </td>
+                          <td className="py-2.5 px-3">
+                            {act.responsavel ? (
+                              <div className="group relative w-fit">
+                                <div className="w-6 h-6 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[9px] font-black text-[#1B4D3E] border border-slate-200 cursor-default hover:bg-[#1B4D3E]/20 transition-colors">
+                                  {act.responsavel.nome.substring(0, 2).toUpperCase()}
+                                </div>
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded-md whitespace-nowrap shadow-md z-50 pointer-events-none">
+                                  {act.responsavel.nome}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="group relative w-fit">
+                                <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-black text-slate-400 border border-slate-200 border-dashed cursor-default">
+                                  -
+                                </div>
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded-md whitespace-nowrap shadow-md z-50 pointer-events-none">
+                                  Não delegado
+                                </div>
+                              </div>
+                            )}
                           </td>
                           {!isCompleted && (
                             <td className="py-2.5 px-3 text-center">
