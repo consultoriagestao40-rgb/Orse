@@ -565,7 +565,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       <div className="overflow-x-auto mt-1">
                         <table className="w-full text-left text-xs">
                           <thead>
-                            <tr className="bg-slate-900 text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
+                            <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
                               <th className="px-3 py-2.5 font-extrabold text-left first:rounded-l-lg">Item / Descrição</th>
                               <th className="px-3 py-2.5 font-extrabold text-center w-28 last:rounded-r-lg">Status</th>
                             </tr>
@@ -1004,7 +1004,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       <col style={{ width: '6%' }} />
                     </colgroup>
                     <thead>
-                      <tr className="bg-slate-900 text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
+                      <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
                         <th className="py-2.5 px-1 text-center w-10 first:rounded-l-lg">Item</th>
                         <th className="py-2.5 px-3 text-left">Função / Cargo</th>
                         <th className="py-2.5 px-3 text-center">Qtd</th>
@@ -1130,7 +1130,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       <col style={{ width: '6%' }} />
                     </colgroup>
                     <thead>
-                      <tr className="bg-slate-900 text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
+                      <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
                         <th className="py-2.5 px-1 text-center w-10 first:rounded-l-lg">Item</th>
                         <th className="py-2.5 px-3 text-left">Nome do Equipamento</th>
                         <th className="py-2.5 px-3 text-center">Quantidade</th>
@@ -1245,7 +1245,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       <col style={{ width: '6%' }} />
                     </colgroup>
                     <thead>
-                      <tr className="bg-slate-900 text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
+                      <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
                         <th className="py-2.5 px-1 text-center w-10 first:rounded-l-lg">Item</th>
                         <th className="py-2.5 px-3 text-left">Nome do Material</th>
                         <th className="py-2.5 px-3 text-center">Qtd</th>
@@ -1552,7 +1552,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                             <col style={{ width: '12%' }} />
                           </colgroup>
                           <thead>
-                            <tr className="bg-slate-900 text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
+                            <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
                               <th className="py-2.5 px-1 text-center w-10 first:rounded-l-lg">Item</th>
                               <th className="py-2.5 px-3 text-left">Descrição</th>
                               <th className="py-2.5 px-3 text-center">Resp.</th>
