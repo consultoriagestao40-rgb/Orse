@@ -319,7 +319,10 @@ export default function PicDashboard() {
             
             {/* ─────────────────────────────────────────────────────────────────
                 VISÃO KANBAN BOARD
-                ─────────────────────────                {stages.map((stage, sIdx) => {
+                ───────────────────────────────────────────────────────────────── */}
+            {viewMode === 'kanban' && (
+              <div className="flex gap-[3px] overflow-x-auto pb-4 w-full items-start select-none flex-1 overflow-y-hidden h-full">
+                {stages.map((stage, sIdx) => {
                   const stagePics = filteredPics.filter(p => p.stageId === stage.id);
                   const isDraggedOver = draggedOverColumnId === stage.id;
                   const borderHex = stage.color || '#3b82f6';
