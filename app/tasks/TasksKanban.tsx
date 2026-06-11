@@ -10,7 +10,7 @@ import {
 import { 
   getTasks, getTaskStages, createTaskStage, updateTaskStage, 
   deleteTaskStage, reorderTaskStages, createTask, updateTask,
-  getTenantTags, createTenantTag
+  getTenantTags, createTenantTag, getTaskTemplates
 } from './actions';
 import TaskMetrics from './components/TaskMetrics';
 import TaskDetailsModal from './components/TaskDetailsModal';
@@ -166,6 +166,14 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
   const [newPriority, setNewPriority] = useState('MEDIA');
   const [newVencimento, setNewVencimento] = useState('');
 
+  // Task templates and recurrence states
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [recorrente, setRecorrente] = useState(false);
+  const [recorrenciaFrequencia, setRecorrenciaFrequencia] = useState('SEMANAL');
+  const [recorrenciaIntervalo, setRecorrenciaIntervalo] = useState(1);
+  const [recorrenciaFim, setRecorrenciaFim] = useState('');
+
   // Quick Task Create state
   const [showQuickCreate, setShowQuickCreate] = useState(false);
   const [quickCreateStageId, setQuickCreateStageId] = useState('');
@@ -223,6 +231,7 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
         prioridade: filterPriority,
         vencimentoPreset: filterVencimento
       });
+      const templatesRes = await getTaskTemplates();
 
       if (stagesRes.success && stagesRes.stages) {
         setStages(stagesRes.stages);
@@ -232,6 +241,9 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
       }
       if (tasksRes.success && tasksRes.tasks) {
         setTasks(tasksRes.tasks);
+      }
+      if (templatesRes.success && templatesRes.templates) {
+        setTemplates(templatesRes.templates);
       }
     } catch (e) {
       console.error(e);
@@ -543,6 +555,24 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
     setShowQuickCreate(true);
   };
 
+  const handleTemplateChange = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    if (!templateId) {
+      setNewTitle('');
+      setNewDesc('');
+      setNewPriority('MEDIA');
+      setNewRespId('');
+      return;
+    }
+    const template = templates.find(t => t.id === templateId);
+    if (template) {
+      setNewTitle(template.titulo);
+      setNewDesc(template.descricao || '');
+      setNewPriority(template.prioridade || 'MEDIA');
+      setNewRespId(template.responsavelId || '');
+    }
+  };
+
   // Create Task Submit
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -561,7 +591,12 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
       stageId: defaultStageId,
       responsavelId: newRespId || undefined,
       vencimento: newVencimento || undefined,
-      prioridade: newPriority
+      prioridade: newPriority,
+      recorrente,
+      recorrenciaFrequencia: recorrente ? recorrenciaFrequencia : undefined,
+      recorrenciaIntervalo: recorrente ? recorrenciaIntervalo : undefined,
+      recorrenciaFim: recorrente && recorrenciaFim ? recorrenciaFim : undefined,
+      templateId: selectedTemplateId || undefined
     });
 
     if (res.success) {
@@ -572,6 +607,11 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
       setNewRespId('');
       setNewPriority('MEDIA');
       setNewVencimento('');
+      setSelectedTemplateId('');
+      setRecorrente(false);
+      setRecorrenciaFrequencia('SEMANAL');
+      setRecorrenciaIntervalo(1);
+      setRecorrenciaFim('');
       fetchData();
     } else {
       alert(res.error || 'Erro ao criar tarefa');
@@ -1505,6 +1545,21 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
               </button>
             </div>
             <form onSubmit={handleCreateTask} className="space-y-4">
+              {templates && templates.length > 0 && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Usar Modelo de Tarefa</label>
+                  <select
+                    value={selectedTemplateId}
+                    onChange={e => handleTemplateChange(e.target.value)}
+                    className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-650 bg-white outline-none focus:border-[#1B4D3E]"
+                  >
+                    <option value="">-- Criar do zero --</option>
+                    {templates.map(t => (
+                      <option key={t.id} value={t.id}>{t.titulo}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">Título da Tarefa *</label>
                 <input 
@@ -1574,6 +1629,61 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                   />
                 </div>
               </div>
+
+              {/* Recorrência */}
+              <div className="border-t border-slate-100 pt-3.5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-600">Tarefa Recorrente</span>
+                  <input
+                    type="checkbox"
+                    checked={recorrente}
+                    onChange={e => setRecorrente(e.target.checked)}
+                    className="w-4 h-4 text-[#1B4D3E] rounded border-slate-300"
+                  />
+                </div>
+                
+                {recorrente && (
+                  <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl animate-fade-in">
+                    <div>
+                      <label className="block text-[9px] font-bold text-slate-500 mb-1 uppercase tracking-wide">Frequência</label>
+                      <select
+                        value={recorrenciaFrequencia}
+                        onChange={e => setRecorrenciaFrequencia(e.target.value)}
+                        className="w-full p-2 border border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-700 outline-none focus:border-[#1B4D3E]"
+                      >
+                        <option value="DIARIO">Diário</option>
+                        <option value="SEMANAL">Semanal</option>
+                        <option value="MENSAL">Mensal</option>
+                        <option value="TRIMESTRAL">Trimestral</option>
+                        <option value="SEMESTRAL">Semestral</option>
+                        <option value="ANUAL">Anual</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-bold text-slate-500 mb-1 uppercase tracking-wide">Repetir a cada</label>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          min="1"
+                          required
+                          value={recorrenciaIntervalo}
+                          onChange={e => setRecorrenciaIntervalo(parseInt(e.target.value) || 1)}
+                          className="w-16 p-1.5 border border-slate-200 rounded-lg text-xs font-bold bg-white text-slate-705 outline-none focus:border-[#1B4D3E] text-center"
+                        />
+                        <span className="text-[10px] text-slate-500 font-bold">
+                          {recorrenciaFrequencia === 'DIARIO' && 'dias'}
+                          {recorrenciaFrequencia === 'SEMANAL' && 'semanas'}
+                          {recorrenciaFrequencia === 'MENSAL' && 'meses'}
+                          {recorrenciaFrequencia === 'TRIMESTRAL' && 'trimestres'}
+                          {recorrenciaFrequencia === 'SEMESTRAL' && 'semestres'}
+                          {recorrenciaFrequencia === 'ANUAL' && 'anos'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-2 justify-end pt-3">
                 <button 
                   type="button" 

@@ -267,6 +267,11 @@ export async function createTask(data: {
   tags?: string[]; // array of tagIds
   participantes?: string[]; // userIds
   observadores?: string[]; // userIds
+  recorrente?: boolean;
+  recorrenciaFrequencia?: string;
+  recorrenciaIntervalo?: number;
+  recorrenciaFim?: string | Date;
+  templateId?: string;
 }) {
   const user = await getLoggedUser();
   if (!user) return { success: false, error: 'Unauthorized' };
@@ -281,9 +286,57 @@ export async function createTask(data: {
         responsavelId: data.responsavelId || user.id,
         vencimento: data.vencimento ? new Date(data.vencimento) : null,
         prioridade: data.prioridade || 'MEDIA',
-        tenantId: user.tenantId
+        tenantId: user.tenantId,
+        recorrente: data.recorrente || false,
+        recorrenciaFrequencia: data.recorrenciaFrequencia || null,
+        recorrenciaIntervalo: data.recorrenciaIntervalo !== undefined ? data.recorrenciaIntervalo : 1,
+        recorrenciaFim: data.recorrenciaFim ? new Date(data.recorrenciaFim) : null
       }
     });
+
+    // If templateId is provided, clone subtasks and tags from it
+    if (data.templateId) {
+      const template = await prisma.taskTemplate.findUnique({
+        where: { id: data.templateId }
+      });
+      if (template) {
+        // Clone activities (checklist)
+        if (template.activities) {
+          try {
+            const subtaskTitles = JSON.parse(template.activities);
+            if (Array.isArray(subtaskTitles)) {
+              for (const title of subtaskTitles) {
+                await prisma.taskActivity.create({
+                  data: {
+                    taskId: task.id,
+                    titulo: title,
+                    concluida: false
+                  }
+                });
+              }
+            }
+          } catch (e) {
+            console.error('Failed to parse template activities:', e);
+          }
+        }
+
+        // Clone tags
+        if (template.tagIds) {
+          try {
+            const tagIds = JSON.parse(template.tagIds);
+            if (Array.isArray(tagIds)) {
+              for (const tagId of tagIds) {
+                await prisma.taskTag.create({
+                  data: { taskId: task.id, tagId }
+                });
+              }
+            }
+          } catch (e) {
+            console.error('Failed to parse template tags:', e);
+          }
+        }
+      }
+    }
 
     // Add tags
     if (data.tags && data.tags.length > 0) {
@@ -328,6 +381,155 @@ export async function createTask(data: {
   }
 }
 
+// Helpers for Recurring Tasks
+function calculateNextRecurrenceDate(baseDate: Date, frequencia: string, intervalo: number): Date {
+  const nextDate = new Date(baseDate);
+  const addValue = intervalo > 0 ? intervalo : 1;
+  
+  switch (frequencia) {
+    case 'DIARIO':
+      nextDate.setDate(nextDate.getDate() + addValue);
+      break;
+    case 'SEMANAL':
+      nextDate.setDate(nextDate.getDate() + (addValue * 7));
+      break;
+    case 'MENSAL':
+      nextDate.setMonth(nextDate.getMonth() + addValue);
+      break;
+    case 'TRIMESTRAL':
+      nextDate.setMonth(nextDate.getMonth() + (addValue * 3));
+      break;
+    case 'SEMESTRAL':
+      nextDate.setMonth(nextDate.getMonth() + (addValue * 6));
+      break;
+    case 'ANUAL':
+      nextDate.setFullYear(nextDate.getFullYear() + addValue);
+      break;
+    default:
+      nextDate.setDate(nextDate.getDate() + addValue);
+  }
+  return nextDate;
+}
+
+async function spawnNextRecurringInstance(taskId: string) {
+  try {
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      include: {
+        atividades: true,
+        tags: true,
+        participantes: true,
+        observadores: true
+      }
+    });
+    if (!task || !task.recorrente || !task.recorrenciaFrequencia) return;
+
+    // Calculate next due date
+    const baseDate = task.vencimento ? new Date(task.vencimento) : new Date();
+    const nextDueDate = calculateNextRecurrenceDate(baseDate, task.recorrenciaFrequencia, task.recorrenciaIntervalo || 1);
+
+    // If there is an end date and we exceeded it, stop
+    if (task.recorrenciaFim && nextDueDate > new Date(task.recorrenciaFim)) {
+      return;
+    }
+
+    // Find the first stage of the tenant to place the new task
+    const firstStage = await prisma.taskStage.findFirst({
+      where: { tenantId: task.tenantId },
+      orderBy: { ordem: 'asc' }
+    });
+    if (!firstStage) return;
+
+    // Create the new task copy
+    const newTask = await prisma.task.create({
+      data: {
+        titulo: task.titulo,
+        descricao: task.descricao,
+        status: 'PENDENTE',
+        prioridade: task.prioridade,
+        stageId: firstStage.id,
+        criadorId: task.criadorId,
+        responsavelId: task.responsavelId,
+        vencimento: nextDueDate,
+        tenantId: task.tenantId,
+        recorrente: true,
+        recorrenciaFrequencia: task.recorrenciaFrequencia,
+        recorrenciaIntervalo: task.recorrenciaIntervalo,
+        recorrenciaFim: task.recorrenciaFim
+      }
+    });
+
+    // Copy activities in pending state
+    if (task.atividades && task.atividades.length > 0) {
+      for (const act of task.atividades) {
+        await prisma.taskActivity.create({
+          data: {
+            taskId: newTask.id,
+            titulo: act.titulo,
+            descricao: act.descricao,
+            responsavelId: act.responsavelId,
+            concluida: false
+          }
+        });
+      }
+    }
+
+    // Copy tags
+    if (task.tags && task.tags.length > 0) {
+      for (const tTag of task.tags) {
+        await prisma.taskTag.create({
+          data: {
+            taskId: newTask.id,
+            tagId: tTag.tagId
+          }
+        });
+      }
+    }
+
+    // Copy participants
+    if (task.participantes && task.participantes.length > 0) {
+      for (const p of task.participantes) {
+        await prisma.taskParticipant.create({
+          data: {
+            taskId: newTask.id,
+            userId: p.userId
+          }
+        });
+      }
+    }
+
+    // Copy observers
+    if (task.observadores && task.observadores.length > 0) {
+      for (const o of task.observadores) {
+        await prisma.taskObserver.create({
+          data: {
+            taskId: newTask.id,
+            userId: o.userId
+          }
+        });
+      }
+    }
+
+    // Log creation
+    await prisma.taskHistory.create({
+      data: {
+        taskId: newTask.id,
+        tipo: 'CRIACAO',
+        descricao: `Tarefa gerada automaticamente por recorrência (${task.recorrenciaFrequencia.toLowerCase()})`
+      }
+    });
+
+    // Disable recurrence on completed task so it acts as history
+    await prisma.task.update({
+      where: { id: task.id },
+      data: { recorrente: false }
+    });
+
+  } catch (error) {
+    console.error('Failed to spawn recurring instance:', error);
+  }
+}
+
 // Update Task Data (e.g. title, description, priority, assignee, due date, status)
 export async function updateTask(taskId: string, data: {
   titulo?: string;
@@ -337,6 +539,11 @@ export async function updateTask(taskId: string, data: {
   vencimento?: string | Date | null;
   status?: string;
   stageId?: string;
+  recorrente?: boolean;
+  recorrenciaFrequencia?: string | null;
+  recorrenciaIntervalo?: number;
+  recorrenciaProximaData?: string | Date | null;
+  recorrenciaFim?: string | Date | null;
 }) {
   const user = await getLoggedUser();
   if (!user) return { success: false, error: 'Unauthorized' };
@@ -356,6 +563,15 @@ export async function updateTask(taskId: string, data: {
     if (data.vencimento !== undefined) updateData.vencimento = data.vencimento ? new Date(data.vencimento) : null;
     if (data.status !== undefined) updateData.status = data.status;
     if (data.stageId !== undefined) updateData.stageId = data.stageId;
+    if (data.recorrente !== undefined) updateData.recorrente = data.recorrente;
+    if (data.recorrenciaFrequencia !== undefined) updateData.recorrenciaFrequencia = data.recorrenciaFrequencia;
+    if (data.recorrenciaIntervalo !== undefined) updateData.recorrenciaIntervalo = data.recorrenciaIntervalo;
+    if (data.recorrenciaProximaData !== undefined) {
+      updateData.recorrenciaProximaData = data.recorrenciaProximaData ? new Date(data.recorrenciaProximaData) : null;
+    }
+    if (data.recorrenciaFim !== undefined) {
+      updateData.recorrenciaFim = data.recorrenciaFim ? new Date(data.recorrenciaFim) : null;
+    }
 
     const task = await prisma.task.update({
       where: { id: taskId },
@@ -387,6 +603,11 @@ export async function updateTask(taskId: string, data: {
         descricao: `${desc} por ${user.nome}`
       }
     });
+
+    // Trigger recurrence if marked as completed
+    if (data.status === 'CONCLUIDA' && oldTask.status !== 'CONCLUIDA' && (data.recorrente ?? oldTask.recorrente)) {
+      await spawnNextRecurringInstance(taskId);
+    }
 
     revalidatePath('/tasks');
     return { success: true, task };
@@ -832,6 +1053,65 @@ export async function deleteTaskMeeting(meetingId: string, taskId: string) {
 
     revalidatePath('/tasks');
     revalidatePath('/calendar');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// ================= TASK TEMPLATES (MODELOS DE TAREFA) =================
+export async function getTaskTemplates() {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const templates = await prisma.taskTemplate.findMany({
+      where: { tenantId: user.tenantId },
+      orderBy: { createdAt: 'desc' }
+    });
+    return { success: true, templates };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function createTaskTemplate(data: {
+  titulo: string;
+  descricao?: string;
+  prioridade?: string;
+  responsavelId?: string;
+  activities?: string; // stringified JSON array
+  tagIds?: string; // stringified JSON array
+}) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const template = await prisma.taskTemplate.create({
+      data: {
+        titulo: data.titulo,
+        descricao: data.descricao || null,
+        prioridade: data.prioridade || 'MEDIA',
+        responsavelId: data.responsavelId || null,
+        activities: data.activities || null,
+        tagIds: data.tagIds || null,
+        tenantId: user.tenantId
+      }
+    });
+    return { success: true, template };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteTaskTemplate(id: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    await prisma.taskTemplate.delete({
+      where: { id, tenantId: user.tenantId }
+    });
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };

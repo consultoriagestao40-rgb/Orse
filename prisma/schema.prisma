@@ -53,6 +53,7 @@ model Tenant {
   tasks                     Task[]
   taskStages                TaskStage[]
   tags                      Tag[]
+  taskTemplates             TaskTemplate[]
 }
 
 model EmpresaEmissora {
@@ -813,6 +814,12 @@ model Task {
   tags          TaskTag[]
   calendarEvents Activity[]
   
+  recorrente            Boolean   @default(false)
+  recorrenciaFrequencia String?
+  recorrenciaIntervalo  Int?      @default(1)
+  recorrenciaProximaData DateTime?
+  recorrenciaFim        DateTime?
+
   tenantId      String?
   tenant        Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdAt     DateTime           @default(now())
@@ -905,4 +912,20 @@ model TaskTag {
   tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, tagId])
+}
+
+model TaskTemplate {
+  id            String   @id @default(cuid())
+  titulo        String
+  descricao     String?  @db.Text
+  prioridade    String   @default("MEDIA") // BAIXA, MEDIA, ALTA
+  responsavelId String?
+  
+  activities    String?  @db.Text // JSON list of subtask titles: ["Subtask 1", "Subtask 2"]
+  tagIds        String?  @db.Text // JSON list of tag IDs: ["tag-id-1", "tag-id-2"]
+  
+  tenantId      String?
+  tenant        Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

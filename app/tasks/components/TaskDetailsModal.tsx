@@ -11,7 +11,8 @@ import {
   deleteTenantTag, getTenantTags, createTaskActivity, 
   toggleTaskActivity, deleteTaskActivity, updateTaskActivity, addTaskComment, 
   uploadTaskAttachment, downloadTaskAttachment,
-  getTaskMeetings, createTaskMeeting, deleteTaskMeeting
+  getTaskMeetings, createTaskMeeting, deleteTaskMeeting,
+  createTaskTemplate
 } from '../actions';
 
 const themeColorsGrid = [
@@ -61,6 +62,14 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
   const [prioridade, setPrioridade] = useState(task.prioridade);
   const [vencimento, setVencimento] = useState(
     task.vencimento ? new Date(task.vencimento).toISOString().split('T')[0] : ''
+  );
+
+  // Recurrence states
+  const [localRecorrente, setLocalRecorrente] = useState(task.recorrente || false);
+  const [localRecorrenciaFrequencia, setLocalRecorrenciaFrequencia] = useState(task.recorrenciaFrequencia || 'SEMANAL');
+  const [localRecorrenciaIntervalo, setLocalRecorrenciaIntervalo] = useState(task.recorrenciaIntervalo || 1);
+  const [localRecorrenciaFim, setLocalRecorrenciaFim] = useState(
+    task.recorrenciaFim ? new Date(task.recorrenciaFim).toISOString().split('T')[0] : ''
   );
   const [stageId, setStageId] = useState(task.stageId);
   const [responsavelId, setResponsavelId] = useState(task.responsavelId || '');
@@ -198,6 +207,10 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
     setDescricao(task.descricao || '');
     setPrioridade(task.prioridade);
     setVencimento(task.vencimento ? new Date(task.vencimento).toISOString().split('T')[0] : '');
+    setLocalRecorrente(task.recorrente || false);
+    setLocalRecorrenciaFrequencia(task.recorrenciaFrequencia || 'SEMANAL');
+    setLocalRecorrenciaIntervalo(task.recorrenciaIntervalo || 1);
+    setLocalRecorrenciaFim(task.recorrenciaFim ? new Date(task.recorrenciaFim).toISOString().split('T')[0] : '');
     setStageId(task.stageId);
     setResponsavelId(task.responsavelId || '');
     setSelectedParticipants(task.participantes?.map((p: any) => p.userId) || []);
@@ -396,6 +409,26 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
     } else {
       setIsSaving(false);
       showCustomAlert('Erro', res.error || 'Erro ao clonar tarefa');
+    }
+  };
+
+  const handleSaveAsTemplate = async () => {
+    setIsSaving(true);
+    const subtasks = atividades?.map((a: any) => a.titulo) || [];
+    const res = await createTaskTemplate({
+      titulo: titulo,
+      descricao: descricao || undefined,
+      prioridade: prioridade,
+      responsavelId: responsavelId || undefined,
+      activities: JSON.stringify(subtasks),
+      tagIds: JSON.stringify(selectedTags)
+    });
+
+    setIsSaving(false);
+    if (res.success) {
+      showCustomAlert('Sucesso', 'Modelo de tarefa salvo com sucesso!');
+    } else {
+      showCustomAlert('Erro', res.error || 'Erro ao salvar modelo de tarefa');
     }
   };
 
@@ -1497,6 +1530,90 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
               </select>
             </div>
 
+            {/* Recorrência */}
+            <div className="border-t border-slate-100 pt-4 mt-2">
+              <label className="flex items-center gap-2 cursor-pointer mb-2">
+                <input
+                  type="checkbox"
+                  checked={localRecorrente}
+                  disabled={isCompleted}
+                  onChange={e => {
+                    const val = e.target.checked;
+                    setLocalRecorrente(val);
+                    saveField({ recorrente: val });
+                  }}
+                  className="w-4 h-4 text-[#1B4D3E] rounded border-slate-300 focus:ring-[#1B4D3E] disabled:opacity-50 cursor-pointer"
+                />
+                <span className="text-xs font-bold text-slate-700 select-none">Tarefa Recorrente</span>
+              </label>
+
+              {localRecorrente && (
+                <div className="space-y-3 p-3 bg-slate-50 rounded-xl border border-slate-200 mt-2">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Frequência</label>
+                    <select
+                      value={localRecorrenciaFrequencia}
+                      disabled={isCompleted}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setLocalRecorrenciaFrequencia(val);
+                        saveField({ recorrenciaFrequencia: val });
+                      }}
+                      className="w-full p-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] bg-white cursor-pointer disabled:bg-slate-100 disabled:cursor-default"
+                    >
+                      <option value="DIARIO">Diária</option>
+                      <option value="SEMANAL">Semanal</option>
+                      <option value="MENSAL">Mensal</option>
+                      <option value="TRIMESTRAL">Trimestral</option>
+                      <option value="SEMESTRAL">Semestral</option>
+                      <option value="ANUAL">Anual</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Repetir a cada</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="1"
+                        value={localRecorrenciaIntervalo}
+                        disabled={isCompleted}
+                        onChange={e => {
+                          const val = parseInt(e.target.value) || 1;
+                          setLocalRecorrenciaIntervalo(val);
+                          saveField({ recorrenciaIntervalo: val });
+                        }}
+                        className="w-20 p-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] bg-white disabled:bg-slate-100 disabled:cursor-default"
+                      />
+                      <span className="text-xs font-semibold text-slate-500">
+                        {localRecorrenciaFrequencia === 'DIARIO' && (localRecorrenciaIntervalo > 1 ? 'dias' : 'dia')}
+                        {localRecorrenciaFrequencia === 'SEMANAL' && (localRecorrenciaIntervalo > 1 ? 'semanas' : 'semana')}
+                        {localRecorrenciaFrequencia === 'MENSAL' && (localRecorrenciaIntervalo > 1 ? 'meses' : 'mês')}
+                        {localRecorrenciaFrequencia === 'TRIMESTRAL' && (localRecorrenciaIntervalo > 1 ? 'trimestres' : 'trimestre')}
+                        {localRecorrenciaFrequencia === 'SEMESTRAL' && (localRecorrenciaIntervalo > 1 ? 'semestres' : 'semestre')}
+                        {localRecorrenciaFrequencia === 'ANUAL' && (localRecorrenciaIntervalo > 1 ? 'anos' : 'ano')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Fim da recorrência (Opcional)</label>
+                    <input
+                      type="date"
+                      value={localRecorrenciaFim}
+                      disabled={isCompleted}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setLocalRecorrenciaFim(val);
+                        saveField({ recorrenciaFim: val || null });
+                      }}
+                      className="w-full p-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E] bg-white disabled:bg-slate-100 disabled:cursor-default"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
                 {/* Tags (Labels) */}
                 <div>
                   <div className="flex justify-between items-center mb-1">
@@ -1741,6 +1858,14 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
               className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 bg-white text-slate-655 rounded-xl text-xs font-bold hover:bg-slate-50 disabled:opacity-50 transition-colors cursor-pointer"
             >
               <Copy size={13} /> Clonar Tarefa
+            </button>
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={handleSaveAsTemplate}
+              className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 bg-white text-slate-655 rounded-xl text-xs font-bold hover:bg-slate-50 disabled:opacity-50 transition-colors cursor-pointer"
+            >
+              <FilePlus2 size={13} className="text-blue-500" /> Salvar como Modelo
             </button>
           </div>
 
