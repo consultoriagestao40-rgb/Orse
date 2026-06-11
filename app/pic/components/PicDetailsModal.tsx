@@ -1157,7 +1157,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                             </button>
                           </td>
                         </tr>
-                      )}
+                      ))}
                     </tbody>
                   </table>
                 </div>
