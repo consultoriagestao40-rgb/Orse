@@ -798,56 +798,56 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
             <div className="space-y-8">
               
               {/* Seção Funcionários (Quadro CLT Vendido) */}
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+              <div className="bg-white border border-slate-300 rounded-none p-5 shadow-sm space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
                     <Users size={16} /> Quadro de Funcionários (Postos CLT)
                   </h3>
                   <button
                     onClick={handleAddEmployee}
-                    className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider hover:text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1 transition-colors cursor-pointer"
+                    className="text-[10px] text-emerald-600 font-black uppercase tracking-wider hover:text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-none border border-emerald-300 flex items-center gap-1 transition-colors cursor-pointer select-none"
                   >
                     <Plus size={12} /> Adicionar Nova Função
                   </button>
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
+                  <table className="w-full text-left text-xs border-collapse border border-slate-300">
                     <thead>
-                      <tr className="bg-slate-50 text-slate-400 uppercase text-[9px] tracking-wider border-b border-slate-200">
-                        <th className="px-3 py-2">Função / Cargo</th>
-                        <th className="px-3 py-2 text-center w-16">Qtd</th>
-                        <th className="px-3 py-2 text-center w-20">Escala</th>
-                        <th className="px-3 py-2 text-center w-24">Horário Entrada</th>
-                        <th className="px-3 py-2 text-center w-24">Horário Saída</th>
-                        <th className="px-3 py-2 w-32">Dias da Semana</th>
-                        <th className="px-3 py-2 text-center w-12">Remover</th>
+                      <tr className="bg-[#1B4D3E] text-white uppercase text-[9.5px] tracking-wider">
+                        <th className="px-3 py-2.5 font-black border border-slate-300 text-white">Função / Cargo</th>
+                        <th className="px-3 py-2.5 text-center w-16 font-black border border-slate-300 text-white">Qtd</th>
+                        <th className="px-3 py-2.5 text-center w-20 font-black border border-slate-300 text-white">Escala</th>
+                        <th className="px-3 py-2.5 text-center w-24 font-black border border-slate-300 text-white">Horário Entrada</th>
+                        <th className="px-3 py-2.5 text-center w-24 font-black border border-slate-300 text-white">Horário Saída</th>
+                        <th className="px-3 py-2.5 w-32 font-black border border-slate-300 text-white">Dias da Semana</th>
+                        <th className="px-3 py-2.5 text-center w-12 font-black border border-slate-300 text-white">Remover</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
+                    <tbody className="font-semibold text-slate-700">
                       {funcionarios.map((emp, index) => (
-                        <tr key={emp.id} className="hover:bg-slate-50/50">
-                          <td className="px-2 py-2">
+                        <tr key={emp.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-300">
+                          <td className="px-2 py-1.5 border border-slate-300">
                             <input
                               type="text"
                               value={emp.funcao}
                               onChange={(e) => handleUpdateEmployee(index, 'funcao', e.target.value)}
-                              className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-800 font-bold px-1 py-0.5"
+                              className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
                             />
                           </td>
-                          <td className="px-2 py-2">
+                          <td className="px-2 py-1.5 border border-slate-300">
                             <input
                               type="number"
                               value={emp.quantidade}
                               onChange={(e) => handleUpdateEmployee(index, 'quantidade', Number(e.target.value))}
-                              className="w-12 bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-center font-bold px-1 py-0.5"
+                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
                             />
                           </td>
-                          <td className="px-2 py-2">
+                          <td className="px-2 py-1.5 border border-slate-300">
                             <select
                               value={emp.escala}
                               onChange={(e) => handleUpdateEmployee(index, 'escala', e.target.value)}
-                              className="w-full bg-transparent outline-none font-bold text-center"
+                              className="w-full bg-transparent outline-none font-bold text-center py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none cursor-pointer"
                             >
                               <option value="5x2">5x2</option>
                               <option value="6x1">6x1</option>
@@ -855,32 +855,33 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               <option value="4x2">4x2</option>
                             </select>
                           </td>
-                          <td className="px-2 py-2">
+                          <td className="px-2 py-1.5 border border-slate-300">
                             <input
                               type="text"
                               value={emp.horarioEntrada || '08:00'}
                               onChange={(e) => handleUpdateEmployee(index, 'horarioEntrada', e.target.value)}
-                              className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-center font-bold px-1 py-0.5"
+                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
                             />
                           </td>
-                          <td className="px-2 py-2">
+                          <td className="px-2 py-1.5 border border-slate-300">
                             <input
                               type="text"
                               value={emp.horarioSaida || '17:00'}
                               onChange={(e) => handleUpdateEmployee(index, 'horarioSaida', e.target.value)}
-                              className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-center font-bold px-1 py-0.5"
+                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
                             />
                           </td>
-                          <td className="px-2 py-2">
+                          <td className="px-2 py-1.5 border border-slate-300">
                             <input
                               type="text"
                               value={emp.diasSemana || 'Segunda a Sexta'}
                               onChange={(e) => handleUpdateEmployee(index, 'diasSemana', e.target.value)}
-                              className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-650 font-bold px-1 py-0.5"
+                              className="w-full bg-transparent outline-none text-slate-700 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
                             />
                           </td>
-                          <td className="px-2 py-2 text-center">
+                          <td className="px-2 py-1.5 border border-slate-300 text-center">
                             <button
+                              type="button"
                               onClick={() => handleRemoveEmployee(index)}
                               className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
                             >
@@ -891,7 +892,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       ))}
                       {funcionarios.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="px-6 py-6 text-center text-slate-400 italic font-medium">
+                          <td colSpan={7} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-300">
                             Nenhum funcionário cadastrado.
                           </td>
                         </tr>
@@ -904,7 +905,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   <button
                     onClick={handleSaveEmployees}
                     disabled={saving}
-                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-bold uppercase py-1.5 px-5 rounded-lg tracking-wider transition-colors cursor-pointer disabled:opacity-50"
+                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase py-2 px-5 rounded-none tracking-widest transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
                   >
                     Salvar Quadro
                   </button>
@@ -912,70 +913,71 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
               </div>
 
               {/* Seção Equipamentos */}
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+              <div className="bg-white border border-slate-300 rounded-none p-5 shadow-sm space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
                     <Briefcase size={16} /> Relação de Equipamentos / Máquinas
                   </h3>
                   <button
                     onClick={handleAddEquipment}
-                    className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider hover:text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1 transition-colors cursor-pointer"
+                    className="text-[10px] text-emerald-600 font-black uppercase tracking-wider hover:text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-none border border-emerald-300 flex items-center gap-1 transition-colors cursor-pointer select-none"
                   >
                     <Plus size={12} /> Adicionar Equipamento
                   </button>
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
+                  <table className="w-full text-left text-xs border-collapse border border-slate-300">
                     <thead>
-                      <tr className="bg-slate-50 text-slate-400 uppercase text-[9px] tracking-wider border-b border-slate-200">
-                        <th className="px-3 py-2">Nome do Equipamento</th>
-                        <th className="px-3 py-2 text-center w-20">Quantidade</th>
-                        <th className="px-3 py-2 text-center w-24">Tipo Alocação</th>
-                        <th className="px-3 py-2">Observações</th>
-                        <th className="px-3 py-2 text-center w-12">Remover</th>
+                      <tr className="bg-[#1B4D3E] text-white uppercase text-[9.5px] tracking-wider">
+                        <th className="px-3 py-2.5 font-black border border-slate-300 text-white">Nome do Equipamento</th>
+                        <th className="px-3 py-2.5 text-center w-20 font-black border border-slate-300 text-white">Quantidade</th>
+                        <th className="px-3 py-2.5 text-center w-24 font-black border border-slate-300 text-white">Tipo Alocação</th>
+                        <th className="px-3 py-2.5 font-black border border-slate-300 text-white">Observações</th>
+                        <th className="px-3 py-2.5 text-center w-12 font-black border border-slate-300 text-white">Remover</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
+                    <tbody className="font-semibold text-slate-700">
                       {equipamentos.map((eq, index) => (
-                        <tr key={eq.id} className="hover:bg-slate-50/50">
-                          <td className="px-2 py-2">
+                        <tr key={eq.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-300">
+                          <td className="px-2 py-1.5 border border-slate-300">
                             <input
                               type="text"
                               value={eq.nome}
                               onChange={(e) => handleUpdateEquipment(index, 'nome', e.target.value)}
-                              className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-800 font-bold px-1 py-0.5"
+                              className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
                             />
                           </td>
-                          <td className="px-2 py-2">
+                          <td className="px-2 py-1.5 border border-slate-300">
                             <input
                               type="number"
                               value={eq.quantidade}
                               onChange={(e) => handleUpdateEquipment(index, 'quantidade', Number(e.target.value))}
-                              className="w-16 bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-center font-bold px-1 py-0.5"
+                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
                             />
                           </td>
-                          <td className="px-2 py-2">
+                          <td className="px-2 py-1.5 border border-slate-300">
                             <select
                               value={eq.tipo}
                               onChange={(e) => handleUpdateEquipment(index, 'tipo', e.target.value)}
-                              className="w-full bg-transparent outline-none font-bold text-center"
+                              className="w-full bg-transparent outline-none font-bold text-center py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none cursor-pointer"
                             >
                               <option value="PROPRIO">Próprio</option>
                               <option value="LOCADO">Locado</option>
                             </select>
                           </td>
-                          <td className="px-2 py-2">
+                          <td className="px-2 py-1.5 border border-slate-300">
                             <input
                               type="text"
                               value={eq.observacao || ''}
                               onChange={(e) => handleUpdateEquipment(index, 'observacao', e.target.value)}
                               placeholder="Especificações, voltagem..."
-                              className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-650 px-1 py-0.5 font-medium"
+                              className="w-full bg-transparent outline-none text-slate-700 px-1.5 py-0.5 font-bold border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
                             />
                           </td>
-                          <td className="px-2 py-2 text-center">
+                          <td className="px-2 py-1.5 border border-slate-300 text-center">
                             <button
+                              type="button"
                               onClick={() => handleRemoveEquipment(index)}
                               className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
                             >
@@ -986,7 +988,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       ))}
                       {equipamentos.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="px-6 py-6 text-center text-slate-400 italic font-medium">
+                          <td colSpan={5} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-300">
                             Nenhum equipamento listado.
                           </td>
                         </tr>
@@ -999,7 +1001,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   <button
                     onClick={handleSaveEquipments}
                     disabled={saving}
-                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-bold uppercase py-1.5 px-5 rounded-lg tracking-wider transition-colors cursor-pointer disabled:opacity-50"
+                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase py-2 px-5 rounded-none tracking-widest transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
                   >
                     Salvar Equipamentos
                   </button>
@@ -1007,68 +1009,69 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
               </div>
 
               {/* Seção Materiais e Insumos */}
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+              <div className="bg-white border border-slate-300 rounded-none p-5 shadow-sm space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
                     <Package size={16} /> Relação de Materiais, Descartáveis e Insumos
                   </h3>
                   <button
                     onClick={handleAddMaterial}
-                    className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider hover:text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1 transition-colors cursor-pointer"
+                    className="text-[10px] text-emerald-600 font-black uppercase tracking-wider hover:text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-none border border-emerald-300 flex items-center gap-1 transition-colors cursor-pointer select-none"
                   >
                     <Plus size={12} /> Adicionar Material
                   </button>
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
+                  <table className="w-full text-left text-xs border-collapse border border-slate-300">
                     <thead>
-                      <tr className="bg-slate-50 text-slate-400 uppercase text-[9px] tracking-wider border-b border-slate-200">
-                        <th className="px-3 py-2">Nome do Material / Insumo</th>
-                        <th className="px-3 py-2 text-center w-20">Quantidade</th>
-                        <th className="px-3 py-2 text-center w-16">Unidade</th>
-                        <th className="px-3 py-2">Observações</th>
-                        <th className="px-3 py-2 text-center w-12">Remover</th>
+                      <tr className="bg-[#1B4D3E] text-white uppercase text-[9.5px] tracking-wider">
+                        <th className="px-3 py-2.5 font-black border border-slate-300 text-white">Nome do Material / Insumo</th>
+                        <th className="px-3 py-2.5 text-center w-20 font-black border border-slate-300 text-white">Quantidade</th>
+                        <th className="px-3 py-2.5 text-center w-16 font-black border border-slate-300 text-white">Unidade</th>
+                        <th className="px-3 py-2.5 font-black border border-slate-300 text-white">Observações</th>
+                        <th className="px-3 py-2.5 text-center w-12 font-black border border-slate-300 text-white">Remover</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
+                    <tbody className="font-semibold text-slate-700">
                       {materiais.map((mat, index) => (
-                        <tr key={mat.id} className="hover:bg-slate-50/50">
-                          <td className="px-2 py-2">
+                        <tr key={mat.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-300">
+                          <td className="px-2 py-1.5 border border-slate-300">
                             <input
                               type="text"
                               value={mat.nome}
                               onChange={(e) => handleUpdateMaterial(index, 'nome', e.target.value)}
-                              className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-800 font-bold px-1 py-0.5"
+                              className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
                             />
                           </td>
-                          <td className="px-2 py-2">
+                          <td className="px-2 py-1.5 border border-slate-300">
                             <input
                               type="number"
                               value={mat.quantidade}
                               onChange={(e) => handleUpdateMaterial(index, 'quantidade', Number(e.target.value))}
-                              className="w-16 bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-center font-bold px-1 py-0.5"
+                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
                             />
                           </td>
-                          <td className="px-2 py-2">
+                          <td className="px-2 py-1.5 border border-slate-300">
                             <input
                               type="text"
                               value={mat.unidade || 'UN'}
                               onChange={(e) => handleUpdateMaterial(index, 'unidade', e.target.value)}
-                              className="w-12 bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-center font-bold px-1 py-0.5"
+                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
                             />
                           </td>
-                          <td className="px-2 py-2">
+                          <td className="px-2 py-1.5 border border-slate-300">
                             <input
                               type="text"
                               value={mat.observacao || ''}
                               onChange={(e) => handleUpdateMaterial(index, 'observacao', e.target.value)}
                               placeholder="Frequência de entrega, diluições..."
-                              className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-650 px-1 py-0.5 font-medium"
+                              className="w-full bg-transparent outline-none text-slate-700 px-1.5 py-0.5 font-bold border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
                             />
                           </td>
-                          <td className="px-2 py-2 text-center">
+                          <td className="px-2 py-1.5 border border-slate-300 text-center">
                             <button
+                              type="button"
                               onClick={() => handleRemoveMaterial(index)}
                               className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
                             >
@@ -1079,7 +1082,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       ))}
                       {materiais.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="px-6 py-6 text-center text-slate-400 italic font-medium">
+                          <td colSpan={5} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-300">
                             Nenhum insumo ou material listado.
                           </td>
                         </tr>
@@ -1092,7 +1095,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   <button
                     onClick={handleSaveMaterials}
                     disabled={saving}
-                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-bold uppercase py-1.5 px-5 rounded-lg tracking-wider transition-colors cursor-pointer disabled:opacity-50"
+                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase py-2 px-5 rounded-none tracking-widest transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
                   >
                     Salvar Insumos
                   </button>
