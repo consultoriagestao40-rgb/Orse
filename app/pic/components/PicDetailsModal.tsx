@@ -1379,19 +1379,29 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
 
                       {/* Tabela de Ações */}
                       <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs border-collapse">
+                        <table className="w-full border-x-2 border-b-2 border-slate-900 border-collapse text-xs select-text table-fixed mt-0 border-t-0">
+                          <colgroup>
+                            <col style={{ width: '5%' }} />
+                            <col style={{ width: '60%' }} />
+                            <col style={{ width: '8%' }} />
+                            <col style={{ width: '15%' }} />
+                            <col style={{ width: '12%' }} />
+                          </colgroup>
                           <thead>
-                            <tr className="bg-slate-50 text-slate-400 uppercase text-[9px] tracking-wider border-b border-slate-200">
-                              <th className="px-3 py-2 w-10 text-center">Status</th>
-                              <th className="px-3 py-2 w-10 text-center">Nº</th>
-                              <th className="px-3 py-2">Descrição da Ação</th>
-                              <th className="px-3 py-2 w-48">Responsável</th>
-                              <th className="px-3 py-2 w-36">Prazo Final</th>
-                              <th className="px-3 py-2">Observações</th>
-                              <th className="px-3 py-2 w-10 text-center">Deletar</th>
+                            <tr>
+                              <th colSpan={5} className="bg-[#1E4663] text-white font-black text-center text-[11px] py-1.5 border border-slate-900 tracking-wider uppercase">
+                                AÇÕES
+                              </th>
+                            </tr>
+                            <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-center uppercase text-[9.5px]">
+                              <th className="py-1.5 px-1 border-r border-slate-900 text-center select-none w-10 text-slate-800 font-extrabold">Item</th>
+                              <th className="py-1.5 px-3 border-r border-slate-900 text-left text-slate-800 font-extrabold">Descrição</th>
+                              <th className="py-1.5 px-3 border-r border-slate-900 text-center text-slate-800 font-extrabold">Resp.</th>
+                              <th className="py-1.5 px-3 border-r border-slate-900 text-slate-800 font-extrabold">Prazo</th>
+                              <th className="py-1.5 px-1.5 text-center text-slate-800 font-extrabold">Status</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
+                          <tbody>
                             {acoes.map((action: any, idx: number) => (
                               <ActionRow
                                 key={action.id}
@@ -1404,10 +1414,11 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                             ))}
 
                             {/* Campo de Cadastro Inline de Nova Ação */}
-                            <tr className="bg-slate-50/20">
-                              <td className="px-3 py-2.5"></td>
-                              <td className="px-3 py-2.5"></td>
-                              <td className="px-2 py-2.5">
+                            <tr className="bg-slate-50/20 border-b border-slate-900">
+                              <td className="py-1 px-1 border-r border-slate-900 text-center text-slate-400 font-bold">
+                                +
+                              </td>
+                              <td className="py-1 px-3 border-r border-slate-900">
                                 <input
                                   type="text"
                                   placeholder="Escreva e adicione uma nova ação nesta área..."
@@ -1419,18 +1430,17 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleAddAction(sec.id);
                                   }}
-                                  className="w-full bg-transparent border-b border-dashed border-slate-300 focus:border-[#1B4D3E] outline-none text-xs font-bold text-slate-700 px-1 py-0.5"
+                                  className="w-full bg-transparent border-none outline-none focus:ring-0 text-xs font-bold text-slate-700 py-0.5"
                                 />
                               </td>
-                              <td className="px-2 py-2.5" colSpan={3}>
+                              <td className="py-1 px-1 border-r border-slate-900 text-center" colSpan={3}>
                                 <button
                                   onClick={() => handleAddAction(sec.id)}
-                                  className="text-[9px] text-[#1B4D3E] font-black uppercase tracking-widest hover:text-[#12362b] bg-[#1B4D3E]/8 px-2 py-1 rounded-md border border-[#1B4D3E]/20 transition-colors cursor-pointer"
+                                  className="text-[9px] text-[#1E4663] font-black uppercase tracking-widest hover:text-[#153145] bg-[#1E4663]/8 px-2.5 py-1 rounded-none border border-[#1E4663]/20 transition-colors cursor-pointer"
                                 >
                                   + Inserir Ação
                                 </button>
                               </td>
-                              <td className="px-3 py-2.5"></td>
                             </tr>
 
                           </tbody>
@@ -1462,6 +1472,7 @@ interface ActionRowProps {
 
 function ActionRow({ action, users, idx, handleUpdateAction, handleDeleteAction }: ActionRowProps) {
   const isCompleted = action.status === 'CONCLUIDA';
+  const [obsModalOpen, setObsModalOpen] = React.useState(false);
 
   // Local state for description and observation to avoid typing lag and parent rerenders
   const [localDescricao, setLocalDescricao] = React.useState(action.descricao || '');
@@ -1490,113 +1501,193 @@ function ActionRow({ action, users, idx, handleUpdateAction, handleDeleteAction 
     }
   };
 
+  const getStatusText = () => {
+    if (isCompleted) return 'CONCLUÍDA';
+    if (action.dataLimite) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const limit = new Date(action.dataLimite);
+      if (limit < today) return 'ATRASADA';
+    }
+    return 'EM DIA';
+  };
+
+  const statusText = getStatusText();
+  let statusColorClass = 'bg-blue-50 text-blue-700 border-blue-200';
+  if (statusText === 'CONCLUÍDA') {
+    statusColorClass = 'bg-emerald-50 text-emerald-700 border-emerald-300';
+  } else if (statusText === 'ATRASADA') {
+    statusColorClass = 'bg-red-50 text-red-700 border-red-300';
+  }
+
+  const selectedUser = action.responsavelId ? users.find(u => u.id === action.responsavelId) : null;
+  const avatarUrl = selectedUser?.avatarUrl;
+  const userName = selectedUser?.nome || 'Selecionar';
+
   return (
-    <tr className={`hover:bg-slate-50/50 ${isCompleted ? 'bg-slate-50/30' : ''}`}>
-      {/* Checkbox de Conclusão */}
-      <td className="px-3 py-2 text-center">
-        <input
-          type="checkbox"
-          checked={isCompleted}
-          onChange={() => handleUpdateAction(action.id, {
-            status: isCompleted ? 'PENDENTE' : 'CONCLUIDA'
-          })}
-          className="w-4 h-4 rounded border-slate-300 text-[#1B4D3E] focus:ring-[#1B4D3E] cursor-pointer"
-        />
-      </td>
+    <>
+      <tr className={`hover:bg-slate-50/10 bg-white ${isCompleted ? 'bg-slate-50/20' : ''} border-b border-slate-900`}>
+        {/* Número Sequencial / Item */}
+        <td className="py-1 px-1 border-r border-slate-900 text-center font-bold text-slate-500 whitespace-nowrap">
+          {idx + 1}
+        </td>
 
-      {/* Número Sequencial */}
-      <td className="px-3 py-2 text-center font-mono text-[11px] text-slate-400">
-        {idx + 1}
-      </td>
+        {/* Descrição + Speech Bubble Button */}
+        <td className="py-1.5 px-3 border-r border-slate-900">
+          <div className="flex items-center justify-between gap-2">
+            <input
+              type="text"
+              value={localDescricao}
+              onChange={(e) => setLocalDescricao(e.target.value)}
+              onBlur={handleDescBlur}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur();
+                }
+              }}
+              className={`w-full bg-transparent border-none outline-none focus:ring-0 text-slate-800 font-bold py-0.5 leading-normal text-xs ${
+                isCompleted ? 'line-through text-slate-400' : ''
+              }`}
+            />
+            <button
+              type="button"
+              onClick={() => setObsModalOpen(true)}
+              className="flex items-center gap-1 p-1 rounded transition-colors text-slate-400 hover:text-[#1E4663] hover:bg-slate-100 cursor-pointer shrink-0 mt-0.5"
+              title="Anotações / Observações da Ação"
+            >
+              <MessageSquare size={14} className={localObservacao ? 'text-[#1E4663]' : 'text-slate-305'} />
+              {localObservacao && (
+                <span className="w-1.5 h-1.5 bg-[#1E4663] rounded-full shrink-0" />
+              )}
+            </button>
+          </div>
+        </td>
 
-      {/* Descrição */}
-      <td className="px-2 py-2">
-        <input
-          type="text"
-          value={localDescricao}
-          onChange={(e) => setLocalDescricao(e.target.value)}
-          onBlur={handleDescBlur}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.currentTarget.blur();
-            }
-          }}
-          className={`w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-800 font-bold px-1 py-0.5 ${
-            isCompleted ? 'line-through text-slate-400' : ''
-          }`}
-        />
-      </td>
+        {/* Responsável (Avatar Dropdown) */}
+        <td className="py-1.5 px-1 border-r border-slate-900 text-center relative">
+          <div className="flex items-center justify-center">
+            {avatarUrl ? (
+              <img 
+                src={avatarUrl} 
+                alt={userName} 
+                className="w-5.5 h-5.5 rounded-full object-cover border border-slate-200"
+                title={userName}
+              />
+            ) : (
+              <div className="w-5.5 h-5.5 rounded-full bg-[#1E4663]/10 flex items-center justify-center text-[8.5px] font-black text-[#1E4663] uppercase border border-slate-200" title={userName}>
+                {userName !== 'Selecionar' && userName !== 'Sem Responsável' 
+                  ? userName.split(' ').map((n: string) => n[0]).join('').substring(0, 2) 
+                  : <User size={11} />}
+              </div>
+            )}
+            <select
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              value={action.responsavelId || ''}
+              onChange={(e) => handleUpdateAction(action.id, {
+                responsavelId: e.target.value || null
+              })}
+            >
+              <option value="">Selecionar</option>
+              {users.map(u => (
+                <option key={u.id} value={u.id}>{u.nome}</option>
+              ))}
+            </select>
+          </div>
+        </td>
 
-      {/* Responsável (Avatar Dropdown) */}
-      <td className="px-2 py-2">
-        <div className="flex items-center gap-1 bg-slate-100/60 border border-slate-200/50 rounded-lg px-2 py-1">
-          {action.responsavel?.avatarUrl ? (
-            <img src={action.responsavel.avatarUrl} alt={action.responsavel.nome} className="w-5.5 h-5.5 rounded-full object-cover shrink-0" />
-          ) : action.responsavel?.nome ? (
-            <div className="w-5.5 h-5.5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[7.5px] font-black text-[#1B4D3E] uppercase shrink-0 border border-slate-200">
-              {action.responsavel.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-            </div>
-          ) : (
-            <div className="w-5.5 h-5.5 rounded-full bg-slate-200 flex items-center justify-center text-[7.5px] font-bold text-slate-400 uppercase shrink-0 border border-slate-200">
-              -
-            </div>
-          )}
-          <select
-            className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer w-full ml-1"
-            value={action.responsavelId || ''}
-            onChange={(e) => handleUpdateAction(action.id, {
-              responsavelId: e.target.value || null
-            })}
-          >
-            <option value="">Sem Responsável</option>
-            {users.map(u => (
-              <option key={u.id} value={u.id}>{u.nome}</option>
-            ))}
-          </select>
-        </div>
-      </td>
-
-      {/* Prazo Final */}
-      <td className="px-2 py-2">
-        <div className="flex items-center gap-1.5 bg-slate-100/60 border border-slate-200/50 rounded-lg px-2 py-1">
-          <Calendar size={13} className="text-slate-400 shrink-0" />
+        {/* Prazo Final */}
+        <td className="py-1.5 px-1 border-r border-slate-900 text-center">
           <input
             type="date"
             value={action.dataLimite ? new Date(action.dataLimite).toISOString().substring(0, 10) : ''}
             onChange={(e) => handleUpdateAction(action.id, {
               dataLimite: e.target.value || null
             })}
-            className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer w-full"
+            className="w-full bg-transparent border-none outline-none focus:ring-0 text-center text-xs py-0.5 h-6 min-w-0 font-medium text-slate-800"
           />
+        </td>
+
+        {/* Status (Checkbox + Badge + Deletar) */}
+        <td className="py-1.5 px-1.5 text-center">
+          <div className="flex items-center justify-center gap-1.5">
+            {/* Toggle Conclusão */}
+            <input
+              type="checkbox"
+              checked={isCompleted}
+              onChange={() => handleUpdateAction(action.id, {
+                status: isCompleted ? 'PENDENTE' : 'CONCLUIDA'
+              })}
+              className="w-3.5 h-3.5 rounded border-slate-350 text-[#1E4663] focus:ring-[#1E4663] cursor-pointer"
+            />
+
+            {/* Status Badge */}
+            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border select-none whitespace-nowrap ${statusColorClass}`}>
+              {statusText}
+            </span>
+
+            {/* Delete Action Button */}
+            <button
+              onClick={() => handleDeleteAction(action.id)}
+              className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors cursor-pointer shrink-0"
+              title="Excluir Ação"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        </td>
+      </tr>
+
+      {/* MODAL DE OBSERVAÇÕES / ANOTAÇÕES */}
+      {obsModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs no-print animate-fade-in">
+          <div className="bg-white border border-slate-900 rounded-none shadow-2xl max-w-md w-full p-6 space-y-4 text-left">
+            <div className="flex items-center justify-between border-b border-slate-900 pb-2">
+              <h3 className="text-xs font-black text-[#1E4663] uppercase tracking-wider flex items-center gap-1.5">
+                <MessageSquare size={14} /> Anotações da Ação
+              </h3>
+              <button
+                onClick={() => {
+                  handleObsBlur();
+                  setObsModalOpen(false);
+                }}
+                className="text-slate-400 hover:text-slate-700 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div className="space-y-1.5">
+              <p className="text-[10px] text-slate-400 uppercase font-black">Ação:</p>
+              <p className="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 p-2.5">
+                {localDescricao}
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-[#1E4663] font-black uppercase block">Observações / Histórico</label>
+              <textarea
+                value={localObservacao}
+                onChange={(e) => setLocalObservacao(e.target.value)}
+                placeholder="Insira observações de status, histórico ou anotações desta ação..."
+                rows={5}
+                className="w-full bg-slate-50 border border-slate-300 focus:border-[#1E4663] outline-none text-xs font-bold text-slate-800 p-3 leading-relaxed resize-none rounded-none"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
+              <button
+                onClick={() => {
+                  handleObsBlur();
+                  setObsModalOpen(false);
+                }}
+                className="px-4 py-2 bg-[#1E4663] hover:bg-[#153145] text-white text-[10px] font-black uppercase tracking-wider rounded-none cursor-pointer shadow-sm transition-colors"
+              >
+                Confirmar e Fechar
+              </button>
+            </div>
+          </div>
         </div>
-      </td>
-
-      {/* Observações */}
-      <td className="px-2 py-2">
-        <input
-          type="text"
-          value={localObservacao}
-          onChange={(e) => setLocalObservacao(e.target.value)}
-          onBlur={handleObsBlur}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.currentTarget.blur();
-            }
-          }}
-          placeholder="Anotar status..."
-          className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-650 font-medium px-1 py-0.5"
-        />
-      </td>
-
-      {/* Ação: Deletar */}
-      <td className="px-3 py-2 text-center">
-        <button
-          onClick={() => handleDeleteAction(action.id)}
-          className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
-        >
-          <Trash2 size={13} />
-        </button>
-      </td>
-    </tr>
+      )}
+    </>
   );
 }
