@@ -111,6 +111,8 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
   const [isEditing, setIsEditing] = useState(false);
   const [showDelegarPopover, setShowDelegarPopover] = useState(false);
   const delegarPopoverRef = useRef<HTMLDivElement>(null);
+  const [showResponsavelPopover, setShowResponsavelPopover] = useState(false);
+  const responsavelPopoverRef = useRef<HTMLDivElement>(null);
 
   // Inline activity editing states
   const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
@@ -166,6 +168,9 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
       }
       if (delegarPopoverRef.current && !delegarPopoverRef.current.contains(event.target as Node)) {
         setShowDelegarPopover(false);
+      }
+      if (responsavelPopoverRef.current && !responsavelPopoverRef.current.contains(event.target as Node)) {
+        setShowResponsavelPopover(false);
       }
       if (actRespPopoverRef.current && !actRespPopoverRef.current.contains(event.target as Node)) {
         setActRespPopoverId(null);
@@ -715,7 +720,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                             {actRespPopoverId === act.id && (
                               <div 
                                 ref={actRespPopoverRef}
-                                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl p-2 z-50 text-slate-800"
+                                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl p-2 z-50 text-slate-800 max-h-48 overflow-y-auto"
                               >
                                 <div className="px-2 py-1 text-[8px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
                                   Delegar para...
@@ -725,9 +730,12 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                                     await handleSaveActivityField(act.id, { responsavelId: null });
                                     setActRespPopoverId(null);
                                   }}
-                                  className="px-2.5 py-1.5 hover:bg-slate-50 rounded-lg text-xs cursor-pointer font-semibold"
+                                  className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-slate-50 rounded-lg text-xs cursor-pointer font-semibold"
                                 >
-                                  Sem responsável
+                                  <div className="w-[18px] h-[18px] rounded-full bg-slate-100 flex items-center justify-center text-[9px] text-slate-455 shrink-0">
+                                    👤
+                                  </div>
+                                  <span>Sem responsável</span>
                                 </div>
                                 {users.map(u => (
                                   <div
@@ -736,9 +744,20 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                                       await handleSaveActivityField(act.id, { responsavelId: u.id });
                                       setActRespPopoverId(null);
                                     }}
-                                    className="px-2.5 py-1.5 hover:bg-slate-50 rounded-lg text-xs cursor-pointer font-semibold"
+                                    className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-slate-50 rounded-lg text-xs cursor-pointer font-semibold"
                                   >
-                                    {u.nome}
+                                    {u.avatarUrl ? (
+                                      <img 
+                                        src={u.avatarUrl} 
+                                        alt={u.nome} 
+                                        className="w-[18px] h-[18px] rounded-full object-cover border border-slate-100 shrink-0" 
+                                      />
+                                    ) : (
+                                      <div className="w-[18px] h-[18px] rounded-full bg-[#1B4D3E]/10 text-[#1B4D3E] flex items-center justify-center text-[8px] font-bold shrink-0 uppercase">
+                                        {u.nome.substring(0, 2).toUpperCase()}
+                                      </div>
+                                    )}
+                                    <span className="truncate">{u.nome}</span>
                                   </div>
                                 ))}
                               </div>
@@ -1087,13 +1106,83 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
               {(() => {
                 const currentResp = users.find(u => u.id === responsavelId);
                 return (
-                  <div className="flex items-center gap-2.5 p-2.5 border border-slate-200 bg-white rounded-xl">
-                    <div className="w-7 h-7 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[10px] font-bold text-[#1B4D3E]">
-                      {currentResp ? currentResp.nome.substring(0, 2).toUpperCase() : '?'}
+                  <div className="relative" ref={responsavelPopoverRef}>
+                    <div 
+                      onClick={() => {
+                        if (isCompleted) return;
+                        setShowResponsavelPopover(!showResponsavelPopover);
+                      }}
+                      className="flex items-center gap-2.5 p-2.5 border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer rounded-xl transition-colors"
+                    >
+                      {currentResp?.avatarUrl ? (
+                        <img 
+                          src={currentResp.avatarUrl} 
+                          alt={currentResp.nome} 
+                          className="w-7 h-7 rounded-full object-cover border border-slate-200"
+                        />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[10px] font-bold text-[#1B4D3E]">
+                          {currentResp ? currentResp.nome.substring(0, 2).toUpperCase() : '?'}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-slate-700 truncate">
+                          {currentResp ? currentResp.nome : 'Não delegado'}
+                        </p>
+                        {!isCompleted && (
+                          <p className="text-[8px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Clique para alterar</p>
+                        )}
+                      </div>
                     </div>
-                    <span className="text-xs font-bold text-slate-700 truncate">
-                      {currentResp ? currentResp.nome : 'Não delegado'}
-                    </span>
+
+                    {showResponsavelPopover && !isCompleted && (
+                      <div className="absolute top-full left-0 mt-1.5 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-2.5 z-50 text-slate-800 animate-fade-in max-h-56 overflow-y-auto">
+                        <div className="px-2 py-1 text-[9px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
+                          Definir Responsável
+                        </div>
+                        <div 
+                          onClick={async () => {
+                            setResponsavelId('');
+                            await saveField({ responsavelId: null });
+                            setShowResponsavelPopover(false);
+                          }}
+                          className={`flex items-center gap-2 px-2.5 py-1.5 hover:bg-slate-50 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                            !responsavelId ? 'text-[#1B4D3E] font-bold bg-slate-50' : 'text-slate-650'
+                          }`}
+                        >
+                          <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px] text-slate-450 shrink-0">
+                            👤
+                          </div>
+                          <span>Sem responsável</span>
+                        </div>
+                        {users.map(u => (
+                          <div
+                            key={u.id}
+                            onClick={async () => {
+                              setResponsavelId(u.id);
+                              await saveField({ responsavelId: u.id });
+                              setShowResponsavelPopover(false);
+                            }}
+                            className={`flex items-center gap-2 px-2.5 py-1.5 hover:bg-slate-50 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                              responsavelId === u.id ? 'text-[#1B4D3E] font-bold bg-slate-50' : 'text-slate-650'
+                            }`}
+                          >
+                            {u.avatarUrl ? (
+                              <img 
+                                src={u.avatarUrl} 
+                                alt={u.nome} 
+                                className="w-5 h-5 rounded-full object-cover border border-slate-100 shrink-0" 
+                              />
+                            ) : (
+                              <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 text-[#1B4D3E] flex items-center justify-center text-[9px] font-bold shrink-0 uppercase">
+                                {u.nome.substring(0, 2).toUpperCase()}
+                              </div>
+                            )}
+                            <span className="truncate">{u.nome}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })()}
@@ -1472,11 +1561,14 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                               await saveField({ responsavelId: null });
                               setShowDelegarPopover(false);
                             }}
-                            className={`px-2.5 py-1.5 hover:bg-slate-50 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                            className={`flex items-center gap-2 px-2.5 py-1.5 hover:bg-slate-50 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
                               !responsavelId ? 'text-[#1B4D3E] font-bold bg-slate-50' : 'text-slate-650'
                             }`}
                           >
-                            Sem responsável
+                            <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px] text-slate-450 shrink-0">
+                              👤
+                            </div>
+                            <span>Sem responsável</span>
                           </div>
                           {users.map(u => (
                             <div
@@ -1486,11 +1578,22 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                                 await saveField({ responsavelId: u.id });
                                 setShowDelegarPopover(false);
                               }}
-                              className={`px-2.5 py-1.5 hover:bg-slate-50 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                              className={`flex items-center gap-2 px-2.5 py-1.5 hover:bg-slate-50 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
                                 responsavelId === u.id ? 'text-[#1B4D3E] font-bold bg-slate-50' : 'text-slate-650'
                               }`}
                             >
-                              {u.nome}
+                              {u.avatarUrl ? (
+                                <img 
+                                  src={u.avatarUrl} 
+                                  alt={u.nome} 
+                                  className="w-5 h-5 rounded-full object-cover border border-slate-100 shrink-0" 
+                                />
+                              ) : (
+                                <div className="w-5 h-5 rounded-full bg-[#1B4D3E]/10 text-[#1B4D3E] flex items-center justify-center text-[9px] font-bold shrink-0 uppercase">
+                                  {u.nome.substring(0, 2).toUpperCase()}
+                                </div>
+                              )}
+                              <span className="truncate">{u.nome}</span>
                             </div>
                           ))}
                         </div>
