@@ -1166,19 +1166,35 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
               <div className="space-y-6">
                 {(pic.secoes || []).map((sec: any) => {
                   const acoes = sec.acoes || [];
+                  const secProg = progress.sections.find((s: any) => s.id === sec.id) || { total: 0, completed: 0, percent: 0 };
                   return (
                     <div key={sec.id} className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
                       
                       {/* Título Seção */}
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                        <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
-                          📋 Seção: {sec.nome}
-                        </h3>
+                        <div className="flex items-center gap-4 flex-1 min-w-0 mr-4">
+                          <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5 shrink-0">
+                            📋 Seção: {sec.nome}
+                          </h3>
+                          
+                          {/* Barra de Progresso da Seção */}
+                          <div className="flex items-center gap-2.5 flex-1 max-w-64">
+                            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/50">
+                              <div 
+                                className="bg-[#1B4D3E] h-2 rounded-full transition-all duration-500" 
+                                style={{ width: `${secProg.percent}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-[10px] font-black text-slate-500 shrink-0">
+                              {secProg.percent}% ({secProg.completed}/{secProg.total})
+                            </span>
+                          </div>
+                        </div>
                         {/* Apenas permite excluir seções que não sejam as padrões (RH, Suprimentos, Operação) */}
                         {!['RH', 'SUPRIMENTOS', 'OPERAÇÃO', 'OPERACAO'].includes(sec.nome.toUpperCase()) && (
                           <button
                             onClick={() => handleDeleteSection(sec.id)}
-                            className="text-[10px] text-red-500 font-bold uppercase tracking-wider hover:text-red-700 bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 flex items-center gap-1 transition-colors cursor-pointer"
+                            className="text-[10px] text-red-500 font-bold uppercase tracking-wider hover:text-red-700 bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 flex items-center gap-1 transition-colors cursor-pointer shrink-0"
                           >
                             <Trash2 size={12} /> Excluir Área
                           </button>
