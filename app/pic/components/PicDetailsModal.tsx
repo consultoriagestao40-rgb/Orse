@@ -1151,6 +1151,11 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                             <button
                               type="button"
                               onClick={() => handleRemoveMaterial(index)}
+                              className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
                         </tr>
                       )}
                     </tbody>
