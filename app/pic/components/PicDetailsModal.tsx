@@ -429,12 +429,12 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs font-sans text-left">
-      <div className="bg-white rounded-none shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden border border-slate-300 animate-fade-in relative">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden border border-slate-200 animate-fade-in relative">
         
         {/* Header do Modal */}
-        <header className="bg-slate-100 border-b border-slate-300 px-6 py-4 flex items-center justify-between shrink-0">
+        <header className="bg-slate-100 border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#1B4D3E]/10 rounded-none border border-[#1B4D3E]/20 flex items-center justify-center text-[#1B4D3E]">
+            <div className="w-10 h-10 bg-[#1B4D3E]/10 rounded-xl border border-[#1B4D3E]/20 flex items-center justify-center text-[#1B4D3E]">
               <ClipboardCheck size={22} className="stroke-[2.5]" />
             </div>
             <div>
@@ -448,14 +448,14 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
           </div>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-slate-200 rounded-none text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+            className="p-2 hover:bg-slate-200 rounded-full text-slate-400 hover:text-slate-600 transition-colors cursor-pointer flex items-center justify-center"
           >
             <X size={20} className="stroke-[2.5]" />
           </button>
         </header>
 
         {/* Abas de Navegação */}
-        <nav className="bg-slate-50 border-b border-slate-300 px-6 flex gap-6 shrink-0">
+        <nav className="bg-slate-50 border-b border-slate-200 px-6 flex gap-6 shrink-0">
           {(['identificacao', 'financeiro', 'operacional', 'planejador'] as TabType[]).map((tab) => {
             const labels = {
               identificacao: '1. Identificação',
@@ -475,7 +475,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`py-3.5 border-b-2 font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer rounded-none ${
+                className={`py-3.5 border-b-2 font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all duration-200 cursor-pointer ${
                   isActive 
                     ? 'border-[#1B4D3E] text-[#1B4D3E]' 
                     : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -501,7 +501,8 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
               <div className="md:col-span-2 space-y-6">
                 
                 {/* Cartão Dados Cliente */}
-                <div className="bg-white border border-slate-300 rounded-none p-5 shadow-sm space-y-4">
+                {/* Cartão Dados Cliente */}
+                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
                   <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2">
                     Dados Gerais do Cliente
                   </h3>
@@ -546,14 +547,14 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                 </div>
 
                 {/* Cartão Escopo e Itens */}
-                <div className="bg-white border border-slate-300 rounded-none p-5 shadow-sm space-y-4">
+                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
                   <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2">
                     Escopo e Detalhamento da FPV
                   </h3>
                   <div className="space-y-3 text-xs font-semibold text-slate-700">
                     <div>
                       <span className="text-[10px] text-slate-400 uppercase block font-black">Objeto / Escopo Técnico</span>
-                      <p className="bg-slate-50 border border-slate-300 rounded-none p-3 mt-1 text-slate-600 font-medium whitespace-pre-line leading-relaxed">
+                      <p className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 mt-1 text-slate-600 font-medium whitespace-pre-line leading-relaxed">
                         {meta.escopoTecnico || meta.objetoProposta || 'Não especificado no contrato.'}
                       </p>
                     </div>
@@ -561,21 +562,21 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                     <div>
                       <span className="text-[10px] text-slate-400 uppercase block font-black mb-1.5">Itens Inclusos e Excluídos</span>
                       <div className="overflow-x-auto mt-1">
-                        <table className="w-full text-left text-xs border-collapse border border-slate-300">
+                        <table className="w-full text-left text-xs border-collapse border border-slate-200">
                           <thead>
                             <tr className="bg-[#1B4D3E] text-white uppercase text-[9.5px] tracking-wider">
-                              <th className="px-3 py-2 font-black border border-slate-300 text-white">Item / Descrição</th>
-                              <th className="px-3 py-2 text-center w-28 font-black border border-slate-300 text-white">Status</th>
+                              <th className="px-3 py-2 font-black border border-slate-200 text-white">Item / Descrição</th>
+                              <th className="px-3 py-2 text-center w-28 font-black border border-slate-200 text-white">Status</th>
                             </tr>
                           </thead>
                           <tbody className="font-semibold text-slate-700">
                             {(meta.itensInclusosExcluidos || []).map((item: any) => (
-                              <tr key={item.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-300">
-                                <td className="px-3 py-2 border border-slate-300 text-slate-800 font-bold">
+                              <tr key={item.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-200">
+                                <td className="px-3 py-2 border border-slate-200 text-slate-800 font-bold">
                                   {item.descricao}
                                 </td>
-                                <td className="px-3 py-2 border border-slate-300 text-center">
-                                  <span className={`px-2 py-0.5 rounded-none text-[9px] font-black uppercase border ${
+                                <td className="px-3 py-2 border border-slate-200 text-center">
+                                  <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase border ${
                                     item.incluso 
                                       ? 'bg-emerald-50 text-emerald-700 border-emerald-300' 
                                       : 'bg-red-50 text-red-700 border-red-300'
@@ -587,7 +588,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                             ))}
                             {(meta.itensInclusosExcluidos || []).length === 0 && (
                               <tr>
-                                <td colSpan={2} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-300">
+                                <td colSpan={2} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-200">
                                   Nenhum item incluso ou excluso especificado.
                                 </td>
                               </tr>
@@ -605,14 +606,14 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
               <div className="space-y-6">
                 
                 {/* Cartão Comercial e Grupo */}
-                <div className="bg-white border border-slate-300 rounded-none p-5 shadow-sm space-y-4">
+                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
                   <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2">
                     Dados da Proponente / Comercial
                   </h3>
                   <div className="space-y-3.5 text-xs font-bold text-slate-700">
                     <div>
                       <span className="text-[10px] text-slate-400 uppercase block">Empresa do Grupo Associada</span>
-                      <div className="flex items-center gap-2 mt-1 px-3 py-2 bg-blue-50 border border-blue-300 rounded-none text-blue-700">
+                      <div className="flex items-center gap-2 mt-1 px-3 py-2 bg-[#1B4D3E]/5 border border-[#1B4D3E]/15 rounded-lg text-[#1B4D3E]">
                         <Briefcase size={14} />
                         <span className="font-extrabold uppercase">{contrato.empresaEmissora?.nomeFantasia || 'JVS Group'}</span>
                       </div>
@@ -622,9 +623,9 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       <span className="text-[10px] text-slate-400 uppercase block">Vendedor / Fechamento</span>
                       <div className="flex items-center gap-2 mt-1">
                         {vendedor.avatarUrl ? (
-                          <img src={vendedor.avatarUrl} alt={vendedor.nome} className="w-8 h-8 rounded-none object-cover border border-slate-200" />
+                          <img src={vendedor.avatarUrl} alt={vendedor.nome} className="w-8 h-8 rounded-full object-cover border border-slate-200" />
                         ) : (
-                          <div className="w-8 h-8 rounded-none bg-[#1B4D3E]/10 flex items-center justify-center text-[10px] font-black text-[#1B4D3E] uppercase border border-slate-200">
+                          <div className="w-8 h-8 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[10px] font-black text-[#1B4D3E] uppercase border border-slate-200">
                             {(vendedor.nome || 'Sis').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                           </div>
                         )}
@@ -638,7 +639,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                 </div>
 
                 {/* Cartão Informações Anotáveis */}
-                <div className="bg-white border border-slate-300 rounded-none p-5 shadow-sm space-y-3 flex flex-col h-[280px]">
+                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3 flex flex-col h-[280px]">
                   <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2 shrink-0">
                     Informações Anotáveis / Observações
                   </h3>
@@ -646,12 +647,12 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                     value={anotacoes}
                     onChange={(e) => setAnotacoes(e.target.value)}
                     placeholder="Escreva anotações internas da implantação..."
-                    className="flex-1 w-full bg-slate-50 border border-slate-300 rounded-none p-3 text-xs text-slate-700 outline-none focus:border-[#1B4D3E] resize-none font-medium leading-relaxed"
+                    className="flex-1 w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-700 outline-none focus:border-[#1B4D3E] resize-none font-medium leading-relaxed"
                   />
                   <button
                     onClick={handleSaveDetails}
                     disabled={saving}
-                    className="w-full py-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase rounded-none tracking-widest transition-colors shrink-0 cursor-pointer disabled:opacity-50 shadow-sm"
+                    className="w-full py-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase rounded-lg tracking-widest transition-colors shrink-0 cursor-pointer disabled:opacity-50 shadow-sm"
                   >
                     {saving ? 'Gravando...' : 'Salvar Anotações'}
                   </button>
@@ -662,16 +663,8 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
             </div>
           )}
 
-          {/* ───────────────────────────────────────────────────────────────────
-              ABA 02: FINANCEIRO E FATURAMENTO
-              ─────────────────────────────────────────────────────────────────── */}
-          {activeTab === 'financeiro' && (
-            <div className="space-y-6">
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                {/* Dados de Faturamento Geral */}
-                <div className="bg-white border border-slate-300 rounded-none p-5 shadow-sm space-y-4">
+          {/* ──────────────────────────                {/* Dados de Faturamento Geral */}
+                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
                   <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2">
                     Ciclos e Medições do Contrato
                   </h3>
@@ -686,7 +679,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                           value={valorMensalStr}
                           onChange={(e) => setValorMensalStr(e.target.value)}
                           onBlur={handleValorMensalBlur}
-                          className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-none text-sm text-slate-800 outline-none focus:border-[#1B4D3E] font-bold"
+                          className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 font-bold"
                         />
                       </div>
                     </div>
@@ -698,7 +691,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                         value={dataFaturamento}
                         onChange={(e) => setDataFaturamento(e.target.value)}
                         placeholder="Ex: Todo dia 25"
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-none text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
                       />
                     </div>
 
@@ -709,7 +702,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                         value={periodoMedicaoInicio}
                         onChange={(e) => setPeriodoMedicaoInicio(e.target.value)}
                         placeholder="Ex: Dia 21 de cada mês"
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-none text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
                       />
                     </div>
 
@@ -720,7 +713,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                         value={periodoMedicaoFim}
                         onChange={(e) => setPeriodoMedicaoFim(e.target.value)}
                         placeholder="Ex: Dia 20 do mês subsequente"
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-none text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
                       />
                     </div>
 
@@ -731,7 +724,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                         value={prazoPagamento}
                         onChange={(e) => setPrazoPagamento(e.target.value)}
                         placeholder="Ex: 15 dias após recebimento da NF"
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-none text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
                       />
                     </div>
 
@@ -742,20 +735,20 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                         value={dataPagamento}
                         onChange={(e) => setDataPagamento(e.target.value)}
                         placeholder="Ex: Dia 10 do mês posterior"
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-none text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
                       />
                     </div>
 
                     <div>
                       <label className="text-[10px] text-[#1B4D3E] font-black uppercase block mb-1">Início da Vigência (Contrato)</label>
-                      <div className="w-full px-3 py-2 bg-slate-100/60 border border-slate-300 text-sm text-slate-500 font-extrabold select-none">
+                      <div className="w-full px-3 py-2 bg-slate-100/60 border border-slate-200 rounded-lg text-sm text-slate-500 font-extrabold select-none">
                         {formattedDataInicio}
                       </div>
                     </div>
 
                     <div>
                       <label className="text-[10px] text-[#1B4D3E] font-black uppercase block mb-1">Prazo de Vigência (Contrato)</label>
-                      <div className="w-full px-3 py-2 bg-slate-100/60 border border-slate-300 text-sm text-slate-500 font-extrabold select-none">
+                      <div className="w-full px-3 py-2 bg-slate-100/60 border border-slate-200 rounded-lg text-sm text-slate-500 font-extrabold select-none">
                         {formattedVigencia}
                       </div>
                     </div>
@@ -763,7 +756,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                 </div>
 
                 {/* Dados para Emissão de Nota (Faturamento CNPJ) */}
-                <div className="bg-white border border-slate-300 rounded-none p-5 shadow-sm space-y-4">
+                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
                   <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2">
                     Dados Fiscais para Faturamento / Emissão de NF
                   </h3>
@@ -775,7 +768,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                         type="text"
                         value={faturamentoRazaoSocial}
                         onChange={(e) => setFaturamentoRazaoSocial(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-none text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
                       />
                     </div>
 
@@ -785,7 +778,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                         type="text"
                         value={faturamentoCnpj}
                         onChange={(e) => setFaturamentoCnpj(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-none text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
                       />
                     </div>
 
@@ -795,7 +788,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                         type="email"
                         value={faturamentoEmail}
                         onChange={(e) => setFaturamentoEmail(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-none text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
                       />
                     </div>
 
@@ -805,7 +798,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                         type="text"
                         value={faturamentoInscricaoEstadual}
                         onChange={(e) => setFaturamentoInscricaoEstadual(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-none text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
                       />
                     </div>
 
@@ -815,7 +808,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                         type="text"
                         value={faturamentoInscricaoMunicipal}
                         onChange={(e) => setFaturamentoInscricaoMunicipal(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-none text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
                       />
                     </div>
 
@@ -825,7 +818,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                         type="text"
                         value={faturamentoEndereco}
                         onChange={(e) => setFaturamentoEndereco(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-none text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
                       />
                     </div>
                   </div>
@@ -834,7 +827,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
               </div>
 
               {/* Documentação necessária mensalmente */}
-              <div className="bg-white border border-slate-300 rounded-none p-5 shadow-sm space-y-4">
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
                 <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2">
                   Documentação Exigida Mensalmente (Anexo à Fatura / Retenções)
                 </h3>
@@ -843,13 +836,13 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                     value={documentacoesMensais}
                     onChange={(e) => setDocumentacoesMensais(e.target.value)}
                     placeholder="Descreva as certidões e comprovantes exigidos pelo cliente..."
-                    className="w-full bg-slate-50 border border-slate-300 rounded-none p-3 text-xs text-slate-700 outline-none focus:border-[#1B4D3E] h-24 resize-none font-medium leading-relaxed"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-700 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 h-24 resize-none font-medium leading-relaxed"
                   />
                   <div className="flex justify-end">
                     <button
                       onClick={handleSaveDetails}
                       disabled={saving}
-                      className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase py-2 px-6 rounded-none tracking-widest transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
+                      className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase py-2 px-6 rounded-lg tracking-widest transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
                     >
                       {saving ? 'Salvando...' : 'Salvar Detalhes Financeiros'}
                     </button>
@@ -867,56 +860,57 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
             <div className="space-y-8">
               
               {/* Seção Funcionários (Quadro CLT Vendido) */}
-              <div className="bg-white border border-slate-300 rounded-none p-5 shadow-sm space-y-4">
+              {/* Seção Funcionários (Quadro CLT Vendido) */}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
                     <Users size={16} /> Quadro de Funcionários (Postos CLT)
                   </h3>
                   <button
                     onClick={handleAddEmployee}
-                    className="text-[10px] text-emerald-600 font-black uppercase tracking-wider hover:text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-none border border-emerald-300 flex items-center gap-1 transition-colors cursor-pointer select-none"
+                    className="text-[10px] text-emerald-600 font-black uppercase tracking-wider hover:text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-300 flex items-center gap-1 transition-colors cursor-pointer select-none"
                   >
                     <Plus size={12} /> Adicionar Nova Função
                   </button>
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse border border-slate-300">
+                  <table className="w-full text-left text-xs border-collapse border border-slate-200">
                     <thead>
                       <tr className="bg-[#1B4D3E] text-white uppercase text-[9.5px] tracking-wider">
-                        <th className="px-3 py-2.5 font-black border border-slate-300 text-white">Função / Cargo</th>
-                        <th className="px-3 py-2.5 text-center w-16 font-black border border-slate-300 text-white">Qtd</th>
-                        <th className="px-3 py-2.5 text-center w-20 font-black border border-slate-300 text-white">Escala</th>
-                        <th className="px-3 py-2.5 text-center w-24 font-black border border-slate-300 text-white">Horário Entrada</th>
-                        <th className="px-3 py-2.5 text-center w-24 font-black border border-slate-300 text-white">Horário Saída</th>
-                        <th className="px-3 py-2.5 w-44 font-black border border-slate-300 text-white">Dias da Semana</th>
-                        <th className="px-3 py-2.5 text-center w-12 font-black border border-slate-300 text-white">Remover</th>
+                        <th className="px-3 py-2.5 font-black border border-slate-200 text-white">Função / Cargo</th>
+                        <th className="px-3 py-2.5 text-center w-16 font-black border border-slate-200 text-white">Qtd</th>
+                        <th className="px-3 py-2.5 text-center w-20 font-black border border-slate-200 text-white">Escala</th>
+                        <th className="px-3 py-2.5 text-center w-24 font-black border border-slate-200 text-white">Horário Entrada</th>
+                        <th className="px-3 py-2.5 text-center w-24 font-black border border-slate-200 text-white">Horário Saída</th>
+                        <th className="px-3 py-2.5 w-44 font-black border border-slate-200 text-white">Dias da Semana</th>
+                        <th className="px-3 py-2.5 text-center w-12 font-black border border-slate-200 text-white">Remover</th>
                       </tr>
                     </thead>
                     <tbody className="font-semibold text-slate-700">
                       {funcionarios.map((emp, index) => (
-                        <tr key={emp.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-300">
-                          <td className="px-2 py-1.5 border border-slate-300">
+                        <tr key={emp.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-200">
+                          <td className="px-2 py-1.5 border border-slate-200">
                             <input
                               type="text"
                               value={emp.funcao}
                               onChange={(e) => handleUpdateEmployee(index, 'funcao', e.target.value)}
-                              className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
+                              className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
                             />
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-300">
+                          <td className="px-2 py-1.5 border border-slate-200">
                             <input
                               type="number"
                               value={emp.quantidade}
                               onChange={(e) => handleUpdateEmployee(index, 'quantidade', Number(e.target.value))}
-                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
+                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
                             />
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-300">
+                          <td className="px-2 py-1.5 border border-slate-200">
                             <select
                               value={emp.escala}
                               onChange={(e) => handleUpdateEmployee(index, 'escala', e.target.value)}
-                              className="w-full bg-transparent outline-none font-bold text-center py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none cursor-pointer"
+                              className="w-full bg-transparent outline-none font-bold text-center py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md cursor-pointer"
                             >
                               <option value="5x2">5x2</option>
                               <option value="6x1">6x1</option>
@@ -924,31 +918,31 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               <option value="4x2">4x2</option>
                             </select>
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-300">
+                          <td className="px-2 py-1.5 border border-slate-200">
                             <input
                               type="text"
                               value={emp.horarioEntrada || '08:00'}
                               onChange={(e) => handleUpdateEmployee(index, 'horarioEntrada', e.target.value)}
-                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
+                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
                             />
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-300">
+                          <td className="px-2 py-1.5 border border-slate-200">
                             <input
                               type="text"
                               value={emp.horarioSaida || '17:00'}
                               onChange={(e) => handleUpdateEmployee(index, 'horarioSaida', e.target.value)}
-                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
+                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
                             />
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-300">
+                          <td className="px-2 py-1.5 border border-slate-200">
                             <input
                               type="text"
                               value={emp.diasSemana || 'Segunda a Sexta'}
                               onChange={(e) => handleUpdateEmployee(index, 'diasSemana', e.target.value)}
-                              className="w-full bg-transparent outline-none text-slate-700 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
+                              className="w-full bg-transparent outline-none text-slate-700 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
                             />
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-300 text-center">
+                          <td className="px-2 py-1.5 border border-slate-200 text-center">
                             <button
                               type="button"
                               onClick={() => handleRemoveEmployee(index)}
@@ -961,7 +955,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       ))}
                       {funcionarios.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-300">
+                          <td colSpan={7} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-200">
                             Nenhum funcionário cadastrado.
                           </td>
                         </tr>
@@ -974,7 +968,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   <button
                     onClick={handleSaveEmployees}
                     disabled={saving}
-                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase py-2 px-5 rounded-none tracking-widest transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
+                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase py-2 px-5 rounded-lg tracking-widest transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
                   >
                     Salvar Quadro
                   </button>
@@ -982,39 +976,39 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
               </div>
 
               {/* Seção Equipamentos */}
-              <div className="bg-white border border-slate-300 rounded-none p-5 shadow-sm space-y-4">
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
                     <Briefcase size={16} /> Relação de Equipamentos / Máquinas
                   </h3>
                   <button
                     onClick={handleAddEquipment}
-                    className="text-[10px] text-emerald-600 font-black uppercase tracking-wider hover:text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-none border border-emerald-300 flex items-center gap-1 transition-colors cursor-pointer select-none"
+                    className="text-[10px] text-emerald-600 font-black uppercase tracking-wider hover:text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-300 flex items-center gap-1 transition-colors cursor-pointer select-none"
                   >
                     <Plus size={12} /> Adicionar Equipamento
                   </button>
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse border border-slate-300">
+                  <table className="w-full text-left text-xs border-collapse border border-slate-200">
                     <thead>
                       <tr className="bg-[#1B4D3E] text-white uppercase text-[9.5px] tracking-wider">
-                        <th className="px-3 py-2.5 font-black border border-slate-300 text-white">Nome do Equipamento</th>
-                        <th className="px-3 py-2.5 text-center w-20 font-black border border-slate-300 text-white">Quantidade</th>
-                        <th className="px-3 py-2.5 text-center w-24 font-black border border-slate-300 text-white">Tipo Alocação</th>
-                        <th className="px-3 py-2.5 text-center w-12 font-black border border-slate-300 text-white">Remover</th>
+                        <th className="px-3 py-2.5 font-black border border-slate-200 text-white">Nome do Equipamento</th>
+                        <th className="px-3 py-2.5 text-center w-20 font-black border border-slate-200 text-white">Quantidade</th>
+                        <th className="px-3 py-2.5 text-center w-24 font-black border border-slate-200 text-white">Tipo Alocação</th>
+                        <th className="px-3 py-2.5 text-center w-12 font-black border border-slate-200 text-white">Remover</th>
                       </tr>
                     </thead>
                     <tbody className="font-semibold text-slate-700">
                       {equipamentos.map((eq, index) => (
-                        <tr key={eq.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-300">
-                          <td className="px-2 py-1.5 border border-slate-300">
+                        <tr key={eq.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-200">
+                          <td className="px-2 py-1.5 border border-slate-200">
                             <div className="flex items-center justify-between gap-2">
                               <input
                                 type="text"
                                 value={eq.nome}
                                 onChange={(e) => handleUpdateEquipment(index, 'nome', e.target.value)}
-                                className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
+                                className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
                               />
                               <button
                                 type="button"
@@ -1034,25 +1028,25 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               </button>
                             </div>
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-300">
+                          <td className="px-2 py-1.5 border border-slate-200">
                             <input
                               type="number"
                               value={eq.quantidade}
                               onChange={(e) => handleUpdateEquipment(index, 'quantidade', Number(e.target.value))}
-                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
+                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
                             />
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-300">
+                          <td className="px-2 py-1.5 border border-slate-200">
                             <select
                               value={eq.tipo}
                               onChange={(e) => handleUpdateEquipment(index, 'tipo', e.target.value)}
-                              className="w-full bg-transparent outline-none font-bold text-center py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none cursor-pointer"
+                              className="w-full bg-transparent outline-none font-bold text-center py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md cursor-pointer"
                             >
                               <option value="PROPRIO">Próprio</option>
                               <option value="LOCADO">Locado</option>
                             </select>
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-300 text-center">
+                          <td className="px-2 py-1.5 border border-slate-200 text-center">
                             <button
                               type="button"
                               onClick={() => handleRemoveEquipment(index)}
@@ -1065,7 +1059,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       ))}
                       {equipamentos.length === 0 && (
                         <tr>
-                          <td colSpan={4} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-300">
+                          <td colSpan={4} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-200">
                             Nenhum equipamento listado.
                           </td>
                         </tr>
@@ -1078,7 +1072,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   <button
                     onClick={handleSaveEquipments}
                     disabled={saving}
-                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase py-2 px-5 rounded-none tracking-widest transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
+                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase py-2 px-5 rounded-lg tracking-widest transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
                   >
                     Salvar Equipamentos
                   </button>
@@ -1086,39 +1080,39 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
               </div>
 
               {/* Seção Materiais e Insumos */}
-              <div className="bg-white border border-slate-300 rounded-none p-5 shadow-sm space-y-4">
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
                     <Package size={16} /> Relação de Materiais, Descartáveis e Insumos
                   </h3>
                   <button
                     onClick={handleAddMaterial}
-                    className="text-[10px] text-emerald-600 font-black uppercase tracking-wider hover:text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-none border border-emerald-300 flex items-center gap-1 transition-colors cursor-pointer select-none"
+                    className="text-[10px] text-emerald-600 font-black uppercase tracking-wider hover:text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-300 flex items-center gap-1 transition-colors cursor-pointer select-none"
                   >
                     <Plus size={12} /> Adicionar Material
                   </button>
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse border border-slate-300">
+                  <table className="w-full text-left text-xs border-collapse border border-slate-200">
                     <thead>
                       <tr className="bg-[#1B4D3E] text-white uppercase text-[9.5px] tracking-wider">
-                        <th className="px-3 py-2.5 font-black border border-slate-300 text-white">Nome do Material / Insumo</th>
-                        <th className="px-3 py-2.5 text-center w-20 font-black border border-slate-300 text-white">Quantidade</th>
-                        <th className="px-3 py-2.5 text-center w-16 font-black border border-slate-300 text-white">Unidade</th>
-                        <th className="px-3 py-2.5 text-center w-12 font-black border border-slate-300 text-white">Remover</th>
+                        <th className="px-3 py-2.5 font-black border border-slate-200 text-white">Nome do Material / Insumo</th>
+                        <th className="px-3 py-2.5 text-center w-20 font-black border border-slate-200 text-white">Quantidade</th>
+                        <th className="px-3 py-2.5 text-center w-16 font-black border border-slate-200 text-white">Unidade</th>
+                        <th className="px-3 py-2.5 text-center w-12 font-black border border-slate-200 text-white">Remover</th>
                       </tr>
                     </thead>
                     <tbody className="font-semibold text-slate-700">
                       {materiais.map((mat, index) => (
-                        <tr key={mat.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-300">
-                          <td className="px-2 py-1.5 border border-slate-300">
+                        <tr key={mat.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-200">
+                          <td className="px-2 py-1.5 border border-slate-200">
                             <div className="flex items-center justify-between gap-2">
                               <input
                                 type="text"
                                 value={mat.nome}
                                 onChange={(e) => handleUpdateMaterial(index, 'nome', e.target.value)}
-                                className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
+                                className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
                               />
                               <button
                                 type="button"
@@ -1138,23 +1132,23 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               </button>
                             </div>
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-300">
+                          <td className="px-2 py-1.5 border border-slate-200">
                             <input
                               type="number"
                               value={mat.quantidade}
                               onChange={(e) => handleUpdateMaterial(index, 'quantidade', Number(e.target.value))}
-                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
+                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
                             />
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-300">
+                          <td className="px-2 py-1.5 border border-slate-200">
                             <input
                               type="text"
                               value={mat.unidade || 'UN'}
                               onChange={(e) => handleUpdateMaterial(index, 'unidade', e.target.value)}
-                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
+                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
                             />
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-300 text-center">
+                          <td className="px-2 py-1.5 border border-slate-200 text-center">
                             <button
                               type="button"
                               onClick={() => handleRemoveMaterial(index)}
@@ -1167,7 +1161,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       ))}
                       {materiais.length === 0 && (
                         <tr>
-                          <td colSpan={4} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-300">
+                          <td colSpan={4} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-200">
                             Nenhum insumo ou material listado.
                           </td>
                         </tr>
@@ -1180,7 +1174,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   <button
                     onClick={handleSaveMaterials}
                     disabled={saving}
-                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase py-2 px-5 rounded-none tracking-widest transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
+                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase py-2 px-5 rounded-lg tracking-widest transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
                   >
                     Salvar Insumos
                   </button>

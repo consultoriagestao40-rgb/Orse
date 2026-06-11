@@ -561,7 +561,7 @@ export async function triggerPicCreationForContract(contratoId: string) {
           return {
             picId: pic.id,
             funcao: item.nomeCargo,
-            quantidade: item.quantidade || 1,
+            quantidade: Math.round(item.quantidade) || 1,
             escala: item.escala || '5x2',
             horarioEntrada: postParams.horarioInicio || item.entrada || '08:00',
             horarioSaida: postParams.horarioFim || item.saida || '17:00',
@@ -585,7 +585,7 @@ export async function triggerPicCreationForContract(contratoId: string) {
         data: maquinasList.map((m: any) => ({
           picId: pic.id,
           nome: m.descricao || m.nome || 'Máquina/Equipamento',
-          quantidade: m.quantidade || 1,
+          quantidade: Math.round(m.quantidade) || 1,
           tipo: isLocado(m.descricao || '') ? 'LOCADO' : 'PROPRIO',
           observacao: ''
         }))
@@ -601,7 +601,7 @@ export async function triggerPicCreationForContract(contratoId: string) {
         data: combinedMaterials.map((m: any) => ({
           picId: pic.id,
           nome: m.descricao || m.nome || 'Material/Insumo',
-          quantidade: m.quantidade || 1,
+          quantidade: Math.round(m.quantidade) || 1,
           unidade: m.unidade || 'UN',
           observacao: ''
         }))

@@ -263,7 +263,10 @@ export async function updateContratoStatus(id: string, status: string) {
     });
 
     if (status.toUpperCase() === 'VIGENTE' || status.toUpperCase() === 'ATIVO') {
-      await triggerPicCreationForContract(id);
+      const picRes = await triggerPicCreationForContract(id);
+      if (!picRes.success) {
+        throw new Error(picRes.error || 'Erro ao gerar o PIC');
+      }
     }
 
     revalidatePath('/contratos');
@@ -281,7 +284,10 @@ export async function updateContratoDetails(id: string, data: any) {
     });
 
     if (data.status && (data.status.toUpperCase() === 'VIGENTE' || data.status.toUpperCase() === 'ATIVO')) {
-      await triggerPicCreationForContract(id);
+      const picRes = await triggerPicCreationForContract(id);
+      if (!picRes.success) {
+        throw new Error(picRes.error || 'Erro ao gerar o PIC');
+      }
     }
 
     revalidatePath('/contratos');
