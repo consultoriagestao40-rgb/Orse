@@ -56,8 +56,8 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
   const [showAddSection, setShowAddSection] = useState(false);
   const [newActionNames, setNewActionNames] = useState<Record<string, string>>({});
 
-  const loadPicData = async () => {
-    setLoading(true);
+  const loadPicData = async (silent = false) => {
+    if (!silent) setLoading(true);
     const res = await getPicById(picId);
     if (res.success && res.pic) {
       const p = res.pic;
@@ -83,7 +83,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
       alert(res.error || 'Erro ao carregar dados do PIC');
       onClose();
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
 
   useEffect(() => {
@@ -244,7 +244,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
     if (res.success) {
       setNewSectionName('');
       setShowAddSection(false);
-      await loadPicData();
+      await loadPicData(true);
     } else {
       alert(res.error || 'Erro ao criar seção');
     }
@@ -256,7 +256,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
     const res = await deletePicSection(secaoId);
     setSaving(false);
     if (res.success) {
-      await loadPicData();
+      await loadPicData(true);
     } else {
       alert(res.error || 'Erro ao excluir seção');
     }
@@ -270,7 +270,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
     setSaving(false);
     if (res.success) {
       setNewActionNames({ ...newActionNames, [secaoId]: '' });
-      await loadPicData();
+      await loadPicData(true);
     } else {
       alert(res.error || 'Erro ao criar ação');
     }
@@ -279,7 +279,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
   const handleUpdateAction = async (actionId: string, data: any) => {
     const res = await updatePicAction(actionId, data);
     if (res.success) {
-      await loadPicData();
+      await loadPicData(true);
       if (refreshData) refreshData(true);
     } else {
       alert(res.error || 'Erro ao atualizar ação');
@@ -292,7 +292,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
     const res = await deletePicAction(actionId);
     setSaving(false);
     if (res.success) {
-      await loadPicData();
+      await loadPicData(true);
     } else {
       alert(res.error || 'Erro ao excluir ação');
     }
@@ -1200,108 +1200,16 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
-                            {acoes.map((action: any, idx: number) => {
-                              const isCompleted = action.status === 'CONCLUIDA';
-                              return (
-                                <tr key={action.id} className={`hover:bg-slate-50/50 ${isCompleted ? 'bg-slate-50/30' : ''}`}>
-                                  
-                                  {/* Checkbox de Conclusão */}
-                                  <td className="px-3 py-2 text-center">
-                                    <input
-                                      type="checkbox"
-                                      checked={isCompleted}
-                                      onChange={() => handleUpdateAction(action.id, {
-                                        status: isCompleted ? 'PENDENTE' : 'CONCLUIDA'
-                                      })}
-                                      className="w-4 h-4 rounded border-slate-300 text-[#1B4D3E] focus:ring-[#1B4D3E] cursor-pointer"
-                                    />
-                                  </td>
-
-                                  {/* Número Sequencial */}
-                                  <td className="px-3 py-2 text-center font-mono text-[11px] text-slate-400">
-                                    {idx + 1}
-                                  </td>
-
-                                  {/* Descrição */}
-                                  <td className="px-2 py-2">
-                                    <input
-                                      type="text"
-                                      value={action.descricao}
-                                      onChange={(e) => handleUpdateAction(action.id, { descricao: e.target.value })}
-                                      className={`w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-800 font-bold px-1 py-0.5 ${
-                                        isCompleted ? 'line-through text-slate-400' : ''
-                                      }`}
-                                    />
-                                  </td>
-
-                                  {/* Responsável (Avatar Dropdown) */}
-                                  <td className="px-2 py-2">
-                                    <div className="flex items-center gap-1 bg-slate-100/60 border border-slate-200/50 rounded-lg px-2 py-1">
-                                      {action.responsavel?.avatarUrl ? (
-                                        <img src={action.responsavel.avatarUrl} alt={action.responsavel.nome} className="w-5.5 h-5.5 rounded-full object-cover shrink-0" />
-                                      ) : action.responsavel?.nome ? (
-                                        <div className="w-5.5 h-5.5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[7.5px] font-black text-[#1B4D3E] uppercase shrink-0 border border-slate-200">
-                                          {action.responsavel.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                                        </div>
-                                      ) : (
-                                        <div className="w-5.5 h-5.5 rounded-full bg-slate-200 flex items-center justify-center text-[7.5px] font-bold text-slate-400 uppercase shrink-0 border border-slate-200">
-                                          -
-                                        </div>
-                                      )}
-                                      <select
-                                        className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer w-full ml-1"
-                                        value={action.responsavelId || ''}
-                                        onChange={(e) => handleUpdateAction(action.id, {
-                                          responsavelId: e.target.value || null
-                                        })}
-                                      >
-                                        <option value="">Sem Responsável</option>
-                                        {users.map(u => (
-                                          <option key={u.id} value={u.id}>{u.nome}</option>
-                                        ))}
-                                      </select>
-                                    </div>
-                                  </td>
-
-                                  {/* Prazo Final */}
-                                  <td className="px-2 py-2">
-                                    <div className="flex items-center gap-1.5 bg-slate-100/60 border border-slate-200/50 rounded-lg px-2 py-1">
-                                      <Calendar size={13} className="text-slate-400 shrink-0" />
-                                      <input
-                                        type="date"
-                                        value={action.dataLimite ? new Date(action.dataLimite).toISOString().substring(0, 10) : ''}
-                                        onChange={(e) => handleUpdateAction(action.id, {
-                                          dataLimite: e.target.value || null
-                                        })}
-                                        className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer w-full"
-                                      />
-                                    </div>
-                                  </td>
-
-                                  {/* Observações */}
-                                  <td className="px-2 py-2">
-                                    <input
-                                      type="text"
-                                      value={action.observacao || ''}
-                                      onChange={(e) => handleUpdateAction(action.id, { observacao: e.target.value })}
-                                      placeholder="Anotar status..."
-                                      className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-650 font-medium px-1 py-0.5"
-                                    />
-                                  </td>
-
-                                  {/* Ação: Deletar */}
-                                  <td className="px-3 py-2 text-center">
-                                    <button
-                                      onClick={() => handleDeleteAction(action.id)}
-                                      className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
-                                    >
-                                      <Trash2 size={13} />
-                                    </button>
-                                  </td>
-
-                                </tr>
-                              );
-                            })}
+                            {acoes.map((action: any, idx: number) => (
+                              <ActionRow
+                                key={action.id}
+                                action={action}
+                                users={users}
+                                idx={idx}
+                                handleUpdateAction={handleUpdateAction}
+                                handleDeleteAction={handleDeleteAction}
+                              />
+                            ))}
 
                             {/* Campo de Cadastro Inline de Nova Ação */}
                             <tr className="bg-slate-50/20">
@@ -1349,5 +1257,154 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
 
       </div>
     </div>
+  );
+}
+
+interface ActionRowProps {
+  action: any;
+  users: any[];
+  idx: number;
+  handleUpdateAction: (actionId: string, data: any) => Promise<void>;
+  handleDeleteAction: (actionId: string) => Promise<void>;
+}
+
+function ActionRow({ action, users, idx, handleUpdateAction, handleDeleteAction }: ActionRowProps) {
+  const isCompleted = action.status === 'CONCLUIDA';
+
+  // Local state for description and observation to avoid typing lag and parent rerenders
+  const [localDescricao, setLocalDescricao] = React.useState(action.descricao || '');
+  const [localObservacao, setLocalObservacao] = React.useState(action.observacao || '');
+
+  // Keep local state in sync if parent state changes (e.g., reload from server)
+  React.useEffect(() => {
+    setLocalDescricao(action.descricao || '');
+  }, [action.descricao]);
+
+  React.useEffect(() => {
+    setLocalObservacao(action.observacao || '');
+  }, [action.observacao]);
+
+  const handleDescBlur = () => {
+    if (localDescricao.trim() && localDescricao !== action.descricao) {
+      handleUpdateAction(action.id, { descricao: localDescricao });
+    } else if (!localDescricao.trim()) {
+      setLocalDescricao(action.descricao); // reset to original if empty
+    }
+  };
+
+  const handleObsBlur = () => {
+    if (localObservacao !== (action.observacao || '')) {
+      handleUpdateAction(action.id, { observacao: localObservacao });
+    }
+  };
+
+  return (
+    <tr className={`hover:bg-slate-50/50 ${isCompleted ? 'bg-slate-50/30' : ''}`}>
+      {/* Checkbox de Conclusão */}
+      <td className="px-3 py-2 text-center">
+        <input
+          type="checkbox"
+          checked={isCompleted}
+          onChange={() => handleUpdateAction(action.id, {
+            status: isCompleted ? 'PENDENTE' : 'CONCLUIDA'
+          })}
+          className="w-4 h-4 rounded border-slate-300 text-[#1B4D3E] focus:ring-[#1B4D3E] cursor-pointer"
+        />
+      </td>
+
+      {/* Número Sequencial */}
+      <td className="px-3 py-2 text-center font-mono text-[11px] text-slate-400">
+        {idx + 1}
+      </td>
+
+      {/* Descrição */}
+      <td className="px-2 py-2">
+        <input
+          type="text"
+          value={localDescricao}
+          onChange={(e) => setLocalDescricao(e.target.value)}
+          onBlur={handleDescBlur}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.currentTarget.blur();
+            }
+          }}
+          className={`w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-800 font-bold px-1 py-0.5 ${
+            isCompleted ? 'line-through text-slate-400' : ''
+          }`}
+        />
+      </td>
+
+      {/* Responsável (Avatar Dropdown) */}
+      <td className="px-2 py-2">
+        <div className="flex items-center gap-1 bg-slate-100/60 border border-slate-200/50 rounded-lg px-2 py-1">
+          {action.responsavel?.avatarUrl ? (
+            <img src={action.responsavel.avatarUrl} alt={action.responsavel.nome} className="w-5.5 h-5.5 rounded-full object-cover shrink-0" />
+          ) : action.responsavel?.nome ? (
+            <div className="w-5.5 h-5.5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[7.5px] font-black text-[#1B4D3E] uppercase shrink-0 border border-slate-200">
+              {action.responsavel.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+            </div>
+          ) : (
+            <div className="w-5.5 h-5.5 rounded-full bg-slate-200 flex items-center justify-center text-[7.5px] font-bold text-slate-400 uppercase shrink-0 border border-slate-200">
+              -
+            </div>
+          )}
+          <select
+            className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer w-full ml-1"
+            value={action.responsavelId || ''}
+            onChange={(e) => handleUpdateAction(action.id, {
+              responsavelId: e.target.value || null
+            })}
+          >
+            <option value="">Sem Responsável</option>
+            {users.map(u => (
+              <option key={u.id} value={u.id}>{u.nome}</option>
+            ))}
+          </select>
+        </div>
+      </td>
+
+      {/* Prazo Final */}
+      <td className="px-2 py-2">
+        <div className="flex items-center gap-1.5 bg-slate-100/60 border border-slate-200/50 rounded-lg px-2 py-1">
+          <Calendar size={13} className="text-slate-400 shrink-0" />
+          <input
+            type="date"
+            value={action.dataLimite ? new Date(action.dataLimite).toISOString().substring(0, 10) : ''}
+            onChange={(e) => handleUpdateAction(action.id, {
+              dataLimite: e.target.value || null
+            })}
+            className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer w-full"
+          />
+        </div>
+      </td>
+
+      {/* Observações */}
+      <td className="px-2 py-2">
+        <input
+          type="text"
+          value={localObservacao}
+          onChange={(e) => setLocalObservacao(e.target.value)}
+          onBlur={handleObsBlur}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.currentTarget.blur();
+            }
+          }}
+          placeholder="Anotar status..."
+          className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-650 font-medium px-1 py-0.5"
+        />
+      </td>
+
+      {/* Ação: Deletar */}
+      <td className="px-3 py-2 text-center">
+        <button
+          onClick={() => handleDeleteAction(action.id)}
+          className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+        >
+          <Trash2 size={13} />
+        </button>
+      </td>
+    </tr>
   );
 }
