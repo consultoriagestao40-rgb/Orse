@@ -1,0 +1,1353 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { 
+  X, Calendar, User, Plus, Trash2, Paperclip, Send, Copy,
+  Tag, AlertTriangle, Users, Eye, History, MessageSquare,
+  CheckCircle2, AlertCircle, FileText, Download, Check, Edit2, ClipboardCheck,
+  FileSpreadsheet, FileImage, File, Briefcase, DollarSign, Wrench, Package, ListTodo
+} from 'lucide-react';
+import { 
+  getPicById, updatePicDetails, updatePicEmployees, 
+  updatePicEquipments, updatePicMaterials, createPicSection,
+  deletePicSection, createPicAction, updatePicAction, deletePicAction 
+} from '../actions';
+
+interface PicDetailsModalProps {
+  picId: string;
+  users: any[];
+  onClose: () => void;
+  refreshData?: (silent?: boolean) => void | Promise<void>;
+}
+
+type TabType = 'identificacao' | 'financeiro' | 'operacional' | 'planejador';
+
+export default function PicDetailsModal({ picId, users, onClose, refreshData }: PicDetailsModalProps) {
+  const [activeTab, setActiveTab] = useState<TabType>('identificacao');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [pic, setPic] = useState<any>(null);
+
+  // Aba 1 - Identificação
+  const [anotacoes, setAnotacoes] = useState('');
+
+  // Aba 2 - Financeiro
+  const [valorMensal, setValorMensal] = useState(0);
+  const [periodoMedicaoInicio, setPeriodoMedicaoInicio] = useState('');
+  const [periodoMedicaoFim, setPeriodoMedicaoFim] = useState('');
+  const [dataFaturamento, setDataFaturamento] = useState('');
+  const [documentacoesMensais, setDocumentacoesMensais] = useState('');
+  const [prazoPagamento, setPrazoPagamento] = useState('');
+  const [dataPagamento, setDataPagamento] = useState('');
+  const [faturamentoCnpj, setFaturamentoCnpj] = useState('');
+  const [faturamentoRazaoSocial, setFaturamentoRazaoSocial] = useState('');
+  const [faturamentoEndereco, setFaturamentoEndereco] = useState('');
+  const [faturamentoInscricaoEstadual, setFaturamentoInscricaoEstadual] = useState('');
+  const [faturamentoInscricaoMunicipal, setFaturamentoInscricaoMunicipal] = useState('');
+  const [faturamentoEmail, setFaturamentoEmail] = useState('');
+
+  // Aba 3 - Operacional (Tabelas locais editáveis)
+  const [funcionarios, setFuncionarios] = useState<any[]>([]);
+  const [equipamentos, setEquipamentos] = useState<any[]>([]);
+  const [materiais, setMateriais] = useState<any[]>([]);
+
+  // Planejador (Adição de seções)
+  const [newSectionName, setNewSectionName] = useState('');
+  const [showAddSection, setShowAddSection] = useState(false);
+  const [newActionNames, setNewActionNames] = useState<Record<string, string>>({});
+
+  const loadPicData = async () => {
+    setLoading(true);
+    const res = await getPicById(picId);
+    if (res.success && res.pic) {
+      const p = res.pic;
+      setPic(p);
+      setAnotacoes(p.anotacoes || '');
+      setValorMensal(p.valorMensal || 0);
+      setPeriodoMedicaoInicio(p.periodoMedicaoInicio || '');
+      setPeriodoMedicaoFim(p.periodoMedicaoFim || '');
+      setDataFaturamento(p.dataFaturamento || '');
+      setDocumentacoesMensais(p.documentacoesMensais || '');
+      setPrazoPagamento(p.prazoPagamento || '');
+      setDataPagamento(p.dataPagamento || '');
+      setFaturamentoCnpj(p.faturamentoCnpj || '');
+      setFaturamentoRazaoSocial(p.faturamentoRazaoSocial || '');
+      setFaturamentoEndereco(p.faturamentoEndereco || '');
+      setFaturamentoInscricaoEstadual(p.faturamentoInscricaoEstadual || '');
+      setFaturamentoInscricaoMunicipal(p.faturamentoInscricaoMunicipal || '');
+      setFaturamentoEmail(p.faturamentoEmail || '');
+      setFuncionarios(p.funcionarios || []);
+      setEquipamentos(p.equipamentos || []);
+      setMateriais(p.materiais || []);
+    } else {
+      alert(res.error || 'Erro ao carregar dados do PIC');
+      onClose();
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadPicData();
+  }, [picId]);
+
+  // Salvar Aba 1 e Aba 2
+  const handleSaveDetails = async () => {
+    setSaving(true);
+    const fields = {
+      anotacoes,
+      valorMensal: Number(valorMensal),
+      periodoMedicaoInicio,
+      periodoMedicaoFim,
+      dataFaturamento,
+      documentacoesMensais,
+      prazoPagamento,
+      dataPagamento,
+      faturamentoCnpj,
+      faturamentoRazaoSocial,
+      faturamentoEndereco,
+      faturamentoInscricaoEstadual,
+      faturamentoInscricaoMunicipal,
+      faturamentoEmail
+    };
+
+    const res = await updatePicDetails(picId, fields);
+    setSaving(false);
+    if (res.success) {
+      if (refreshData) refreshData(true);
+      // alert('Dados salvos com sucesso!');
+    } else {
+      alert(res.error || 'Erro ao salvar alterações');
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // ABA 3: OPERACIONAL - MANIPULAÇÃO LOCAL E PERSISTÊNCIA
+  // ---------------------------------------------------------------------------
+
+  const handleAddEmployee = () => {
+    setFuncionarios([
+      ...funcionarios,
+      {
+        id: `temp-${Date.now()}-${Math.random()}`,
+        funcao: 'Nova Função',
+        quantidade: 1,
+        escala: '5x2',
+        horarioEntrada: '08:00',
+        horarioSaida: '17:00',
+        diasSemana: 'Segunda a Sexta'
+      }
+    ]);
+  };
+
+  const handleUpdateEmployee = (index: number, field: string, val: any) => {
+    const updated = [...funcionarios];
+    updated[index] = { ...updated[index], [field]: val };
+    setFuncionarios(updated);
+  };
+
+  const handleRemoveEmployee = (index: number) => {
+    setFuncionarios(funcionarios.filter((_, i) => i !== index));
+  };
+
+  const handleSaveEmployees = async () => {
+    setSaving(true);
+    const res = await updatePicEmployees(picId, funcionarios);
+    setSaving(false);
+    if (res.success) {
+      if (refreshData) refreshData(true);
+      alert('Quadro de funcionários atualizado com sucesso!');
+    } else {
+      alert(res.error || 'Erro ao atualizar funcionários');
+    }
+  };
+
+  const handleAddEquipment = () => {
+    setEquipamentos([
+      ...equipamentos,
+      {
+        id: `temp-${Date.now()}-${Math.random()}`,
+        nome: 'Novo Equipamento',
+        quantidade: 1,
+        tipo: 'PROPRIO',
+        observacao: ''
+      }
+    ]);
+  };
+
+  const handleUpdateEquipment = (index: number, field: string, val: any) => {
+    const updated = [...equipamentos];
+    updated[index] = { ...updated[index], [field]: val };
+    setEquipamentos(updated);
+  };
+
+  const handleRemoveEquipment = (index: number) => {
+    setEquipamentos(equipamentos.filter((_, i) => i !== index));
+  };
+
+  const handleSaveEquipments = async () => {
+    setSaving(true);
+    const res = await updatePicEquipments(picId, equipamentos);
+    setSaving(false);
+    if (res.success) {
+      if (refreshData) refreshData(true);
+      alert('Relação de equipamentos atualizada com sucesso!');
+    } else {
+      alert(res.error || 'Erro ao atualizar equipamentos');
+    }
+  };
+
+  const handleAddMaterial = () => {
+    setMateriais([
+      ...materiais,
+      {
+        id: `temp-${Date.now()}-${Math.random()}`,
+        nome: 'Novo Material/Descartável',
+        quantidade: 1,
+        unidade: 'UN',
+        observacao: ''
+      }
+    ]);
+  };
+
+  const handleUpdateMaterial = (index: number, field: string, val: any) => {
+    const updated = [...materiais];
+    updated[index] = { ...updated[index], [field]: val };
+    setMateriais(updated);
+  };
+
+  const handleRemoveMaterial = (index: number) => {
+    setMateriais(materiais.filter((_, i) => i !== index));
+  };
+
+  const handleSaveMaterials = async () => {
+    setSaving(true);
+    const res = await updatePicMaterials(picId, materiais);
+    setSaving(false);
+    if (res.success) {
+      if (refreshData) refreshData(true);
+      alert('Relação de materiais atualizada com sucesso!');
+    } else {
+      alert(res.error || 'Erro ao atualizar materiais');
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // ABA 4: PLANEJADOR DE AÇÕES
+  // ---------------------------------------------------------------------------
+
+  const handleAddSection = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSectionName.trim()) return;
+    setSaving(true);
+    const res = await createPicSection(picId, newSectionName.trim());
+    setSaving(false);
+    if (res.success) {
+      setNewSectionName('');
+      setShowAddSection(false);
+      await loadPicData();
+    } else {
+      alert(res.error || 'Erro ao criar seção');
+    }
+  };
+
+  const handleDeleteSection = async (secaoId: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta seção de ações?')) return;
+    setSaving(true);
+    const res = await deletePicSection(secaoId);
+    setSaving(false);
+    if (res.success) {
+      await loadPicData();
+    } else {
+      alert(res.error || 'Erro ao excluir seção');
+    }
+  };
+
+  const handleAddAction = async (secaoId: string) => {
+    const desc = newActionNames[secaoId] || '';
+    if (!desc.trim()) return;
+    setSaving(true);
+    const res = await createPicAction(secaoId, desc.trim());
+    setSaving(false);
+    if (res.success) {
+      setNewActionNames({ ...newActionNames, [secaoId]: '' });
+      await loadPicData();
+    } else {
+      alert(res.error || 'Erro ao criar ação');
+    }
+  };
+
+  const handleUpdateAction = async (actionId: string, data: any) => {
+    const res = await updatePicAction(actionId, data);
+    if (res.success) {
+      await loadPicData();
+      if (refreshData) refreshData(true);
+    } else {
+      alert(res.error || 'Erro ao atualizar ação');
+    }
+  };
+
+  const handleDeleteAction = async (actionId: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta ação?')) return;
+    setSaving(true);
+    const res = await deletePicAction(actionId);
+    setSaving(false);
+    if (res.success) {
+      await loadPicData();
+    } else {
+      alert(res.error || 'Erro ao excluir ação');
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // CÁLCULOS DE PROGRESSO (VELOCÍMETRO / GAUGE)
+  // ---------------------------------------------------------------------------
+
+  const calculateProgress = () => {
+    if (!pic || !pic.secoes) return { total: 0, completed: 0, percent: 0, sections: [] };
+
+    let totalActions = 0;
+    let completedActions = 0;
+    const sectionsProgress: any[] = [];
+
+    for (const s of pic.secoes) {
+      const act = s.acoes || [];
+      const t = act.length;
+      const c = act.filter((a: any) => a.status === 'CONCLUIDA').length;
+      const pct = t > 0 ? Math.round((c / t) * 100) : 0;
+      
+      totalActions += t;
+      completedActions += c;
+
+      sectionsProgress.push({
+        id: s.id,
+        nome: s.nome,
+        total: t,
+        completed: c,
+        percent: pct
+      });
+    }
+
+    const percent = totalActions > 0 ? Math.round((completedActions / totalActions) * 100) : 0;
+    return {
+      total: totalActions,
+      completed: completedActions,
+      percent,
+      sections: sectionsProgress
+    };
+  };
+
+  const progress = calculateProgress();
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs">
+        <div className="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-[#1B4D3E] border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-slate-600 font-bold uppercase tracking-wider text-xs">Carregando PIC...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Dados do contrato comercial (FPV Referencia)
+  const contrato = pic.contrato || {};
+  const client = contrato.client || {};
+  const proposta = contrato.proposta || {};
+  const lastVersao = proposta.versoes?.[0] || {};
+  const meta = lastVersao.metadados || {};
+  const FPVNum = proposta.numero ? `FPV-${proposta.numero.toString().padStart(3, '0')}` : 'S/N';
+  const FPVRev = meta.revisao || 'R01';
+  const vendedor = proposta.user || {};
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs font-sans text-left">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-fade-in relative">
+        
+        {/* Header do Modal */}
+        <header className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#1B4D3E]/10 rounded-xl flex items-center justify-center text-[#1B4D3E]">
+              <ClipboardCheck size={22} className="stroke-[2.5]" />
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-slate-800 uppercase tracking-wide">
+                PIC: {client.razaoSocial || client.nomeFantasia || 'Cliente não identificado'}
+              </h2>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-0.5">
+                Contrato: {contrato.id ? `ID-${contrato.id.substring(0,8).toUpperCase()}` : '-'} • Proposta: {FPVNum} (Rev {FPVRev})
+              </p>
+            </div>
+          </div>
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-slate-200 rounded-xl text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+          >
+            <X size={20} className="stroke-[2.5]" />
+          </button>
+        </header>
+
+        {/* Abas de Navegação */}
+        <nav className="bg-slate-50 border-b border-slate-200 px-6 flex gap-6 shrink-0">
+          {(['identificacao', 'financeiro', 'operacional', 'planejador'] as TabType[]).map((tab) => {
+            const labels = {
+              identificacao: '1. Identificação',
+              financeiro: '2. Financeiro',
+              operacional: '3. Operacional',
+              planejador: '4. Planejador de Ações'
+            };
+            const icons = {
+              identificacao: Briefcase,
+              financeiro: DollarSign,
+              operacional: Wrench,
+              planejador: ListTodo
+            };
+            const Icon = icons[tab];
+            const isActive = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`py-3.5 border-b-2 font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all cursor-pointer ${
+                  isActive 
+                    ? 'border-[#1B4D3E] text-[#1B4D3E] scale-105' 
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Icon size={14} className={isActive ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+                {labels[tab]}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Conteúdo das Abas (Scrollable) */}
+        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
+          
+          {/* ───────────────────────────────────────────────────────────────────
+              ABA 01: IDENTIFICAÇÃO DO CONTRATO
+              ─────────────────────────────────────────────────────────────────── */}
+          {activeTab === 'identificacao' && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              {/* Col Esquerda - Dados Cliente e Proposta */}
+              <div className="md:col-span-2 space-y-6">
+                
+                {/* Cartão Dados Cliente */}
+                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+                  <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2">
+                    Dados Gerais do Cliente
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-bold text-slate-700">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase block">Nome Fantasia</span>
+                      <span>{client.nomeFantasia || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase block">Razão Social</span>
+                      <span>{client.razaoSocial || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase block">CNPJ / CPF</span>
+                      <span>{client.cnpj || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase block">Segmento</span>
+                      <span>{client.segmento || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase block">Contato Principal</span>
+                      <span>{client.contato ? `${client.contato} (${client.contatoCargo || 'Sem Cargo'})` : '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase block">WhatsApp / Fone</span>
+                      <span>{client.whatsapp || '-'}</span>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <span className="text-[10px] text-slate-400 uppercase block">Endereço da Prestação</span>
+                      <span>{client.endereco || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cartão Escopo e Itens */}
+                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+                  <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2">
+                    Escopo e Detalhamento da FPV
+                  </h3>
+                  <div className="space-y-3 text-xs font-semibold text-slate-700">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase block font-black">Objeto / Escopo Técnico</span>
+                      <p className="bg-slate-50 border border-slate-200 rounded-lg p-3 mt-1 text-slate-600 font-medium whitespace-pre-line leading-relaxed">
+                        {meta.escopoTecnico || meta.objetoProposta || 'Não especificado no contrato.'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase block font-black mb-1.5">Itens Inclusos e Excluídos</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+                        {(meta.itensInclusosExcluidos || []).map((item: any) => (
+                          <div key={item.id} className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg">
+                            <div className={`w-2 h-2 rounded-full shrink-0 ${item.incluso ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                            <span className="text-[11px] font-bold text-slate-600 truncate" title={item.descricao}>
+                              {item.descricao}
+                            </span>
+                            <span className={`text-[9px] font-black uppercase ml-auto px-1.5 py-0.5 rounded ${
+                              item.incluso ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {item.incluso ? 'Incluso' : 'Excluso'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Col Direita - Proponente, Comercial e Anotações */}
+              <div className="space-y-6">
+                
+                {/* Cartão Comercial e Grupo */}
+                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+                  <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2">
+                    Dados da Proponente / Comercial
+                  </h3>
+                  <div className="space-y-3.5 text-xs font-bold text-slate-700">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase block">Empresa do Grupo Associada</span>
+                      <div className="flex items-center gap-2 mt-1 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-blue-700">
+                        <Briefcase size={14} />
+                        <span className="font-extrabold uppercase">{contrato.empresaEmissora?.nomeFantasia || 'JVS Group'}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase block">Vendedor / Fechamento</span>
+                      <div className="flex items-center gap-2 mt-1">
+                        {vendedor.avatarUrl ? (
+                          <img src={vendedor.avatarUrl} alt={vendedor.nome} className="w-8 h-8 rounded-full object-cover border border-slate-200" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[10px] font-black text-[#1B4D3E] uppercase border border-slate-200">
+                            {(vendedor.nome || 'Sis').split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                          </div>
+                        )}
+                        <div>
+                          <span className="block font-bold">{vendedor.nome || 'Não atribuído'}</span>
+                          <span className="text-[10px] text-slate-400 font-semibold block">{vendedor.email || ''}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cartão Informações Anotáveis */}
+                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-3 flex flex-col h-[280px]">
+                  <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2 shrink-0">
+                    Informações Anotáveis / Observações
+                  </h3>
+                  <textarea
+                    value={anotacoes}
+                    onChange={(e) => setAnotacoes(e.target.value)}
+                    placeholder="Escreva anotações internas da implantação..."
+                    className="flex-1 w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-700 outline-none focus:border-[#1B4D3E] resize-none font-medium leading-relaxed"
+                  />
+                  <button
+                    onClick={handleSaveDetails}
+                    disabled={saving}
+                    className="w-full py-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-bold uppercase rounded-lg tracking-wider transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+                  >
+                    {saving ? 'Gravando...' : 'Salvar Anotações'}
+                  </button>
+                </div>
+
+              </div>
+
+            </div>
+          )}
+
+          {/* ───────────────────────────────────────────────────────────────────
+              ABA 02: FINANCEIRO E FATURAMENTO
+              ─────────────────────────────────────────────────────────────────── */}
+          {activeTab === 'financeiro' && (
+            <div className="space-y-6">
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Dados de Faturamento Geral */}
+                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+                  <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2">
+                    Ciclos e Medições do Contrato
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-bold text-slate-700">
+                    <div>
+                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Valor Mensal do Contrato</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2.5 text-slate-400">R$</span>
+                        <input
+                          type="number"
+                          value={valorMensal}
+                          onChange={(e) => setValorMensal(Number(e.target.value))}
+                          className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] font-bold"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Data Prevista de Faturamento</label>
+                      <input
+                        type="text"
+                        value={dataFaturamento}
+                        onChange={(e) => setDataFaturamento(e.target.value)}
+                        placeholder="Ex: Todo dia 25"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Período Medição (Início)</label>
+                      <input
+                        type="text"
+                        value={periodoMedicaoInicio}
+                        onChange={(e) => setPeriodoMedicaoInicio(e.target.value)}
+                        placeholder="Ex: Dia 21 de cada mês"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Período Medição (Fim)</label>
+                      <input
+                        type="text"
+                        value={periodoMedicaoFim}
+                        onChange={(e) => setPeriodoMedicaoFim(e.target.value)}
+                        placeholder="Ex: Dia 20 do mês subsequente"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Prazo de Pagamento (Vencimento)</label>
+                      <input
+                        type="text"
+                        value={prazoPagamento}
+                        onChange={(e) => setPrazoPagamento(e.target.value)}
+                        placeholder="Ex: 15 dias após recebimento da NF"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Data Efetiva de Pagamento</label>
+                      <input
+                        type="text"
+                        value={dataPagamento}
+                        onChange={(e) => setDataPagamento(e.target.value)}
+                        placeholder="Ex: Dia 10 do mês posterior"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dados para Emissão de Nota (Faturamento CNPJ) */}
+                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+                  <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2">
+                    Dados Fiscais para Faturamento / Emissão de NF
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-bold text-slate-700">
+                    <div className="sm:col-span-2">
+                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Razão Social de Faturamento</label>
+                      <input
+                        type="text"
+                        value={faturamentoRazaoSocial}
+                        onChange={(e) => setFaturamentoRazaoSocial(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-slate-400 uppercase block mb-1">CNPJ de Faturamento</label>
+                      <input
+                        type="text"
+                        value={faturamentoCnpj}
+                        onChange={(e) => setFaturamentoCnpj(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-slate-400 uppercase block mb-1">E-mail para Envio de NF</label>
+                      <input
+                        type="email"
+                        value={faturamentoEmail}
+                        onChange={(e) => setFaturamentoEmail(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Inscrição Estadual (IE)</label>
+                      <input
+                        type="text"
+                        value={faturamentoInscricaoEstadual}
+                        onChange={(e) => setFaturamentoInscricaoEstadual(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Inscrição Municipal (IM)</label>
+                      <input
+                        type="text"
+                        value={faturamentoInscricaoMunicipal}
+                        onChange={(e) => setFaturamentoInscricaoMunicipal(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Endereço de Faturamento</label>
+                      <input
+                        type="text"
+                        value={faturamentoEndereco}
+                        onChange={(e) => setFaturamentoEndereco(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Documentação necessária mensalmente */}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+                <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2">
+                  Documentação Exigida Mensalmente (Anexo à Fatura / Retenções)
+                </h3>
+                <div className="space-y-3">
+                  <textarea
+                    value={documentacoesMensais}
+                    onChange={(e) => setDocumentacoesMensais(e.target.value)}
+                    placeholder="Descreva as certidões e comprovantes exigidos pelo cliente..."
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-700 outline-none focus:border-[#1B4D3E] h-24 resize-none font-medium leading-relaxed"
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleSaveDetails}
+                      disabled={saving}
+                      className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-bold uppercase py-2 px-6 rounded-lg tracking-wider transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      {saving ? 'Salvando...' : 'Salvar Detalhes Financeiros'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ───────────────────────────────────────────────────────────────────
+              ABA 03: OPERACIONAL (FUNCIONÁRIOS, EQUIPAMENTOS, MATERIAIS)
+              ─────────────────────────────────────────────────────────────────── */}
+          {activeTab === 'operacional' && (
+            <div className="space-y-8">
+              
+              {/* Seção Funcionários (Quadro CLT Vendido) */}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
+                    <Users size={16} /> Quadro de Funcionários (Postos CLT)
+                  </h3>
+                  <button
+                    onClick={handleAddEmployee}
+                    className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider hover:text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <Plus size={12} /> Adicionar Nova Função
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-400 uppercase text-[9px] tracking-wider border-b border-slate-200">
+                        <th className="px-3 py-2">Função / Cargo</th>
+                        <th className="px-3 py-2 text-center w-16">Qtd</th>
+                        <th className="px-3 py-2 text-center w-20">Escala</th>
+                        <th className="px-3 py-2 text-center w-24">Horário Entrada</th>
+                        <th className="px-3 py-2 text-center w-24">Horário Saída</th>
+                        <th className="px-3 py-2 w-32">Dias da Semana</th>
+                        <th className="px-3 py-2 text-center w-12">Remover</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
+                      {funcionarios.map((emp, index) => (
+                        <tr key={emp.id} className="hover:bg-slate-50/50">
+                          <td className="px-2 py-2">
+                            <input
+                              type="text"
+                              value={emp.funcao}
+                              onChange={(e) => handleUpdateEmployee(index, 'funcao', e.target.value)}
+                              className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-800 font-bold px-1 py-0.5"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              type="number"
+                              value={emp.quantidade}
+                              onChange={(e) => handleUpdateEmployee(index, 'quantidade', Number(e.target.value))}
+                              className="w-12 bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-center font-bold px-1 py-0.5"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            <select
+                              value={emp.escala}
+                              onChange={(e) => handleUpdateEmployee(index, 'escala', e.target.value)}
+                              className="w-full bg-transparent outline-none font-bold text-center"
+                            >
+                              <option value="5x2">5x2</option>
+                              <option value="6x1">6x1</option>
+                              <option value="12x36">12x36</option>
+                              <option value="4x2">4x2</option>
+                            </select>
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              type="text"
+                              value={emp.horarioEntrada || '08:00'}
+                              onChange={(e) => handleUpdateEmployee(index, 'horarioEntrada', e.target.value)}
+                              className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-center font-bold px-1 py-0.5"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              type="text"
+                              value={emp.horarioSaida || '17:00'}
+                              onChange={(e) => handleUpdateEmployee(index, 'horarioSaida', e.target.value)}
+                              className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-center font-bold px-1 py-0.5"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              type="text"
+                              value={emp.diasSemana || 'Segunda a Sexta'}
+                              onChange={(e) => handleUpdateEmployee(index, 'diasSemana', e.target.value)}
+                              className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-650 font-bold px-1 py-0.5"
+                            />
+                          </td>
+                          <td className="px-2 py-2 text-center">
+                            <button
+                              onClick={() => handleRemoveEmployee(index)}
+                              className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {funcionarios.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="px-6 py-6 text-center text-slate-400 italic font-medium">
+                            Nenhum funcionário cadastrado.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex justify-end pt-2 border-t border-slate-100">
+                  <button
+                    onClick={handleSaveEmployees}
+                    disabled={saving}
+                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-bold uppercase py-1.5 px-5 rounded-lg tracking-wider transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    Salvar Quadro
+                  </button>
+                </div>
+              </div>
+
+              {/* Seção Equipamentos */}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
+                    <Briefcase size={16} /> Relação de Equipamentos / Máquinas
+                  </h3>
+                  <button
+                    onClick={handleAddEquipment}
+                    className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider hover:text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <Plus size={12} /> Adicionar Equipamento
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-400 uppercase text-[9px] tracking-wider border-b border-slate-200">
+                        <th className="px-3 py-2">Nome do Equipamento</th>
+                        <th className="px-3 py-2 text-center w-20">Quantidade</th>
+                        <th className="px-3 py-2 text-center w-24">Tipo Alocação</th>
+                        <th className="px-3 py-2">Observações</th>
+                        <th className="px-3 py-2 text-center w-12">Remover</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
+                      {equipamentos.map((eq, index) => (
+                        <tr key={eq.id} className="hover:bg-slate-50/50">
+                          <td className="px-2 py-2">
+                            <input
+                              type="text"
+                              value={eq.nome}
+                              onChange={(e) => handleUpdateEquipment(index, 'nome', e.target.value)}
+                              className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-800 font-bold px-1 py-0.5"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              type="number"
+                              value={eq.quantidade}
+                              onChange={(e) => handleUpdateEquipment(index, 'quantidade', Number(e.target.value))}
+                              className="w-16 bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-center font-bold px-1 py-0.5"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            <select
+                              value={eq.tipo}
+                              onChange={(e) => handleUpdateEquipment(index, 'tipo', e.target.value)}
+                              className="w-full bg-transparent outline-none font-bold text-center"
+                            >
+                              <option value="PROPRIO">Próprio</option>
+                              <option value="LOCADO">Locado</option>
+                            </select>
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              type="text"
+                              value={eq.observacao || ''}
+                              onChange={(e) => handleUpdateEquipment(index, 'observacao', e.target.value)}
+                              placeholder="Especificações, voltagem..."
+                              className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-650 px-1 py-0.5 font-medium"
+                            />
+                          </td>
+                          <td className="px-2 py-2 text-center">
+                            <button
+                              onClick={() => handleRemoveEquipment(index)}
+                              className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {equipamentos.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-6 text-center text-slate-400 italic font-medium">
+                            Nenhum equipamento listado.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex justify-end pt-2 border-t border-slate-100">
+                  <button
+                    onClick={handleSaveEquipments}
+                    disabled={saving}
+                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-bold uppercase py-1.5 px-5 rounded-lg tracking-wider transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    Salvar Equipamentos
+                  </button>
+                </div>
+              </div>
+
+              {/* Seção Materiais e Insumos */}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
+                    <Package size={16} /> Relação de Materiais, Descartáveis e Insumos
+                  </h3>
+                  <button
+                    onClick={handleAddMaterial}
+                    className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider hover:text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <Plus size={12} /> Adicionar Material
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-400 uppercase text-[9px] tracking-wider border-b border-slate-200">
+                        <th className="px-3 py-2">Nome do Material / Insumo</th>
+                        <th className="px-3 py-2 text-center w-20">Quantidade</th>
+                        <th className="px-3 py-2 text-center w-16">Unidade</th>
+                        <th className="px-3 py-2">Observações</th>
+                        <th className="px-3 py-2 text-center w-12">Remover</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
+                      {materiais.map((mat, index) => (
+                        <tr key={mat.id} className="hover:bg-slate-50/50">
+                          <td className="px-2 py-2">
+                            <input
+                              type="text"
+                              value={mat.nome}
+                              onChange={(e) => handleUpdateMaterial(index, 'nome', e.target.value)}
+                              className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-800 font-bold px-1 py-0.5"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              type="number"
+                              value={mat.quantidade}
+                              onChange={(e) => handleUpdateMaterial(index, 'quantidade', Number(e.target.value))}
+                              className="w-16 bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-center font-bold px-1 py-0.5"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              type="text"
+                              value={mat.unidade || 'UN'}
+                              onChange={(e) => handleUpdateMaterial(index, 'unidade', e.target.value)}
+                              className="w-12 bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-center font-bold px-1 py-0.5"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              type="text"
+                              value={mat.observacao || ''}
+                              onChange={(e) => handleUpdateMaterial(index, 'observacao', e.target.value)}
+                              placeholder="Frequência de entrega, diluições..."
+                              className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-650 px-1 py-0.5 font-medium"
+                            />
+                          </td>
+                          <td className="px-2 py-2 text-center">
+                            <button
+                              onClick={() => handleRemoveMaterial(index)}
+                              className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {materiais.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-6 text-center text-slate-400 italic font-medium">
+                            Nenhum insumo ou material listado.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex justify-end pt-2 border-t border-slate-100">
+                  <button
+                    onClick={handleSaveMaterials}
+                    disabled={saving}
+                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-bold uppercase py-1.5 px-5 rounded-lg tracking-wider transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    Salvar Insumos
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ───────────────────────────────────────────────────────────────────
+              ABA 04: PLANEJADOR DE AÇÕES (RH, SUPRIMENTOS, OPERAÇÃO)
+              ─────────────────────────────────────────────────────────────────── */}
+          {activeTab === 'planejador' && (
+            <div className="space-y-6">
+              
+              {/* Resumo do Progresso com SVG Gauge/Velocímetro */}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col md:flex-row items-center gap-8">
+                
+                {/* SVG Velocímetro */}
+                <div className="relative flex flex-col items-center shrink-0">
+                  <svg width="150" height="100" viewBox="0 0 150 100" className="overflow-visible">
+                    {/* Arco cinza de fundo (fundo) */}
+                    <path
+                      d="M 20 80 A 55 55 0 0 1 130 80"
+                      fill="none"
+                      stroke="#e2e8f0"
+                      strokeWidth="12"
+                      strokeLinecap="round"
+                    />
+                    {/* Arco de progresso dinâmico */}
+                    <path
+                      d="M 20 80 A 55 55 0 0 1 130 80"
+                      fill="none"
+                      stroke="#1B4D3E"
+                      strokeWidth="12"
+                      strokeLinecap="round"
+                      strokeDasharray="172.78"
+                      strokeDashoffset={172.78 - (172.78 * progress.percent) / 100}
+                      className="transition-all duration-500 ease-out"
+                    />
+                  </svg>
+                  <div className="absolute top-10 flex flex-col items-center">
+                    <span className="text-2xl font-black text-[#1B4D3E]">{progress.percent}%</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Concluído</span>
+                  </div>
+                </div>
+
+                {/* Progress bars por seção */}
+                <div className="flex-1 w-full space-y-3">
+                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                    Resumo do Progresso por Área ({progress.completed}/{progress.total} Ações)
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {progress.sections.map((sec: any) => (
+                      <div key={sec.id} className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-[10px] font-black text-slate-600 uppercase tracking-wider">{sec.nome}</span>
+                          <span className="text-[10px] font-extrabold text-[#1B4D3E]">{sec.percent}%</span>
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="bg-[#1B4D3E] h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${sec.percent}%` }}
+                          />
+                        </div>
+                        <span className="text-[9px] font-bold text-slate-400 block mt-1 uppercase">
+                          {sec.completed}/{sec.total} completas
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Botão de Adicionar Nova Seção */}
+                <div className="shrink-0">
+                  {!showAddSection ? (
+                    <button
+                      onClick={() => setShowAddSection(true)}
+                      className="py-2.5 px-4 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold uppercase rounded-lg tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <Plus size={14} /> Nova Seção
+                    </button>
+                  ) : (
+                    <form onSubmit={handleAddSection} className="flex gap-2 bg-slate-100 p-2.5 rounded-lg border border-slate-200">
+                      <input
+                        type="text"
+                        placeholder="Nome da Seção (ex: TI)"
+                        value={newSectionName}
+                        onChange={(e) => setNewSectionName(e.target.value)}
+                        className="px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold outline-none text-slate-800"
+                        style={{ width: '130px' }}
+                      />
+                      <button
+                        type="submit"
+                        className="px-3 py-1.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-bold uppercase rounded-lg"
+                      >
+                        OK
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setShowAddSection(false); setNewSectionName(''); }}
+                        className="px-2.5 py-1.5 bg-slate-300 hover:bg-slate-400 text-slate-700 text-xs font-bold uppercase rounded-lg"
+                      >
+                        X
+                      </button>
+                    </form>
+                  )}
+                </div>
+
+              </div>
+
+              {/* Lista de Seções com suas Ações */}
+              <div className="space-y-6">
+                {(pic.secoes || []).map((sec: any) => {
+                  const acoes = sec.acoes || [];
+                  return (
+                    <div key={sec.id} className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+                      
+                      {/* Título Seção */}
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
+                          📋 Seção: {sec.nome}
+                        </h3>
+                        {/* Apenas permite excluir seções que não sejam as padrões (RH, Suprimentos, Operação) */}
+                        {!['RH', 'SUPRIMENTOS', 'OPERAÇÃO', 'OPERACAO'].includes(sec.nome.toUpperCase()) && (
+                          <button
+                            onClick={() => handleDeleteSection(sec.id)}
+                            className="text-[10px] text-red-500 font-bold uppercase tracking-wider hover:text-red-700 bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 flex items-center gap-1 transition-colors cursor-pointer"
+                          >
+                            <Trash2 size={12} /> Excluir Área
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Tabela de Ações */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-slate-50 text-slate-400 uppercase text-[9px] tracking-wider border-b border-slate-200">
+                              <th className="px-3 py-2 w-10 text-center">Status</th>
+                              <th className="px-3 py-2 w-10 text-center">Nº</th>
+                              <th className="px-3 py-2">Descrição da Ação</th>
+                              <th className="px-3 py-2 w-48">Responsável</th>
+                              <th className="px-3 py-2 w-36">Prazo Final</th>
+                              <th className="px-3 py-2">Observações</th>
+                              <th className="px-3 py-2 w-10 text-center">Deletar</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
+                            {acoes.map((action: any, idx: number) => {
+                              const isCompleted = action.status === 'CONCLUIDA';
+                              return (
+                                <tr key={action.id} className={`hover:bg-slate-50/50 ${isCompleted ? 'bg-slate-50/30' : ''}`}>
+                                  
+                                  {/* Checkbox de Conclusão */}
+                                  <td className="px-3 py-2 text-center">
+                                    <input
+                                      type="checkbox"
+                                      checked={isCompleted}
+                                      onChange={() => handleUpdateAction(action.id, {
+                                        status: isCompleted ? 'PENDENTE' : 'CONCLUIDA'
+                                      })}
+                                      className="w-4 h-4 rounded border-slate-300 text-[#1B4D3E] focus:ring-[#1B4D3E] cursor-pointer"
+                                    />
+                                  </td>
+
+                                  {/* Número Sequencial */}
+                                  <td className="px-3 py-2 text-center font-mono text-[11px] text-slate-400">
+                                    {idx + 1}
+                                  </td>
+
+                                  {/* Descrição */}
+                                  <td className="px-2 py-2">
+                                    <input
+                                      type="text"
+                                      value={action.descricao}
+                                      onChange={(e) => handleUpdateAction(action.id, { descricao: e.target.value })}
+                                      className={`w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-800 font-bold px-1 py-0.5 ${
+                                        isCompleted ? 'line-through text-slate-400' : ''
+                                      }`}
+                                    />
+                                  </td>
+
+                                  {/* Responsável (Avatar Dropdown) */}
+                                  <td className="px-2 py-2">
+                                    <div className="flex items-center gap-1 bg-slate-100/60 border border-slate-200/50 rounded-lg px-2 py-1">
+                                      {action.responsavel?.avatarUrl ? (
+                                        <img src={action.responsavel.avatarUrl} alt={action.responsavel.nome} className="w-5.5 h-5.5 rounded-full object-cover shrink-0" />
+                                      ) : action.responsavel?.nome ? (
+                                        <div className="w-5.5 h-5.5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[7.5px] font-black text-[#1B4D3E] uppercase shrink-0 border border-slate-200">
+                                          {action.responsavel.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                                        </div>
+                                      ) : (
+                                        <div className="w-5.5 h-5.5 rounded-full bg-slate-200 flex items-center justify-center text-[7.5px] font-bold text-slate-400 uppercase shrink-0 border border-slate-200">
+                                          -
+                                        </div>
+                                      )}
+                                      <select
+                                        className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer w-full ml-1"
+                                        value={action.responsavelId || ''}
+                                        onChange={(e) => handleUpdateAction(action.id, {
+                                          responsavelId: e.target.value || null
+                                        })}
+                                      >
+                                        <option value="">Sem Responsável</option>
+                                        {users.map(u => (
+                                          <option key={u.id} value={u.id}>{u.nome}</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                  </td>
+
+                                  {/* Prazo Final */}
+                                  <td className="px-2 py-2">
+                                    <div className="flex items-center gap-1.5 bg-slate-100/60 border border-slate-200/50 rounded-lg px-2 py-1">
+                                      <Calendar size={13} className="text-slate-400 shrink-0" />
+                                      <input
+                                        type="date"
+                                        value={action.dataLimite ? new Date(action.dataLimite).toISOString().substring(0, 10) : ''}
+                                        onChange={(e) => handleUpdateAction(action.id, {
+                                          dataLimite: e.target.value || null
+                                        })}
+                                        className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer w-full"
+                                      />
+                                    </div>
+                                  </td>
+
+                                  {/* Observações */}
+                                  <td className="px-2 py-2">
+                                    <input
+                                      type="text"
+                                      value={action.observacao || ''}
+                                      onChange={(e) => handleUpdateAction(action.id, { observacao: e.target.value })}
+                                      placeholder="Anotar status..."
+                                      className="w-full bg-transparent border-b border-transparent focus:border-[#1B4D3E] outline-none text-slate-650 font-medium px-1 py-0.5"
+                                    />
+                                  </td>
+
+                                  {/* Ação: Deletar */}
+                                  <td className="px-3 py-2 text-center">
+                                    <button
+                                      onClick={() => handleDeleteAction(action.id)}
+                                      className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                                    >
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </td>
+
+                                </tr>
+                              );
+                            })}
+
+                            {/* Campo de Cadastro Inline de Nova Ação */}
+                            <tr className="bg-slate-50/20">
+                              <td className="px-3 py-2.5"></td>
+                              <td className="px-3 py-2.5"></td>
+                              <td className="px-2 py-2.5">
+                                <input
+                                  type="text"
+                                  placeholder="Escreva e adicione uma nova ação nesta área..."
+                                  value={newActionNames[sec.id] || ''}
+                                  onChange={(e) => setNewActionNames({
+                                    ...newActionNames,
+                                    [sec.id]: e.target.value
+                                  })}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleAddAction(sec.id);
+                                  }}
+                                  className="w-full bg-transparent border-b border-dashed border-slate-300 focus:border-[#1B4D3E] outline-none text-xs font-bold text-slate-700 px-1 py-0.5"
+                                />
+                              </td>
+                              <td className="px-2 py-2.5" colSpan={3}>
+                                <button
+                                  onClick={() => handleAddAction(sec.id)}
+                                  className="text-[9px] text-[#1B4D3E] font-black uppercase tracking-widest hover:text-[#12362b] bg-[#1B4D3E]/8 px-2 py-1 rounded-md border border-[#1B4D3E]/20 transition-colors cursor-pointer"
+                                >
+                                  + Inserir Ação
+                                </button>
+                              </td>
+                              <td className="px-3 py-2.5"></td>
+                            </tr>
+
+                          </tbody>
+                        </table>
+                      </div>
+
+                    </div>
+                  );
+                })}
+              </div>
+
+            </div>
+          )}
+
+        </div>
+
+      </div>
+    </div>
+  );
+}

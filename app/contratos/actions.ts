@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { getLoggedUser } from '@/app/propostas/actions';
+import { triggerPicCreationForContract } from '@/app/pic/actions';
 export async function getEmpresasEmissoras() {
   try {
     const data = await prisma.empresaEmissora.findMany();
@@ -260,6 +261,11 @@ export async function updateContratoStatus(id: string, status: string) {
       where: { id },
       data: { status }
     });
+
+    if (status.toUpperCase() === 'VIGENTE' || status.toUpperCase() === 'ATIVO') {
+      await triggerPicCreationForContract(id);
+    }
+
     revalidatePath('/contratos');
     return { success: true };
   } catch (error: any) {
@@ -273,6 +279,11 @@ export async function updateContratoDetails(id: string, data: any) {
       where: { id },
       data
     });
+
+    if (data.status && (data.status.toUpperCase() === 'VIGENTE' || data.status.toUpperCase() === 'ATIVO')) {
+      await triggerPicCreationForContract(id);
+    }
+
     revalidatePath('/contratos');
     return { success: true };
   } catch (error: any) {
