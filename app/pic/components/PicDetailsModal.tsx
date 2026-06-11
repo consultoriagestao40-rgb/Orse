@@ -663,7 +663,15 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
             </div>
           )}
 
-          {/* ──────────────────────────                {/* Dados de Faturamento Geral */}
+          {/* ───────────────────────────────────────────────────────────────────
+              ABA 02: FINANCEIRO E FATURAMENTO
+              ─────────────────────────────────────────────────────────────────── */}
+          {activeTab === 'financeiro' && (
+            <div className="space-y-6">
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Dados de Faturamento Geral */}
                 <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
                   <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2">
                     Ciclos e Medições do Contrato
