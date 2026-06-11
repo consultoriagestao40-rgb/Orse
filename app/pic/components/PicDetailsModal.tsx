@@ -429,10 +429,10 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs font-sans text-left">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden border border-slate-200 animate-fade-in relative">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-fade-in relative">
         
         {/* Header do Modal */}
-        <header className="bg-slate-100 border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
+        <header className="bg-white border-b border-slate-100 px-6 py-5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-[#1B4D3E]/10 rounded-xl border border-[#1B4D3E]/20 flex items-center justify-center text-[#1B4D3E]">
               <ClipboardCheck size={22} className="stroke-[2.5]" />
@@ -448,14 +448,14 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
           </div>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-slate-200 rounded-full text-slate-400 hover:text-slate-600 transition-colors cursor-pointer flex items-center justify-center"
+            className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors cursor-pointer flex items-center justify-center"
           >
             <X size={20} className="stroke-[2.5]" />
           </button>
         </header>
 
         {/* Abas de Navegação */}
-        <nav className="bg-slate-50 border-b border-slate-200 px-6 flex gap-6 shrink-0">
+        <nav className="bg-white border-b border-slate-100 px-6 flex gap-6 shrink-0">
           {(['identificacao', 'financeiro', 'operacional', 'planejador'] as TabType[]).map((tab) => {
             const labels = {
               identificacao: '1. Identificação',
@@ -562,24 +562,24 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                     <div>
                       <span className="text-[10px] text-slate-400 uppercase block font-black mb-1.5">Itens Inclusos e Excluídos</span>
                       <div className="overflow-x-auto mt-1">
-                        <table className="w-full text-left text-xs border-collapse border border-slate-200">
+                        <table className="w-full text-left text-xs">
                           <thead>
-                            <tr className="bg-[#1B4D3E] text-white uppercase text-[9.5px] tracking-wider">
-                              <th className="px-3 py-2 font-black border border-slate-200 text-white">Item / Descrição</th>
-                              <th className="px-3 py-2 text-center w-28 font-black border border-slate-200 text-white">Status</th>
+                            <tr className="border-b border-slate-100 text-slate-400 uppercase text-[9.5px] tracking-wider font-bold">
+                              <th className="px-3 py-3 font-bold">Item / Descrição</th>
+                              <th className="px-3 py-3 text-center w-28 font-bold">Status</th>
                             </tr>
                           </thead>
                           <tbody className="font-semibold text-slate-700">
                             {(meta.itensInclusosExcluidos || []).map((item: any) => (
-                              <tr key={item.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-200">
-                                <td className="px-3 py-2 border border-slate-200 text-slate-800 font-bold">
+                              <tr key={item.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-100/80">
+                                <td className="px-3 py-3 text-slate-800 font-bold">
                                   {item.descricao}
                                 </td>
-                                <td className="px-3 py-2 border border-slate-200 text-center">
-                                  <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase border ${
+                                <td className="px-3 py-3 text-center">
+                                  <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase border ${
                                     item.incluso 
-                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300' 
-                                      : 'bg-red-50 text-red-700 border-red-300'
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300/60' 
+                                      : 'bg-red-50 text-red-700 border-red-300/60'
                                   }`}>
                                     {item.incluso ? 'Incluso' : 'Excluso'}
                                   </span>
@@ -588,7 +588,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                             ))}
                             {(meta.itensInclusosExcluidos || []).length === 0 && (
                               <tr>
-                                <td colSpan={2} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-200">
+                                <td colSpan={2} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border-b border-slate-100">
                                   Nenhum item incluso ou excluso especificado.
                                 </td>
                               </tr>
@@ -883,42 +883,42 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse border border-slate-200">
+                  <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="bg-[#1B4D3E] text-white uppercase text-[9.5px] tracking-wider">
-                        <th className="px-3 py-2.5 font-black border border-slate-200 text-white">Função / Cargo</th>
-                        <th className="px-3 py-2.5 text-center w-16 font-black border border-slate-200 text-white">Qtd</th>
-                        <th className="px-3 py-2.5 text-center w-20 font-black border border-slate-200 text-white">Escala</th>
-                        <th className="px-3 py-2.5 text-center w-24 font-black border border-slate-200 text-white">Horário Entrada</th>
-                        <th className="px-3 py-2.5 text-center w-24 font-black border border-slate-200 text-white">Horário Saída</th>
-                        <th className="px-3 py-2.5 w-44 font-black border border-slate-200 text-white">Dias da Semana</th>
-                        <th className="px-3 py-2.5 text-center w-12 font-black border border-slate-200 text-white">Remover</th>
+                      <tr className="border-b border-slate-100 text-slate-400 uppercase text-[9.5px] tracking-wider font-bold select-none">
+                        <th className="px-3 py-3 font-bold">Função / Cargo</th>
+                        <th className="px-3 py-3 text-center w-16 font-bold">Qtd</th>
+                        <th className="px-3 py-3 text-center w-20 font-bold">Escala</th>
+                        <th className="px-3 py-3 text-center w-24 font-bold">Horário Entrada</th>
+                        <th className="px-3 py-3 text-center w-24 font-bold">Horário Saída</th>
+                        <th className="px-3 py-3 w-44 font-bold">Dias da Semana</th>
+                        <th className="px-3 py-3 text-center w-12 font-bold">Remover</th>
                       </tr>
                     </thead>
                     <tbody className="font-semibold text-slate-700">
                       {funcionarios.map((emp, index) => (
-                        <tr key={emp.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-200">
-                          <td className="px-2 py-1.5 border border-slate-200">
+                        <tr key={emp.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-100/80">
+                          <td className="px-3 py-2">
                             <input
                               type="text"
                               value={emp.funcao}
                               onChange={(e) => handleUpdateEmployee(index, 'funcao', e.target.value)}
-                              className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
+                              className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-1.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-lg transition-all"
                             />
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-200">
+                          <td className="px-3 py-2">
                             <input
                               type="number"
                               value={emp.quantidade}
                               onChange={(e) => handleUpdateEmployee(index, 'quantidade', Number(e.target.value))}
-                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
+                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-1.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-lg transition-all"
                             />
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-200">
+                          <td className="px-3 py-2">
                             <select
                               value={emp.escala}
                               onChange={(e) => handleUpdateEmployee(index, 'escala', e.target.value)}
-                              className="w-full bg-transparent outline-none font-bold text-center py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md cursor-pointer"
+                              className="w-full bg-transparent outline-none font-bold text-center py-1.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-lg cursor-pointer transition-all"
                             >
                               <option value="5x2">5x2</option>
                               <option value="6x1">6x1</option>
@@ -926,35 +926,35 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               <option value="4x2">4x2</option>
                             </select>
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-200">
+                          <td className="px-3 py-2">
                             <input
                               type="text"
                               value={emp.horarioEntrada || '08:00'}
                               onChange={(e) => handleUpdateEmployee(index, 'horarioEntrada', e.target.value)}
-                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
+                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-1.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-lg transition-all"
                             />
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-200">
+                          <td className="px-3 py-2">
                             <input
                               type="text"
                               value={emp.horarioSaida || '17:00'}
                               onChange={(e) => handleUpdateEmployee(index, 'horarioSaida', e.target.value)}
-                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
+                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-1.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-lg transition-all"
                             />
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-200">
+                          <td className="px-3 py-2">
                             <input
                               type="text"
                               value={emp.diasSemana || 'Segunda a Sexta'}
                               onChange={(e) => handleUpdateEmployee(index, 'diasSemana', e.target.value)}
-                              className="w-full bg-transparent outline-none text-slate-700 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
+                              className="w-full bg-transparent outline-none text-slate-700 font-bold px-1.5 py-1.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-lg transition-all"
                             />
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-200 text-center">
+                          <td className="px-3 py-2 text-center">
                             <button
                               type="button"
                               onClick={() => handleRemoveEmployee(index)}
-                              className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                              className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors cursor-pointer"
                             >
                               <Trash2 size={14} />
                             </button>
@@ -963,7 +963,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       ))}
                       {funcionarios.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-200">
+                          <td colSpan={7} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border-b border-slate-100">
                             Nenhum funcionário cadastrado.
                           </td>
                         </tr>
@@ -976,7 +976,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   <button
                     onClick={handleSaveEmployees}
                     disabled={saving}
-                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase py-2 px-5 rounded-lg tracking-widest transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
+                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase py-2.5 px-6 rounded-xl tracking-widest transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
                   >
                     Salvar Quadro
                   </button>
@@ -998,25 +998,25 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse border border-slate-200">
+                  <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="bg-[#1B4D3E] text-white uppercase text-[9.5px] tracking-wider">
-                        <th className="px-3 py-2.5 font-black border border-slate-200 text-white">Nome do Equipamento</th>
-                        <th className="px-3 py-2.5 text-center w-20 font-black border border-slate-200 text-white">Quantidade</th>
-                        <th className="px-3 py-2.5 text-center w-24 font-black border border-slate-200 text-white">Tipo Alocação</th>
-                        <th className="px-3 py-2.5 text-center w-12 font-black border border-slate-200 text-white">Remover</th>
+                      <tr className="border-b border-slate-100 text-slate-400 uppercase text-[9.5px] tracking-wider font-bold select-none">
+                        <th className="px-3 py-3 font-bold">Nome do Equipamento</th>
+                        <th className="px-3 py-3 text-center w-20 font-bold">Quantidade</th>
+                        <th className="px-3 py-3 text-center w-24 font-bold">Tipo Alocação</th>
+                        <th className="px-3 py-3 text-center w-12 font-bold">Remover</th>
                       </tr>
                     </thead>
                     <tbody className="font-semibold text-slate-700">
                       {equipamentos.map((eq, index) => (
-                        <tr key={eq.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-200">
-                          <td className="px-2 py-1.5 border border-slate-200">
+                        <tr key={eq.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-100/80">
+                          <td className="px-3 py-2">
                             <div className="flex items-center justify-between gap-2">
                               <input
                                 type="text"
                                 value={eq.nome}
                                 onChange={(e) => handleUpdateEquipment(index, 'nome', e.target.value)}
-                                className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
+                                className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-1.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-lg transition-all"
                               />
                               <button
                                 type="button"
@@ -1026,7 +1026,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                                   title: eq.nome || 'Novo Equipamento',
                                   value: eq.observacao || ''
                                 })}
-                                className="flex items-center gap-1 p-1 rounded transition-colors text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100 cursor-pointer shrink-0 mt-0.5"
+                                className="flex items-center gap-1 p-1.5 rounded-lg transition-colors text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100 cursor-pointer shrink-0 mt-0.5"
                                 title="Observações / Detalhes do Equipamento"
                               >
                                 <MessageSquare size={14} className={eq.observacao ? 'text-[#1B4D3E]' : 'text-slate-300'} />
@@ -1036,29 +1036,29 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               </button>
                             </div>
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-200">
+                          <td className="px-3 py-2">
                             <input
                               type="number"
                               value={eq.quantidade}
                               onChange={(e) => handleUpdateEquipment(index, 'quantidade', Number(e.target.value))}
-                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
+                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-1.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-lg transition-all"
                             />
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-200">
+                          <td className="px-3 py-2">
                             <select
                               value={eq.tipo}
                               onChange={(e) => handleUpdateEquipment(index, 'tipo', e.target.value)}
-                              className="w-full bg-transparent outline-none font-bold text-center py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md cursor-pointer"
+                              className="w-full bg-transparent outline-none font-bold text-center py-1.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-lg cursor-pointer transition-all"
                             >
                               <option value="PROPRIO">Próprio</option>
                               <option value="LOCADO">Locado</option>
                             </select>
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-200 text-center">
+                          <td className="px-3 py-2 text-center">
                             <button
                               type="button"
                               onClick={() => handleRemoveEquipment(index)}
-                              className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                              className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors cursor-pointer"
                             >
                               <Trash2 size={14} />
                             </button>
@@ -1067,7 +1067,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       ))}
                       {equipamentos.length === 0 && (
                         <tr>
-                          <td colSpan={4} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-200">
+                          <td colSpan={4} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border-b border-slate-100">
                             Nenhum equipamento listado.
                           </td>
                         </tr>
@@ -1080,98 +1080,77 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   <button
                     onClick={handleSaveEquipments}
                     disabled={saving}
-                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase py-2 px-5 rounded-lg tracking-widest transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
+                    className="bg-slate-900 hover:bg-black text-white text-xs font-black uppercase py-4 px-8 rounded-3xl tracking-widest transition-all cursor-pointer disabled:opacity-50 shadow-lg shadow-slate-200"
                   >
                     Salvar Equipamentos
                   </button>
                 </div>
               </div>
 
-              {/* Seção Materiais e Insumos */}
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
-                    <Package size={16} /> Relação de Materiais, Descartáveis e Insumos
+              {/* Seção Materiais */}
+              <div className="bg-white border-0 rounded-3xl p-6 shadow-sm shadow-slate-100 space-y-4">
+                <div className="flex items-center justify-between pb-2">
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <Package size={16} /> Materiais e Insumos
                   </h3>
                   <button
                     onClick={handleAddMaterial}
-                    className="text-[10px] text-emerald-600 font-black uppercase tracking-wider hover:text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-300 flex items-center gap-1 transition-colors cursor-pointer select-none"
+                    className="text-[10px] text-slate-900 font-black uppercase tracking-wider hover:bg-slate-100 bg-slate-50 px-4 py-2 rounded-2xl flex items-center gap-1 transition-colors cursor-pointer select-none"
                   >
-                    <Plus size={12} /> Adicionar Material
+                    <Plus size={12} /> Adicionar
                   </button>
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse border border-slate-200">
+                  <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="bg-[#1B4D3E] text-white uppercase text-[9.5px] tracking-wider">
-                        <th className="px-3 py-2.5 font-black border border-slate-200 text-white">Nome do Material / Insumo</th>
-                        <th className="px-3 py-2.5 text-center w-20 font-black border border-slate-200 text-white">Quantidade</th>
-                        <th className="px-3 py-2.5 text-center w-16 font-black border border-slate-200 text-white">Unidade</th>
-                        <th className="px-3 py-2.5 text-center w-12 font-black border border-slate-200 text-white">Remover</th>
+                      <tr className="text-slate-400 uppercase text-[9.5px] tracking-wider font-bold">
+                        <th className="px-3 py-3">Nome do Material</th>
+                        <th className="px-3 py-3 text-center w-20">Qtd</th>
+                        <th className="px-3 py-3 text-center w-20">Unidade</th>
+                        <th className="px-3 py-3 text-center w-12">Remover</th>
                       </tr>
                     </thead>
                     <tbody className="font-semibold text-slate-700">
                       {materiais.map((mat, index) => (
-                        <tr key={mat.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-200">
-                          <td className="px-2 py-1.5 border border-slate-200">
+                        <tr key={mat.id} className="hover:bg-slate-50/50 rounded-3xl">
+                          <td className="px-3 py-2">
                             <div className="flex items-center justify-between gap-2">
                               <input
                                 type="text"
                                 value={mat.nome}
                                 onChange={(e) => handleUpdateMaterial(index, 'nome', e.target.value)}
-                                className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
+                                className="w-full bg-transparent outline-none text-slate-800 font-bold px-3 py-2.5 rounded-2xl transition-all focus:bg-slate-50"
                               />
                               <button
                                 type="button"
-                                onClick={() => setActiveObservationEdit({
-                                  type: 'material',
-                                  index,
-                                  title: mat.nome || 'Novo Material',
-                                  value: mat.observacao || ''
-                                })}
-                                className="flex items-center gap-1 p-1 rounded transition-colors text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100 cursor-pointer shrink-0 mt-0.5"
-                                title="Observações / Detalhes do Material"
+                                onClick={() => setActiveObservationEdit({ type: 'material', index, title: mat.nome, value: mat.observacao || '' })}
+                                className="p-2.5 rounded-2xl transition-colors text-slate-400 hover:text-slate-900 hover:bg-slate-100"
                               >
-                                <MessageSquare size={14} className={mat.observacao ? 'text-[#1B4D3E]' : 'text-slate-300'} />
-                                {mat.observacao && (
-                                  <span className="w-1.5 h-1.5 bg-[#1B4D3E] rounded-full shrink-0" />
-                                )}
+                                <MessageSquare size={16} />
                               </button>
                             </div>
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-200">
+                          <td className="px-3 py-2">
                             <input
                               type="number"
                               value={mat.quantidade}
                               onChange={(e) => handleUpdateMaterial(index, 'quantidade', Number(e.target.value))}
-                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
+                              className="w-full bg-transparent outline-none text-center font-bold px-3 py-2.5 rounded-2xl transition-all focus:bg-slate-50"
                             />
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-200">
+                          <td className="px-3 py-2">
                             <input
                               type="text"
                               value={mat.unidade || 'UN'}
                               onChange={(e) => handleUpdateMaterial(index, 'unidade', e.target.value)}
-                              className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-md"
+                              className="w-full bg-transparent outline-none text-center font-bold px-3 py-2.5 rounded-2xl transition-all focus:bg-slate-50"
                             />
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-200 text-center">
+                          <td className="px-3 py-2 text-center">
                             <button
                               type="button"
                               onClick={() => handleRemoveMaterial(index)}
-                              className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                      {materiais.length === 0 && (
-                        <tr>
-                          <td colSpan={4} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-200">
-                            Nenhum insumo ou material listado.
-                          </td>
                         </tr>
                       )}
                     </tbody>
@@ -1398,26 +1377,21 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
 
                       {/* Tabela de Ações */}
                       <div className="overflow-x-auto">
-                        <table className="w-full border-x-2 border-b-2 border-slate-900 border-collapse text-xs select-text table-fixed mt-0 border-t-0">
+                        <table className="w-full text-xs select-text table-fixed mt-0">
                           <colgroup>
-                            <col style={{ width: '5%' }} />
-                            <col style={{ width: '60%' }} />
-                            <col style={{ width: '8%' }} />
-                            <col style={{ width: '15%' }} />
+                            <col style={{ width: '6%' }} />
+                            <col style={{ width: '58%' }} />
+                            <col style={{ width: '12%' }} />
+                            <col style={{ width: '12%' }} />
                             <col style={{ width: '12%' }} />
                           </colgroup>
                           <thead>
-                            <tr>
-                              <th colSpan={5} className="bg-[#1E4663] text-white font-black text-center text-[11px] py-1.5 border border-slate-900 tracking-wider uppercase">
-                                AÇÕES
-                              </th>
-                            </tr>
-                            <tr className="bg-[#DCE6F1] font-black text-slate-800 border-b border-slate-900 text-center uppercase text-[9.5px]">
-                              <th className="py-1.5 px-1 border-r border-slate-900 text-center select-none w-10 text-slate-800 font-extrabold">Item</th>
-                              <th className="py-1.5 px-3 border-r border-slate-900 text-left text-slate-800 font-extrabold">Descrição</th>
-                              <th className="py-1.5 px-3 border-r border-slate-900 text-center text-slate-800 font-extrabold">Resp.</th>
-                              <th className="py-1.5 px-3 border-r border-slate-900 text-slate-800 font-extrabold">Prazo</th>
-                              <th className="py-1.5 px-1.5 text-center text-slate-800 font-extrabold">Status</th>
+                            <tr className="border-b border-slate-100 text-slate-400 uppercase text-[9.5px] font-bold select-none tracking-wider text-center">
+                              <th className="py-3 px-1 text-center w-10">Item</th>
+                              <th className="py-3 px-3 text-left">Descrição</th>
+                              <th className="py-3 px-3 text-center">Resp.</th>
+                              <th className="py-3 px-3 text-center">Prazo</th>
+                              <th className="py-3 px-1.5 text-center">Status</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1433,11 +1407,11 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                             ))}
 
                             {/* Campo de Cadastro Inline de Nova Ação */}
-                            <tr className="bg-slate-50/20 border-b border-slate-900">
-                              <td className="py-1 px-1 border-r border-slate-900 text-center text-slate-400 font-bold">
+                            <tr className="bg-slate-50/20 border-b border-slate-100/80">
+                              <td className="py-3.5 px-1 text-center text-slate-400 font-bold text-xs select-none">
                                 +
                               </td>
-                              <td className="py-1 px-3 border-r border-slate-900">
+                              <td className="py-2.5 px-3">
                                 <input
                                   type="text"
                                   placeholder="Escreva e adicione uma nova ação nesta área..."
@@ -1449,13 +1423,13 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleAddAction(sec.id);
                                   }}
-                                  className="w-full bg-transparent border-none outline-none focus:ring-0 text-xs font-bold text-slate-700 py-0.5"
+                                  className="w-full bg-transparent border-none outline-none focus:ring-0 text-xs font-bold text-slate-700 py-1"
                                 />
                               </td>
-                              <td className="py-1 px-1 border-r border-slate-900 text-center" colSpan={3}>
+                              <td className="py-2.5 px-1 text-center" colSpan={3}>
                                 <button
                                   onClick={() => handleAddAction(sec.id)}
-                                  className="text-[9px] text-[#1E4663] font-black uppercase tracking-widest hover:text-[#153145] bg-[#1E4663]/8 px-2.5 py-1 rounded-none border border-[#1E4663]/20 transition-colors cursor-pointer"
+                                  className="text-[9px] text-[#1E4663] font-black uppercase tracking-widest hover:text-[#153145] bg-[#1E4663]/8 px-3.5 py-2 rounded-xl border border-[#1E4663]/20 transition-colors cursor-pointer"
                                 >
                                   + Inserir Ação
                                 </button>
@@ -1481,15 +1455,15 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
       {/* MODAL PARA EDITAR OBSERVAÇÕES DE EQUIPAMENTO / MATERIAL */}
       {activeObservationEdit && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs no-print animate-fade-in">
-          <div className="bg-white border border-slate-300 rounded-none shadow-2xl max-w-md w-full p-6 space-y-4 text-left">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+          <div className="bg-white border border-slate-100 rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-5 text-left border border-slate-200/50">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
                 <MessageSquare size={14} /> Observações / Detalhes
               </h3>
               <button
                 type="button"
                 onClick={() => setActiveObservationEdit(null)}
-                className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                className="text-slate-400 hover:text-slate-700 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -1497,7 +1471,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
             
             <div className="space-y-1.5">
               <p className="text-[10px] text-slate-400 uppercase font-black">Item:</p>
-              <p className="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 p-2.5">
+              <p className="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200/60 rounded-xl p-3">
                 {activeObservationEdit.title}
               </p>
             </div>
@@ -1512,11 +1486,11 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                 })}
                 placeholder={activeObservationEdit.type === 'equipamento' ? "Especificações, voltagem, fabricante, etc..." : "Frequência de entrega, diluições, marca sugerida, etc..."}
                 rows={5}
-                className="w-full bg-slate-50 border border-slate-300 focus:border-[#1B4D3E] outline-none text-xs font-bold text-slate-800 p-3 leading-relaxed resize-none rounded-none"
+                className="w-full bg-slate-50 border border-slate-200/80 focus:border-[#1B4D3E]/80 outline-none text-xs font-bold text-slate-800 p-3 leading-relaxed resize-none rounded-xl focus:ring-2 focus:ring-[#1B4D3E]/10"
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => {
@@ -1528,7 +1502,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   }
                   setActiveObservationEdit(null);
                 }}
-                className="px-4 py-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[10px] font-black uppercase tracking-wider rounded-none cursor-pointer shadow-sm transition-colors"
+                className="px-5 py-2.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[10px] font-black uppercase tracking-wider rounded-xl cursor-pointer shadow-sm transition-colors"
               >
                 Confirmar
               </button>
@@ -1604,14 +1578,14 @@ function ActionRow({ action, users, idx, handleUpdateAction, handleDeleteAction 
 
   return (
     <>
-      <tr className={`hover:bg-slate-50/10 bg-white ${isCompleted ? 'bg-slate-50/20' : ''} border-b border-slate-900`}>
+      <tr className={`hover:bg-slate-50/50 bg-white ${isCompleted ? 'bg-slate-50/10' : ''} border-b border-slate-100/80 transition-colors`}>
         {/* Número Sequencial / Item */}
-        <td className="py-1 px-1 border-r border-slate-900 text-center font-bold text-slate-500 whitespace-nowrap">
+        <td className="py-3 px-1 text-center font-bold text-slate-400 select-none text-[11px]">
           {idx + 1}
         </td>
 
         {/* Descrição + Speech Bubble Button */}
-        <td className="py-1.5 px-3 border-r border-slate-900">
+        <td className="py-2 px-3">
           <div className="flex items-center justify-between gap-2">
             <input
               type="text"
@@ -1623,14 +1597,14 @@ function ActionRow({ action, users, idx, handleUpdateAction, handleDeleteAction 
                   e.currentTarget.blur();
                 }
               }}
-              className={`w-full bg-transparent border-none outline-none focus:ring-0 text-slate-800 font-bold py-0.5 leading-normal text-xs ${
+              className={`w-full bg-transparent border-none outline-none focus:ring-0 text-slate-800 font-bold py-1 leading-normal text-xs ${
                 isCompleted ? 'line-through text-slate-400' : ''
               }`}
             />
             <button
               type="button"
               onClick={() => setObsModalOpen(true)}
-              className="flex items-center gap-1 p-1 rounded transition-colors text-slate-400 hover:text-[#1E4663] hover:bg-slate-100 cursor-pointer shrink-0 mt-0.5"
+              className="flex items-center gap-1 p-1.5 rounded-lg transition-colors text-slate-400 hover:text-[#1E4663] hover:bg-slate-100 cursor-pointer shrink-0 mt-0.5"
               title="Anotações / Observações da Ação"
             >
               <MessageSquare size={14} className={localObservacao ? 'text-[#1E4663]' : 'text-slate-300'} />
@@ -1642,20 +1616,20 @@ function ActionRow({ action, users, idx, handleUpdateAction, handleDeleteAction 
         </td>
 
         {/* Responsável (Avatar Dropdown) */}
-        <td className="py-1.5 px-1 border-r border-slate-900 text-center relative">
+        <td className="py-2 px-1 text-center relative">
           <div className="flex items-center justify-center">
             {avatarUrl ? (
               <img 
                 src={avatarUrl} 
                 alt={userName} 
-                className="w-5.5 h-5.5 rounded-full object-cover border border-slate-200"
+                className="w-6 h-6 rounded-full object-cover border border-slate-100 shadow-xs"
                 title={userName}
               />
             ) : (
-              <div className="w-5.5 h-5.5 rounded-full bg-[#1E4663]/10 flex items-center justify-center text-[8.5px] font-black text-[#1E4663] uppercase border border-slate-200" title={userName}>
+              <div className="w-6 h-6 rounded-full bg-[#1E4663]/8 flex items-center justify-center text-[8.5px] font-black text-[#1E4663] uppercase border border-slate-200/50 shadow-xs" title={userName}>
                 {userName !== 'Selecionar' && userName !== 'Sem Responsável' 
                   ? userName.split(' ').map((n: string) => n[0]).join('').substring(0, 2) 
-                  : <User size={11} />}
+                  : <User size={12} className="text-slate-400" />}
               </div>
             )}
             <select
@@ -1674,20 +1648,20 @@ function ActionRow({ action, users, idx, handleUpdateAction, handleDeleteAction 
         </td>
 
         {/* Prazo Final */}
-        <td className="py-1.5 px-1 border-r border-slate-900 text-center">
+        <td className="py-2 px-1 text-center">
           <input
             type="date"
             value={action.dataLimite ? new Date(action.dataLimite).toISOString().substring(0, 10) : ''}
             onChange={(e) => handleUpdateAction(action.id, {
               dataLimite: e.target.value || null
             })}
-            className="w-full bg-transparent border-none outline-none focus:ring-0 text-center text-xs py-0.5 h-6 min-w-0 font-medium text-slate-800"
+            className="w-full bg-transparent border-none outline-none focus:ring-0 text-center text-xs py-1 h-7 min-w-0 font-bold text-slate-700 cursor-pointer rounded-lg hover:bg-slate-100/60"
           />
         </td>
 
         {/* Status (Checkbox + Badge + Deletar) */}
-        <td className="py-1.5 px-1.5 text-center">
-          <div className="flex items-center justify-center gap-1.5">
+        <td className="py-2 px-1.5 text-center">
+          <div className="flex items-center justify-center gap-2">
             {/* Toggle Conclusão */}
             <input
               type="checkbox"
@@ -1695,21 +1669,21 @@ function ActionRow({ action, users, idx, handleUpdateAction, handleDeleteAction 
               onChange={() => handleUpdateAction(action.id, {
                 status: isCompleted ? 'PENDENTE' : 'CONCLUIDA'
               })}
-              className="w-3.5 h-3.5 rounded border-slate-350 text-[#1E4663] focus:ring-[#1E4663] cursor-pointer"
+              className="w-4 h-4 rounded-md border-slate-300 text-[#1E4663] focus:ring-[#1E4663]/25 cursor-pointer transition-all"
             />
 
             {/* Status Badge */}
-            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border select-none whitespace-nowrap ${statusColorClass}`}>
+            <span className={`px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border select-none whitespace-nowrap ${statusColorClass}`}>
               {statusText}
             </span>
 
             {/* Delete Action Button */}
             <button
               onClick={() => handleDeleteAction(action.id)}
-              className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors cursor-pointer shrink-0"
+              className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer shrink-0"
               title="Excluir Ação"
             >
-              <X size={12} />
+              <X size={13} />
             </button>
           </div>
         </td>
@@ -1718,8 +1692,8 @@ function ActionRow({ action, users, idx, handleUpdateAction, handleDeleteAction 
       {/* MODAL DE OBSERVAÇÕES / ANOTAÇÕES */}
       {obsModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs no-print animate-fade-in">
-          <div className="bg-white border border-slate-900 rounded-none shadow-2xl max-w-md w-full p-6 space-y-4 text-left">
-            <div className="flex items-center justify-between border-b border-slate-900 pb-2">
+          <div className="bg-white border border-slate-200/50 rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-5 text-left">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-xs font-black text-[#1E4663] uppercase tracking-wider flex items-center gap-1.5">
                 <MessageSquare size={14} /> Anotações da Ação
               </h3>
@@ -1728,7 +1702,7 @@ function ActionRow({ action, users, idx, handleUpdateAction, handleDeleteAction 
                   handleObsBlur();
                   setObsModalOpen(false);
                 }}
-                className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                className="text-slate-400 hover:text-slate-700 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -1736,7 +1710,7 @@ function ActionRow({ action, users, idx, handleUpdateAction, handleDeleteAction 
             
             <div className="space-y-1.5">
               <p className="text-[10px] text-slate-400 uppercase font-black">Ação:</p>
-              <p className="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 p-2.5">
+              <p className="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200/60 rounded-xl p-3">
                 {localDescricao}
               </p>
             </div>
@@ -1748,17 +1722,17 @@ function ActionRow({ action, users, idx, handleUpdateAction, handleDeleteAction 
                 onChange={(e) => setLocalObservacao(e.target.value)}
                 placeholder="Insira observações de status, histórico ou anotações desta ação..."
                 rows={5}
-                className="w-full bg-slate-50 border border-slate-300 focus:border-[#1E4663] outline-none text-xs font-bold text-slate-800 p-3 leading-relaxed resize-none rounded-none"
+                className="w-full bg-slate-50 border border-slate-200/80 focus:border-[#1E4663]/80 outline-none text-xs font-bold text-slate-800 p-3 leading-relaxed resize-none rounded-xl focus:ring-2 focus:ring-[#1E4663]/10"
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
               <button
                 onClick={() => {
                   handleObsBlur();
                   setObsModalOpen(false);
                 }}
-                className="px-4 py-2 bg-[#1E4663] hover:bg-[#153145] text-white text-[10px] font-black uppercase tracking-wider rounded-none cursor-pointer shadow-sm transition-colors"
+                className="px-5 py-2.5 bg-[#1E4663] hover:bg-[#153145] text-white text-[10px] font-black uppercase tracking-wider rounded-xl cursor-pointer shadow-sm transition-colors"
               >
                 Confirmar e Fechar
               </button>
