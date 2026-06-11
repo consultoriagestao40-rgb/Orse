@@ -169,7 +169,7 @@ export default function CalendarPage() {
                                 className="text-[10px] bg-[#1B4D3E] text-white p-1 rounded font-medium leading-tight truncate px-1.5 cursor-pointer hover:opacity-80 transition-opacity" 
                                 title={a.titulo}
                               >
-                                {timeStr} - {a.lead?.nomeFantasia || a.task?.titulo || a.titulo}
+                                {timeStr} - {a.lead?.nomeFantasia || a.titulo}
                               </div>
                             );
                           })}

@@ -996,163 +996,6 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
               )}
             </div>
 
-            {/* Calendar Events (Reuniões da Tarefa) */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                  <Calendar size={14} /> Reuniões no Calendário
-                </h4>
-                {!isCompleted && !isAddingMeeting && (
-                  <button
-                    onClick={() => setIsAddingMeeting(true)}
-                    className="flex items-center gap-1 text-[11px] font-bold text-[#1B4D3E] hover:underline border-none bg-transparent cursor-pointer"
-                  >
-                    <Plus size={12} /> Agendar
-                  </button>
-                )}
-              </div>
-
-              {/* Novo Evento Form */}
-              {isAddingMeeting && (
-                <form onSubmit={handleCreateMeeting} className="mb-4 bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
-                  <div className="flex justify-between items-center border-b border-slate-150 pb-2 mb-2">
-                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Agendar Nova Reunião</span>
-                    <button 
-                      type="button" 
-                      onClick={() => {
-                        setIsAddingMeeting(false);
-                        setMeetingTitulo('');
-                        setMeetingDescricao('');
-                        setMeetingData('');
-                        setMeetingHoraInicio('');
-                        setMeetingHoraFim('');
-                      }} 
-                      className="text-slate-400 hover:text-rose-600 border-none bg-transparent cursor-pointer"
-                    >
-                      <X size={15} />
-                    </button>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Título *</label>
-                    <input 
-                      type="text" 
-                      required 
-                      value={meetingTitulo} 
-                      onChange={e => setMeetingTitulo(e.target.value)} 
-                      className="w-full border border-slate-200 rounded-xl p-2 text-xs outline-none focus:border-[#1B4D3E] bg-white font-semibold text-slate-700" 
-                      placeholder="Ex: Reunião de Alinhamento da Tarefa"
-                    />
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Data *</label>
-                      <input 
-                        type="date" 
-                        required 
-                        value={meetingData} 
-                        onChange={e => setMeetingData(e.target.value)} 
-                        className="w-full border border-slate-200 rounded-xl p-2 text-xs outline-none focus:border-[#1B4D3E] bg-white font-semibold text-slate-700" 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Início *</label>
-                      <input 
-                        type="time" 
-                        required 
-                        value={meetingHoraInicio} 
-                        onChange={e => setMeetingHoraInicio(e.target.value)} 
-                        className="w-full border border-slate-200 rounded-xl p-2 text-xs outline-none focus:border-[#1B4D3E] bg-white font-semibold text-slate-700" 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Fim *</label>
-                      <input 
-                        type="time" 
-                        required 
-                        value={meetingHoraFim} 
-                        onChange={e => setMeetingHoraFim(e.target.value)} 
-                        className="w-full border border-slate-200 rounded-xl p-2 text-xs outline-none focus:border-[#1B4D3E] bg-white font-semibold text-slate-700" 
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Descrição</label>
-                    <textarea 
-                      value={meetingDescricao} 
-                      onChange={e => setMeetingDescricao(e.target.value)} 
-                      className="w-full border border-slate-200 rounded-xl p-2 text-xs outline-none focus:border-[#1B4D3E] bg-white font-semibold text-slate-700 resize-none" 
-                      rows={2} 
-                      placeholder="Pauta da reunião, link da videochamada, etc..."
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2 pt-2 border-t border-slate-150">
-                    <button 
-                      type="button" 
-                      onClick={() => setIsAddingMeeting(false)} 
-                      className="px-3 py-1.5 border border-slate-200 bg-white text-slate-500 rounded-xl text-xs font-bold hover:bg-slate-50 cursor-pointer"
-                    >
-                      Cancelar
-                    </button>
-                    <button 
-                      type="submit" 
-                      disabled={isSavingMeeting} 
-                      className="px-4 py-1.5 bg-[#1B4D3E] hover:bg-[#13382d] text-white rounded-xl text-xs font-bold disabled:opacity-50 cursor-pointer"
-                    >
-                      {isSavingMeeting ? 'Salvando...' : 'Confirmar'}
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {/* List of Meetings */}
-              {meetings && meetings.length > 0 ? (
-                <div className="flex flex-col gap-2">
-                  {meetings.map((meeting: any) => {
-                    const dateObj = new Date(meeting.dataInicio);
-                    const dateEndObj = new Date(meeting.dataFim);
-                    const dateStr = !isNaN(dateObj.getTime()) ? dateObj.toLocaleDateString('pt-BR') : '';
-                    const timeStr = !isNaN(dateObj.getTime()) ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-                    const timeEndStr = !isNaN(dateEndObj.getTime()) ? dateEndObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-                    return (
-                      <div key={meeting.id} className="p-2.5 border border-slate-200 rounded-xl flex items-center justify-between bg-white hover:border-[#1B4D3E]/30 transition-colors shadow-xs">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-9 h-9 rounded-lg bg-[#1B4D3E]/5 border border-[#1B4D3E]/10 flex items-center justify-center shrink-0 text-[#1B4D3E]">
-                            <Calendar size={16} />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[11px] font-bold text-slate-700 truncate">{meeting.titulo}</p>
-                            <p className="text-[9px] text-slate-400 font-semibold flex items-center gap-1.5 flex-wrap">
-                              <span>{dateStr} às {timeStr} - {timeEndStr}</span>
-                              <span className="text-slate-300">•</span>
-                              <span>Organizado por {meeting.user?.nome || 'Sistema'}</span>
-                            </p>
-                            {meeting.descricao && (
-                              <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5 max-w-[450px]" title={meeting.descricao}>
-                                {meeting.descricao}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        {!isCompleted && (
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteMeeting(meeting.id)}
-                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl border-none bg-transparent cursor-pointer"
-                            title="Desmarcar Reunião"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                !isAddingMeeting && (
-                  <p className="text-[10px] text-slate-450 font-semibold italic">Nenhum compromisso agendado para esta tarefa.</p>
-                )
-              )}
-            </div>
           </div>
 
             {/* Attachments (Anexos) */}
@@ -1349,6 +1192,164 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                   {task.createdAt ? new Date(task.createdAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
                 </span>
               </div>
+            </div>
+
+            {/* Reuniões */}
+            <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs space-y-2.5">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Reuniões</span>
+                {!isCompleted && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMeetingTitulo(`Reunião da tarefa: "${task.titulo}"`);
+                      setMeetingData(new Date().toISOString().split('T')[0]);
+                      setMeetingHoraInicio('');
+                      setMeetingHoraFim('');
+                      setMeetingDescricao('');
+                      setIsAddingMeeting(true);
+                    }}
+                    className="flex items-center gap-0.5 bg-[#E0F2FE] hover:bg-[#BAE6FD] text-[#0369A1] px-2 py-0.5 rounded-full text-[9px] font-bold transition-colors border-none cursor-pointer"
+                  >
+                    <Plus size={10} className="stroke-[3]" /> Adicionar
+                  </button>
+                )}
+              </div>
+
+              {/* Novo Evento Form */}
+              {isAddingMeeting && (
+                <form onSubmit={handleCreateMeeting} className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2.5 shadow-2xs animate-fade-in">
+                  <div className="flex justify-between items-center border-b border-slate-150 pb-1.5 mb-1 flex-wrap">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Agendar Reunião</span>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setIsAddingMeeting(false);
+                        setMeetingTitulo('');
+                        setMeetingDescricao('');
+                        setMeetingData('');
+                        setMeetingHoraInicio('');
+                        setMeetingHoraFim('');
+                      }} 
+                      className="text-slate-400 hover:text-rose-600 border-none bg-transparent cursor-pointer p-0"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                  <div>
+                    <label className="block text-[8px] font-bold text-slate-400 mb-0.5 uppercase tracking-wide">Título *</label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={meetingTitulo} 
+                      onChange={e => setMeetingTitulo(e.target.value)} 
+                      className="w-full border border-slate-200 rounded-lg p-1.5 text-[10px] outline-none focus:border-[#1B4D3E] bg-white font-semibold text-slate-700" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-[8px] font-bold text-slate-400 mb-0.5 uppercase tracking-wide">Data *</label>
+                      <input 
+                        type="date" 
+                        required 
+                        value={meetingData} 
+                        onChange={e => setMeetingData(e.target.value)} 
+                        className="w-full border border-slate-200 rounded-lg p-1.5 text-[10px] outline-none focus:border-[#1B4D3E] bg-white font-semibold text-slate-700" 
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div>
+                        <label className="block text-[8px] font-bold text-slate-400 mb-0.5 uppercase tracking-wide">Início *</label>
+                        <input 
+                          type="time" 
+                          required 
+                          value={meetingHoraInicio} 
+                          onChange={e => setMeetingHoraInicio(e.target.value)} 
+                          className="w-full border border-slate-200 rounded-lg p-1.5 text-[10px] outline-none focus:border-[#1B4D3E] bg-white font-semibold text-slate-700" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[8px] font-bold text-slate-400 mb-0.5 uppercase tracking-wide">Fim *</label>
+                        <input 
+                          type="time" 
+                          required 
+                          value={meetingHoraFim} 
+                          onChange={e => setMeetingHoraFim(e.target.value)} 
+                          className="w-full border border-slate-200 rounded-lg p-1.5 text-[10px] outline-none focus:border-[#1B4D3E] bg-white font-semibold text-slate-700" 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[8px] font-bold text-slate-400 mb-0.5 uppercase tracking-wide">Descrição</label>
+                    <textarea 
+                      value={meetingDescricao} 
+                      onChange={e => setMeetingDescricao(e.target.value)} 
+                      className="w-full border border-slate-200 rounded-lg p-1.5 text-[10px] outline-none focus:border-[#1B4D3E] bg-white font-semibold text-slate-700 resize-none" 
+                      rows={2} 
+                      placeholder="Pauta da reunião, link..."
+                    />
+                  </div>
+                  <div className="flex justify-end gap-1 pt-1.5 border-t border-slate-150">
+                    <button 
+                      type="button" 
+                      onClick={() => setIsAddingMeeting(false)} 
+                      className="px-2 py-1 border border-slate-200 bg-white text-slate-500 rounded-lg text-[9px] font-bold hover:bg-slate-50 cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      type="submit" 
+                      disabled={isSavingMeeting} 
+                      className="px-2.5 py-1 bg-[#1B4D3E] hover:bg-[#13382d] text-white rounded-lg text-[9px] font-bold disabled:opacity-50 cursor-pointer"
+                    >
+                      {isSavingMeeting ? 'Agendando...' : 'Confirmar'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* List of Meetings */}
+              {meetings && meetings.length > 0 ? (
+                <div className="flex flex-col gap-1.5">
+                  {meetings.map((meeting: any) => {
+                    const dateObj = new Date(meeting.dataInicio);
+                    const dateEndObj = new Date(meeting.dataFim);
+                    const dateStr = !isNaN(dateObj.getTime()) ? dateObj.toLocaleDateString('pt-BR') : '';
+                    const timeStr = !isNaN(dateObj.getTime()) ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+                    const timeEndStr = !isNaN(dateEndObj.getTime()) ? dateEndObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+                    return (
+                      <div key={meeting.id} className="p-2 border border-slate-150 rounded-xl flex items-center justify-between bg-slate-50 hover:bg-slate-100/60 transition-colors">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[10px] font-bold text-slate-700 truncate" title={meeting.titulo}>{meeting.titulo}</p>
+                          <p className="text-[8px] text-slate-450 font-semibold mt-0.5">
+                            {dateStr} • {timeStr} - {timeEndStr}
+                          </p>
+                        </div>
+                        {!isCompleted && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMeeting(meeting.id)}
+                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg border-none bg-transparent cursor-pointer shrink-0 ml-1"
+                            title="Desmarcar Reunião"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                !isAddingMeeting && (
+                  <div className="flex items-center justify-center gap-2 py-3 bg-white">
+                    <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-450">
+                      <Calendar size={12} />
+                    </div>
+                    <span className="text-[11px] text-slate-450 font-semibold">Não há reuniões.</span>
+                  </div>
+                )
+              )}
             </div>
 
             {/* Stage */}
