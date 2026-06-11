@@ -1351,17 +1351,17 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                                 overflowY: 'auto',
                               }}
                             >
-                              <div className="flex flex-col gap-1.5">
+                              <div className="flex flex-col gap-1">
 
                                 {col.tasks.length === 0 ? (
                                   !draggedStageId && draggedOverStageId === col.id ? (
-                                    <div className="bg-slate-100/70 border-2 border-dashed border-[#1E3A8A]/30 rounded-xl h-28 w-full animate-pulse flex items-center justify-center">
+                                    <div className="bg-slate-100/70 border-2 border-dashed border-[#1E3A8A]/30 rounded-lg h-28 w-full animate-pulse flex items-center justify-center">
                                       <span className="text-[10px] font-black text-[#1E3A8A]/60 uppercase tracking-widest animate-pulse">Soltar aqui</span>
                                     </div>
                                   ) : (
                                     <div 
                                       onClick={() => handleOpenQuickCreate(col.id === 'unassigned' || col.id === 'no_tag' ? '' : col.id)}
-                                      className="border border-dashed border-slate-300 hover:border-[#1B4D3E]/40 rounded-xl py-10 flex flex-col items-center justify-center gap-2 flex-1 cursor-pointer transition-all hover:bg-white/50 group/empty"
+                                      className="border border-dashed border-slate-300 hover:border-[#1B4D3E]/40 rounded-lg py-10 flex flex-col items-center justify-center gap-2 flex-1 cursor-pointer transition-all hover:bg-white/50 group/empty"
                                     >
                                       <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center group-hover/empty:bg-[#1B4D3E]/10 group-hover/empty:text-[#1B4D3E] transition-colors">
                                         <Plus size={16} />
@@ -1372,7 +1372,7 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                                 ) : (
                                   <>
                                     {!draggedStageId && draggedOverStageId === col.id && (
-                                      <div className="bg-slate-100/70 border-2 border-dashed border-[#1E3A8A]/30 rounded-xl h-28 w-full animate-pulse flex items-center justify-center">
+                                      <div className="bg-slate-100/70 border-2 border-dashed border-[#1E3A8A]/30 rounded-lg h-28 w-full animate-pulse flex items-center justify-center">
                                         <span className="text-[10px] font-black text-[#1E3A8A]/60 uppercase tracking-widest animate-pulse">Soltar aqui</span>
                                       </div>
                                     )}
@@ -1384,39 +1384,50 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                                           draggable
                                           onDragStart={(e) => handleDragStart(e, t.id)}
                                           onClick={() => setSelectedTask(t)}
-                                          className="p-3 bg-white border border-slate-200 hover:border-[#1E3A8A]/30 rounded-xl shadow-xs cursor-pointer hover:shadow-sm transition-all"
+                                          className="p-2 bg-white border border-slate-200 hover:border-[#1E3A8A]/30 rounded-lg shadow-xs cursor-pointer hover:shadow-sm transition-all h-[96px] flex flex-col justify-between"
                                         >
-                                          <div className="flex justify-between items-start gap-1.5 mb-1.5">
-                                            <span className="text-[9px] font-mono font-bold text-slate-400">
-                                              #{t.codigo || t.id.substring(0, 5)}
-                                            </span>
-                                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border ${getPriorityBadgeClass(t.prioridade)}`}>
+                                          {/* Top Row: Code + Title on the left, Priority on the right */}
+                                          <div className="flex justify-between items-start gap-1.5 min-w-0">
+                                            <div className="flex items-center gap-1 min-w-0">
+                                              <span className="text-[9px] font-mono font-bold text-slate-400 shrink-0">
+                                                #{t.codigo || t.id.substring(0, 5)}
+                                              </span>
+                                              <span className="text-slate-300 shrink-0 text-[10px]">-</span>
+                                              <h4 className="text-[11px] font-bold text-slate-800 truncate leading-none" title={t.titulo}>
+                                                {t.titulo}
+                                              </h4>
+                                            </div>
+                                            <span className={`px-1.5 py-[1px] rounded text-[7.5px] font-black uppercase tracking-wider border shrink-0 ${getPriorityBadgeClass(t.prioridade)}`}>
                                               {t.prioridade}
                                             </span>
                                           </div>
 
-                                          <h4 className="text-xs font-bold text-slate-800 line-clamp-2 leading-snug mb-2.5">
-                                            {t.titulo}
-                                          </h4>
+                                          {/* Task Tags list (limited to 2 items with clean overflow handling) */}
+                                          <div className="flex flex-wrap gap-0.5 my-0.5 overflow-hidden h-[15px] items-center">
+                                            {t.tags && t.tags.length > 0 && (
+                                              <>
+                                                {t.tags.slice(0, 2).map((tt: any) => (
+                                                  <span 
+                                                    key={tt.id} 
+                                                    style={{ backgroundColor: `${tt.tag?.color}15`, color: tt.tag?.color, borderColor: `${tt.tag?.color}35` }}
+                                                    className="text-[7.5px] font-black uppercase border px-1 py-[1px] rounded-md truncate max-w-[80px] leading-none"
+                                                  >
+                                                    {tt.tag?.nome}
+                                                  </span>
+                                                ))}
+                                                {t.tags.length > 2 && (
+                                                  <span className="text-[7.5px] font-bold text-slate-450 px-0.5 leading-none">
+                                                    +{t.tags.length - 2}
+                                                  </span>
+                                                )}
+                                              </>
+                                            )}
+                                          </div>
 
-                                          {/* Task Tags list */}
-                                          {t.tags && t.tags.length > 0 && (
-                                            <div className="flex flex-wrap gap-1 mb-2.5">
-                                              {t.tags.map((tt: any) => (
-                                                <span 
-                                                  key={tt.id} 
-                                                  style={{ backgroundColor: `${tt.tag?.color}15`, color: tt.tag?.color, borderColor: `${tt.tag?.color}35` }}
-                                                  className="text-[8px] font-black uppercase border px-1.5 py-0.5 rounded-md truncate max-w-[100px]"
-                                                >
-                                                  {tt.tag?.nome}
-                                                </span>
-                                              ))}
-                                            </div>
-                                          )}
-
-                                          <div className="flex justify-between items-center border-t border-slate-100 pt-2 text-[10px] font-semibold text-slate-500">
-                                            <span className={`px-2 py-0.5 rounded-lg border text-[9px] font-bold flex items-center gap-1 transition-all ${dl.badgeClass}`}>
-                                              <Calendar size={10} />
+                                          {/* Bottom Row: Deadline & Assignee */}
+                                          <div className="flex justify-between items-center border-t border-slate-100 pt-1.5 text-[9px] font-semibold text-slate-500">
+                                            <span className={`px-1.5 py-0.5 rounded-md border text-[8.5px] font-bold flex items-center gap-1 transition-all ${dl.badgeClass}`}>
+                                              <Calendar size={9} />
                                               <span>{dl.text}</span>
                                             </span>
                                             <div className="flex items-center gap-1 text-slate-550 shrink-0">
@@ -1424,12 +1435,12 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                                                 <img 
                                                   src={t.responsavel.avatarUrl} 
                                                   alt={t.responsavel.nome} 
-                                                  className="w-5 h-5 rounded-full object-cover border border-slate-200"
+                                                  className="w-[18px] h-[18px] rounded-full object-cover border border-slate-200"
                                                   title={t.responsavel.nome}
                                                 />
                                               ) : (
                                                 <div 
-                                                  className="w-5 h-5 rounded-full bg-slate-200 text-slate-650 flex items-center justify-center text-[8px] font-bold uppercase"
+                                                  className="w-[18px] h-[18px] rounded-full bg-slate-200 text-slate-650 flex items-center justify-center text-[7px] font-bold uppercase"
                                                   title={t.responsavel?.nome || 'Não delegado'}
                                                 >
                                                   {t.responsavel?.nome?.substring(0, 2).toUpperCase() || '?'}
