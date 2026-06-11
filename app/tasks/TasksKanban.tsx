@@ -1073,7 +1073,7 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                         <React.Fragment key={col.id}>
                           {viewMode === 'kanban-etapa' && draggedStageId && draggedOverBeforeStageId === col.id && (
                             <div 
-                              className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-slate-300 rounded-2xl h-[calc(100vh-300px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                              className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-slate-300 rounded-2xl h-[calc(100vh-52px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                               onDragOver={(e) => e.preventDefault()}
                               onDrop={() => handleDropStage(draggedStageId, col.id)}
                             >
@@ -1347,7 +1347,7 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                                 borderColor: borderRgba,
                                 borderWidth: '0 1px 1px 1px',
                                 borderStyle: 'solid',
-                                height: 'calc(100vh - 300px)',
+                                height: 'calc(100vh - 52px)',
                                 overflowY: 'auto',
                               }}
                             >
@@ -1460,7 +1460,7 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
 
                     {viewMode === 'kanban-etapa' && draggedStageId && draggedOverBeforeStageId === 'last' && (
                       <div 
-                        className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-slate-300 rounded-2xl h-[calc(100vh-300px)] flex items-center justify-center mx-1.5 transition-all duration-200"
+                        className="w-[274px] shrink-0 bg-slate-100/40 border-2 border-dashed border-slate-300 rounded-2xl h-[calc(100vh-52px)] flex items-center justify-center mx-1.5 transition-all duration-200"
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={() => handleDropStage(draggedStageId, 'last')}
                       >
@@ -1472,7 +1472,7 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
 
                     {viewMode === 'kanban-etapa' && (
                       <div 
-                        className="w-16 shrink-0 h-[calc(100vh-300px)] transition-all duration-200"
+                        className="w-16 shrink-0 h-[calc(100vh-52px)] transition-all duration-200"
                         onDragOver={(e) => {
                           e.preventDefault();
                           if (draggedStageId) {
