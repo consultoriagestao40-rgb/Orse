@@ -974,7 +974,7 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
           </div>
         ) : (
           /* ================= KANBAN BOARD VIEWS ================= */
-          <div className="pt-3 pb-6 pl-2 pr-1 bg-slate-50 min-w-max overflow-x-auto min-h-[calc(100vh-280px)]">
+          <div className="pt-3 pb-6 pl-2 pr-1 bg-slate-50 min-w-max min-h-[calc(100vh-280px)]">
             <div className="flex gap-[3px] select-none">
               {/* Kanban Modes Render */}
               {(() => {
