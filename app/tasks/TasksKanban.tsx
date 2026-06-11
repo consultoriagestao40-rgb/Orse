@@ -1352,15 +1352,6 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                               }}
                             >
                               <div className="flex flex-col gap-1.5">
-                                {/* Botão de Tarefa Rápida no topo da coluna */}
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenQuickCreate(col.id === 'unassigned' || col.id === 'no_tag' ? '' : col.id)}
-                                  className="w-full py-1.5 bg-slate-50 hover:bg-white text-slate-600 hover:text-slate-800 border border-slate-200 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all mb-1.5 cursor-pointer shadow-2xs hover:shadow-xs"
-                                >
-                                  <Plus size={11} className="text-[#1B4D3E] stroke-[3]" />
-                                  <span>Tarefa Rápida</span>
-                                </button>
 
                                 {col.tasks.length === 0 ? (
                                   !draggedStageId && draggedOverStageId === col.id ? (
