@@ -566,17 +566,17 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                         <table className="w-full text-left text-xs border-collapse">
                           <thead>
                             <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
-                              <th className="px-3 py-2.5 font-extrabold text-left first:rounded-l-lg">Item / Descrição</th>
-                              <th className="px-3 py-2.5 font-extrabold text-center w-28 last:rounded-r-lg">Status</th>
+                              <th className="px-3 py-2.5 font-extrabold text-left border-r border-white/10 last:border-r-0">Item / Descrição</th>
+                              <th className="px-3 py-2.5 font-extrabold text-center w-28 border-r border-white/10 last:border-r-0">Status</th>
                             </tr>
                           </thead>
                           <tbody className="font-semibold text-slate-700">
                             {(meta.itensInclusosExcluidos || []).map((item: any) => (
-                              <tr key={item.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-100/80">
-                                <td className="px-3 py-3 text-slate-800 font-bold">
+                              <tr key={item.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-100/80 transition-colors">
+                                <td className="px-3 py-3 text-slate-800 font-bold border-r border-slate-200/50 last:border-r-0">
                                   {item.descricao}
                                 </td>
-                                <td className="px-3 py-3 text-center">
+                                <td className="px-3 py-3 text-center border-r border-slate-200/50 last:border-r-0">
                                   <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase border ${
                                     item.incluso 
                                       ? 'bg-emerald-50 text-emerald-700 border-emerald-300/60' 
@@ -1005,23 +1005,23 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                     </colgroup>
                     <thead>
                       <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
-                        <th className="py-2.5 px-1 text-center w-10 first:rounded-l-lg">Item</th>
-                        <th className="py-2.5 px-3 text-left">Função / Cargo</th>
-                        <th className="py-2.5 px-3 text-center">Qtd</th>
-                        <th className="py-2.5 px-3 text-center">Escala</th>
-                        <th className="py-2.5 px-3 text-center">Entrada</th>
-                        <th className="py-2.5 px-3 text-center">Saída</th>
-                        <th className="py-2.5 px-3 text-left">Dias da Semana</th>
-                        <th className="py-2.5 px-1 text-center last:rounded-r-lg">Remover</th>
+                        <th className="py-2.5 px-1 text-center w-10 border-r border-white/10 last:border-r-0">Item</th>
+                        <th className="py-2.5 px-3 text-left border-r border-white/10 last:border-r-0">Função / Cargo</th>
+                        <th className="py-2.5 px-3 text-center border-r border-white/10 last:border-r-0">Qtd</th>
+                        <th className="py-2.5 px-3 text-center border-r border-white/10 last:border-r-0">Escala</th>
+                        <th className="py-2.5 px-3 text-center border-r border-white/10 last:border-r-0">Entrada</th>
+                        <th className="py-2.5 px-3 text-center border-r border-white/10 last:border-r-0">Saída</th>
+                        <th className="py-2.5 px-3 text-left border-r border-white/10 last:border-r-0">Dias da Semana</th>
+                        <th className="py-2.5 px-1 text-center border-r border-white/10 last:border-r-0">Remover</th>
                       </tr>
                     </thead>
                     <tbody className="font-semibold text-slate-700">
                       {funcionarios.map((emp, index) => (
                         <tr key={emp.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-100/80 transition-colors">
-                          <td className="py-3 px-1 text-center font-bold text-slate-400 select-none text-[11px]">
+                          <td className="py-3 px-1 text-center font-bold text-slate-400 select-none text-[11px] border-r border-slate-200/50 last:border-r-0">
                             {index + 1}
                           </td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0">
                             <input
                               type="text"
                               value={emp.funcao}
@@ -1029,7 +1029,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               className="w-full bg-transparent border-none outline-none focus:ring-0 text-slate-800 font-bold py-1 leading-normal text-xs"
                             />
                           </td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0">
                             <input
                               type="number"
                               value={emp.quantidade}
@@ -1037,7 +1037,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               className="w-full bg-transparent border-none outline-none focus:ring-0 text-slate-800 font-bold py-1 leading-normal text-xs text-center"
                             />
                           </td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0">
                             <select
                               value={emp.escala}
                               onChange={(e) => handleUpdateEmployee(index, 'escala', e.target.value)}
@@ -1049,7 +1049,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               <option value="4x2">4x2</option>
                             </select>
                           </td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0">
                             <input
                               type="text"
                               value={emp.horarioEntrada || '08:00'}
@@ -1057,7 +1057,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               className="w-full bg-transparent border-none outline-none focus:ring-0 text-slate-800 font-bold py-1 leading-normal text-xs text-center"
                             />
                           </td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0">
                             <input
                               type="text"
                               value={emp.horarioSaida || '17:00'}
@@ -1065,7 +1065,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               className="w-full bg-transparent border-none outline-none focus:ring-0 text-slate-800 font-bold py-1 leading-normal text-xs text-center"
                             />
                           </td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0">
                             <input
                               type="text"
                               value={emp.diasSemana || 'Segunda a Sexta'}
@@ -1073,7 +1073,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               className="w-full bg-transparent border-none outline-none focus:ring-0 text-slate-700 font-bold py-1 leading-normal text-xs"
                             />
                           </td>
-                          <td className="px-3 py-2 text-center">
+                          <td className="px-3 py-2 text-center border-r border-slate-200/50 last:border-r-0">
                             <button
                               type="button"
                               onClick={() => handleRemoveEmployee(index)}
@@ -1131,20 +1131,20 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                     </colgroup>
                     <thead>
                       <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
-                        <th className="py-2.5 px-1 text-center w-10 first:rounded-l-lg">Item</th>
-                        <th className="py-2.5 px-3 text-left">Nome do Equipamento</th>
-                        <th className="py-2.5 px-3 text-center">Quantidade</th>
-                        <th className="py-2.5 px-3 text-center">Tipo Alocação</th>
-                        <th className="py-2.5 px-1 text-center last:rounded-r-lg">Remover</th>
+                        <th className="py-2.5 px-1 text-center w-10 border-r border-white/10 last:border-r-0">Item</th>
+                        <th className="py-2.5 px-3 text-left border-r border-white/10 last:border-r-0">Nome do Equipamento</th>
+                        <th className="py-2.5 px-3 text-center border-r border-white/10 last:border-r-0">Quantidade</th>
+                        <th className="py-2.5 px-3 text-center border-r border-white/10 last:border-r-0">Tipo Alocação</th>
+                        <th className="py-2.5 px-1 text-center border-r border-white/10 last:border-r-0">Remover</th>
                       </tr>
                     </thead>
                     <tbody className="font-semibold text-slate-700">
                       {equipamentos.map((eq, index) => (
                         <tr key={eq.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-100/80 transition-colors">
-                          <td className="py-3 px-1 text-center font-bold text-slate-400 select-none text-[11px]">
+                          <td className="py-3 px-1 text-center font-bold text-slate-400 select-none text-[11px] border-r border-slate-200/50 last:border-r-0">
                             {index + 1}
                           </td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0">
                             <div className="flex items-center justify-between gap-2">
                               <input
                                 type="text"
@@ -1170,7 +1170,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               </button>
                             </div>
                           </td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0">
                             <input
                               type="number"
                               value={eq.quantidade}
@@ -1178,7 +1178,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               className="w-full bg-transparent border-none outline-none focus:ring-0 text-slate-800 font-bold py-1 leading-normal text-xs text-center"
                             />
                           </td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0">
                             <select
                               value={eq.tipo}
                               onChange={(e) => handleUpdateEquipment(index, 'tipo', e.target.value)}
@@ -1188,7 +1188,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               <option value="LOCADO">Locado</option>
                             </select>
                           </td>
-                          <td className="px-3 py-2 text-center">
+                          <td className="px-3 py-2 text-center border-r border-slate-200/50 last:border-r-0">
                             <button
                               type="button"
                               onClick={() => handleRemoveEquipment(index)}
@@ -1246,20 +1246,20 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                     </colgroup>
                     <thead>
                       <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
-                        <th className="py-2.5 px-1 text-center w-10 first:rounded-l-lg">Item</th>
-                        <th className="py-2.5 px-3 text-left">Nome do Material</th>
-                        <th className="py-2.5 px-3 text-center">Qtd</th>
-                        <th className="py-2.5 px-3 text-center">Unidade</th>
-                        <th className="py-2.5 px-1 text-center last:rounded-r-lg">Remover</th>
+                        <th className="py-2.5 px-1 text-center w-10 border-r border-white/10 last:border-r-0">Item</th>
+                        <th className="py-2.5 px-3 text-left border-r border-white/10 last:border-r-0">Nome do Material</th>
+                        <th className="py-2.5 px-3 text-center border-r border-white/10 last:border-r-0">Qtd</th>
+                        <th className="py-2.5 px-3 text-center border-r border-white/10 last:border-r-0">Unidade</th>
+                        <th className="py-2.5 px-1 text-center border-r border-white/10 last:border-r-0">Remover</th>
                       </tr>
                     </thead>
                     <tbody className="font-semibold text-slate-700">
                       {materiais.map((mat, index) => (
                         <tr key={mat.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-100/80 transition-colors">
-                          <td className="py-3 px-1 text-center font-bold text-slate-400 select-none text-[11px]">
+                          <td className="py-3 px-1 text-center font-bold text-slate-400 select-none text-[11px] border-r border-slate-200/50 last:border-r-0">
                             {index + 1}
                           </td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0">
                             <div className="flex items-center justify-between gap-2">
                               <input
                                 type="text"
@@ -1285,7 +1285,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               </button>
                             </div>
                           </td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0">
                             <input
                               type="number"
                               value={mat.quantidade}
@@ -1293,7 +1293,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               className="w-full bg-transparent border-none outline-none focus:ring-0 text-slate-800 font-bold py-1 leading-normal text-xs text-center"
                             />
                           </td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0">
                             <input
                               type="text"
                               value={mat.unidade || 'UN'}
@@ -1301,7 +1301,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               className="w-full bg-transparent border-none outline-none focus:ring-0 text-slate-800 font-bold py-1 leading-normal text-xs text-center"
                             />
                           </td>
-                          <td className="px-3 py-2 text-center">
+                          <td className="px-3 py-2 text-center border-r border-slate-200/50 last:border-r-0">
                             <button
                               type="button"
                               onClick={() => handleRemoveMaterial(index)}
@@ -1553,11 +1553,11 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                           </colgroup>
                           <thead>
                             <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
-                              <th className="py-2.5 px-1 text-center w-10 first:rounded-l-lg">Item</th>
-                              <th className="py-2.5 px-3 text-left">Descrição</th>
-                              <th className="py-2.5 px-3 text-center">Resp.</th>
-                              <th className="py-2.5 px-3 text-center">Prazo</th>
-                              <th className="py-2.5 px-1.5 text-center last:rounded-r-lg">Status</th>
+                              <th className="py-2.5 px-1 text-center w-10 border-r border-white/10 last:border-r-0">Item</th>
+                              <th className="py-2.5 px-3 text-left border-r border-white/10 last:border-r-0">Descrição</th>
+                              <th className="py-2.5 px-3 text-center border-r border-white/10 last:border-r-0">Resp.</th>
+                              <th className="py-2.5 px-3 text-center border-r border-white/10 last:border-r-0">Prazo</th>
+                              <th className="py-2.5 px-1.5 text-center border-r border-white/10 last:border-r-0">Status</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1574,10 +1574,10 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
 
                             {/* Campo de Cadastro Inline de Nova Ação */}
                             <tr className="bg-slate-50/20 border-b border-slate-100/80">
-                              <td className="py-3.5 px-1 text-center text-slate-400 font-bold text-xs select-none">
+                              <td className="py-3.5 px-1 text-center text-slate-400 font-bold text-xs select-none border-r border-slate-200/50">
                                 +
                               </td>
-                              <td className="py-2.5 px-3">
+                              <td className="py-2.5 px-3 border-r border-slate-200/50">
                                 <input
                                   type="text"
                                   placeholder="Escreva e adicione uma nova ação nesta área..."
@@ -1592,7 +1592,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                                   className="w-full bg-transparent border-none outline-none focus:ring-0 text-xs font-bold text-slate-700 py-1"
                                 />
                               </td>
-                              <td className="py-2.5 px-1 text-center" colSpan={3}>
+                              <td className="py-2.5 px-1 text-center last:border-r-0" colSpan={3}>
                                 <button
                                   onClick={() => handleAddAction(sec.id)}
                                   className="text-[9px] text-[#1E4663] font-black uppercase tracking-widest hover:text-[#153145] bg-[#1E4663]/8 px-3.5 py-2 rounded-xl border border-[#1E4663]/20 transition-colors cursor-pointer"
@@ -1746,12 +1746,12 @@ function ActionRow({ action, users, idx, handleUpdateAction, handleDeleteAction 
     <>
       <tr className={`hover:bg-slate-50/50 bg-white ${isCompleted ? 'bg-slate-50/10' : ''} border-b border-slate-100/80 transition-colors`}>
         {/* Número Sequencial / Item */}
-        <td className="py-3 px-1 text-center font-bold text-slate-400 select-none text-[11px]">
+        <td className="py-3 px-1 text-center font-bold text-slate-400 select-none text-[11px] border-r border-slate-200/50 last:border-r-0">
           {idx + 1}
         </td>
 
         {/* Descrição + Speech Bubble Button */}
-        <td className="py-2 px-3">
+        <td className="py-2 px-3 border-r border-slate-200/50 last:border-r-0">
           <div className="flex items-center justify-between gap-2">
             <input
               type="text"
@@ -1782,7 +1782,7 @@ function ActionRow({ action, users, idx, handleUpdateAction, handleDeleteAction 
         </td>
 
         {/* Responsável (Avatar Dropdown) */}
-        <td className="py-2 px-1 text-center relative">
+        <td className="py-2 px-1 text-center relative border-r border-slate-200/50 last:border-r-0">
           <div className="flex items-center justify-center">
             {avatarUrl ? (
               <img 
@@ -1814,7 +1814,7 @@ function ActionRow({ action, users, idx, handleUpdateAction, handleDeleteAction 
         </td>
 
         {/* Prazo Final */}
-        <td className="py-2 px-1 text-center">
+        <td className="py-2 px-1 text-center border-r border-slate-200/50 last:border-r-0">
           <input
             type="date"
             value={action.dataLimite ? new Date(action.dataLimite).toISOString().substring(0, 10) : ''}
@@ -1826,7 +1826,7 @@ function ActionRow({ action, users, idx, handleUpdateAction, handleDeleteAction 
         </td>
 
         {/* Status (Checkbox + Badge + Deletar) */}
-        <td className="py-2 px-1.5 text-center">
+        <td className="py-2 px-1.5 text-center border-r border-slate-200/50 last:border-r-0">
           <div className="flex items-center justify-center gap-2">
             {/* Toggle Conclusão */}
             <input
