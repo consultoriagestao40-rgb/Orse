@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  X, Calendar, User, Plus, Trash2, Paperclip, Send, 
+  X, Calendar, User, Plus, Trash2, Paperclip, Send, Copy,
   Tag, AlertTriangle, Users, Eye, History, MessageSquare,
   CheckCircle2, AlertCircle, FileText, Download, Check, Edit2,
   FileSpreadsheet, FileImage, File, Reply, CornerDownRight, FilePlus2
@@ -350,6 +350,42 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
         refreshData(true);
       }
     );
+  };
+
+  const cloneTask = async () => {
+    setIsSaving(true);
+    const res = await createTask({
+      titulo: `${titulo} (Cópia)`,
+      descricao: descricao || undefined,
+      stageId: stageId,
+      responsavelId: responsavelId || undefined,
+      vencimento: vencimento || undefined,
+      prioridade: prioridade,
+      tags: selectedTags,
+      participantes: selectedParticipants,
+      observadores: selectedObservers,
+    });
+
+    if (res.success && res.task) {
+      // Clone activities (subtasks)
+      if (atividades && atividades.length > 0) {
+        for (const act of atividades) {
+          await createTaskActivity(res.task.id, {
+            titulo: act.titulo,
+            descricao: act.descricao || undefined,
+            responsavelId: act.responsavelId || undefined,
+            vencimento: act.vencimento ? new Date(act.vencimento) : undefined,
+          });
+        }
+      }
+      setIsSaving(false);
+      showCustomAlert('Sucesso', 'Tarefa clonada com sucesso!');
+      onClose();
+      refreshData(true);
+    } else {
+      setIsSaving(false);
+      showCustomAlert('Erro', res.error || 'Erro ao clonar tarefa');
+    }
   };
 
   const handleSaveActivityTitulo = async (activityId: string) => {
@@ -1435,8 +1471,8 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
 
         {/* Fixed Footer Bar */}
         <div className="h-16 px-6 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0 z-10">
-          {/* Left Side: Delete (if not completed) */}
-          <div>
+          {/* Left Side: Delete & Clone */}
+          <div className="flex items-center gap-2">
             {!isCompleted && (
               <button
                 type="button"
@@ -1460,6 +1496,14 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                 <Trash2 size={13} /> Excluir Tarefa
               </button>
             )}
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={cloneTask}
+              className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 bg-white text-slate-655 rounded-xl text-xs font-bold hover:bg-slate-50 disabled:opacity-50 transition-colors cursor-pointer"
+            >
+              <Copy size={13} /> Clonar Tarefa
+            </button>
           </div>
 
           {/* Right Side: Actions */}
