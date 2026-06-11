@@ -1631,7 +1631,7 @@ function ActionRow({ action, users, idx, handleUpdateAction, handleDeleteAction 
               className="flex items-center gap-1 p-1 rounded transition-colors text-slate-400 hover:text-[#1E4663] hover:bg-slate-100 cursor-pointer shrink-0 mt-0.5"
               title="Anotações / Observações da Ação"
             >
-              <MessageSquare size={14} className={localObservacao ? 'text-[#1E4663]' : 'text-slate-305'} />
+              <MessageSquare size={14} className={localObservacao ? 'text-[#1E4663]' : 'text-slate-300'} />
               {localObservacao && (
                 <span className="w-1.5 h-1.5 bg-[#1E4663] rounded-full shrink-0" />
               )}
