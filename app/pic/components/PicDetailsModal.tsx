@@ -39,6 +39,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
   const [saving, setSaving] = useState(false);
   const [pic, setPic] = useState<any>(null);
   const [summaryGrouping, setSummaryGrouping] = useState<'area' | 'responsavel'>('area');
+  const [activeObservationEdit, setActiveObservationEdit] = useState<any | null>(null);
 
   // Aba 1 - Identificação
   const [anotacoes, setAnotacoes] = useState('');
