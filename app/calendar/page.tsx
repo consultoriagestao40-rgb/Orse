@@ -169,7 +169,7 @@ export default function CalendarPage() {
                                 className="text-[10px] bg-[#1B4D3E] text-white p-1 rounded font-medium leading-tight truncate px-1.5 cursor-pointer hover:opacity-80 transition-opacity" 
                                 title={a.titulo}
                               >
-                                {timeStr} - {a.lead?.nomeFantasia || a.titulo}
+                                {timeStr} - {a.lead?.nomeFantasia || a.task?.titulo || a.titulo}
                               </div>
                             );
                           })}
@@ -239,6 +239,15 @@ export default function CalendarPage() {
                     <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1">Lead Associado</h4>
                     <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl">
                       <p className="font-bold text-emerald-900">{showViewModal.lead.nomeFantasia}</p>
+                    </div>
+                  </div>
+                )}
+                
+                {showViewModal.task && (
+                  <div>
+                    <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1">Tarefa Associada</h4>
+                    <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl">
+                      <p className="font-bold text-blue-900">{showViewModal.task.titulo}</p>
                     </div>
                   </div>
                 )}

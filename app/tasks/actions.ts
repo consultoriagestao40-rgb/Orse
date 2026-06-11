@@ -746,3 +746,94 @@ export async function downloadTaskAttachment(attachmentId: string) {
     return { success: false, error: error.message };
   }
 }
+
+// ================= CALENDAR EVENTS (REUNIÕES DA TAREFA) =================
+export async function getTaskMeetings(taskId: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const meetings = await prisma.activity.findMany({
+      where: {
+        taskId,
+        tenantId: user.tenantId
+      },
+      include: {
+        user: { select: { nome: true, avatarUrl: true } }
+      },
+      orderBy: { dataInicio: 'asc' }
+    });
+    return { success: true, meetings };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function createTaskMeeting(taskId: string, data: {
+  titulo: string;
+  descricao?: string;
+  dataInicio: string | Date;
+  dataFim: string | Date;
+}) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const meeting = await prisma.activity.create({
+      data: {
+        taskId,
+        titulo: data.titulo,
+        descricao: data.descricao || null,
+        tipo: 'REUNIAO',
+        dataInicio: new Date(data.dataInicio),
+        dataFim: new Date(data.dataFim),
+        userId: user.id,
+        tenantId: user.tenantId
+      }
+    });
+
+    await prisma.taskHistory.create({
+      data: {
+        taskId,
+        tipo: 'OUTRO',
+        descricao: `Reunião "${data.titulo}" agendada por ${user.nome}`
+      }
+    });
+
+    revalidatePath('/tasks');
+    revalidatePath('/calendar');
+    return { success: true, meeting };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteTaskMeeting(meetingId: string, taskId: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const meeting = await prisma.activity.findFirst({
+      where: { id: meetingId, tenantId: user.tenantId }
+    });
+    if (!meeting) return { success: false, error: 'Reunião não encontrada' };
+
+    await prisma.activity.delete({
+      where: { id: meetingId }
+    });
+
+    await prisma.taskHistory.create({
+      data: {
+        taskId,
+        tipo: 'OUTRO',
+        descricao: `Reunião "${meeting.titulo}" desmarcada por ${user.nome}`
+      }
+    });
+
+    revalidatePath('/tasks');
+    revalidatePath('/calendar');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

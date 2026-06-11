@@ -670,7 +670,7 @@ export async function getActivities(leadId?: string) {
     whereClause.tenantId = user.tenantId;
     const activities = await prisma.activity.findMany({
       where: whereClause,
-      include: { user: { select: { nome: true } }, lead: { select: { nomeFantasia: true } } },
+      include: { user: { select: { nome: true } }, lead: { select: { nomeFantasia: true } }, task: { select: { titulo: true } } },
       orderBy: { dataInicio: 'asc' }
     });
     return { success: true, activities };

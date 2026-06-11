@@ -10,7 +10,8 @@ import {
   updateTaskObservers, updateTaskTags, createTenantTag, 
   deleteTenantTag, getTenantTags, createTaskActivity, 
   toggleTaskActivity, deleteTaskActivity, updateTaskActivity, addTaskComment, 
-  uploadTaskAttachment, downloadTaskAttachment 
+  uploadTaskAttachment, downloadTaskAttachment,
+  getTaskMeetings, createTaskMeeting, deleteTaskMeeting
 } from '../actions';
 
 const themeColorsGrid = [
@@ -113,6 +114,16 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
   const delegarPopoverRef = useRef<HTMLDivElement>(null);
   const [showResponsavelPopover, setShowResponsavelPopover] = useState(false);
   const responsavelPopoverRef = useRef<HTMLDivElement>(null);
+
+  // Meetings states
+  const [meetings, setMeetings] = useState<any[]>([]);
+  const [meetingTitulo, setMeetingTitulo] = useState('');
+  const [meetingDescricao, setMeetingDescricao] = useState('');
+  const [meetingData, setMeetingData] = useState('');
+  const [meetingHoraInicio, setMeetingHoraInicio] = useState('');
+  const [meetingHoraFim, setMeetingHoraFim] = useState('');
+  const [isAddingMeeting, setIsAddingMeeting] = useState(false);
+  const [isSavingMeeting, setIsSavingMeeting] = useState(false);
 
   // Inline activity editing states
   const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
@@ -386,6 +397,73 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
       setIsSaving(false);
       showCustomAlert('Erro', res.error || 'Erro ao clonar tarefa');
     }
+  };
+
+  useEffect(() => {
+    loadMeetings();
+  }, [task.id]);
+
+  const loadMeetings = async () => {
+    const res = await getTaskMeetings(task.id);
+    if (res.success && res.meetings) {
+      setMeetings(res.meetings);
+    }
+  };
+
+  const handleCreateMeeting = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!meetingTitulo.trim() || !meetingData || !meetingHoraInicio || !meetingHoraFim) {
+      showCustomAlert('Erro', 'Preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    const dataInicioStr = `${meetingData}T${meetingHoraInicio}:00`;
+    const dataFimStr = `${meetingData}T${meetingHoraFim}:00`;
+    const dataInicio = new Date(dataInicioStr);
+    const dataFim = new Date(dataFimStr);
+
+    if (dataFim <= dataInicio) {
+      showCustomAlert('Erro', 'O horário de término deve ser após o horário de início.');
+      return;
+    }
+
+    setIsSavingMeeting(true);
+    const res = await createTaskMeeting(task.id, {
+      titulo: meetingTitulo.trim(),
+      descricao: meetingDescricao.trim() || undefined,
+      dataInicio: dataInicio.toISOString(),
+      dataFim: dataFim.toISOString()
+    });
+
+    setIsSavingMeeting(false);
+    if (res.success) {
+      setMeetingTitulo('');
+      setMeetingDescricao('');
+      setMeetingData('');
+      setMeetingHoraInicio('');
+      setMeetingHoraFim('');
+      setIsAddingMeeting(false);
+      await loadMeetings();
+      refreshData(true);
+    } else {
+      showCustomAlert('Erro', res.error || 'Erro ao criar compromisso');
+    }
+  };
+
+  const handleDeleteMeeting = async (meetingId: string) => {
+    showCustomConfirm(
+      'Desmarcar Compromisso',
+      'Deseja realmente cancelar este compromisso?',
+      async () => {
+        const res = await deleteTaskMeeting(meetingId, task.id);
+        if (res.success) {
+          await loadMeetings();
+          refreshData(true);
+        } else {
+          showCustomAlert('Erro', res.error || 'Erro ao desmarcar compromisso');
+        }
+      }
+    );
   };
 
   const handleSaveActivityTitulo = async (activityId: string) => {
@@ -916,7 +994,166 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
                   <Plus size={14} /> Adicionar Atividade
                 </button>
               )}
-            </div>           </div>
+            </div>
+
+            {/* Calendar Events (Reuniões da Tarefa) */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <Calendar size={14} /> Reuniões no Calendário
+                </h4>
+                {!isCompleted && !isAddingMeeting && (
+                  <button
+                    onClick={() => setIsAddingMeeting(true)}
+                    className="flex items-center gap-1 text-[11px] font-bold text-[#1B4D3E] hover:underline border-none bg-transparent cursor-pointer"
+                  >
+                    <Plus size={12} /> Agendar
+                  </button>
+                )}
+              </div>
+
+              {/* Novo Evento Form */}
+              {isAddingMeeting && (
+                <form onSubmit={handleCreateMeeting} className="mb-4 bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
+                  <div className="flex justify-between items-center border-b border-slate-150 pb-2 mb-2">
+                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Agendar Nova Reunião</span>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setIsAddingMeeting(false);
+                        setMeetingTitulo('');
+                        setMeetingDescricao('');
+                        setMeetingData('');
+                        setMeetingHoraInicio('');
+                        setMeetingHoraFim('');
+                      }} 
+                      className="text-slate-400 hover:text-rose-600 border-none bg-transparent cursor-pointer"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Título *</label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={meetingTitulo} 
+                      onChange={e => setMeetingTitulo(e.target.value)} 
+                      className="w-full border border-slate-200 rounded-xl p-2 text-xs outline-none focus:border-[#1B4D3E] bg-white font-semibold text-slate-700" 
+                      placeholder="Ex: Reunião de Alinhamento da Tarefa"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Data *</label>
+                      <input 
+                        type="date" 
+                        required 
+                        value={meetingData} 
+                        onChange={e => setMeetingData(e.target.value)} 
+                        className="w-full border border-slate-200 rounded-xl p-2 text-xs outline-none focus:border-[#1B4D3E] bg-white font-semibold text-slate-700" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Início *</label>
+                      <input 
+                        type="time" 
+                        required 
+                        value={meetingHoraInicio} 
+                        onChange={e => setMeetingHoraInicio(e.target.value)} 
+                        className="w-full border border-slate-200 rounded-xl p-2 text-xs outline-none focus:border-[#1B4D3E] bg-white font-semibold text-slate-700" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Fim *</label>
+                      <input 
+                        type="time" 
+                        required 
+                        value={meetingHoraFim} 
+                        onChange={e => setMeetingHoraFim(e.target.value)} 
+                        className="w-full border border-slate-200 rounded-xl p-2 text-xs outline-none focus:border-[#1B4D3E] bg-white font-semibold text-slate-700" 
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Descrição</label>
+                    <textarea 
+                      value={meetingDescricao} 
+                      onChange={e => setMeetingDescricao(e.target.value)} 
+                      className="w-full border border-slate-200 rounded-xl p-2 text-xs outline-none focus:border-[#1B4D3E] bg-white font-semibold text-slate-700 resize-none" 
+                      rows={2} 
+                      placeholder="Pauta da reunião, link da videochamada, etc..."
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2 border-t border-slate-150">
+                    <button 
+                      type="button" 
+                      onClick={() => setIsAddingMeeting(false)} 
+                      className="px-3 py-1.5 border border-slate-200 bg-white text-slate-500 rounded-xl text-xs font-bold hover:bg-slate-50 cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      type="submit" 
+                      disabled={isSavingMeeting} 
+                      className="px-4 py-1.5 bg-[#1B4D3E] hover:bg-[#13382d] text-white rounded-xl text-xs font-bold disabled:opacity-50 cursor-pointer"
+                    >
+                      {isSavingMeeting ? 'Salvando...' : 'Confirmar'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* List of Meetings */}
+              {meetings && meetings.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {meetings.map((meeting: any) => {
+                    const dateObj = new Date(meeting.dataInicio);
+                    const dateEndObj = new Date(meeting.dataFim);
+                    const dateStr = !isNaN(dateObj.getTime()) ? dateObj.toLocaleDateString('pt-BR') : '';
+                    const timeStr = !isNaN(dateObj.getTime()) ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+                    const timeEndStr = !isNaN(dateEndObj.getTime()) ? dateEndObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+                    return (
+                      <div key={meeting.id} className="p-2.5 border border-slate-200 rounded-xl flex items-center justify-between bg-white hover:border-[#1B4D3E]/30 transition-colors shadow-xs">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-9 h-9 rounded-lg bg-[#1B4D3E]/5 border border-[#1B4D3E]/10 flex items-center justify-center shrink-0 text-[#1B4D3E]">
+                            <Calendar size={16} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-bold text-slate-700 truncate">{meeting.titulo}</p>
+                            <p className="text-[9px] text-slate-400 font-semibold flex items-center gap-1.5 flex-wrap">
+                              <span>{dateStr} às {timeStr} - {timeEndStr}</span>
+                              <span className="text-slate-300">•</span>
+                              <span>Organizado por {meeting.user?.nome || 'Sistema'}</span>
+                            </p>
+                            {meeting.descricao && (
+                              <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5 max-w-[450px]" title={meeting.descricao}>
+                                {meeting.descricao}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {!isCompleted && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMeeting(meeting.id)}
+                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl border-none bg-transparent cursor-pointer"
+                            title="Desmarcar Reunião"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                !isAddingMeeting && (
+                  <p className="text-[10px] text-slate-450 font-semibold italic">Nenhum compromisso agendado para esta tarefa.</p>
+                )
+              )}
+            </div>
+          </div>
 
             {/* Attachments (Anexos) */}
             <div>
