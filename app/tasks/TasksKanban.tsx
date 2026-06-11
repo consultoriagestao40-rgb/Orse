@@ -1393,7 +1393,7 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                                                 #{t.codigo || t.id.substring(0, 5)}
                                               </span>
                                               <span className="text-slate-300 shrink-0 text-[10px]">-</span>
-                                              <h4 className="text-[11px] font-bold text-slate-800 truncate leading-none" title={t.titulo}>
+                                              <h4 className="text-xs font-bold text-slate-800 truncate leading-none" title={t.titulo}>
                                                 {t.titulo}
                                               </h4>
                                             </div>
