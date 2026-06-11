@@ -27,6 +27,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [pic, setPic] = useState<any>(null);
+  const [summaryGrouping, setSummaryGrouping] = useState<'area' | 'responsavel'>('area');
 
   // Aba 1 - Identificação
   const [anotacoes, setAnotacoes] = useState('');
@@ -303,11 +304,12 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
   // ---------------------------------------------------------------------------
 
   const calculateProgress = () => {
-    if (!pic || !pic.secoes) return { total: 0, completed: 0, percent: 0, sections: [] };
+    if (!pic || !pic.secoes) return { total: 0, completed: 0, percent: 0, sections: [], responsibles: [] };
 
     let totalActions = 0;
     let completedActions = 0;
     const sectionsProgress: any[] = [];
+    const responsiblesProgressMap: Record<string, { nome: string; completed: number; total: number; avatarUrl?: string }> = {};
 
     for (const s of pic.secoes) {
       const act = s.acoes || [];
@@ -325,14 +327,54 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
         completed: c,
         percent: pct
       });
+
+      for (const a of act) {
+        const respId = a.responsavelId || 'unassigned';
+        const respName = a.responsavel?.nome || 'Sem Responsável';
+        const avatar = a.responsavel?.avatarUrl;
+        
+        if (!responsiblesProgressMap[respId]) {
+          responsiblesProgressMap[respId] = {
+            nome: respName,
+            completed: 0,
+            total: 0,
+            avatarUrl: avatar
+          };
+        }
+        
+        responsiblesProgressMap[respId].total += 1;
+        if (a.status === 'CONCLUIDA') {
+          responsiblesProgressMap[respId].completed += 1;
+        }
+      }
     }
+
+    const responsiblesProgress = Object.entries(responsiblesProgressMap).map(([id, data]) => {
+      const pct = data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0;
+      return {
+        id,
+        nome: data.nome,
+        completed: data.completed,
+        total: data.total,
+        percent: pct,
+        avatarUrl: data.avatarUrl
+      };
+    });
+
+    // Sort responsibles by name (with Sem Responsável last)
+    responsiblesProgress.sort((a, b) => {
+      if (a.id === 'unassigned') return 1;
+      if (b.id === 'unassigned') return -1;
+      return a.nome.localeCompare(b.nome);
+    });
 
     const percent = totalActions > 0 ? Math.round((completedActions / totalActions) * 100) : 0;
     return {
       total: totalActions,
       completed: completedActions,
       percent,
-      sections: sectionsProgress
+      sections: sectionsProgress,
+      responsibles: responsiblesProgress
     };
   };
 
@@ -1098,29 +1140,92 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   </div>
                 </div>
 
-                {/* Progress bars por seção */}
+                {/* Progress bars por seção/responsável */}
                 <div className="flex-1 w-full space-y-3">
-                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                    Resumo do Progresso por Área ({progress.completed}/{progress.total} Ações)
-                  </h4>
+                  <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-2">
+                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                      {summaryGrouping === 'area'
+                        ? `Resumo do Progresso por Área (${progress.completed}/${progress.total} Ações)`
+                        : `Resumo do Progresso por Responsável (${progress.completed}/${progress.total} Ações)`
+                      }
+                    </h4>
+                    
+                    {/* Botão de Alternar Visão */}
+                    <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200 shrink-0 select-none">
+                      <button
+                        type="button"
+                        onClick={() => setSummaryGrouping('area')}
+                        className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-md transition-all cursor-pointer ${
+                          summaryGrouping === 'area'
+                            ? 'bg-[#1B4D3E] text-white shadow-xs'
+                            : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        Área
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSummaryGrouping('responsavel')}
+                        className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-md transition-all cursor-pointer ${
+                          summaryGrouping === 'responsavel'
+                            ? 'bg-[#1B4D3E] text-white shadow-xs'
+                            : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        Responsável
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {progress.sections.map((sec: any) => (
-                      <div key={sec.id} className="bg-slate-50 border border-slate-200 rounded-xl p-3">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-[10px] font-black text-slate-600 uppercase tracking-wider">{sec.nome}</span>
-                          <span className="text-[10px] font-extrabold text-[#1B4D3E]">{sec.percent}%</span>
+                    {summaryGrouping === 'area' ? (
+                      progress.sections.map((sec: any) => (
+                        <div key={sec.id} className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-[10px] font-black text-slate-600 uppercase tracking-wider">{sec.nome}</span>
+                            <span className="text-[10px] font-extrabold text-[#1B4D3E]">{sec.percent}%</span>
+                          </div>
+                          <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                            <div 
+                              className="bg-[#1B4D3E] h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${sec.percent}%` }}
+                            />
+                          </div>
+                          <span className="text-[9px] font-bold text-slate-400 block mt-1 uppercase">
+                            {sec.completed}/{sec.total} completas
+                          </span>
                         </div>
-                        <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                          <div 
-                            className="bg-[#1B4D3E] h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${sec.percent}%` }}
-                          />
+                      ))
+                    ) : (
+                      progress.responsibles.map((resp: any) => (
+                        <div key={resp.id} className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col justify-between">
+                          <div>
+                            <div className="flex justify-between items-center mb-1">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                {resp.avatarUrl ? (
+                                  <img src={resp.avatarUrl} alt={resp.nome} className="w-4.5 h-4.5 rounded-full object-cover shrink-0" />
+                                ) : (
+                                  <div className="w-4.5 h-4.5 rounded-full bg-[#1B4D3E]/10 flex items-center justify-center text-[6.5px] font-black text-[#1B4D3E] uppercase shrink-0 border border-slate-200">
+                                    {resp.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                                  </div>
+                                )}
+                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-wider truncate">{resp.nome}</span>
+                              </div>
+                              <span className="text-[10px] font-extrabold text-[#1B4D3E]">{resp.percent}%</span>
+                            </div>
+                            <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                              <div 
+                                className="bg-[#1B4D3E] h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${resp.percent}%` }}
+                              />
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-bold text-slate-400 block mt-1 uppercase">
+                            {resp.completed}/{resp.total} completas
+                          </span>
                         </div>
-                        <span className="text-[9px] font-bold text-slate-400 block mt-1 uppercase">
-                          {sec.completed}/{sec.total} completas
-                        </span>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
 
