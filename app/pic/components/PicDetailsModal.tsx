@@ -562,8 +562,8 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
 
                     <div>
                       <span className="text-[10px] text-slate-400 uppercase block font-black mb-1.5">Itens Inclusos e Excluídos</span>
-                      <div className="overflow-x-auto mt-1">
-                        <table className="w-full text-left text-xs">
+                      <div className="overflow-x-auto border border-slate-200/80 rounded-xl overflow-hidden mt-1 bg-white">
+                        <table className="w-full text-left text-xs border-collapse">
                           <thead>
                             <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
                               <th className="px-3 py-2.5 font-extrabold text-left first:rounded-l-lg">Item / Descrição</th>
@@ -991,8 +991,8 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   </button>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs select-text table-fixed mt-0">
+                <div className="overflow-x-auto border border-slate-200/80 rounded-xl overflow-hidden bg-white">
+                  <table className="w-full text-xs select-text table-fixed mt-0 border-collapse">
                     <colgroup>
                       <col style={{ width: '6%' }} />
                       <col style={{ width: '30%' }} />
@@ -1120,8 +1120,8 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   </button>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs select-text table-fixed mt-0">
+                <div className="overflow-x-auto border border-slate-200/80 rounded-xl overflow-hidden bg-white">
+                  <table className="w-full text-xs select-text table-fixed mt-0 border-collapse">
                     <colgroup>
                       <col style={{ width: '6%' }} />
                       <col style={{ width: '56%' }} />
@@ -1235,8 +1235,8 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   </button>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs select-text table-fixed mt-0">
+                <div className="overflow-x-auto border border-slate-200/80 rounded-xl overflow-hidden bg-white">
+                  <table className="w-full text-xs select-text table-fixed mt-0 border-collapse">
                     <colgroup>
                       <col style={{ width: '6%' }} />
                       <col style={{ width: '56%' }} />
@@ -1542,8 +1542,8 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       </div>
 
                       {/* Tabela de Ações */}
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-xs select-text table-fixed mt-0">
+                      <div className="overflow-x-auto border border-slate-200/80 rounded-xl overflow-hidden bg-white">
+                        <table className="w-full text-xs select-text table-fixed mt-0 border-collapse">
                           <colgroup>
                             <col style={{ width: '6%' }} />
                             <col style={{ width: '58%' }} />
