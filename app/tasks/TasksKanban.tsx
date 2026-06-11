@@ -1427,70 +1427,82 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                                           draggable
                                           onDragStart={(e) => handleDragStart(e, t.id)}
                                           onClick={() => setSelectedTask(t)}
-                                          className="p-3.5 bg-white border border-slate-200 hover:border-[#1B4D3E]/30 rounded-xl shadow-xs cursor-pointer hover:shadow-md hover:translate-y-[-2px] transition-all min-h-[124px] flex flex-col justify-between gap-2"
+                                          className="p-2.5 bg-white border border-slate-200 hover:border-[#1B4D3E]/30 rounded-lg shadow-xs cursor-pointer hover:shadow-sm h-[96px] flex flex-col justify-between"
                                         >
-                                          {/* Top Row: Code + Tag Name on the left, Priority on the right */}
-                                          <div className="flex justify-between items-center text-[10px] font-extrabold uppercase tracking-wider text-slate-400 min-w-0">
-                                            <div className="flex items-center gap-1 min-w-0">
-                                              <span className="font-mono text-slate-400">
+                                          {/* Top Row: Code + Title inline, Priority badge on the right */}
+                                          <div className="flex justify-between items-start gap-2 min-w-0">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                              <span className="text-[10px] font-extrabold font-mono text-slate-400 shrink-0">
                                                 #{t.codigo || t.id.substring(0, 5)}
                                               </span>
                                               {t.recorrente && (
                                                 <RefreshCw size={9} className="text-[#1B4D3E] shrink-0" title="Tarefa Recorrente" />
                                               )}
-                                              {t.tags && t.tags.length > 0 && (
-                                                <>
-                                                  <span className="text-slate-300">•</span>
-                                                  <span style={{ color: t.tags[0].tag?.color }} className="truncate max-w-[100px]">
-                                                    {t.tags[0].tag?.nome}
-                                                  </span>
-                                                </>
-                                              )}
+                                              <h4 className="text-[11.5px] font-bold text-slate-800 truncate leading-tight" title={t.titulo}>
+                                                {t.titulo}
+                                              </h4>
                                             </div>
-                                            <span className={`px-1.5 py-[1.5px] rounded text-[8.5px] font-black uppercase tracking-wider border shrink-0 ${getPriorityBadgeClass(t.prioridade)}`}>
+                                            <span className={`px-1.5 py-[1px] rounded text-[8px] font-black uppercase tracking-wider border shrink-0 ${getPriorityBadgeClass(t.prioridade)}`}>
                                               {t.prioridade}
                                             </span>
                                           </div>
 
-                                          {/* Middle Area: Title & Subtasks progress */}
-                                          <div className="flex-1 min-w-0 flex flex-col gap-1.5 justify-center py-1">
-                                            <h4 className="text-[12.5px] font-bold text-slate-800 leading-snug line-clamp-2" title={t.titulo}>
-                                              {t.titulo}
-                                            </h4>
-                                            
+                                          {/* Middle Row: Tags and Checklist progress */}
+                                          <div className="flex items-center justify-between gap-2 my-0.5">
+                                            <div className="flex gap-1 overflow-hidden min-w-0">
+                                              {t.tags && t.tags.length > 0 && (
+                                                <>
+                                                  {t.tags.slice(0, 2).map((tt: any) => (
+                                                    <span 
+                                                      key={tt.id} 
+                                                      style={{ backgroundColor: `${tt.tag?.color}15`, color: tt.tag?.color, borderColor: `${tt.tag?.color}35` }}
+                                                      className="text-[8px] font-extrabold uppercase border px-1.5 py-[1px] rounded-md truncate max-w-[85px] leading-none shrink-0"
+                                                    >
+                                                      {tt.tag?.nome}
+                                                    </span>
+                                                  ))}
+                                                  {t.tags.length > 2 && (
+                                                    <span className="text-[8px] font-bold text-slate-400 shrink-0 self-center">
+                                                      +{t.tags.length - 2}
+                                                    </span>
+                                                  )}
+                                                </>
+                                              )}
+                                            </div>
+
                                             {t.atividades && t.atividades.length > 0 && (
-                                              <div className="flex items-center gap-1 mt-0.5 text-[9.5px] font-bold text-slate-500">
-                                                <CheckCircle2 size={10} className="text-slate-400 shrink-0" />
+                                              <div className="flex items-center gap-1 text-[9px] font-extrabold text-slate-450 shrink-0 uppercase tracking-wider">
+                                                <CheckCircle2 size={10} className="text-slate-400" />
                                                 <span>
-                                                  {t.atividades.filter((a: any) => a.concluida).length}/{t.atividades.length} Subtarefas
+                                                  {t.atividades.filter((a: any) => a.concluida).length}/{t.atividades.length}
                                                 </span>
                                               </div>
                                             )}
                                           </div>
 
                                           {/* Bottom Row: Assignee Info & Deadline */}
-                                          <div className="flex justify-between items-center border-t border-slate-100 pt-2 text-[10px] font-semibold text-slate-500">
+                                          <div className="flex justify-between items-center border-t border-slate-100 pt-1.5 text-[9.5px] font-semibold text-slate-500">
                                             <div className="flex items-center gap-1.5 min-w-0">
                                               {t.responsavel?.avatarUrl ? (
                                                 <img 
                                                   src={t.responsavel.avatarUrl} 
                                                   alt={t.responsavel.nome} 
-                                                  className="w-[20px] h-[20px] rounded-full object-cover border border-slate-200 shrink-0"
+                                                  className="w-[18px] h-[18px] rounded-full object-cover border border-slate-200 shrink-0"
                                                   title={t.responsavel.nome}
                                                 />
                                               ) : (
                                                 <div 
-                                                  className="w-[20px] h-[20px] rounded-full bg-[#1B4D3E]/10 text-[#1B4D3E] flex items-center justify-center text-[9px] font-bold uppercase shrink-0"
+                                                  className="w-[18px] h-[18px] rounded-full bg-[#1B4D3E]/10 text-[#1B4D3E] flex items-center justify-center text-[9px] font-black uppercase shrink-0"
                                                   title={t.responsavel?.nome || 'Não delegado'}
                                                 >
                                                   {t.responsavel?.nome?.substring(0, 2).toUpperCase() || '?'}
                                                 </div>
                                               )}
-                                              <span className="text-[10px] font-bold text-slate-500 truncate" title={t.responsavel?.nome}>
+                                              <span className="text-[9.5px] font-bold text-slate-600 truncate" title={t.responsavel?.nome}>
                                                 {t.responsavel ? t.responsavel.nome.split(' ')[0] : 'Não delegado'}
                                               </span>
                                             </div>
-                                            <span className={`px-1.5 py-0.5 rounded-md border text-[9.5px] font-bold flex items-center gap-1 transition-all shrink-0 ${dl.badgeClass}`}>
+                                            <span className={`px-1.5 py-0.5 rounded-md border text-[9px] font-bold flex items-center gap-1 transition-all shrink-0 ${dl.badgeClass}`}>
                                               <Calendar size={10} />
                                               <span>{dl.text}</span>
                                             </span>
