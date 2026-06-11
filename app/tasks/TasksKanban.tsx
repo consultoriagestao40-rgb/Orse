@@ -940,15 +940,13 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
                         {/* Atividade Column */}
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-2">
-                            {totalAct > 0 && (
+                            {(t.unreadActivitiesCount || 0) > 0 && (
                               <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white shrink-0 ${
-                                pendingAct === 0 
-                                  ? 'bg-emerald-500' 
-                                  : t.atividades.some((a: any) => !a.concluida && a.vencimento && new Date(a.vencimento).getTime() < Date.now())
-                                    ? 'bg-rose-500'
-                                    : 'bg-slate-400'
+                                t.vencimento && new Date(t.vencimento).getTime() < Date.now() && t.status !== 'CONCLUIDA'
+                                  ? 'bg-rose-500'
+                                  : 'bg-slate-400'
                               }`}>
-                                {pendingAct}
+                                {t.unreadActivitiesCount}
                               </span>
                             )}
                             <span className="text-xs text-slate-500 font-semibold">

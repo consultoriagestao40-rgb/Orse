@@ -250,7 +250,25 @@ export async function getTasks(filters?: {
       orderBy: { createdAt: 'desc' }
     });
 
-    return { success: true, tasks };
+    // Fetch user's viewed timestamps
+    const taskViews = await prisma.taskView.findMany({
+      where: { userId: user.id }
+    });
+    const viewMap = new Map(taskViews.map(v => [v.taskId, v.viewedAt]));
+
+    const tasksWithUnread = tasks.map((t: any) => {
+      const viewedAt = viewMap.get(t.id);
+      const unreadCount = t.history.filter((h: any) => 
+        h.userId !== user.id && 
+        new Date(h.createdAt).getTime() > (viewedAt ? new Date(viewedAt).getTime() : 0)
+      ).length;
+      return {
+        ...t,
+        unreadActivitiesCount: unreadCount
+      };
+    });
+
+    return { success: true, tasks: tasksWithUnread };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -370,7 +388,8 @@ export async function createTask(data: {
       data: {
         taskId: task.id,
         tipo: 'CRIACAO',
-        descricao: `Tarefa criada por ${user.nome}`
+        descricao: `Tarefa criada por ${user.nome}`,
+        userId: user.id
       }
     });
 
@@ -600,7 +619,8 @@ export async function updateTask(taskId: string, data: {
       data: {
         taskId,
         tipo: 'ALTERACAO_DADOS',
-        descricao: `${desc} por ${user.nome}`
+        descricao: `${desc} por ${user.nome}`,
+        userId: user.id
       }
     });
 
@@ -652,7 +672,8 @@ export async function updateTaskParticipants(taskId: string, userIds: string[]) 
       data: {
         taskId,
         tipo: 'ALTERACAO_DADOS',
-        descricao: `Participantes atualizados por ${user.nome}`
+        descricao: `Participantes atualizados por ${user.nome}`,
+        userId: user.id
       }
     });
 
@@ -683,7 +704,8 @@ export async function updateTaskObservers(taskId: string, userIds: string[]) {
       data: {
         taskId,
         tipo: 'ALTERACAO_DADOS',
-        descricao: `Observadores atualizados por ${user.nome}`
+        descricao: `Observadores atualizados por ${user.nome}`,
+        userId: user.id
       }
     });
 
@@ -788,7 +810,8 @@ export async function createTaskActivity(taskId: string, data: {
       data: {
         taskId,
         tipo: 'ATIVIDADE',
-        descricao: `Subtarefa "${data.titulo}" criada por ${user.nome}`
+        descricao: `Subtarefa "${data.titulo}" criada por ${user.nome}`,
+        userId: user.id
       }
     });
 
@@ -813,7 +836,8 @@ export async function toggleTaskActivity(activityId: string, concluida: boolean)
       data: {
         taskId: activity.taskId,
         tipo: 'ATIVIDADE',
-        descricao: `Subtarefa "${activity.titulo}" marcada como ${concluida ? 'concluída' : 'pendente'} por ${user.nome}`
+        descricao: `Subtarefa "${activity.titulo}" marcada como ${concluida ? 'concluída' : 'pendente'} por ${user.nome}`,
+        userId: user.id
       }
     });
 
@@ -868,7 +892,8 @@ export async function deleteTaskActivity(activityId: string) {
       data: {
         taskId: activity.taskId,
         tipo: 'ATIVIDADE',
-        descricao: `Subtarefa "${activity.titulo}" removida por ${user.nome}`
+        descricao: `Subtarefa "${activity.titulo}" removida por ${user.nome}`,
+        userId: user.id
       }
     });
 
@@ -893,7 +918,8 @@ export async function addTaskComment(taskId: string, texto: string) {
       data: {
         taskId,
         tipo: 'COMENTARIO',
-        descricao: `Comentário adicionado por ${user.nome}`
+        descricao: `Comentário adicionado por ${user.nome}`,
+        userId: user.id
       }
     });
 
@@ -945,7 +971,8 @@ export async function uploadTaskAttachment(taskId: string, nome: string, tamanho
       data: {
         taskId,
         tipo: 'ANEXO',
-        descricao: `Arquivo "${nome}" anexado por ${user.nome}`
+        descricao: `Arquivo "${nome}" anexado por ${user.nome}`,
+        userId: user.id
       }
     });
 
@@ -1017,7 +1044,8 @@ export async function createTaskMeeting(taskId: string, data: {
       data: {
         taskId,
         tipo: 'OUTRO',
-        descricao: `Reunião "${data.titulo}" agendada por ${user.nome}`
+        descricao: `Reunião "${data.titulo}" agendada por ${user.nome}`,
+        userId: user.id
       }
     });
 
@@ -1047,7 +1075,8 @@ export async function deleteTaskMeeting(meetingId: string, taskId: string) {
       data: {
         taskId,
         tipo: 'OUTRO',
-        descricao: `Reunião "${meeting.titulo}" desmarcada por ${user.nome}`
+        descricao: `Reunião "${meeting.titulo}" desmarcada por ${user.nome}`,
+        userId: user.id
       }
     });
 
@@ -1112,6 +1141,33 @@ export async function deleteTaskTemplate(id: string) {
     await prisma.taskTemplate.delete({
       where: { id, tenantId: user.tenantId }
     });
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// ================= TASK VIEWED STATUS (VISUALIZAÇÃO DE TAREFA) =================
+export async function markTaskAsViewed(taskId: string) {
+  const user = await getLoggedUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  try {
+    await prisma.taskView.upsert({
+      where: {
+        taskId_userId: {
+          taskId,
+          userId: user.id
+        }
+      },
+      update: { viewedAt: new Date() },
+      create: {
+        taskId,
+        userId: user.id,
+        viewedAt: new Date()
+      }
+    });
+    revalidatePath('/tasks');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };

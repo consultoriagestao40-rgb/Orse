@@ -12,7 +12,7 @@ import {
   toggleTaskActivity, deleteTaskActivity, updateTaskActivity, addTaskComment, 
   uploadTaskAttachment, downloadTaskAttachment,
   getTaskMeetings, createTaskMeeting, deleteTaskMeeting,
-  createTaskTemplate
+  createTaskTemplate, markTaskAsViewed
 } from '../actions';
 
 const themeColorsGrid = [
@@ -434,6 +434,11 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
   };
 
   useEffect(() => {
+    const handleView = async () => {
+      await markTaskAsViewed(task.id);
+      if (refreshData) refreshData(true);
+    };
+    handleView();
     loadMeetings();
   }, [task.id]);
 

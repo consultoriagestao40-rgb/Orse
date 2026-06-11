@@ -108,6 +108,8 @@ model User {
   taskComments             TaskComment[]
   taskAttachments          TaskAttachment[]
   taskActivities           TaskActivity[]
+  taskHistories            TaskHistory[]
+  taskViews                TaskView[]
 }
 
 model Client {
@@ -813,6 +815,7 @@ model Task {
   history       TaskHistory[]
   tags          TaskTag[]
   calendarEvents Activity[]
+  views         TaskView[]
   
   recorrente            Boolean   @default(false)
   recorrenciaFrequencia String?
@@ -891,6 +894,8 @@ model TaskHistory {
   task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   tipo      String   // Ex: 'CRIACAO', 'MUDANCA_ETAPA', 'COMENTARIO', 'ATIVIDADE', 'ANEXO', 'ALTERACAO_DADOS'
   descricao String   @db.Text
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
 }
 
@@ -928,4 +933,15 @@ model TaskTemplate {
   tenant        Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model TaskView {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  viewedAt  DateTime @default(now())
+
+  @@unique([taskId, userId])
 }
