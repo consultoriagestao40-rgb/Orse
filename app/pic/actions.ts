@@ -49,25 +49,43 @@ export async function getPicStages() {
   }
 }
 
-export async function createPicStage(nome: string, color: string = '#3b82f6') {
+export async function createPicStage(nome: string, color: string = '#3b82f6', insertAfterId?: string) {
   const user = await getLoggedUser();
   if (!user) return { success: false, error: 'Unauthorized' };
 
   try {
-    const lastStage = await prisma.picStage.findFirst({
+    const stages = await prisma.picStage.findMany({
       where: { tenantId: user.tenantId },
-      orderBy: { ordem: 'desc' }
+      orderBy: { ordem: 'asc' }
     });
-    const nextOrdem = lastStage ? lastStage.ordem + 1 : 1;
+
+    let targetIndex = stages.length; // default to append
+    if (insertAfterId) {
+      const idx = stages.findIndex(s => s.id === insertAfterId);
+      if (idx !== -1) {
+        targetIndex = idx + 1;
+      }
+    }
 
     const stage = await prisma.picStage.create({
       data: {
         nome,
         color,
-        ordem: nextOrdem,
+        ordem: targetIndex + 1,
         tenantId: user.tenantId
       }
     });
+
+    // Reorder all stages sequentially
+    const newStagesList = [...stages];
+    newStagesList.splice(targetIndex, 0, stage);
+
+    for (let i = 0; i < newStagesList.length; i++) {
+      await prisma.picStage.update({
+        where: { id: newStagesList[i].id },
+        data: { ordem: i + 1 }
+      });
+    }
 
     revalidatePath('/pic');
     return { success: true, stage };

@@ -35,6 +35,7 @@ export default function PicDashboard() {
   const [showAddStageModal, setShowAddStageModal] = useState(false);
   const [newStageName, setNewStageName] = useState('');
   const [newStageColor, setNewStageColor] = useState('#3b82f6');
+  const [insertAfterStageId, setInsertAfterStageId] = useState<string | null>(null);
 
   // Drag and drop de colunas
   const [draggedColumnId, setDraggedColumnId] = useState<string | null>(null);
@@ -210,8 +211,9 @@ export default function PicDashboard() {
     setShowAddStageModal(false);
     setLoading(true);
 
-    const res = await createPicStage(newStageName.trim(), newStageColor);
+    const res = await createPicStage(newStageName.trim(), newStageColor, insertAfterStageId || undefined);
     setNewStageName('');
+    setInsertAfterStageId(null);
     if (res.success) {
       await loadData();
     } else {
@@ -240,9 +242,9 @@ export default function PicDashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex h-screen bg-slate-50 overflow-hidden">
       <Sidebar />
-      <main className="flex-1 overflow-x-hidden p-8 flex flex-col items-center">
+      <main className="flex-1 overflow-hidden p-8 flex flex-col items-center">
         
         {/* Header da Tela */}
         <header className="w-full max-w-7xl flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 border-b border-slate-200 pb-4 shrink-0 gap-4">
@@ -292,7 +294,10 @@ export default function PicDashboard() {
 
             {/* Criar Etapa */}
             <button
-              onClick={() => setShowAddStageModal(true)}
+              onClick={() => {
+                setInsertAfterStageId(null);
+                setShowAddStageModal(true);
+              }}
               className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase px-4 py-2 rounded-lg shadow-sm transition-all flex items-center gap-1 cursor-pointer shrink-0"
             >
               <Plus size={14} /> Nova Etapa
@@ -310,62 +315,106 @@ export default function PicDashboard() {
             </div>
           </div>
         ) : (
-          <div className="w-full max-w-7xl flex-1 flex">
+          <div className="w-full max-w-7xl flex-1 flex overflow-hidden">
             
             {/* ─────────────────────────────────────────────────────────────────
                 VISÃO KANBAN BOARD
-                ───────────────────────────────────────────────────────────────── */}
-            {viewMode === 'kanban' && (
-              <div className="flex gap-4 overflow-x-auto pb-6 w-full items-start select-none">
-                {stages.map((stage, sIdx) => {
+                ─────────────────────────                {stages.map((stage, sIdx) => {
                   const stagePics = filteredPics.filter(p => p.stageId === stage.id);
                   const isDraggedOver = draggedOverColumnId === stage.id;
                   const borderHex = stage.color || '#3b82f6';
                   const textContrast = resolveContrastColor(borderHex);
-                  const headerBg = borderHex;
-                  const bgRgba = hexToRgba(borderHex, 0.04);
+                  const contrast = textContrast === '#ffffff' ? 'white' : 'dark';
+                  const bgRgba = hexToRgba(borderHex, contrast === 'white' ? 0.08 : 0.18);
+                  const borderRgba = hexToRgba(borderHex, contrast === 'white' ? 0.25 : 0.45);
+                  const isFirst = sIdx === 0;
+                  const isLast = sIdx === stages.length - 1;
                   
                   return (
                     <div 
                       key={stage.id} 
-                      className={`flex flex-col shrink-0 w-[278px] border-r border-slate-100 last:border-0 transition-all ${
+                      className={`flex flex-col shrink-0 h-full transition-all ${
                         isDraggedOver ? 'scale-98 opacity-90' : ''
                       }`}
+                      style={{ width: '274px' }}
                       onDragOver={(e) => handleColumnDragOver(e, stage.id)}
                       onDrop={(e) => handleColumnDrop(e, stage.id)}
                     >
                       
                       {/* Frozen Header da Coluna */}
                       <div 
-                        draggable
-                        onDragStart={(e) => handleColumnDragStart(e, stage.id)}
-                        className="sticky top-0 z-20 cursor-grab active:cursor-grabbing pb-3 select-none"
+                        className="sticky top-0 select-none duration-200 bg-slate-50 shrink-0"
+                        style={{ zIndex: 20 + (stages.length - sIdx) }}
                       >
                         <div 
-                          className="h-[52px] rounded-xl flex items-center justify-between px-3 shadow-sm relative group/colHeader border"
-                          style={{ backgroundColor: headerBg, color: textContrast, borderColor: hexToRgba(borderHex, 0.15) }}
+                          className="relative h-[52px] shrink-0 z-10 w-full group/header pointer-events-auto cursor-grab active:cursor-grabbing"
+                          draggable
+                          onDragStart={(e) => handleColumnDragStart(e, stage.id)}
+                          onDragOver={(e) => handleColumnDragOver(e, stage.id)}
+                          onDrop={(e) => handleColumnDrop(e, stage.id)}
                         >
-                          <div className="flex flex-col min-w-0 justify-center">
-                            <span className="text-xs font-black uppercase tracking-wider truncate max-w-[170px] leading-none">
-                              {stage.nome}
-                            </span>
-                            <span className="text-[10px] font-bold mt-1 opacity-90 truncate leading-none">
-                              {stagePics.length} {stagePics.length === 1 ? 'programa' : 'programas'}
-                            </span>
-                          </div>
-                          
-                          {/* Botões editar coluna */}
-                          <button
-                            onClick={() => {
-                              setEditingStageId(stage.id);
-                              setLocalStageName(stage.nome);
-                              setLocalStageColor(stage.color);
-                            }}
-                            className="p-1 rounded-full opacity-0 group-hover/colHeader:opacity-100 transition-opacity hover:bg-white/10 text-inherit cursor-pointer flex items-center justify-center"
-                            title="Editar Etapa"
+                          <svg 
+                            className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
+                            viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
+                            preserveAspectRatio="none"
+                            style={{ color: borderHex }}
                           >
-                            <Edit2 size={13} />
-                          </button>
+                            <path 
+                              d={isFirst 
+                                ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                                : isLast 
+                                  ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                                  : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                              }
+                              fill="currentColor" 
+                              stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
+                              strokeWidth="1"
+                            />
+                          </svg>
+                          <div 
+                            className={`relative z-10 flex items-center justify-between h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                            style={{ color: textContrast }}
+                          >
+                            <div className="flex flex-col min-w-0 justify-center">
+                              <h3 className="font-black uppercase tracking-wider text-[11px] truncate max-w-[150px] leading-none">
+                                {stage.nome}
+                              </h3>
+                              <span className="text-[10px] font-bold mt-1 opacity-90 truncate select-none leading-none">
+                                {stagePics.length} {stagePics.length === 1 ? 'programa' : 'programas'}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingStageId(stage.id);
+                                  setLocalStageName(stage.nome);
+                                  setLocalStageColor(stage.color);
+                                }}
+                                className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-155 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                                style={{ color: 'inherit' }}
+                                title="Editar Etapa"
+                              >
+                                <Edit2 size={12} />
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setInsertAfterStageId(stage.id);
+                                  setShowAddStageModal(true);
+                                }}
+                                className="p-1 rounded-full opacity-0 group-hover/header:opacity-100 transition-opacity duration-155 flex items-center justify-center cursor-pointer hover:bg-black/5"
+                                style={{ color: 'inherit' }}
+                                title="Criar Nova Etapa"
+                              >
+                                <Plus size={12} />
+                              </button>
+                            </div>
+                          </div>
                         </div>
 
                         {/* Modal Dropdown para Edição Inline do Estágio */}
@@ -375,7 +424,7 @@ export default function PicDashboard() {
                             <div className="absolute left-1/2 -translate-x-1/2 top-14 z-40 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-[250px] text-slate-800 flex flex-col gap-3 font-sans normal-case tracking-normal">
                               <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Editar Coluna</span>
-                                <button onClick={() => setEditingStageId(null)} className="text-slate-400 hover:text-slate-600"><X size={12} /></button>
+                                <button type="button" onClick={() => setEditingStageId(null)} className="text-slate-400 hover:text-slate-650 transition-colors"><X size={12} /></button>
                               </div>
                               
                               <div className="flex flex-col gap-1">
@@ -432,8 +481,13 @@ export default function PicDashboard() {
                       <div 
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={(e) => handleDropCard(e, stage.id)}
-                        className="py-2.5 px-1 rounded-2xl flex flex-col gap-2 min-h-[50vh] transition-colors overflow-y-auto"
-                        style={{ backgroundColor: bgRgba, border: `1px dashed ${hexToRgba(borderHex, 0.1)}`, height: 'calc(100vh - 180px)' }}
+                        className="px-[4px] py-3 rounded-b-2xl rounded-t-none flex-1 flex flex-col gap-2 overflow-y-auto"
+                        style={{ 
+                          backgroundColor: bgRgba, 
+                          borderColor: borderRgba,
+                          borderWidth: '0 1px 1px 1px',
+                          borderStyle: 'solid',
+                        }}
                       >
                         {stagePics.map(pic => {
                           const client = pic.contrato?.client || {};
