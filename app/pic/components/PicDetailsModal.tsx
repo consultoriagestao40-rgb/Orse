@@ -1001,7 +1001,6 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                         <th className="px-3 py-2.5 font-black border border-slate-300 text-white">Nome do Equipamento</th>
                         <th className="px-3 py-2.5 text-center w-20 font-black border border-slate-300 text-white">Quantidade</th>
                         <th className="px-3 py-2.5 text-center w-24 font-black border border-slate-300 text-white">Tipo Alocação</th>
-                        <th className="px-3 py-2.5 font-black border border-slate-300 text-white">Observações</th>
                         <th className="px-3 py-2.5 text-center w-12 font-black border border-slate-300 text-white">Remover</th>
                       </tr>
                     </thead>
@@ -1009,12 +1008,30 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       {equipamentos.map((eq, index) => (
                         <tr key={eq.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-300">
                           <td className="px-2 py-1.5 border border-slate-300">
-                            <input
-                              type="text"
-                              value={eq.nome}
-                              onChange={(e) => handleUpdateEquipment(index, 'nome', e.target.value)}
-                              className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
-                            />
+                            <div className="flex items-center justify-between gap-2">
+                              <input
+                                type="text"
+                                value={eq.nome}
+                                onChange={(e) => handleUpdateEquipment(index, 'nome', e.target.value)}
+                                className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setActiveObservationEdit({
+                                  type: 'equipamento',
+                                  index,
+                                  title: eq.nome || 'Novo Equipamento',
+                                  value: eq.observacao || ''
+                                })}
+                                className="flex items-center gap-1 p-1 rounded transition-colors text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100 cursor-pointer shrink-0 mt-0.5"
+                                title="Observações / Detalhes do Equipamento"
+                              >
+                                <MessageSquare size={14} className={eq.observacao ? 'text-[#1B4D3E]' : 'text-slate-300'} />
+                                {eq.observacao && (
+                                  <span className="w-1.5 h-1.5 bg-[#1B4D3E] rounded-full shrink-0" />
+                                )}
+                              </button>
+                            </div>
                           </td>
                           <td className="px-2 py-1.5 border border-slate-300">
                             <input
@@ -1034,15 +1051,6 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               <option value="LOCADO">Locado</option>
                             </select>
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-300">
-                            <input
-                              type="text"
-                              value={eq.observacao || ''}
-                              onChange={(e) => handleUpdateEquipment(index, 'observacao', e.target.value)}
-                              placeholder="Especificações, voltagem..."
-                              className="w-full bg-transparent outline-none text-slate-700 px-1.5 py-0.5 font-bold border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
-                            />
-                          </td>
                           <td className="px-2 py-1.5 border border-slate-300 text-center">
                             <button
                               type="button"
@@ -1056,7 +1064,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       ))}
                       {equipamentos.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-300">
+                          <td colSpan={4} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-300">
                             Nenhum equipamento listado.
                           </td>
                         </tr>
@@ -1097,7 +1105,6 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                         <th className="px-3 py-2.5 font-black border border-slate-300 text-white">Nome do Material / Insumo</th>
                         <th className="px-3 py-2.5 text-center w-20 font-black border border-slate-300 text-white">Quantidade</th>
                         <th className="px-3 py-2.5 text-center w-16 font-black border border-slate-300 text-white">Unidade</th>
-                        <th className="px-3 py-2.5 font-black border border-slate-300 text-white">Observações</th>
                         <th className="px-3 py-2.5 text-center w-12 font-black border border-slate-300 text-white">Remover</th>
                       </tr>
                     </thead>
@@ -1105,12 +1112,30 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       {materiais.map((mat, index) => (
                         <tr key={mat.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-300">
                           <td className="px-2 py-1.5 border border-slate-300">
-                            <input
-                              type="text"
-                              value={mat.nome}
-                              onChange={(e) => handleUpdateMaterial(index, 'nome', e.target.value)}
-                              className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
-                            />
+                            <div className="flex items-center justify-between gap-2">
+                              <input
+                                type="text"
+                                value={mat.nome}
+                                onChange={(e) => handleUpdateMaterial(index, 'nome', e.target.value)}
+                                className="w-full bg-transparent outline-none text-slate-800 font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setActiveObservationEdit({
+                                  type: 'material',
+                                  index,
+                                  title: mat.nome || 'Novo Material',
+                                  value: mat.observacao || ''
+                                })}
+                                className="flex items-center gap-1 p-1 rounded transition-colors text-slate-400 hover:text-[#1B4D3E] hover:bg-slate-100 cursor-pointer shrink-0 mt-0.5"
+                                title="Observações / Detalhes do Material"
+                              >
+                                <MessageSquare size={14} className={mat.observacao ? 'text-[#1B4D3E]' : 'text-slate-300'} />
+                                {mat.observacao && (
+                                  <span className="w-1.5 h-1.5 bg-[#1B4D3E] rounded-full shrink-0" />
+                                )}
+                              </button>
+                            </div>
                           </td>
                           <td className="px-2 py-1.5 border border-slate-300">
                             <input
@@ -1128,15 +1153,6 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                               className="w-full bg-transparent outline-none text-center font-bold px-1.5 py-0.5 border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
                             />
                           </td>
-                          <td className="px-2 py-1.5 border border-slate-300">
-                            <input
-                              type="text"
-                              value={mat.observacao || ''}
-                              onChange={(e) => handleUpdateMaterial(index, 'observacao', e.target.value)}
-                              placeholder="Frequência de entrega, diluições..."
-                              className="w-full bg-transparent outline-none text-slate-700 px-1.5 py-0.5 font-bold border border-transparent focus:border-[#1B4D3E]/30 focus:bg-slate-50/50 rounded-none"
-                            />
-                          </td>
                           <td className="px-2 py-1.5 border border-slate-300 text-center">
                             <button
                               type="button"
@@ -1150,7 +1166,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       ))}
                       {materiais.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-300">
+                          <td colSpan={4} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white border border-slate-300">
                             Nenhum insumo ou material listado.
                           </td>
                         </tr>
@@ -1458,6 +1474,65 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
         </div>
 
       </div>
+
+      {/* MODAL PARA EDITAR OBSERVAÇÕES DE EQUIPAMENTO / MATERIAL */}
+      {activeObservationEdit && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs no-print animate-fade-in">
+          <div className="bg-white border border-slate-300 rounded-none shadow-2xl max-w-md w-full p-6 space-y-4 text-left">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+              <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
+                <MessageSquare size={14} /> Observações / Detalhes
+              </h3>
+              <button
+                type="button"
+                onClick={() => setActiveObservationEdit(null)}
+                className="text-slate-400 hover:text-slate-700 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div className="space-y-1.5">
+              <p className="text-[10px] text-slate-400 uppercase font-black">Item:</p>
+              <p className="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 p-2.5">
+                {activeObservationEdit.title}
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-[#1B4D3E] font-black uppercase block">Anotações / Especificações</label>
+              <textarea
+                value={activeObservationEdit.value}
+                onChange={(e) => setActiveObservationEdit({
+                  ...activeObservationEdit,
+                  value: e.target.value
+                })}
+                placeholder={activeObservationEdit.type === 'equipamento' ? "Especificações, voltagem, fabricante, etc..." : "Frequência de entrega, diluições, marca sugerida, etc..."}
+                rows={5}
+                className="w-full bg-slate-50 border border-slate-300 focus:border-[#1B4D3E] outline-none text-xs font-bold text-slate-800 p-3 leading-relaxed resize-none rounded-none"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => {
+                  const { type, index, value } = activeObservationEdit;
+                  if (type === 'equipamento') {
+                    handleUpdateEquipment(index, 'observacao', value);
+                  } else {
+                    handleUpdateMaterial(index, 'observacao', value);
+                  }
+                  setActiveObservationEdit(null);
+                }}
+                className="px-4 py-2 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[10px] font-black uppercase tracking-wider rounded-none cursor-pointer shadow-sm transition-colors"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
