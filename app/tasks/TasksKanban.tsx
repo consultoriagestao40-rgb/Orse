@@ -774,7 +774,10 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
 
 
             <button
-              onClick={() => setShowNewTask(true)}
+              onClick={() => {
+                fetchData(true);
+                setShowNewTask(true);
+              }}
               className="bg-[#1B4D3E] text-white hover:bg-[#13382d] px-4 py-2 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1 flex-shrink-0 cursor-pointer border-none"
             >
               <Plus size={16} /> Nova Tarefa
@@ -1545,21 +1548,19 @@ export default function TasksKanban({ initialUsers }: TasksKanbanProps) {
               </button>
             </div>
             <form onSubmit={handleCreateTask} className="space-y-4">
-              {templates && templates.length > 0 && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Usar Modelo de Tarefa</label>
-                  <select
-                    value={selectedTemplateId}
-                    onChange={e => handleTemplateChange(e.target.value)}
-                    className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-650 bg-white outline-none focus:border-[#1B4D3E]"
-                  >
-                    <option value="">-- Criar do zero --</option>
-                    {templates.map(t => (
-                      <option key={t.id} value={t.id}>{t.titulo}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Usar Modelo de Tarefa</label>
+                <select
+                  value={selectedTemplateId}
+                  onChange={e => handleTemplateChange(e.target.value)}
+                  className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-650 bg-white outline-none focus:border-[#1B4D3E]"
+                >
+                  <option value="">-- Criar do zero --</option>
+                  {templates && templates.map(t => (
+                    <option key={t.id} value={t.id}>{t.titulo}</option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">Título da Tarefa *</label>
                 <input 

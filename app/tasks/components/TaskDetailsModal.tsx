@@ -427,6 +427,7 @@ export default function TaskDetailsModal({ task, stages, users, onClose, refresh
     setIsSaving(false);
     if (res.success) {
       showCustomAlert('Sucesso', 'Modelo de tarefa salvo com sucesso!');
+      if (refreshData) refreshData(true);
     } else {
       showCustomAlert('Erro', res.error || 'Erro ao salvar modelo de tarefa');
     }
