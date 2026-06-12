@@ -2638,7 +2638,7 @@ export default function AtivosPage() {
                 })()}
 
                  <footer className="pt-4 flex gap-3 border-t border-slate-100">
-                  {osForm.id && (() => {
+                  {osForm.id && activeOsTab === 'details' && (() => {
                     const currentOs = ordens.find(o => o.id === osForm.id);
                     return currentOs ? (
                       <button 
