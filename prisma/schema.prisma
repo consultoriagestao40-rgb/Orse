@@ -1174,6 +1174,8 @@ model OrdemServicoAtivo {
   latitudeChegada    Float?
   longitudeChegada   Float?
   rotaIniciadaEm     DateTime?
+  atendimentoIniciadoEm DateTime?
+  dataExecucao       DateTime?
   dataEmissao        DateTime          @default(now())
   dataPrevista       DateTime?
   observacao         String?           @db.Text
@@ -1185,6 +1187,7 @@ model OrdemServicoAtivo {
   assinaturaCliente  String?           @db.Text // Base64 signature drawing
   nomeAssinante      String?
   cpfAssinante       String?
+  historico          String?           @db.Text // JSON string tracking lifecycle history events
   tenantId           String?
   tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdAt          DateTime          @default(now())

@@ -8,7 +8,7 @@ import {
   Calendar, Printer, LayoutGrid, Kanban, 
   Tags, Info, Users, ShieldCheck, Check, 
   MessageSquare, User, FileImage, Layers, ChevronRight, FileCheck, CheckCircle,
-  DollarSign, TrendingUp, Navigation, MapPin
+  DollarSign, TrendingUp, Navigation, MapPin, Camera, FileSignature, History
 } from 'lucide-react';
 
 import { 
@@ -59,6 +59,20 @@ export default function AtivosPage() {
   const [modalOsPdfOpen, setModalOsPdfOpen] = useState(false);
   const [selectedContratoForPdf, setSelectedContratoForPdf] = useState<any>(null);
   const [selectedOsForPdf, setSelectedOsForPdf] = useState<any>(null);
+
+  // OS edit tab selection (details vs history/lifecycle log)
+  const [activeOsTab, setActiveOsTab] = useState<'details' | 'history'>('details');
+
+  const formatDuration = (start: any, end: any) => {
+    if (!start || !end) return null;
+    const diffMs = new Date(end).getTime() - new Date(start).getTime();
+    if (diffMs < 0) return null;
+    const totalMinutes = Math.floor(diffMs / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    if (hours > 0) return `${hours}h ${mins}min`;
+    return `${mins}min`;
+  };
 
   // OS Signature Modal
   const [modalSignatureOpen, setModalSignatureOpen] = useState(false);
@@ -576,6 +590,7 @@ export default function AtivosPage() {
         dataPrevista: new Date().toISOString().substring(0, 10)
       });
     }
+    setActiveOsTab('details');
     setModalOsOpen(true);
   };
 
@@ -1697,11 +1712,12 @@ export default function AtivosPage() {
                           {colOrdens.map(os => (
                             <div 
                               key={os.id} 
-                              className="bg-white border border-slate-200 rounded-xl p-3 shadow-xs space-y-2 hover:shadow-sm transition-shadow text-left cursor-grab active:cursor-grabbing"
+                              className="bg-white border border-slate-200 hover:border-[#1B4D3E]/30 rounded-xl p-3 shadow-xs space-y-2 hover:shadow-sm transition-all text-left cursor-pointer"
                               draggable={true}
                               onDragStart={(e) => {
                                 e.dataTransfer.setData('text/plain', os.id);
                               }}
+                              onClick={() => openOsModal(os)}
                             >
                               <div className="flex justify-between items-center">
                                 <span className="font-mono text-[9px] font-black text-slate-700 bg-slate-100 border border-slate-200/80 rounded px-1.5 py-0.5 whitespace-nowrap">
@@ -1765,116 +1781,6 @@ export default function AtivosPage() {
                                 <div className="text-slate-500 font-bold px-1 flex justify-between items-center">
                                   <span className="text-slate-400 font-extrabold">Previsto:</span>
                                   <span className="text-slate-700 font-extrabold">{os.dataPrevista ? new Date(os.dataPrevista).toLocaleDateString('pt-BR') : '-'}</span>
-                                </div>
-                              </div>
-                              <div className="flex justify-between items-center pt-2 border-t border-slate-100 gap-1.5">
-                                <div className="flex gap-1.5">
-                                  {os.status !== 'CONCLUIDA' && os.status !== 'CANCELADA' && (
-                                    <button 
-                                      onClick={() => openOsModal(os)}
-                                      className="text-[9px] font-black uppercase text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-0.5 cursor-pointer"
-                                      title="Editar OS"
-                                    >
-                                      <Edit2 size={11} /> Editar
-                                    </button>
-                                  )}
-                                  <button 
-                                    onClick={() => { setSelectedOsForPdf(os); setModalOsPdfOpen(true); }}
-                                    className="text-[9px] font-black uppercase text-slate-550 hover:text-[#1B4D3E] transition-colors flex items-center gap-0.5 cursor-pointer"
-                                    title="Ver OS (PDF)"
-                                  >
-                                    <Printer size={11} /> PDF
-                                  </button>
-                                </div>
-                                
-                                <div className="flex flex-wrap gap-1 justify-end">
-                                  {colStatus === 'PENDENTE' && (
-                                    <>
-                                      <button 
-                                        onClick={() => handleUpdateOsStatus(os.id, 'PROGRAMADO')} 
-                                        className="text-[8.5px] font-black bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                      >
-                                        Programar
-                                      </button>
-                                      <button 
-                                        onClick={() => handleUpdateOsStatus(os.id, 'EM_ANDAMENTO')} 
-                                        className="text-[8.5px] font-black bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                      >
-                                        Atender
-                                      </button>
-                                    </>
-                                  )}
-                                  {colStatus === 'PROGRAMADO' && (
-                                    <>
-                                      <button 
-                                        onClick={() => handleUpdateOsStatus(os.id, 'PENDENTE')} 
-                                        className="text-[8.5px] font-bold text-slate-450 hover:bg-slate-100 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                      >
-                                        Voltar
-                                      </button>
-                                      <button 
-                                        onClick={() => handleUpdateOsStatus(os.id, 'EM_ANDAMENTO')} 
-                                        className="text-[8.5px] font-black bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                      >
-                                        Atender
-                                      </button>
-                                    </>
-                                  )}
-                                  {colStatus === 'EM_ANDAMENTO' && (
-                                    <>
-                                      <button 
-                                        onClick={() => handleUpdateOsStatus(os.id, 'PROGRAMADO')} 
-                                        className="text-[8.5px] font-bold text-slate-450 hover:bg-slate-100 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                      >
-                                        Voltar
-                                      </button>
-                                      <button 
-                                        onClick={() => handleUpdateOsStatus(os.id, 'VALIDACAO')} 
-                                        className="text-[8.5px] font-black bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                      >
-                                        Concluir
-                                      </button>
-                                    </>
-                                  )}
-                                  {colStatus === 'VALIDACAO' && (
-                                    <>
-                                      <button 
-                                        onClick={() => handleUpdateOsStatus(os.id, 'EM_ANDAMENTO')} 
-                                        className="text-[8.5px] font-bold text-slate-450 hover:bg-slate-100 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                        title="Recusar e voltar para Em Atendimento"
-                                      >
-                                        Recusar
-                                      </button>
-                                      <button 
-                                        onClick={() => handleUpdateOsStatus(os.id, 'CONCLUIDA')} 
-                                        className="text-[8.5px] font-black bg-[#1B4D3E] text-white hover:bg-[#13382D] border border-[#1b4d3e]/20 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                      >
-                                        Validar
-                                      </button>
-                                    </>
-                                  )}
-                                  {colStatus === 'CANCELADA' && (
-                                    <button 
-                                      onClick={() => handleUpdateOsStatus(os.id, 'PENDENTE')} 
-                                      className="text-[8.5px] font-bold text-slate-450 hover:bg-slate-100 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                    >
-                                      Restaurar
-                                    </button>
-                                  )}
-                                  {colStatus === 'CONCLUIDA' && (
-                                    <span className="text-emerald-600 font-extrabold flex items-center gap-0.5 text-[8.5px]">
-                                      <CheckCircle size={11} /> Ok
-                                    </span>
-                                  )}
-                                  
-                                  {colStatus !== 'CANCELADA' && colStatus !== 'CONCLUIDA' && colStatus !== 'VALIDACAO' && (
-                                    <button 
-                                      onClick={() => handleUpdateOsStatus(os.id, 'CANCELADA')} 
-                                      className="text-[8.5px] font-bold text-red-500 hover:bg-red-50 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                    >
-                                      Cancelar
-                                    </button>
-                                  )}
                                 </div>
                               </div>
                             </div>
@@ -2410,133 +2316,350 @@ export default function AtivosPage() {
                 <button onClick={() => setModalOsOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"><X size={18} /></button>
               </header>
               <div className="p-6 space-y-4">
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo de Serviço *</label>
-                    <select
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
-                      value={osForm.tipo}
-                      onChange={(e) => setOsForm({...osForm, tipo: e.target.value})}
+                {osForm.id && (
+                  <div className="flex border-b border-slate-150 mb-4 select-none">
+                    <button
+                      type="button"
+                      onClick={() => setActiveOsTab('details')}
+                      className={`flex-1 pb-2.5 text-xs font-black uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+                        activeOsTab === 'details'
+                          ? 'border-[#1B4D3E] text-[#1B4D3E]'
+                          : 'border-transparent text-slate-400 hover:text-slate-600'
+                      }`}
                     >
-                      <option value="INSTALACAO">Instalação (Novo ou Aumento)</option>
-                      <option value="RETIRADA">Retirada (Encerramento/Troca)</option>
-                      <option value="TROCA">Troca (Substituição de Equip.)</option>
-                      <option value="MANUTENCAO">Manutenção Corretiva/Preventiva</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Prevista Execução</label>
-                    <input
-                      type="date"
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
-                      value={osForm.dataPrevista}
-                      onChange={(e) => setOsForm({...osForm, dataPrevista: e.target.value})}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contrato de Comodato Origem *</label>
-                  <select
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
-                    value={osForm.contratoComodatoId}
-                    onChange={(e) => handleOsContratoChange(e.target.value)}
-                  >
-                    {contratos.map(c => (
-                      <option key={c.id} value={c.id}>#{String(c.codigo).padStart(4, '0')} - {c.client.nomeFantasia}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Seleção do Equipamento Associado */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ativo/Equipamento Alvo *</label>
-                    <select
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
-                      value={osForm.ativoId}
-                      onChange={(e) => setOsForm({...osForm, ativoId: e.target.value})}
+                      Detalhes da OS
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveOsTab('history')}
+                      className={`flex-1 pb-2.5 text-xs font-black uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+                        activeOsTab === 'history'
+                          ? 'border-[#1B4D3E] text-[#1B4D3E]'
+                          : 'border-transparent text-slate-400 hover:text-slate-600'
+                      }`}
                     >
-                      <option value="" disabled hidden>Selecione</option>
-                      {/* Mostra equipamentos que pertencem a esse contrato de comodato */}
-                      {contratos.find(c => c.id === osForm.contratoComodatoId)?.itens.map((it: any) => (
-                        <option key={it.ativo.id} value={it.ativo.id}>{it.ativo.codigo} - {it.ativo.descricao}</option>
-                      ))}
-                    </select>
+                      Histórico & Atendimento
+                    </button>
                   </div>
-                  
-                  {osForm.tipo === 'TROCA' && (
+                )}
+
+                {(!osForm.id || activeOsTab === 'details') && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo de Serviço *</label>
+                        <select
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
+                          value={osForm.tipo}
+                          onChange={(e) => setOsForm({...osForm, tipo: e.target.value})}
+                        >
+                          <option value="INSTALACAO">Instalação (Novo ou Aumento)</option>
+                          <option value="RETIRADA">Retirada (Encerramento/Troca)</option>
+                          <option value="TROCA">Troca (Substituição de Equip.)</option>
+                          <option value="MANUTENCAO">Manutenção Corretiva/Preventiva</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Prevista Execução</label>
+                        <input
+                          type="date"
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
+                          value={osForm.dataPrevista}
+                          onChange={(e) => setOsForm({...osForm, dataPrevista: e.target.value})}
+                        />
+                      </div>
+                    </div>
+
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Equipamento Destino (Novo) *</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contrato de Comodato Origem *</label>
                       <select
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-[#1B4D3E] outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
-                        value={osForm.ativoDestinoId}
-                        onChange={(e) => setOsForm({...osForm, ativoDestinoId: e.target.value})}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
+                        value={osForm.contratoComodatoId}
+                        onChange={(e) => handleOsContratoChange(e.target.value)}
                       >
-                        <option value="" disabled hidden>Selecione Novo Ativo</option>
-                        {ativos.filter(a => a.status === 'DISPONIVEL').map(a => (
-                          <option key={a.id} value={a.id}>{a.codigo} - {a.descricao}</option>
+                        {contratos.map(c => (
+                          <option key={c.id} value={c.id}>#{String(c.codigo).padStart(4, '0')} - {c.client.nomeFantasia}</option>
                         ))}
                       </select>
                     </div>
-                  )}
-                </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Técnico Responsável</label>
-                  <select
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] cursor-pointer"
-                    value={osForm.tecnicoEmail || ''}
-                    onChange={(e) => {
-                      const emailSelected = e.target.value;
-                      const userSelected = usuarios.find(u => u.email === emailSelected);
-                      setOsForm({
-                        ...osForm,
-                        tecnicoEmail: emailSelected,
-                        tecnicoResponsavel: userSelected ? userSelected.nome : ''
-                      });
-                    }}
-                  >
-                    <option value="">Selecione um Técnico...</option>
-                    {usuarios.map((u) => (
-                      <option key={u.id} value={u.email}>
-                        {u.nome} ({u.cargo || 'Técnico'})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    {/* Seleção do Equipamento Associado */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ativo/Equipamento Alvo *</label>
+                        <select
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
+                          value={osForm.ativoId}
+                          onChange={(e) => setOsForm({...osForm, ativoId: e.target.value})}
+                        >
+                          <option value="" disabled hidden>Selecione</option>
+                          {/* Mostra equipamentos que pertencem a esse contrato de comodato */}
+                          {contratos.find(c => c.id === osForm.contratoComodatoId)?.itens.map((it: any) => (
+                            <option key={it.ativo.id} value={it.ativo.id}>{it.ativo.codigo} - {it.ativo.descricao}</option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      {osForm.tipo === 'TROCA' && (
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Equipamento Destino (Novo) *</label>
+                          <select
+                            className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-[#1B4D3E] outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
+                            value={osForm.ativoDestinoId}
+                            onChange={(e) => setOsForm({...osForm, ativoDestinoId: e.target.value})}
+                          >
+                            <option value="" disabled hidden>Selecione Novo Ativo</option>
+                            {ativos.filter(a => a.status === 'DISPONIVEL').map(a => (
+                              <option key={a.id} value={a.id}>{a.codigo} - {a.descricao}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Instruções de Atendimento *</label>
-                  <textarea
-                    rows={3}
-                    placeholder="Instruções para o técnico sobre a execução da OS..."
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 resize-none leading-relaxed"
-                    value={osForm.instrucoes}
-                    onChange={(e) => setOsForm({...osForm, instrucoes: e.target.value})}
-                  />
-                </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Técnico Responsável</label>
+                      <select
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] cursor-pointer"
+                        value={osForm.tecnicoEmail || ''}
+                        onChange={(e) => {
+                          const emailSelected = e.target.value;
+                          const userSelected = usuarios.find(u => u.email === emailSelected);
+                          setOsForm({
+                            ...osForm,
+                            tecnicoEmail: emailSelected,
+                            tecnicoResponsavel: userSelected ? userSelected.nome : ''
+                          });
+                        }}
+                      >
+                        <option value="">Selecione um Técnico...</option>
+                        {usuarios.map((u) => (
+                          <option key={u.id} value={u.email}>
+                            {u.nome} ({u.cargo || 'Técnico'})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Observação Técnica</label>
-                  <textarea
-                    rows={2}
-                    placeholder="Anotações internas, históricos ou motivos da OS..."
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 resize-none leading-relaxed"
-                    value={osForm.observacao}
-                    onChange={(e) => setOsForm({...osForm, observacao: e.target.value})}
-                  />
-                </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Instruções de Atendimento *</label>
+                      <textarea
+                        rows={3}
+                        placeholder="Instruções para o técnico sobre a execução da OS..."
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 resize-none leading-relaxed"
+                        value={osForm.instrucoes}
+                        onChange={(e) => setOsForm({...osForm, instrucoes: e.target.value})}
+                      />
+                    </div>
 
-                <footer className="pt-4 flex gap-3 border-t border-slate-100">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Observação Técnica</label>
+                      <textarea
+                        rows={2}
+                        placeholder="Anotações internas, históricos ou motivos da OS..."
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 resize-none leading-relaxed"
+                        value={osForm.observacao}
+                        onChange={(e) => setOsForm({...osForm, observacao: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {(osForm.id && activeOsTab === 'history') && (() => {
+                  const currentOs = ordens.find(o => o.id === osForm.id);
+                  if (!currentOs) return <p className="text-xs text-slate-400">OS não encontrada.</p>;
+
+                  // Parse history events
+                  let logs: any[] = [];
+                  if (currentOs.historico) {
+                    try {
+                      logs = JSON.parse(currentOs.historico);
+                    } catch (e) {}
+                  }
+
+                  // Durations
+                  const travelTime = formatDuration(currentOs.rotaIniciadaEm, currentOs.atendimentoIniciadoEm);
+                  const attendanceTime = formatDuration(currentOs.atendimentoIniciadoEm, currentOs.dataExecucao);
+                  
+                  return (
+                    <div className="space-y-5 max-h-[60vh] overflow-y-auto pr-1">
+                      
+                      {/* Section 1: Attendance Report / Resumo do Atendimento */}
+                      <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 space-y-3.5 text-left">
+                        <h4 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
+                          <CheckCircle size={13} className="stroke-[2.5]" />
+                          Resumo do Atendimento
+                        </h4>
+
+                        <div className="grid grid-cols-2 gap-4 text-[10.5px]">
+                          <div>
+                            <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider">Técnico</span>
+                            <span className="font-extrabold text-slate-700 uppercase">{currentOs.tecnicoResponsavel || 'Não atribuído'}</span>
+                          </div>
+                          <div>
+                            <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider">Status Atual</span>
+                            <span className="font-black text-[#1B4D3E] uppercase">{currentOs.status}</span>
+                          </div>
+                          <div>
+                            <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider">Tempo de Deslocamento</span>
+                            <span className="font-bold text-slate-700">{travelTime || '-'}</span>
+                          </div>
+                          <div>
+                            <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider">Tempo de Atendimento</span>
+                            <span className="font-bold text-slate-700">{attendanceTime || '-'}</span>
+                          </div>
+                          {currentOs.rotaIniciadaEm && (
+                            <div>
+                              <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider">Início do Deslocamento</span>
+                              <span className="font-medium text-slate-600">{new Date(currentOs.rotaIniciadaEm).toLocaleString('pt-BR')}</span>
+                            </div>
+                          )}
+                          {currentOs.atendimentoIniciadoEm && (
+                            <div>
+                              <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider">Chegada Onsite</span>
+                              <span className="font-medium text-slate-600">{new Date(currentOs.atendimentoIniciadoEm).toLocaleString('pt-BR')}</span>
+                            </div>
+                          )}
+                          {currentOs.dataExecucao && (
+                            <div className="col-span-2">
+                              <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider">Conclusão / Execução</span>
+                              <span className="font-extrabold text-slate-800">{new Date(currentOs.dataExecucao).toLocaleString('pt-BR')}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {currentOs.observacaoAtendimento && (
+                          <div className="border-t border-slate-200/60 pt-2.5">
+                            <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider mb-0.5">Relato do Técnico</span>
+                            <p className="text-[10.5px] font-semibold text-slate-700 leading-relaxed bg-white p-2.5 rounded-lg border border-slate-150">{currentOs.observacaoAtendimento}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Section 2: Photos / Fotos */}
+                      {(() => {
+                        let photosList: string[] = [];
+                        if (currentOs.fotosAtendimento) {
+                          try {
+                            photosList = JSON.parse(currentOs.fotosAtendimento);
+                          } catch (e) {}
+                        }
+                        if (photosList.length === 0) return null;
+
+                        return (
+                          <div className="space-y-2 text-left">
+                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                              <Camera size={13} className="stroke-[2.5]" />
+                              Fotos do Atendimento ({photosList.length})
+                            </h4>
+                            <div className="grid grid-cols-3 gap-2">
+                              {photosList.map((photoUrl, i) => (
+                                <a 
+                                  key={i} 
+                                  href={photoUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="aspect-square border border-slate-200 rounded-lg overflow-hidden hover:border-[#1B4D3E]/30 transition-all cursor-zoom-in"
+                                >
+                                  <img 
+                                    src={photoUrl} 
+                                    alt={`Foto ${i + 1}`} 
+                                    className="w-full h-full object-cover" 
+                                  />
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Section 3: Signature / Assinatura */}
+                      {currentOs.assinaturaCliente && (
+                        <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 space-y-3 text-left">
+                          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <FileSignature size={13} className="stroke-[2.5]" />
+                            Assinatura do Cliente
+                          </h4>
+                          <div className="bg-white border border-slate-200 rounded-lg p-2 flex justify-center max-w-[280px] mx-auto">
+                            <img 
+                              src={currentOs.assinaturaCliente} 
+                              alt="Assinatura" 
+                              className="max-h-24 object-contain" 
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4 text-[10.5px] border-t border-slate-200/60 pt-2.5">
+                            <div>
+                              <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider">Nome do Assinante</span>
+                              <span className="font-extrabold text-slate-700 uppercase">{currentOs.nomeAssinante || '-'}</span>
+                            </div>
+                            <div>
+                              <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider">CPF</span>
+                              <span className="font-extrabold text-slate-700">{currentOs.cpfAssinante || '-'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Section 4: Lifecycle Log Timeline / Histórico de Eventos */}
+                      <div className="space-y-3 text-left">
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <History size={13} className="stroke-[2.5]" />
+                          Ciclo de Vida do Card
+                        </h4>
+                        
+                        {logs.length === 0 ? (
+                          <p className="text-[10.5px] text-slate-450 italic">Nenhum evento registrado no histórico.</p>
+                        ) : (
+                          <div className="relative pl-4 border-l border-slate-200 space-y-4 text-[10.5px] select-none ml-1.5">
+                            {logs.map((log: any, idx: number) => (
+                              <div key={idx} className="relative">
+                                {/* Dot indicator */}
+                                <div className="absolute -left-[20.5px] top-1.5 w-2 h-2 rounded-full bg-[#1B4D3E] border border-white" />
+                                
+                                <div className="space-y-0.5">
+                                  <div className="flex justify-between items-center gap-2">
+                                    <span className="font-extrabold text-slate-700">{log.acao}</span>
+                                    <span className="text-[9px] font-bold text-slate-400 whitespace-nowrap">
+                                      {new Date(log.data).toLocaleString('pt-BR')}
+                                    </span>
+                                  </div>
+                                  <div className="text-[9px] text-slate-450 font-bold uppercase">
+                                    Por: <span className="text-slate-650 font-extrabold">{log.usuario}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                    </div>
+                  );
+                })()}
+
+                 <footer className="pt-4 flex gap-3 border-t border-slate-100">
+                  {osForm.id && (() => {
+                    const currentOs = ordens.find(o => o.id === osForm.id);
+                    return currentOs ? (
+                      <button 
+                        type="button"
+                        onClick={() => { setSelectedOsForPdf(currentOs); setModalOsPdfOpen(true); }}
+                        className="py-3 px-4 text-xs font-black text-slate-550 hover:bg-emerald-50 hover:text-[#1B4D3E] border border-slate-200 hover:border-emerald-250 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+                        title="Ver OS (PDF)"
+                      >
+                        <Printer size={14} className="stroke-[2.5]" /> PDF
+                      </button>
+                    ) : null;
+                  })()}
                   <button 
+                    type="button"
                     onClick={() => setModalOsOpen(false)}
                     className="flex-1 py-3 text-xs font-black text-slate-500 uppercase hover:bg-slate-50 rounded-xl transition-all cursor-pointer"
                   >
                     Cancelar
                   </button>
                   <button 
+                    type="button"
                     onClick={handleSaveOs}
                     disabled={saving}
                     className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"

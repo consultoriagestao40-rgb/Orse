@@ -674,9 +674,20 @@ export async function updateOrdemServicoAtivo(id: string, data: {
   latitudeChegada?: number | null;
   longitudeChegada?: number | null;
   rotaIniciadaEm?: string | null;
+  atendimentoIniciadoEm?: string | null;
+  historico?: string;
 }) {
   try {
     const user = await checkAuth();
+
+    // Fetch current state of the OS to track history logs
+    const currentOs = await prisma.ordemServicoAtivo.findUnique({
+      where: { id, tenantId: user.tenantId }
+    });
+
+    if (!currentOs) {
+      return { success: false, error: "Ordem de Serviço não encontrada." };
+    }
 
     const updateData: any = {};
     if (data.status !== undefined) updateData.status = data.status;
@@ -701,6 +712,78 @@ export async function updateOrdemServicoAtivo(id: string, data: {
     if (data.latitudeChegada !== undefined) updateData.latitudeChegada = data.latitudeChegada;
     if (data.longitudeChegada !== undefined) updateData.longitudeChegada = data.longitudeChegada;
     if (data.rotaIniciadaEm !== undefined) updateData.rotaIniciadaEm = data.rotaIniciadaEm ? new Date(data.rotaIniciadaEm) : null;
+    if (data.atendimentoIniciadoEm !== undefined) updateData.atendimentoIniciadoEm = data.atendimentoIniciadoEm ? new Date(data.atendimentoIniciadoEm) : null;
+
+    // Parse existing history or initialize it
+    let historicoArray: any[] = [];
+    if (currentOs.historico) {
+      try {
+        historicoArray = JSON.parse(currentOs.historico);
+      } catch (e) {
+        historicoArray = [{ data: currentOs.createdAt.toISOString(), acao: "Histórico Inicializado", usuario: "Sistema" }];
+      }
+    } else {
+      historicoArray = [{ data: currentOs.createdAt.toISOString(), acao: "Ordem de Serviço Criada", usuario: "Sistema" }];
+    }
+
+    const nowStr = new Date().toISOString();
+    const userName = user.nome || user.email || "Sistema";
+
+    // Trace status transitions
+    if (data.status !== undefined && data.status !== currentOs.status) {
+      historicoArray.push({
+        data: nowStr,
+        acao: `Status alterado de ${currentOs.status} para ${data.status}`,
+        usuario: userName
+      });
+
+      if (data.status === 'EM_ANDAMENTO') {
+        updateData.atendimentoIniciadoEm = new Date();
+      }
+      if (data.status === 'CONCLUIDA') {
+        updateData.dataExecucao = new Date();
+      }
+    }
+
+    // Trace technician assignment changes
+    if (data.tecnicoEmail !== undefined && data.tecnicoEmail !== currentOs.tecnicoEmail) {
+      const prevTech = currentOs.tecnicoResponsavel || "Nenhum";
+      const nextTech = data.tecnicoResponsavel || "Nenhum";
+      historicoArray.push({
+        data: nowStr,
+        acao: `Responsável técnico alterado de: "${prevTech}" para: "${nextTech}"`,
+        usuario: userName
+      });
+    }
+
+    // Trace route initialization
+    if (data.rotaIniciadaEm !== undefined && data.rotaIniciadaEm) {
+      historicoArray.push({
+        data: nowStr,
+        acao: "Técnico iniciou deslocamento para o cliente",
+        usuario: userName
+      });
+    }
+
+    // Trace onsite arrival
+    if (data.latitudeChegada !== undefined && data.latitudeChegada) {
+      historicoArray.push({
+        data: nowStr,
+        acao: "Técnico chegou ao cliente e iniciou atendimento local",
+        usuario: userName
+      });
+    }
+
+    // Trace technician finalization
+    if (data.status === 'VALIDACAO' && currentOs.status !== 'VALIDACAO') {
+      historicoArray.push({
+        data: nowStr,
+        acao: "Atendimento concluído pelo técnico (Aguardando validação do gestor)",
+        usuario: userName
+      });
+    }
+
+    updateData.historico = JSON.stringify(historicoArray);
 
     const os = await prisma.ordemServicoAtivo.update({
       where: { id, tenantId: user.tenantId },
