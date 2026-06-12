@@ -663,6 +663,12 @@ export async function updateOrdemServicoAtivo(id: string, data: {
   assinaturaCliente?: string;
   nomeAssinante?: string;
   cpfAssinante?: string;
+  tipo?: string;
+  contratoComodatoId?: string;
+  clientId?: string;
+  ativoId?: string;
+  ativoDestinoId?: string | null;
+  dataPrevista?: string | null;
 }) {
   try {
     const user = await checkAuth();
@@ -679,6 +685,12 @@ export async function updateOrdemServicoAtivo(id: string, data: {
     if (data.assinaturaCliente !== undefined) updateData.assinaturaCliente = data.assinaturaCliente;
     if (data.nomeAssinante !== undefined) updateData.nomeAssinante = data.nomeAssinante;
     if (data.cpfAssinante !== undefined) updateData.cpfAssinante = data.cpfAssinante;
+    if (data.tipo !== undefined) updateData.tipo = data.tipo;
+    if (data.contratoComodatoId !== undefined) updateData.contratoComodatoId = data.contratoComodatoId;
+    if (data.clientId !== undefined) updateData.clientId = data.clientId;
+    if (data.ativoId !== undefined) updateData.ativoId = data.ativoId;
+    if (data.ativoDestinoId !== undefined) updateData.ativoDestinoId = data.ativoDestinoId || null;
+    if (data.dataPrevista !== undefined) updateData.dataPrevista = data.dataPrevista ? new Date(data.dataPrevista) : null;
 
     const os = await prisma.ordemServicoAtivo.update({
       where: { id, tenantId: user.tenantId },

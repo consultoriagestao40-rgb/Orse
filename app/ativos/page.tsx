@@ -527,21 +527,37 @@ export default function AtivosPage() {
     if (contratos.length === 0) {
       return showAlert('Contrato Necessário', 'Para gerar uma OS, é necessário possuir contratos de comodato cadastrados.', 'warning');
     }
-    const targetContrato = contratos[0];
     
-    setOsForm({
-      id: '',
-      tipo: 'INSTALACAO',
-      contratoComodatoId: targetContrato.id,
-      clientId: targetContrato.clientId,
-      ativoId: targetContrato.itens[0]?.ativoId || '',
-      ativoDestinoId: '',
-      observacao: '',
-      instrucoes: '',
-      tecnicoResponsavel: '',
-      tecnicoEmail: '',
-      dataPrevista: new Date().toISOString().substring(0, 10)
-    });
+    if (os) {
+      setOsForm({
+        id: os.id,
+        tipo: os.tipo,
+        contratoComodatoId: os.contratoComodatoId,
+        clientId: os.clientId,
+        ativoId: os.ativoId,
+        ativoDestinoId: os.ativoDestinoId || '',
+        observacao: os.observacao || '',
+        instrucoes: os.instrucoes || '',
+        tecnicoResponsavel: os.tecnicoResponsavel || '',
+        tecnicoEmail: os.tecnicoEmail || '',
+        dataPrevista: os.dataPrevista ? new Date(os.dataPrevista).toISOString().substring(0, 10) : ''
+      });
+    } else {
+      const targetContrato = contratos[0];
+      setOsForm({
+        id: '',
+        tipo: 'INSTALACAO',
+        contratoComodatoId: targetContrato.id,
+        clientId: targetContrato.clientId,
+        ativoId: targetContrato.itens[0]?.ativoId || '',
+        ativoDestinoId: '',
+        observacao: '',
+        instrucoes: '',
+        tecnicoResponsavel: '',
+        tecnicoEmail: '',
+        dataPrevista: new Date().toISOString().substring(0, 10)
+      });
+    }
     setModalOsOpen(true);
   };
 
@@ -562,12 +578,30 @@ export default function AtivosPage() {
       return showAlert('Seleção Necessária', 'Selecione o Contrato e o Equipamento associado.', 'warning');
     }
     setSaving(true);
-    const res = await createOrdemServicoAtivo(osForm);
+    let res;
+    if (osForm.id) {
+      res = await updateOrdemServicoAtivo(osForm.id, {
+        tipo: osForm.tipo,
+        contratoComodatoId: osForm.contratoComodatoId,
+        clientId: osForm.clientId,
+        ativoId: osForm.ativoId,
+        ativoDestinoId: osForm.ativoDestinoId || null,
+        observacao: osForm.observacao,
+        instrucoes: osForm.instrucoes,
+        tecnicoResponsavel: osForm.tecnicoResponsavel,
+        tecnicoEmail: osForm.tecnicoEmail,
+        dataPrevista: osForm.dataPrevista ? new Date(osForm.dataPrevista).toISOString() : null
+      });
+    } else {
+      res = await createOrdemServicoAtivo(osForm);
+    }
+    
     if (res.success) {
       setModalOsOpen(false);
       await loadData();
+      showAlert('OS Salva', osForm.id ? 'Ordem de serviço atualizada com sucesso.' : 'Ordem de serviço cadastrada com sucesso.', 'success');
     } else {
-      showAlert('Erro ao Salvar', res.error || 'Erro ao cadastrar OS', 'error');
+      showAlert('Erro ao Salvar', res.error || 'Erro ao gravar OS', 'error');
     }
     setSaving(false);
   };
@@ -1450,6 +1484,15 @@ export default function AtivosPage() {
                           </td>
                           <td className="px-6 py-3.5">
                             <div className="flex items-center justify-center gap-1.5">
+                              {os.status !== 'CONCLUIDA' && os.status !== 'CANCELADA' && (
+                                <button 
+                                  onClick={() => openOsModal(os)}
+                                  className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"
+                                  title="Editar OS"
+                                >
+                                  <Edit2 size={13} />
+                                </button>
+                              )}
                               <button 
                                 onClick={() => { setSelectedOsForPdf(os); setModalOsPdfOpen(true); }}
                                 className="p-1.5 text-[#1B4D3E] hover:bg-emerald-50 rounded-lg"
@@ -1619,13 +1662,24 @@ export default function AtivosPage() {
                             </div>
                           </div>
                           <div className="flex justify-between items-center pt-2 border-t border-slate-100 gap-1.5">
-                            <button 
-                              onClick={() => { setSelectedOsForPdf(os); setModalOsPdfOpen(true); }}
-                              className="text-[9px] font-black uppercase text-slate-550 hover:text-[#1B4D3E] transition-colors flex items-center gap-0.5 cursor-pointer"
-                              title="Ver OS (PDF)"
-                            >
-                              <Printer size={11} /> PDF
-                            </button>
+                            <div className="flex gap-1.5">
+                              {os.status !== 'CONCLUIDA' && os.status !== 'CANCELADA' && (
+                                <button 
+                                  onClick={() => openOsModal(os)}
+                                  className="text-[9px] font-black uppercase text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-0.5 cursor-pointer"
+                                  title="Editar OS"
+                                >
+                                  <Edit2 size={11} /> Editar
+                                </button>
+                              )}
+                              <button 
+                                onClick={() => { setSelectedOsForPdf(os); setModalOsPdfOpen(true); }}
+                                className="text-[9px] font-black uppercase text-slate-550 hover:text-[#1B4D3E] transition-colors flex items-center gap-0.5 cursor-pointer"
+                                  title="Ver OS (PDF)"
+                              >
+                                <Printer size={11} /> PDF
+                              </button>
+                            </div>
                             
                             <div className="flex flex-wrap gap-1 justify-end">
                               {colStatus === 'PENDENTE' && (
@@ -2235,7 +2289,7 @@ export default function AtivosPage() {
               <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none">
                 <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
                   <Wrench size={16} className="stroke-[2.5]" />
-                  Abrir Ordem de Serviço (OS)
+                  {osForm.id ? 'Editar Ordem de Serviço (OS)' : 'Abrir Ordem de Serviço (OS)'}
                 </h3>
                 <button onClick={() => setModalOsOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"><X size={18} /></button>
               </header>
@@ -2371,7 +2425,7 @@ export default function AtivosPage() {
                     disabled={saving}
                     className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
                   >
-                    <Save size={14} /> {saving ? 'Gerando...' : 'Gravar Ordem de Serviço'}
+                    <Save size={14} /> {saving ? 'Salvando...' : (osForm.id ? 'Salvar Alterações' : 'Gravar Ordem de Serviço')}
                   </button>
                 </footer>
               </div>
@@ -2822,6 +2876,52 @@ export default function AtivosPage() {
                 </div>
               </div>
 
+              {/* Relatório Técnico de Atendimento (se houver) */}
+              {(selectedOsForPdf.observacaoAtendimento || selectedOsForPdf.fotosAtendimento) && (
+                <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs bg-white text-left">
+                  <div className="bg-slate-50 px-4 py-2 border-b border-slate-200 text-slate-500 font-black uppercase text-[10px] tracking-wider select-none">
+                    Relatório de Atendimento Técnico
+                  </div>
+                  <div className="p-4 space-y-4 font-bold text-slate-700 text-[10px]">
+                    {selectedOsForPdf.observacaoAtendimento && (
+                      <div className="space-y-1">
+                        <span className="text-[9px] text-slate-450 font-extrabold uppercase block tracking-wider leading-none">Relato Técnico do Atendimento</span>
+                        <p className="bg-slate-50 border border-slate-150 rounded-xl p-3 mt-1 text-slate-600 font-semibold leading-relaxed whitespace-pre-wrap text-[11px]">
+                          {selectedOsForPdf.observacaoAtendimento}
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedOsForPdf.fotosAtendimento && (() => {
+                      try {
+                        const fotosList = JSON.parse(selectedOsForPdf.fotosAtendimento);
+                        if (Array.isArray(fotosList) && fotosList.length > 0) {
+                          return (
+                            <div className="space-y-2">
+                              <span className="text-[9px] text-slate-450 font-extrabold uppercase block tracking-wider leading-none">Fotos de Comprovação do Serviço</span>
+                              <div className="grid grid-cols-2 gap-3 mt-1">
+                                {fotosList.map((fotoStr: string, idx: number) => (
+                                  <div key={idx} className="aspect-video relative rounded-xl border border-slate-200 overflow-hidden bg-slate-50 max-h-[140px]">
+                                    <img 
+                                      src={fotoStr} 
+                                      alt={`Foto de Atendimento ${idx + 1}`} 
+                                      className="w-full h-full object-cover" 
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        }
+                      } catch (e) {
+                        console.error('Error parsing fotosAtendimento', e);
+                      }
+                      return null;
+                    })()}
+                  </div>
+                </div>
+              )}
+
               {/* Bloco de Observações Adicionais */}
               <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
                 <div className="bg-slate-50 px-4 py-2 border-b border-slate-200 text-slate-500 font-black uppercase text-[10px] tracking-wider select-none">
@@ -2851,6 +2951,12 @@ export default function AtivosPage() {
                             className="max-h-[60px] object-contain mb-1"
                           />
                           <span className="text-[9px] text-emerald-600 font-black uppercase flex items-center gap-1"><CheckCircle size={10} /> Assinado Digitalmente</span>
+                          {selectedOsForPdf.nomeAssinante && (
+                            <span className="text-[8.5px] text-slate-500 font-bold mt-0.5">Nome: {selectedOsForPdf.nomeAssinante}</span>
+                          )}
+                          {selectedOsForPdf.cpfAssinante && (
+                            <span className="text-[8.5px] text-slate-500 font-bold">CPF: {selectedOsForPdf.cpfAssinante}</span>
+                          )}
                         </div>
                       ) : (
                         <div className="h-[60px] flex items-end justify-center w-full">
