@@ -77,8 +77,9 @@ export default function ClienteEditPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
-      <main className="flex-1 p-10 max-w-5xl mx-auto w-full">
-        <header className="flex justify-between items-center mb-12">
+      <main className="flex-1 p-10 overflow-y-auto">
+        <div className="max-w-5xl mx-auto w-full">
+          <header className="flex justify-between items-center mb-12">
           <div className="flex items-center gap-6">
             <button 
               onClick={() => router.push('/clientes')}
@@ -199,6 +200,7 @@ export default function ClienteEditPage({ params }: { params: Promise<{ id: stri
             </div>
           </div>
         </div>
+      </div>
       </main>
     </div>
   );
