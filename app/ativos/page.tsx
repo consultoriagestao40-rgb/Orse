@@ -41,6 +41,8 @@ export default function AtivosPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterCategoria, setFilterCategoria] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
   
   // Modals & Forms State
   const [modalAtivoOpen, setModalAtivoOpen] = useState(false);
@@ -569,11 +571,15 @@ export default function AtivosPage() {
   // -----------------------------------------------------------------------------
   // FILTERS AND GROUPINGS
   // -----------------------------------------------------------------------------
-  const filteredAtivos = ativos.filter(a => 
-    a.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    a.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    a.categoria.nome.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredAtivos = ativos.filter(a => {
+    const matchesSearch = 
+      a.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.categoria.nome.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategoria = filterCategoria ? a.categoriaId === filterCategoria : true;
+    const matchesStatus = filterStatus ? a.status === filterStatus : true;
+    return matchesSearch && matchesCategoria && matchesStatus;
+  });
 
   const filteredContratos = contratos.filter(c => 
     c.client.nomeFantasia.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -816,6 +822,33 @@ export default function AtivosPage() {
                     <option value="categoria">Por Categoria de Ativo</option>
                   </select>
                 )}
+              </div>
+            )}
+            
+            {activeTab === 'ativos' && (
+              <div className="flex items-center gap-3">
+                <select
+                  value={filterCategoria}
+                  onChange={(e) => setFilterCategoria(e.target.value)}
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-slate-500 outline-none focus:border-[#1B4D3E] cursor-pointer max-w-[180px] truncate"
+                >
+                  <option value="">TODAS AS CATEGORIAS</option>
+                  {categorias.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.nome.toUpperCase()}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-slate-500 outline-none focus:border-[#1B4D3E] cursor-pointer"
+                >
+                  <option value="">TODOS OS STATUS</option>
+                  <option value="DISPONIVEL">DISPONÍVEL</option>
+                  <option value="COMODATO">COMODATO</option>
+                  <option value="MANUTENCAO">MANUTENÇÃO</option>
+                  <option value="BAIXADO">BAIXADO</option>
+                </select>
               </div>
             )}
             
