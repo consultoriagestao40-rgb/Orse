@@ -2488,7 +2488,7 @@ export default function AtivosPage() {
                       <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 space-y-3.5 text-left">
                         <h4 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
                           <CheckCircle size={13} className="stroke-[2.5]" />
-                          Resumo do Atendimento
+                          Resumo dos Tempos
                         </h4>
 
                         <div className="grid grid-cols-2 gap-4 text-[10.5px]">
@@ -2527,78 +2527,7 @@ export default function AtivosPage() {
                             </div>
                           )}
                         </div>
-
-                        {currentOs.observacaoAtendimento && (
-                          <div className="border-t border-slate-200/60 pt-2.5">
-                            <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider mb-0.5">Relato do Técnico</span>
-                            <p className="text-[10.5px] font-semibold text-slate-700 leading-relaxed bg-white p-2.5 rounded-lg border border-slate-150">{currentOs.observacaoAtendimento}</p>
-                          </div>
-                        )}
                       </div>
-
-                      {/* Section 2: Photos / Fotos */}
-                      {(() => {
-                        let photosList: string[] = [];
-                        if (currentOs.fotosAtendimento) {
-                          try {
-                            photosList = JSON.parse(currentOs.fotosAtendimento);
-                          } catch (e) {}
-                        }
-                        if (photosList.length === 0) return null;
-
-                        return (
-                          <div className="space-y-2 text-left">
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                              <Camera size={13} className="stroke-[2.5]" />
-                              Fotos do Atendimento ({photosList.length})
-                            </h4>
-                            <div className="grid grid-cols-3 gap-2">
-                              {photosList.map((photoUrl, i) => (
-                                <a 
-                                  key={i} 
-                                  href={photoUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="aspect-square border border-slate-200 rounded-lg overflow-hidden hover:border-[#1B4D3E]/30 transition-all cursor-zoom-in"
-                                >
-                                  <img 
-                                    src={photoUrl} 
-                                    alt={`Foto ${i + 1}`} 
-                                    className="w-full h-full object-cover" 
-                                  />
-                                </a>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })()}
-
-                      {/* Section 3: Signature / Assinatura */}
-                      {currentOs.assinaturaCliente && (
-                        <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 space-y-3 text-left">
-                          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                            <FileSignature size={13} className="stroke-[2.5]" />
-                            Assinatura do Cliente
-                          </h4>
-                          <div className="bg-white border border-slate-200 rounded-lg p-2 flex justify-center max-w-[280px] mx-auto">
-                            <img 
-                              src={currentOs.assinaturaCliente} 
-                              alt="Assinatura" 
-                              className="max-h-24 object-contain" 
-                            />
-                          </div>
-                          <div className="grid grid-cols-2 gap-4 text-[10.5px] border-t border-slate-200/60 pt-2.5">
-                            <div>
-                              <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider">Nome do Assinante</span>
-                              <span className="font-extrabold text-slate-700 uppercase">{currentOs.nomeAssinante || '-'}</span>
-                            </div>
-                            <div>
-                              <span className="block font-black text-slate-400 uppercase text-[8px] tracking-wider">CPF</span>
-                              <span className="font-extrabold text-slate-700">{currentOs.cpfAssinante || '-'}</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
 
                       {/* Section 4: Lifecycle Log Timeline / Histórico de Eventos */}
                       <div className="space-y-3 text-left">
