@@ -2541,20 +2541,20 @@ export default function AtivosPage() {
             display: none !important;
           }
           
-          /* Resetar wrappers */
-          html, body {
-            height: auto !important;
-            min-height: 100% !important;
-            overflow: visible !important;
+          /* Resetar wrappers e classes restritivas de altura/overflow para evitar páginas em branco */
+          html, body, #ativos-layout-root,
+          [class*="h-screen"],
+          [class*="min-h-screen"], 
+          [class*="overflow-hidden"],
+          [class*="overflow-y-auto"] {
             background: white !important;
-          }
-          
-          #ativos-layout-root {
+            background-color: white !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
             display: block !important;
-            height: auto !important;
-            min-height: 100% !important;
-            overflow: visible !important;
-            background: white !important;
+            position: static !important;
             padding: 0 !important;
             margin: 0 !important;
           }
@@ -2570,6 +2570,8 @@ export default function AtivosPage() {
             margin: 0 !important;
             overflow: visible !important;
             box-shadow: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
           }
           .print-modal-container > div {
             border: none !important;
@@ -2580,6 +2582,8 @@ export default function AtivosPage() {
             margin: 0 !important;
             padding: 0 !important;
             overflow: visible !important;
+            display: block !important;
+            position: static !important;
           }
           .print-modal-container header {
             display: none !important;
@@ -2595,6 +2599,20 @@ export default function AtivosPage() {
             max-width: 100% !important;
             box-shadow: none !important;
             background: white !important;
+            display: block !important;
+            position: static !important;
+          }
+          /* Evitar quebras de página em meio a blocos de assinatura e tabelas */
+          tr, 
+          thead,
+          .avoid-break,
+          .print-modal-container h4,
+          .print-modal-container .grid,
+          .print-modal-container table,
+          .print-modal-container .pt-12,
+          .print-modal-container .pt-16 {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
           }
           /* Configurações de página A4 (margin 0 remove cabeçalhos/rodapés padrão do navegador) */
           @page {
