@@ -8,7 +8,7 @@ import {
   Calendar, Printer, LayoutGrid, Kanban, 
   Tags, Info, Users, ShieldCheck, Check, 
   MessageSquare, User, FileImage, Layers, ChevronRight, FileCheck, CheckCircle,
-  DollarSign, TrendingUp, Navigation, MapPin, Camera, FileSignature, History
+  DollarSign, TrendingUp, Navigation, MapPin, History
 } from 'lucide-react';
 
 import { 
