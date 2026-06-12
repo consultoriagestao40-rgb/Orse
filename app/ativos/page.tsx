@@ -1,0 +1,2220 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import Sidebar from '@/components/Sidebar';
+import { 
+  Plus, Search, Edit2, Trash2, X, Save, 
+  Boxes, FileText, ClipboardList, Wrench, 
+  Calendar, Printer, LayoutGrid, Kanban, 
+  Tags, Info, Users, ShieldCheck, Check, 
+  MessageSquare, User, FileImage, Layers, ChevronRight, FileCheck, CheckCircle
+} from 'lucide-react';
+
+import { 
+  getCategoriasAtivo, createCategoriaAtivo, updateCategoriaAtivo, deleteCategoriaAtivo,
+  getAtivos, createAtivo, updateAtivo, deleteAtivo,
+  getTemplatesComodato, createTemplateComodato, updateTemplateComodato, deleteTemplateComodato,
+  getContratosComodato, createContratoComodato, updateContratoComodatoStatus, deleteContratoComodato,
+  getOrdensServicoAtivo, createOrdemServicoAtivo, updateOrdemServicoAtivo, deleteOrdemServicoAtivo
+} from './actions';
+import { getClientes } from '@/app/clientes/actions';
+import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
+
+type ActiveTab = 'ativos' | 'templates' | 'contratos' | 'ordens';
+type ViewMode = 'lista' | 'kanban' | 'agrupado';
+type GroupBy = 'segmento' | 'categoria';
+
+export default function AtivosPage() {
+  const [activeTab, setActiveTab] = useState<ActiveTab>('ativos');
+  
+  // Data State
+  const [ativos, setAtivos] = useState<any[]>([]);
+  const [categorias, setCategorias] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [contratos, setContratos] = useState<any[]>([]);
+  const [ordens, setOrdens] = useState<any[]>([]);
+  const [clientes, setClientes] = useState<any[]>([]);
+  const [empresas, setEmpresas] = useState<any[]>([]);
+  
+  // Loading & UI State
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Modals & Forms State
+  const [modalAtivoOpen, setModalAtivoOpen] = useState(false);
+  const [modalCategoriaOpen, setModalCategoriaOpen] = useState(false);
+  const [modalTemplateOpen, setModalTemplateOpen] = useState(false);
+  const [modalContratoOpen, setModalContratoOpen] = useState(false);
+  const [modalOsOpen, setModalOsOpen] = useState(false);
+  
+  // PDF Preview Modals
+  const [modalContratoPdfOpen, setModalContratoPdfOpen] = useState(false);
+  const [modalOsPdfOpen, setModalOsPdfOpen] = useState(false);
+  const [selectedContratoForPdf, setSelectedContratoForPdf] = useState<any>(null);
+  const [selectedOsForPdf, setSelectedOsForPdf] = useState<any>(null);
+
+  // OS Signature Modal
+  const [modalSignatureOpen, setModalSignatureOpen] = useState(false);
+  const [selectedOsForSignature, setSelectedOsForSignature] = useState<any>(null);
+
+  // Contracts View Settings
+  const [contratosViewMode, setContratosViewMode] = useState<ViewMode>('lista');
+  const [contratosGroupBy, setContratosGroupBy] = useState<GroupBy>('segmento');
+
+  // Form Data
+  const [ativoForm, setAtivoForm] = useState({ id: '', descricao: '', valor: '', categoriaId: '', observacao: '', status: 'DISPONIVEL' });
+  const [categoriaForm, setCategoriaForm] = useState({ id: '', nome: '' });
+  const [templateForm, setTemplateForm] = useState<{ id: string, nome: string, clausulas: { id?: string, ordem: number, titulo: string, texto: string }[] }>({ id: '', nome: '', clausulas: [] });
+  
+  const [contratoForm, setContratoForm] = useState<{
+    id: string;
+    clientId: string;
+    empresaEmissoraId: string;
+    dataInicio: string;
+    vigenciaMeses: number;
+    valorMinimoMensal: number;
+    templateId: string;
+    clausulas: { ordem: number, titulo: string, texto: string }[];
+    selectedAtivos: { ativoId: string, quantidade: number, valorUnitario: number }[];
+  }>({
+    id: '',
+    clientId: '',
+    empresaEmissoraId: '',
+    dataInicio: new Date().toISOString().substring(0, 10),
+    vigenciaMeses: 12,
+    valorMinimoMensal: 250,
+    templateId: '',
+    clausulas: [],
+    selectedAtivos: []
+  });
+
+  const [osForm, setOsForm] = useState({
+    id: '',
+    tipo: 'INSTALACAO',
+    contratoComodatoId: '',
+    ativoId: '',
+    ativoDestinoId: '',
+    observacao: '',
+    instrucoes: '',
+    tecnicoResponsavel: '',
+    dataPrevista: new Date().toISOString().substring(0, 10)
+  });
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [catRes, ativosRes, tempRes, contrRes, osRes, cliRes, empRes] = await Promise.all([
+        getCategoriasAtivo(),
+        getAtivos(),
+        getTemplatesComodato(),
+        getContratosComodato(),
+        getOrdensServicoAtivo(),
+        getClientes(),
+        getEmpresasEmissoras()
+      ]);
+
+      if (catRes.success) setCategorias(catRes.categorias || []);
+      if (ativosRes.success) setAtivos(ativosRes.ativos || []);
+      if (tempRes.success) setTemplates(tempRes.templates || []);
+      if (contrRes.success) setContratos(contrRes.contratos || []);
+      if (osRes.success) setOrdens(osRes.ordens || []);
+      setClientes(cliRes || []);
+      setEmpresas(empRes || []);
+    } catch (err) {
+      console.error(err);
+    }
+    setLoading(false);
+  };
+
+  // -----------------------------------------------------------------------------
+  // ATIVO CRUD
+  // -----------------------------------------------------------------------------
+  const openAtivoModal = (ativo?: any) => {
+    if (ativo) {
+      setAtivoForm({
+        id: ativo.id,
+        descricao: ativo.descricao,
+        valor: ativo.valor,
+        categoriaId: ativo.categoriaId,
+        observacao: ativo.observacao || '',
+        status: ativo.status
+      });
+    } else {
+      setAtivoForm({
+        id: '',
+        descricao: '',
+        valor: '',
+        categoriaId: categorias[0]?.id || '',
+        observacao: '',
+        status: 'DISPONIVEL'
+      });
+    }
+    setModalAtivoOpen(true);
+  };
+
+  const handleSaveAtivo = async () => {
+    if (!ativoForm.descricao || !ativoForm.categoriaId || !ativoForm.valor) {
+      return alert('Preencha os campos obrigatórios (Descrição, Categoria e Valor)');
+    }
+    setSaving(true);
+    const data = {
+      descricao: ativoForm.descricao,
+      valor: parseFloat(String(ativoForm.valor)) || 0,
+      categoriaId: ativoForm.categoriaId,
+      observacao: ativoForm.observacao,
+      status: ativoForm.status
+    };
+
+    let res;
+    if (ativoForm.id) {
+      res = await updateAtivo(ativoForm.id, data);
+    } else {
+      res = await createAtivo(data);
+    }
+
+    if (res.success) {
+      setModalAtivoOpen(false);
+      await loadData();
+    } else {
+      alert(res.error || 'Erro ao salvar ativo');
+    }
+    setSaving(false);
+  };
+
+  const handleDeleteAtivo = async (id: string) => {
+    if (!confirm('Deseja excluir este ativo permanentemente?')) return;
+    setLoading(true);
+    const res = await deleteAtivo(id);
+    if (res.success) {
+      await loadData();
+    } else {
+      alert(res.error || 'Erro ao excluir ativo');
+    }
+    setLoading(false);
+  };
+
+  // -----------------------------------------------------------------------------
+  // CATEGORIA CRUD
+  // -----------------------------------------------------------------------------
+  const openCategoriaModal = (cat?: any) => {
+    if (cat) {
+      setCategoriaForm({ id: cat.id, nome: cat.nome });
+    } else {
+      setCategoriaForm({ id: '', nome: '' });
+    }
+    setModalCategoriaOpen(true);
+  };
+
+  const handleSaveCategoria = async () => {
+    if (!categoriaForm.nome.trim()) return alert('Nome é obrigatório');
+    setSaving(true);
+    let res;
+    if (categoriaForm.id) {
+      res = await updateCategoriaAtivo(categoriaForm.id, categoriaForm.nome);
+    } else {
+      res = await createCategoriaAtivo(categoriaForm.nome);
+    }
+
+    if (res.success) {
+      setModalCategoriaOpen(false);
+      await loadData();
+    } else {
+      alert(res.error || 'Erro ao salvar categoria');
+    }
+    setSaving(false);
+  };
+
+  const handleDeleteCategoria = async (id: string) => {
+    if (!confirm('Deseja excluir esta categoria?')) return;
+    setLoading(true);
+    const res = await deleteCategoriaAtivo(id);
+    if (res.success) {
+      await loadData();
+    } else {
+      alert(res.error || 'Erro ao excluir categoria');
+    }
+    setLoading(false);
+  };
+
+  // -----------------------------------------------------------------------------
+  // TEMPLATE CRUD
+  // -----------------------------------------------------------------------------
+  const openTemplateModal = (temp?: any) => {
+    if (temp) {
+      setTemplateForm({
+        id: temp.id,
+        nome: temp.nome,
+        clausulas: temp.clausulas.map((c: any) => ({ ...c }))
+      });
+    } else {
+      // Inicia com minuta oficial Slimpe preenchida para facilitar!
+      setTemplateForm({
+        id: '',
+        nome: 'Modelo Slimpe Padrão',
+        clausulas: [
+          { ordem: 1, titulo: 'CLÁUSULA 1 – DO OBJETO', texto: 'O presente contrato tem como objeto a cessão gratuita, em regime de comodato, dos equipamentos de propriedade da COMODANTE, os quais estarão descritos nas respectivas Notas Fiscais de Comodato emitidas em nome do COMODATÁRIO.\nParágrafo único: O COMODATÁRIO reconhece que poderão ser emitidas uma ou mais Notas Fiscais de Comodato ao longo da vigência deste contrato, em conformidade com as necessidades e andamento da relação comercial, sendo tais documentos considerados parte integrante deste contrato. Havendo necessidade de alterações, complementações ou exclusões de equipamentos, estas poderão ser formalizadas por meio de aditivo contratual anexo.' },
+          { ordem: 2, titulo: 'CLÁUSULA 2 – DA FINALIDADE', texto: 'Os equipamentos serão utilizados exclusivamente nas dependências do COMODATÁRIO, para uso com os produtos fornecidos pela COMODANTE, não podendo ser removidos ou utilizados para outros fins sem autorização expressa.' },
+          { ordem: 3, titulo: 'CLÁUSULA 3 – DA VIGÊNCIA', texto: 'Este contrato vigorará por prazo indeterminado, podendo ser rescindido por qualquer das partes, mediante notificação por escrito com antecedência mínima de 30 (trinta) dias.' },
+          { ordem: 4, titulo: 'CLÁUSULA 4 – DAS OBRIGAÇÕES DO COMODATÁRIO', texto: 'Parágrafo único: O COMODATÁRIO se responsabiliza pelo ressarcimento, com base no valor de mercado do bem, em caso de perda, furto, roubo, extravio ou dano de qualquer natureza aos equipamentos, exceto nos casos de desgaste natural ou defeito de fabricação.\nO COMODATÁRIO se obriga a:\n1. Zelar pela boa conservação e funcionamento dos equipamentos;\n2. Não emprestar, ceder ou transferir os bens a terceiros;\n3. Utilizar exclusivamente produtos fornecidos pela COMODANTE nos referidos equipamentos;\n4. Restituir os bens em perfeito estado de conservação, salvo desgaste natural, quando solicitado pela COMODANTE ou na rescisão contratual.' },
+          { ordem: 5, titulo: 'CLÁUSULA 5 – DA CONDIÇÃO DE MANUTENÇÃO DO COMODATO', texto: 'O presente comodato fica condicionado à aquisição mínima mensal de produtos fornecidos pela COMODANTE, no valor de R$ 250,00 (duzentos e cinquenta reais). O não cumprimento desta condição autoriza a COMODANTE a rescindir o contrato de imediato, mediante simples notificação, devendo o COMODATÁRIO providenciar a devolução dos equipamentos cedidos em até 10 (dez) dias úteis.' },
+          { ordem: 6, titulo: 'CLÁUSULA 6 – DAS OBRIGAÇÕES DO COMODANTE', texto: 'Parágrafo 1º: A manutenção corretiva decorrente de mau uso, instalação inadequada pelo COMODATÁRIO, ou danos por ele causados, será de responsabilidade do COMODATÁRIO, que arcará com todos os custos de reparo ou reposição do equipamento.\nParágrafo 2º: Custos adicionais de instalação, transporte ou reposição não decorrentes de defeito de fabricação ou uso normal, serão de responsabilidade exclusiva do COMODATÁRIO.\nCompete à COMODANTE:\n1. Realizar a instalação dos equipamentos no local indicado;\n2. Prestar orientação técnica para o uso adequado;\n3. Realizar eventuais manutenções corretivas nos equipamentos, desde que decorrentes de uso normal.' },
+          { ordem: 7, titulo: 'CLÁUSULA 7 – DA RESCISÃO', texto: 'Parágrafo 1º: Em caso de rescisão por qualquer dos motivos acima, o COMODATÁRIO se compromete a devolver todos os equipamentos cedidos em até 10 (dez) dias úteis após a notificação formal.\nO presente contrato poderá ser rescindido:\n- Por descumprimento de qualquer cláusula;\n- Por solicitação de qualquer das partes, com aviso prévio de 30 dias;\n- Em caso de encerramento da relação comercial entre as partes.' },
+          { ordem: 8, titulo: 'CLÁUSULA 8 – DA PROPRIEDADE DOS EQUIPAMENTOS', texto: 'Os equipamentos objeto deste contrato são de propriedade exclusiva e inalienável da COMODANTE. Em nenhuma hipótese, o COMODATÁRIO terá direito de retenção ou propriedade sobre os bens, devendo restituí-los integralmente ao término do contrato, independentemente do motivo da rescisão.' },
+          { ordem: 9, titulo: 'CLÁUSULA 9 – DO FORO', texto: 'Para dirimir quaisquer controvérsias oriundas deste contrato, as partes elegem o foro da comarca de Pinhais/PR, com renúncia de qualquer outro, por mais privilegiado que seja.' }
+        ]
+      });
+    }
+    setModalTemplateOpen(true);
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!templateForm.nome.trim()) return alert('Nome do template é obrigatório');
+    setSaving(true);
+    let res;
+    if (templateForm.id) {
+      res = await updateTemplateComodato(templateForm.id, templateForm.nome, templateForm.clausulas);
+    } else {
+      res = await createTemplateComodato(templateForm.nome, templateForm.clausulas);
+    }
+
+    if (res.success) {
+      setModalTemplateOpen(false);
+      await loadData();
+    } else {
+      alert(res.error || 'Erro ao salvar template');
+    }
+    setSaving(false);
+  };
+
+  const handleAddClauseToTemplate = () => {
+    const nextOrdem = templateForm.clausulas.length + 1;
+    setTemplateForm(prev => ({
+      ...prev,
+      clausulas: [...prev.clausulas, { ordem: nextOrdem, titulo: `CLÁUSULA ${nextOrdem} – TÍTULO`, texto: '' }]
+    }));
+  };
+
+  const handleClauseChange = (idx: number, field: string, val: any) => {
+    const updated = [...templateForm.clausulas];
+    updated[idx] = { ...updated[idx], [field]: val };
+    setTemplateForm(prev => ({ ...prev, clausulas: updated }));
+  };
+
+  const handleRemoveClauseFromTemplate = (idx: number) => {
+    const updated = templateForm.clausulas.filter((_, i) => i !== idx).map((c, i) => ({ ...c, ordem: i + 1 }));
+    setTemplateForm(prev => ({ ...prev, clausulas: updated }));
+  };
+
+  const handleDeleteTemplate = async (id: string) => {
+    if (!confirm('Excluir este template?')) return;
+    setLoading(true);
+    await deleteTemplateComodato(id);
+    await loadData();
+    setLoading(false);
+  };
+
+  // -----------------------------------------------------------------------------
+  // CONTRATOS DE COMODATO CRUD
+  // -----------------------------------------------------------------------------
+  const openContratoModal = () => {
+    if (clientes.length === 0 || empresas.length === 0) {
+      return alert('Certifique-se de que existem clientes e empresas emissoras cadastradas no sistema.');
+    }
+    setContratoForm({
+      id: '',
+      clientId: clientes[0]?.id || '',
+      empresaEmissoraId: empresas[0]?.id || '',
+      dataInicio: new Date().toISOString().substring(0, 10),
+      vigenciaMeses: 12,
+      valorMinimoMensal: 250,
+      templateId: templates[0]?.id || '',
+      clausulas: templates[0] ? templates[0].clausulas.map((c: any) => ({ ordem: c.ordem, titulo: c.titulo, texto: c.texto })) : [],
+      selectedAtivos: []
+    });
+    setModalContratoOpen(true);
+  };
+
+  const handleTemplateSelectionChange = (tplId: string) => {
+    const tpl = templates.find(t => t.id === tplId);
+    if (tpl) {
+      setContratoForm(prev => ({
+        ...prev,
+        templateId: tplId,
+        clausulas: tpl.clausulas.map((c: any) => ({ ordem: c.ordem, titulo: c.titulo, texto: c.texto }))
+      }));
+    }
+  };
+
+  const handleAddAtivoToContrato = (ativoId: string) => {
+    const active = ativos.find(a => a.id === ativoId);
+    if (!active) return;
+    if (contratoForm.selectedAtivos.some(item => item.ativoId === ativoId)) return;
+
+    setContratoForm(prev => ({
+      ...prev,
+      selectedAtivos: [...prev.selectedAtivos, { ativoId, quantidade: 1, valorUnitario: active.valor }]
+    }));
+  };
+
+  const handleUpdateContratoAtivoField = (idx: number, field: string, val: any) => {
+    const updated = [...contratoForm.selectedAtivos];
+    updated[idx] = { ...updated[idx], [field]: val };
+    setContratoForm(prev => ({ ...prev, selectedAtivos: updated }));
+  };
+
+  const handleRemoveAtivoFromContrato = (idx: number) => {
+    setContratoForm(prev => ({
+      ...prev,
+      selectedAtivos: prev.selectedAtivos.filter((_, i) => i !== idx)
+    }));
+  };
+
+  const handleSaveContrato = async () => {
+    if (contratoForm.selectedAtivos.length === 0) {
+      return alert('Adicione pelo menos um equipamento no contrato.');
+    }
+    setSaving(true);
+    const res = await createContratoComodato({
+      clientId: contratoForm.clientId,
+      empresaEmissoraId: contratoForm.empresaEmissoraId,
+      dataInicio: contratoForm.dataInicio,
+      vigenciaMeses: Number(contratoForm.vigenciaMeses) || 12,
+      valorMinimoMensal: Number(contratoForm.valorMinimoMensal) || 0,
+      clausulas: contratoForm.clausulas,
+      itens: contratoForm.selectedAtivos
+    });
+
+    if (res.success) {
+      setModalContratoOpen(false);
+      await loadData();
+    } else {
+      alert(res.error || 'Erro ao gerar contrato de comodato');
+    }
+    setSaving(false);
+  };
+
+  const handleUpdateContratoStatus = async (id: string, newStatus: string) => {
+    setLoading(true);
+    const res = await updateContratoComodatoStatus(id, newStatus);
+    if (res.success) {
+      await loadData();
+    } else {
+      alert(res.error || 'Erro ao atualizar status');
+    }
+    setLoading(false);
+  };
+
+  const handleDeleteContrato = async (id: string) => {
+    if (!confirm('Deseja excluir este contrato? Todos os equipamentos vinculados voltarão a ficar disponíveis.')) return;
+    setLoading(true);
+    const res = await deleteContratoComodato(id);
+    if (res.success) {
+      await loadData();
+    } else {
+      alert(res.error || 'Erro ao excluir contrato');
+    }
+    setLoading(false);
+  };
+
+  // -----------------------------------------------------------------------------
+  // OS CRUD
+  // -----------------------------------------------------------------------------
+  const openOsModal = (os?: any) => {
+    if (contratos.length === 0) {
+      return alert('Para gerar uma OS, é necessário possuir contratos de comodato cadastrados.');
+    }
+    const targetContrato = contratos[0];
+    
+    setOsForm({
+      id: '',
+      tipo: 'INSTALACAO',
+      contratoComodatoId: targetContrato.id,
+      clientId: targetContrato.clientId,
+      ativoId: targetContrato.itens[0]?.ativoId || '',
+      ativoDestinoId: '',
+      observacao: '',
+      instrucoes: '',
+      tecnicoResponsavel: '',
+      dataPrevista: new Date().toISOString().substring(0, 10)
+    });
+    setModalOsOpen(true);
+  };
+
+  const handleOsContratoChange = (contratoId: string) => {
+    const target = contratos.find(c => c.id === contratoId);
+    if (target) {
+      setOsForm(prev => ({
+        ...prev,
+        contratoComodatoId: contratoId,
+        clientId: target.clientId,
+        ativoId: target.itens[0]?.ativoId || ''
+      }));
+    }
+  };
+
+  const handleSaveOs = async () => {
+    if (!osForm.contratoComodatoId || !osForm.ativoId) {
+      return alert('Selecione o Contrato e o Equipamento associado.');
+    }
+    setSaving(true);
+    const res = await createOrdemServicoAtivo(osForm);
+    if (res.success) {
+      setModalOsOpen(false);
+      await loadData();
+    } else {
+      alert(res.error || 'Erro ao cadastrar OS');
+    }
+    setSaving(false);
+  };
+
+  const handleConcludeOs = async (osId: string) => {
+    setSelectedOsForSignature(ordens.find(o => o.id === osId));
+    setModalSignatureOpen(true);
+  };
+
+  const handleSaveSignature = async (base64Signature: string) => {
+    if (!selectedOsForSignature) return;
+    setSaving(true);
+    const res = await updateOrdemServicoAtivo(selectedOsForSignature.id, {
+      status: 'CONCLUIDA',
+      assinaturaCliente: base64Signature,
+      nomeAssinante: selectedOsForSignature.client?.contato || 'Responsável',
+      cpfAssinante: selectedOsForSignature.client?.cnpj || 'Sem Documento'
+    });
+    setSaving(false);
+    setModalSignatureOpen(false);
+    if (res.success) {
+      await loadData();
+    } else {
+      alert(res.error || 'Erro ao assinar e concluir OS');
+    }
+  };
+
+  const handleDeleteOs = async (id: string) => {
+    if (!confirm('Deseja excluir esta Ordem de Serviço?')) return;
+    setLoading(true);
+    await deleteOrdemServicoAtivo(id);
+    await loadData();
+    setLoading(false);
+  };
+
+  // -----------------------------------------------------------------------------
+  // FILTERS AND GROUPINGS
+  // -----------------------------------------------------------------------------
+  const filteredAtivos = ativos.filter(a => 
+    a.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    a.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    a.categoria.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredContratos = contratos.filter(c => 
+    c.client.nomeFantasia.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.client.razaoSocial && c.client.razaoSocial.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    c.empresaEmissora.nomeFantasia.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.itens.some((item: any) => item.ativo.descricao.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const filteredOrdens = ordens.filter(o => 
+    o.client.nomeFantasia.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    o.tecnicoResponsavel.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    o.tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    o.ativo.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    `OS ${o.codigo}`.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Groupings logic for Contracts
+  const getGroupedContratos = () => {
+    const map: Record<string, any[]> = {};
+    for (const c of filteredContratos) {
+      let key = 'Sem Classificação';
+      if (contratosGroupBy === 'segmento') {
+        key = c.client.segmento || 'Não Identificado';
+      } else if (contratosGroupBy === 'categoria') {
+        key = c.itens[0]?.ativo.categoria?.nome || 'Geral';
+      }
+      if (!map[key]) map[key] = [];
+      map[key].push(c);
+    }
+    return Object.entries(map);
+  };
+
+  return (
+    <div className="flex min-h-screen bg-[#F8FAFC]">
+      <Sidebar />
+      
+      <main className="flex-1 p-8 overflow-y-auto no-print">
+        <div className="max-w-7xl mx-auto space-y-6">
+          
+          {/* HEADER DO MÓDULO */}
+          <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-slate-200 pb-5 gap-4">
+            <div>
+              <h1 className="text-2xl font-black text-[#1B4D3E] tracking-wider uppercase flex items-center gap-2.5">
+                <Boxes size={24} className="stroke-[2.5]" /> Gestão de Ativos & Comodato
+              </h1>
+              <p className="text-slate-400 text-xs mt-1 uppercase font-bold tracking-wider">Controle do parque de ativos, minutas contratuais, termos de comodato e ordens de serviço</p>
+            </div>
+            
+            {/* Botão de Criação Conforme Aba */}
+            {activeTab === 'ativos' && (
+              <div className="flex gap-2 shrink-0">
+                <button 
+                  onClick={() => openCategoriaModal()}
+                  className="border border-[#1B4D3E] text-[#1B4D3E] hover:bg-emerald-50/50 font-black py-2.5 px-5 rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer"
+                >
+                  Nova Categoria
+                </button>
+                <button 
+                  onClick={() => openAtivoModal()}
+                  className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                >
+                  <Plus size={16} /> Novo Equipamento
+                </button>
+              </div>
+            )}
+            {activeTab === 'templates' && (
+              <button 
+                onClick={() => openTemplateModal()}
+                className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer shrink-0"
+              >
+                <Plus size={16} /> Novo Template
+              </button>
+            )}
+            {activeTab === 'contratos' && (
+              <button 
+                onClick={() => openContratoModal()}
+                className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer shrink-0"
+              >
+                <Plus size={16} /> Novo Contrato de Comodato
+              </button>
+            )}
+            {activeTab === 'ordens' && (
+              <button 
+                onClick={() => openOsModal()}
+                className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer shrink-0"
+              >
+                <Plus size={16} /> Abrir Ordem de Serviço
+              </button>
+            )}
+          </header>
+
+          {/* NAVEGAÇÃO DE SUB-ABAS */}
+          <nav className="flex gap-6 border-b border-slate-200">
+            {(['ativos', 'templates', 'contratos', 'ordens'] as ActiveTab[]).map(tab => {
+              const labels = {
+                ativos: '1. Parque de Ativos',
+                templates: '2. Minutas Padrão',
+                contratos: '3. Contratos de Comodato',
+                ordens: '4. Ordens de Serviço (OS)'
+              };
+              const icons = {
+                ativos: Boxes,
+                templates: FileText,
+                contratos: FileCheck,
+                ordens: Wrench
+              };
+              const Icon = icons[tab];
+              const isActive = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => { setActiveTab(tab); setSearchTerm(''); }}
+                  className={`py-3.5 border-b-2 font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all duration-200 cursor-pointer ${
+                    isActive 
+                      ? 'border-[#1B4D3E] text-[#1B4D3E]' 
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <Icon size={14} className={isActive ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+                  {labels[tab]}
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* BARRA DE FILTROS E BUSCA */}
+          <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center bg-white p-4 border border-slate-200 rounded-2xl shadow-xs gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input 
+                type="text" 
+                placeholder="Buscar por descrição, código ou detalhes..." 
+                className="w-full bg-slate-50/50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 outline-none font-bold uppercase transition-all"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            {/* Configurações Extra de Filtro exclusivas da aba Contratos */}
+            {activeTab === 'contratos' && (
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+                  <button 
+                    onClick={() => setContratosViewMode('lista')}
+                    className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors ${contratosViewMode === 'lista' ? 'bg-[#1B4D3E] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+                  >
+                    <LayoutGrid size={12} /> Lista
+                  </button>
+                  <button 
+                    onClick={() => setContratosViewMode('kanban')}
+                    className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors ${contratosViewMode === 'kanban' ? 'bg-[#1B4D3E] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+                  >
+                    <Kanban size={12} /> Kanban
+                  </button>
+                  <button 
+                    onClick={() => setContratosViewMode('agrupado')}
+                    className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors ${contratosViewMode === 'agrupado' ? 'bg-[#1B4D3E] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+                  >
+                    <Layers size={12} /> Agrupados
+                  </button>
+                </div>
+
+                {contratosViewMode === 'agrupado' && (
+                  <select
+                    value={contratosGroupBy}
+                    onChange={(e) => setContratosGroupBy(e.target.value as GroupBy)}
+                    className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-600 outline-none focus:border-[#1B4D3E] cursor-pointer"
+                  >
+                    <option value="segmento">Por Segmento de Cliente</option>
+                    <option value="categoria">Por Categoria de Ativo</option>
+                  </select>
+                )}
+              </div>
+            )}
+            
+            <div className="text-right flex items-center gap-2 self-end md:self-auto select-none">
+              <span className="text-[9px] font-extrabold text-slate-400 uppercase leading-none block">Total Carregado</span>
+              <span className="text-sm font-black text-[#1B4D3E] bg-[#1B4D3E]/8 border border-[#1B4D3E]/15 rounded-lg px-2.5 py-1">
+                {activeTab === 'ativos' && filteredAtivos.length}
+                {activeTab === 'templates' && templates.length}
+                {activeTab === 'contratos' && filteredContratos.length}
+                {activeTab === 'ordens' && filteredOrdens.length}
+              </span>
+            </div>
+          </div>
+
+          {/* ───────────────────────────────────────────────────────────────────
+              ABA 1: PARQUE DE ATIVOS E CATEGORIAS
+              ─────────────────────────────────────────────────────────────────── */}
+          {activeTab === 'ativos' && (
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+              
+              {/* Categorias (Col Esquerda) */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                  <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
+                    <Tags size={14} /> Categorias
+                  </h3>
+                </div>
+                <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto pr-1">
+                  {categorias.map(cat => (
+                    <div key={cat.id} className="py-2.5 flex justify-between items-center group">
+                      <span className="text-xs font-bold text-slate-700 uppercase">{cat.nome}</span>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => openCategoriaModal(cat)} className="p-1 text-amber-500 hover:bg-amber-50 rounded-lg"><Edit2 size={12} /></button>
+                        <button onClick={() => handleDeleteCategoria(cat.id)} className="p-1 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={12} /></button>
+                      </div>
+                    </div>
+                  ))}
+                  {categorias.length === 0 && (
+                    <div className="py-6 text-center text-slate-400 italic text-xs">Nenhuma categoria cadastrada.</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tabela de Ativos (Col Direita) */}
+              <div className="lg:col-span-3 bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-[#1B4D3E] text-slate-100 text-[10px] font-bold uppercase tracking-widest border-none select-none">
+                    <tr>
+                      <th className="px-6 py-4 w-28 text-center">Código</th>
+                      <th className="px-6 py-4">Equipamento / Descrição</th>
+                      <th className="px-6 py-4 w-40 text-center">Categoria</th>
+                      <th className="px-6 py-4 w-32 text-right">Valor Reposição</th>
+                      <th className="px-6 py-4 w-32 text-center">Status</th>
+                      <th className="px-6 py-4 w-24 text-center">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-150 font-semibold text-slate-700">
+                    {loading && ativos.length === 0 ? (
+                      <tr><td colSpan={6} className="px-6 py-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Carregando ativos do parque...</td></tr>
+                    ) : filteredAtivos.length === 0 ? (
+                      <tr><td colSpan={6} className="px-6 py-20 text-center text-slate-400 italic text-xs">Nenhum equipamento localizado.</td></tr>
+                    ) : (
+                      filteredAtivos.map(ativo => {
+                        let statusColor = 'bg-slate-50 text-slate-600 border-slate-200';
+                        if (ativo.status === 'DISPONIVEL') statusColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                        else if (ativo.status === 'COMODATO') statusColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                        else if (ativo.status === 'MANUTENCAO') statusColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                        else if (ativo.status === 'BAIXADO') statusColor = 'bg-red-50 text-red-700 border-red-200';
+
+                        return (
+                          <tr key={ativo.id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-6 py-3.5 text-center">
+                              <span className="font-mono bg-slate-100 border border-slate-200/80 rounded-lg px-2.5 py-0.5 text-[10px] font-black text-slate-700">{ativo.codigo}</span>
+                            </td>
+                            <td className="px-6 py-3.5 text-xs text-slate-800 font-extrabold uppercase">
+                              <div>{ativo.descricao}</div>
+                              {ativo.observacao && <div className="text-[9px] text-slate-400 italic font-semibold mt-0.5">{ativo.observacao}</div>}
+                            </td>
+                            <td className="px-6 py-3.5 text-center text-[10px] text-slate-500 uppercase">{ativo.categoria?.nome}</td>
+                            <td className="px-6 py-3.5 text-right text-xs font-black text-slate-900">
+                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(ativo.valor)}
+                            </td>
+                            <td className="px-6 py-3.5 text-center">
+                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border select-none ${statusColor}`}>
+                                {ativo.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-3.5">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button onClick={() => openAtivoModal(ativo)} className="p-1 text-amber-500 hover:bg-amber-50 rounded-lg"><Edit2 size={13} /></button>
+                                <button onClick={() => handleDeleteAtivo(ativo.id)} className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={13} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ───────────────────────────────────────────────────────────────────
+              ABA 2: MINUTAS PADRÕES (TEMPLATES)
+              ─────────────────────────────────────────────────────────────────── */}
+          {activeTab === 'templates' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {loading && templates.length === 0 ? (
+                <div className="col-span-full py-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Carregando minutas padrão...</div>
+              ) : templates.length === 0 ? (
+                <div className="col-span-full bg-white border border-slate-200 rounded-2xl p-20 text-center text-slate-400 italic">Nenhum template de comodato cadastrado. Crie um para preencher os contratos com facilidade.</div>
+              ) : (
+                templates.map(tpl => (
+                  <div key={tpl.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+                    <div>
+                      <div className="flex justify-between items-start">
+                        <div className="w-10 h-10 bg-[#1B4D3E]/10 border border-[#1B4D3E]/20 text-[#1B4D3E] rounded-xl flex items-center justify-center shrink-0">
+                          <FileText size={20} className="stroke-[2.5]" />
+                        </div>
+                        <div className="flex gap-1">
+                          <button onClick={() => openTemplateModal(tpl)} className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg" title="Editar"><Edit2 size={13} /></button>
+                          <button onClick={() => handleDeleteTemplate(tpl.id)} className="p-1.5 text-slate-450 hover:text-red-500 hover:bg-red-50 rounded-lg" title="Excluir"><Trash2 size={13} /></button>
+                        </div>
+                      </div>
+                      <div className="mt-4">
+                        <h4 className="text-xs font-black text-slate-800 uppercase tracking-wide">{tpl.nome}</h4>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">{tpl.clausulas.length} Cláusulas Estruturadas</p>
+                      </div>
+                      <div className="mt-4 bg-slate-50 border border-slate-100 rounded-xl p-3 text-[10.5px] text-slate-500 italic max-h-[140px] overflow-hidden leading-relaxed">
+                        {(tpl.clausulas[0]?.texto || '').substring(0, 180)}...
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => openTemplateModal(tpl)}
+                      className="mt-5 w-full py-2 bg-slate-50 border border-slate-200/80 hover:bg-slate-100/60 text-slate-600 text-[10px] font-black uppercase tracking-wider rounded-xl transition-colors cursor-pointer"
+                    >
+                      Editar Cláusulas
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* ───────────────────────────────────────────────────────────────────
+              ABA 3: GESTÃO DE CONTRATOS DE COMODATO
+              ─────────────────────────────────────────────────────────────────── */}
+          {activeTab === 'contratos' && (
+            <>
+              {/* VISÃO LISTA */}
+              {contratosViewMode === 'lista' && (
+                <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-[#1B4D3E] text-slate-100 text-[10px] font-bold uppercase tracking-widest border-none select-none">
+                      <tr>
+                        <th className="px-6 py-4 text-center w-24">Cód. Contrato</th>
+                        <th className="px-6 py-4">Cliente</th>
+                        <th className="px-6 py-4">Empresa (Grupo)</th>
+                        <th className="px-6 py-4 text-center w-28">Início</th>
+                        <th className="px-6 py-4 text-center w-24">Vigência</th>
+                        <th className="px-6 py-4 text-center w-28">Vencimento</th>
+                        <th className="px-6 py-4 text-right w-36">Consumo Mínimo</th>
+                        <th className="px-6 py-4 text-center w-36">Equipamentos</th>
+                        <th className="px-6 py-4 text-center w-32">Situação</th>
+                        <th className="px-6 py-4 w-28 text-center">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-150 font-semibold text-slate-700">
+                      {loading && contratos.length === 0 ? (
+                        <tr><td colSpan={10} className="px-6 py-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Carregando contratos de comodato...</td></tr>
+                      ) : filteredContratos.length === 0 ? (
+                        <tr><td colSpan={10} className="px-6 py-20 text-center text-slate-400 italic text-xs">Nenhum contrato de comodato localizado.</td></tr>
+                      ) : (
+                        filteredContratos.map(contrato => {
+                          let statusColor = 'bg-slate-50 text-slate-600 border-slate-200';
+                          if (contrato.status === 'VIGENTE') statusColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                          else if (contrato.status === 'RASCUNHO') statusColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                          else if (contrato.status === 'SUSPENSO') statusColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                          else if (contrato.status === 'ENCERRADO') statusColor = 'bg-red-50 text-red-700 border-red-200';
+
+                          return (
+                            <tr key={contrato.id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-6 py-3.5 text-center">
+                                <span className="font-mono bg-slate-100 border border-slate-200/80 rounded-lg px-2.5 py-0.5 text-[10px] font-black text-slate-700">
+                                  #{String(contrato.codigo).padStart(4, '0')}
+                                </span>
+                              </td>
+                              <td className="px-6 py-3.5 text-xs text-slate-800 font-extrabold uppercase">
+                                <div>{contrato.client.nomeFantasia}</div>
+                                {contrato.client.razaoSocial && <div className="text-[9px] text-slate-400 font-bold tracking-wider mt-0.5">{contrato.client.razaoSocial}</div>}
+                              </td>
+                              <td className="px-6 py-3.5 text-xs text-slate-600 font-bold uppercase">{contrato.empresaEmissora.nomeFantasia}</td>
+                              <td className="px-6 py-3.5 text-center text-xs text-slate-600">
+                                {new Date(contrato.dataInicio).toLocaleDateString('pt-BR')}
+                              </td>
+                              <td className="px-6 py-3.5 text-center text-xs font-bold text-slate-800">
+                                {contrato.vigenciaMeses} Meses
+                              </td>
+                              <td className="px-6 py-3.5 text-center text-xs text-slate-600">
+                                {contrato.dataVencimento ? new Date(contrato.dataVencimento).toLocaleDateString('pt-BR') : '-'}
+                              </td>
+                              <td className="px-6 py-3.5 text-right text-xs font-black text-[#1B4D3E]">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(contrato.valorMinimoMensal)}
+                              </td>
+                              <td className="px-6 py-3.5 text-center text-[10px] text-slate-500 font-bold uppercase">
+                                <div className="max-w-[200px] truncate" title={contrato.itens.map((i: any) => `${i.quantidade}x ${i.ativo.descricao}`).join(', ')}>
+                                  {contrato.itens.length} Equipamento(s)
+                                </div>
+                              </td>
+                              <td className="px-6 py-3.5 text-center">
+                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border select-none ${statusColor}`}>
+                                  {contrato.status}
+                                </span>
+                              </td>
+                              <td className="px-6 py-3.5">
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <button 
+                                    onClick={() => { setSelectedContratoForPdf(contrato); setModalContratoPdfOpen(true); }}
+                                    className="p-1 text-[#1B4D3E] hover:bg-emerald-50 rounded-lg"
+                                    title="Ver Contrato (PDF)"
+                                  >
+                                    <Printer size={13} />
+                                  </button>
+                                  <select
+                                    value={contrato.status}
+                                    onChange={(e) => handleUpdateContratoStatus(contrato.id, e.target.value)}
+                                    className="text-[9px] bg-slate-50 border border-slate-200 rounded px-1 py-0.5 outline-none font-bold text-slate-600 cursor-pointer"
+                                  >
+                                    <option value="RASCUNHO">Rascunho</option>
+                                    <option value="VIGENTE">Vigente</option>
+                                    <option value="SUSPENSO">Suspenso</option>
+                                    <option value="ENCERRADO">Encerrado</option>
+                                  </select>
+                                  <button onClick={() => handleDeleteContrato(contrato.id)} className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={13} /></button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* VISÃO KANBAN */}
+              {contratosViewMode === 'kanban' && (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-stretch">
+                  {(['RASCUNHO', 'VIGENTE', 'SUSPENSO', 'ENCERRADO'] as const).map(colStatus => {
+                    const colContratos = filteredContratos.filter(c => c.status === colStatus);
+                    const titleMap = {
+                      RASCUNHO: 'Rascunho',
+                      VIGENTE: 'Vigente',
+                      SUSPENSO: 'Suspenso',
+                      ENCERRADO: 'Encerrado'
+                    };
+                    const colorMap = {
+                      RASCUNHO: 'border-t-blue-500',
+                      VIGENTE: 'border-t-emerald-500',
+                      SUSPENSO: 'border-t-amber-500',
+                      ENCERRADO: 'border-t-red-500'
+                    };
+                    return (
+                      <div key={colStatus} className={`bg-slate-50/50 border border-slate-200 rounded-2xl p-4 flex flex-col min-h-[400px] border-t-4 ${colorMap[colStatus]}`}>
+                        <div className="flex justify-between items-center pb-3 border-b border-slate-200/80 mb-4 select-none">
+                          <span className="text-xs font-black text-slate-700 uppercase tracking-wider">{titleMap[colStatus]}</span>
+                          <span className="text-[10px] font-black text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded-lg">{colContratos.length}</span>
+                        </div>
+                        <div className="flex-1 space-y-3 overflow-y-auto pr-0.5">
+                          {colContratos.map(contr => (
+                            <div key={contr.id} className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-xs space-y-3 hover:shadow-sm transition-shadow">
+                              <div className="flex justify-between items-center">
+                                <span className="font-mono text-[9px] font-black text-slate-400">#{String(contr.codigo).padStart(4, '0')}</span>
+                                <span className="text-[9px] text-slate-400 font-bold">{contr.vigenciaMeses} Meses</span>
+                              </div>
+                              <div className="space-y-0.5">
+                                <h4 className="text-xs font-black text-slate-800 uppercase leading-tight truncate">{contr.client.nomeFantasia}</h4>
+                                <p className="text-[9.5px] text-slate-500 truncate">{contr.empresaEmissora.nomeFantasia}</p>
+                              </div>
+                              <div className="bg-slate-50/60 rounded-lg p-2 border border-slate-100/50 text-[10px] space-y-1">
+                                <div className="text-slate-650 font-bold leading-tight">
+                                  {contr.itens.map((it: any) => `${it.quantidade}x ${it.ativo.descricao}`).join(', ')}
+                                </div>
+                                <div className="flex justify-between items-center text-[9px] font-extrabold text-[#1B4D3E] pt-1 mt-1 border-t border-slate-200/55">
+                                  <span>Consumo Mínimo:</span>
+                                  <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(contr.valorMinimoMensal)}</span>
+                                </div>
+                              </div>
+                              <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                                <button 
+                                  onClick={() => { setSelectedContratoForPdf(contr); setModalContratoPdfOpen(true); }}
+                                  className="text-[9px] font-black uppercase text-slate-550 hover:text-[#1B4D3E] transition-colors flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Printer size={10} /> Imprimir PDF
+                                </button>
+                                <div className="flex gap-1">
+                                  {colStatus !== 'RASCUNHO' && (
+                                    <button onClick={() => handleUpdateContratoStatus(contr.id, 'RASCUNHO')} className="text-[9px] font-bold text-slate-450 hover:text-blue-600 hover:bg-blue-50 px-1.5 py-0.5 rounded transition-all">Desativar</button>
+                                  )}
+                                  {colStatus !== 'VIGENTE' && (
+                                    <button onClick={() => handleUpdateContratoStatus(contr.id, 'VIGENTE')} className="text-[9px] font-black text-white bg-[#1B4D3E] hover:bg-[#13382D] px-2 py-0.5 rounded transition-all">Ativar</button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          {colContratos.length === 0 && (
+                            <div className="py-12 text-center text-slate-350 italic text-[10px]">Arraste ou ative contratos para esta etapa.</div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* VISÃO AGRUPADA */}
+              {contratosViewMode === 'agrupado' && (
+                <div className="space-y-6">
+                  {getGroupedContratos().map(([groupName, groupContratos]) => (
+                    <div key={groupName} className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+                      <div className="bg-slate-50 border-b border-slate-100 px-5 py-3 flex justify-between items-center select-none">
+                        <span className="text-xs font-black text-slate-700 uppercase tracking-wider">
+                          {contratosGroupBy === 'segmento' ? 'Segmento Cliente: ' : 'Categoria Ativo: '} {groupName}
+                        </span>
+                        <span className="text-[10px] font-black text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded-lg">{groupContratos.length} Contratos</span>
+                      </div>
+                      <table className="w-full text-left border-collapse">
+                        <tbody className="divide-y divide-slate-150 font-semibold text-slate-700 text-xs">
+                          {groupContratos.map(contrato => (
+                            <tr key={contrato.id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-6 py-3 w-28 text-center">
+                                <span className="font-mono bg-slate-100 border border-slate-200/80 rounded-lg px-2.5 py-0.5 text-[10px] font-black text-slate-700">
+                                  #{String(contrato.codigo).padStart(4, '0')}
+                                </span>
+                              </td>
+                              <td className="px-6 py-3 font-extrabold text-slate-800 uppercase">
+                                {contrato.client.nomeFantasia}
+                              </td>
+                              <td className="px-6 py-3 text-slate-550 font-bold uppercase">{contrato.empresaEmissora.nomeFantasia}</td>
+                              <td className="px-6 py-3 text-center text-slate-650">
+                                Vigência: {contrato.vigenciaMeses} meses (Venc. {contrato.dataVencimento ? new Date(contrato.dataVencimento).toLocaleDateString('pt-BR') : '-'})
+                              </td>
+                              <td className="px-6 py-3 text-slate-600">
+                                {contrato.itens.map((it: any) => `${it.quantidade}x ${it.ativo.descricao}`).join(', ')}
+                              </td>
+                              <td className="px-6 py-3 text-right font-black text-[#1B4D3E]">
+                                Min: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(contrato.valorMinimoMensal)}
+                              </td>
+                              <td className="px-6 py-3 text-center">
+                                <span className={`px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase border ${
+                                  contrato.status === 'VIGENTE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200'
+                                }`}>
+                                  {contrato.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ))}
+                  {getGroupedContratos().length === 0 && (
+                    <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-400 italic">Nenhum contrato localizado para agrupamento.</div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ───────────────────────────────────────────────────────────────────
+              ABA 4: GESTÃO DE ORDENS DE SERVIÇO (OS)
+              ─────────────────────────────────────────────────────────────────── */}
+          {activeTab === 'ordens' && (
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-[#1B4D3E] text-slate-100 text-[10px] font-bold uppercase tracking-widest border-none select-none">
+                  <tr>
+                    <th className="px-6 py-4 text-center w-28">Nº Ordem</th>
+                    <th className="px-6 py-4">Cliente</th>
+                    <th className="px-6 py-4 text-center w-36">Tipo OS</th>
+                    <th className="px-6 py-4">Equipamento Vinculado</th>
+                    <th className="px-6 py-4 text-center w-36">Emissão</th>
+                    <th className="px-6 py-4 text-center w-36">Data Prevista</th>
+                    <th className="px-6 py-4 w-44">Técnico Responsável</th>
+                    <th className="px-6 py-4 text-center w-32">Status</th>
+                    <th className="px-6 py-4 w-28 text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-150 font-semibold text-slate-700">
+                  {loading && ordens.length === 0 ? (
+                    <tr><td colSpan={9} className="px-6 py-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Carregando ordens de serviço...</td></tr>
+                  ) : filteredOrdens.length === 0 ? (
+                    <tr><td colSpan={9} className="px-6 py-20 text-center text-slate-400 italic text-xs">Nenhuma OS localizada.</td></tr>
+                  ) : (
+                    filteredOrdens.map(os => {
+                      let statusColor = 'bg-slate-50 text-slate-600 border-slate-200';
+                      if (os.status === 'CONCLUIDA') statusColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                      else if (os.status === 'PENDENTE') statusColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                      else if (os.status === 'EM_ANDAMENTO') statusColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                      else if (os.status === 'CANCELADA') statusColor = 'bg-red-50 text-red-700 border-red-200';
+
+                      return (
+                        <tr key={os.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-6 py-3.5 text-center">
+                            <span className="font-mono bg-slate-100 border border-slate-200/80 rounded-lg px-2.5 py-0.5 text-[10px] font-black text-slate-700">
+                              OS № {String(os.codigo).padStart(3, '0')}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3.5 text-xs text-slate-800 font-extrabold uppercase">
+                            <div>{os.client.nomeFantasia}</div>
+                          </td>
+                          <td className="px-6 py-3.5 text-center">
+                            <span className="bg-[#1B4D3E]/8 text-[#1B4D3E] text-[9px] font-black px-2 py-0.5 rounded border border-[#1B4D3E]/15 uppercase tracking-wider">
+                              {os.tipo}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3.5 text-xs text-slate-600 font-semibold uppercase">
+                            <div>{os.ativo.descricao}</div>
+                            {os.tipo === 'TROCA' && os.ativoDestino && (
+                              <div className="text-[9px] text-[#1B4D3E] font-extrabold mt-0.5 flex items-center gap-1">
+                                <ChevronRight size={10} /> Substituir por: {os.ativoDestino.descricao}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-3.5 text-center text-xs text-slate-550">
+                            {new Date(os.dataEmissao).toLocaleDateString('pt-BR')}
+                          </td>
+                          <td className="px-6 py-3.5 text-center text-xs text-slate-550">
+                            {os.dataPrevista ? new Date(os.dataPrevista).toLocaleDateString('pt-BR') : '-'}
+                          </td>
+                          <td className="px-6 py-3.5 text-xs text-slate-700 font-bold uppercase truncate max-w-[140px]">{os.tecnicoResponsavel || 'Não Atribuído'}</td>
+                          <td className="px-6 py-3.5 text-center">
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border select-none ${statusColor}`}>
+                              {os.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3.5">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button 
+                                onClick={() => { setSelectedOsForPdf(os); setModalOsPdfOpen(true); }}
+                                className="p-1.5 text-[#1B4D3E] hover:bg-emerald-50 rounded-lg"
+                                title="Ver OS (PDF)"
+                              >
+                                <Printer size={13} />
+                              </button>
+                              {os.status === 'PENDENTE' && (
+                                <button 
+                                  onClick={() => handleConcludeOs(os.id)}
+                                  className="text-[9px] font-black text-white bg-[#1B4D3E] hover:bg-[#13382D] px-2 py-1 rounded-lg uppercase tracking-wider"
+                                >
+                                  Concluir
+                                </button>
+                              )}
+                              {os.status === 'CONCLUIDA' && (
+                                <span className="text-emerald-600 p-1" title="Assinada e Finalizada">
+                                  <CheckCircle size={16} />
+                                </span>
+                              )}
+                              <button onClick={() => handleDeleteOs(os.id)} className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={13} /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+        </div>
+
+        {/* ───────────────────────────────────────────────────────────────────
+            MODAL CADASTRO / EDIÇÃO ATIVO
+            ─────────────────────────────────────────────────────────────────── */}
+        {modalAtivoOpen && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 animate-fade-in text-left">
+              <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none">
+                <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                  <Boxes size={16} className="stroke-[2.5]" />
+                  {ativoForm.id ? 'Editar Equipamento' : 'Cadastrar Equipamento'}
+                </h3>
+                <button onClick={() => setModalAtivoOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"><X size={18} /></button>
+              </header>
+              <div className="p-6 space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Descrição do Equipamento *</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: SABONETEIRA 800ML QUARTZ BRANCO"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 uppercase"
+                    value={ativoForm.descricao}
+                    onChange={(e) => setAtivoForm({...ativoForm, descricao: e.target.value})}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Categoria *</label>
+                    <select
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
+                      value={ativoForm.categoriaId}
+                      onChange={(e) => setAtivoForm({...ativoForm, categoriaId: e.target.value})}
+                    >
+                      <option value="" disabled hidden>Selecione</option>
+                      {categorias.map(c => (
+                        <option key={c.id} value={c.id}>{c.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor Reposição (R$) *</label>
+                    <input
+                      type="number"
+                      placeholder="0.00"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10"
+                      value={ativoForm.valor}
+                      onChange={(e) => setAtivoForm({...ativoForm, valor: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status / Situação</label>
+                    <select
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
+                      value={ativoForm.status}
+                      onChange={(e) => setAtivoForm({...ativoForm, status: e.target.value})}
+                    >
+                      <option value="DISPONIVEL">Disponível</option>
+                      <option value="COMODATO">Comodato</option>
+                      <option value="MANUTENCAO">Manutenção</option>
+                      <option value="BAIXADO">Baixado</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Observação Técnica</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Número de série, fabricante, especificações de voltagem etc..."
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 resize-none"
+                    value={ativoForm.observacao}
+                    onChange={(e) => setAtivoForm({...ativoForm, observacao: e.target.value})}
+                  />
+                </div>
+
+                <footer className="pt-4 flex gap-3 border-t border-slate-100">
+                  <button 
+                    onClick={() => setModalAtivoOpen(false)}
+                    className="flex-1 py-3 text-xs font-black text-slate-500 uppercase hover:bg-slate-50 rounded-xl transition-all cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    onClick={handleSaveAtivo}
+                    disabled={saving}
+                    className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+                  >
+                    <Save size={14} /> {saving ? 'Salvando...' : 'Gravar Equipamento'}
+                  </button>
+                </footer>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ───────────────────────────────────────────────────────────────────
+            MODAL CADASTRO / EDIÇÃO CATEGORIA
+            ─────────────────────────────────────────────────────────────────── */}
+        {modalCategoriaOpen && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-100 animate-fade-in text-left">
+              <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none">
+                <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                  <Tags size={16} className="stroke-[2.5]" />
+                  {categoriaForm.id ? 'Editar Categoria' : 'Nova Categoria'}
+                </h3>
+                <button onClick={() => setModalCategoriaOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"><X size={18} /></button>
+              </header>
+              <div className="p-6 space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome da Categoria *</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Dispensadores"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 uppercase"
+                    value={categoriaForm.nome}
+                    onChange={(e) => setCategoriaForm({...categoriaForm, nome: e.target.value})}
+                  />
+                </div>
+
+                <footer className="pt-4 flex gap-3 border-t border-slate-100">
+                  <button 
+                    onClick={() => setModalCategoriaOpen(false)}
+                    className="flex-1 py-3 text-xs font-black text-slate-500 uppercase hover:bg-slate-50 rounded-xl transition-all cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    onClick={handleSaveCategoria}
+                    disabled={saving}
+                    className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+                  >
+                    <Save size={14} /> {saving ? 'Salvando...' : 'Gravar Categoria'}
+                  </button>
+                </footer>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ───────────────────────────────────────────────────────────────────
+            MODAL CADASTRO / EDIÇÃO TEMPLATE MINUTA
+            ─────────────────────────────────────────────────────────────────── */}
+        {modalTemplateOpen && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden border border-slate-100 animate-fade-in text-left">
+              <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none shrink-0">
+                <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                  <FileText size={16} className="stroke-[2.5]" />
+                  {templateForm.id ? 'Editar Minuta de Comodato' : 'Nova Minuta de Comodato'}
+                </h3>
+                <button onClick={() => setModalTemplateOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"><X size={18} /></button>
+              </header>
+              <div className="p-6 flex-1 overflow-y-auto space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome do Template *</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Minuta Oficial Comodato Slimpe"
+                    className="w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10"
+                    value={templateForm.nome}
+                    onChange={(e) => setTemplateForm({...templateForm, nome: e.target.value})}
+                  />
+                </div>
+
+                <div className="flex justify-between items-center pt-2 border-b border-slate-100 pb-1 select-none">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estrutura de Cláusulas</span>
+                  <button 
+                    onClick={handleAddClauseToTemplate}
+                    className="text-[10px] font-black text-[#1B4D3E] uppercase hover:bg-[#1B4D3E]/10 border border-[#1B4D3E]/15 rounded-lg px-2.5 py-1 flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <Plus size={10} /> Adicionar Cláusula
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {templateForm.clausulas.map((c, index) => (
+                    <div key={index} className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-3 relative group">
+                      <div className="flex justify-between items-center gap-4">
+                        <div className="flex items-center gap-2 flex-1">
+                          <span className="text-xs font-black text-[#1B4D3E] bg-white border border-[#1B4D3E]/15 rounded-lg px-2.5 py-1">#{c.ordem}</span>
+                          <input
+                            type="text"
+                            placeholder="Título da Cláusula"
+                            className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-[#1B4D3E]"
+                            value={c.titulo}
+                            onChange={(e) => handleClauseChange(index, 'titulo', e.target.value)}
+                          />
+                        </div>
+                        <button 
+                          onClick={() => handleRemoveClauseFromTemplate(index)}
+                          className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg shrink-0 transition-colors"
+                          title="Remover"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                      <textarea
+                        rows={4}
+                        placeholder="Texto da cláusula..."
+                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-650 outline-none focus:border-[#1B4D3E] leading-relaxed resize-none"
+                        value={c.texto}
+                        onChange={(e) => handleClauseChange(index, 'texto', e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <footer className="p-6 bg-slate-50 border-t border-slate-150 flex gap-3 shrink-0">
+                <button 
+                  onClick={() => setModalTemplateOpen(false)}
+                  className="flex-1 py-3 text-xs font-black text-slate-500 uppercase hover:bg-slate-100 rounded-xl transition-all cursor-pointer border border-slate-200"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleSaveTemplate}
+                  disabled={saving}
+                  className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+                >
+                  <Save size={14} /> {saving ? 'Salvando...' : 'Gravar Template de Minuta'}
+                </button>
+              </footer>
+            </div>
+          </div>
+        )}
+
+        {/* ───────────────────────────────────────────────────────────────────
+            MODAL GERAR NOVO CONTRATO DE COMODATO
+            ─────────────────────────────────────────────────────────────────── */}
+        {modalContratoOpen && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl h-[85vh] flex flex-col overflow-hidden border border-slate-100 animate-fade-in text-left">
+              <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none shrink-0">
+                <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                  <FileCheck size={16} className="stroke-[2.5]" />
+                  Gerar Contrato de Comodato
+                </h3>
+                <button onClick={() => setModalContratoOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"><X size={18} /></button>
+              </header>
+              <div className="p-6 flex-1 overflow-y-auto space-y-6">
+                
+                {/* 1. Vínculos e Prazos */}
+                <div className="bg-slate-50 border border-slate-150 rounded-2xl p-5 space-y-4">
+                  <h4 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest border-b border-slate-200 pb-1.5">1. Dados e Prazos do Contrato</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente Comodatário *</label>
+                      <select
+                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
+                        value={contratoForm.clientId}
+                        onChange={(e) => setContratoForm({...contratoForm, clientId: e.target.value})}
+                      >
+                        {clientes.map(c => (
+                          <option key={c.id} value={c.id}>{c.nomeFantasia} ({c.cnpj || 'Sem CNPJ'})</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Empresa Emissora (Grupo) *</label>
+                      <select
+                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
+                        value={contratoForm.empresaEmissoraId}
+                        onChange={(e) => setContratoForm({...contratoForm, empresaEmissoraId: e.target.value})}
+                      >
+                        {empresas.map(e => (
+                          <option key={e.id} value={e.id}>{e.nomeFantasia}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Início *</label>
+                      <input
+                        type="date"
+                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
+                        value={contratoForm.dataInicio}
+                        onChange={(e) => setContratoForm({...contratoForm, dataInicio: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vigência (Meses) *</label>
+                      <input
+                        type="number"
+                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
+                        value={contratoForm.vigenciaMeses}
+                        onChange={(e) => setContratoForm({...contratoForm, vigenciaMeses: Number(e.target.value)})}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest block mb-0.5">Compra Mínima Mensal (R$)</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-slate-450">R$</span>
+                        <input
+                          type="number"
+                          className="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-850 outline-none focus:border-[#1B4D3E]"
+                          value={contratoForm.valorMinimoMensal}
+                          onChange={(e) => setContratoForm({...contratoForm, valorMinimoMensal: Number(e.target.value)})}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Seleção de Equipamentos (Ativos) */}
+                <div className="bg-slate-50 border border-slate-150 rounded-2xl p-5 space-y-4">
+                  <h4 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest border-b border-slate-200 pb-1.5">2. Vincular Equipamentos (Ativos)</h4>
+                  
+                  {/* Selector de Ativo */}
+                  <div className="flex gap-2">
+                    <select
+                      className="flex-1 px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase"
+                      defaultValue=""
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          handleAddAtivoToContrato(e.target.value);
+                          e.target.value = '';
+                        }
+                      }}
+                    >
+                      <option value="" disabled hidden>Selecione os equipamentos para adicionar...</option>
+                      {ativos.filter(a => a.status === 'DISPONIVEL').map(a => (
+                        <option key={a.id} value={a.id}>{a.codigo} - {a.descricao} (Val: R$ {a.valor})</option>
+                      ))}
+                      {ativos.filter(a => a.status === 'DISPONIVEL').length === 0 && (
+                        <option value="" disabled>Nenhum equipamento disponível no parque de ativos.</option>
+                      )}
+                    </select>
+                  </div>
+
+                  {/* Lista de Ativos Selecionados */}
+                  <div className="space-y-2">
+                    {contratoForm.selectedAtivos.map((sel, idx) => {
+                      const asset = ativos.find(a => a.id === sel.ativoId);
+                      return (
+                        <div key={idx} className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                          <div className="flex-1">
+                            <span className="font-mono text-[9px] font-black bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5 text-slate-600 uppercase">{asset?.codigo}</span>
+                            <span className="text-xs font-black text-slate-800 uppercase block mt-1">{asset?.descricao}</span>
+                          </div>
+                          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-slate-400 font-bold uppercase">Qtd:</span>
+                              <input 
+                                type="number" 
+                                min={1}
+                                value={sel.quantidade}
+                                onChange={(e) => handleUpdateContratoAtivoField(idx, 'quantidade', Number(e.target.value) || 1)}
+                                className="w-14 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-black text-center"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-slate-400 font-bold uppercase">Preço:</span>
+                              <input 
+                                type="number" 
+                                value={sel.valorUnitario}
+                                onChange={(e) => handleUpdateContratoAtivoField(idx, 'valorUnitario', Number(e.target.value) || 0)}
+                                className="w-24 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-black text-right"
+                              />
+                            </div>
+                            <button 
+                              onClick={() => handleRemoveAtivoFromContrato(idx)}
+                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Minuta / Cláusulas do Contrato */}
+                <div className="bg-slate-50 border border-slate-150 rounded-2xl p-5 space-y-4">
+                  <div className="flex justify-between items-center border-b border-slate-200 pb-1.5 select-none">
+                    <h4 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest">3. Cláusulas do Contrato</h4>
+                    <select
+                      value={contratoForm.templateId}
+                      onChange={(e) => handleTemplateSelectionChange(e.target.value)}
+                      className="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-[10.5px] font-black text-slate-600 outline-none cursor-pointer"
+                    >
+                      {templates.map(t => (
+                        <option key={t.id} value={t.id}>{t.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+                    {contratoForm.clausulas.map((c, index) => (
+                      <div key={index} className="bg-white border border-slate-200/80 rounded-xl p-3.5 space-y-2">
+                        <div className="text-[11px] font-black text-[#1B4D3E] uppercase">{c.titulo}</div>
+                        <textarea
+                          rows={3}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-650 outline-none leading-relaxed resize-none"
+                          value={c.texto}
+                          onChange={(e) => {
+                            const updated = [...contratoForm.clausulas];
+                            updated[index].texto = e.target.value;
+                            setContratoForm({...contratoForm, clausulas: updated});
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+              <footer className="p-6 bg-slate-50 border-t border-slate-150 flex gap-3 shrink-0">
+                <button 
+                  onClick={() => setModalContratoOpen(false)}
+                  className="flex-1 py-3 text-xs font-black text-slate-500 uppercase hover:bg-slate-100 rounded-xl transition-all cursor-pointer border border-slate-200"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleSaveContrato}
+                  disabled={saving}
+                  className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+                >
+                  <Save size={14} /> {saving ? 'Salvando...' : 'Gerar Contrato de Comodato'}
+                </button>
+              </footer>
+            </div>
+          </div>
+        )}
+
+        {/* ───────────────────────────────────────────────────────────────────
+            MODAL CADASTRO / ABERTURA DE ORDEM DE SERVIÇO (OS)
+            ─────────────────────────────────────────────────────────────────── */}
+        {modalOsOpen && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 animate-fade-in text-left">
+              <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none">
+                <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                  <Wrench size={16} className="stroke-[2.5]" />
+                  Abrir Ordem de Serviço (OS)
+                </h3>
+                <button onClick={() => setModalOsOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"><X size={18} /></button>
+              </header>
+              <div className="p-6 space-y-4">
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo de Serviço *</label>
+                    <select
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
+                      value={osForm.tipo}
+                      onChange={(e) => setOsForm({...osForm, tipo: e.target.value})}
+                    >
+                      <option value="INSTALACAO">Instalação (Novo ou Aumento)</option>
+                      <option value="RETIRADA">Retirada (Encerramento/Troca)</option>
+                      <option value="TROCA">Troca (Substituição de Equip.)</option>
+                      <option value="MANUTENCAO">Manutenção Corretiva/Preventiva</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Prevista Execução</label>
+                    <input
+                      type="date"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
+                      value={osForm.dataPrevista}
+                      onChange={(e) => setOsForm({...osForm, dataPrevista: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contrato de Comodato Origem *</label>
+                  <select
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
+                    value={osForm.contratoComodatoId}
+                    onChange={(e) => handleOsContratoChange(e.target.value)}
+                  >
+                    {contratos.map(c => (
+                      <option key={c.id} value={c.id}>#{String(c.codigo).padStart(4, '0')} - {c.client.nomeFantasia}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Seleção do Equipamento Associado */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ativo/Equipamento Alvo *</label>
+                    <select
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
+                      value={osForm.ativoId}
+                      onChange={(e) => setOsForm({...osForm, ativoId: e.target.value})}
+                    >
+                      <option value="" disabled hidden>Selecione</option>
+                      {/* Mostra equipamentos que pertencem a esse contrato de comodato */}
+                      {contratos.find(c => c.id === osForm.contratoComodatoId)?.itens.map((it: any) => (
+                        <option key={it.ativo.id} value={it.ativo.id}>{it.ativo.codigo} - {it.ativo.descricao}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  {osForm.tipo === 'TROCA' && (
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Equipamento Destino (Novo) *</label>
+                      <select
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-[#1B4D3E] outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
+                        value={osForm.ativoDestinoId}
+                        onChange={(e) => setOsForm({...osForm, ativoDestinoId: e.target.value})}
+                      >
+                        <option value="" disabled hidden>Selecione Novo Ativo</option>
+                        {ativos.filter(a => a.status === 'DISPONIVEL').map(a => (
+                          <option key={a.id} value={a.id}>{a.codigo} - {a.descricao}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Técnico Responsável</label>
+                  <input
+                    type="text"
+                    placeholder="Nome do técnico de campo..."
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
+                    value={osForm.tecnicoResponsavel}
+                    onChange={(e) => setOsForm({...osForm, tecnicoResponsavel: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Instruções de Atendimento *</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Instruções para o técnico sobre a execução da OS..."
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 resize-none leading-relaxed"
+                    value={osForm.instrucoes}
+                    onChange={(e) => setOsForm({...osForm, instrucoes: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Observação Técnica</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Anotações internas, históricos ou motivos da OS..."
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 resize-none leading-relaxed"
+                    value={osForm.observacao}
+                    onChange={(e) => setOsForm({...osForm, observacao: e.target.value})}
+                  />
+                </div>
+
+                <footer className="pt-4 flex gap-3 border-t border-slate-100">
+                  <button 
+                    onClick={() => setModalOsOpen(false)}
+                    className="flex-1 py-3 text-xs font-black text-slate-500 uppercase hover:bg-slate-50 rounded-xl transition-all cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    onClick={handleSaveOs}
+                    disabled={saving}
+                    className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+                  >
+                    <Save size={14} /> {saving ? 'Gerando...' : 'Gravar Ordem de Serviço'}
+                  </button>
+                </footer>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ───────────────────────────────────────────────────────────────────
+            MODAL COLETA DE ASSINATURA DA OS
+            ─────────────────────────────────────────────────────────────────── */}
+        {modalSignatureOpen && (
+          <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-xs">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 animate-fade-in text-left">
+              <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none">
+                <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                  <FileImage size={16} className="stroke-[2.5]" />
+                  Assinatura de Recebimento da OS
+                </h3>
+                <button onClick={() => setModalSignatureOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"><X size={18} /></button>
+              </header>
+              <div className="p-6 space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Declaração</label>
+                  <p className="text-[11px] text-slate-500 leading-relaxed font-bold bg-slate-50 border border-slate-200/50 rounded-xl p-3.5">
+                    Eu, como responsável do cliente comodatário, declaro ter acompanhado o atendimento técnico e atesto o perfeito estado de conservação/funcionamento dos equipamentos listados nesta OS.
+                  </p>
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Assine na área abaixo *</label>
+                  <SignaturePad 
+                    onSave={(dataUrl) => handleSaveSignature(dataUrl)}
+                    onCancel={() => setModalSignatureOpen(false)}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </main>
+
+      {/* ───────────────────────────────────────────────────────────────────
+          PRINT ONLY MODALS AND PRINT STYLES
+          ─────────────────────────────────────────────────────────────────── */}
+
+      {/* 1. PDF CONTRATO DE COMODATO PREVIEW */}
+      {modalContratoPdfOpen && selectedContratoForPdf && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs no-print">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden border border-slate-100 text-left">
+            <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none shrink-0">
+              <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider">Visualizar Minuta de Contrato de Comodato</h3>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => window.print()}
+                  className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-1.5 px-4 rounded-lg text-[10px] uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors shadow-xs"
+                >
+                  <Printer size={12} /> Imprimir Contrato
+                </button>
+                <button onClick={() => setModalContratoPdfOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"><X size={18} /></button>
+              </div>
+            </header>
+            
+            <div className="p-10 flex-1 overflow-y-auto font-sans text-xs text-slate-800 leading-relaxed space-y-6 max-w-[210mm] mx-auto bg-white shadow-inner">
+              
+              {/* Logo / Header */}
+              <div className="text-center space-y-2 pb-6 border-b border-slate-200">
+                <h1 className="text-lg font-extrabold tracking-tight text-[#1B4D3E] uppercase">CONTRATO DE COMODATO DE EQUIPAMENTOS</h1>
+                <p className="text-[10px] font-bold text-slate-450 tracking-wider uppercase">Instrumento Particular de Comodato de Ativos</p>
+              </div>
+
+              <div className="space-y-4">
+                <p className="font-extrabold uppercase select-none text-[11px] leading-relaxed">
+                  PELO PRESENTE INSTRUMENTO PARTICULAR DE COMODATO, DE UM LADO:
+                </p>
+                <div className="space-y-1.5 pl-4 border-l-2 border-[#1B4D3E]/20">
+                  <span className="font-black text-[#1B4D3E] text-[10px] tracking-wider uppercase block">COMODANTE:</span>
+                  <p className="text-[11px] font-bold text-slate-700 leading-normal">
+                    {selectedContratoForPdf.empresaEmissora.razaoSocial || selectedContratoForPdf.empresaEmissora.nomeFantasia}, inscrita no CNPJ sob o nº {selectedContratoForPdf.empresaEmissora.cnpj}, com sede à {selectedContratoForPdf.empresaEmissora.endereco || '-'}, doravante denominada COMODANTE.
+                  </p>
+                </div>
+
+                <p className="font-extrabold uppercase select-none text-[11px] leading-relaxed">
+                  E, DE OUTRO LADO:
+                </p>
+                <div className="space-y-1.5 pl-4 border-l-2 border-[#1B4D3E]/20">
+                  <span className="font-black text-[#1B4D3E] text-[10px] tracking-wider uppercase block">COMODATÁRIO:</span>
+                  <p className="text-[11px] font-bold text-slate-700 leading-normal">
+                    {selectedContratoForPdf.client.razaoSocial || selectedContratoForPdf.client.nomeFantasia}, inscrita no CNPJ/CPF {selectedContratoForPdf.client.cnpj || selectedContratoForPdf.client.cpf || '-'}, com sede à {selectedContratoForPdf.client.endereco || '-'}, doravante denominado COMODATÁRIO.
+                  </p>
+                </div>
+                
+                <p className="font-bold text-slate-700 italic select-none">
+                  Têm entre si, justo e contratado, o seguinte:
+                </p>
+              </div>
+
+              {/* Cláusulas Dinâmicas */}
+              <div className="space-y-6">
+                {selectedContratoForPdf.clausulas.map((c: any, index: number) => {
+                  const isClausula1 = c.titulo.includes('CLÁUSULA 1') || c.titulo.includes('OBJETO');
+                  return (
+                    <div key={index} className="space-y-2">
+                      <h4 className="font-black text-[11px] text-[#1B4D3E] uppercase tracking-wide border-b border-slate-100 pb-1">{c.titulo}</h4>
+                      <p className="font-semibold text-slate-700 whitespace-pre-wrap leading-relaxed">{c.texto}</p>
+
+                      {/* Tabela Injetada na Cláusula 1 */}
+                      {isClausula1 && (
+                        <div className="pt-3 overflow-hidden rounded-xl border border-slate-200">
+                          <table className="w-full text-left text-xs border-collapse">
+                            <thead>
+                              <tr className="bg-[#1B4D3E] text-white text-[9px] font-black uppercase tracking-wider text-center border-none">
+                                <th className="px-3 py-2 w-16 text-center">Código</th>
+                                <th className="px-4 py-2 text-left">Descrição do Produto</th>
+                                <th className="px-3 py-2 w-32 text-center">Categoria</th>
+                                <th className="px-3 py-2 w-20 text-center">Qtde</th>
+                                <th className="px-3 py-2 w-32 text-right">Pr. Venda Unit.</th>
+                                <th className="px-3 py-2 w-36 text-right">Pr. Venda Total</th>
+                              </tr>
+                            </thead>
+                            <tbody className="font-bold text-slate-700">
+                              {selectedContratoForPdf.itens.map((it: any, idx: number) => (
+                                <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50/20 bg-white last:border-b-0">
+                                  <td className="px-3 py-2 text-center text-[10px] font-mono text-slate-500">{it.ativo.codigo}</td>
+                                  <td className="px-4 py-2 text-slate-800 text-[11px] uppercase">{it.ativo.descricao}</td>
+                                  <td className="px-3 py-2 text-center text-[10px] text-slate-500 uppercase">{it.ativo.categoria?.nome || 'COMODATO'}</td>
+                                  <td className="px-3 py-2 text-center text-[11px] text-slate-800 font-extrabold">{it.quantidade}</td>
+                                  <td className="px-3 py-2 text-right text-[11px]">
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(it.valorUnitario)}
+                                  </td>
+                                  <td className="px-3 py-2 text-right text-[11px] text-slate-900 font-black">
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(it.valorUnitario * it.quantidade)}
+                                  </td>
+                                </tr>
+                              ))}
+                              {/* Totalizador */}
+                              <tr className="bg-slate-50 text-[11px] font-black border-t border-slate-300">
+                                <td colSpan={3} className="px-4 py-2 text-right text-[#1B4D3E] uppercase tracking-wider">Total em Comodato:</td>
+                                <td className="px-3 py-2 text-center text-slate-900">
+                                  {selectedContratoForPdf.itens.reduce((acc: number, curr: any) => acc + curr.quantidade, 0)}
+                                </td>
+                                <td></td>
+                                <td className="px-3 py-2 text-right text-[#1B4D3E]">
+                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                                    selectedContratoForPdf.itens.reduce((acc: number, curr: any) => acc + (curr.valorUnitario * curr.quantidade), 0)
+                                  )}
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Assinaturas */}
+              <div className="pt-12 select-none print:pt-16">
+                <p className="text-center text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                  E por estarem assim justos e contratados, firmam o presente instrumento em duas vias.
+                </p>
+                <div className="grid grid-cols-2 gap-12 pt-16 text-[10.5px] font-bold text-slate-700 text-center">
+                  <div className="space-y-4">
+                    <div className="border-t border-slate-350 pt-2.5 flex flex-col items-center">
+                      <span className="font-black text-[#1B4D3E] uppercase tracking-wider">COMODANTE</span>
+                      <span className="text-[9.5px] text-slate-500 uppercase mt-0.5">{selectedContratoForPdf.empresaEmissora.nomeFantasia}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="border-t border-slate-350 pt-2.5 flex flex-col items-center">
+                      <span className="font-black text-slate-800 uppercase tracking-wider">COMODATÁRIO</span>
+                      <span className="text-[9.5px] text-slate-500 uppercase mt-0.5">{selectedContratoForPdf.client.razaoSocial || selectedContratoForPdf.client.nomeFantasia}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. PDF ORDEM DE SERVIÇO (OS) PREVIEW */}
+      {modalOsPdfOpen && selectedOsForPdf && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs no-print">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl h-[90vh] flex flex-col overflow-hidden border border-slate-100 text-left">
+            <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none shrink-0">
+              <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider">Visualizar Ordem de Serviço</h3>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => {
+                    const originalTitle = document.title;
+                    document.title = `Ordem_de_Servico_No_${selectedOsForPdf.codigo}`;
+                    window.print();
+                    setTimeout(() => { document.title = originalTitle; }, 500);
+                  }}
+                  className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-1.5 px-4 rounded-lg text-[10px] uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors shadow-xs"
+                >
+                  <Printer size={12} /> Imprimir OS
+                </button>
+                <button onClick={() => setModalOsPdfOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"><X size={18} /></button>
+              </div>
+            </header>
+            
+            <div className="p-8 flex-1 overflow-y-auto font-sans text-xs text-slate-800 leading-relaxed space-y-5 max-w-[210mm] mx-auto bg-white shadow-inner">
+              
+              {/* Cabeçalho da OS */}
+              <div className="flex justify-between items-start border-b border-slate-300 pb-3 gap-6">
+                <div className="flex items-center gap-3">
+                  {/* Slimpe Default Logo Box */}
+                  <div className="w-16 h-16 bg-[#1B4D3E] text-white rounded-xl flex flex-col items-center justify-center font-black text-xs uppercase tracking-tighter leading-none shrink-0 shadow-xs border border-[#13382D]">
+                    <span className="text-[14px] font-extrabold tracking-tighter">SLIMPE</span>
+                    <span className="text-[7.5px] font-black tracking-widest mt-1 opacity-80">HIGIENE</span>
+                  </div>
+                  <div className="space-y-0.5">
+                    <h2 className="text-xs font-black text-[#1B4D3E] uppercase tracking-widest">SLIMPE HIGIENE E LIMPEZA</h2>
+                    <p className="text-[9.5px] font-semibold text-slate-500 block leading-tight">Av. Maringá, 1273 - Barracão A - Emiliano Perneta</p>
+                    <p className="text-[9.5px] font-semibold text-slate-500 block leading-tight">Pinhais / PR - CEP: 83.324-432</p>
+                    <p className="text-[9.5px] font-semibold text-slate-500 block leading-tight">CNPJ: 32.463.831/0001-96 - Telefone: (041) 3732-4665</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Faixa Título da OS */}
+              <div className="bg-[#1B4D3E]/8 border border-[#1B4D3E]/15 text-[#1B4D3E] py-2 px-4 rounded-xl text-center select-none shrink-0">
+                <h2 className="text-xs font-black uppercase tracking-widest">ORDEM DE SERVIÇO Nº {String(selectedOsForPdf.codigo).padStart(3, '0')}</h2>
+              </div>
+
+              {/* Dados do Cliente e Endereço */}
+              <div className="bg-slate-50/50 border border-slate-200 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5 font-bold text-slate-700">
+                  <div>
+                    <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Cliente</span>
+                    <span className="text-[11.5px] font-black text-slate-850 uppercase">{selectedOsForPdf.client.nomeFantasia}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Endereço da Prestação</span>
+                    <span className="text-[10.5px] uppercase">{selectedOsForPdf.client.endereco || '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">UF / Cidade</span>
+                      <span className="text-[10px] uppercase">PR / Curitiba</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Telefone</span>
+                      <span className="text-[10px]">{selectedOsForPdf.client.whatsapp || selectedOsForPdf.client.telefone || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 border-t sm:border-t-0 sm:border-l border-slate-200 pt-3 sm:pt-0 sm:pl-4 font-bold text-slate-700">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Data Emissão</span>
+                      <span className="text-[10px]">{new Date(selectedOsForPdf.dataEmissao).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Data Prevista</span>
+                      <span className="text-[10px]">{selectedOsForPdf.dataPrevista ? new Date(selectedOsForPdf.dataPrevista).toLocaleDateString('pt-BR') : '00/00/0000'}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Contato no Atendimento</span>
+                    <span className="text-[10px] uppercase">{selectedOsForPdf.client.contato || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Orçamento Associado</span>
+                    <span className="text-[10px]">Orçamento: 0</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bloco de Serviço */}
+              <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                <div className="bg-[#1B4D3E]/8 border-b border-slate-200 px-4 py-2 text-[#1B4D3E] font-black uppercase text-[10px] tracking-wider select-none">
+                  SERVIÇO
+                </div>
+                <div className="p-4 space-y-4 font-bold text-slate-700">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-b border-slate-100 pb-3">
+                    <div>
+                      <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Descrição</span>
+                      <span className="text-[11px] font-black text-slate-800 uppercase">{selectedOsForPdf.tipo === 'INSTALACAO' ? 'INSTALAÇÃO DE COMODATOS' : selectedOsForPdf.tipo === 'RETIRADA' ? 'RETIRADA DE COMODATOS' : selectedOsForPdf.tipo === 'TROCA' ? 'TROCA DE COMODATOS' : 'MANUTENÇÃO DE COMODATOS'}</span>
+                    </div>
+                    <div className="text-center">
+                      <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Quantidade</span>
+                      <span className="text-[11px]">0.000</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Valor Previsto</span>
+                      <span className="text-[11px] text-slate-850 font-black">R$ 0.00</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Instruções de Atendimento</span>
+                    <p className="bg-slate-50 border border-slate-100 rounded-xl p-3.5 mt-1 text-slate-600 font-semibold leading-relaxed whitespace-pre-wrap">
+                      {selectedOsForPdf.instrucoes || 'Nenhuma instrução específica fornecida.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bloco de Observações Adicionais */}
+              <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                <div className="bg-slate-50 px-4 py-2 border-b border-slate-200 text-slate-500 font-black uppercase text-[10px] tracking-wider select-none">
+                  Observação:
+                </div>
+                <div className="p-4 bg-white min-h-[120px] font-semibold text-slate-650 leading-relaxed whitespace-pre-wrap">
+                  {selectedOsForPdf.observacao || 'Nenhuma observação cadastrada.'}
+                </div>
+              </div>
+
+              {/* Rodapé de Assinatura Física ou Digital */}
+              <div className="pt-10 select-none">
+                <div className="grid grid-cols-2 gap-12 text-[10.5px] font-bold text-slate-700 text-center">
+                  <div className="space-y-4">
+                    <div className="border-t border-slate-350 pt-2 flex flex-col items-center">
+                      <span className="font-black text-slate-800">Técnico Responsável</span>
+                      <span className="text-[9px] text-slate-450 uppercase mt-0.5">{selectedOsForPdf.tecnicoResponsavel || 'Não Informado'}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="border-t border-slate-350 pt-2 flex flex-col items-center">
+                      {selectedOsForPdf.assinaturaCliente ? (
+                        <div className="flex flex-col items-center">
+                          <img 
+                            src={selectedOsForPdf.assinaturaCliente} 
+                            alt="Assinatura Cliente" 
+                            className="max-h-[60px] object-contain mb-1"
+                          />
+                          <span className="text-[9px] text-emerald-600 font-black uppercase flex items-center gap-1"><CheckCircle size={10} /> Assinado Digitalmente</span>
+                        </div>
+                      ) : (
+                        <div className="h-[60px] flex items-end justify-center w-full">
+                          <span className="text-slate-300 italic text-[10px]">_____________________________________</span>
+                        </div>
+                      )}
+                      <span className="font-black text-slate-800 mt-1">Cliente</span>
+                      <span className="text-[9px] text-slate-450 uppercase mt-0.5">{selectedOsForPdf.client.nomeFantasia}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────────────
+          ESTILO CSS EXCLUSIVO DE IMPRESSÃO (PRINT MEDIA OVERRIDES)
+          ─────────────────────────────────────────────────────────────────── */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          /* Esconder toda a estrutura do CRM */
+          body * {
+            visibility: hidden !important;
+          }
+          /* Mostrar apenas o modal que está ativo para impressão em PDF */
+          [class*="fixed"][class*="z-50"] ,
+          [class*="fixed"][class*="z-50"] * {
+            visibility: visible !important;
+          }
+          /* Resetar overlays e backgrounds do modal na impressão */
+          [class*="fixed"][class*="z-50"] {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: visible !important;
+            box-shadow: none !important;
+          }
+          [class*="fixed"][class*="z-50"] > div {
+            border: none !important;
+            box-shadow: none !important;
+            max-width: none !important;
+            width: 100% !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+          }
+          header.shrink-0 {
+            display: none !important;
+          }
+          /* Configurações de página A4 */
+          @page {
+            size: A4;
+            margin: 15mm 10mm 15mm 10mm !important;
+          }
+        }
+      `}} />
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------------
+// AUXILIARY SIGNATURE CANVAS COMPONENT
+// -----------------------------------------------------------------------------
+function SignaturePad({ onSave, onCancel }: { onSave: (dataUrl: string) => void; onCancel: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.strokeStyle = '#1b4d3e';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+      }
+    }
+  }, []);
+
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    setIsDrawing(true);
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = ('touches' in e) ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
+    const y = ('touches' in e) ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = ('touches' in e) ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
+    const y = ('touches' in e) ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    e.preventDefault();
+  };
+
+  const stopDrawing = () => {
+    setIsDrawing(false);
+  };
+
+  const clear = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
+  const save = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL();
+    onSave(dataUrl);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="border border-slate-250 rounded-2xl overflow-hidden bg-slate-50">
+        <canvas
+          ref={canvasRef}
+          width={400}
+          height={180}
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+          onTouchStart={startDrawing}
+          onTouchMove={draw}
+          onTouchEnd={stopDrawing}
+          className="w-full h-[180px] cursor-crosshair touch-none"
+        />
+      </div>
+      <div className="flex gap-2 justify-end select-none shrink-0 pb-1">
+        <button type="button" onClick={clear} className="px-4 py-2 border border-slate-200 text-slate-500 rounded-xl text-xs font-black uppercase hover:bg-slate-50 cursor-pointer">Limpar</button>
+        <button type="button" onClick={onCancel} className="px-4 py-2 border border-slate-200 text-slate-500 rounded-xl text-xs font-black uppercase hover:bg-slate-50 cursor-pointer">Cancelar</button>
+        <button type="button" onClick={save} className="px-5 py-2 bg-[#1B4D3E] text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-[#13382D] cursor-pointer shadow-xs transition-colors">Confirmar Assinatura</button>
+      </div>
+    </div>
+  );
+}

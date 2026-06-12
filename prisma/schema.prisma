@@ -56,6 +56,11 @@ model Tenant {
   taskTemplates             TaskTemplate[]
   pics                      Pic[]
   picStages                 PicStage[]
+  categoriasAtivo           CategoriaAtivo[]
+  ativos                    Ativo[]
+  templatesComodato         TemplateComodato[]
+  contratosComodato         ContratoComodato[]
+  ordensServicoAtivo        OrdemServicoAtivo[]
 }
 
 model EmpresaEmissora {
@@ -70,6 +75,7 @@ model EmpresaEmissora {
   updatedAt    DateTime   @updatedAt
   contratos    Contrato[]
   documentosProposta DocumentoProposta[] @relation("EmpresaToDocumento")
+  contratosComodato   ContratoComodato[]
 }
 
 model User {
@@ -131,6 +137,8 @@ model Client {
   propostas    Proposta[]
   contratos    Contrato[]
   documentosProposta DocumentoProposta[] @relation("ClientToDocumento")
+  contratosComodato   ContratoComodato[]
+  ordensServicoAtivo  OrdemServicoAtivo[]
   tenantId     String?
   tenant       Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
@@ -1050,4 +1058,123 @@ model PicAction {
   observacao    String?    @db.Text
   status        String     @default("PENDENTE") // PENDENTE, CONCLUIDA
   ordem         Int        @default(0)
+}
+
+model CategoriaAtivo {
+  id        String   @id @default(cuid())
+  nome      String
+  ativo     Boolean  @default(true)
+  ativos    Ativo[]
+  tenantId  String?
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([nome, tenantId])
+}
+
+model Ativo {
+  id                   String               @id @default(cuid())
+  codigo               String               @unique // ex: ATV-0001
+  descricao            String
+  valor                Float                @default(0)
+  status               String               @default("DISPONIVEL") // DISPONIVEL, COMODATO, MANUTENCAO, BAIXADO
+  observacao           String?              @db.Text
+  categoriaId          String
+  categoria            CategoriaAtivo       @relation(fields: [categoriaId], references: [id])
+  tenantId             String?
+  tenant               Tenant?              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contratosItem        ContratoComodatoItem[]
+  ordensServico        OrdemServicoAtivo[]  @relation("AtivoToOS")
+  ordensServicoDestino OrdemServicoAtivo[]  @relation("AtivoDestinoToOS")
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+}
+
+model TemplateComodato {
+  id        String                     @id @default(uuid())
+  nome      String
+  clausulas ClausulaTemplateComodato[]
+  tenantId  String?
+  tenant    Tenant?                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime                   @default(now())
+  updatedAt DateTime                   @updatedAt
+
+  @@unique([nome, tenantId])
+}
+
+model ClausulaTemplateComodato {
+  id         String           @id @default(uuid())
+  templateId String
+  template   TemplateComodato @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  ordem      Int              @default(0)
+  titulo     String
+  texto      String           @db.Text
+}
+
+model ContratoComodato {
+  id                String                     @id @default(cuid())
+  codigo            Int                        @unique @default(autoincrement())
+  clientId          String
+  client            Client                     @relation(fields: [clientId], references: [id])
+  empresaEmissoraId String
+  empresaEmissora   EmpresaEmissora            @relation(fields: [empresaEmissoraId], references: [id])
+  status            String                     @default("RASCUNHO") // RASCUNHO, VIGENTE, SUSPENSO, ENCERRADO, VENCIDO
+  dataInicio        DateTime
+  vigenciaMeses     Int                        @default(12)
+  dataVencimento    DateTime?
+  valorMinimoMensal Float                      @default(250.00)
+  clausulas         ClausulaContratoComodato[]
+  itens             ContratoComodatoItem[]
+  ordensServico     OrdemServicoAtivo[]
+  tenantId          String?
+  tenant            Tenant?                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+}
+
+model ContratoComodatoItem {
+  id                 String           @id @default(cuid())
+  contratoComodatoId String
+  contratoComodato   ContratoComodato @relation(fields: [contratoComodatoId], references: [id], onDelete: Cascade)
+  ativoId            String
+  ativo              Ativo            @relation(fields: [ativoId], references: [id])
+  quantidade         Int              @default(1)
+  valorUnitario      Float            @default(0)
+}
+
+model ClausulaContratoComodato {
+  id                 String           @id @default(uuid())
+  contratoComodatoId String
+  contratoComodato   ContratoComodato @relation(fields: [contratoComodatoId], references: [id], onDelete: Cascade)
+  ordem              Int              @default(0)
+  titulo             String
+  texto              String           @db.Text
+}
+
+model OrdemServicoAtivo {
+  id                 String            @id @default(cuid())
+  codigo             Int               @unique @default(autoincrement()) // OS Nº 320
+  tipo               String            // INSTALACAO, RETIRADA, TROCA, MANUTENCAO
+  contratoComodatoId String
+  contratoComodato   ContratoComodato  @relation(fields: [contratoComodatoId], references: [id], onDelete: Cascade)
+  clientId           String
+  client             Client            @relation(fields: [clientId], references: [id])
+  ativoId            String
+  ativo              Ativo             @relation("AtivoToOS", fields: [ativoId], references: [id])
+  ativoDestinoId     String?
+  ativoDestino       Ativo?            @relation("AtivoDestinoToOS", fields: [ativoDestinoId], references: [id])
+  status             String            @default("PENDENTE") // PENDENTE, EM_ANDAMENTO, CONCLUIDA, CANCELADA
+  dataEmissao        DateTime          @default(now())
+  dataPrevista       DateTime?
+  observacao         String?           @db.Text
+  instrucoes         String?           @db.Text
+  tecnicoResponsavel String?
+  assinaturaCliente  String?           @db.Text // Base64 signature drawing
+  nomeAssinante      String?
+  cpfAssinante       String?
+  tenantId           String?
+  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 }
