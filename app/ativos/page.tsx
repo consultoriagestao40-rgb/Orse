@@ -7,7 +7,8 @@ import {
   Boxes, FileText, ClipboardList, Wrench, 
   Calendar, Printer, LayoutGrid, Kanban, 
   Tags, Info, Users, ShieldCheck, Check, 
-  MessageSquare, User, FileImage, Layers, ChevronRight, FileCheck, CheckCircle
+  MessageSquare, User, FileImage, Layers, ChevronRight, FileCheck, CheckCircle,
+  DollarSign, TrendingUp
 } from 'lucide-react';
 
 import { 
@@ -697,6 +698,76 @@ export default function AtivosPage() {
               );
             })}
           </nav>
+
+          {/* CARDS DE RESUMO DO PARQUE DE ATIVOS */}
+          {activeTab === 'ativos' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              {/* Card 1: Total Ativos */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4 transition-all hover:shadow-md">
+                <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                  <Boxes size={22} className="stroke-[2]" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Total de Ativos</span>
+                  <span className="text-xl font-black text-slate-800 mt-1 block truncate">
+                    {ativos.length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 2: Alocados */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4 transition-all hover:shadow-md">
+                <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#1E4480] shrink-0">
+                  <FileCheck size={22} className="stroke-[2]" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Ativos Alocados</span>
+                  <span className="text-xl font-black text-[#1E4480] mt-1 block truncate">
+                    {ativos.filter(a => a.status === 'COMODATO').length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 3: Disponíveis */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4 transition-all hover:shadow-md">
+                <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                  <CheckCircle size={22} className="stroke-[2]" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Disponíveis</span>
+                  <span className="text-xl font-black text-emerald-600 mt-1 block truncate">
+                    {ativos.filter(a => a.status === 'DISPONIVEL').length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 4: Valor do Parque Total */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4 transition-all hover:shadow-md">
+                <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                  <DollarSign size={22} className="stroke-[2]" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Valor do Parque</span>
+                  <span className="text-base font-black text-amber-600 mt-1 block truncate" title={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(ativos.reduce((acc, curr) => acc + (curr.valor || 0), 0))}>
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(ativos.reduce((acc, curr) => acc + (curr.valor || 0), 0))}
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 5: Valor Alocado */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4 transition-all hover:shadow-md">
+                <div className="w-12 h-12 rounded-xl bg-[#1B4D3E]/5 border border-[#1B4D3E]/10 flex items-center justify-center text-[#1B4D3E] shrink-0">
+                  <TrendingUp size={22} className="stroke-[2]" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Valor Alocado</span>
+                  <span className="text-base font-black text-[#1B4D3E] mt-1 block truncate" title={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(ativos.filter(a => a.status === 'COMODATO').reduce((acc, curr) => acc + (curr.valor || 0), 0))}>
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(ativos.filter(a => a.status === 'COMODATO').reduce((acc, curr) => acc + (curr.valor || 0), 0))}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* BARRA DE FILTROS E BUSCA */}
           <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center bg-white p-4 border border-slate-200 rounded-2xl shadow-xs gap-4">
