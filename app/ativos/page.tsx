@@ -775,8 +775,17 @@ export default function AtivosPage() {
     <div id="ativos-layout-root" className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
       
-      <main className="flex-1 p-8 overflow-y-auto no-print">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <main className={`flex-1 no-print ${
+        activeTab === 'ordens' && osViewMode === 'kanban' 
+          ? 'overflow-hidden flex flex-col h-screen bg-slate-50' 
+          : 'p-8 overflow-y-auto'
+      }`}>
+        <div className={`space-y-6 ${
+          activeTab === 'ordens' && osViewMode === 'kanban' 
+            ? 'w-full flex-1 flex flex-col min-h-0' 
+            : 'max-w-7xl mx-auto'
+        }`}>
+          <div className={activeTab === 'ordens' && osViewMode === 'kanban' ? 'px-8 pt-8 space-y-6 shrink-0' : 'space-y-6'}>
           
           {/* HEADER DO MÓDULO */}
           <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-slate-200 pb-5 gap-4">
@@ -1040,6 +1049,7 @@ export default function AtivosPage() {
                 {activeTab === 'ordens' && filteredOrdens.length}
               </span>
             </div>
+          </div>
           </div>
 
           {/* ───────────────────────────────────────────────────────────────────
@@ -1584,8 +1594,8 @@ export default function AtivosPage() {
           )}
 
           {activeTab === 'ordens' && osViewMode === 'kanban' && (
-            <div className="overflow-x-auto pb-4 select-none bg-slate-50/50 rounded-3xl border border-slate-200/80 p-2 shadow-inner">
-              <div className="flex gap-[3px] min-w-max">
+            <div className="overflow-x-auto pb-6 select-none bg-slate-50 pl-2 pr-1 flex-1 min-h-0">
+              <div className="flex gap-[3px] min-w-max h-full">
                 {(['PENDENTE', 'PROGRAMADO', 'EM_DESLOCAMENTO', 'EM_ANDAMENTO', 'VALIDACAO', 'CONCLUIDA', 'CANCELADA'] as const).map((colStatus, idx) => {
                   const colOrdens = filteredOrdens.filter(o => o.status === colStatus);
                   const isFirst = idx === 0;
@@ -1620,7 +1630,7 @@ export default function AtivosPage() {
                   return (
                     <div 
                       key={colStatus} 
-                      className="flex flex-col flex-shrink-0"
+                      className="flex flex-col flex-shrink-0 h-[calc(100vh-270px)]"
                       style={{ width: '274px' }}
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => {
@@ -1667,7 +1677,7 @@ export default function AtivosPage() {
 
                       {/* Cards list with customized scroll background */}
                       <div
-                        className="px-[4px] py-3 rounded-b-2xl rounded-t-none"
+                        className="px-[4px] py-3 rounded-b-2xl rounded-t-none flex-1 min-h-0"
                         style={{
                           width: '274px',
                           minWidth: '274px',
@@ -1677,8 +1687,6 @@ export default function AtivosPage() {
                           borderColor: borderRgba,
                           borderWidth: '0 1px 1px 1px',
                           borderStyle: 'solid',
-                          height: 'calc(100vh - 300px)',
-                          minHeight: '450px',
                           overflowY: 'auto',
                         }}
                       >
