@@ -423,6 +423,72 @@ export async function createContratoComodato(data: {
   }
 }
 
+export async function updateContratoComodato(id: string, data: {
+  clientId: string;
+  empresaEmissoraId: string;
+  dataInicio: string;
+  vigenciaMeses: number;
+  valorMinimoMensal: number;
+  clausulas: { ordem: number; titulo: string; texto: string }[];
+  itens: { ativoId: string; quantidade: number; valorUnitario: number }[];
+}) {
+  try {
+    const user = await checkAuth();
+
+    const dataInicioDate = new Date(data.dataInicio);
+    const dataVencimento = new Date(dataInicioDate);
+    dataVencimento.setMonth(dataVencimento.getMonth() + data.vigenciaMeses);
+
+    // Update contract metadata
+    await prisma.contratoComodato.update({
+      where: { id, tenantId: user.tenantId },
+      data: {
+        clientId: data.clientId,
+        empresaEmissoraId: data.empresaEmissoraId,
+        dataInicio: dataInicioDate,
+        vigenciaMeses: data.vigenciaMeses,
+        dataVencimento,
+        valorMinimoMensal: data.valorMinimoMensal,
+      }
+    });
+
+    // Delete existing clauses and recreate
+    await prisma.clausulaContratoComodato.deleteMany({
+      where: { contratoComodatoId: id }
+    });
+    if (data.clausulas.length > 0) {
+      await prisma.clausulaContratoComodato.createMany({
+        data: data.clausulas.map(c => ({
+          contratoComodatoId: id,
+          ordem: c.ordem,
+          titulo: c.titulo,
+          texto: c.texto
+        }))
+      });
+    }
+
+    // Delete existing items and recreate
+    await prisma.contratoComodatoItem.deleteMany({
+      where: { contratoComodatoId: id }
+    });
+    if (data.itens.length > 0) {
+      await prisma.contratoComodatoItem.createMany({
+        data: data.itens.map(i => ({
+          contratoComodatoId: id,
+          ativoId: i.ativoId,
+          quantidade: i.quantidade,
+          valorUnitario: i.valorUnitario
+        }))
+      });
+    }
+
+    revalidatePath('/ativos');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 export async function updateContratoComodatoStatus(id: string, status: string) {
   try {
     const user = await checkAuth();

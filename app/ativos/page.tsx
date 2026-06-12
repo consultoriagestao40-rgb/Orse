@@ -15,7 +15,7 @@ import {
   getCategoriasAtivo, createCategoriaAtivo, updateCategoriaAtivo, deleteCategoriaAtivo,
   getAtivos, createAtivo, updateAtivo, deleteAtivo,
   getTemplatesComodato, createTemplateComodato, updateTemplateComodato, deleteTemplateComodato,
-  getContratosComodato, createContratoComodato, updateContratoComodatoStatus, deleteContratoComodato,
+  getContratosComodato, createContratoComodato, updateContratoComodato, updateContratoComodatoStatus, deleteContratoComodato,
   getOrdensServicoAtivo, createOrdemServicoAtivo, updateOrdemServicoAtivo, deleteOrdemServicoAtivo
 } from './actions';
 import { getClientes } from '@/app/clientes/actions';
@@ -376,21 +376,35 @@ export default function AtivosPage() {
   // -----------------------------------------------------------------------------
   // CONTRATOS DE COMODATO CRUD
   // -----------------------------------------------------------------------------
-  const openContratoModal = () => {
+  const openContratoModal = (contrato?: any) => {
     if (clientes.length === 0 || empresas.length === 0) {
       return showAlert('Dados Faltando', 'Certifique-se de que existem clientes e empresas emissoras cadastradas no sistema.', 'warning');
     }
-    setContratoForm({
-      id: '',
-      clientId: clientes[0]?.id || '',
-      empresaEmissoraId: empresas[0]?.id || '',
-      dataInicio: new Date().toISOString().substring(0, 10),
-      vigenciaMeses: 12,
-      valorMinimoMensal: 250,
-      templateId: templates[0]?.id || '',
-      clausulas: templates[0] ? templates[0].clausulas.map((c: any) => ({ ordem: c.ordem, titulo: c.titulo, texto: c.texto })) : [],
-      selectedAtivos: []
-    });
+    if (contrato) {
+      setContratoForm({
+        id: contrato.id,
+        clientId: contrato.clientId,
+        empresaEmissoraId: contrato.empresaEmissoraId,
+        dataInicio: new Date(contrato.dataInicio).toISOString().substring(0, 10),
+        vigenciaMeses: contrato.vigenciaMeses,
+        valorMinimoMensal: contrato.valorMinimoMensal,
+        templateId: contrato.templateId || '',
+        clausulas: contrato.clausulas ? contrato.clausulas.map((c: any) => ({ ordem: c.ordem, titulo: c.titulo, texto: c.texto })) : [],
+        selectedAtivos: contrato.itens ? contrato.itens.map((i: any) => ({ ativoId: i.ativoId, quantidade: i.quantidade, valorUnitario: i.valorUnitario })) : []
+      });
+    } else {
+      setContratoForm({
+        id: '',
+        clientId: clientes[0]?.id || '',
+        empresaEmissoraId: empresas[0]?.id || '',
+        dataInicio: new Date().toISOString().substring(0, 10),
+        vigenciaMeses: 12,
+        valorMinimoMensal: 250,
+        templateId: templates[0]?.id || '',
+        clausulas: templates[0] ? templates[0].clausulas.map((c: any) => ({ ordem: c.ordem, titulo: c.titulo, texto: c.texto })) : [],
+        selectedAtivos: []
+      });
+    }
     setModalContratoOpen(true);
   };
 
@@ -434,7 +448,8 @@ export default function AtivosPage() {
       return showAlert('Campo Obrigatório', 'Adicione pelo menos um equipamento no contrato.', 'warning');
     }
     setSaving(true);
-    const res = await createContratoComodato({
+    let res;
+    const data = {
       clientId: contratoForm.clientId,
       empresaEmissoraId: contratoForm.empresaEmissoraId,
       dataInicio: contratoForm.dataInicio,
@@ -442,7 +457,12 @@ export default function AtivosPage() {
       valorMinimoMensal: Number(contratoForm.valorMinimoMensal) || 0,
       clausulas: contratoForm.clausulas,
       itens: contratoForm.selectedAtivos
-    });
+    };
+    if (contratoForm.id) {
+      res = await updateContratoComodato(contratoForm.id, data);
+    } else {
+      res = await createContratoComodato(data);
+    }
 
     if (res.success) {
       setModalContratoOpen(false);
@@ -988,23 +1008,23 @@ export default function AtivosPage() {
             <>
               {/* VISÃO LISTA */}
               {contratosViewMode === 'lista' && (
-                <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+                <div className="bg-white border border-slate-300 rounded shadow-sm overflow-x-auto">
                   <table className="w-full text-left border-collapse">
-                    <thead className="bg-[#1B4D3E] text-slate-100 text-[10px] font-bold uppercase tracking-widest border-none select-none">
+                    <thead className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-widest border-none select-none">
                       <tr>
-                        <th className="px-6 py-4 text-center w-24">Cód. Contrato</th>
-                        <th className="px-6 py-4">Cliente</th>
-                        <th className="px-6 py-4">Empresa (Grupo)</th>
-                        <th className="px-6 py-4 text-center w-28">Início</th>
-                        <th className="px-6 py-4 text-center w-24">Vigência</th>
-                        <th className="px-6 py-4 text-center w-28">Vencimento</th>
-                        <th className="px-6 py-4 text-right w-36">Consumo Mínimo</th>
-                        <th className="px-6 py-4 text-center w-36">Equipamentos</th>
-                        <th className="px-6 py-4 text-center w-32">Situação</th>
-                        <th className="px-6 py-4 w-28 text-center">Ações</th>
+                        <th className="px-6 py-4 border-r border-white/10 text-center w-24">Cód. Contrato</th>
+                        <th className="px-6 py-4 border-r border-white/10">Cliente</th>
+                        <th className="px-6 py-4 border-r border-white/10">Empresa (Grupo)</th>
+                        <th className="px-6 py-4 border-r border-white/10 text-center w-28">Início</th>
+                        <th className="px-6 py-4 border-r border-white/10 text-center w-24">Vigência</th>
+                        <th className="px-6 py-4 border-r border-white/10 text-center w-28">Vencimento</th>
+                        <th className="px-6 py-4 border-r border-white/10 text-right w-36">Consumo Mínimo</th>
+                        <th className="px-6 py-4 border-r border-white/10 text-center w-36">Equipamentos</th>
+                        <th className="px-6 py-4 border-r border-white/10 text-center w-32">Situação</th>
+                        <th className="px-6 py-4 text-center w-40">Ações</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-150 font-semibold text-slate-700">
+                    <tbody className="divide-y divide-slate-200 font-semibold text-slate-700">
                       {loading && contratos.length === 0 ? (
                         <tr><td colSpan={10} className="px-6 py-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Carregando contratos de comodato...</td></tr>
                       ) : filteredContratos.length === 0 ? (
@@ -1018,7 +1038,7 @@ export default function AtivosPage() {
                           else if (contrato.status === 'ENCERRADO') statusColor = 'bg-red-50 text-red-700 border-red-200';
 
                           return (
-                            <tr key={contrato.id} className="hover:bg-slate-50/50 transition-colors">
+                            <tr key={contrato.id} className="hover:bg-slate-50 transition-colors group">
                               <td className="px-6 py-3.5 text-center">
                                 <span className="font-mono bg-slate-100 border border-slate-200/80 rounded-lg px-2.5 py-0.5 text-[10px] font-black text-slate-700">
                                   #{String(contrato.codigo).padStart(4, '0')}
@@ -1026,7 +1046,6 @@ export default function AtivosPage() {
                               </td>
                               <td className="px-6 py-3.5 text-xs text-slate-800 font-extrabold uppercase">
                                 <div>{contrato.client.nomeFantasia}</div>
-                                {contrato.client.razaoSocial && <div className="text-[9px] text-slate-400 font-bold tracking-wider mt-0.5">{contrato.client.razaoSocial}</div>}
                               </td>
                               <td className="px-6 py-3.5 text-xs text-slate-600 font-bold uppercase">{contrato.empresaEmissora.nomeFantasia}</td>
                               <td className="px-6 py-3.5 text-center text-xs text-slate-600">
@@ -1047,15 +1066,22 @@ export default function AtivosPage() {
                                 </div>
                               </td>
                               <td className="px-6 py-3.5 text-center">
-                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border select-none ${statusColor}`}>
+                                <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase border select-none ${statusColor}`}>
                                   {contrato.status}
                                 </span>
                               </td>
                               <td className="px-6 py-3.5">
-                                <div className="flex items-center justify-center gap-1.5">
+                                <div className="flex items-center justify-center gap-2">
+                                  <button 
+                                    onClick={() => openContratoModal(contrato)}
+                                    className="p-1 text-amber-500 hover:text-amber-600 transition-colors"
+                                    title="Editar Contrato"
+                                  >
+                                    <Edit2 size={13} />
+                                  </button>
                                   <button 
                                     onClick={() => { setSelectedContratoForPdf(contrato); setModalContratoPdfOpen(true); }}
-                                    className="p-1 text-[#1B4D3E] hover:bg-emerald-50 rounded-lg"
+                                    className="p-1 text-[#1B4D3E] hover:text-[#13382D] transition-colors"
                                     title="Ver Contrato (PDF)"
                                   >
                                     <Printer size={13} />
@@ -1063,14 +1089,20 @@ export default function AtivosPage() {
                                   <select
                                     value={contrato.status}
                                     onChange={(e) => handleUpdateContratoStatus(contrato.id, e.target.value)}
-                                    className="text-[9px] bg-slate-50 border border-slate-200 rounded px-1 py-0.5 outline-none font-bold text-slate-600 cursor-pointer"
+                                    className="text-[9px] bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 outline-none font-bold text-slate-650 cursor-pointer"
                                   >
-                                    <option value="RASCUNHO">Rascunho</option>
-                                    <option value="VIGENTE">Vigente</option>
-                                    <option value="SUSPENSO">Suspenso</option>
-                                    <option value="ENCERRADO">Encerrado</option>
+                                    <option value="RASCUNHO">RASCUNHO</option>
+                                    <option value="VIGENTE">VIGENTE</option>
+                                    <option value="SUSPENSO">SUSPENSO</option>
+                                    <option value="ENCERRADO">ENCERRADO</option>
                                   </select>
-                                  <button onClick={() => handleDeleteContrato(contrato.id)} className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={13} /></button>
+                                  <button 
+                                    onClick={() => handleDeleteContrato(contrato.id)} 
+                                    className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                                    title="Excluir"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
                                 </div>
                               </td>
                             </tr>
@@ -1599,7 +1631,7 @@ export default function AtivosPage() {
               <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none shrink-0">
                 <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
                   <FileCheck size={16} className="stroke-[2.5]" />
-                  Gerar Contrato de Comodato
+                  {contratoForm.id ? 'Editar' : 'Gerar'} Contrato de Comodato
                 </h3>
                 <button onClick={() => setModalContratoOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"><X size={18} /></button>
               </header>
