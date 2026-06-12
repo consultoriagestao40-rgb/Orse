@@ -2332,7 +2332,7 @@ export default function AtivosPage() {
               </div>
 
               {/* Assinaturas */}
-              <div className="pt-12 select-none print:pt-16">
+              <div className="pt-12 select-none print:pt-16 avoid-break">
                 <p className="text-center text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                   E por estarem assim justos e contratados, firmam o presente instrumento em duas vias.
                 </p>
@@ -2349,6 +2349,47 @@ export default function AtivosPage() {
                       <span className="text-[9.5px] text-slate-500 uppercase mt-0.5">{selectedContratoForPdf.client.razaoSocial || selectedContratoForPdf.client.nomeFantasia}</span>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* Testemunhas (Conforme segunda imagem do usuário) */}
+              <div className="pt-12 select-none print:pt-16 avoid-break">
+                <span className="font-black text-slate-800 text-[10px] tracking-wider uppercase block text-left mb-8">TESTEMUNHAS:</span>
+                <div className="grid grid-cols-2 gap-16 text-[10.5px] font-bold text-slate-700 text-left">
+                  <div className="space-y-3">
+                    <span className="block text-[10px] text-slate-400 font-extrabold uppercase">1. ___________________________________________</span>
+                    <span className="block text-[9.5px] text-slate-500 uppercase mt-2">Nome:</span>
+                    <span className="block text-[9.5px] text-slate-500 uppercase mt-1">CPF:</span>
+                  </div>
+                  <div className="space-y-3">
+                    <span className="block text-[10px] text-slate-400 font-extrabold uppercase">2. ___________________________________________</span>
+                    <span className="block text-[9.5px] text-slate-500 uppercase mt-2">Nome:</span>
+                    <span className="block text-[9.5px] text-slate-500 uppercase mt-1">CPF:</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rodapé Corporativo Slimpe (Conforme segunda imagem do usuário) */}
+              <div className="pt-12 border-t border-slate-200 mt-16 flex justify-between items-end avoid-break text-slate-400 text-[8.5px] font-semibold leading-normal select-none">
+                <div className="space-y-0.5 text-left">
+                  <p className="font-extrabold text-[#1B4D3E] text-[9.5px]">Slimpe Comércio de Artigos para Limpeza Ltda</p>
+                  <p>CNPJ 32.463.831/0001-96 / Insc. Est. 90.801.686-64</p>
+                  <p>Avenida Maringá, 1273, Barracão A, Bairro Emiliano Perneta, Pinhais/PR, CEP 83.324-432</p>
+                  <p>Telefone: (41) 3732-4665 / WhatsApp: (41) 9-8855-8959</p>
+                </div>
+                <div className="shrink-0 flex flex-col items-end">
+                  {currentTenant?.logoUrl ? (
+                    <img
+                      src={`/api/tenant/logo?tenantId=${currentTenant.id}&v=${currentTenant.logoUrl.length > 30 ? encodeURIComponent(currentTenant.logoUrl.substring(currentTenant.logoUrl.length - 10)) : encodeURIComponent(currentTenant.logoUrl.substring(0, 10))}`}
+                      alt="Logo Slimpe"
+                      className="h-10 max-w-[140px] object-contain"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 bg-[#1B4D3E] text-white rounded-lg flex flex-col items-center justify-center font-black text-[8px] uppercase tracking-tighter leading-none shrink-0 border border-[#13382D]">
+                      <span className="text-[10px] font-extrabold tracking-tighter">SLIMPE</span>
+                      <span className="text-[5px] font-black tracking-widest mt-0.5 opacity-80">HIGIENE</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -2384,12 +2425,20 @@ export default function AtivosPage() {
               {/* Cabeçalho da OS */}
               <div className="flex justify-between items-start border-b border-slate-300 pb-3 gap-6">
                 <div className="flex items-center gap-3">
-                  {/* Slimpe Default Logo Box */}
-                  <div className="w-16 h-16 bg-[#1B4D3E] text-white rounded-xl flex flex-col items-center justify-center font-black text-xs uppercase tracking-tighter leading-none shrink-0 shadow-xs border border-[#13382D]">
-                    <span className="text-[14px] font-extrabold tracking-tighter">SLIMPE</span>
-                    <span className="text-[7.5px] font-black tracking-widest mt-1 opacity-80">HIGIENE</span>
-                  </div>
-                  <div className="space-y-0.5">
+                  {currentTenant?.logoUrl ? (
+                    <img 
+                      src={`/api/tenant/logo?tenantId=${currentTenant.id}&v=${currentTenant.logoUrl.length > 30 ? encodeURIComponent(currentTenant.logoUrl.substring(currentTenant.logoUrl.length - 10)) : encodeURIComponent(currentTenant.logoUrl.substring(0, 10))}`}
+                      alt="Logo Empresa"
+                      className="h-16 max-w-[180px] object-contain shrink-0"
+                    />
+                  ) : (
+                    /* Slimpe Default Logo Box */
+                    <div className="w-16 h-16 bg-[#1B4D3E] text-white rounded-xl flex flex-col items-center justify-center font-black text-xs uppercase tracking-tighter leading-none shrink-0 shadow-xs border border-[#13382D]">
+                      <span className="text-[14px] font-extrabold tracking-tighter">SLIMPE</span>
+                      <span className="text-[7.5px] font-black tracking-widest mt-1 opacity-80">HIGIENE</span>
+                    </div>
+                  )}
+                  <div className="space-y-0.5 text-left">
                     <h2 className="text-xs font-black text-[#1B4D3E] uppercase tracking-widest">SLIMPE HIGIENE E LIMPEZA</h2>
                     <p className="text-[9.5px] font-semibold text-slate-500 block leading-tight">Av. Maringá, 1273 - Barracão A - Emiliano Perneta</p>
                     <p className="text-[9.5px] font-semibold text-slate-500 block leading-tight">Pinhais / PR - CEP: 83.324-432</p>
