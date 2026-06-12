@@ -213,6 +213,39 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
     onClose();
   };
 
+  const formatListType = (type: 'disc' | 'decimal' | 'lower-alpha' | 'upper-alpha') => {
+    if (type === 'disc') {
+      document.execCommand('insertUnorderedList', false);
+    } else {
+      document.execCommand('insertOrderedList', false);
+    }
+    
+    // Find parent list node and set style
+    setTimeout(() => {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        let node = selection.getRangeAt(0).startContainer;
+        while (node && node !== editorRef.current) {
+          if (node.nodeName === 'OL' && type !== 'disc') {
+            const olNode = node as HTMLOListElement;
+            olNode.style.listStyleType = type;
+            if (type === 'lower-alpha') olNode.setAttribute('type', 'a');
+            else if (type === 'upper-alpha') olNode.setAttribute('type', 'A');
+            else olNode.setAttribute('type', '1');
+            break;
+          }
+          if (node.nodeName === 'UL' && type === 'disc') {
+            const ulNode = node as HTMLUListElement;
+            ulNode.style.listStyleType = type;
+            break;
+          }
+          node = node.parentNode as Node;
+        }
+      }
+      if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML);
+    }, 0);
+  };
+
   // ---------------------------------------------------------------------------
   // ABA 3: OPERACIONAL - MANIPULAÇÃO LOCAL E PERSISTÊNCIA
   // ---------------------------------------------------------------------------
@@ -563,6 +596,20 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
           content: attr(placeholder);
           color: #94a3b8 !important;
           cursor: text;
+        }
+        .ata-editor ul {
+          list-style-type: disc !important;
+          margin-left: 24px !important;
+          margin-top: 4px !important;
+          margin-bottom: 4px !important;
+        }
+        .ata-editor ol {
+          margin-left: 24px !important;
+          margin-top: 4px !important;
+          margin-bottom: 4px !important;
+        }
+        .ata-editor li {
+          display: list-item !important;
         }
       `}} />
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-fade-in relative print:shadow-none print:border-none print:w-full print:h-auto print:max-w-none print:rounded-none print:bg-white print:overflow-visible">
@@ -1861,22 +1908,26 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
 
                   <div className="h-4 w-px bg-slate-300 mx-1" />
 
-                  <button
-                    type="button"
-                    onClick={() => { document.execCommand('insertUnorderedList', false); if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML); }}
-                    className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
-                    title="Lista Marcadores"
+                  {/* Tipo de Lista */}
+                  <select
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === 'disc') formatListType('disc');
+                      else if (val === 'decimal') formatListType('decimal');
+                      else if (val === 'lower-alpha') formatListType('lower-alpha');
+                      else if (val === 'upper-alpha') formatListType('upper-alpha');
+                      e.target.value = ''; // Reset selection
+                    }}
+                    className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-600 outline-none focus:border-[#1B4D3E] transition-colors cursor-pointer"
+                    defaultValue=""
+                    title="Inserir Lista"
                   >
-                    <List size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { document.execCommand('insertOrderedList', false); if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML); }}
-                    className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
-                    title="Lista Numerada"
-                  >
-                    <ListOrdered size={14} />
-                  </button>
+                    <option value="" disabled hidden>Listas...</option>
+                    <option value="disc">● Marcadores</option>
+                    <option value="decimal">1. Números (1, 2, 3)</option>
+                    <option value="lower-alpha">a. Letras Minúsculas (a, b, c)</option>
+                    <option value="upper-alpha">A. Letras Maiúsculas (A, B, C)</option>
+                  </select>
 
                   <div className="h-4 w-px bg-slate-300 mx-1" />
 
@@ -2063,15 +2114,17 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   
                   .html-content-area ul {
                     list-style-type: disc !important;
-                    margin-left: 20px !important;
-                    margin-top: 5px !important;
-                    margin-bottom: 5px !important;
+                    margin-left: 24px !important;
+                    margin-top: 4px !important;
+                    margin-bottom: 4px !important;
                   }
                   .html-content-area ol {
-                    list-style-type: decimal !important;
-                    margin-left: 20px !important;
-                    margin-top: 5px !important;
-                    margin-bottom: 5px !important;
+                    margin-left: 24px !important;
+                    margin-top: 4px !important;
+                    margin-bottom: 4px !important;
+                  }
+                  .html-content-area li {
+                    display: list-item !important;
                   }
 
                   @media print {
