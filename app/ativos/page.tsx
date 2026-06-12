@@ -656,7 +656,7 @@ export default function AtivosPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
+    <div id="ativos-layout-root" className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
       
       <main className="flex-1 p-8 overflow-y-auto no-print">
@@ -2222,7 +2222,7 @@ export default function AtivosPage() {
 
       {/* 1. PDF CONTRATO DE COMODATO PREVIEW */}
       {modalContratoPdfOpen && selectedContratoForPdf && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs no-print print-modal-container">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs print-modal-container">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden border border-slate-100 text-left">
             <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none shrink-0">
               <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider">Visualizar Minuta de Contrato de Comodato</h3>
@@ -2359,7 +2359,7 @@ export default function AtivosPage() {
 
       {/* 2. PDF ORDEM DE SERVIÇO (OS) PREVIEW */}
       {modalOsPdfOpen && selectedOsForPdf && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs no-print print-modal-container">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs print-modal-container">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl h-[90vh] flex flex-col overflow-hidden border border-slate-100 text-left">
             <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none shrink-0">
               <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider">Visualizar Ordem de Serviço</h3>
@@ -2530,23 +2530,41 @@ export default function AtivosPage() {
           ─────────────────────────────────────────────────────────────────── */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          /* Esconder toda a estrutura do CRM */
-          body * {
-            visibility: hidden !important;
+          /* Esconder toda a estrutura do CRM (sidebar, header, main) */
+          aside,
+          main,
+          .no-print,
+          header,
+          .sidebar-aside,
+          .sidebar-topbar,
+          .sidebar-widget-panel {
+            display: none !important;
           }
-          /* Mostrar apenas o modal que está ativo para impressão em PDF */
-          .print-modal-container,
-          .print-modal-container * {
-            visibility: visible !important;
-          }
-          /* Resetar overlays e backgrounds do modal na impressão */
-          .print-modal-container {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
+          
+          /* Resetar wrappers */
+          html, body {
             height: auto !important;
             min-height: 100% !important;
+            overflow: visible !important;
+            background: white !important;
+          }
+          
+          #ativos-layout-root {
+            display: block !important;
+            height: auto !important;
+            min-height: 100% !important;
+            overflow: visible !important;
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          
+          /* Mostrar apenas o modal que está ativo para impressão em PDF */
+          .print-modal-container {
+            display: block !important;
+            position: static !important;
+            width: 100% !important;
+            height: auto !important;
             background: white !important;
             padding: 0 !important;
             margin: 0 !important;
