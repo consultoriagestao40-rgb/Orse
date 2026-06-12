@@ -1125,9 +1125,10 @@ export default function Page() {
             return;
           }
 
-          // Se for dispositivo móvel, redireciona qualquer usuário logado para a Área do Técnico
+          // Se for dispositivo móvel, redireciona qualquer usuário logado para a Área do Técnico (a menos que tenha optado pelo modo desktop)
+          const isDesktopMode = typeof window !== 'undefined' && sessionStorage.getItem('sb_mobile_mode') === 'desktop';
           const isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-          if (isMobile) {
+          if (isMobile && !isDesktopMode) {
             router.push('/ativos/tecnico');
             return;
           }
