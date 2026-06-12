@@ -624,17 +624,12 @@ export default function TecnicoPage() {
           <span className="text-[10px] font-black text-slate-450 uppercase tracking-widest flex items-center gap-1.5">
             <ClipboardList size={13} /> Suas Ordens de Serviço
           </span>
-          <div className="flex items-center gap-3">
-            <span className="text-[9px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1 bg-emerald-50 border border-emerald-250 px-2 py-0.5 rounded-lg select-none" title="Notificações Sonoras Ativadas">
-              <Volume2 size={11} className="animate-pulse" /> Som Ativo
-            </span>
-            <button 
-              onClick={loadTechnicianData}
-              className="text-[9px] font-black text-[#1B4D3E] uppercase hover:underline cursor-pointer"
-            >
-              Atualizar
-            </button>
-          </div>
+          <button 
+            onClick={loadTechnicianData}
+            className="text-[9px] font-black text-[#1B4D3E] uppercase hover:underline cursor-pointer"
+          >
+            Atualizar
+          </button>
         </div>
 
         {/* LOADING STATE */}

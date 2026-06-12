@@ -1584,7 +1584,7 @@ export default function AtivosPage() {
           )}
 
           {activeTab === 'ordens' && osViewMode === 'kanban' && (
-            <div className="flex gap-4 pb-4 select-none overflow-x-auto w-full items-stretch min-h-[500px] scrollbar-thin">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3.5 items-stretch pb-4 select-none">
               {(['PENDENTE', 'PROGRAMADO', 'EM_DESLOCAMENTO', 'EM_ANDAMENTO', 'VALIDACAO', 'CONCLUIDA', 'CANCELADA'] as const).map(colStatus => {
                 const colOrdens = filteredOrdens.filter(o => o.status === colStatus);
                 const titleMap = {
@@ -1608,16 +1608,16 @@ export default function AtivosPage() {
                 return (
                   <div 
                     key={colStatus} 
-                    className={`bg-slate-50/50 border border-slate-200 rounded-2xl p-3 flex flex-col min-h-[450px] w-[260px] shrink-0 border-t-4 ${colorMap[colStatus]}`}
+                    className={`bg-slate-50/50 border border-slate-200 rounded-2xl p-3 flex flex-col min-h-[450px] min-w-0 flex-1 border-t-4 ${colorMap[colStatus]}`}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
                       const osId = e.dataTransfer.getData('text/plain');
                       handleUpdateOsStatus(osId, colStatus);
                     }}
                   >
-                    <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 mb-3">
-                      <span className="text-[10px] font-black text-slate-700 uppercase tracking-wider">{titleMap[colStatus]}</span>
-                      <span className="text-[9px] font-black text-slate-400 bg-white border border-slate-200 px-1.5 py-0.5 rounded-md">{colOrdens.length}</span>
+                    <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 mb-3 gap-1">
+                      <span className="text-[9px] font-black text-slate-700 uppercase tracking-wider truncate" title={titleMap[colStatus]}>{titleMap[colStatus]}</span>
+                      <span className="text-[9px] font-black text-slate-400 bg-white border border-slate-200 px-1.5 py-0.5 rounded-md shrink-0">{colOrdens.length}</span>
                     </div>
                     <div className="flex-1 space-y-3 overflow-y-auto pr-0.5 max-h-[60vh]">
                       {colOrdens.map(os => (
