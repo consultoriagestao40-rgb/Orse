@@ -6,7 +6,9 @@ import {
   Tag, AlertTriangle, Users, Eye, History, MessageSquare,
   CheckCircle2, AlertCircle, FileText, Download, Check, Edit2, ClipboardCheck,
   FileSpreadsheet, FileImage, File, Briefcase, DollarSign, Wrench, Package, ListTodo,
-  Building, Mail, MapPin, Clock, Printer
+  Building, Mail, MapPin, Clock, Printer,
+  Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  Strikethrough, Outdent, Indent, Palette, Eraser
 } from 'lucide-react';
 import { 
   getPicById, updatePicDetails, updatePicEmployees, 
@@ -21,7 +23,7 @@ interface PicDetailsModalProps {
   refreshData?: (silent?: boolean) => void | Promise<void>;
 }
 
-type TabType = 'identificacao' | 'financeiro' | 'operacional' | 'planejador' | 'ordem-servico';
+type TabType = 'identificacao' | 'financeiro' | 'operacional' | 'planejador' | 'ata-pic' | 'ordem-servico';
 
 const parseCurrency = (val: string): number => {
   if (!val) return 0;
@@ -66,6 +68,10 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
   const [faturamentoInscricaoEstadual, setFaturamentoInscricaoEstadual] = useState('');
   const [faturamentoInscricaoMunicipal, setFaturamentoInscricaoMunicipal] = useState('');
   const [faturamentoEmail, setFaturamentoEmail] = useState('');
+  const [relatorioReuniao, setRelatorioReuniao] = useState('');
+  const [textColor, setTextColor] = useState('#000000');
+  const editorRef = React.useRef<HTMLDivElement>(null);
+  const colorInputRef = React.useRef<HTMLInputElement>(null);
 
   // Aba 3 - Operacional (Tabelas locais editáveis)
   const [funcionarios, setFuncionarios] = useState<any[]>([]);
@@ -98,6 +104,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
       setFaturamentoInscricaoEstadual(p.faturamentoInscricaoEstadual || '');
       setFaturamentoInscricaoMunicipal(p.faturamentoInscricaoMunicipal || '');
       setFaturamentoEmail(p.faturamentoEmail || '');
+      setRelatorioReuniao(p.relatorioReuniao || '');
       setFuncionarios(p.funcionarios || []);
       setEquipamentos(p.equipamentos || []);
       setMateriais(p.materiais || []);
@@ -111,6 +118,14 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
   useEffect(() => {
     loadPicData();
   }, [picId]);
+
+  useEffect(() => {
+    if (activeTab === 'ata-pic' && editorRef.current) {
+      if (editorRef.current.innerHTML !== relatorioReuniao) {
+        editorRef.current.innerHTML = relatorioReuniao;
+      }
+    }
+  }, [activeTab, relatorioReuniao]);
 
   // Salvar Aba 1 e Aba 2
   const handleSaveDetails = async () => {
@@ -129,7 +144,8 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
       faturamentoEndereco,
       faturamentoInscricaoEstadual,
       faturamentoInscricaoMunicipal,
-      faturamentoEmail
+      faturamentoEmail,
+      relatorioReuniao
     };
 
     const res = await updatePicDetails(picId, fields);
@@ -488,6 +504,11 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
         .border-t-transparent {
           border-top-color: transparent !important;
         }
+        .ata-editor:empty::before {
+          content: attr(placeholder);
+          color: #94a3b8 !important;
+          cursor: text;
+        }
       `}} />
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-fade-in relative print:shadow-none print:border-none print:w-full print:h-auto print:max-w-none print:rounded-none print:bg-white print:overflow-visible">
         
@@ -516,19 +537,21 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
 
         {/* Abas de Navegação */}
         <nav className="bg-white border-b border-slate-100 px-6 flex gap-6 shrink-0 no-print">
-          {(['identificacao', 'financeiro', 'operacional', 'planejador', 'ordem-servico'] as TabType[]).map((tab) => {
+          {(['identificacao', 'financeiro', 'operacional', 'planejador', 'ata-pic', 'ordem-servico'] as TabType[]).map((tab) => {
             const labels = {
               identificacao: '1. Identificação',
               financeiro: '2. Financeiro',
               operacional: '3. Operacional',
               planejador: '4. Planejador de Ações',
-              'ordem-servico': '5. Ordem de Serviço'
+              'ata-pic': '5. Ata da Reunião',
+              'ordem-servico': '6. Ordem de Serviço'
             };
             const icons = {
               identificacao: Briefcase,
               financeiro: DollarSign,
               operacional: Wrench,
               planejador: ListTodo,
+              'ata-pic': MessageSquare,
               'ordem-servico': ClipboardCheck
             };
             const Icon = icons[tab];
@@ -1675,6 +1698,211 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
             </div>
           )}
 
+          {activeTab === 'ata-pic' && (
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4 animate-fade-in no-print">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-4 gap-4">
+                <div>
+                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <MessageSquare size={16} className="sys-text-primary" /> Ata de Implantação (Relato de Reunião)
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                    Escreva as considerações e relatos da reunião do PIC. O texto formatado irá para o final da OS.
+                  </p>
+                </div>
+                <button
+                  onClick={handleSaveDetails}
+                  disabled={saving}
+                  className="sys-btn-primary text-white text-[10px] font-black uppercase py-2.5 px-6 rounded-lg tracking-widest transition-all cursor-pointer disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] shadow-xs"
+                >
+                  {saving ? 'Salvando...' : 'Salvar Ata'}
+                </button>
+              </div>
+
+              {/* Caixa do Relatório da Reunião */}
+              <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                {/* Header Bar */}
+                <div className="text-white text-[9.5px] font-black uppercase tracking-wider text-center py-2 select-none" style={{ backgroundColor: primaryColor }}>
+                  Relatório da Reunião:
+                </div>
+                
+                {/* Toolbar */}
+                <div className="bg-slate-50 border-b border-slate-200 p-2 flex flex-wrap items-center gap-1.5 select-none">
+                  {/* Dropdown de Formato de Texto */}
+                  <select
+                    onChange={(e) => {
+                      document.execCommand('formatBlock', false, e.target.value);
+                      if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML);
+                    }}
+                    className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-600 outline-none focus:border-[#1B4D3E] transition-colors cursor-pointer"
+                    defaultValue="p"
+                    title="Formato do Texto"
+                  >
+                    <option value="p">Texto Normal</option>
+                    <option value="h1">Título 1</option>
+                    <option value="h2">Título 2</option>
+                    <option value="h3">Título 3</option>
+                  </select>
+
+                  <div className="h-4 w-px bg-slate-300 mx-1" />
+
+                  <button
+                    type="button"
+                    onClick={() => { document.execCommand('bold', false); if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML); }}
+                    className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                    title="Negrito"
+                  >
+                    <Bold size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { document.execCommand('italic', false); if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML); }}
+                    className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                    title="Itálico"
+                  >
+                    <Italic size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { document.execCommand('underline', false); if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML); }}
+                    className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                    title="Sublinhado"
+                  >
+                    <Underline size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { document.execCommand('strikeThrough', false); if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML); }}
+                    className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                    title="Tachado"
+                  >
+                    <Strikethrough size={14} />
+                  </button>
+
+                  <div className="h-4 w-px bg-slate-300 mx-1" />
+
+                  {/* Color Picker */}
+                  <div className="relative flex items-center">
+                    <input
+                      ref={colorInputRef}
+                      type="color"
+                      value={textColor}
+                      onChange={(e) => {
+                        const color = e.target.value;
+                        setTextColor(color);
+                        document.execCommand('foreColor', false, color);
+                        if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML);
+                      }}
+                      className="sr-only"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => colorInputRef.current?.click()}
+                      className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer flex items-center gap-1"
+                      title="Cor do Texto"
+                    >
+                      <Palette size={14} style={{ color: textColor }} />
+                    </button>
+                  </div>
+
+                  <div className="h-4 w-px bg-slate-300 mx-1" />
+
+                  <button
+                    type="button"
+                    onClick={() => { document.execCommand('insertUnorderedList', false); if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML); }}
+                    className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                    title="Lista Marcadores"
+                  >
+                    <List size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { document.execCommand('insertOrderedList', false); if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML); }}
+                    className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                    title="Lista Numerada"
+                  >
+                    <ListOrdered size={14} />
+                  </button>
+
+                  <div className="h-4 w-px bg-slate-300 mx-1" />
+
+                  {/* Indentação */}
+                  <button
+                    type="button"
+                    onClick={() => { document.execCommand('outdent', false); if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML); }}
+                    className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                    title="Diminuir Recuo"
+                  >
+                    <Outdent size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { document.execCommand('indent', false); if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML); }}
+                    className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                    title="Aumentar Recuo"
+                  >
+                    <Indent size={14} />
+                  </button>
+
+                  <div className="h-4 w-px bg-slate-300 mx-1" />
+
+                  <button
+                    type="button"
+                    onClick={() => { document.execCommand('justifyLeft', false); if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML); }}
+                    className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                    title="Alinhar à Esquerda"
+                  >
+                    <AlignLeft size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { document.execCommand('justifyCenter', false); if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML); }}
+                    className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                    title="Centralizar"
+                  >
+                    <AlignCenter size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { document.execCommand('justifyRight', false); if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML); }}
+                    className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                    title="Alinhar à Direita"
+                  >
+                    <AlignRight size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { document.execCommand('justifyFull', false); if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML); }}
+                    className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                    title="Justificar"
+                  >
+                    <AlignJustify size={14} />
+                  </button>
+
+                  <div className="h-4 w-px bg-slate-300 mx-1" />
+
+                  {/* Limpar Formatação */}
+                  <button
+                    type="button"
+                    onClick={() => { document.execCommand('removeFormat', false); if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML); }}
+                    className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
+                    title="Limpar Formatação"
+                  >
+                    <Eraser size={14} />
+                  </button>
+                </div>
+
+                {/* Content Area (ContentEditable) */}
+                <div
+                  ref={editorRef}
+                  contentEditable
+                  onInput={() => { if (editorRef.current) setRelatorioReuniao(editorRef.current.innerHTML); }}
+                  className="ata-editor p-4 bg-white min-h-[300px] max-h-[500px] overflow-y-auto text-slate-800 text-xs outline-none leading-relaxed prose prose-sm max-w-none"
+                  placeholder="Escreva os relatos e notas da reunião aqui..."
+                />
+              </div>
+            </div>
+          )}
+
           {activeTab === 'ordem-servico' && (
             <div className="space-y-6 animate-fade-in print:bg-white print:p-0 print:m-0">
               {/* Barra de Ações Superior (no-print) */}
@@ -1776,6 +2004,19 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   
                   #ordem-servico-print-area tr:last-child td:last-child {
                     border-bottom-right-radius: 11px !important;
+                  }
+                  
+                  .html-content-area ul {
+                    list-style-type: disc !important;
+                    margin-left: 20px !important;
+                    margin-top: 5px !important;
+                    margin-bottom: 5px !important;
+                  }
+                  .html-content-area ol {
+                    list-style-type: decimal !important;
+                    margin-left: 20px !important;
+                    margin-top: 5px !important;
+                    margin-bottom: 5px !important;
                   }
 
                   @media print {
@@ -2267,7 +2508,18 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       </tbody>
                     </table>
                   </div>
-                </div>
+                {/* Considerações da Reunião de PIC (Ata de Implantação) */}
+                {pic.relatorioReuniao && (
+                  <div className="print-section space-y-2.5">
+                    <h3 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-1 flex items-center gap-1.5">
+                      <MessageSquare size={12} /> Considerações da Reunião de PIC
+                    </h3>
+                    <div 
+                      className="bg-slate-50/30 border border-slate-200 rounded-xl p-4 text-slate-700 text-[11px] font-medium leading-relaxed html-content-area"
+                      dangerouslySetInnerHTML={{ __html: pic.relatorioReuniao }}
+                    />
+                  </div>
+                )}
 
                 {/* Seção 7: Aprovação e Liberação Física (Assinaturas) */}
                 <div className="print-section pt-8 space-y-6">
