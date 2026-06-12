@@ -152,10 +152,65 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
     setSaving(false);
     if (res.success) {
       if (refreshData) refreshData(true);
+      setPic((prev: any) => prev ? { ...prev, ...fields } : null);
       // alert('Dados salvos com sucesso!');
     } else {
       alert(res.error || 'Erro ao salvar alterações');
     }
+  };
+
+  const handleTabChange = async (tab: TabType) => {
+    if (activeTab === 'identificacao' || activeTab === 'financeiro' || activeTab === 'ata-pic') {
+      const fields = {
+        anotacoes,
+        valorMensal: parseCurrency(valorMensalStr),
+        periodoMedicaoInicio,
+        periodoMedicaoFim,
+        dataFaturamento,
+        documentacoesMensais,
+        prazoPagamento,
+        dataPagamento,
+        faturamentoCnpj,
+        faturamentoRazaoSocial,
+        faturamentoEndereco,
+        faturamentoInscricaoEstadual,
+        faturamentoInscricaoMunicipal,
+        faturamentoEmail,
+        relatorioReuniao
+      };
+      updatePicDetails(picId, fields).then(res => {
+        if (res.success) {
+          if (refreshData) refreshData(true);
+          setPic((prev: any) => prev ? { ...prev, ...fields } : null);
+        }
+      });
+    }
+    setActiveTab(tab);
+  };
+
+  const handleClose = async () => {
+    if (activeTab === 'identificacao' || activeTab === 'financeiro' || activeTab === 'ata-pic') {
+      const fields = {
+        anotacoes,
+        valorMensal: parseCurrency(valorMensalStr),
+        periodoMedicaoInicio,
+        periodoMedicaoFim,
+        dataFaturamento,
+        documentacoesMensais,
+        prazoPagamento,
+        dataPagamento,
+        faturamentoCnpj,
+        faturamentoRazaoSocial,
+        faturamentoEndereco,
+        faturamentoInscricaoEstadual,
+        faturamentoInscricaoMunicipal,
+        faturamentoEmail,
+        relatorioReuniao
+      };
+      await updatePicDetails(picId, fields);
+      if (refreshData) refreshData(true);
+    }
+    onClose();
   };
 
   // ---------------------------------------------------------------------------
@@ -528,7 +583,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
             </div>
           </div>
           <button 
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors cursor-pointer flex items-center justify-center"
           >
             <X size={20} className="stroke-[2.5]" />
@@ -559,7 +614,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
             return (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => handleTabChange(tab)}
                 className={`py-3.5 border-b-2 font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all duration-200 cursor-pointer ${
                   isActive 
                     ? 'border-[#1B4D3E] text-[#1B4D3E]' 
@@ -2510,14 +2565,14 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   </div>
                 </div>
                 {/* Considerações da Reunião de PIC (Ata de Implantação) */}
-                {pic.relatorioReuniao && (
+                {relatorioReuniao && (
                   <div className="print-section space-y-2.5">
                     <h3 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-1 flex items-center gap-1.5">
                       <MessageSquare size={12} /> Considerações da Reunião de PIC
                     </h3>
                     <div 
                       className="bg-slate-50/30 border border-slate-200 rounded-xl p-4 text-slate-700 text-[11px] font-medium leading-relaxed html-content-area"
-                      dangerouslySetInnerHTML={{ __html: pic.relatorioReuniao }}
+                      dangerouslySetInnerHTML={{ __html: relatorioReuniao }}
                     />
                   </div>
                 )}
