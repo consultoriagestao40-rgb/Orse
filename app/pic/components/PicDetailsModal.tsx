@@ -8,7 +8,7 @@ import {
   FileSpreadsheet, FileImage, File, Briefcase, DollarSign, Wrench, Package, ListTodo,
   Building, Mail, MapPin, Clock, Printer,
   Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  Strikethrough, Outdent, Indent, Palette, Eraser
+  Strikethrough, ListIndentDecrease, ListIndentIncrease, Palette, Eraser
 } from 'lucide-react';
 import { 
   getPicById, updatePicDetails, updatePicEmployees, 
@@ -1832,7 +1832,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                     className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
                     title="Diminuir Recuo"
                   >
-                    <Outdent size={14} />
+                    <ListIndentDecrease size={14} />
                   </button>
                   <button
                     type="button"
@@ -1840,7 +1840,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                     className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors cursor-pointer"
                     title="Aumentar Recuo"
                   >
-                    <Indent size={14} />
+                    <ListIndentIncrease size={14} />
                   </button>
 
                   <div className="h-4 w-px bg-slate-300 mx-1" />
