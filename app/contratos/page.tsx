@@ -1031,7 +1031,7 @@ export default function ContratosDashboard() {
                     <thead>
                       <tr className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-wider">
                         {['Contrato','Cliente','Empresa Grupo','Criado Por','Gerado Em','Início','Vigência','Vencimento','Data Reajuste','Mensal','Status','Ações'].map(h => (
-                          <th key={h} className={`px-6 py-3${h === 'Mensal' ? ' text-right' : ['Início','Vigência','Vencimento','Data Reajuste','Status','Ações'].includes(h) ? ' text-center' : ''}`}>{h}</th>
+                          <th key={h} className={`px-6 py-3${h === 'Mensal' ? ' text-right' : ['Início','Vigência','Vencimento','Data Reajuste','Status','Ações'].includes(h) ? ' text-center' : ''}${h === 'Cliente' ? ' min-w-[360px]' : ''}`}>{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -1043,7 +1043,7 @@ export default function ContratosDashboard() {
                       ) : filteredContratos.map((c) => (
                         <tr key={c.id} className="border-b border-slate-200 hover:bg-slate-50 transition-colors">
                           <td className="px-6 py-3 font-bold text-slate-700">{gerarNumeroContrato(c)}</td>
-                          <td className="px-6 py-3 font-semibold text-slate-800">{c.client?.razaoSocial || c.client?.nomeFantasia}</td>
+                          <td className="px-6 py-3 font-semibold text-slate-800 min-w-[360px]">{c.client?.razaoSocial || c.client?.nomeFantasia}</td>
                           <td className="px-6 py-3 text-slate-600">{c.empresaEmissora?.nomeFantasia}</td>
                           <td className="px-6 py-3">
                             <div className="flex items-center gap-1.5">

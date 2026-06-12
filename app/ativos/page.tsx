@@ -1013,15 +1013,15 @@ export default function AtivosPage() {
                     <thead className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-widest border-none select-none">
                       <tr>
                         <th className="px-6 py-4 border-r border-white/10 text-center w-24">Cód. Contrato</th>
-                        <th className="px-6 py-4 border-r border-white/10">Cliente</th>
-                        <th className="px-6 py-4 border-r border-white/10">Empresa (Grupo)</th>
+                        <th className="px-6 py-4 border-r border-white/10 min-w-[360px]">Cliente</th>
+                        <th className="px-6 py-4 border-r border-white/10 w-44">Empresa (Grupo)</th>
                         <th className="px-6 py-4 border-r border-white/10 text-center w-28">Início</th>
                         <th className="px-6 py-4 border-r border-white/10 text-center w-24">Vigência</th>
                         <th className="px-6 py-4 border-r border-white/10 text-center w-28">Vencimento</th>
                         <th className="px-6 py-4 border-r border-white/10 text-right w-36">Consumo Mínimo</th>
                         <th className="px-6 py-4 border-r border-white/10 text-center w-36">Equipamentos</th>
-                        <th className="px-6 py-4 border-r border-white/10 text-center w-32">Situação</th>
-                        <th className="px-6 py-4 text-center w-40">Ações</th>
+                        <th className="px-6 py-4 border-r border-white/10 text-center w-28">Situação</th>
+                        <th className="px-6 py-4 text-center w-28">Ações</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 font-semibold text-slate-700">
@@ -1044,10 +1044,10 @@ export default function AtivosPage() {
                                   #{String(contrato.codigo).padStart(4, '0')}
                                 </span>
                               </td>
-                              <td className="px-6 py-3.5 text-xs text-slate-800 font-extrabold uppercase">
+                              <td className="px-6 py-3.5 text-xs text-slate-800 font-extrabold uppercase min-w-[360px]">
                                 <div>{contrato.client.nomeFantasia}</div>
                               </td>
-                              <td className="px-6 py-3.5 text-xs text-slate-600 font-bold uppercase">{contrato.empresaEmissora.nomeFantasia}</td>
+                              <td className="px-6 py-3.5 text-xs text-slate-650 font-bold uppercase">{contrato.empresaEmissora.nomeFantasia}</td>
                               <td className="px-6 py-3.5 text-center text-xs text-slate-600">
                                 {new Date(contrato.dataInicio).toLocaleDateString('pt-BR')}
                               </td>
@@ -1071,34 +1071,24 @@ export default function AtivosPage() {
                                 </span>
                               </td>
                               <td className="px-6 py-3.5">
-                                <div className="flex items-center justify-center gap-2">
+                                <div className="flex items-center justify-center gap-1.5">
                                   <button 
                                     onClick={() => openContratoModal(contrato)}
-                                    className="p-1 text-amber-500 hover:text-amber-600 transition-colors"
+                                    className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
                                     title="Editar Contrato"
                                   >
                                     <Edit2 size={13} />
                                   </button>
                                   <button 
                                     onClick={() => { setSelectedContratoForPdf(contrato); setModalContratoPdfOpen(true); }}
-                                    className="p-1 text-[#1B4D3E] hover:text-[#13382D] transition-colors"
+                                    className="p-1.5 text-[#1B4D3E] hover:bg-[#1B4D3E]/8 rounded-lg transition-colors"
                                     title="Ver Contrato (PDF)"
                                   >
                                     <Printer size={13} />
                                   </button>
-                                  <select
-                                    value={contrato.status}
-                                    onChange={(e) => handleUpdateContratoStatus(contrato.id, e.target.value)}
-                                    className="text-[9px] bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 outline-none font-bold text-slate-650 cursor-pointer"
-                                  >
-                                    <option value="RASCUNHO">RASCUNHO</option>
-                                    <option value="VIGENTE">VIGENTE</option>
-                                    <option value="SUSPENSO">SUSPENSO</option>
-                                    <option value="ENCERRADO">ENCERRADO</option>
-                                  </select>
                                   <button 
                                     onClick={() => handleDeleteContrato(contrato.id)} 
-                                    className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                     title="Excluir"
                                   >
                                     <Trash2 size={13} />
@@ -1248,7 +1238,7 @@ export default function AtivosPage() {
                 <thead className="bg-[#1B4D3E] text-slate-100 text-[10px] font-bold uppercase tracking-widest border-none select-none">
                   <tr>
                     <th className="px-6 py-4 text-center w-28">Nº Ordem</th>
-                    <th className="px-6 py-4">Cliente</th>
+                    <th className="px-6 py-4 min-w-[360px]">Cliente</th>
                     <th className="px-6 py-4 text-center w-36">Tipo OS</th>
                     <th className="px-6 py-4">Equipamento Vinculado</th>
                     <th className="px-6 py-4 text-center w-36">Emissão</th>
@@ -1278,7 +1268,7 @@ export default function AtivosPage() {
                               OS № {String(os.codigo).padStart(3, '0')}
                             </span>
                           </td>
-                          <td className="px-6 py-3.5 text-xs text-slate-800 font-extrabold uppercase">
+                          <td className="px-6 py-3.5 text-xs text-slate-800 font-extrabold uppercase min-w-[360px]">
                             <div>{os.client.nomeFantasia}</div>
                           </td>
                           <td className="px-6 py-3.5 text-center">
@@ -1667,7 +1657,7 @@ export default function AtivosPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Início *</label>
                       <input
@@ -1687,7 +1677,7 @@ export default function AtivosPage() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest block mb-0.5">Compra Mínima Mensal (R$)</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Compra Mínima (R$)</label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-slate-450">R$</span>
                         <input
@@ -1697,6 +1687,19 @@ export default function AtivosPage() {
                           onChange={(e) => setContratoForm({...contratoForm, valorMinimoMensal: Number(e.target.value)})}
                         />
                       </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest block mb-0.5">Situação / Status</label>
+                      <select
+                        className="w-full px-3.5 py-2.5 bg-white border border-[#1B4D3E]/30 rounded-xl text-xs font-black text-[#1B4D3E] outline-none focus:border-[#1B4D3E] cursor-pointer"
+                        value={contratoForm.status}
+                        onChange={(e) => setContratoForm({...contratoForm, status: e.target.value})}
+                      >
+                        <option value="RASCUNHO">RASCUNHO</option>
+                        <option value="VIGENTE">VIGENTE</option>
+                        <option value="SUSPENSO">SUSPENSO</option>
+                        <option value="ENCERRADO">ENCERRADO</option>
+                      </select>
                     </div>
                   </div>
                 </div>

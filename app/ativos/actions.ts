@@ -426,6 +426,7 @@ export async function createContratoComodato(data: {
 export async function updateContratoComodato(id: string, data: {
   clientId: string;
   empresaEmissoraId: string;
+  status?: string;
   dataInicio: string;
   vigenciaMeses: number;
   valorMinimoMensal: number;
@@ -445,12 +446,38 @@ export async function updateContratoComodato(id: string, data: {
       data: {
         clientId: data.clientId,
         empresaEmissoraId: data.empresaEmissoraId,
+        status: data.status,
         dataInicio: dataInicioDate,
         vigenciaMeses: data.vigenciaMeses,
         dataVencimento,
         valorMinimoMensal: data.valorMinimoMensal,
       }
     });
+
+    // Side-effects of status change on linked assets
+    if (data.status) {
+      if (data.status === 'VIGENTE') {
+        const items = await prisma.contratoComodatoItem.findMany({
+          where: { contratoComodatoId: id }
+        });
+        for (const item of items) {
+          await prisma.ativo.update({
+            where: { id: item.ativoId },
+            data: { status: 'COMODATO' }
+          });
+        }
+      } else if (data.status === 'ENCERRADO' || data.status === 'CANCELADO') {
+        const items = await prisma.contratoComodatoItem.findMany({
+          where: { contratoComodatoId: id }
+        });
+        for (const item of items) {
+          await prisma.ativo.update({
+            where: { id: item.ativoId },
+            data: { status: 'DISPONIVEL' }
+          });
+        }
+      }
+    }
 
     // Delete existing clauses and recreate
     await prisma.clausulaContratoComodato.deleteMany({
