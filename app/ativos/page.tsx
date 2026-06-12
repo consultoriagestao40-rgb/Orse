@@ -1233,7 +1233,7 @@ export default function AtivosPage() {
               ABA 4: GESTÃO DE ORDENS DE SERVIÇO (OS)
               ─────────────────────────────────────────────────────────────────── */}
           {activeTab === 'ordens' && (
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead className="bg-[#1B4D3E] text-slate-100 text-[10px] font-bold uppercase tracking-widest border-none select-none">
                   <tr>
@@ -1264,7 +1264,7 @@ export default function AtivosPage() {
                       return (
                         <tr key={os.id} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-6 py-3.5 text-center">
-                            <span className="font-mono bg-slate-100 border border-slate-200/80 rounded-lg px-2.5 py-0.5 text-[10px] font-black text-slate-700">
+                            <span className="font-mono bg-slate-100 border border-slate-200/80 rounded-lg px-2.5 py-0.5 text-[10px] font-black text-slate-700 whitespace-nowrap">
                               OS № {String(os.codigo).padStart(3, '0')}
                             </span>
                           </td>
@@ -2008,7 +2008,7 @@ export default function AtivosPage() {
 
       {/* 1. PDF CONTRATO DE COMODATO PREVIEW */}
       {modalContratoPdfOpen && selectedContratoForPdf && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs no-print">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs no-print print-modal-container">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden border border-slate-100 text-left">
             <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none shrink-0">
               <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider">Visualizar Minuta de Contrato de Comodato</h3>
@@ -2145,7 +2145,7 @@ export default function AtivosPage() {
 
       {/* 2. PDF ORDEM DE SERVIÇO (OS) PREVIEW */}
       {modalOsPdfOpen && selectedOsForPdf && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs no-print">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs no-print print-modal-container">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl h-[90vh] flex flex-col overflow-hidden border border-slate-100 text-left">
             <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none shrink-0">
               <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider">Visualizar Ordem de Serviço</h3>
@@ -2321,40 +2321,59 @@ export default function AtivosPage() {
             visibility: hidden !important;
           }
           /* Mostrar apenas o modal que está ativo para impressão em PDF */
-          [class*="fixed"][class*="z-50"] ,
-          [class*="fixed"][class*="z-50"] * {
+          .print-modal-container,
+          .print-modal-container * {
             visibility: visible !important;
           }
           /* Resetar overlays e backgrounds do modal na impressão */
-          [class*="fixed"][class*="z-50"] {
+          .print-modal-container {
             position: absolute !important;
             left: 0 !important;
             top: 0 !important;
             width: 100% !important;
             height: auto !important;
+            min-height: 100% !important;
             background: white !important;
             padding: 0 !important;
             margin: 0 !important;
             overflow: visible !important;
             box-shadow: none !important;
           }
-          [class*="fixed"][class*="z-50"] > div {
+          .print-modal-container > div {
             border: none !important;
             box-shadow: none !important;
-            max-width: none !important;
+            max-width: 100% !important;
             width: 100% !important;
             height: auto !important;
             margin: 0 !important;
             padding: 0 !important;
             overflow: visible !important;
           }
-          header.shrink-0 {
+          .print-modal-container header {
             display: none !important;
+          }
+          /* Resetar container scrollável para impressão */
+          .print-modal-container div[class*="overflow-y-auto"] {
+            overflow: visible !important;
+            height: auto !important;
+            max-height: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-shadow: none !important;
+            background: white !important;
           }
           /* Configurações de página A4 */
           @page {
             size: A4;
             margin: 15mm 10mm 15mm 10mm !important;
+          }
+          /* Forçar cores e gráficos de fundo */
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
           }
         }
       `}} />
