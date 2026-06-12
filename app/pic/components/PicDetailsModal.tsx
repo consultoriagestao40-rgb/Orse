@@ -415,6 +415,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
 
   // Dados do contrato comercial (FPV Referencia)
   const contrato = pic.contrato || {};
+  const empresaEmissora = contrato.empresaEmissora || {};
   const client = contrato.client || {};
   const proposta = contrato.proposta || {};
   const lastVersao = proposta.versoes?.[0] || {};
@@ -1834,11 +1835,32 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   <h3 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-1 flex items-center gap-1.5">
                     <Briefcase size={12} /> 1. Dados do Contrato e Contatos
                   </h3>
-                  <div className="grid grid-cols-2 gap-4 bg-slate-50/50 border border-slate-100 rounded-xl p-4 print:bg-white print:border-slate-200">
+                  <div className="grid grid-cols-3 gap-4 bg-slate-50/50 border border-slate-100 rounded-xl p-4 print:bg-white print:border-slate-200">
+                    {/* Coluna 1: Dados da Contratada (Nossa Empresa) */}
                     <div className="space-y-2">
+                      <div className="border-b border-slate-200/60 pb-1">
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Contratada (Nossa Empresa)</span>
+                      </div>
                       <div>
-                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Razão Social do Cliente</span>
-                        <span className="font-bold text-slate-800 text-[11px]">{client.razaoSocial || client.nomeFantasia || '-'}</span>
+                        <span className="font-bold text-slate-800 text-[11px] block leading-tight">{empresaEmissora.razaoSocial || empresaEmissora.nomeFantasia || 'Não especificada'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">CNPJ</span>
+                        <span className="font-bold text-slate-700 text-[11px]">{empresaEmissora.cnpj || '-'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Endereço</span>
+                        <span className="font-semibold text-slate-650 block leading-tight text-[10px] mt-0.5">{empresaEmissora.endereco || '-'}</span>
+                      </div>
+                    </div>
+
+                    {/* Coluna 2: Dados do Contratante (Cliente) */}
+                    <div className="space-y-2 border-l border-slate-200/50 pl-4 print:border-slate-200">
+                      <div className="border-b border-slate-200/60 pb-1">
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Contratante (Cliente)</span>
+                      </div>
+                      <div>
+                        <span className="font-bold text-slate-800 text-[11px] block leading-tight">{client.razaoSocial || client.nomeFantasia || 'Não especificado'}</span>
                       </div>
                       <div>
                         <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">CNPJ / CPF</span>
@@ -1846,28 +1868,35 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       </div>
                       <div>
                         <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Endereço de Implantação</span>
-                        <span className="font-semibold text-slate-600 block leading-tight mt-0.5">{client.endereco || '-'}</span>
+                        <span className="font-semibold text-slate-655 block leading-tight text-[10px] mt-0.5">{client.endereco || '-'}</span>
                       </div>
                     </div>
-                    <div className="space-y-2">
+
+                    {/* Coluna 3: Dados do Contrato e Gestão */}
+                    <div className="space-y-2 border-l border-slate-200/50 pl-4 print:border-slate-200">
+                      <div className="border-b border-slate-200/60 pb-1">
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Contrato e Comercial</span>
+                      </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Início da Vigência</span>
+                          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Início Vigência</span>
                           <span className="font-bold text-slate-700">{formattedDataInicio}</span>
                         </div>
                         <div>
-                          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Prazo de Vigência</span>
+                          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Prazo Vigência</span>
                           <span className="font-bold text-slate-700">{formattedVigencia}</span>
                         </div>
                       </div>
                       <div>
-                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Proposta Comercial Associada</span>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Proposta Associada</span>
                         <span className="font-bold text-slate-700">{FPVNum} (Rev {FPVRev})</span>
                       </div>
                       <div>
                         <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Gestor Comercial (Vendedor)</span>
-                        <span className="font-bold text-slate-700 block">{vendedor.nome || 'Não especificado'}</span>
-                        <span className="text-[9px] text-slate-400 font-bold block">{vendedor.email || ''}</span>
+                        <span className="font-bold text-slate-800 text-[11px] block">{vendedor.nome || 'Não especificado'}</span>
+                        {vendedor.cargo && <span className="text-[9px] text-slate-500 font-bold block">{vendedor.cargo}</span>}
+                        <span className="text-[9px] text-slate-450 font-bold block mt-0.5 leading-tight">{vendedor.email || ''}</span>
+                        {vendedor.celular && <span className="text-[9px] text-slate-450 font-bold block leading-tight">{vendedor.celular}</span>}
                       </div>
                     </div>
                   </div>
