@@ -66,6 +66,39 @@ export default function AtivosPage() {
   const [showQuickCategory, setShowQuickCategory] = useState(false);
   const [quickCategoryName, setQuickCategoryName] = useState('');
 
+  // Estados e helpers para Alertas e Confirmações Premium
+  const [customAlert, setCustomAlert] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    type: 'info'
+  });
+
+  const [customConfirm, setCustomConfirm] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
+
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    setCustomAlert({ open: true, title, message, type });
+  };
+
+  const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setCustomConfirm({ open: true, title, message, onConfirm });
+  };
+
   // Form Data
   const [ativoForm, setAtivoForm] = useState({ id: '', descricao: '', valor: '', categoriaId: '', observacao: '', status: 'DISPONIVEL' });
   const [categoriaForm, setCategoriaForm] = useState({ id: '', nome: '' });
@@ -163,7 +196,7 @@ export default function AtivosPage() {
 
   const handleSaveAtivo = async () => {
     if (!ativoForm.descricao || !ativoForm.categoriaId || !ativoForm.valor) {
-      return alert('Preencha os campos obrigatórios (Descrição, Categoria e Valor)');
+      return showAlert('Campos Obrigatórios', 'Preencha os campos obrigatórios (Descrição, Categoria e Valor)', 'warning');
     }
     setSaving(true);
     const data = {
@@ -185,21 +218,26 @@ export default function AtivosPage() {
       setModalAtivoOpen(false);
       await loadData();
     } else {
-      alert(res.error || 'Erro ao salvar ativo');
+      showAlert('Erro ao Salvar', res.error || 'Erro ao salvar ativo', 'error');
     }
     setSaving(false);
   };
 
   const handleDeleteAtivo = async (id: string) => {
-    if (!confirm('Deseja excluir este ativo permanentemente?')) return;
-    setLoading(true);
-    const res = await deleteAtivo(id);
-    if (res.success) {
-      await loadData();
-    } else {
-      alert(res.error || 'Erro ao excluir ativo');
-    }
-    setLoading(false);
+    showConfirm(
+      'Excluir Ativo',
+      'Deseja excluir este ativo permanentemente?',
+      async () => {
+        setLoading(true);
+        const res = await deleteAtivo(id);
+        if (res.success) {
+          await loadData();
+        } else {
+          showAlert('Erro ao Excluir', res.error || 'Erro ao excluir ativo', 'error');
+        }
+        setLoading(false);
+      }
+    );
   };
 
   // -----------------------------------------------------------------------------
@@ -215,7 +253,7 @@ export default function AtivosPage() {
   };
 
   const handleSaveCategoria = async () => {
-    if (!categoriaForm.nome.trim()) return alert('Nome é obrigatório');
+    if (!categoriaForm.nome.trim()) return showAlert('Campo Obrigatório', 'Nome é obrigatório', 'warning');
     setSaving(true);
     let res;
     if (categoriaForm.id) {
@@ -228,21 +266,26 @@ export default function AtivosPage() {
       setModalCategoriaOpen(false);
       await loadData();
     } else {
-      alert(res.error || 'Erro ao salvar categoria');
+      showAlert('Erro ao Salvar', res.error || 'Erro ao salvar categoria', 'error');
     }
     setSaving(false);
   };
 
   const handleDeleteCategoria = async (id: string) => {
-    if (!confirm('Deseja excluir esta categoria?')) return;
-    setLoading(true);
-    const res = await deleteCategoriaAtivo(id);
-    if (res.success) {
-      await loadData();
-    } else {
-      alert(res.error || 'Erro ao excluir categoria');
-    }
-    setLoading(false);
+    showConfirm(
+      'Excluir Categoria',
+      'Deseja excluir esta categoria?',
+      async () => {
+        setLoading(true);
+        const res = await deleteCategoriaAtivo(id);
+        if (res.success) {
+          await loadData();
+        } else {
+          showAlert('Erro ao Excluir', res.error || 'Erro ao excluir categoria', 'error');
+        }
+        setLoading(false);
+      }
+    );
   };
 
   // -----------------------------------------------------------------------------
@@ -277,7 +320,7 @@ export default function AtivosPage() {
   };
 
   const handleSaveTemplate = async () => {
-    if (!templateForm.nome.trim()) return alert('Nome do template é obrigatório');
+    if (!templateForm.nome.trim()) return showAlert('Campo Obrigatório', 'Nome do template é obrigatório', 'warning');
     setSaving(true);
     let res;
     if (templateForm.id) {
@@ -290,7 +333,7 @@ export default function AtivosPage() {
       setModalTemplateOpen(false);
       await loadData();
     } else {
-      alert(res.error || 'Erro ao salvar template');
+      showAlert('Erro ao Salvar', res.error || 'Erro ao salvar template', 'error');
     }
     setSaving(false);
   };
@@ -315,11 +358,16 @@ export default function AtivosPage() {
   };
 
   const handleDeleteTemplate = async (id: string) => {
-    if (!confirm('Excluir este template?')) return;
-    setLoading(true);
-    await deleteTemplateComodato(id);
-    await loadData();
-    setLoading(false);
+    showConfirm(
+      'Excluir Template',
+      'Excluir este template?',
+      async () => {
+        setLoading(true);
+        await deleteTemplateComodato(id);
+        await loadData();
+        setLoading(false);
+      }
+    );
   };
 
   // -----------------------------------------------------------------------------
@@ -327,7 +375,7 @@ export default function AtivosPage() {
   // -----------------------------------------------------------------------------
   const openContratoModal = () => {
     if (clientes.length === 0 || empresas.length === 0) {
-      return alert('Certifique-se de que existem clientes e empresas emissoras cadastradas no sistema.');
+      return showAlert('Dados Faltando', 'Certifique-se de que existem clientes e empresas emissoras cadastradas no sistema.', 'warning');
     }
     setContratoForm({
       id: '',
@@ -380,7 +428,7 @@ export default function AtivosPage() {
 
   const handleSaveContrato = async () => {
     if (contratoForm.selectedAtivos.length === 0) {
-      return alert('Adicione pelo menos um equipamento no contrato.');
+      return showAlert('Campo Obrigatório', 'Adicione pelo menos um equipamento no contrato.', 'warning');
     }
     setSaving(true);
     const res = await createContratoComodato({
@@ -397,7 +445,7 @@ export default function AtivosPage() {
       setModalContratoOpen(false);
       await loadData();
     } else {
-      alert(res.error || 'Erro ao gerar contrato de comodato');
+      showAlert('Erro ao Salvar', res.error || 'Erro ao gerar contrato de comodato', 'error');
     }
     setSaving(false);
   };
@@ -408,21 +456,26 @@ export default function AtivosPage() {
     if (res.success) {
       await loadData();
     } else {
-      alert(res.error || 'Erro ao atualizar status');
+      showAlert('Erro ao Salvar', res.error || 'Erro ao atualizar status', 'error');
     }
     setLoading(false);
   };
 
   const handleDeleteContrato = async (id: string) => {
-    if (!confirm('Deseja excluir este contrato? Todos os equipamentos vinculados voltarão a ficar disponíveis.')) return;
-    setLoading(true);
-    const res = await deleteContratoComodato(id);
-    if (res.success) {
-      await loadData();
-    } else {
-      alert(res.error || 'Erro ao excluir contrato');
-    }
-    setLoading(false);
+    showConfirm(
+      'Excluir Contrato',
+      'Deseja excluir este contrato? Todos os equipamentos vinculados voltarão a ficar disponíveis.',
+      async () => {
+        setLoading(true);
+        const res = await deleteContratoComodato(id);
+        if (res.success) {
+          await loadData();
+        } else {
+          showAlert('Erro ao Excluir', res.error || 'Erro ao excluir contrato', 'error');
+        }
+        setLoading(false);
+      }
+    );
   };
 
   // -----------------------------------------------------------------------------
@@ -430,7 +483,7 @@ export default function AtivosPage() {
   // -----------------------------------------------------------------------------
   const openOsModal = (os?: any) => {
     if (contratos.length === 0) {
-      return alert('Para gerar uma OS, é necessário possuir contratos de comodato cadastrados.');
+      return showAlert('Contrato Necessário', 'Para gerar uma OS, é necessário possuir contratos de comodato cadastrados.', 'warning');
     }
     const targetContrato = contratos[0];
     
@@ -463,7 +516,7 @@ export default function AtivosPage() {
 
   const handleSaveOs = async () => {
     if (!osForm.contratoComodatoId || !osForm.ativoId) {
-      return alert('Selecione o Contrato e o Equipamento associado.');
+      return showAlert('Seleção Necessária', 'Selecione o Contrato e o Equipamento associado.', 'warning');
     }
     setSaving(true);
     const res = await createOrdemServicoAtivo(osForm);
@@ -471,7 +524,7 @@ export default function AtivosPage() {
       setModalOsOpen(false);
       await loadData();
     } else {
-      alert(res.error || 'Erro ao cadastrar OS');
+      showAlert('Erro ao Salvar', res.error || 'Erro ao cadastrar OS', 'error');
     }
     setSaving(false);
   };
@@ -495,16 +548,21 @@ export default function AtivosPage() {
     if (res.success) {
       await loadData();
     } else {
-      alert(res.error || 'Erro ao assinar e concluir OS');
+      showAlert('Erro ao Salvar', res.error || 'Erro ao assinar e concluir OS', 'error');
     }
   };
 
   const handleDeleteOs = async (id: string) => {
-    if (!confirm('Deseja excluir esta Ordem de Serviço?')) return;
-    setLoading(true);
-    await deleteOrdemServicoAtivo(id);
-    await loadData();
-    setLoading(false);
+    showConfirm(
+      'Excluir Ordem de Serviço',
+      'Deseja excluir esta Ordem de Serviço?',
+      async () => {
+        setLoading(true);
+        await deleteOrdemServicoAtivo(id);
+        await loadData();
+        setLoading(false);
+      }
+    );
   };
 
   // -----------------------------------------------------------------------------
@@ -1207,7 +1265,7 @@ export default function AtivosPage() {
                       <button
                         type="button"
                         onClick={async () => {
-                          if (!quickCategoryName.trim()) return alert('Digite o nome da categoria');
+                          if (!quickCategoryName.trim()) return showAlert('Campo Obrigatório', 'Digite o nome da categoria', 'warning');
                           setSaving(true);
                           const res = await createCategoriaAtivo(quickCategoryName);
                           setSaving(false);
@@ -1217,7 +1275,7 @@ export default function AtivosPage() {
                             setShowQuickCategory(false);
                             setQuickCategoryName('');
                           } else {
-                            alert(res.error || 'Erro ao criar categoria');
+                            showAlert('Erro ao Salvar', res.error || 'Erro ao criar categoria', 'error');
                           }
                         }}
                         className="px-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black text-[10px] uppercase tracking-wider rounded-lg transition-all cursor-pointer flex items-center justify-center shrink-0"

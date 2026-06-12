@@ -1196,7 +1196,7 @@ const Sidebar = () => {
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, index)}
               onDragEnd={handleDragEnd}
-              className={`cursor-grab active:cursor-grabbing transition-all duration-150 border-t-2 border-b-2 border-transparent ${
+              className={`cursor-pointer transition-all duration-150 border-t-2 border-b-2 border-transparent ${
                 draggedIndex === index 
                   ? 'opacity-40 scale-95 border-2 border-dashed border-[#1B4D3E]/30 rounded-2xl bg-slate-50/50' 
                   : 'hover:scale-[1.01]'
