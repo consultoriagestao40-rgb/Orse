@@ -2955,13 +2955,14 @@ export default function AtivosPage() {
               )}
 
               {/* Auditoria Física de Geolocalização (GPS) */}
-              {(selectedOsForPdf.latitudePartida || selectedOsForPdf.latitudeChegada) && (
+              {((selectedOsForPdf.latitudePartida !== null && selectedOsForPdf.latitudePartida !== undefined) || 
+                (selectedOsForPdf.latitudeChegada !== null && selectedOsForPdf.latitudeChegada !== undefined)) && (
                 <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs bg-white text-left">
                   <div className="bg-slate-50 px-4 py-2 border-b border-slate-200 text-slate-500 font-black uppercase text-[10px] tracking-wider select-none">
                     Auditoria Física de Geolocalização (GPS)
                   </div>
                   <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 font-bold text-slate-700 text-[10px]">
-                    {selectedOsForPdf.latitudePartida && (
+                    {selectedOsForPdf.latitudePartida !== null && selectedOsForPdf.latitudePartida !== undefined && selectedOsForPdf.longitudePartida !== null && selectedOsForPdf.longitudePartida !== undefined && (
                       <div className="space-y-2 bg-slate-50/50 p-3 rounded-xl border border-slate-150">
                         <span className="text-[9px] text-[#1B4D3E] font-black uppercase tracking-wider flex items-center gap-1">
                           <Navigation size={12} className="stroke-[2.5]" /> Partida (Início do Deslocamento)
@@ -2975,7 +2976,7 @@ export default function AtivosPage() {
                           </p>
                           <p>
                             <span className="text-slate-400 font-extrabold">Coordenadas:</span>{" "}
-                            {selectedOsForPdf.latitudePartida.toFixed(6)}, {selectedOsForPdf.longitudePartida.toFixed(6)}
+                            {Number(selectedOsForPdf.latitudePartida).toFixed(6)}, {Number(selectedOsForPdf.longitudePartida).toFixed(6)}
                           </p>
                           <button
                             onClick={() => {
@@ -2990,7 +2991,7 @@ export default function AtivosPage() {
                       </div>
                     )}
 
-                    {selectedOsForPdf.latitudeChegada && (
+                    {selectedOsForPdf.latitudeChegada !== null && selectedOsForPdf.latitudeChegada !== undefined && selectedOsForPdf.longitudeChegada !== null && selectedOsForPdf.longitudeChegada !== undefined && (
                       <div className="space-y-2 bg-slate-50/50 p-3 rounded-xl border border-slate-150">
                         <span className="text-[9px] text-emerald-700 font-black uppercase tracking-wider flex items-center gap-1">
                           <MapPin size={12} className="stroke-[2.5]" /> Chegada (Início do Atendimento)
@@ -3004,7 +3005,7 @@ export default function AtivosPage() {
                           </p>
                           <p>
                             <span className="text-slate-400 font-extrabold">Coordenadas:</span>{" "}
-                            {selectedOsForPdf.latitudeChegada.toFixed(6)}, {selectedOsForPdf.longitudeChegada.toFixed(6)}
+                            {Number(selectedOsForPdf.latitudeChegada).toFixed(6)}, {Number(selectedOsForPdf.longitudeChegada).toFixed(6)}
                           </p>
                           <button
                             onClick={() => {
