@@ -1168,12 +1168,15 @@ model OrdemServicoAtivo {
   ativo              Ativo             @relation("AtivoToOS", fields: [ativoId], references: [id])
   ativoDestinoId     String?
   ativoDestino       Ativo?            @relation("AtivoDestinoToOS", fields: [ativoDestinoId], references: [id])
-  status             String            @default("PENDENTE") // PENDENTE, EM_ANDAMENTO, CONCLUIDA, CANCELADA
+  status             String            @default("PENDENTE") // PENDENTE, PROGRAMADO, EM_ANDAMENTO, VALIDACAO, CONCLUIDA, CANCELADA
   dataEmissao        DateTime          @default(now())
   dataPrevista       DateTime?
   observacao         String?           @db.Text
   instrucoes         String?           @db.Text
   tecnicoResponsavel String?
+  tecnicoEmail       String?
+  observacaoAtendimento String?        @db.Text
+  fotosAtendimento   String?           @db.Text // JSON string containing base64 images
   assinaturaCliente  String?           @db.Text // Base64 signature drawing
   nomeAssinante      String?
   cpfAssinante       String?

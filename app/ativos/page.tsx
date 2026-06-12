@@ -21,6 +21,8 @@ import {
 } from './actions';
 import { getClientes } from '@/app/clientes/actions';
 import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
+import { getAllUsers } from '@/app/leads/actions';
+import { getLoggedUser } from '@/app/propostas/actions';
 
 type ActiveTab = 'ativos' | 'templates' | 'contratos' | 'ordens';
 type ViewMode = 'lista' | 'kanban' | 'agrupado';
@@ -67,8 +69,13 @@ export default function AtivosPage() {
   const [contratosGroupBy, setContratosGroupBy] = useState<GroupBy>('segmento');
 
   // OS View Settings
-  const [osViewMode, setOsViewMode] = useState<'lista' | 'kanban'>('lista');
+  const [osViewMode, setOsViewMode] = useState<'lista' | 'kanban'>('kanban');
   const [currentTenant, setCurrentTenant] = useState<any>(null);
+  const [usuarios, setUsuarios] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [modalAssignTecnicoOpen, setModalAssignTecnicoOpen] = useState(false);
+  const [osToAssignTecnico, setOsToAssignTecnico] = useState<any>(null);
+  const [selectedTecnicoForAssign, setSelectedTecnicoForAssign] = useState('');
 
   // Quick Category Creation in Modal
   const [showQuickCategory, setShowQuickCategory] = useState(false);
@@ -143,6 +150,7 @@ export default function AtivosPage() {
     observacao: '',
     instrucoes: '',
     tecnicoResponsavel: '',
+    tecnicoEmail: '',
     dataPrevista: new Date().toISOString().substring(0, 10)
   });
 
@@ -153,7 +161,7 @@ export default function AtivosPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [catRes, ativosRes, tempRes, contrRes, osRes, cliRes, empRes, tenantRes] = await Promise.all([
+      const [catRes, ativosRes, tempRes, contrRes, osRes, cliRes, empRes, tenantRes, usersRes, loggedUser] = await Promise.all([
         getCategoriasAtivo(),
         getAtivos(),
         getTemplatesComodato(),
@@ -161,7 +169,9 @@ export default function AtivosPage() {
         getOrdensServicoAtivo(),
         getClientes(),
         getEmpresasEmissoras(),
-        getLoggedTenantInfo()
+        getLoggedTenantInfo(),
+        getAllUsers(),
+        getLoggedUser()
       ]);
 
       if (catRes.success) setCategorias(catRes.categorias || []);
@@ -172,6 +182,8 @@ export default function AtivosPage() {
       setClientes(cliRes || []);
       setEmpresas(empRes || []);
       if (tenantRes.success) setCurrentTenant(tenantRes.tenant);
+      if (usersRes?.success) setUsuarios(usersRes.users || []);
+      if (loggedUser) setCurrentUser(loggedUser);
     } catch (err) {
       console.error(err);
     }
@@ -527,6 +539,7 @@ export default function AtivosPage() {
       observacao: '',
       instrucoes: '',
       tecnicoResponsavel: '',
+      tecnicoEmail: '',
       dataPrevista: new Date().toISOString().substring(0, 10)
     });
     setModalOsOpen(true);
@@ -569,6 +582,16 @@ export default function AtivosPage() {
       handleConcludeOs(osId);
       return;
     }
+    if (newStatus === 'PROGRAMADO') {
+      const os = ordens.find(o => o.id === osId);
+      const hasTecnico = os?.tecnicoEmail && os.tecnicoEmail.trim() !== '' && os?.tecnicoResponsavel && os.tecnicoResponsavel.trim() !== '';
+      if (!hasTecnico) {
+        setOsToAssignTecnico(os);
+        setSelectedTecnicoForAssign('');
+        setModalAssignTecnicoOpen(true);
+        return;
+      }
+    }
     setSaving(true);
     const res = await updateOrdemServicoAtivo(osId, { status: newStatus });
     setSaving(false);
@@ -577,6 +600,33 @@ export default function AtivosPage() {
       showAlert('Status Atualizado', 'Ordem de serviço atualizada com sucesso.', 'success');
     } else {
       showAlert('Erro ao Atualizar', res.error || 'Erro ao atualizar status da OS', 'error');
+    }
+  };
+
+  const handleConfirmAssignTecnico = async () => {
+    if (!osToAssignTecnico) return;
+    if (!selectedTecnicoForAssign) {
+      return showAlert('Técnico Necessário', 'Por favor, selecione um técnico para programar esta OS.', 'warning');
+    }
+    const userSelected = usuarios.find(u => u.email === selectedTecnicoForAssign);
+    if (!userSelected) return;
+
+    setSaving(true);
+    const res = await updateOrdemServicoAtivo(osToAssignTecnico.id, {
+      status: 'PROGRAMADO',
+      tecnicoEmail: userSelected.email,
+      tecnicoResponsavel: userSelected.nome
+    });
+    setSaving(false);
+
+    if (res.success) {
+      setModalAssignTecnicoOpen(false);
+      setOsToAssignTecnico(null);
+      setSelectedTecnicoForAssign('');
+      await loadData();
+      showAlert('OS Programada', `Ordem atribuída ao técnico ${userSelected.nome} com sucesso.`, 'success');
+    } else {
+      showAlert('Erro ao Programar', res.error || 'Erro ao atribuir técnico à OS', 'error');
     }
   };
 
@@ -1312,6 +1362,9 @@ export default function AtivosPage() {
                       } else if (os.status === 'EM_ANDAMENTO') {
                         statusColor = 'bg-amber-50 text-amber-700 border-amber-200';
                         statusText = 'Em atendimento';
+                      } else if (os.status === 'VALIDACAO') {
+                        statusColor = 'bg-purple-50 text-purple-700 border-purple-200';
+                        statusText = 'Em Validação';
                       } else if (os.status === 'CANCELADA') {
                         statusColor = 'bg-red-50 text-red-700 border-red-200';
                         statusText = 'Cancelada';
@@ -1371,9 +1424,20 @@ export default function AtivosPage() {
                                   <option value="PENDENTE">Backlog</option>
                                   <option value="PROGRAMADO">Programado</option>
                                   <option value="EM_ANDAMENTO">Atendimento</option>
+                                  <option value="VALIDACAO">Validação</option>
                                   <option value="CANCELADA">Cancelar</option>
                                   <option value="CONCLUIDA">Concluir</option>
                                 </select>
+                              )}
+                              
+                              {os.status === 'VALIDACAO' && (
+                                <button 
+                                  onClick={() => handleUpdateOsStatus(os.id, 'CONCLUIDA')}
+                                  className="text-[9px] font-black bg-[#1B4D3E] text-white hover:bg-[#13382D] border border-[#1b4d3e]/20 px-2 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                  title="Validar e Concluir OS"
+                                >
+                                  Validar
+                                </button>
                               )}
                               
                               {os.status === 'CANCELADA' && (
@@ -1404,32 +1468,49 @@ export default function AtivosPage() {
           )}
 
           {activeTab === 'ordens' && osViewMode === 'kanban' && (
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-stretch pb-4 select-none">
-              {(['PENDENTE', 'PROGRAMADO', 'EM_ANDAMENTO', 'CANCELADA', 'CONCLUIDA'] as const).map(colStatus => {
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-stretch pb-4 select-none">
+              {(['PENDENTE', 'PROGRAMADO', 'EM_ANDAMENTO', 'VALIDACAO', 'CONCLUIDA', 'CANCELADA'] as const).map(colStatus => {
                 const colOrdens = filteredOrdens.filter(o => o.status === colStatus);
                 const titleMap = {
                   PENDENTE: 'Backlog',
                   PROGRAMADO: 'Programado',
                   EM_ANDAMENTO: 'Em atendimento',
-                  CANCELADA: 'Cancelada',
-                  CONCLUIDA: 'Concluída'
+                  VALIDACAO: 'Em Validação',
+                  CONCLUIDA: 'Concluída',
+                  CANCELADA: 'Cancelada'
                 };
                 const colorMap = {
                   PENDENTE: 'border-t-slate-400',
                   PROGRAMADO: 'border-t-blue-500',
                   EM_ANDAMENTO: 'border-t-amber-500',
-                  CANCELADA: 'border-t-red-500',
-                  CONCLUIDA: 'border-t-emerald-500'
+                  VALIDACAO: 'border-t-purple-500',
+                  CONCLUIDA: 'border-t-emerald-500',
+                  CANCELADA: 'border-t-red-500'
                 };
                 return (
-                  <div key={colStatus} className={`bg-slate-50/50 border border-slate-200 rounded-2xl p-3 flex flex-col min-h-[450px] min-w-[220px] border-t-4 ${colorMap[colStatus]}`}>
+                  <div 
+                    key={colStatus} 
+                    className={`bg-slate-50/50 border border-slate-200 rounded-2xl p-3 flex flex-col min-h-[450px] min-w-[220px] border-t-4 ${colorMap[colStatus]}`}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      const osId = e.dataTransfer.getData('text/plain');
+                      handleUpdateOsStatus(osId, colStatus);
+                    }}
+                  >
                     <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 mb-3">
                       <span className="text-[10px] font-black text-slate-700 uppercase tracking-wider">{titleMap[colStatus]}</span>
                       <span className="text-[9px] font-black text-slate-400 bg-white border border-slate-200 px-1.5 py-0.5 rounded-md">{colOrdens.length}</span>
                     </div>
                     <div className="flex-1 space-y-3 overflow-y-auto pr-0.5 max-h-[60vh]">
                       {colOrdens.map(os => (
-                        <div key={os.id} className="bg-white border border-slate-200 rounded-xl p-3 shadow-xs space-y-2 hover:shadow-sm transition-shadow text-left">
+                        <div 
+                          key={os.id} 
+                          className="bg-white border border-slate-200 rounded-xl p-3 shadow-xs space-y-2 hover:shadow-sm transition-shadow text-left cursor-grab active:cursor-grabbing"
+                          draggable={true}
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData('text/plain', os.id);
+                          }}
+                        >
                           <div className="flex justify-between items-center">
                             <span className="font-mono text-[9px] font-black text-slate-700 bg-slate-100 border border-slate-200/80 rounded px-1.5 py-0.5 whitespace-nowrap">
                               OS № {String(os.codigo).padStart(3, '0')}
@@ -1501,10 +1582,27 @@ export default function AtivosPage() {
                                     Voltar
                                   </button>
                                   <button 
-                                    onClick={() => handleUpdateOsStatus(os.id, 'CONCLUIDA')} 
-                                    className="text-[8.5px] font-black bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                    onClick={() => handleUpdateOsStatus(os.id, 'VALIDACAO')} 
+                                    className="text-[8.5px] font-black bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
                                   >
                                     Concluir
+                                  </button>
+                                </>
+                              )}
+                              {colStatus === 'VALIDACAO' && (
+                                <>
+                                  <button 
+                                    onClick={() => handleUpdateOsStatus(os.id, 'EM_ANDAMENTO')} 
+                                    className="text-[8.5px] font-bold text-slate-450 hover:bg-slate-100 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                    title="Recusar e voltar para Em Atendimento"
+                                  >
+                                    Recusar
+                                  </button>
+                                  <button 
+                                    onClick={() => handleUpdateOsStatus(os.id, 'CONCLUIDA')} 
+                                    className="text-[8.5px] font-black bg-[#1B4D3E] text-white hover:bg-[#13382D] border border-[#1b4d3e]/20 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                  >
+                                    Validar
                                   </button>
                                 </>
                               )}
@@ -1522,7 +1620,7 @@ export default function AtivosPage() {
                                 </span>
                               )}
                               
-                              {colStatus !== 'CANCELADA' && colStatus !== 'CONCLUIDA' && (
+                              {colStatus !== 'CANCELADA' && colStatus !== 'CONCLUIDA' && colStatus !== 'VALIDACAO' && (
                                 <button 
                                   onClick={() => handleUpdateOsStatus(os.id, 'CANCELADA')} 
                                   className="text-[8.5px] font-bold text-red-500 hover:bg-red-50 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
@@ -2130,13 +2228,26 @@ export default function AtivosPage() {
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Técnico Responsável</label>
-                  <input
-                    type="text"
-                    placeholder="Nome do técnico de campo..."
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
-                    value={osForm.tecnicoResponsavel}
-                    onChange={(e) => setOsForm({...osForm, tecnicoResponsavel: e.target.value})}
-                  />
+                  <select
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] cursor-pointer"
+                    value={osForm.tecnicoEmail || ''}
+                    onChange={(e) => {
+                      const emailSelected = e.target.value;
+                      const userSelected = usuarios.find(u => u.email === emailSelected);
+                      setOsForm({
+                        ...osForm,
+                        tecnicoEmail: emailSelected,
+                        tecnicoResponsavel: userSelected ? userSelected.nome : ''
+                      });
+                    }}
+                  >
+                    <option value="">Selecione um Técnico...</option>
+                    {usuarios.map((u) => (
+                      <option key={u.id} value={u.email}>
+                        {u.nome} ({u.cargo || 'Técnico'})
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="space-y-1">
@@ -2174,6 +2285,71 @@ export default function AtivosPage() {
                     className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
                   >
                     <Save size={14} /> {saving ? 'Gerando...' : 'Gravar Ordem de Serviço'}
+                  </button>
+                </footer>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ───────────────────────────────────────────────────────────────────
+            MODAL DE ATRIBUIÇÃO DE TÉCNICO
+            ─────────────────────────────────────────────────────────────────── */}
+        {modalAssignTecnicoOpen && (
+          <div className="fixed inset-0 bg-black/50 z-[120] flex items-center justify-center p-4 backdrop-blur-xs">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-100 animate-fade-in text-left">
+              <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none">
+                <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                  <Wrench size={16} className="stroke-[2.5]" />
+                  Atribuir Técnico Responsável
+                </h3>
+                <button 
+                  onClick={() => {
+                    setModalAssignTecnicoOpen(false);
+                    setOsToAssignTecnico(null);
+                    setSelectedTecnicoForAssign('');
+                  }} 
+                  className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </header>
+              <div className="p-6 space-y-4">
+                <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                  Para programar esta Ordem de Serviço, é obrigatório atribuir um técnico responsável que executará o atendimento de campo.
+                </p>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Selecione o Técnico</label>
+                  <select
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] cursor-pointer"
+                    value={selectedTecnicoForAssign}
+                    onChange={(e) => setSelectedTecnicoForAssign(e.target.value)}
+                  >
+                    <option value="">Selecione...</option>
+                    {usuarios.map((u) => (
+                      <option key={u.id} value={u.email}>
+                        {u.nome} ({u.cargo || 'Técnico'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <footer className="pt-4 flex gap-3 border-t border-slate-100">
+                  <button 
+                    onClick={() => {
+                      setModalAssignTecnicoOpen(false);
+                      setOsToAssignTecnico(null);
+                      setSelectedTecnicoForAssign('');
+                    }}
+                    className="flex-1 py-3 text-xs font-black text-slate-500 uppercase hover:bg-slate-50 rounded-xl transition-all cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    onClick={handleConfirmAssignTecnico}
+                    disabled={saving}
+                    className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+                  >
+                    <Save size={14} /> Atribuir e Programar
                   </button>
                 </footer>
               </div>

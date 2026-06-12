@@ -616,6 +616,7 @@ export async function createOrdemServicoAtivo(data: {
   observacao?: string;
   instrucoes?: string;
   tecnicoResponsavel?: string;
+  tecnicoEmail?: string;
   dataPrevista?: string;
 }) {
   try {
@@ -631,6 +632,7 @@ export async function createOrdemServicoAtivo(data: {
         observacao: data.observacao || '',
         instrucoes: data.instrucoes || '',
         tecnicoResponsavel: data.tecnicoResponsavel || '',
+        tecnicoEmail: data.tecnicoEmail || '',
         status: 'PENDENTE',
         dataPrevista: data.dataPrevista ? new Date(data.dataPrevista) : null,
         tenantId: user.tenantId
@@ -655,6 +657,9 @@ export async function updateOrdemServicoAtivo(id: string, data: {
   observacao?: string;
   instrucoes?: string;
   tecnicoResponsavel?: string;
+  tecnicoEmail?: string;
+  observacaoAtendimento?: string;
+  fotosAtendimento?: string;
   assinaturaCliente?: string;
   nomeAssinante?: string;
   cpfAssinante?: string;
@@ -668,6 +673,9 @@ export async function updateOrdemServicoAtivo(id: string, data: {
     if (data.observacao !== undefined) updateData.observacao = data.observacao;
     if (data.instrucoes !== undefined) updateData.instrucoes = data.instrucoes;
     if (data.tecnicoResponsavel !== undefined) updateData.tecnicoResponsavel = data.tecnicoResponsavel;
+    if (data.tecnicoEmail !== undefined) updateData.tecnicoEmail = data.tecnicoEmail;
+    if (data.observacaoAtendimento !== undefined) updateData.observacaoAtendimento = data.observacaoAtendimento;
+    if (data.fotosAtendimento !== undefined) updateData.fotosAtendimento = data.fotosAtendimento;
     if (data.assinaturaCliente !== undefined) updateData.assinaturaCliente = data.assinaturaCliente;
     if (data.nomeAssinante !== undefined) updateData.nomeAssinante = data.nomeAssinante;
     if (data.cpfAssinante !== undefined) updateData.cpfAssinante = data.cpfAssinante;
@@ -760,6 +768,32 @@ export async function getLoggedTenantInfo() {
       return { success: false, error: 'Unauthorized' };
     }
     return { success: true, tenant: user.tenant };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getTecnicoOrdens() {
+  try {
+    const user = await checkAuth();
+    const ordens = await prisma.ordemServicoAtivo.findMany({
+      where: {
+        tenantId: user.tenantId,
+        OR: [
+          { tecnicoEmail: user.email },
+          { tecnicoResponsavel: user.nome }
+        ],
+        status: { in: ['PROGRAMADO', 'EM_ANDAMENTO'] }
+      },
+      include: {
+        client: true,
+        contratoComodato: true,
+        ativo: true,
+        ativoDestino: true
+      },
+      orderBy: { dataPrevista: 'asc' }
+    });
+    return { success: true, ordens };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

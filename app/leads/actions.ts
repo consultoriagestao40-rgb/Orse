@@ -823,7 +823,7 @@ export async function getAllUsers() {
 
     const users = await prisma.user.findMany({
       where: whereClause,
-      select: { id: true, nome: true, cargo: true, role: true, avatarUrl: true }
+      select: { id: true, nome: true, cargo: true, role: true, avatarUrl: true, email: true }
     });
     return { success: true, users };
   } catch (error: any) {
