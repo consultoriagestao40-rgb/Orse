@@ -35,6 +35,27 @@ export default function TecnicoPage() {
     loadTechnicianData();
   }, []);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const preventDefaultTouch = (e: TouchEvent) => {
+      // Prevent scrolling/bouncing only when dragging inside the canvas
+      if (e.target === canvas) {
+        e.preventDefault();
+      }
+    };
+
+    // Use native event listeners with passive: false to successfully call preventDefault() on mobile
+    canvas.addEventListener('touchstart', preventDefaultTouch, { passive: false });
+    canvas.addEventListener('touchmove', preventDefaultTouch, { passive: false });
+
+    return () => {
+      canvas.removeEventListener('touchstart', preventDefaultTouch);
+      canvas.removeEventListener('touchmove', preventDefaultTouch);
+    };
+  }, [activeOsForFinalize]);
+
   const loadTechnicianData = async () => {
     setLoading(true);
     try {
@@ -482,33 +503,33 @@ export default function TecnicoPage() {
                 )}
               </div>
 
-              {/* Actions Footer */}
+              {/* Actions Footer - 100% Mobile Responsive stacked buttons */}
               <footer className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex flex-col gap-2 select-none">
                 {isPending && (
-                  <div className="flex gap-2 w-full">
-                    <button
-                      onClick={() => handleCancelOs(os.id)}
-                      disabled={saving}
-                      className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                    >
-                      <X size={13} /> Cancelar OS
-                    </button>
+                  <div className="flex flex-col gap-2 w-full">
                     <button
                       onClick={() => handleStartService(os.id)}
                       disabled={saving}
-                      className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
                     >
-                      <Play size={12} fill="white" /> Iniciar Atendimento
+                      <Play size={13} fill="white" className="shrink-0" /> Iniciar Atendimento
+                    </button>
+                    <button
+                      onClick={() => handleCancelOs(os.id)}
+                      disabled={saving}
+                      className="w-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <X size={12} className="shrink-0" /> Cancelar Ordem de Serviço (OS)
                     </button>
                   </div>
                 )}
                 {isProgress && (
-                  <div className="flex flex-col gap-2 w-full">
+                  <div className="flex flex-col gap-2.5 w-full">
                     <button
                       onClick={() => handleOpenFinalize(os)}
-                      className="w-full bg-[#1B4D3E] hover:bg-[#13382D] text-white py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
                     >
-                      <CheckCircle size={13} /> Finalizar Atendimento
+                      <CheckCircle size={14} className="shrink-0" /> Finalizar Atendimento
                     </button>
                     <div className="flex gap-2 w-full">
                       <button
@@ -516,14 +537,14 @@ export default function TecnicoPage() {
                         disabled={saving}
                         className="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1 transition-all cursor-pointer"
                       >
-                        <RotateCcw size={12} /> Desfazer Início
+                        <RotateCcw size={12} className="shrink-0" /> Desfazer Início
                       </button>
                       <button
                         onClick={() => handleCancelOs(os.id)}
                         disabled={saving}
                         className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1 transition-all cursor-pointer"
                       >
-                        <X size={12} /> Cancelar OS
+                        <X size={12} className="shrink-0" /> Cancelar OS
                       </button>
                     </div>
                   </div>
@@ -534,9 +555,9 @@ export default function TecnicoPage() {
         })}
       </main>
 
-      {/* FINALIZATION MODAL / SCREEN */}
+      {/* FINALIZATION MODAL / SCREEN - Responsive overflow containment */}
       {activeOsForFinalize && (
-        <div className="fixed inset-0 bg-white z-50 flex flex-col animate-slide-up overflow-y-auto">
+        <div className="fixed inset-0 bg-white z-50 flex flex-col animate-slide-up overflow-y-auto overflow-x-hidden w-full max-w-md mx-auto border-x border-slate-100 shadow-2xl">
           {/* Modal Header */}
           <header className="sticky top-0 bg-white border-b border-slate-200 px-4 py-4 flex items-center justify-between z-40 select-none">
             <button 
@@ -551,8 +572,8 @@ export default function TecnicoPage() {
             <div className="w-8"></div> {/* Spacer for symmetry */}
           </header>
 
-          {/* Modal Body */}
-          <div className="flex-1 p-4 max-w-md mx-auto w-full space-y-5 pb-8 text-left">
+          {/* Modal Body - Strict width mapping and horizontal lock */}
+          <div className="flex-1 p-4 w-full max-w-md mx-auto space-y-5 pb-8 text-left overflow-x-hidden">
             {/* Context Summary card */}
             <div className="bg-slate-50 rounded-2xl p-4 border border-slate-150 text-xs font-bold text-slate-700 space-y-1.5">
               <span className="text-[9px] font-black uppercase tracking-widest text-[#1B4D3E] block">Cliente</span>
@@ -577,7 +598,7 @@ export default function TecnicoPage() {
             {/* Photos Uploader */}
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest block">Anexar Fotos do Serviço</label>
-              <div className="grid grid-cols-3 gap-3 select-none">
+              <div className="grid grid-cols-3 gap-2 select-none w-full">
                 {/* Photo Previews */}
                 {fotos.map((foto, index) => (
                   <div key={index} className="aspect-square relative rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden group">
@@ -622,12 +643,12 @@ export default function TecnicoPage() {
                 </button>
               </div>
               
-              <div className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 select-none touch-none">
+              <div className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 select-none touch-none w-full">
                 <canvas
                   ref={canvasRef}
-                  width={380}
-                  height={150}
-                  className="w-full bg-slate-50 cursor-crosshair touch-none"
+                  width={340}
+                  height={140}
+                  className="w-full bg-slate-50 cursor-crosshair touch-none block"
                   onMouseDown={startDrawing}
                   onMouseMove={draw}
                   onMouseUp={stopDrawing}
@@ -642,26 +663,26 @@ export default function TecnicoPage() {
               </div>
             </div>
 
-            {/* Signee metadata */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Signee metadata - Stacked vertically for mobile readability and full width */}
+            <div className="space-y-3 w-full">
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest">Nome do Assinante *</label>
+                <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest block">Nome do Assinante *</label>
                 <input
                   type="text"
-                  placeholder="Nome de quem assinou"
+                  placeholder="Nome do cliente responsável"
                   value={nomeAssinante}
                   onChange={(e) => setNomeAssinante(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
+                  className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-colors"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest">CPF do Assinante</label>
+                <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest block">CPF do Assinante</label>
                 <input
                   type="text"
-                  placeholder="Apenas números"
+                  placeholder="Apenas números (opcional)"
                   value={cpfAssinante}
                   onChange={(e) => setCpfAssinante(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
+                  className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-colors"
                 />
               </div>
             </div>
