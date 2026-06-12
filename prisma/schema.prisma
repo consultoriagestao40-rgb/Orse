@@ -1168,7 +1168,12 @@ model OrdemServicoAtivo {
   ativo              Ativo             @relation("AtivoToOS", fields: [ativoId], references: [id])
   ativoDestinoId     String?
   ativoDestino       Ativo?            @relation("AtivoDestinoToOS", fields: [ativoDestinoId], references: [id])
-  status             String            @default("PENDENTE") // PENDENTE, PROGRAMADO, EM_ANDAMENTO, VALIDACAO, CONCLUIDA, CANCELADA
+  status             String            @default("PENDENTE") // PENDENTE, PROGRAMADO, EM_DESLOCAMENTO, EM_ANDAMENTO, VALIDACAO, CONCLUIDA, CANCELADA
+  latitudePartida    Float?
+  longitudePartida   Float?
+  latitudeChegada    Float?
+  longitudeChegada   Float?
+  rotaIniciadaEm     DateTime?
   dataEmissao        DateTime          @default(now())
   dataPrevista       DateTime?
   observacao         String?           @db.Text

@@ -669,6 +669,11 @@ export async function updateOrdemServicoAtivo(id: string, data: {
   ativoId?: string;
   ativoDestinoId?: string | null;
   dataPrevista?: string | null;
+  latitudePartida?: number | null;
+  longitudePartida?: number | null;
+  latitudeChegada?: number | null;
+  longitudeChegada?: number | null;
+  rotaIniciadaEm?: string | null;
 }) {
   try {
     const user = await checkAuth();
@@ -691,6 +696,11 @@ export async function updateOrdemServicoAtivo(id: string, data: {
     if (data.ativoId !== undefined) updateData.ativoId = data.ativoId;
     if (data.ativoDestinoId !== undefined) updateData.ativoDestinoId = data.ativoDestinoId || null;
     if (data.dataPrevista !== undefined) updateData.dataPrevista = data.dataPrevista ? new Date(data.dataPrevista) : null;
+    if (data.latitudePartida !== undefined) updateData.latitudePartida = data.latitudePartida;
+    if (data.longitudePartida !== undefined) updateData.longitudePartida = data.longitudePartida;
+    if (data.latitudeChegada !== undefined) updateData.latitudeChegada = data.latitudeChegada;
+    if (data.longitudeChegada !== undefined) updateData.longitudeChegada = data.longitudeChegada;
+    if (data.rotaIniciadaEm !== undefined) updateData.rotaIniciadaEm = data.rotaIniciadaEm ? new Date(data.rotaIniciadaEm) : null;
 
     const os = await prisma.ordemServicoAtivo.update({
       where: { id, tenantId: user.tenantId },
@@ -795,7 +805,7 @@ export async function getTecnicoOrdens() {
           { tecnicoEmail: user.email },
           { tecnicoResponsavel: user.nome }
         ],
-        status: { in: ['PROGRAMADO', 'EM_ANDAMENTO'] }
+        status: { in: ['PROGRAMADO', 'EM_DESLOCAMENTO', 'EM_ANDAMENTO'] }
       },
       include: {
         client: true,

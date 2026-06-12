@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { 
   Wrench, ArrowLeft, Play, CheckCircle, Camera, Trash2, 
   RotateCcw, Save, X, ClipboardList, MapPin, User, FileText,
-  Calendar, Check, LogOut, Loader2, Briefcase
+  Calendar, Check, LogOut, Loader2, Briefcase, Car, Navigation, Volume2
 } from 'lucide-react';
 import { 
   getTecnicoOrdens, updateOrdemServicoAtivo, getLoggedTenantInfo 
@@ -15,6 +15,7 @@ export default function TecnicoPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [ordens, setOrdens] = useState<any[]>([]);
+  const [knownOsIds, setKnownOsIds] = useState<string[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [tenant, setTenant] = useState<any>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'warning'; title: string; text: string } | null>(null);
@@ -97,6 +98,84 @@ export default function TecnicoPage() {
     };
   }, [activeOsForFinalize]);
 
+  // Polling de 30 segundos em background para novas ordens de serviço
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    const interval = setInterval(() => {
+      loadTechnicianDataSilently();
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, [currentUser, knownOsIds]);
+
+  const playNotificationSound = () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Tom A5
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      
+      oscillator.start();
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+      
+      setTimeout(() => {
+        try {
+          const osc2 = audioCtx.createOscillator();
+          const gain2 = audioCtx.createGain();
+          osc2.connect(gain2);
+          gain2.connect(audioCtx.destination);
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(880, audioCtx.currentTime);
+          gain2.gain.setValueAtTime(0.1, audioCtx.currentTime);
+          osc2.start();
+          gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+          osc2.stop(audioCtx.currentTime + 0.2);
+        } catch (e) {}
+      }, 200);
+      
+      oscillator.stop(audioCtx.currentTime + 0.2);
+    } catch (error) {
+      console.error('Erro ao reproduzir som de notificação:', error);
+    }
+  };
+
+  const getGPSLocation = (): Promise<{ latitude: number; longitude: number }> => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocalização não é suportada neste navegador.'));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+        },
+        (error) => {
+          let msg = 'Erro ao obter localização.';
+          if (error.code === error.PERMISSION_DENIED) {
+            msg = 'Permissão de GPS negada. Por favor, habilite o acesso à localização nas configurações do seu celular.';
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            msg = 'Sinal de GPS indisponível no momento.';
+          } else if (error.code === error.TIMEOUT) {
+            msg = 'Tempo limite esgotado ao tentar obter o GPS.';
+          }
+          reject(new Error(msg));
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+      );
+    });
+  };
+
   const loadTechnicianData = async () => {
     setLoading(true);
     try {
@@ -106,8 +185,9 @@ export default function TecnicoPage() {
         getLoggedTenantInfo()
       ]);
 
-      if (ordensRes.success) {
-        setOrdens(ordensRes.ordens || []);
+      if (ordensRes.success && ordensRes.ordens) {
+        setOrdens(ordensRes.ordens);
+        setKnownOsIds(ordensRes.ordens.map((os: any) => os.id));
       }
       if (loggedUser) {
         setCurrentUser(loggedUser);
@@ -122,6 +202,29 @@ export default function TecnicoPage() {
     setLoading(false);
   };
 
+  const loadTechnicianDataSilently = async () => {
+    try {
+      const ordensRes = await getTecnicoOrdens();
+      if (ordensRes.success && ordensRes.ordens) {
+        const newOrdens = ordensRes.ordens;
+        
+        const hasNewOs = newOrdens.some((os: any) => 
+          os.status === 'PROGRAMADO' && !knownOsIds.includes(os.id)
+        );
+        
+        if (hasNewOs && knownOsIds.length > 0) {
+          playNotificationSound();
+          showAlert('success', 'Nova OS Recebida!', 'Uma nova ordem de serviço foi atribuída a você.');
+        }
+        
+        setOrdens(newOrdens);
+        setKnownOsIds(newOrdens.map((os: any) => os.id));
+      }
+    } catch (err) {
+      console.error('Erro no polling em background:', err);
+    }
+  };
+
   const showAlert = (type: 'success' | 'error' | 'warning', title: string, text: string) => {
     setAlert({ type, title, text });
     setTimeout(() => {
@@ -129,20 +232,72 @@ export default function TecnicoPage() {
     }, 5000);
   };
 
-  const handleStartService = async (osId: string) => {
+  const handleStartRoute = async (osId: string, clientAddress: string) => {
     setSaving(true);
+    showAlert('warning', 'Obtendo GPS...', 'Aguarde enquanto lemos a sua localização de partida.');
+    
     try {
-      const res = await updateOrdemServicoAtivo(osId, { status: 'EM_ANDAMENTO' });
+      const location = await getGPSLocation();
+      const res = await updateOrdemServicoAtivo(osId, {
+        status: 'EM_DESLOCAMENTO',
+        latitudePartida: location.latitude,
+        longitudePartida: location.longitude,
+        rotaIniciadaEm: new Date().toISOString()
+      });
+      
       if (res.success) {
         await loadTechnicianData();
-        showAlert('success', 'Atendimento Iniciado', 'O status da ordem foi alterado para Em Atendimento.');
+        showAlert('success', 'Rota Iniciada!', 'Status alterado para Em Deslocamento. Abrindo o GPS...');
+        
+        const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${location.latitude},${location.longitude}&destination=${encodeURIComponent(clientAddress)}`;
+        window.open(mapsUrl, '_blank');
       } else {
-        showAlert('error', 'Falha ao Iniciar', res.error || 'Não foi possível iniciar o atendimento.');
+        showAlert('error', 'Falha ao Iniciar Rota', res.error || 'Erro ao atualizar dados.');
       }
     } catch (err: any) {
-      showAlert('error', 'Erro', err.message || 'Erro ao atualizar status.');
+      showAlert('error', 'GPS Obrigatório', err.message || 'É necessário permitir o acesso ao GPS para iniciar a rota.');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
+  };
+
+  const handleOpenRouteAgain = (os: any) => {
+    const lat = os.latitudePartida;
+    const lng = os.longitudePartida;
+    const dest = os.client?.endereco || '';
+    
+    let mapsUrl = '';
+    if (lat && lng) {
+      mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${lat},${lng}&destination=${encodeURIComponent(dest)}`;
+    } else {
+      mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest)}`;
+    }
+    window.open(mapsUrl, '_blank');
+  };
+
+  const handleStartService = async (osId: string) => {
+    setSaving(true);
+    showAlert('warning', 'Validando Chegada...', 'Aguarde enquanto o GPS valida a sua localização de chegada.');
+    
+    try {
+      const location = await getGPSLocation();
+      const res = await updateOrdemServicoAtivo(osId, {
+        status: 'EM_ANDAMENTO',
+        latitudeChegada: location.latitude,
+        longitudeChegada: location.longitude
+      });
+      
+      if (res.success) {
+        await loadTechnicianData();
+        showAlert('success', 'Atendimento Iniciado', 'Você chegou ao cliente. O atendimento foi iniciado.');
+      } else {
+        showAlert('error', 'Falha ao Iniciar Atendimento', res.error || 'Erro ao registrar chegada.');
+      }
+    } catch (err: any) {
+      showAlert('error', 'GPS Obrigatório', err.message || 'É necessário permitir o acesso ao GPS para registrar a sua chegada ao cliente.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleOpenFinalize = (os: any) => {
@@ -329,20 +484,25 @@ export default function TecnicoPage() {
   };
 
   const handleCancelService = async (osId: string) => {
-    if (!confirm('Deseja realmente cancelar o atendimento e voltar o status para Programado?')) return;
+    if (!confirm('Deseja realmente desfazer o início do atendimento e voltar o status para Em Deslocamento?')) return;
     setSaving(true);
     try {
-      const res = await updateOrdemServicoAtivo(osId, { status: 'PROGRAMADO' });
+      const res = await updateOrdemServicoAtivo(osId, { 
+        status: 'EM_DESLOCAMENTO',
+        latitudeChegada: null,
+        longitudeChegada: null
+      });
       if (res.success) {
         await loadTechnicianData();
-        showAlert('success', 'Atendimento Cancelado', 'O status da ordem voltou para Programada.');
+        showAlert('success', 'Início Desfeito', 'O status da ordem voltou para Em Deslocamento.');
       } else {
-        showAlert('error', 'Falha ao Reverter', res.error || 'Não foi possível cancelar o atendimento.');
+        showAlert('error', 'Falha ao Reverter', res.error || 'Não foi possível reverter o início do atendimento.');
       }
     } catch (err: any) {
       showAlert('error', 'Erro', err.message || 'Erro ao atualizar status.');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleCancelOs = async (osId: string) => {
@@ -464,12 +624,17 @@ export default function TecnicoPage() {
           <span className="text-[10px] font-black text-slate-450 uppercase tracking-widest flex items-center gap-1.5">
             <ClipboardList size={13} /> Suas Ordens de Serviço
           </span>
-          <button 
-            onClick={loadTechnicianData}
-            className="text-[9px] font-black text-[#1B4D3E] uppercase hover:underline cursor-pointer"
-          >
-            Atualizar
-          </button>
+          <div className="flex items-center gap-3">
+            <span className="text-[9px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1 bg-emerald-50 border border-emerald-250 px-2 py-0.5 rounded-lg select-none" title="Notificações Sonoras Ativadas">
+              <Volume2 size={11} className="animate-pulse" /> Som Ativo
+            </span>
+            <button 
+              onClick={loadTechnicianData}
+              className="text-[9px] font-black text-[#1B4D3E] uppercase hover:underline cursor-pointer"
+            >
+              Atualizar
+            </button>
+          </div>
         </div>
 
         {/* LOADING STATE */}
@@ -496,7 +661,18 @@ export default function TecnicoPage() {
         {/* ORDERS LIST */}
         {!loading && ordens.map((os) => {
           const isPending = os.status === 'PROGRAMADO';
+          const isTransit = os.status === 'EM_DESLOCAMENTO';
           const isProgress = os.status === 'EM_ANDAMENTO';
+          
+          let statusText = 'Programada';
+          let statusStyle = 'bg-blue-50 text-blue-700 border-blue-200';
+          if (isTransit) {
+            statusText = 'Em Deslocamento';
+            statusStyle = 'bg-cyan-50 text-cyan-700 border-cyan-200';
+          } else if (isProgress) {
+            statusText = 'Em Atendimento';
+            statusStyle = 'bg-amber-50 text-amber-700 border-amber-200';
+          }
           
           return (
             <div key={os.id} className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col hover:border-slate-300 transition-colors">
@@ -505,12 +681,8 @@ export default function TecnicoPage() {
                 <span className="font-mono text-[9.5px] font-black text-slate-700 bg-white border border-slate-200 px-2 py-0.5 rounded-lg shadow-2xs">
                   OS № {String(os.codigo).padStart(3, '0')}
                 </span>
-                <span className={`px-2 py-0.5 border rounded-full text-[8.5px] font-black uppercase tracking-wider ${
-                  isProgress 
-                    ? 'bg-amber-50 text-amber-700 border-amber-200' 
-                    : 'bg-blue-50 text-blue-700 border-blue-200'
-                }`}>
-                  {isProgress ? 'Em Atendimento' : 'Programada'}
+                <span className={`px-2 py-0.5 border rounded-full text-[8.5px] font-black uppercase tracking-wider ${statusStyle}`}>
+                  {statusText}
                 </span>
               </header>
 
@@ -561,11 +733,11 @@ export default function TecnicoPage() {
                 {isPending && (
                   <div className="flex flex-col gap-2 w-full">
                     <button
-                      onClick={() => handleStartService(os.id)}
+                      onClick={() => handleStartRoute(os.id, os.client?.endereco || '')}
                       disabled={saving}
                       className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
                     >
-                      <Play size={13} fill="white" className="shrink-0" /> Iniciar Atendimento
+                      <Navigation size={13} fill="white" className="shrink-0" /> Iniciar Rota (Google Maps)
                     </button>
                     <button
                       onClick={() => handleCancelOs(os.id)}
@@ -574,6 +746,32 @@ export default function TecnicoPage() {
                     >
                       <X size={12} className="shrink-0" /> Cancelar Ordem de Serviço (OS)
                     </button>
+                  </div>
+                )}
+                {isTransit && (
+                  <div className="flex flex-col gap-2 w-full">
+                    <button
+                      onClick={() => handleStartService(os.id)}
+                      disabled={saving}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
+                    >
+                      <CheckCircle size={13} fill="white" className="shrink-0" /> Cheguei / Iniciar Atendimento
+                    </button>
+                    <div className="flex gap-2 w-full">
+                      <button
+                        onClick={() => handleOpenRouteAgain(os)}
+                        className="flex-1 bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-200 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      >
+                        <Car size={12} className="shrink-0" /> Rota Novamente
+                      </button>
+                      <button
+                        onClick={() => handleCancelOs(os.id)}
+                        disabled={saving}
+                        className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      >
+                        <X size={12} className="shrink-0" /> Cancelar OS
+                      </button>
+                    </div>
                   </div>
                 )}
                 {isProgress && (

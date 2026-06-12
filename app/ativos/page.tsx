@@ -76,6 +76,7 @@ export default function AtivosPage() {
   const [modalAssignTecnicoOpen, setModalAssignTecnicoOpen] = useState(false);
   const [osToAssignTecnico, setOsToAssignTecnico] = useState<any>(null);
   const [selectedTecnicoForAssign, setSelectedTecnicoForAssign] = useState('');
+  const [targetStatusForAssign, setTargetStatusForAssign] = useState<string>('PROGRAMADO');
 
   // Quick Category Creation in Modal
   const [showQuickCategory, setShowQuickCategory] = useState(false);
@@ -156,7 +157,24 @@ export default function AtivosPage() {
 
   useEffect(() => {
     loadData();
+
+    const interval = setInterval(() => {
+      loadOrdensSilently();
+    }, 20000);
+
+    return () => clearInterval(interval);
   }, []);
+
+  const loadOrdensSilently = async () => {
+    try {
+      const osRes = await getOrdensServicoAtivo();
+      if (osRes.success && osRes.ordens) {
+        setOrdens(osRes.ordens);
+      }
+    } catch (err) {
+      console.error("Erro ao atualizar ordens em background:", err);
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -616,12 +634,13 @@ export default function AtivosPage() {
       handleConcludeOs(osId);
       return;
     }
-    if (newStatus === 'PROGRAMADO') {
+    if (newStatus === 'PROGRAMADO' || newStatus === 'EM_DESLOCAMENTO' || newStatus === 'EM_ANDAMENTO') {
       const os = ordens.find(o => o.id === osId);
       const hasTecnico = os?.tecnicoEmail && os.tecnicoEmail.trim() !== '' && os?.tecnicoResponsavel && os.tecnicoResponsavel.trim() !== '';
       if (!hasTecnico) {
         setOsToAssignTecnico(os);
         setSelectedTecnicoForAssign('');
+        setTargetStatusForAssign(newStatus);
         setModalAssignTecnicoOpen(true);
         return;
       }
@@ -647,7 +666,7 @@ export default function AtivosPage() {
 
     setSaving(true);
     const res = await updateOrdemServicoAtivo(osToAssignTecnico.id, {
-      status: 'PROGRAMADO',
+      status: targetStatusForAssign,
       tecnicoEmail: userSelected.email,
       tecnicoResponsavel: userSelected.nome
     });
@@ -658,7 +677,14 @@ export default function AtivosPage() {
       setOsToAssignTecnico(null);
       setSelectedTecnicoForAssign('');
       await loadData();
-      showAlert('OS Programada', `Ordem atribuída ao técnico ${userSelected.nome} com sucesso.`, 'success');
+      
+      let msgText = `Ordem atribuída ao técnico ${userSelected.nome} com sucesso.`;
+      if (targetStatusForAssign === 'EM_DESLOCAMENTO') {
+        msgText = `Ordem colocada em deslocamento com o técnico ${userSelected.nome}.`;
+      } else if (targetStatusForAssign === 'EM_ANDAMENTO') {
+        msgText = `Ordem colocada em atendimento com o técnico ${userSelected.nome}.`;
+      }
+      showAlert('OS Atualizada', msgText, 'success');
     } else {
       showAlert('Erro ao Programar', res.error || 'Erro ao atribuir técnico à OS', 'error');
     }
@@ -1399,6 +1425,9 @@ export default function AtivosPage() {
                       } else if (os.status === 'PROGRAMADO') {
                         statusColor = 'bg-blue-50 text-blue-700 border-blue-200';
                         statusText = 'Programado';
+                      } else if (os.status === 'EM_DESLOCAMENTO') {
+                        statusColor = 'bg-cyan-50 text-cyan-700 border-cyan-200';
+                        statusText = 'Em deslocamento';
                       } else if (os.status === 'EM_ANDAMENTO') {
                         statusColor = 'bg-amber-50 text-amber-700 border-amber-200';
                         statusText = 'Em atendimento';
@@ -1509,6 +1538,7 @@ export default function AtivosPage() {
                                 >
                                   <option value="PENDENTE">Backlog</option>
                                   <option value="PROGRAMADO">Programado</option>
+                                  <option value="EM_DESLOCAMENTO">Deslocamento</option>
                                   <option value="EM_ANDAMENTO">Atendimento</option>
                                   <option value="VALIDACAO">Validação</option>
                                   <option value="CANCELADA">Cancelar</option>
@@ -1554,12 +1584,13 @@ export default function AtivosPage() {
           )}
 
           {activeTab === 'ordens' && osViewMode === 'kanban' && (
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-stretch pb-4 select-none">
-              {(['PENDENTE', 'PROGRAMADO', 'EM_ANDAMENTO', 'VALIDACAO', 'CONCLUIDA', 'CANCELADA'] as const).map(colStatus => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 items-stretch pb-4 select-none">
+              {(['PENDENTE', 'PROGRAMADO', 'EM_DESLOCAMENTO', 'EM_ANDAMENTO', 'VALIDACAO', 'CONCLUIDA', 'CANCELADA'] as const).map(colStatus => {
                 const colOrdens = filteredOrdens.filter(o => o.status === colStatus);
                 const titleMap = {
                   PENDENTE: 'Backlog',
                   PROGRAMADO: 'Programado',
+                  EM_DESLOCAMENTO: 'Em Deslocamento',
                   EM_ANDAMENTO: 'Em atendimento',
                   VALIDACAO: 'Em Validação',
                   CONCLUIDA: 'Concluída',
@@ -1568,6 +1599,7 @@ export default function AtivosPage() {
                 const colorMap = {
                   PENDENTE: 'border-t-slate-400',
                   PROGRAMADO: 'border-t-blue-500',
+                  EM_DESLOCAMENTO: 'border-t-cyan-500',
                   EM_ANDAMENTO: 'border-t-amber-500',
                   VALIDACAO: 'border-t-purple-500',
                   CONCLUIDA: 'border-t-emerald-500',
@@ -2918,6 +2950,74 @@ export default function AtivosPage() {
                       }
                       return null;
                     })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Auditoria Física de Geolocalização (GPS) */}
+              {(selectedOsForPdf.latitudePartida || selectedOsForPdf.latitudeChegada) && (
+                <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs bg-white text-left">
+                  <div className="bg-slate-50 px-4 py-2 border-b border-slate-200 text-slate-500 font-black uppercase text-[10px] tracking-wider select-none">
+                    Auditoria Física de Geolocalização (GPS)
+                  </div>
+                  <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 font-bold text-slate-700 text-[10px]">
+                    {selectedOsForPdf.latitudePartida && (
+                      <div className="space-y-2 bg-slate-50/50 p-3 rounded-xl border border-slate-150">
+                        <span className="text-[9px] text-[#1B4D3E] font-black uppercase tracking-wider flex items-center gap-1">
+                          <Navigation size={12} className="stroke-[2.5]" /> Partida (Início do Deslocamento)
+                        </span>
+                        <div className="space-y-1 text-slate-650 font-semibold">
+                          <p>
+                            <span className="text-slate-400 font-extrabold">Horário:</span>{" "}
+                            {selectedOsForPdf.rotaIniciadaEm
+                              ? new Date(selectedOsForPdf.rotaIniciadaEm).toLocaleString('pt-BR')
+                              : '-'}
+                          </p>
+                          <p>
+                            <span className="text-slate-400 font-extrabold">Coordenadas:</span>{" "}
+                            {selectedOsForPdf.latitudePartida.toFixed(6)}, {selectedOsForPdf.longitudePartida.toFixed(6)}
+                          </p>
+                          <button
+                            onClick={() => {
+                              const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${selectedOsForPdf.latitudePartida},${selectedOsForPdf.longitudePartida}`;
+                              window.open(mapsUrl, '_blank');
+                            }}
+                            className="mt-1 bg-white hover:bg-slate-100 text-slate-750 border border-slate-200 rounded-lg px-2.5 py-1 text-[8.5px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                          >
+                            Ver Ponto de Partida no Mapa
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedOsForPdf.latitudeChegada && (
+                      <div className="space-y-2 bg-slate-50/50 p-3 rounded-xl border border-slate-150">
+                        <span className="text-[9px] text-emerald-700 font-black uppercase tracking-wider flex items-center gap-1">
+                          <MapPin size={12} className="stroke-[2.5]" /> Chegada (Início do Atendimento)
+                        </span>
+                        <div className="space-y-1 text-slate-650 font-semibold">
+                          <p>
+                            <span className="text-slate-400 font-extrabold">Horário:</span>{" "}
+                            {selectedOsForPdf.dataExecucao
+                              ? new Date(selectedOsForPdf.dataExecucao).toLocaleString('pt-BR')
+                              : '-'}
+                          </p>
+                          <p>
+                            <span className="text-slate-400 font-extrabold">Coordenadas:</span>{" "}
+                            {selectedOsForPdf.latitudeChegada.toFixed(6)}, {selectedOsForPdf.longitudeChegada.toFixed(6)}
+                          </p>
+                          <button
+                            onClick={() => {
+                              const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${selectedOsForPdf.latitudeChegada},${selectedOsForPdf.longitudeChegada}`;
+                              window.open(mapsUrl, '_blank');
+                            }}
+                            className="mt-1 bg-white hover:bg-slate-100 text-slate-750 border border-slate-200 rounded-lg px-2.5 py-1 text-[8.5px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                          >
+                            Ver Ponto de Chegada no Mapa
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
