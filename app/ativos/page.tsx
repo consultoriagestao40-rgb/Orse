@@ -2530,31 +2530,25 @@ export default function AtivosPage() {
           ─────────────────────────────────────────────────────────────────── */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          /* Esconder toda a estrutura do CRM (sidebar, header, main) */
-          aside,
-          main,
-          .no-print,
-          header,
-          .sidebar-aside,
-          .sidebar-topbar,
-          .sidebar-widget-panel {
+          /* Esconder toda a estrutura do CRM (sidebar, header, main) com alta especificidade */
+          html body aside,
+          html body main,
+          html body .no-print,
+          html body header,
+          html body .sidebar-aside,
+          html body .sidebar-topbar,
+          html body .sidebar-widget-panel {
             display: none !important;
           }
           
-          /* Resetar wrappers e classes restritivas de altura/overflow para evitar páginas em branco */
-          html, body, #ativos-layout-root,
-          [class*="h-screen"],
-          [class*="min-h-screen"], 
-          [class*="overflow-hidden"],
-          [class*="overflow-y-auto"] {
+          /* Resetar wrappers principais */
+          html, body, #ativos-layout-root {
             background: white !important;
             background-color: white !important;
             height: auto !important;
             min-height: 0 !important;
             max-height: none !important;
             overflow: visible !important;
-            display: block !important;
-            position: static !important;
             padding: 0 !important;
             margin: 0 !important;
           }
