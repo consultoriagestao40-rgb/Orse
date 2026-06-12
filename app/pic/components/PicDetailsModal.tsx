@@ -2508,6 +2508,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       </tbody>
                     </table>
                   </div>
+                </div>
                 {/* Considerações da Reunião de PIC (Ata de Implantação) */}
                 {pic.relatorioReuniao && (
                   <div className="print-section space-y-2.5">
