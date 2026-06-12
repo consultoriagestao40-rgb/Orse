@@ -1791,7 +1791,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       width: 100% !important;
                       max-width: none !important;
                       margin: 0 !important;
-                      padding: 0 !important;
+                      padding: 20mm 15mm !important;
                       border: none !important;
                       box-shadow: none !important;
                       background: white !important;
@@ -1804,7 +1804,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                     }
                     @page {
                       size: A4;
-                      margin: 15mm;
+                      margin: 0mm !important;
                     }
                     .print-section {
                       page-break-inside: avoid;
