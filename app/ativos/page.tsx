@@ -777,12 +777,12 @@ export default function AtivosPage() {
       
       <main className={`flex-1 no-print ${
         activeTab === 'ordens' && osViewMode === 'kanban' 
-          ? 'overflow-hidden flex flex-col h-screen bg-slate-50' 
+          ? 'overflow-auto h-screen p-0 bg-slate-50' 
           : 'p-8 overflow-y-auto'
       }`}>
         <div className={`space-y-6 ${
           activeTab === 'ordens' && osViewMode === 'kanban' 
-            ? 'w-full flex-1 flex flex-col min-h-0' 
+            ? 'w-full' 
             : 'max-w-7xl mx-auto'
         }`}>
           <div className={activeTab === 'ordens' && osViewMode === 'kanban' ? 'px-8 pt-8 space-y-6 shrink-0' : 'space-y-6'}>
@@ -1594,8 +1594,8 @@ export default function AtivosPage() {
           )}
 
           {activeTab === 'ordens' && osViewMode === 'kanban' && (
-            <div className="overflow-x-auto pb-6 select-none bg-slate-50 pl-2 pr-1 flex-1 min-h-0">
-              <div className="flex gap-[3px] min-w-max h-full">
+            <div className="overflow-x-auto pb-6 select-none bg-slate-50 pl-2 pr-1">
+              <div className="flex gap-[3px] min-w-max">
                 {(['PENDENTE', 'PROGRAMADO', 'EM_DESLOCAMENTO', 'EM_ANDAMENTO', 'VALIDACAO', 'CONCLUIDA', 'CANCELADA'] as const).map((colStatus, idx) => {
                   const colOrdens = filteredOrdens.filter(o => o.status === colStatus);
                   const isFirst = idx === 0;
@@ -1630,7 +1630,7 @@ export default function AtivosPage() {
                   return (
                     <div 
                       key={colStatus} 
-                      className="flex flex-col flex-shrink-0 h-[calc(100vh-270px)]"
+                      className="flex flex-col flex-shrink-0"
                       style={{ width: '274px' }}
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => {
@@ -1677,7 +1677,7 @@ export default function AtivosPage() {
 
                       {/* Cards list with customized scroll background */}
                       <div
-                        className="px-[4px] py-3 rounded-b-2xl rounded-t-none flex-1 min-h-0"
+                        className="px-[4px] py-3 rounded-b-2xl rounded-t-none"
                         style={{
                           width: '274px',
                           minWidth: '274px',
@@ -1687,6 +1687,7 @@ export default function AtivosPage() {
                           borderColor: borderRgba,
                           borderWidth: '0 1px 1px 1px',
                           borderStyle: 'solid',
+                          height: 'calc(100vh - 52px)',
                           overflowY: 'auto',
                         }}
                       >
