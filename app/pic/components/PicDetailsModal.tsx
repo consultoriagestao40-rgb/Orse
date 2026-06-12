@@ -400,12 +400,13 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
   };
 
   const progress = calculateProgress();
+  const primaryColor = pic?.tenant?.primaryColor || '#1B4D3E';
 
   if (loading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs">
         <div className="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[#1B4D3E] border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: primaryColor, borderTopColor: 'transparent' }}></div>
           <p className="text-slate-600 font-bold uppercase tracking-wider text-xs">Carregando PIC...</p>
         </div>
       </div>
@@ -440,6 +441,53 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs font-sans text-left print:absolute print:inset-0 print:z-0 print:block print:bg-white print:p-0">
+      <style dangerouslySetInnerHTML={{ __html: `
+        /* Overrides para a cor dinâmica do sistema */
+        .text-\\[\\#1B4D3E\\] {
+          color: ${primaryColor} !important;
+        }
+        .bg-\\[\\#1B4D3E\\] {
+          background-color: ${primaryColor} !important;
+        }
+        .bg-\\[\\#1B4D3E\\]\\/5 {
+          background-color: ${primaryColor}0d !important;
+        }
+        .bg-\\[\\#1B4D3E\\]\\/8 {
+          background-color: ${primaryColor}14 !important;
+        }
+        .bg-\\[\\#1B4D3E\\]\\/10 {
+          background-color: ${primaryColor}1a !important;
+        }
+        .border-\\[\\#1B4D3E\\] {
+          border-color: ${primaryColor} !important;
+        }
+        .border-\\[\\#1B4D3E\\]\\/15 {
+          border-color: ${primaryColor}26 !important;
+        }
+        .border-\\[\\#1B4D3E\\]\\/20 {
+          border-color: ${primaryColor}33 !important;
+        }
+        .hover\\:bg-\\[\\#13382D\\]:hover {
+          background-color: ${primaryColor}dd !important;
+        }
+        .hover\\:bg-\\[\\#1B4D3E\\]:hover {
+          background-color: ${primaryColor} !important;
+          color: white !important;
+        }
+        .hover\\:text-\\[\\#1B4D3E\\]:hover {
+          color: ${primaryColor} !important;
+        }
+        .focus\\:border-\\[\\#1B4D3E\\]:focus {
+          border-color: ${primaryColor} !important;
+        }
+        .focus\\:ring-\\[\\#1B4D3E\\]\\/10:focus {
+          --tw-ring-color: ${primaryColor}1a !important;
+          outline: none !important;
+        }
+        .border-t-transparent {
+          border-top-color: transparent !important;
+        }
+      `}} />
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-fade-in relative print:shadow-none print:border-none print:w-full print:h-auto print:max-w-none print:rounded-none print:bg-white print:overflow-visible">
         
         {/* Header do Modal */}
@@ -1653,18 +1701,84 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
               >
                 {/* Estilo Dinâmico de Impressão */}
                 <style dangerouslySetInnerHTML={{ __html: `
+                  #ordem-servico-print-area {
+                    --primary-color: ${primaryColor};
+                  }
+                  
+                  #ordem-servico-print-area table {
+                    width: 100% !important;
+                    border-collapse: separate !important;
+                    border-spacing: 0 !important;
+                    border: 1px solid #e2e8f0 !important;
+                    border-radius: 12px !important;
+                    overflow: hidden !important;
+                    margin-top: 6px !important;
+                    margin-bottom: 6px !important;
+                  }
+                  
+                  #ordem-servico-print-area th {
+                    background-color: var(--primary-color) !important;
+                    color: white !important;
+                    font-weight: 800 !important;
+                    text-transform: uppercase !important;
+                    font-size: 8.5px !important;
+                    letter-spacing: 0.05em !important;
+                    padding: 10px 12px !important;
+                    border-bottom: 1px solid #e2e8f0 !important;
+                    border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
+                  }
+                  
+                  #ordem-servico-print-area th:last-child {
+                    border-right: none !important;
+                  }
+                  
+                  #ordem-servico-print-area td {
+                    padding: 10px 12px !important;
+                    border-bottom: 1px solid #e2e8f0 !important;
+                    border-right: 1px solid #e2e8f0 !important;
+                    font-size: 11px !important;
+                  }
+                  
+                  #ordem-servico-print-area td:last-child {
+                    border-right: none !important;
+                  }
+                  
+                  #ordem-servico-print-area tr:last-child td {
+                    border-bottom: none !important;
+                  }
+                  
+                  /* Cantos arredondados */
+                  #ordem-servico-print-area tr:first-child th:first-child {
+                    border-top-left-radius: 11px !important;
+                  }
+                  
+                  #ordem-servico-print-area tr:first-child th:last-child {
+                    border-top-right-radius: 11px !important;
+                  }
+                  
+                  #ordem-servico-print-area tr:last-child td:first-child {
+                    border-bottom-left-radius: 11px !important;
+                  }
+                  
+                  #ordem-servico-print-area tr:last-child td:last-child {
+                    border-bottom-right-radius: 11px !important;
+                  }
+
                   @media print {
-                    body, html {
-                      background: white !important;
-                      height: auto !important;
-                      overflow: visible !important;
+                    /* Oculta tudo na página por padrão */
+                    body * {
+                      visibility: hidden !important;
                     }
-                    /* Esconde barra lateral e painéis superiores globais do Next */
-                    .no-print, header, nav, button, aside, .sidebar-topbar, .sidebar-widget-panel {
-                      display: none !important;
+                    /* Torna visível apenas a área de impressão da OS e seus filhos */
+                    #ordem-servico-print-area,
+                    #ordem-servico-print-area * {
+                      visibility: visible !important;
                     }
-                    /* Corrige dimensões da folha A4 e remove margens de tela */
+                    /* Posiciona e formata a área de impressão */
                     #ordem-servico-print-area {
+                      position: absolute !important;
+                      left: 0 !important;
+                      top: 0 !important;
                       width: 100% !important;
                       max-width: none !important;
                       margin: 0 !important;
@@ -1674,12 +1788,15 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       background: white !important;
                       color: black !important;
                     }
-                    /* Ajusta margens da folha no diálogo de PDF */
+                    body, html {
+                      background: white !important;
+                      height: auto !important;
+                      overflow: visible !important;
+                    }
                     @page {
                       size: A4;
                       margin: 15mm;
                     }
-                    /* Evita quebras de linha indesejadas no meio de seções */
                     .print-section {
                       page-break-inside: avoid;
                     }
@@ -1769,64 +1886,45 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                       </p>
                     </div>
 
-                    {/* Itens Inclusos / Excluídos Lado a Lado */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block mb-1.5">Itens Inclusos</span>
-                        <div className="border border-emerald-100 rounded-xl overflow-hidden print:border-slate-200">
-                          <table className="w-full text-left text-xs border-collapse">
-                            <thead>
-                              <tr className="bg-emerald-50 text-emerald-800 uppercase text-[8px] font-bold select-none tracking-wider text-center border-b border-emerald-100 print:bg-slate-50 print:text-slate-800 print:border-slate-200">
-                                <th className="px-3 py-1.5 font-extrabold text-left">Descrição</th>
-                              </tr>
-                            </thead>
-                            <tbody className="font-semibold text-slate-700">
-                              {(meta.itensInclusosExcluidos || []).filter((item: any) => item.incluso).map((item: any) => (
-                                <tr key={item.id} className="border-b border-slate-100/50 print:border-slate-200">
-                                  <td className="px-3 py-2 text-slate-800 text-[11px] font-medium">
-                                    ✓ {item.descricao}
-                                  </td>
-                                </tr>
-                              ))}
-                              {(meta.itensInclusosExcluidos || []).filter((item: any) => item.incluso).length === 0 && (
-                                <tr>
-                                  <td className="px-3 py-3 text-center text-slate-400 italic font-medium bg-white">
-                                    Nenhum item incluso listado.
-                                  </td>
-                                </tr>
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
+                    {/* Itens Inclusos e Excluídos Unificados */}
+                    <div className="space-y-3">
+                      <div className="border-b-2 pb-1" style={{ borderColor: primaryColor }}>
+                        <h4 className="text-[11px] font-black uppercase tracking-wider block" style={{ color: primaryColor }}>
+                          04 - ITENS INCLUSOS E EXCLUSOS
+                        </h4>
                       </div>
-
-                      <div>
-                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block mb-1.5">Itens Excluídos</span>
-                        <div className="border border-red-100 rounded-xl overflow-hidden print:border-slate-200">
-                          <table className="w-full text-left text-xs border-collapse">
-                            <thead>
-                              <tr className="bg-red-50/60 text-red-800 uppercase text-[8px] font-bold select-none tracking-wider text-center border-b border-red-100 print:bg-slate-50 print:text-slate-800 print:border-slate-200">
-                                <th className="px-3 py-1.5 font-extrabold text-left">Descrição</th>
+                      <div className="overflow-hidden bg-white">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="text-slate-100 uppercase text-[8.5px] font-black select-none tracking-wider text-center">
+                              <th className="px-3 py-2.5 w-16 text-center">Item</th>
+                              <th className="px-4 py-2.5 text-left">Descrição</th>
+                              <th className="px-3 py-2.5 w-36 text-center">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="font-semibold text-slate-700">
+                            {(meta.itensInclusosExcluidos || []).map((item: any, idx: number) => (
+                              <tr key={item.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-200/50 last:border-b-0 print:border-slate-200 transition-colors">
+                                <td className="px-3 py-2.5 text-center text-slate-450 text-[10px] font-bold">
+                                  {String(idx + 1).padStart(2, '0')}
+                                </td>
+                                <td className="px-4 py-2.5 text-slate-800 text-[11px] font-bold">
+                                  {item.descricao}
+                                </td>
+                                <td className="px-3 py-2.5 text-center text-[10px] font-black tracking-wider uppercase" style={{ color: item.incluso ? primaryColor : '#ef4444' }}>
+                                  {item.incluso ? 'INCLUSO' : 'NÃO INCLUSO'}
+                                </td>
                               </tr>
-                            </thead>
-                            <tbody className="font-semibold text-slate-700">
-                              {(meta.itensInclusosExcluidos || []).filter((item: any) => !item.incluso).map((item: any) => (
-                                <tr key={item.id} className="border-b border-slate-100/50 print:border-slate-200">
-                                  <td className="px-3 py-2 text-slate-800 text-[11px] font-medium">
-                                    ✗ {item.descricao}
-                                  </td>
-                                </tr>
-                              ))}
-                              {(meta.itensInclusosExcluidos || []).filter((item: any) => !item.incluso).length === 0 && (
-                                <tr>
-                                  <td className="px-3 py-3 text-center text-slate-400 italic font-medium bg-white">
-                                    Nenhum item excluso listado.
-                                  </td>
-                                </tr>
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
+                            ))}
+                            {(meta.itensInclusosExcluidos || []).length === 0 && (
+                              <tr>
+                                <td colSpan={3} className="px-4 py-4 text-center text-slate-400 italic font-medium bg-white">
+                                  Nenhum item incluso ou excluso especificado.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   </div>
@@ -1906,7 +2004,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   <h3 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-1 flex items-center gap-1.5">
                     <Users size={12} /> 4. Dimensionamento do Quadro Operacional (Mão de Obra)
                   </h3>
-                  <div className="border border-slate-205 rounded-xl overflow-hidden bg-white print:border-slate-200">
+                  <div className="bg-white overflow-x-auto">
                     <table className="w-full text-xs select-text table-fixed mt-0 border-collapse">
                       <colgroup>
                         <col style={{ width: '6%' }} />
@@ -1918,7 +2016,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                         <col style={{ width: '18%' }} />
                       </colgroup>
                       <thead>
-                        <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[8px] font-bold select-none tracking-wider text-center border-none">
+                        <tr className="text-slate-100 uppercase text-[8.5px] font-black select-none tracking-wider text-center border-none">
                           <th className="py-2 px-1 text-center w-10 border-r border-white/10 last:border-r-0">Item</th>
                           <th className="py-2 px-3 text-left border-r border-white/10 last:border-r-0">Função / Cargo</th>
                           <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0">Qtd</th>
@@ -1966,101 +2064,97 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   </div>
                 </div>
 
-                {/* Seção 5: Recursos de Equipamentos e Materiais */}
-                <div className="print-section grid grid-cols-2 gap-4">
-                  
-                  {/* Tabela Equipamentos */}
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider block flex items-center gap-1.5 border-b border-slate-100 pb-1">
-                      <Wrench size={12} /> 5. Relação de Máquinas / Equipamentos
-                    </span>
-                    <div className="border border-slate-200 rounded-xl overflow-hidden bg-white print:border-slate-200">
-                      <table className="w-full text-xs select-text border-collapse">
-                        <thead>
-                          <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[8px] font-bold select-none tracking-wider text-center border-none">
-                            <th className="py-2 px-1 text-center w-10 border-r border-white/10 last:border-r-0">Item</th>
-                            <th className="py-2 px-3 text-left border-r border-white/10 last:border-r-0">Nome do Equipamento</th>
-                            <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0 w-16">Qtd</th>
-                            <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0 w-20">Alocação</th>
+                {/* Seção 5: Relação de Máquinas / Equipamentos */}
+                <div className="print-section space-y-2.5">
+                  <h3 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-1 flex items-center gap-1.5">
+                    <Wrench size={12} /> 5. Relação de Máquinas / Equipamentos
+                  </h3>
+                  <div className="bg-white overflow-x-auto">
+                    <table className="w-full text-xs select-text border-collapse">
+                      <thead>
+                        <tr className="text-slate-100 uppercase text-[8.5px] font-black select-none tracking-wider text-center border-none">
+                          <th className="py-2 px-1 text-center w-12 border-r border-white/10 last:border-r-0">Item</th>
+                          <th className="py-2 px-3 text-left border-r border-white/10 last:border-r-0">Nome do Equipamento / Descrição</th>
+                          <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0 w-20">Qtd</th>
+                          <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0 w-28">Alocação</th>
+                        </tr>
+                      </thead>
+                      <tbody className="font-semibold text-slate-700">
+                        {equipamentos.map((eq, index) => (
+                          <tr key={eq.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-100/80 transition-colors">
+                            <td className="py-2.5 px-1 text-center font-bold text-slate-400 select-none text-[10px] border-r border-slate-200/50 last:border-r-0">
+                              {index + 1}
+                            </td>
+                            <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0 text-slate-800">
+                              <div className="space-y-0.5">
+                                <div className="text-[11px] font-bold text-slate-850">{eq.nome}</div>
+                                {eq.observacao && <div className="text-[8.5px] text-slate-450 italic font-semibold">{eq.observacao}</div>}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0 text-center font-black text-slate-850 text-[11px]">
+                              {eq.quantidade || 0}
+                            </td>
+                            <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0 text-center text-[10px] uppercase font-bold text-slate-500">
+                              {eq.tipo === 'PROPRIO' ? 'Próprio' : 'Locado'}
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody className="font-semibold text-slate-700">
-                          {equipamentos.map((eq, index) => (
-                            <tr key={eq.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-100/80 transition-colors">
-                              <td className="py-2 px-1 text-center font-bold text-slate-400 select-none text-[10px] border-r border-slate-200/50 last:border-r-0">
-                                {index + 1}
-                              </td>
-                              <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-slate-800">
-                                <div className="space-y-0.5">
-                                  <div className="text-[11px] font-bold text-slate-800">{eq.nome}</div>
-                                  {eq.observacao && <div className="text-[8.5px] text-slate-450 italic font-semibold">{eq.observacao}</div>}
-                                </div>
-                              </td>
-                              <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-center font-black text-slate-800 text-[11px]">
-                                {eq.quantidade || 0}
-                              </td>
-                              <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-center text-[10px] uppercase font-bold text-slate-500">
-                                {eq.tipo === 'PROPRIO' ? 'Próprio' : 'Locado'}
-                              </td>
-                            </tr>
-                          ))}
-                          {equipamentos.length === 0 && (
-                            <tr>
-                              <td colSpan={4} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white">
-                                Nenhum equipamento listado.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+                        ))}
+                        {equipamentos.length === 0 && (
+                          <tr>
+                            <td colSpan={4} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white">
+                              Nenhum equipamento listado.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
+                </div>
 
-                  {/* Tabela Materiais */}
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider block flex items-center gap-1.5 border-b border-slate-100 pb-1">
-                      <Package size={12} /> 6. Relação de Materiais e Insumos
-                    </span>
-                    <div className="border border-slate-200 rounded-xl overflow-hidden bg-white print:border-slate-200">
-                      <table className="w-full text-xs select-text border-collapse">
-                        <thead>
-                          <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[8px] font-bold select-none tracking-wider text-center border-none">
-                            <th className="py-2 px-1 text-center w-10 border-r border-white/10 last:border-r-0">Item</th>
-                            <th className="py-2 px-3 text-left border-r border-white/10 last:border-r-0">Nome do Material</th>
-                            <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0 w-16">Qtd</th>
-                            <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0 w-16">Unid</th>
+                {/* Seção 6: Relação de Materiais e Insumos */}
+                <div className="print-section space-y-2.5">
+                  <h3 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-1 flex items-center gap-1.5">
+                    <Package size={12} /> 6. Relação de Materiais e Insumos
+                  </h3>
+                  <div className="bg-white overflow-x-auto">
+                    <table className="w-full text-xs select-text border-collapse">
+                      <thead>
+                        <tr className="text-slate-100 uppercase text-[8.5px] font-black select-none tracking-wider text-center border-none">
+                          <th className="py-2 px-1 text-center w-12 border-r border-white/10 last:border-r-0">Item</th>
+                          <th className="py-2 px-3 text-left border-r border-white/10 last:border-r-0">Nome do Material / Insumo</th>
+                          <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0 w-20">Qtd</th>
+                          <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0 w-20">Unidade</th>
+                        </tr>
+                      </thead>
+                      <tbody className="font-semibold text-slate-700">
+                        {materiais.map((mat, index) => (
+                          <tr key={mat.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-100/80 transition-colors">
+                            <td className="py-2.5 px-1 text-center font-bold text-slate-400 select-none text-[10px] border-r border-slate-200/50 last:border-r-0">
+                              {index + 1}
+                            </td>
+                            <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0 text-slate-800">
+                              <div className="space-y-0.5">
+                                <div className="text-[11px] font-bold text-slate-850">{mat.nome}</div>
+                                {mat.observacao && <div className="text-[8.5px] text-slate-450 italic font-semibold">{mat.observacao}</div>}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0 text-center font-black text-slate-850 text-[11px]">
+                              {mat.quantidade || 0}
+                            </td>
+                            <td className="px-3 py-2 border-r border-slate-200/50 last:border-r-0 text-center text-[10px] uppercase font-bold text-slate-500">
+                              {mat.unidade || 'UN'}
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody className="font-semibold text-slate-700">
-                          {materiais.map((mat, index) => (
-                            <tr key={mat.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-100/80 transition-colors">
-                              <td className="py-2 px-1 text-center font-bold text-slate-400 select-none text-[10px] border-r border-slate-200/50 last:border-r-0">
-                                {index + 1}
-                              </td>
-                              <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-slate-800">
-                                <div className="space-y-0.5">
-                                  <div className="text-[11px] font-bold text-slate-800">{mat.nome}</div>
-                                  {mat.observacao && <div className="text-[8.5px] text-slate-450 italic font-semibold">{mat.observacao}</div>}
-                                </div>
-                              </td>
-                              <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-center font-black text-slate-800 text-[11px]">
-                                {mat.quantidade || 0}
-                              </td>
-                              <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-center text-[10px] uppercase font-bold text-slate-500">
-                                {mat.unidade || 'UN'}
-                              </td>
-                            </tr>
-                          ))}
-                          {materiais.length === 0 && (
-                            <tr>
-                              <td colSpan={4} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white">
-                                Nenhum material listado.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+                        ))}
+                        {materiais.length === 0 && (
+                          <tr>
+                            <td colSpan={4} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white">
+                              Nenhum material listado.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
@@ -2069,7 +2163,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   <h3 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-1 flex items-center gap-1.5">
                     <ListTodo size={12} /> 7. Ações de Planejamento e Implantação do Serviço
                   </h3>
-                  <div className="border border-slate-200 rounded-xl overflow-hidden bg-white print:border-slate-200">
+                  <div className="bg-white overflow-x-auto">
                     <table className="w-full text-xs select-text table-fixed mt-0 border-collapse">
                       <colgroup>
                         <col style={{ width: '6%' }} />
@@ -2079,7 +2173,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                         <col style={{ width: '12%' }} />
                       </colgroup>
                       <thead>
-                        <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[8px] font-bold select-none tracking-wider text-center border-none">
+                        <tr className="text-slate-100 uppercase text-[8.5px] font-black select-none tracking-wider text-center border-none">
                           <th className="py-2 px-1 text-center w-10 border-r border-white/10 last:border-r-0">Item</th>
                           <th className="py-2 px-3 text-left border-r border-white/10 last:border-r-0">Descrição da Ação / Área</th>
                           <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0">Responsável</th>

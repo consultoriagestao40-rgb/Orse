@@ -212,6 +212,7 @@ export async function getPicById(id: string) {
       where: { id, tenantId: user.tenantId },
       include: {
         stage: true,
+        tenant: true,
         funcionarios: { orderBy: { funcao: 'asc' } },
         equipamentos: { orderBy: { nome: 'asc' } },
         materiais: { orderBy: { nome: 'asc' } },
