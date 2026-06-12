@@ -62,6 +62,10 @@ export default function AtivosPage() {
   const [contratosViewMode, setContratosViewMode] = useState<ViewMode>('lista');
   const [contratosGroupBy, setContratosGroupBy] = useState<GroupBy>('segmento');
 
+  // Quick Category Creation in Modal
+  const [showQuickCategory, setShowQuickCategory] = useState(false);
+  const [quickCategoryName, setQuickCategoryName] = useState('');
+
   // Form Data
   const [ativoForm, setAtivoForm] = useState({ id: '', descricao: '', valor: '', categoriaId: '', observacao: '', status: 'DISPONIVEL' });
   const [categoriaForm, setCategoriaForm] = useState({ id: '', nome: '' });
@@ -701,33 +705,7 @@ export default function AtivosPage() {
               ABA 1: PARQUE DE ATIVOS E CATEGORIAS
               ─────────────────────────────────────────────────────────────────── */}
           {activeTab === 'ativos' && (
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-              
-              {/* Categorias (Col Esquerda) */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
-                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                  <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
-                    <Tags size={14} /> Categorias
-                  </h3>
-                </div>
-                <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto pr-1">
-                  {categorias.map(cat => (
-                    <div key={cat.id} className="py-2.5 flex justify-between items-center group">
-                      <span className="text-xs font-bold text-slate-700 uppercase">{cat.nome}</span>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => openCategoriaModal(cat)} className="p-1 text-amber-500 hover:bg-amber-50 rounded-lg"><Edit2 size={12} /></button>
-                        <button onClick={() => handleDeleteCategoria(cat.id)} className="p-1 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={12} /></button>
-                      </div>
-                    </div>
-                  ))}
-                  {categorias.length === 0 && (
-                    <div className="py-6 text-center text-slate-400 italic text-xs">Nenhuma categoria cadastrada.</div>
-                  )}
-                </div>
-              </div>
-
-              {/* Tabela de Ativos (Col Direita) */}
-              <div className="lg:col-span-3 bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
                 <table className="w-full text-left border-collapse">
                   <thead className="bg-[#1B4D3E] text-slate-100 text-[10px] font-bold uppercase tracking-widest border-none select-none">
                     <tr>
@@ -783,7 +761,6 @@ export default function AtivosPage() {
                   </tbody>
                 </table>
               </div>
-            </div>
           )}
 
           {/* ───────────────────────────────────────────────────────────────────
@@ -1182,20 +1159,73 @@ export default function AtivosPage() {
                   />
                 </div>
                 
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Categoria *</label>
+                  <select
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
+                    value={ativoForm.categoriaId === '' && showQuickCategory ? '__NEW__' : ativoForm.categoriaId}
+                    onChange={(e) => {
+                      if (e.target.value === '__NEW__') {
+                        setShowQuickCategory(true);
+                        setAtivoForm({...ativoForm, categoriaId: ''});
+                      } else {
+                        setShowQuickCategory(false);
+                        setAtivoForm({...ativoForm, categoriaId: e.target.value});
+                      }
+                    }}
+                  >
+                    <option value="" disabled hidden>Selecione</option>
+                    {categorias.map(c => (
+                      <option key={c.id} value={c.id}>{c.nome}</option>
+                    ))}
+                    <option value="__NEW__" className="text-emerald-600 font-extrabold">+ CRIAR NOVA CATEGORIA...</option>
+                  </select>
+
+                  {showQuickCategory && (
+                    <div className="mt-2 flex gap-1.5 animate-fade-in bg-emerald-50/20 p-2.5 rounded-xl border border-emerald-100/50">
+                      <input
+                        type="text"
+                        placeholder="Nome da Nova Categoria"
+                        className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase"
+                        value={quickCategoryName}
+                        onChange={(e) => setQuickCategoryName(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!quickCategoryName.trim()) return alert('Digite o nome da categoria');
+                          setSaving(true);
+                          const res = await createCategoriaAtivo(quickCategoryName);
+                          setSaving(false);
+                          if (res.success && res.categoria) {
+                            await loadData();
+                            setAtivoForm(prev => ({...prev, categoriaId: res.categoria.id}));
+                            setShowQuickCategory(false);
+                            setQuickCategoryName('');
+                          } else {
+                            alert(res.error || 'Erro ao criar categoria');
+                          }
+                        }}
+                        className="px-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black text-[10px] uppercase tracking-wider rounded-lg transition-all cursor-pointer flex items-center justify-center shrink-0"
+                      >
+                        Salvar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowQuickCategory(false);
+                          setQuickCategoryName('');
+                          setAtivoForm(prev => ({...prev, categoriaId: categorias[0]?.id || ''}));
+                        }}
+                        className="px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-500 font-black text-[10px] uppercase tracking-wider rounded-lg transition-all cursor-pointer flex items-center justify-center shrink-0"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Categoria *</label>
-                    <select
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
-                      value={ativoForm.categoriaId}
-                      onChange={(e) => setAtivoForm({...ativoForm, categoriaId: e.target.value})}
-                    >
-                      <option value="" disabled hidden>Selecione</option>
-                      {categorias.map(c => (
-                        <option key={c.id} value={c.id}>{c.nome}</option>
-                      ))}
-                    </select>
-                  </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor Reposição (R$) *</label>
                     <input
@@ -1206,9 +1236,6 @@ export default function AtivosPage() {
                       onChange={(e) => setAtivoForm({...ativoForm, valor: e.target.value})}
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status / Situação</label>
                     <select
