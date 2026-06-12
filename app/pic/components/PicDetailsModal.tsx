@@ -1688,7 +1688,15 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                   </p>
                 </div>
                 <button
-                  onClick={() => window.print()}
+                  onClick={() => {
+                    const originalTitle = document.title;
+                    const osNum = contrato.id ? `OS-PIC-${contrato.id.substring(0, 6).toUpperCase()}` : 'NOVO';
+                    document.title = `Ordem de Serviços ${FPVNum} ${FPVRev} ${osNum}`;
+                    window.print();
+                    setTimeout(() => {
+                      document.title = originalTitle;
+                    }, 500);
+                  }}
                   className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[10px] font-black uppercase py-2.5 px-6 rounded-lg tracking-widest transition-colors cursor-pointer flex items-center gap-2 shadow-xs"
                 >
                   <Printer size={14} /> Imprimir Ordem de Serviço (PDF)
