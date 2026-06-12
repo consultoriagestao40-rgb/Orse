@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { 
   Wrench, ArrowLeft, Play, CheckCircle, Camera, Trash2, 
   RotateCcw, Save, X, ClipboardList, MapPin, User, FileText,
-  Calendar, Check, LogOut, Loader2
+  Calendar, Check, LogOut, Loader2, Briefcase
 } from 'lucide-react';
 import { 
   getTecnicoOrdens, updateOrdemServicoAtivo, getLoggedTenantInfo 
