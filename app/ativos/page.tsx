@@ -707,7 +707,7 @@ export default function AtivosPage() {
           {activeTab === 'ativos' && (
             <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
                 <table className="w-full text-left border-collapse">
-                  <thead className="bg-slate-50/70 text-slate-500 text-[10px] font-black uppercase tracking-widest border-b border-slate-200/60 select-none">
+                  <thead className="bg-[#1B4D3E] text-slate-100 text-[10px] font-bold uppercase tracking-widest border-none select-none">
                     <tr>
                       <th className="px-4 py-4 w-40 text-center">Código</th>
                       <th className="px-6 py-4">Equipamento / Descrição</th>
