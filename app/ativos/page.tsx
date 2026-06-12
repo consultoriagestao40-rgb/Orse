@@ -2318,20 +2318,52 @@ export default function AtivosPage() {
                 <p className="text-xs text-slate-500 font-medium leading-relaxed">
                   Para programar esta Ordem de Serviço, é obrigatório atribuir um técnico responsável que executará o atendimento de campo.
                 </p>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Selecione o Técnico</label>
-                  <select
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] cursor-pointer"
-                    value={selectedTecnicoForAssign}
-                    onChange={(e) => setSelectedTecnicoForAssign(e.target.value)}
-                  >
-                    <option value="">Selecione...</option>
-                    {usuarios.map((u) => (
-                      <option key={u.id} value={u.email}>
-                        {u.nome} ({u.cargo || 'Técnico'})
-                      </option>
-                    ))}
-                  </select>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Selecione o Técnico</label>
+                  <div className="max-h-[220px] overflow-y-auto space-y-2 pr-1 scrollbar-thin">
+                    {usuarios.length === 0 ? (
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/60 text-center">
+                        <p className="text-xs text-slate-400 font-semibold italic">Nenhum técnico disponível</p>
+                      </div>
+                    ) : (
+                      usuarios.map((u) => {
+                        const isSelected = selectedTecnicoForAssign === u.email;
+                        return (
+                          <button
+                            key={u.id}
+                            type="button"
+                            onClick={() => setSelectedTecnicoForAssign(u.email)}
+                            className={`w-full flex items-center gap-3 p-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${
+                              isSelected 
+                                ? 'bg-blue-50/70 border-blue-500 ring-2 ring-blue-500/10' 
+                                : 'bg-slate-50 hover:bg-slate-100 border-slate-200'
+                            }`}
+                          >
+                            {u.avatarUrl ? (
+                              <img 
+                                src={u.avatarUrl} 
+                                alt={u.nome} 
+                                className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0" 
+                              />
+                            ) : (
+                              <div className="w-9 h-9 bg-[#1B4D3E]/10 text-[#1B4D3E] rounded-full flex items-center justify-center font-black text-xs uppercase shrink-0 border border-[#1B4D3E]/20">
+                                {u.nome ? u.nome.substring(0, 2) : 'US'}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-xs font-black text-slate-800 uppercase truncate leading-tight">{u.nome}</h4>
+                              <p className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wide truncate mt-0.5">{u.cargo || 'Técnico'}</p>
+                            </div>
+                            {isSelected && (
+                              <div className="w-5.5 h-5.5 bg-blue-500 text-white rounded-full flex items-center justify-center shrink-0 shadow-xs">
+                                <Check size={11} className="stroke-[3]" />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
                 <footer className="pt-4 flex gap-3 border-t border-slate-100">
                   <button 
