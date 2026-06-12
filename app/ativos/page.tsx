@@ -630,6 +630,12 @@ export default function AtivosPage() {
     }
   };
 
+  const handleReassignTecnico = (os: any) => {
+    setOsToAssignTecnico(os);
+    setSelectedTecnicoForAssign(os.tecnicoEmail || '');
+    setModalAssignTecnicoOpen(true);
+  };
+
   const handleSaveSignature = async (base64Signature: string) => {
     if (!selectedOsForSignature) return;
     setSaving(true);
@@ -1399,7 +1405,44 @@ export default function AtivosPage() {
                           <td className="px-6 py-3.5 text-center text-xs text-slate-550">
                             {os.dataPrevista ? new Date(os.dataPrevista).toLocaleDateString('pt-BR') : '-'}
                           </td>
-                          <td className="px-6 py-3.5 text-xs text-slate-700 font-bold uppercase truncate max-w-[140px]">{os.tecnicoResponsavel || 'Não Atribuído'}</td>
+                          <td className="px-6 py-3.5 text-xs text-slate-700 font-bold uppercase truncate max-w-[150px]">
+                            {os.tecnicoResponsavel ? (() => {
+                              const tech = usuarios.find(u => u.email === os.tecnicoEmail);
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => handleReassignTecnico(os)}
+                                  className="flex items-center gap-2 p-1 hover:bg-blue-50 border border-transparent hover:border-blue-150 rounded-lg text-left transition-all group/table-tech cursor-pointer max-w-full"
+                                  title="Clique para alterar o técnico"
+                                >
+                                  {tech?.avatarUrl ? (
+                                    <img 
+                                      src={tech.avatarUrl} 
+                                      alt={os.tecnicoResponsavel} 
+                                      className="w-5 h-5 rounded-full object-cover border border-slate-200 shrink-0" 
+                                    />
+                                  ) : (
+                                    <div className="w-5 h-5 bg-[#1B4D3E]/10 text-[#1B4D3E] rounded-full flex items-center justify-center font-black text-[9px] uppercase shrink-0 border border-[#1B4D3E]/15">
+                                      {os.tecnicoResponsavel.substring(0, 2)}
+                                    </div>
+                                  )}
+                                  <span className="truncate group-hover/table-tech:text-blue-600 transition-colors">
+                                    {os.tecnicoResponsavel}
+                                  </span>
+                                </button>
+                              );
+                            })() : (
+                              <button
+                                type="button"
+                                onClick={() => handleReassignTecnico(os)}
+                                className="flex items-center justify-center gap-1 p-1 px-2 bg-amber-50 hover:bg-amber-100 border border-dashed border-amber-300 text-amber-800 rounded-lg text-left transition-all cursor-pointer"
+                                title="Atribuir Técnico"
+                              >
+                                <Users size={10} className="stroke-[2.5]" />
+                                <span className="text-[9px] font-black uppercase">Atribuir</span>
+                              </button>
+                            )}
+                          </td>
                           <td className="px-6 py-3.5 text-center">
                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border select-none ${statusColor}`}>
                               {statusText}
@@ -1521,14 +1564,58 @@ export default function AtivosPage() {
                             <h4 className="text-[10px] font-extrabold text-slate-800 uppercase leading-tight truncate" title={os.client.nomeFantasia}>{os.client.nomeFantasia}</h4>
                             <p className="text-[9.5px] text-slate-550 truncate font-semibold uppercase" title={os.ativo.descricao}>{os.ativo.descricao}</p>
                           </div>
-                          <div className="bg-slate-50/60 rounded-lg p-2 border border-slate-100/50 text-[9.5px] space-y-1">
-                            {os.tecnicoResponsavel && (
-                              <div className="text-slate-600 truncate font-bold uppercase">
-                                <span className="text-slate-400 font-extrabold">Téc:</span> {os.tecnicoResponsavel}
-                              </div>
+                           <div className="bg-slate-50/60 rounded-lg p-2 border border-slate-100/50 text-[9.5px] space-y-2">
+                            {os.tecnicoResponsavel ? (() => {
+                              const tech = usuarios.find(u => u.email === os.tecnicoEmail);
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleReassignTecnico(os);
+                                  }}
+                                  className="w-full flex items-center gap-2 p-1 bg-white hover:bg-blue-50/40 border border-slate-150 hover:border-blue-200 rounded-lg text-left transition-all group/tech cursor-pointer"
+                                  title="Clique para alterar o técnico"
+                                >
+                                  {tech?.avatarUrl ? (
+                                    <img 
+                                      src={tech.avatarUrl} 
+                                      alt={os.tecnicoResponsavel} 
+                                      className="w-5.5 h-5.5 rounded-full object-cover border border-slate-200 shrink-0" 
+                                    />
+                                  ) : (
+                                    <div className="w-5.5 h-5.5 bg-[#1B4D3E]/10 text-[#1B4D3E] rounded-full flex items-center justify-center font-black text-[9px] uppercase shrink-0 border border-[#1B4D3E]/15">
+                                      {os.tecnicoResponsavel.substring(0, 2)}
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider leading-none">Técnico</p>
+                                    <p className="text-[9.5px] font-extrabold text-slate-700 uppercase truncate mt-0.5 group-hover/tech:text-blue-600 transition-colors">
+                                      {os.tecnicoResponsavel}
+                                    </p>
+                                  </div>
+                                  <div className="text-slate-300 group-hover/tech:text-blue-500 transition-colors shrink-0 pr-0.5">
+                                    <Users size={9} className="stroke-[2.5]" />
+                                  </div>
+                                </button>
+                              );
+                            })() : (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleReassignTecnico(os);
+                                }}
+                                className="w-full flex items-center justify-center gap-1.5 p-1 bg-amber-50 hover:bg-amber-100 border border-dashed border-amber-300 text-amber-800 rounded-lg text-left transition-all cursor-pointer"
+                                title="Atribuir Técnico"
+                              >
+                                <Users size={10} className="stroke-[2.5]" />
+                                <span className="text-[9px] font-black uppercase tracking-wider">Atribuir Técnico</span>
+                              </button>
                             )}
-                            <div className="text-slate-500 font-bold">
-                              <span className="text-slate-400 font-extrabold">Previsto:</span> {os.dataPrevista ? new Date(os.dataPrevista).toLocaleDateString('pt-BR') : '-'}
+                            <div className="text-slate-500 font-bold px-1 flex justify-between items-center">
+                              <span className="text-slate-400 font-extrabold">Previsto:</span>
+                              <span className="text-slate-700 font-extrabold">{os.dataPrevista ? new Date(os.dataPrevista).toLocaleDateString('pt-BR') : '-'}</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center pt-2 border-t border-slate-100 gap-1.5">
