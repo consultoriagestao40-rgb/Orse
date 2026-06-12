@@ -61,6 +61,7 @@ model Tenant {
   templatesComodato         TemplateComodato[]
   contratosComodato         ContratoComodato[]
   ordensServicoAtivo        OrdemServicoAtivo[]
+  empresasEmissoras         EmpresaEmissora[]
 }
 
 model EmpresaEmissora {
@@ -76,6 +77,9 @@ model EmpresaEmissora {
   contratos    Contrato[]
   documentosProposta DocumentoProposta[] @relation("EmpresaToDocumento")
   contratosComodato   ContratoComodato[]
+  
+  tenantId     String?
+  tenant       Tenant?    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model User {

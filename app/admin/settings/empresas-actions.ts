@@ -3,11 +3,25 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { unstable_noStore as noStore } from 'next/cache';
+import { getLoggedUser } from '@/app/propostas/actions';
+
+async function checkAuth() {
+  const user = await getLoggedUser();
+  if (!user || !user.tenantId) {
+    throw new Error('Unauthorized');
+  }
+  return user;
+}
 
 export async function getEmpresasEmissoras() {
   noStore();
   try {
+    const user = await getLoggedUser();
+    if (!user || !user.tenantId) {
+      return [];
+    }
     return await prisma.empresaEmissora.findMany({
+      where: { tenantId: user.tenantId },
       orderBy: { nomeFantasia: 'asc' }
     });
   } catch (error) {
@@ -18,6 +32,7 @@ export async function getEmpresasEmissoras() {
 
 export async function createEmpresaEmissora(data: any) {
   try {
+    const user = await checkAuth();
     const res = await prisma.empresaEmissora.create({
       data: {
         nomeFantasia: data.nomeFantasia,
@@ -26,6 +41,7 @@ export async function createEmpresaEmissora(data: any) {
         endereco: data.endereco,
         telefone: data.telefone,
         email: data.email,
+        tenantId: user.tenantId
       }
     });
     revalidatePath('/admin/settings');
@@ -38,8 +54,9 @@ export async function createEmpresaEmissora(data: any) {
 
 export async function updateEmpresaEmissora(id: string, data: any) {
   try {
+    const user = await checkAuth();
     const res = await prisma.empresaEmissora.update({
-      where: { id },
+      where: { id, tenantId: user.tenantId },
       data: {
         nomeFantasia: data.nomeFantasia,
         razaoSocial: data.razaoSocial,
@@ -59,7 +76,10 @@ export async function updateEmpresaEmissora(id: string, data: any) {
 
 export async function deleteEmpresaEmissora(id: string) {
   try {
-    await prisma.empresaEmissora.delete({ where: { id } });
+    const user = await checkAuth();
+    await prisma.empresaEmissora.delete({ 
+      where: { id, tenantId: user.tenantId } 
+    });
     revalidatePath('/admin/settings');
     revalidatePath('/propostas/nova');
     return { success: true };
