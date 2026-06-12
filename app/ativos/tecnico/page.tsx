@@ -29,6 +29,7 @@ export default function TecnicoPage() {
   // Canvas Drawing Ref
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawingRef = useRef(false);
+  const [hasDrawn, setHasDrawn] = useState(false);
 
   useEffect(() => {
     loadTechnicianData();
@@ -88,6 +89,7 @@ export default function TecnicoPage() {
     setFotos([]);
     setNomeAssinante(os.client?.contato || '');
     setCpfAssinante('');
+    setHasDrawn(false);
     
     // Auto-scroll to top and block background scroll
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -102,20 +104,25 @@ export default function TecnicoPage() {
   // Canvas event handlers
   const getCoordinates = (e: any) => {
     if (!canvasRef.current) return { x: 0, y: 0 };
-    const rect = canvasRef.current.getBoundingClientRect();
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
     
-    // Support touch vs mouse events
+    let clientX = 0;
+    let clientY = 0;
+    
     if (e.touches && e.touches[0]) {
-      return {
-        x: e.touches[0].clientX - rect.left,
-        y: e.touches[0].clientY - rect.top
-      };
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
     } else {
-      return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      };
+      clientX = e.clientX;
+      clientY = e.clientY;
     }
+    
+    // Scale coordinates correctly based on display size vs canvas resolution
+    const x = ((clientX - rect.left) / rect.width) * canvas.width;
+    const y = ((clientY - rect.top) / rect.height) * canvas.height;
+    
+    return { x, y };
   };
 
   const startDrawing = (e: any) => {
@@ -146,6 +153,7 @@ export default function TecnicoPage() {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.stroke();
+    setHasDrawn(true);
   };
 
   const stopDrawing = () => {
@@ -158,9 +166,10 @@ export default function TecnicoPage() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setHasDrawn(false);
   };
 
-  // Handle Photo Upload and Base64 Conversion
+  // Handle Photo Upload and Base64 Conversion with Client-Side Compression
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const filesList = e.target.files;
     if (!filesList) return;
@@ -173,9 +182,40 @@ export default function TecnicoPage() {
 
       const reader = new FileReader();
       reader.onload = (event) => {
-        if (event.target?.result) {
-          setFotos(prev => [...prev, event.target!.result as string]);
-        }
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Max resolution 800px (perfect for reports and fast upload)
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            // Compress to JPEG with 0.6 quality (looks great, size is < 80KB!)
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+            setFotos(prev => [...prev, compressedBase64]);
+          }
+        };
+        img.src = event.target?.result as string;
       };
       reader.readAsDataURL(file);
     });
@@ -194,18 +234,12 @@ export default function TecnicoPage() {
       return showAlert('warning', 'Assinante Obrigatório', 'Informe o nome do cliente que está assinando.');
     }
 
-    // Capture Signature from Canvas
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    // Check if canvas is empty
-    const blank = document.createElement('canvas');
-    blank.width = canvas.width;
-    blank.height = canvas.height;
-    if (canvas.toDataURL() === blank.toDataURL()) {
+    if (!hasDrawn) {
       return showAlert('warning', 'Assinatura Obrigatória', 'O cliente precisa assinar no campo indicado.');
     }
 
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     const base64Signature = canvas.toDataURL('image/png');
 
     setSaving(true);
@@ -228,6 +262,47 @@ export default function TecnicoPage() {
       }
     } catch (err: any) {
       showAlert('error', 'Erro', err.message || 'Erro ao salvar informações.');
+    }
+    setSaving(false);
+  };
+
+  const handleCancelService = async (osId: string) => {
+    if (!confirm('Deseja realmente cancelar o atendimento e voltar o status para Programado?')) return;
+    setSaving(true);
+    try {
+      const res = await updateOrdemServicoAtivo(osId, { status: 'PROGRAMADO' });
+      if (res.success) {
+        await loadTechnicianData();
+        showAlert('success', 'Atendimento Cancelado', 'O status da ordem voltou para Programada.');
+      } else {
+        showAlert('error', 'Falha ao Reverter', res.error || 'Não foi possível cancelar o atendimento.');
+      }
+    } catch (err: any) {
+      showAlert('error', 'Erro', err.message || 'Erro ao atualizar status.');
+    }
+    setSaving(false);
+  };
+
+  const handleCancelOs = async (osId: string) => {
+    const motivo = prompt('Informe o motivo do cancelamento da Ordem de Serviço:');
+    if (motivo === null) return;
+    if (!motivo.trim()) {
+      return showAlert('warning', 'Motivo Obrigatório', 'Você precisa informar um motivo para cancelar a OS.');
+    }
+    setSaving(true);
+    try {
+      const res = await updateOrdemServicoAtivo(osId, { 
+        status: 'CANCELADA',
+        observacao: `Cancelada pelo técnico. Motivo: ${motivo}`
+      });
+      if (res.success) {
+        await loadTechnicianData();
+        showAlert('success', 'OS Cancelada com Sucesso', 'A ordem de serviço foi cancelada.');
+      } else {
+        showAlert('error', 'Falha ao Cancelar', res.error || 'Não foi possível cancelar a OS.');
+      }
+    } catch (err: any) {
+      showAlert('error', 'Erro', err.message || 'Erro ao cancelar OS.');
     }
     setSaving(false);
   };
@@ -408,23 +483,50 @@ export default function TecnicoPage() {
               </div>
 
               {/* Actions Footer */}
-              <footer className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex gap-2 select-none">
+              <footer className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex flex-col gap-2 select-none">
                 {isPending && (
-                  <button
-                    onClick={() => handleStartService(os.id)}
-                    disabled={saving}
-                    className="w-full bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
-                  >
-                    <Play size={12} fill="white" /> Iniciar Atendimento
-                  </button>
+                  <div className="flex gap-2 w-full">
+                    <button
+                      onClick={() => handleCancelOs(os.id)}
+                      disabled={saving}
+                      className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <X size={13} /> Cancelar OS
+                    </button>
+                    <button
+                      onClick={() => handleStartService(os.id)}
+                      disabled={saving}
+                      className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
+                    >
+                      <Play size={12} fill="white" /> Iniciar Atendimento
+                    </button>
+                  </div>
                 )}
                 {isProgress && (
-                  <button
-                    onClick={() => handleOpenFinalize(os)}
-                    className="w-full bg-[#1B4D3E] hover:bg-[#13382D] text-white py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
-                  >
-                    <CheckCircle size={13} /> Finalizar Atendimento
-                  </button>
+                  <div className="flex flex-col gap-2 w-full">
+                    <button
+                      onClick={() => handleOpenFinalize(os)}
+                      className="w-full bg-[#1B4D3E] hover:bg-[#13382D] text-white py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
+                    >
+                      <CheckCircle size={13} /> Finalizar Atendimento
+                    </button>
+                    <div className="flex gap-2 w-full">
+                      <button
+                        onClick={() => handleCancelService(os.id)}
+                        disabled={saving}
+                        className="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1 transition-all cursor-pointer"
+                      >
+                        <RotateCcw size={12} /> Desfazer Início
+                      </button>
+                      <button
+                        onClick={() => handleCancelOs(os.id)}
+                        disabled={saving}
+                        className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1 transition-all cursor-pointer"
+                      >
+                        <X size={12} /> Cancelar OS
+                      </button>
+                    </div>
+                  </div>
                 )}
               </footer>
             </div>
