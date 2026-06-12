@@ -705,62 +705,76 @@ export default function AtivosPage() {
               ABA 1: PARQUE DE ATIVOS E CATEGORIAS
               ─────────────────────────────────────────────────────────────────── */}
           {activeTab === 'ativos' && (
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                  <thead className="bg-[#1B4D3E] text-slate-100 text-[10px] font-bold uppercase tracking-widest border-none select-none">
-                    <tr>
-                      <th className="px-4 py-4 w-40 text-center">Código</th>
-                      <th className="px-6 py-4">Equipamento / Descrição</th>
-                      <th className="px-6 py-4 w-40 text-center">Categoria</th>
-                      <th className="px-6 py-4 w-32 text-right">Valor Reposição</th>
-                      <th className="px-6 py-4 w-32 text-center">Status</th>
-                      <th className="px-6 py-4 w-24 text-center">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-150 font-semibold text-slate-700">
-                    {loading && ativos.length === 0 ? (
-                      <tr><td colSpan={6} className="px-6 py-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Carregando ativos do parque...</td></tr>
-                    ) : filteredAtivos.length === 0 ? (
-                      <tr><td colSpan={6} className="px-6 py-20 text-center text-slate-400 italic text-xs">Nenhum equipamento localizado.</td></tr>
-                    ) : (
-                      filteredAtivos.map(ativo => {
-                        let statusColor = 'bg-slate-50 text-slate-600 border-slate-200';
-                        if (ativo.status === 'DISPONIVEL') statusColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                        else if (ativo.status === 'COMODATO') statusColor = 'bg-blue-50 text-blue-700 border-blue-200';
-                        else if (ativo.status === 'MANUTENCAO') statusColor = 'bg-amber-50 text-amber-700 border-amber-200';
-                        else if (ativo.status === 'BAIXADO') statusColor = 'bg-red-50 text-red-700 border-red-200';
+            <div className="bg-white border border-slate-300 rounded shadow-sm overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-widest">
+                  <tr>
+                    <th className="px-6 py-4 border-r border-white/10 w-36"># Código</th>
+                    <th className="px-6 py-4 border-r border-white/10">Equipamento / Descrição</th>
+                    <th className="px-6 py-4 border-r border-white/10 text-center w-48">Categoria</th>
+                    <th className="px-6 py-4 border-r border-white/10 text-right w-40">Valor Reposição</th>
+                    <th className="px-6 py-4 border-r border-white/10 text-center w-36">Status</th>
+                    <th className="px-6 py-4 text-center w-28">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {loading && ativos.length === 0 ? (
+                    <tr><td colSpan={6} className="px-6 py-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Carregando ativos do parque...</td></tr>
+                  ) : filteredAtivos.length === 0 ? (
+                    <tr><td colSpan={6} className="px-6 py-20 text-center text-slate-400 italic">Nenhum equipamento localizado.</td></tr>
+                  ) : (
+                    filteredAtivos.map(ativo => {
+                      let statusColor = 'bg-slate-50 text-slate-600 border-slate-200';
+                      if (ativo.status === 'DISPONIVEL') statusColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                      else if (ativo.status === 'COMODATO') statusColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                      else if (ativo.status === 'MANUTENCAO') statusColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                      else if (ativo.status === 'BAIXADO') statusColor = 'bg-red-50 text-red-700 border-red-200';
 
-                        return (
-                          <tr key={ativo.id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-4 py-3.5 text-center whitespace-nowrap">
-                              <span className="font-mono bg-slate-100 border border-slate-200/80 rounded-lg px-2.5 py-0.5 text-[10px] font-black text-slate-700 whitespace-nowrap">{ativo.codigo}</span>
-                            </td>
-                            <td className="px-6 py-3.5 text-xs text-slate-800 font-extrabold uppercase">
-                              <div>{ativo.descricao}</div>
-                              {ativo.observacao && <div className="text-[9px] text-slate-400 italic font-semibold mt-0.5">{ativo.observacao}</div>}
-                            </td>
-                            <td className="px-6 py-3.5 text-center text-[10px] text-slate-500 uppercase">{ativo.categoria?.nome}</td>
-                            <td className="px-6 py-3.5 text-right text-xs font-black text-slate-900">
-                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(ativo.valor)}
-                            </td>
-                            <td className="px-6 py-3.5 text-center">
-                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border select-none ${statusColor}`}>
-                                {ativo.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-3.5">
-                              <div className="flex items-center justify-center gap-1.5">
-                                <button onClick={() => openAtivoModal(ativo)} className="p-1 text-amber-500 hover:bg-amber-50 rounded-lg"><Edit2 size={13} /></button>
-                                <button onClick={() => handleDeleteAtivo(ativo.id)} className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={13} /></button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                      return (
+                        <tr key={ativo.id} className="hover:bg-slate-50 transition-colors group">
+                          <td className="px-6 py-4">
+                            <span className="bg-emerald-50 text-emerald-700 text-[10px] font-black px-2 py-1 rounded border border-emerald-100 uppercase whitespace-nowrap">
+                              {ativo.codigo}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-xs font-black text-slate-700 uppercase">
+                            <div>{ativo.descricao}</div>
+                            {ativo.observacao && <div className="text-[9px] text-slate-400 normal-case italic font-semibold mt-0.5">{ativo.observacao}</div>}
+                          </td>
+                          <td className="px-6 py-4 text-center text-[10px] font-bold text-slate-500 uppercase">{ativo.categoria?.nome}</td>
+                          <td className="px-6 py-4 text-right font-black text-slate-900 text-xs">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(ativo.valor)}
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase border select-none ${statusColor}`}>
+                              {ativo.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <button 
+                                onClick={() => openAtivoModal(ativo)} 
+                                className="p-1.5 text-amber-500 hover:text-amber-600 transition-colors"
+                                title="Editar"
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteAtivo(ativo.id)} 
+                                className="p-1.5 text-slate-400 hover:text-red-600 transition-colors"
+                                title="Excluir"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           )}
 
           {/* ───────────────────────────────────────────────────────────────────
