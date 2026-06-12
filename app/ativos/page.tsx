@@ -1584,7 +1584,7 @@ export default function AtivosPage() {
           )}
 
           {activeTab === 'ordens' && osViewMode === 'kanban' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 items-stretch pb-4 select-none">
+            <div className="flex gap-4 pb-4 select-none overflow-x-auto w-full items-stretch min-h-[500px] scrollbar-thin">
               {(['PENDENTE', 'PROGRAMADO', 'EM_DESLOCAMENTO', 'EM_ANDAMENTO', 'VALIDACAO', 'CONCLUIDA', 'CANCELADA'] as const).map(colStatus => {
                 const colOrdens = filteredOrdens.filter(o => o.status === colStatus);
                 const titleMap = {
@@ -1608,7 +1608,7 @@ export default function AtivosPage() {
                 return (
                   <div 
                     key={colStatus} 
-                    className={`bg-slate-50/50 border border-slate-200 rounded-2xl p-3 flex flex-col min-h-[450px] min-w-[220px] border-t-4 ${colorMap[colStatus]}`}
+                    className={`bg-slate-50/50 border border-slate-200 rounded-2xl p-3 flex flex-col min-h-[450px] w-[260px] shrink-0 border-t-4 ${colorMap[colStatus]}`}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
                       const osId = e.dataTransfer.getData('text/plain');
