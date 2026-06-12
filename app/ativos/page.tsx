@@ -16,7 +16,8 @@ import {
   getAtivos, createAtivo, updateAtivo, deleteAtivo,
   getTemplatesComodato, createTemplateComodato, updateTemplateComodato, deleteTemplateComodato,
   getContratosComodato, createContratoComodato, updateContratoComodato, updateContratoComodatoStatus, deleteContratoComodato,
-  getOrdensServicoAtivo, createOrdemServicoAtivo, updateOrdemServicoAtivo, deleteOrdemServicoAtivo
+  getOrdensServicoAtivo, createOrdemServicoAtivo, updateOrdemServicoAtivo, deleteOrdemServicoAtivo,
+  getLoggedTenantInfo
 } from './actions';
 import { getClientes } from '@/app/clientes/actions';
 import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
@@ -64,6 +65,10 @@ export default function AtivosPage() {
   // Contracts View Settings
   const [contratosViewMode, setContratosViewMode] = useState<ViewMode>('lista');
   const [contratosGroupBy, setContratosGroupBy] = useState<GroupBy>('segmento');
+
+  // OS View Settings
+  const [osViewMode, setOsViewMode] = useState<'lista' | 'kanban'>('lista');
+  const [currentTenant, setCurrentTenant] = useState<any>(null);
 
   // Quick Category Creation in Modal
   const [showQuickCategory, setShowQuickCategory] = useState(false);
@@ -148,14 +153,15 @@ export default function AtivosPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [catRes, ativosRes, tempRes, contrRes, osRes, cliRes, empRes] = await Promise.all([
+      const [catRes, ativosRes, tempRes, contrRes, osRes, cliRes, empRes, tenantRes] = await Promise.all([
         getCategoriasAtivo(),
         getAtivos(),
         getTemplatesComodato(),
         getContratosComodato(),
         getOrdensServicoAtivo(),
         getClientes(),
-        getEmpresasEmissoras()
+        getEmpresasEmissoras(),
+        getLoggedTenantInfo()
       ]);
 
       if (catRes.success) setCategorias(catRes.categorias || []);
@@ -165,6 +171,7 @@ export default function AtivosPage() {
       if (osRes.success) setOrdens(osRes.ordens || []);
       setClientes(cliRes || []);
       setEmpresas(empRes || []);
+      if (tenantRes.success) setCurrentTenant(tenantRes.tenant);
     } catch (err) {
       console.error(err);
     }
@@ -557,6 +564,22 @@ export default function AtivosPage() {
     setModalSignatureOpen(true);
   };
 
+  const handleUpdateOsStatus = async (osId: string, newStatus: string) => {
+    if (newStatus === 'CONCLUIDA') {
+      handleConcludeOs(osId);
+      return;
+    }
+    setSaving(true);
+    const res = await updateOrdemServicoAtivo(osId, { status: newStatus });
+    setSaving(false);
+    if (res.success) {
+      await loadData();
+      showAlert('Status Atualizado', 'Ordem de serviço atualizada com sucesso.', 'success');
+    } else {
+      showAlert('Erro ao Atualizar', res.error || 'Erro ao atualizar status da OS', 'error');
+    }
+  };
+
   const handleSaveSignature = async (base64Signature: string) => {
     if (!selectedOsForSignature) return;
     setSaving(true);
@@ -610,7 +633,7 @@ export default function AtivosPage() {
 
   const filteredOrdens = ordens.filter(o => 
     o.client.nomeFantasia.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    o.tecnicoResponsavel.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (o.tecnicoResponsavel && o.tecnicoResponsavel.toLowerCase().includes(searchTerm.toLowerCase())) ||
     o.tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
     o.ativo.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
     `OS ${o.codigo}`.toLowerCase().includes(searchTerm.toLowerCase())
@@ -842,6 +865,26 @@ export default function AtivosPage() {
                     <option value="categoria">Por Categoria de Ativo</option>
                   </select>
                 )}
+              </div>
+            )}
+
+            {/* Configurações Extra de Filtro exclusivas da aba Ordens de Serviço */}
+            {activeTab === 'ordens' && (
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+                  <button 
+                    onClick={() => setOsViewMode('lista')}
+                    className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors ${osViewMode === 'lista' ? 'bg-[#1B4D3E] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+                  >
+                    <LayoutGrid size={12} /> Lista
+                  </button>
+                  <button 
+                    onClick={() => setOsViewMode('kanban')}
+                    className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors ${osViewMode === 'kanban' ? 'bg-[#1B4D3E] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+                  >
+                    <Kanban size={12} /> Kanban
+                  </button>
+                </div>
               </div>
             )}
             
@@ -1232,7 +1275,7 @@ export default function AtivosPage() {
           {/* ───────────────────────────────────────────────────────────────────
               ABA 4: GESTÃO DE ORDENS DE SERVIÇO (OS)
               ─────────────────────────────────────────────────────────────────── */}
-          {activeTab === 'ordens' && (
+          {activeTab === 'ordens' && osViewMode === 'lista' && (
             <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead className="bg-[#1B4D3E] text-slate-100 text-[10px] font-bold uppercase tracking-widest border-none select-none">
@@ -1244,8 +1287,8 @@ export default function AtivosPage() {
                     <th className="px-6 py-4 text-center w-36">Emissão</th>
                     <th className="px-6 py-4 text-center w-36">Data Prevista</th>
                     <th className="px-6 py-4 w-44">Técnico Responsável</th>
-                    <th className="px-6 py-4 text-center w-32">Status</th>
-                    <th className="px-6 py-4 w-28 text-center">Ações</th>
+                    <th className="px-6 py-4 text-center w-40">Status</th>
+                    <th className="px-6 py-4 w-44 text-center">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-150 font-semibold text-slate-700">
@@ -1256,10 +1299,23 @@ export default function AtivosPage() {
                   ) : (
                     filteredOrdens.map(os => {
                       let statusColor = 'bg-slate-50 text-slate-600 border-slate-200';
-                      if (os.status === 'CONCLUIDA') statusColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                      else if (os.status === 'PENDENTE') statusColor = 'bg-blue-50 text-blue-700 border-blue-200';
-                      else if (os.status === 'EM_ANDAMENTO') statusColor = 'bg-amber-50 text-amber-700 border-amber-200';
-                      else if (os.status === 'CANCELADA') statusColor = 'bg-red-50 text-red-700 border-red-200';
+                      let statusText = os.status;
+                      if (os.status === 'CONCLUIDA') {
+                        statusColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                        statusText = 'Concluída';
+                      } else if (os.status === 'PENDENTE') {
+                        statusColor = 'bg-slate-100 text-slate-650 border-slate-200';
+                        statusText = 'Backlog';
+                      } else if (os.status === 'PROGRAMADO') {
+                        statusColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                        statusText = 'Programado';
+                      } else if (os.status === 'EM_ANDAMENTO') {
+                        statusColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                        statusText = 'Em atendimento';
+                      } else if (os.status === 'CANCELADA') {
+                        statusColor = 'bg-red-50 text-red-700 border-red-200';
+                        statusText = 'Cancelada';
+                      }
 
                       return (
                         <tr key={os.id} className="hover:bg-slate-50/50 transition-colors">
@@ -1293,7 +1349,7 @@ export default function AtivosPage() {
                           <td className="px-6 py-3.5 text-xs text-slate-700 font-bold uppercase truncate max-w-[140px]">{os.tecnicoResponsavel || 'Não Atribuído'}</td>
                           <td className="px-6 py-3.5 text-center">
                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border select-none ${statusColor}`}>
-                              {os.status}
+                              {statusText}
                             </span>
                           </td>
                           <td className="px-6 py-3.5">
@@ -1305,19 +1361,36 @@ export default function AtivosPage() {
                               >
                                 <Printer size={13} />
                               </button>
-                              {os.status === 'PENDENTE' && (
-                                <button 
-                                  onClick={() => handleConcludeOs(os.id)}
-                                  className="text-[9px] font-black text-white bg-[#1B4D3E] hover:bg-[#13382D] px-2 py-1 rounded-lg uppercase tracking-wider"
+                              
+                              {os.status !== 'CONCLUIDA' && os.status !== 'CANCELADA' && (
+                                <select 
+                                  value={os.status}
+                                  onChange={(e) => handleUpdateOsStatus(os.id, e.target.value)}
+                                  className="bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[9px] font-black uppercase text-slate-600 outline-none cursor-pointer hover:border-[#1B4D3E]"
                                 >
-                                  Concluir
+                                  <option value="PENDENTE">Backlog</option>
+                                  <option value="PROGRAMADO">Programado</option>
+                                  <option value="EM_ANDAMENTO">Atendimento</option>
+                                  <option value="CANCELADA">Cancelar</option>
+                                  <option value="CONCLUIDA">Concluir</option>
+                                </select>
+                              )}
+                              
+                              {os.status === 'CANCELADA' && (
+                                <button 
+                                  onClick={() => handleUpdateOsStatus(os.id, 'PENDENTE')} 
+                                  className="text-[9px] font-black text-[#1B4D3E] hover:bg-slate-50 px-2 py-0.5 border border-slate-200 rounded transition-all uppercase tracking-wider"
+                                >
+                                  Restaurar
                                 </button>
                               )}
+                              
                               {os.status === 'CONCLUIDA' && (
-                                <span className="text-emerald-600 p-1" title="Assinada e Finalizada">
-                                  <CheckCircle size={16} />
+                                <span className="text-emerald-600 p-1 flex items-center gap-0.5 text-[10px] font-black uppercase" title="Assinada e Finalizada">
+                                  <CheckCircle size={14} /> Ok
                                 </span>
                               )}
+                              
                               <button onClick={() => handleDeleteOs(os.id)} className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={13} /></button>
                             </div>
                           </td>
@@ -1327,6 +1400,147 @@ export default function AtivosPage() {
                   )}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {activeTab === 'ordens' && osViewMode === 'kanban' && (
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-stretch pb-4 select-none">
+              {(['PENDENTE', 'PROGRAMADO', 'EM_ANDAMENTO', 'CANCELADA', 'CONCLUIDA'] as const).map(colStatus => {
+                const colOrdens = filteredOrdens.filter(o => o.status === colStatus);
+                const titleMap = {
+                  PENDENTE: 'Backlog',
+                  PROGRAMADO: 'Programado',
+                  EM_ANDAMENTO: 'Em atendimento',
+                  CANCELADA: 'Cancelada',
+                  CONCLUIDA: 'Concluída'
+                };
+                const colorMap = {
+                  PENDENTE: 'border-t-slate-400',
+                  PROGRAMADO: 'border-t-blue-500',
+                  EM_ANDAMENTO: 'border-t-amber-500',
+                  CANCELADA: 'border-t-red-500',
+                  CONCLUIDA: 'border-t-emerald-500'
+                };
+                return (
+                  <div key={colStatus} className={`bg-slate-50/50 border border-slate-200 rounded-2xl p-3 flex flex-col min-h-[450px] min-w-[220px] border-t-4 ${colorMap[colStatus]}`}>
+                    <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 mb-3">
+                      <span className="text-[10px] font-black text-slate-700 uppercase tracking-wider">{titleMap[colStatus]}</span>
+                      <span className="text-[9px] font-black text-slate-400 bg-white border border-slate-200 px-1.5 py-0.5 rounded-md">{colOrdens.length}</span>
+                    </div>
+                    <div className="flex-1 space-y-3 overflow-y-auto pr-0.5 max-h-[60vh]">
+                      {colOrdens.map(os => (
+                        <div key={os.id} className="bg-white border border-slate-200 rounded-xl p-3 shadow-xs space-y-2 hover:shadow-sm transition-shadow text-left">
+                          <div className="flex justify-between items-center">
+                            <span className="font-mono text-[9px] font-black text-slate-700 bg-slate-100 border border-slate-200/80 rounded px-1.5 py-0.5 whitespace-nowrap">
+                              OS № {String(os.codigo).padStart(3, '0')}
+                            </span>
+                            <span className="text-[9px] text-[#1B4D3E] font-black uppercase tracking-wider">{os.tipo}</span>
+                          </div>
+                          <div className="space-y-0.5">
+                            <h4 className="text-[10px] font-extrabold text-slate-800 uppercase leading-tight truncate" title={os.client.nomeFantasia}>{os.client.nomeFantasia}</h4>
+                            <p className="text-[9.5px] text-slate-550 truncate font-semibold uppercase" title={os.ativo.descricao}>{os.ativo.descricao}</p>
+                          </div>
+                          <div className="bg-slate-50/60 rounded-lg p-2 border border-slate-100/50 text-[9.5px] space-y-1">
+                            {os.tecnicoResponsavel && (
+                              <div className="text-slate-600 truncate font-bold uppercase">
+                                <span className="text-slate-400 font-extrabold">Téc:</span> {os.tecnicoResponsavel}
+                              </div>
+                            )}
+                            <div className="text-slate-500 font-bold">
+                              <span className="text-slate-400 font-extrabold">Previsto:</span> {os.dataPrevista ? new Date(os.dataPrevista).toLocaleDateString('pt-BR') : '-'}
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center pt-2 border-t border-slate-100 gap-1.5">
+                            <button 
+                              onClick={() => { setSelectedOsForPdf(os); setModalOsPdfOpen(true); }}
+                              className="text-[9px] font-black uppercase text-slate-550 hover:text-[#1B4D3E] transition-colors flex items-center gap-0.5 cursor-pointer"
+                              title="Ver OS (PDF)"
+                            >
+                              <Printer size={11} /> PDF
+                            </button>
+                            
+                            <div className="flex flex-wrap gap-1 justify-end">
+                              {colStatus === 'PENDENTE' && (
+                                <>
+                                  <button 
+                                    onClick={() => handleUpdateOsStatus(os.id, 'PROGRAMADO')} 
+                                    className="text-[8.5px] font-black bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                  >
+                                    Programar
+                                  </button>
+                                  <button 
+                                    onClick={() => handleUpdateOsStatus(os.id, 'EM_ANDAMENTO')} 
+                                    className="text-[8.5px] font-black bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                  >
+                                    Atender
+                                  </button>
+                                </>
+                              )}
+                              {colStatus === 'PROGRAMADO' && (
+                                <>
+                                  <button 
+                                    onClick={() => handleUpdateOsStatus(os.id, 'PENDENTE')} 
+                                    className="text-[8.5px] font-bold text-slate-450 hover:bg-slate-100 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                  >
+                                    Voltar
+                                  </button>
+                                  <button 
+                                    onClick={() => handleUpdateOsStatus(os.id, 'EM_ANDAMENTO')} 
+                                    className="text-[8.5px] font-black bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                  >
+                                    Atender
+                                  </button>
+                                </>
+                              )}
+                              {colStatus === 'EM_ANDAMENTO' && (
+                                <>
+                                  <button 
+                                    onClick={() => handleUpdateOsStatus(os.id, 'PROGRAMADO')} 
+                                    className="text-[8.5px] font-bold text-slate-450 hover:bg-slate-100 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                  >
+                                    Voltar
+                                  </button>
+                                  <button 
+                                    onClick={() => handleUpdateOsStatus(os.id, 'CONCLUIDA')} 
+                                    className="text-[8.5px] font-black bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                  >
+                                    Concluir
+                                  </button>
+                                </>
+                              )}
+                              {colStatus === 'CANCELADA' && (
+                                <button 
+                                  onClick={() => handleUpdateOsStatus(os.id, 'PENDENTE')} 
+                                  className="text-[8.5px] font-bold text-slate-450 hover:bg-slate-100 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                >
+                                  Restaurar
+                                </button>
+                              )}
+                              {colStatus === 'CONCLUIDA' && (
+                                <span className="text-emerald-600 font-extrabold flex items-center gap-0.5 text-[8.5px]">
+                                    <CheckCircle size={11} /> Ok
+                                </span>
+                              )}
+                              
+                              {colStatus !== 'CANCELADA' && colStatus !== 'CONCLUIDA' && (
+                                <button 
+                                  onClick={() => handleUpdateOsStatus(os.id, 'CANCELADA')} 
+                                  className="text-[8.5px] font-bold text-red-500 hover:bg-red-50 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                >
+                                  Cancelar
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {colOrdens.length === 0 && (
+                        <div className="py-12 text-center text-slate-350 italic text-[9px]">Sem ordens de serviço.</div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -2357,17 +2571,17 @@ export default function AtivosPage() {
             overflow: visible !important;
             height: auto !important;
             max-height: none !important;
-            padding: 0 !important;
+            padding: 15mm 12mm 15mm 12mm !important;
             margin: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
             box-shadow: none !important;
             background: white !important;
           }
-          /* Configurações de página A4 */
+          /* Configurações de página A4 (margin 0 remove cabeçalhos/rodapés padrão do navegador) */
           @page {
             size: A4;
-            margin: 15mm 10mm 15mm 10mm !important;
+            margin: 0mm !important;
           }
           /* Forçar cores e gráficos de fundo */
           * {

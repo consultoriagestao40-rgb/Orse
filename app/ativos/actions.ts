@@ -752,3 +752,15 @@ export async function deleteOrdemServicoAtivo(id: string) {
     return { success: false, error: error.message };
   }
 }
+
+export async function getLoggedTenantInfo() {
+  try {
+    const user = await getLoggedUser();
+    if (!user || !user.tenant) {
+      return { success: false, error: 'Unauthorized' };
+    }
+    return { success: true, tenant: user.tenant };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
