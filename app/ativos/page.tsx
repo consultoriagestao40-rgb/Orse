@@ -8,7 +8,7 @@ import {
   Calendar, Printer, LayoutGrid, Kanban, 
   Tags, Info, Users, ShieldCheck, Check, 
   MessageSquare, User, FileImage, Layers, ChevronRight, FileCheck, CheckCircle,
-  DollarSign, TrendingUp
+  DollarSign, TrendingUp, Navigation, MapPin
 } from 'lucide-react';
 
 import { 
@@ -1584,234 +1584,299 @@ export default function AtivosPage() {
           )}
 
           {activeTab === 'ordens' && osViewMode === 'kanban' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3.5 items-stretch pb-4 select-none">
-              {(['PENDENTE', 'PROGRAMADO', 'EM_DESLOCAMENTO', 'EM_ANDAMENTO', 'VALIDACAO', 'CONCLUIDA', 'CANCELADA'] as const).map(colStatus => {
-                const colOrdens = filteredOrdens.filter(o => o.status === colStatus);
-                const titleMap = {
-                  PENDENTE: 'Backlog',
-                  PROGRAMADO: 'Programado',
-                  EM_DESLOCAMENTO: 'Em Deslocamento',
-                  EM_ANDAMENTO: 'Em atendimento',
-                  VALIDACAO: 'Em Validação',
-                  CONCLUIDA: 'Concluída',
-                  CANCELADA: 'Cancelada'
-                };
-                const colorMap = {
-                  PENDENTE: 'border-t-slate-400',
-                  PROGRAMADO: 'border-t-blue-500',
-                  EM_DESLOCAMENTO: 'border-t-cyan-500',
-                  EM_ANDAMENTO: 'border-t-amber-500',
-                  VALIDACAO: 'border-t-purple-500',
-                  CONCLUIDA: 'border-t-emerald-500',
-                  CANCELADA: 'border-t-red-500'
-                };
-                return (
-                  <div 
-                    key={colStatus} 
-                    className={`bg-slate-50/50 border border-slate-200 rounded-2xl p-3 flex flex-col min-h-[450px] min-w-0 flex-1 border-t-4 ${colorMap[colStatus]}`}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      const osId = e.dataTransfer.getData('text/plain');
-                      handleUpdateOsStatus(osId, colStatus);
-                    }}
-                  >
-                    <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 mb-3 gap-1">
-                      <span className="text-[9px] font-black text-slate-700 uppercase tracking-wider truncate" title={titleMap[colStatus]}>{titleMap[colStatus]}</span>
-                      <span className="text-[9px] font-black text-slate-400 bg-white border border-slate-200 px-1.5 py-0.5 rounded-md shrink-0">{colOrdens.length}</span>
-                    </div>
-                    <div className="flex-1 space-y-3 overflow-y-auto pr-0.5 max-h-[60vh]">
-                      {colOrdens.map(os => (
-                        <div 
-                          key={os.id} 
-                          className="bg-white border border-slate-200 rounded-xl p-3 shadow-xs space-y-2 hover:shadow-sm transition-shadow text-left cursor-grab active:cursor-grabbing"
-                          draggable={true}
-                          onDragStart={(e) => {
-                            e.dataTransfer.setData('text/plain', os.id);
-                          }}
-                        >
-                          <div className="flex justify-between items-center">
-                            <span className="font-mono text-[9px] font-black text-slate-700 bg-slate-100 border border-slate-200/80 rounded px-1.5 py-0.5 whitespace-nowrap">
-                              OS № {String(os.codigo).padStart(3, '0')}
-                            </span>
-                            <span className="text-[9px] text-[#1B4D3E] font-black uppercase tracking-wider">{os.tipo}</span>
-                          </div>
-                          <div className="space-y-0.5">
-                            <h4 className="text-[10px] font-extrabold text-slate-800 uppercase leading-tight truncate" title={os.client.nomeFantasia}>{os.client.nomeFantasia}</h4>
-                            <p className="text-[9.5px] text-slate-550 truncate font-semibold uppercase" title={os.ativo.descricao}>{os.ativo.descricao}</p>
-                          </div>
-                           <div className="bg-slate-50/60 rounded-lg p-2 border border-slate-100/50 text-[9.5px] space-y-2">
-                            {os.tecnicoResponsavel ? (() => {
-                              const tech = usuarios.find(u => u.email === os.tecnicoEmail);
-                              return (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleReassignTecnico(os);
-                                  }}
-                                  className="w-full flex items-center gap-2 p-1 bg-white hover:bg-blue-50/40 border border-slate-150 hover:border-blue-200 rounded-lg text-left transition-all group/tech cursor-pointer"
-                                  title="Clique para alterar o técnico"
-                                >
-                                  {tech?.avatarUrl ? (
-                                    <img 
-                                      src={tech.avatarUrl} 
-                                      alt={os.tecnicoResponsavel} 
-                                      className="w-5.5 h-5.5 rounded-full object-cover border border-slate-200 shrink-0" 
-                                    />
-                                  ) : (
-                                    <div className="w-5.5 h-5.5 bg-[#1B4D3E]/10 text-[#1B4D3E] rounded-full flex items-center justify-center font-black text-[9px] uppercase shrink-0 border border-[#1B4D3E]/15">
-                                      {os.tecnicoResponsavel.substring(0, 2)}
-                                    </div>
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider leading-none">Técnico</p>
-                                    <p className="text-[9.5px] font-extrabold text-slate-700 uppercase truncate mt-0.5 group-hover/tech:text-blue-600 transition-colors">
-                                      {os.tecnicoResponsavel}
-                                    </p>
-                                  </div>
-                                  <div className="text-slate-300 group-hover/tech:text-blue-500 transition-colors shrink-0 pr-0.5">
-                                    <Users size={9} className="stroke-[2.5]" />
-                                  </div>
-                                </button>
-                              );
-                            })() : (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleReassignTecnico(os);
-                                }}
-                                className="w-full flex items-center justify-center gap-1.5 p-1 bg-amber-50 hover:bg-amber-100 border border-dashed border-amber-300 text-amber-800 rounded-lg text-left transition-all cursor-pointer"
-                                title="Atribuir Técnico"
-                              >
-                                <Users size={10} className="stroke-[2.5]" />
-                                <span className="text-[9px] font-black uppercase tracking-wider">Atribuir Técnico</span>
-                              </button>
-                            )}
-                            <div className="text-slate-500 font-bold px-1 flex justify-between items-center">
-                              <span className="text-slate-400 font-extrabold">Previsto:</span>
-                              <span className="text-slate-700 font-extrabold">{os.dataPrevista ? new Date(os.dataPrevista).toLocaleDateString('pt-BR') : '-'}</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center pt-2 border-t border-slate-100 gap-1.5">
-                            <div className="flex gap-1.5">
-                              {os.status !== 'CONCLUIDA' && os.status !== 'CANCELADA' && (
-                                <button 
-                                  onClick={() => openOsModal(os)}
-                                  className="text-[9px] font-black uppercase text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-0.5 cursor-pointer"
-                                  title="Editar OS"
-                                >
-                                  <Edit2 size={11} /> Editar
-                                </button>
-                              )}
-                              <button 
-                                onClick={() => { setSelectedOsForPdf(os); setModalOsPdfOpen(true); }}
-                                className="text-[9px] font-black uppercase text-slate-550 hover:text-[#1B4D3E] transition-colors flex items-center gap-0.5 cursor-pointer"
-                                  title="Ver OS (PDF)"
-                              >
-                                <Printer size={11} /> PDF
-                              </button>
-                            </div>
-                            
-                            <div className="flex flex-wrap gap-1 justify-end">
-                              {colStatus === 'PENDENTE' && (
-                                <>
-                                  <button 
-                                    onClick={() => handleUpdateOsStatus(os.id, 'PROGRAMADO')} 
-                                    className="text-[8.5px] font-black bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                  >
-                                    Programar
-                                  </button>
-                                  <button 
-                                    onClick={() => handleUpdateOsStatus(os.id, 'EM_ANDAMENTO')} 
-                                    className="text-[8.5px] font-black bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                  >
-                                    Atender
-                                  </button>
-                                </>
-                              )}
-                              {colStatus === 'PROGRAMADO' && (
-                                <>
-                                  <button 
-                                    onClick={() => handleUpdateOsStatus(os.id, 'PENDENTE')} 
-                                    className="text-[8.5px] font-bold text-slate-450 hover:bg-slate-100 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                  >
-                                    Voltar
-                                  </button>
-                                  <button 
-                                    onClick={() => handleUpdateOsStatus(os.id, 'EM_ANDAMENTO')} 
-                                    className="text-[8.5px] font-black bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                  >
-                                    Atender
-                                  </button>
-                                </>
-                              )}
-                              {colStatus === 'EM_ANDAMENTO' && (
-                                <>
-                                  <button 
-                                    onClick={() => handleUpdateOsStatus(os.id, 'PROGRAMADO')} 
-                                    className="text-[8.5px] font-bold text-slate-450 hover:bg-slate-100 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                  >
-                                    Voltar
-                                  </button>
-                                  <button 
-                                    onClick={() => handleUpdateOsStatus(os.id, 'VALIDACAO')} 
-                                    className="text-[8.5px] font-black bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                  >
-                                    Concluir
-                                  </button>
-                                </>
-                              )}
-                              {colStatus === 'VALIDACAO' && (
-                                <>
-                                  <button 
-                                    onClick={() => handleUpdateOsStatus(os.id, 'EM_ANDAMENTO')} 
-                                    className="text-[8.5px] font-bold text-slate-450 hover:bg-slate-100 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                    title="Recusar e voltar para Em Atendimento"
-                                  >
-                                    Recusar
-                                  </button>
-                                  <button 
-                                    onClick={() => handleUpdateOsStatus(os.id, 'CONCLUIDA')} 
-                                    className="text-[8.5px] font-black bg-[#1B4D3E] text-white hover:bg-[#13382D] border border-[#1b4d3e]/20 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                  >
-                                    Validar
-                                  </button>
-                                </>
-                              )}
-                              {colStatus === 'CANCELADA' && (
-                                <button 
-                                  onClick={() => handleUpdateOsStatus(os.id, 'PENDENTE')} 
-                                  className="text-[8.5px] font-bold text-slate-450 hover:bg-slate-100 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                >
-                                  Restaurar
-                                </button>
-                              )}
-                              {colStatus === 'CONCLUIDA' && (
-                                <span className="text-emerald-600 font-extrabold flex items-center gap-0.5 text-[8.5px]">
-                                    <CheckCircle size={11} /> Ok
-                                </span>
-                              )}
-                              
-                              {colStatus !== 'CANCELADA' && colStatus !== 'CONCLUIDA' && colStatus !== 'VALIDACAO' && (
-                                <button 
-                                  onClick={() => handleUpdateOsStatus(os.id, 'CANCELADA')} 
-                                  className="text-[8.5px] font-bold text-red-500 hover:bg-red-50 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
-                                >
-                                  Cancelar
-                                </button>
-                              )}
+            <div className="overflow-x-auto pb-4 select-none bg-slate-50/50 rounded-3xl border border-slate-200/80 p-2 shadow-inner">
+              <div className="flex gap-[3px] min-w-max">
+                {(['PENDENTE', 'PROGRAMADO', 'EM_DESLOCAMENTO', 'EM_ANDAMENTO', 'VALIDACAO', 'CONCLUIDA', 'CANCELADA'] as const).map((colStatus, idx) => {
+                  const colOrdens = filteredOrdens.filter(o => o.status === colStatus);
+                  const isFirst = idx === 0;
+                  const isLast = idx === 6;
+
+                  const titleMap = {
+                    PENDENTE: 'Backlog',
+                    PROGRAMADO: 'Programado',
+                    EM_DESLOCAMENTO: 'Em Deslocamento',
+                    EM_ANDAMENTO: 'Em atendimento',
+                    VALIDACAO: 'Em Validação',
+                    CONCLUIDA: 'Concluída',
+                    CANCELADA: 'Cancelada'
+                  };
+
+                  const configMap = {
+                    PENDENTE: { hex: '#64748B', contrast: 'white', bg: 'rgba(100, 116, 139, 0.06)', border: 'rgba(100, 116, 139, 0.18)' },
+                    PROGRAMADO: { hex: '#3B82F6', contrast: 'white', bg: 'rgba(59, 130, 246, 0.06)', border: 'rgba(59, 130, 246, 0.18)' },
+                    EM_DESLOCAMENTO: { hex: '#06B6D4', contrast: 'white', bg: 'rgba(6, 182, 212, 0.06)', border: 'rgba(6, 182, 212, 0.18)' },
+                    EM_ANDAMENTO: { hex: '#F59E0B', contrast: 'black', bg: 'rgba(245, 158, 11, 0.12)', border: 'rgba(245, 158, 11, 0.35)' },
+                    VALIDACAO: { hex: '#A855F7', contrast: 'white', bg: 'rgba(168, 85, 247, 0.06)', border: 'rgba(168, 85, 247, 0.18)' },
+                    CONCLUIDA: { hex: '#10B981', contrast: 'white', bg: 'rgba(16, 185, 129, 0.06)', border: 'rgba(16, 185, 129, 0.18)' },
+                    CANCELADA: { hex: '#EF4444', contrast: 'white', bg: 'rgba(239, 68, 68, 0.06)', border: 'rgba(239, 68, 68, 0.18)' }
+                  };
+
+                  const conf = configMap[colStatus];
+                  const resolvedHex = conf.hex;
+                  const contrast = conf.contrast;
+                  const bgRgba = conf.bg;
+                  const borderRgba = conf.border;
+
+                  return (
+                    <div 
+                      key={colStatus} 
+                      className="flex flex-col flex-shrink-0"
+                      style={{ width: '274px' }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        const osId = e.dataTransfer.getData('text/plain');
+                        handleUpdateOsStatus(osId, colStatus);
+                      }}
+                    >
+                      {/* Column Header Sticky */}
+                      <div className="sticky top-0 select-none z-10 bg-slate-50" style={{ zIndex: 20 + (7 - idx) }}>
+                        <div className="relative h-[52px] shrink-0 w-full pointer-events-auto">
+                          <svg 
+                            className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
+                            viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
+                            preserveAspectRatio="none"
+                            style={{ color: resolvedHex }}
+                          >
+                            <path 
+                              d={isFirst 
+                                ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                                : isLast 
+                                  ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                                  : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                              }
+                              fill="currentColor" 
+                              stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
+                              strokeWidth="1"
+                            />
+                          </svg>
+                          <div 
+                            className={`relative z-10 flex items-center justify-between h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                            style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
+                          >
+                            <div className="flex flex-col min-w-0 justify-center">
+                              <h3 className="font-black uppercase tracking-wider text-[11px] truncate max-w-[150px] leading-none">
+                                {titleMap[colStatus]}
+                              </h3>
+                              <span className="text-[10px] font-bold mt-1 opacity-90 truncate select-none leading-none">
+                                {colOrdens.length} {colOrdens.length === 1 ? 'ordem' : 'ordens'}
+                              </span>
                             </div>
                           </div>
                         </div>
-                      ))}
-                      {colOrdens.length === 0 && (
-                        <div className="py-12 text-center text-slate-350 italic text-[9px]">Sem ordens de serviço.</div>
-                      )}
+                      </div>
+
+                      {/* Cards list with customized scroll background */}
+                      <div
+                        className="px-[4px] py-3 rounded-b-2xl rounded-t-none"
+                        style={{
+                          width: '274px',
+                          minWidth: '274px',
+                          maxWidth: '274px',
+                          marginLeft: '0px',
+                          backgroundColor: bgRgba,
+                          borderColor: borderRgba,
+                          borderWidth: '0 1px 1px 1px',
+                          borderStyle: 'solid',
+                          height: 'calc(100vh - 300px)',
+                          minHeight: '450px',
+                          overflowY: 'auto',
+                        }}
+                      >
+                        <div className="flex flex-col gap-2.5">
+                          {colOrdens.map(os => (
+                            <div 
+                              key={os.id} 
+                              className="bg-white border border-slate-200 rounded-xl p-3 shadow-xs space-y-2 hover:shadow-sm transition-shadow text-left cursor-grab active:cursor-grabbing"
+                              draggable={true}
+                              onDragStart={(e) => {
+                                e.dataTransfer.setData('text/plain', os.id);
+                              }}
+                            >
+                              <div className="flex justify-between items-center">
+                                <span className="font-mono text-[9px] font-black text-slate-700 bg-slate-100 border border-slate-200/80 rounded px-1.5 py-0.5 whitespace-nowrap">
+                                  OS № {String(os.codigo).padStart(3, '0')}
+                                </span>
+                                <span className="text-[9px] text-[#1B4D3E] font-black uppercase tracking-wider">{os.tipo}</span>
+                              </div>
+                              <div className="space-y-0.5">
+                                <h4 className="text-[10px] font-extrabold text-slate-800 uppercase leading-tight truncate" title={os.client.nomeFantasia}>{os.client.nomeFantasia}</h4>
+                                <p className="text-[9.5px] text-slate-550 truncate font-semibold uppercase" title={os.ativo.descricao}>{os.ativo.descricao}</p>
+                              </div>
+                              <div className="bg-slate-50/60 rounded-lg p-2 border border-slate-100/50 text-[9.5px] space-y-2">
+                                {os.tecnicoResponsavel ? (() => {
+                                  const tech = usuarios.find(u => u.email === os.tecnicoEmail);
+                                  return (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleReassignTecnico(os);
+                                      }}
+                                      className="w-full flex items-center gap-2 p-1 bg-white hover:bg-blue-50/40 border border-slate-150 hover:border-blue-200 rounded-lg text-left transition-all group/tech cursor-pointer"
+                                      title="Clique para alterar o técnico"
+                                    >
+                                      {tech?.avatarUrl ? (
+                                        <img 
+                                          src={tech.avatarUrl} 
+                                          alt={os.tecnicoResponsavel} 
+                                          className="w-5.5 h-5.5 rounded-full object-cover border border-slate-200 shrink-0" 
+                                        />
+                                      ) : (
+                                        <div className="w-5.5 h-5.5 bg-[#1B4D3E]/10 text-[#1B4D3E] rounded-full flex items-center justify-center font-black text-[9px] uppercase shrink-0 border border-[#1B4D3E]/15">
+                                          {os.tecnicoResponsavel.substring(0, 2)}
+                                        </div>
+                                      )}
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider leading-none">Técnico</p>
+                                        <p className="text-[9.5px] font-extrabold text-slate-700 uppercase truncate mt-0.5 group-hover/tech:text-blue-600 transition-colors">
+                                          {os.tecnicoResponsavel}
+                                        </p>
+                                      </div>
+                                      <div className="text-slate-300 group-hover/tech:text-blue-500 transition-colors shrink-0 pr-0.5">
+                                        <Users size={9} className="stroke-[2.5]" />
+                                      </div>
+                                    </button>
+                                  );
+                                })() : (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleReassignTecnico(os);
+                                    }}
+                                    className="w-full flex items-center justify-center gap-1.5 p-1 bg-amber-50 hover:bg-amber-100 border border-dashed border-amber-300 text-amber-800 rounded-lg text-left transition-all cursor-pointer"
+                                    title="Atribuir Técnico"
+                                  >
+                                    <Users size={10} className="stroke-[2.5]" />
+                                    <span className="text-[9px] font-black uppercase tracking-wider">Atribuir Técnico</span>
+                                  </button>
+                                )}
+                                <div className="text-slate-500 font-bold px-1 flex justify-between items-center">
+                                  <span className="text-slate-400 font-extrabold">Previsto:</span>
+                                  <span className="text-slate-700 font-extrabold">{os.dataPrevista ? new Date(os.dataPrevista).toLocaleDateString('pt-BR') : '-'}</span>
+                                </div>
+                              </div>
+                              <div className="flex justify-between items-center pt-2 border-t border-slate-100 gap-1.5">
+                                <div className="flex gap-1.5">
+                                  {os.status !== 'CONCLUIDA' && os.status !== 'CANCELADA' && (
+                                    <button 
+                                      onClick={() => openOsModal(os)}
+                                      className="text-[9px] font-black uppercase text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-0.5 cursor-pointer"
+                                      title="Editar OS"
+                                    >
+                                      <Edit2 size={11} /> Editar
+                                    </button>
+                                  )}
+                                  <button 
+                                    onClick={() => { setSelectedOsForPdf(os); setModalOsPdfOpen(true); }}
+                                    className="text-[9px] font-black uppercase text-slate-550 hover:text-[#1B4D3E] transition-colors flex items-center gap-0.5 cursor-pointer"
+                                    title="Ver OS (PDF)"
+                                  >
+                                    <Printer size={11} /> PDF
+                                  </button>
+                                </div>
+                                
+                                <div className="flex flex-wrap gap-1 justify-end">
+                                  {colStatus === 'PENDENTE' && (
+                                    <>
+                                      <button 
+                                        onClick={() => handleUpdateOsStatus(os.id, 'PROGRAMADO')} 
+                                        className="text-[8.5px] font-black bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                      >
+                                        Programar
+                                      </button>
+                                      <button 
+                                        onClick={() => handleUpdateOsStatus(os.id, 'EM_ANDAMENTO')} 
+                                        className="text-[8.5px] font-black bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                      >
+                                        Atender
+                                      </button>
+                                    </>
+                                  )}
+                                  {colStatus === 'PROGRAMADO' && (
+                                    <>
+                                      <button 
+                                        onClick={() => handleUpdateOsStatus(os.id, 'PENDENTE')} 
+                                        className="text-[8.5px] font-bold text-slate-450 hover:bg-slate-100 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                      >
+                                        Voltar
+                                      </button>
+                                      <button 
+                                        onClick={() => handleUpdateOsStatus(os.id, 'EM_ANDAMENTO')} 
+                                        className="text-[8.5px] font-black bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                      >
+                                        Atender
+                                      </button>
+                                    </>
+                                  )}
+                                  {colStatus === 'EM_ANDAMENTO' && (
+                                    <>
+                                      <button 
+                                        onClick={() => handleUpdateOsStatus(os.id, 'PROGRAMADO')} 
+                                        className="text-[8.5px] font-bold text-slate-450 hover:bg-slate-100 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                      >
+                                        Voltar
+                                      </button>
+                                      <button 
+                                        onClick={() => handleUpdateOsStatus(os.id, 'VALIDACAO')} 
+                                        className="text-[8.5px] font-black bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                      >
+                                        Concluir
+                                      </button>
+                                    </>
+                                  )}
+                                  {colStatus === 'VALIDACAO' && (
+                                    <>
+                                      <button 
+                                        onClick={() => handleUpdateOsStatus(os.id, 'EM_ANDAMENTO')} 
+                                        className="text-[8.5px] font-bold text-slate-450 hover:bg-slate-100 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                        title="Recusar e voltar para Em Atendimento"
+                                      >
+                                        Recusar
+                                      </button>
+                                      <button 
+                                        onClick={() => handleUpdateOsStatus(os.id, 'CONCLUIDA')} 
+                                        className="text-[8.5px] font-black bg-[#1B4D3E] text-white hover:bg-[#13382D] border border-[#1b4d3e]/20 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                      >
+                                        Validar
+                                      </button>
+                                    </>
+                                  )}
+                                  {colStatus === 'CANCELADA' && (
+                                    <button 
+                                      onClick={() => handleUpdateOsStatus(os.id, 'PENDENTE')} 
+                                      className="text-[8.5px] font-bold text-slate-450 hover:bg-slate-100 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                    >
+                                      Restaurar
+                                    </button>
+                                  )}
+                                  {colStatus === 'CONCLUIDA' && (
+                                    <span className="text-emerald-600 font-extrabold flex items-center gap-0.5 text-[8.5px]">
+                                      <CheckCircle size={11} /> Ok
+                                    </span>
+                                  )}
+                                  
+                                  {colStatus !== 'CANCELADA' && colStatus !== 'CONCLUIDA' && colStatus !== 'VALIDACAO' && (
+                                    <button 
+                                      onClick={() => handleUpdateOsStatus(os.id, 'CANCELADA')} 
+                                      className="text-[8.5px] font-bold text-red-500 hover:bg-red-50 px-1 py-0.5 rounded transition-all uppercase tracking-wider cursor-pointer"
+                                    >
+                                      Cancelar
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          {colOrdens.length === 0 && (
+                            <div className="py-12 text-center text-slate-350 italic text-[9px]">Sem ordens de serviço.</div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
 
