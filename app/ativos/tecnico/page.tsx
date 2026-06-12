@@ -32,6 +32,9 @@ export default function TecnicoPage() {
   const [hasDrawn, setHasDrawn] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('sb_mobile_mode');
+    }
     loadTechnicianData();
   }, []);
 
@@ -53,6 +56,44 @@ export default function TecnicoPage() {
     return () => {
       canvas.removeEventListener('touchstart', preventDefaultTouch);
       canvas.removeEventListener('touchmove', preventDefaultTouch);
+    };
+  }, [activeOsForFinalize]);
+
+  // Trata o redimensionamento e deslocamento de tela no iOS (Safari) para evitar "pulos" e zoom no foco dos inputs
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport || !activeOsForFinalize) return;
+
+    const handleResize = () => {
+      const modalElement = document.getElementById('finalize-modal-container');
+      if (modalElement) {
+        // Encolhe a altura do modal para caber exatamente na área visível (acima do teclado)
+        modalElement.style.height = `${window.visualViewport.height}px`;
+        // Ancorre o modal no topo da viewport visível do iOS
+        modalElement.style.top = `${window.visualViewport.offsetTop}px`;
+        // Trava a rolagem global da janela para evitar o deslocamento do Safari
+        window.scrollTo(0, 0);
+      }
+    };
+
+    window.visualViewport.addEventListener('resize', handleResize);
+    window.visualViewport.addEventListener('scroll', handleResize);
+    
+    // Executa imediatamente
+    handleResize();
+
+    // Pequeno delay para garantir sincronia com a animação de entrada do teclado
+    const timer = setTimeout(handleResize, 100);
+
+    return () => {
+      clearTimeout(timer);
+      window.visualViewport.removeEventListener('resize', handleResize);
+      window.visualViewport.removeEventListener('scroll', handleResize);
+      
+      const modalElement = document.getElementById('finalize-modal-container');
+      if (modalElement) {
+        modalElement.style.height = '';
+        modalElement.style.top = '';
+      }
     };
   }, [activeOsForFinalize]);
 
@@ -328,6 +369,8 @@ export default function TecnicoPage() {
     setSaving(false);
   };
 
+  const isTecnico = currentUser?.cargo?.toLowerCase().includes('tecnico') || currentUser?.cargo?.toLowerCase().includes('técnico');
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans select-none pb-8">
       {/* HEADER PREMIUM */}
@@ -357,13 +400,23 @@ export default function TecnicoPage() {
               <span className="text-[8.5px] font-bold text-white/60 block leading-none">{currentUser.cargo || 'Técnico'}</span>
             </div>
           )}
-          <a 
-            href="/ativos"
-            className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 transition-all rounded-xl cursor-pointer"
-            title="Voltar ao Painel"
-          >
-            <LogOut size={16} />
-          </a>
+          {isTecnico ? (
+            <a 
+              href="/api/auth/logout"
+              className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 transition-all rounded-xl cursor-pointer flex items-center justify-center text-white"
+              title="Sair da Conta (Logout)"
+            >
+              <LogOut size={16} />
+            </a>
+          ) : (
+            <a 
+              href="/ativos?mode=desktop"
+              className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 transition-all rounded-xl cursor-pointer flex items-center justify-center text-white"
+              title="Voltar ao Painel de Gestão"
+            >
+              <Briefcase size={16} />
+            </a>
+          )}
         </div>
       </header>
 
@@ -557,7 +610,10 @@ export default function TecnicoPage() {
 
       {/* FINALIZATION MODAL / SCREEN - Responsive overflow containment */}
       {activeOsForFinalize && (
-        <div className="fixed inset-0 bg-white z-50 flex flex-col animate-slide-up overflow-y-auto overflow-x-hidden w-full max-w-md mx-auto border-x border-slate-100 shadow-2xl">
+        <div 
+          id="finalize-modal-container"
+          className="fixed inset-0 bg-white z-50 flex flex-col animate-slide-up overflow-y-auto overflow-x-hidden w-full max-w-md mx-auto border-x border-slate-100 shadow-2xl"
+        >
           {/* Modal Header */}
           <header className="sticky top-0 bg-white border-b border-slate-200 px-4 py-4 flex items-center justify-between z-40 select-none">
             <button 
@@ -591,7 +647,8 @@ export default function TecnicoPage() {
                 value={relato}
                 onChange={(e) => setRelato(e.target.value)}
                 placeholder="Descreva detalhadamente o serviço efetuado, as condições do equipamento e os fatos ocorridos..."
-                className="w-full px-3.5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-800 outline-none focus:border-[#1B4D3E] resize-none leading-relaxed"
+                className="w-full px-3.5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-base font-semibold text-slate-800 outline-none focus:border-[#1B4D3E] resize-none leading-relaxed"
+                style={{ fontSize: '16px' }}
               />
             </div>
 
@@ -624,6 +681,7 @@ export default function TecnicoPage() {
                       multiple 
                       onChange={handlePhotoUpload} 
                       className="hidden" 
+                      style={{ fontSize: '16px' }}
                     />
                   </label>
                 )}
@@ -672,7 +730,8 @@ export default function TecnicoPage() {
                   placeholder="Nome do cliente responsável"
                   value={nomeAssinante}
                   onChange={(e) => setNomeAssinante(e.target.value)}
-                  className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-colors"
+                  className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-base font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-colors"
+                  style={{ fontSize: '16px' }}
                 />
               </div>
               <div className="space-y-1">
@@ -682,7 +741,8 @@ export default function TecnicoPage() {
                   placeholder="Apenas números (opcional)"
                   value={cpfAssinante}
                   onChange={(e) => setCpfAssinante(e.target.value)}
-                  className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-colors"
+                  className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-base font-bold text-slate-800 outline-none focus:border-[#1B4D3E] focus:bg-white transition-colors"
+                  style={{ fontSize: '16px' }}
                 />
               </div>
             </div>

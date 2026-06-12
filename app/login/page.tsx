@@ -58,8 +58,15 @@ export default function LoginPage() {
       if (res.ok) {
         const superAdmins = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
         const userEmail = data.user?.email?.toLowerCase()?.trim() || '';
+        const userCargo = data.user?.cargo?.toLowerCase() || '';
+        
+        // Detecta se está acessando de dispositivo móvel
+        const isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
         if (superAdmins.includes(userEmail)) {
           window.location.href = '/admin/empresas';
+        } else if (isMobile || userCargo.includes('tecnico') || userCargo.includes('técnico')) {
+          window.location.href = '/ativos/tecnico';
         } else {
           window.location.href = '/'; // Redireciona para o Radar Comercial / Dashboard raiz
         }

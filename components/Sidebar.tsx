@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone, MessageCircle, MessageSquare, UserCog, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
 import { changeMyPassword, changeMyAvatar, getLoggedUser } from '@/app/propostas/actions';
@@ -14,6 +14,29 @@ import { sendInternalMessage, getInternalMessages, markInternalMessagesAsRead, g
  
 const Sidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
+
+  // Redireciona usuários em celulares para a Área do Técnico por padrão, a menos que tenham optado pela versão desktop
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const mode = searchParams.get('mode');
+      
+      if (mode === 'desktop') {
+        sessionStorage.setItem('sb_mobile_mode', 'desktop');
+      }
+      
+      const isDesktopMode = sessionStorage.getItem('sb_mobile_mode') === 'desktop';
+      
+      if (!isDesktopMode) {
+        const isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile && !pathname.startsWith('/ativos/tecnico')) {
+          router.push('/ativos/tecnico');
+        }
+      }
+    }
+  }, [pathname, router]);
+
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTenantBlocked, setIsTenantBlocked] = useState(false);
   const [isMounted, setIsMounted] = useState(false);

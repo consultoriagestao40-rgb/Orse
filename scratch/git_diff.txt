@@ -1,0 +1,518 @@
+diff --git a/app/pic/components/PicDetailsModal.tsx b/app/pic/components/PicDetailsModal.tsx
+index 6e4775e..c202a83 100644
+--- a/app/pic/components/PicDetailsModal.tsx
++++ b/app/pic/components/PicDetailsModal.tsx
+@@ -5,7 +5,8 @@ import {
+   X, Calendar, User, Plus, Trash2, Paperclip, Send, Copy,
+   Tag, AlertTriangle, Users, Eye, History, MessageSquare,
+   CheckCircle2, AlertCircle, FileText, Download, Check, Edit2, ClipboardCheck,
+-  FileSpreadsheet, FileImage, File, Briefcase, DollarSign, Wrench, Package, ListTodo
++  FileSpreadsheet, FileImage, File, Briefcase, DollarSign, Wrench, Package, ListTodo,
++  Building, Mail, MapPin, Clock
+ } from 'lucide-react';
+ import { 
+   getPicById, updatePicDetails, updatePicEmployees, 
+@@ -564,9 +565,9 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }:
+                       <div className="overflow-x-auto mt-1">
+                         <table className="w-full text-left text-xs">
+                           <thead>
+-                            <tr className="border-b border-slate-100 text-slate-400 uppercase text-[9.5px] tracking-wider font-bold">
+-                              <th className="px-3 py-3 font-bold">Item / Descrição</th>
+-                              <th className="px-3 py-3 text-center w-28 font-bold">Status</th>
++                            <tr className="bg-slate-900 text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
++                              <th className="px-3 py-2.5 font-extrabold text-left first:rounded-l-lg">Item / Descrição</th>
++                              <th className="px-3 py-2.5 font-extrabold text-center w-28 last:rounded-r-lg">Status</th>
+                             </tr>
+                           </thead>
+                           <tbody className="font-semibold text-slate-700">
+@@ -667,167 +668,268 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }:
+               ABA 02: FINANCEIRO E FATURAMENTO
+               ─────────────────────────────────────────────────────────────────── */}
+           {activeTab === 'financeiro' && (
+-            <div className="space-y-6">
++            <div className="space-y-6 animate-fade-in">
+               
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 
+                 {/* Dados de Faturamento Geral */}
+-                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+-                  <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2">
+-                    Ciclos e Medições do Contrato
+-                  </h3>
++                <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-6">
++                  <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
++                    <div className="w-8 h-8 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
++                      <DollarSign size={16} className="stroke-[2.5]" />
++                    </div>
++                    <div>
++                      <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
++                        Ciclos e Medições do Contrato
++                      </h3>
++                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Valores, Prazos e Vigência</p>
++                    </div>
++                  </div>
+                   
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-bold text-slate-700">
+                     <div>
+-                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Valor Mensal do Contrato</label>
++                      <label className="text-[10px] text-slate-400 uppercase tracking-wide font-extrabold flex items-center gap-1 mb-1">
++                        Valor Mensal do Contrato
++                      </label>
+                       <div className="relative">
+-                        <span className="absolute left-3 top-2.5 text-slate-400">R$</span>
++                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">R$</span>
+                         <input
+                           type="text"
+                           value={valorMensalStr}
+                           onChange={(e) => setValorMensalStr(e.target.value)}
+                           onBlur={handleValorMensalBlur}
+-                          className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 font-bold"
++                          className="w-full pl-9 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 font-bold transition-all"
+                         />
+                       </div>
+                     </div>
+ 
+                     <div>
+-                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Data Prevista de Faturamento</label>
+-                      <input
+-                        type="text"
+-                        value={dataFaturamento}
+-                        onChange={(e) => setDataFaturamento(e.target.value)}
+-                        placeholder="Ex: Todo dia 25"
+-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
+-                      />
++                      <label className="text-[10px] text-slate-400 uppercase tracking-wide font-extrabold flex items-center gap-1 mb-1">
++                        Data Prevista de Faturamento
++                      </label>
++                      <div className="relative">
++                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
++                          <Calendar size={14} />
++                        </div>
++                        <input
++                          type="text"
++                          value={dataFaturamento}
++                          onChange={(e) => setDataFaturamento(e.target.value)}
++                          placeholder="Ex: Todo dia 25"
++                          className="w-full pl-9 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 font-semibold transition-all"
++                        />
++                      </div>
+                     </div>
+ 
+                     <div>
+-                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Período Medição (Início)</label>
+-                      <input
+-                        type="text"
+-                        value={periodoMedicaoInicio}
+-                        onChange={(e) => setPeriodoMedicaoInicio(e.target.value)}
+-                        placeholder="Ex: Dia 21 de cada mês"
+-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
+-                      />
++                      <label className="text-[10px] text-slate-400 uppercase tracking-wide font-extrabold flex items-center gap-1 mb-1">
++                        Período Medição (Início)
++                      </label>
++                      <div className="relative">
++                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
++                          <Calendar size={14} />
++                        </div>
++                        <input
++                          type="text"
++                          value={periodoMedicaoInicio}
++                          onChange={(e) => setPeriodoMedicaoInicio(e.target.value)}
++                          placeholder="Ex: Dia 21 de cada mês"
++                          className="w-full pl-9 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 font-semibold transition-all"
++                        />
++                      </div>
+                     </div>
+ 
+                     <div>
+-                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Período Medição (Fim)</label>
+-                      <input
+-                        type="text"
+-                        value={periodoMedicaoFim}
+-                        onChange={(e) => setPeriodoMedicaoFim(e.target.value)}
+-                        placeholder="Ex: Dia 20 do mês subsequente"
+-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
+-                      />
++                      <label className="text-[10px] text-slate-400 uppercase tracking-wide font-extrabold flex items-center gap-1 mb-1">
++                        Período Medição (Fim)
++                      </label>
++                      <div className="relative">
++                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
++                          <Calendar size={14} />
++                        </div>
++                        <input
++                          type="text"
++                          value={periodoMedicaoFim}
++                          onChange={(e) => setPeriodoMedicaoFim(e.target.value)}
++                          placeholder="Ex: Dia 20 do mês subsequente"
++                          className="w-full pl-9 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 font-semibold transition-all"
++                        />
++                      </div>
+                     </div>
+ 
+                     <div>
+-                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Prazo de Pagamento (Vencimento)</label>
+-                      <input
+-                        type="text"
+-                        value={prazoPagamento}
+-                        onChange={(e) => setPrazoPagamento(e.target.value)}
+-                        placeholder="Ex: 15 dias após recebimento da NF"
+-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
+-                      />
++                      <label className="text-[10px] text-slate-400 uppercase tracking-wide font-extrabold flex items-center gap-1 mb-1">
++                        Prazo de Pagamento (Vencimento)
++                      </label>
++                      <div className="relative">
++                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
++                          <Clock size={14} />
++                        </div>
++                        <input
++                          type="text"
++                          value={prazoPagamento}
++                          onChange={(e) => setPrazoPagamento(e.target.value)}
++                          placeholder="Ex: 15 dias após recebimento da NF"
++                          className="w-full pl-9 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 font-semibold transition-all"
++                        />
++                      </div>
+                     </div>
+ 
+                     <div>
+-                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Data Efetiva de Pagamento</label>
+-                      <input
+-                        type="text"
+-                        value={dataPagamento}
+-                        onChange={(e) => setDataPagamento(e.target.value)}
+-                        placeholder="Ex: Dia 10 do mês posterior"
+-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
+-                      />
++                      <label className="text-[10px] text-slate-400 uppercase tracking-wide font-extrabold flex items-center gap-1 mb-1">
++                        Data Efetiva de Pagamento
++                      </label>
++                      <div className="relative">
++                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
++                          <Calendar size={14} />
++                        </div>
++                        <input
++                          type="text"
++                          value={dataPagamento}
++                          onChange={(e) => setDataPagamento(e.target.value)}
++                          placeholder="Ex: Dia 10 do mês posterior"
++                          className="w-full pl-9 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 font-semibold transition-all"
++                        />
++                      </div>
+                     </div>
+ 
+-                    <div>
+-                      <label className="text-[10px] text-[#1B4D3E] font-black uppercase block mb-1">Início da Vigência (Contrato)</label>
+-                      <div className="w-full px-3 py-2 bg-slate-100/60 border border-slate-200 rounded-lg text-sm text-slate-500 font-extrabold select-none">
+-                        {formattedDataInicio}
++                    <div className="bg-[#1B4D3E]/5 border border-[#1B4D3E]/15 rounded-xl p-3 flex items-center gap-3">
++                      <div className="w-8 h-8 bg-[#1B4D3E]/10 rounded-lg flex items-center justify-center text-[#1B4D3E] shrink-0">
++                        <Calendar size={15} className="stroke-[2.5]" />
++                      </div>
++                      <div>
++                        <span className="text-[9px] text-[#1B4D3E] font-black uppercase tracking-wider block">Início da Vigência</span>
++                        <span className="text-xs font-black text-slate-700">{formattedDataInicio}</span>
+                       </div>
+                     </div>
+ 
+-                    <div>
+-                      <label className="text-[10px] text-[#1B4D3E] font-black uppercase block mb-1">Prazo de Vigência (Contrato)</label>
+-                      <div className="w-full px-3 py-2 bg-slate-100/60 border border-slate-200 rounded-lg text-sm text-slate-500 font-extrabold select-none">
+-                        {formattedVigencia}
++                    <div className="bg-[#1B4D3E]/5 border border-[#1B4D3E]/15 rounded-xl p-3 flex items-center gap-3">
++                      <div className="w-8 h-8 bg-[#1B4D3E]/10 rounded-lg flex items-center justify-center text-[#1B4D3E] shrink-0">
++                        <Clock size={15} className="stroke-[2.5]" />
++                      </div>
++                      <div>
++                        <span className="text-[9px] text-[#1B4D3E] font-black uppercase tracking-wider block">Prazo de Vigência</span>
++                        <span className="text-xs font-black text-slate-700">{formattedVigencia}</span>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+ 
+                 {/* Dados para Emissão de Nota (Faturamento CNPJ) */}
+-                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+-                  <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2">
+-                    Dados Fiscais para Faturamento / Emissão de NF
+-                  </h3>
++                <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-6">
++                  <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
++                    <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
++                      <Building size={16} className="stroke-[2.5]" />
++                    </div>
++                    <div>
++                      <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
++                        Dados Fiscais para Faturamento / Emissão de NF
++                      </h3>
++                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Informações Jurídicas e Fiscais</p>
++                    </div>
++                  </div>
+                   
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-bold text-slate-700">
+                     <div className="sm:col-span-2">
+-                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Razão Social de Faturamento</label>
+-                      <input
+-                        type="text"
+-                        value={faturamentoRazaoSocial}
+-                        onChange={(e) => setFaturamentoRazaoSocial(e.target.value)}
+-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
+-                      />
++                      <label className="text-[10px] text-slate-400 uppercase tracking-wide font-extrabold flex items-center gap-1 mb-1">
++                        Razão Social de Faturamento
++                      </label>
++                      <div className="relative">
++                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
++                          <Building size={14} />
++                        </div>
++                        <input
++                          type="text"
++                          value={faturamentoRazaoSocial}
++                          onChange={(e) => setFaturamentoRazaoSocial(e.target.value)}
++                          className="w-full pl-9 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 font-semibold transition-all"
++                        />
++                      </div>
+                     </div>
+ 
+                     <div>
+-                      <label className="text-[10px] text-slate-400 uppercase block mb-1">CNPJ de Faturamento</label>
+-                      <input
+-                        type="text"
+-                        value={faturamentoCnpj}
+-                        onChange={(e) => setFaturamentoCnpj(e.target.value)}
+-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
+-                      />
++                      <label className="text-[10px] text-slate-400 uppercase tracking-wide font-extrabold flex items-center gap-1 mb-1">
++                        CNPJ de Faturamento
++                      </label>
++                      <div className="relative">
++                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
++                          <FileText size={14} />
++                        </div>
++                        <input
++                          type="text"
++                          value={faturamentoCnpj}
++                          onChange={(e) => setFaturamentoCnpj(e.target.value)}
++                          className="w-full pl-9 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 font-semibold transition-all"
++                        />
++                      </div>
+                     </div>
+ 
+                     <div>
+-                      <label className="text-[10px] text-slate-400 uppercase block mb-1">E-mail para Envio de NF</label>
+-                      <input
+-                        type="email"
+-                        value={faturamentoEmail}
+-                        onChange={(e) => setFaturamentoEmail(e.target.value)}
+-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
+-                      />
++                      <label className="text-[10px] text-slate-400 uppercase tracking-wide font-extrabold flex items-center gap-1 mb-1">
++                        E-mail para Envio de NF
++                      </label>
++                      <div className="relative">
++                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
++                          <Mail size={14} />
++                        </div>
++                        <input
++                          type="email"
++                          value={faturamentoEmail}
++                          onChange={(e) => setFaturamentoEmail(e.target.value)}
++                          className="w-full pl-9 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 font-semibold transition-all"
++                        />
++                      </div>
+                     </div>
+ 
+                     <div>
+-                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Inscrição Estadual (IE)</label>
+-                      <input
+-                        type="text"
+-                        value={faturamentoInscricaoEstadual}
+-                        onChange={(e) => setFaturamentoInscricaoEstadual(e.target.value)}
+-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
+-                      />
++                      <label className="text-[10px] text-slate-400 uppercase tracking-wide font-extrabold flex items-center gap-1 mb-1">
++                        Inscrição Estadual (IE)
++                      </label>
++                      <div className="relative">
++                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-extrabold text-xs select-none">
++                          #
++                        </div>
++                        <input
++                          type="text"
++                          value={faturamentoInscricaoEstadual}
++                          onChange={(e) => setFaturamentoInscricaoEstadual(e.target.value)}
++                          className="w-full pl-9 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 font-semibold transition-all"
++                        />
++                      </div>
+                     </div>
+ 
+                     <div>
+-                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Inscrição Municipal (IM)</label>
+-                      <input
+-                        type="text"
+-                        value={faturamentoInscricaoMunicipal}
+-                        onChange={(e) => setFaturamentoInscricaoMunicipal(e.target.value)}
+-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
+-                      />
++                      <label className="text-[10px] text-slate-400 uppercase tracking-wide font-extrabold flex items-center gap-1 mb-1">
++                        Inscrição Municipal (IM)
++                      </label>
++                      <div className="relative">
++                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-extrabold text-xs select-none">
++                          #
++                        </div>
++                        <input
++                          type="text"
++                          value={faturamentoInscricaoMunicipal}
++                          onChange={(e) => setFaturamentoInscricaoMunicipal(e.target.value)}
++                          className="w-full pl-9 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 font-semibold transition-all"
++                        />
++                      </div>
+                     </div>
+ 
+                     <div className="sm:col-span-2">
+-                      <label className="text-[10px] text-slate-400 uppercase block mb-1">Endereço de Faturamento</label>
+-                      <input
+-                        type="text"
+-                        value={faturamentoEndereco}
+-                        onChange={(e) => setFaturamentoEndereco(e.target.value)}
+-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20"
+-                      />
++                      <label className="text-[10px] text-slate-400 uppercase tracking-wide font-extrabold flex items-center gap-1 mb-1">
++                        Endereço de Faturamento
++                      </label>
++                      <div className="relative">
++                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
++                          <MapPin size={14} />
++                        </div>
++                        <input
++                          type="text"
++                          value={faturamentoEndereco}
++                          onChange={(e) => setFaturamentoEndereco(e.target.value)}
++                          className="w-full pl-9 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 font-semibold transition-all"
++                        />
++                      </div>
+                     </div>
+                   </div>
+                 </div>
+@@ -835,22 +937,30 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }:
+               </div>
+ 
+               {/* Documentação necessária mensalmente */}
+-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+-                <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-2">
+-                  Documentação Exigida Mensalmente (Anexo à Fatura / Retenções)
+-                </h3>
+-                <div className="space-y-3">
++              <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-4">
++                <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
++                  <div className="w-8 h-8 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
++                    <FileText size={16} className="stroke-[2.5]" />
++                  </div>
++                  <div>
++                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
++                      Documentação Exigida Mensalmente (Anexo à Fatura / Retenções)
++                    </h3>
++                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Exigências Legais e Fiscais do Cliente</p>
++                  </div>
++                </div>
++                <div className="space-y-4">
+                   <textarea
+                     value={documentacoesMensais}
+                     onChange={(e) => setDocumentacoesMensais(e.target.value)}
+                     placeholder="Descreva as certidões e comprovantes exigidos pelo cliente..."
+-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-700 outline-none focus:border-[#1B4D3E] focus:ring-1 focus:ring-[#1B4D3E]/20 h-24 resize-none font-medium leading-relaxed"
++                    className="w-full bg-slate-50/50 border border-slate-200 rounded-xl p-4 text-xs text-slate-700 outline-none focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 h-28 resize-none font-medium leading-relaxed transition-all focus:bg-white"
+                   />
+                   <div className="flex justify-end">
+                     <button
+                       onClick={handleSaveDetails}
+                       disabled={saving}
+-                      className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase py-2 px-6 rounded-lg tracking-widest transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
++                      className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase py-3 px-8 rounded-xl tracking-widest transition-all hover:scale-[1.02] cursor-pointer disabled:opacity-50 shadow-md active:scale-[0.98]"
+                     >
+                       {saving ? 'Salvando...' : 'Salvar Detalhes Financeiros'}
+                     </button>
+@@ -894,15 +1004,15 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }:
+                       <col style={{ width: '6%' }} />
+                     </colgroup>
+                     <thead>
+-                      <tr className="border-b border-slate-100 text-slate-400 uppercase text-[9.5px] font-bold select-none tracking-wider text-center">
+-                        <th className="py-3 px-1 text-center w-10">Item</th>
+-                        <th className="py-3 px-3 text-left">Função / Cargo</th>
+-                        <th className="py-3 px-3 text-center">Qtd</th>
+-                        <th className="py-3 px-3 text-center">Escala</th>
+-                        <th className="py-3 px-3 text-center">Entrada</th>
+-                        <th className="py-3 px-3 text-center">Saída</th>
+-                        <th className="py-3 px-3 text-left">Dias da Semana</th>
+-                        <th className="py-3 px-1 text-center">Remover</th>
++                      <tr className="bg-slate-900 text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
++                        <th className="py-2.5 px-1 text-center w-10 first:rounded-l-lg">Item</th>
++                        <th className="py-2.5 px-3 text-left">Função / Cargo</th>
++                        <th className="py-2.5 px-3 text-center">Qtd</th>
++                        <th className="py-2.5 px-3 text-center">Escala</th>
++                        <th className="py-2.5 px-3 text-center">Entrada</th>
++                        <th className="py-2.5 px-3 text-center">Saída</th>
++                        <th className="py-2.5 px-3 text-left">Dias da Semana</th>
++                        <th className="py-2.5 px-1 text-center last:rounded-r-lg">Remover</th>
+                       </tr>
+                     </thead>
+                     <tbody className="font-semibold text-slate-700">
+@@ -1020,12 +1130,12 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }:
+                       <col style={{ width: '6%' }} />
+                     </colgroup>
+                     <thead>
+-                      <tr className="border-b border-slate-100 text-slate-400 uppercase text-[9.5px] font-bold select-none tracking-wider text-center">
+-                        <th className="py-3 px-1 text-center w-10">Item</th>
+-                        <th className="py-3 px-3 text-left">Nome do Equipamento</th>
+-                        <th className="py-3 px-3 text-center">Quantidade</th>
+-                        <th className="py-3 px-3 text-center">Tipo Alocação</th>
+-                        <th className="py-3 px-1 text-center">Remover</th>
++                      <tr className="bg-slate-900 text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
++                        <th className="py-2.5 px-1 text-center w-10 first:rounded-l-lg">Item</th>
++                        <th className="py-2.5 px-3 text-left">Nome do Equipamento</th>
++                        <th className="py-2.5 px-3 text-center">Quantidade</th>
++                        <th className="py-2.5 px-3 text-center">Tipo Alocação</th>
++                        <th className="py-2.5 px-1 text-center last:rounded-r-lg">Remover</th>
+                       </tr>
+                     </thead>
+                     <tbody className="font-semibold text-slate-700">
+@@ -1135,12 +1245,12 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }:
+                       <col style={{ width: '6%' }} />
+                     </colgroup>
+                     <thead>
+-                      <tr className="border-b border-slate-100 text-slate-400 uppercase text-[9.5px] font-bold select-none tracking-wider text-center">
+-                        <th className="py-3 px-1 text-center w-10">Item</th>
+-                        <th className="py-3 px-3 text-left">Nome do Material</th>
+-                        <th className="py-3 px-3 text-center">Qtd</th>
+-                        <th className="py-3 px-3 text-center">Unidade</th>
+-                        <th className="py-3 px-1 text-center">Remover</th>
++                      <tr className="bg-slate-900 text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
++                        <th className="py-2.5 px-1 text-center w-10 first:rounded-l-lg">Item</th>
++                        <th className="py-2.5 px-3 text-left">Nome do Material</th>
++                        <th className="py-2.5 px-3 text-center">Qtd</th>
++                        <th className="py-2.5 px-3 text-center">Unidade</th>
++                        <th className="py-2.5 px-1 text-center last:rounded-r-lg">Remover</th>
+                       </tr>
+                     </thead>
+                     <tbody className="font-semibold text-slate-700">
+@@ -1442,12 +1552,12 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }:
+                             <col style={{ width: '12%' }} />
+                           </colgroup>
+                           <thead>
+-                            <tr className="border-b border-slate-100 text-slate-400 uppercase text-[9.5px] font-bold select-none tracking-wider text-center">
+-                              <th className="py-3 px-1 text-center w-10">Item</th>
+-                              <th className="py-3 px-3 text-left">Descrição</th>
+-                              <th className="py-3 px-3 text-center">Resp.</th>
+-                              <th className="py-3 px-3 text-center">Prazo</th>
+-                              <th className="py-3 px-1.5 text-center">Status</th>
++                            <tr className="bg-slate-900 text-slate-100 uppercase text-[9px] font-bold select-none tracking-wider text-center border-none">
++                              <th className="py-2.5 px-1 text-center w-10 first:rounded-l-lg">Item</th>
++                              <th className="py-2.5 px-3 text-left">Descrição</th>
++                              <th className="py-2.5 px-3 text-center">Resp.</th>
++                              <th className="py-2.5 px-3 text-center">Prazo</th>
++                              <th className="py-2.5 px-1.5 text-center last:rounded-r-lg">Status</th>
+                             </tr>
+                           </thead>
+                           <tbody>

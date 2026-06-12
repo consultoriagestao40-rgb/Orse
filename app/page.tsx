@@ -1115,14 +1115,38 @@ export default function Page() {
   useEffect(() => {
     fetch('/api/auth/session')
       .then(res => res.json())
-      .then(data => {
+      .then(async (data) => {
         if (data.loggedIn) {
-          setIsLoggedIn(true);
           const superAdmins = ['admin@smartbidhub.com.br', 'admin@smartbid.com'];
           const userEmail = data.email?.toLowerCase()?.trim() || '';
           if (superAdmins.includes(userEmail)) {
             router.push('/admin/empresas');
+            setIsLoggedIn(true);
+            return;
           }
+
+          // Se for dispositivo móvel, redireciona qualquer usuário logado para a Área do Técnico
+          const isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          if (isMobile) {
+            router.push('/ativos/tecnico');
+            return;
+          }
+
+          // Checa se o usuário logado é técnico e redireciona (caso esteja no desktop)
+          try {
+            const loggedUser = await getLoggedUser();
+            if (loggedUser) {
+              const cargoLower = loggedUser.cargo?.toLowerCase() || '';
+              if (cargoLower.includes('tecnico') || cargoLower.includes('técnico')) {
+                router.push('/ativos/tecnico');
+                return;
+              }
+            }
+          } catch (err) {
+            console.error('Erro ao verificar cargo do usuário:', err);
+          }
+
+          setIsLoggedIn(true);
         } else {
           setIsLoggedIn(false);
         }

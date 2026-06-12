@@ -1,0 +1,169 @@
+diff --git a/app/ativos/page.tsx b/app/ativos/page.tsx
+index f6ce899..8e0c950 100644
+--- a/app/ativos/page.tsx
++++ b/app/ativos/page.tsx
+@@ -111,6 +111,7 @@ export default function AtivosPage() {
+     id: string;
+     clientId: string;
+     empresaEmissoraId: string;
++    status: string;
+     dataInicio: string;
+     vigenciaMeses: number;
+     valorMinimoMensal: number;
+@@ -121,6 +122,7 @@ export default function AtivosPage() {
+     id: '',
+     clientId: '',
+     empresaEmissoraId: '',
++    status: 'RASCUNHO',
+     dataInicio: new Date().toISOString().substring(0, 10),
+     vigenciaMeses: 12,
+     valorMinimoMensal: 250,
+@@ -385,6 +387,7 @@ export default function AtivosPage() {
+         id: contrato.id,
+         clientId: contrato.clientId,
+         empresaEmissoraId: contrato.empresaEmissoraId,
++        status: contrato.status,
+         dataInicio: new Date(contrato.dataInicio).toISOString().substring(0, 10),
+         vigenciaMeses: contrato.vigenciaMeses,
+         valorMinimoMensal: contrato.valorMinimoMensal,
+@@ -397,6 +400,7 @@ export default function AtivosPage() {
+         id: '',
+         clientId: clientes[0]?.id || '',
+         empresaEmissoraId: empresas[0]?.id || '',
++        status: 'RASCUNHO',
+         dataInicio: new Date().toISOString().substring(0, 10),
+         vigenciaMeses: 12,
+         valorMinimoMensal: 250,
+@@ -452,6 +456,7 @@ export default function AtivosPage() {
+     const data = {
+       clientId: contratoForm.clientId,
+       empresaEmissoraId: contratoForm.empresaEmissoraId,
++      status: contratoForm.status,
+       dataInicio: contratoForm.dataInicio,
+       vigenciaMeses: Number(contratoForm.vigenciaMeses) || 12,
+       valorMinimoMensal: Number(contratoForm.valorMinimoMensal) || 0,
+@@ -989,39 +994,22 @@ export default function AtivosPage() {
+                         {(tpl.clausulas[0]?.texto || '').substring(0, 180)}...
+                       </div>
+                     </div>
+-                    <button 
+-                      onClick={() => openTemplateModal(tpl)}
+-                      className="mt-5 w-full py-2 bg-slate-50 border border-slate-200/80 hover:bg-slate-100/60 text-slate-600 text-[10px] font-black uppercase tracking-wider rounded-xl transition-colors cursor-pointer"
+-                    >
+-                      Editar Cláusulas
+-                    </button>
+-                  </div>
+-                ))
+-              )}
+-            </div>
+-          )}
+-
+-          {/* ───────────────────────────────────────────────────────────────────
+-              ABA 3: GESTÃO DE CONTRATOS DE COMODATO
+-              ─────────────────────────────────────────────────────────────────── */}
+-          {activeTab === 'contratos' && (
+-            <>
+-              {/* VISÃO LISTA */}
++                    <bu              {/* VISÃO LISTA */}
+               {contratosViewMode === 'lista' && (
+                 <div className="bg-white border border-slate-300 rounded shadow-sm overflow-x-auto">
+                   <table className="w-full text-left border-collapse">
+                     <thead className="bg-[#1B4D3E] text-white text-[10px] font-bold uppercase tracking-widest border-none select-none">
+                       <tr>
+                         <th className="px-6 py-4 border-r border-white/10 text-center w-24">Cód. Contrato</th>
+-                        <th className="px-6 py-4 border-r border-white/10">Cliente</th>
+-                        <th className="px-6 py-4 border-r border-white/10">Empresa (Grupo)</th>
++                        <th className="px-6 py-4 border-r border-white/10 min-w-[280px]">Cliente</th>
++                        <th className="px-6 py-4 border-r border-white/10 w-44">Empresa (Grupo)</th>
+                         <th className="px-6 py-4 border-r border-white/10 text-center w-28">Início</th>
+                         <th className="px-6 py-4 border-r border-white/10 text-center w-24">Vigência</th>
+                         <th className="px-6 py-4 border-r border-white/10 text-center w-28">Vencimento</th>
+                         <th className="px-6 py-4 border-r border-white/10 text-right w-36">Consumo Mínimo</th>
+                         <th className="px-6 py-4 border-r border-white/10 text-center w-36">Equipamentos</th>
+-                        <th className="px-6 py-4 border-r border-white/10 text-center w-32">Situação</th>
+-                        <th className="px-6 py-4 text-center w-40">Ações</th>
++                        <th className="px-6 py-4 border-r border-white/10 text-center w-28">Situação</th>
++                        <th className="px-6 py-4 text-center w-32">Ações</th>
+                       </tr>
+                     </thead>
+                     <tbody className="divide-y divide-slate-200 font-semibold text-slate-700">
+@@ -1044,7 +1032,7 @@ export default function AtivosPage() {
+                                   #{String(contrato.codigo).padStart(4, '0')}
+                                 </span>
+                               </td>
+-                              <td className="px-6 py-3.5 text-xs text-slate-800 font-extrabold uppercase">
++                              <td className="px-6 py-3.5 text-xs text-slate-800 font-extrabold uppercase min-w-[280px]">
+                                 <div>{contrato.client.nomeFantasia}</div>
+                               </td>
+                               <td className="px-6 py-3.5 text-xs text-slate-600 font-bold uppercase">{contrato.empresaEmissora.nomeFantasia}</td>
+@@ -1086,12 +1074,23 @@ export default function AtivosPage() {
+                                   >
+                                     <Printer size={13} />
+                                   </button>
+-                                  <select
+-                                    value={contrato.status}
+-                                    onChange={(e) => handleUpdateContratoStatus(contrato.id, e.target.value)}
+-                                    className="text-[9px] bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 outline-none font-bold text-slate-650 cursor-pointer"
++                                  <button 
++                                    onClick={() => handleDeleteContrato(contrato.id)} 
++                                    className="p-1 text-slate-400 hover:text-red-500 transition-colors"
++                                    title="Excluir"
+                                   >
+-                                    <option value="RASCUNHO">RASCUNHO</option>
++                                    <Trash2 size={13} />
++                                  </button>
++                                </div>
++                              </td>
++                            </tr>
++                          );
++                        })
++                      )}
++                    </tbody>
++                  </table>
++                </div>
++              )}ion value="RASCUNHO">RASCUNHO</option>
+                                     <option value="VIGENTE">VIGENTE</option>
+                                     <option value="SUSPENSO">SUSPENSO</option>
+                                     <option value="ENCERRADO">ENCERRADO</option>
+@@ -1667,7 +1666,7 @@ export default function AtivosPage() {
+                     </div>
+                   </div>
+ 
+-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
++                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                     <div className="space-y-1">
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Início *</label>
+                       <input
+@@ -1687,17 +1686,30 @@ export default function AtivosPage() {
+                       />
+                     </div>
+                     <div className="space-y-1">
+-                      <label className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest block mb-0.5">Compra Mínima Mensal (R$)</label>
++                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Compra Mínima (R$)</label>
+                       <div className="relative">
+                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-slate-450">R$</span>
+                         <input
+                           type="number"
+-                          className="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-850 outline-none focus:border-[#1B4D3E]"
++                          className="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-855 outline-none focus:border-[#1B4D3E]"
+                           value={contratoForm.valorMinimoMensal}
+                           onChange={(e) => setContratoForm({...contratoForm, valorMinimoMensal: Number(e.target.value)})}
+                         />
+                       </div>
+                     </div>
++                    <div className="space-y-1">
++                      <label className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-widest block mb-0.5">Situação / Status</label>
++                      <select
++                        className="w-full px-3.5 py-2.5 bg-white border border-[#1B4D3E]/30 rounded-xl text-xs font-black text-[#1B4D3E] outline-none focus:border-[#1B4D3E] cursor-pointer"
++                        value={contratoForm.status}
++                        onChange={(e) => setContratoForm({...contratoForm, status: e.target.value})}
++                      >
++                        <option value="RASCUNHO">RASCUNHO</option>
++                        <option value="VIGENTE">VIGENTE</option>
++                        <option value="SUSPENSO">SUSPENSO</option>
++                        <option value="ENCERRADO">ENCERRADO</option>
++                      </select>
++                    </div>
+                   </div>
+                 </div>
+ 
