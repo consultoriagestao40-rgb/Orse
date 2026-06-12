@@ -176,8 +176,8 @@ export default function AtivosPage() {
     }
   };
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [catRes, ativosRes, tempRes, contrRes, osRes, cliRes, empRes, tenantRes, usersRes, loggedUser] = await Promise.all([
         getCategoriasAtivo(),
@@ -205,7 +205,7 @@ export default function AtivosPage() {
     } catch (err) {
       console.error(err);
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
 
   // -----------------------------------------------------------------------------
@@ -645,13 +645,15 @@ export default function AtivosPage() {
         return;
       }
     }
-    setSaving(true);
+    
+    // Atualização otimista imediata no estado React para evitar lag visual
+    setOrdens(prev => prev.map(o => o.id === osId ? { ...o, status: newStatus } : o));
+    
     const res = await updateOrdemServicoAtivo(osId, { status: newStatus });
-    setSaving(false);
     if (res.success) {
-      await loadData();
-      showAlert('Status Atualizado', 'Ordem de serviço atualizada com sucesso.', 'success');
+      await loadData(true); // Recarrega silenciosamente em background
     } else {
+      await loadData(true); // Reverte e atualiza com o estado real do banco se houver erro
       showAlert('Erro ao Atualizar', res.error || 'Erro ao atualizar status da OS', 'error');
     }
   };
@@ -676,7 +678,7 @@ export default function AtivosPage() {
       setModalAssignTecnicoOpen(false);
       setOsToAssignTecnico(null);
       setSelectedTecnicoForAssign('');
-      await loadData();
+      await loadData(true);
       
       let msgText = `Ordem atribuída ao técnico ${userSelected.nome} com sucesso.`;
       if (targetStatusForAssign === 'EM_DESLOCAMENTO') {
