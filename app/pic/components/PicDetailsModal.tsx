@@ -1714,6 +1714,11 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                     --primary-color: ${primaryColor};
                   }
                   
+                  #ordem-servico-print-area * {
+                    print-color-adjust: exact !important;
+                    -webkit-print-color-adjust: exact !important;
+                  }
+                  
                   #ordem-servico-print-area table {
                     width: 100% !important;
                     border-collapse: separate !important;
