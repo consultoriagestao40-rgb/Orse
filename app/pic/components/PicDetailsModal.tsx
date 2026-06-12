@@ -6,7 +6,7 @@ import {
   Tag, AlertTriangle, Users, Eye, History, MessageSquare,
   CheckCircle2, AlertCircle, FileText, Download, Check, Edit2, ClipboardCheck,
   FileSpreadsheet, FileImage, File, Briefcase, DollarSign, Wrench, Package, ListTodo,
-  Building, Mail, MapPin, Clock
+  Building, Mail, MapPin, Clock, Printer
 } from 'lucide-react';
 import { 
   getPicById, updatePicDetails, updatePicEmployees, 
@@ -21,7 +21,7 @@ interface PicDetailsModalProps {
   refreshData?: (silent?: boolean) => void | Promise<void>;
 }
 
-type TabType = 'identificacao' | 'financeiro' | 'operacional' | 'planejador';
+type TabType = 'identificacao' | 'financeiro' | 'operacional' | 'planejador' | 'ordem-servico';
 
 const parseCurrency = (val: string): number => {
   if (!val) return 0;
@@ -427,13 +427,23 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
   const formattedVigencia = contrato.vigenciaMeses 
     ? `${contrato.vigenciaMeses} meses` 
     : '-';
+  const todasAcoes = (pic?.secoes || []).flatMap((sec: any) => 
+    (sec.acoes || []).map((action: any) => {
+      const respUser = action.responsavelId ? users.find(u => u.id === action.responsavelId) : null;
+      return {
+        ...action,
+        secaoTitulo: sec.titulo,
+        responsavelNome: respUser?.nome || 'Sem Responsável'
+      };
+    })
+  );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs font-sans text-left">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-fade-in relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs font-sans text-left print:absolute print:inset-0 print:z-0 print:block print:bg-white print:p-0">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-fade-in relative print:shadow-none print:border-none print:w-full print:h-auto print:max-w-none print:rounded-none print:bg-white print:overflow-visible">
         
         {/* Header do Modal */}
-        <header className="bg-white border-b border-slate-100 px-6 py-5 flex items-center justify-between shrink-0">
+        <header className="bg-white border-b border-slate-100 px-6 py-5 flex items-center justify-between shrink-0 no-print">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-[#1B4D3E]/10 rounded-xl border border-[#1B4D3E]/20 flex items-center justify-center text-[#1B4D3E]">
               <ClipboardCheck size={22} className="stroke-[2.5]" />
@@ -456,19 +466,21 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
         </header>
 
         {/* Abas de Navegação */}
-        <nav className="bg-white border-b border-slate-100 px-6 flex gap-6 shrink-0">
-          {(['identificacao', 'financeiro', 'operacional', 'planejador'] as TabType[]).map((tab) => {
+        <nav className="bg-white border-b border-slate-100 px-6 flex gap-6 shrink-0 no-print">
+          {(['identificacao', 'financeiro', 'operacional', 'planejador', 'ordem-servico'] as TabType[]).map((tab) => {
             const labels = {
               identificacao: '1. Identificação',
               financeiro: '2. Financeiro',
               operacional: '3. Operacional',
-              planejador: '4. Planejador de Ações'
+              planejador: '4. Planejador de Ações',
+              'ordem-servico': '5. Ordem de Serviço'
             };
             const icons = {
               identificacao: Briefcase,
               financeiro: DollarSign,
               operacional: Wrench,
-              planejador: ListTodo
+              planejador: ListTodo,
+              'ordem-servico': ClipboardCheck
             };
             const Icon = icons[tab];
             const isActive = activeTab === tab;
@@ -490,7 +502,7 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
         </nav>
 
         {/* Conteúdo das Abas (Scrollable) */}
-        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
+        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 print:bg-white print:p-0 print:overflow-visible">
           
           {/* ───────────────────────────────────────────────────────────────────
               ABA 01: IDENTIFICAÇÃO DO CONTRATO
@@ -1611,6 +1623,550 @@ export default function PicDetailsModal({ picId, users, onClose, refreshData }: 
                 })}
               </div>
 
+            </div>
+          )}
+
+          {activeTab === 'ordem-servico' && (
+            <div className="space-y-6 animate-fade-in print:bg-white print:p-0 print:m-0">
+              {/* Barra de Ações Superior (no-print) */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white border border-slate-200 rounded-2xl p-5 gap-4 shadow-xs no-print">
+                <div className="space-y-1">
+                  <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
+                    <ClipboardCheck size={16} /> Liberação de Implantação
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    Gere o PDF da Ordem de Serviço para liberação física e assinatura.
+                  </p>
+                </div>
+                <button
+                  onClick={() => window.print()}
+                  className="bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[10px] font-black uppercase py-2.5 px-6 rounded-lg tracking-widest transition-colors cursor-pointer flex items-center gap-2 shadow-xs"
+                >
+                  <Printer size={14} /> Imprimir Ordem de Serviço (PDF)
+                </button>
+              </div>
+
+              {/* Folha A4 de Ordem de Serviço */}
+              <div 
+                id="ordem-servico-print-area" 
+                className="max-w-[210mm] mx-auto bg-white shadow-lg border border-slate-200/80 p-8 rounded-2xl font-sans text-slate-850 text-xs leading-relaxed space-y-6 print:max-w-none print:shadow-none print:border-none print:p-0 print:m-0 print:bg-white"
+              >
+                {/* Estilo Dinâmico de Impressão */}
+                <style dangerouslySetInnerHTML={{ __html: `
+                  @media print {
+                    body, html {
+                      background: white !important;
+                      height: auto !important;
+                      overflow: visible !important;
+                    }
+                    /* Esconde barra lateral e painéis superiores globais do Next */
+                    .no-print, header, nav, button, aside, .sidebar-topbar, .sidebar-widget-panel {
+                      display: none !important;
+                    }
+                    /* Corrige dimensões da folha A4 e remove margens de tela */
+                    #ordem-servico-print-area {
+                      width: 100% !important;
+                      max-width: none !important;
+                      margin: 0 !important;
+                      padding: 0 !important;
+                      border: none !important;
+                      box-shadow: none !important;
+                      background: white !important;
+                      color: black !important;
+                    }
+                    /* Ajusta margens da folha no diálogo de PDF */
+                    @page {
+                      size: A4;
+                      margin: 15mm;
+                    }
+                    /* Evita quebras de linha indesejadas no meio de seções */
+                    .print-section {
+                      page-break-inside: avoid;
+                    }
+                    .print-row {
+                      page-break-inside: avoid;
+                    }
+                  }
+                `}} />
+
+                {/* Cabeçalho da Ordem de Serviço */}
+                <div className="flex justify-between items-start border-b-2 border-[#1B4D3E] pb-4">
+                  <div className="space-y-1">
+                    <div className="text-xs font-black text-[#1B4D3E] uppercase tracking-widest">
+                      {pic?.tenant?.nome || 'SMARTBIDHUB'}
+                    </div>
+                    <h1 className="text-lg font-black text-slate-800 uppercase tracking-tight">
+                      Ordem de Serviço (OS)
+                    </h1>
+                    <p className="text-[9px] font-bold text-slate-450 uppercase tracking-widest">
+                      Documento de Liberação de Implantação
+                    </p>
+                  </div>
+                  <div className="text-right space-y-1">
+                    <div className="bg-[#1B4D3E]/8 text-[#1B4D3E] px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider inline-block">
+                      OS-PIC-{contrato.id ? contrato.id.substring(0, 6).toUpperCase() : 'NOVO'}
+                    </div>
+                    <div className="text-[9px] text-slate-450 font-bold uppercase tracking-wider mt-1 block">
+                      Emissão: {new Date().toLocaleDateString('pt-BR')}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção 1: Dados Gerais do Cliente e Contrato */}
+                <div className="print-section space-y-2.5">
+                  <h3 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-1 flex items-center gap-1.5">
+                    <Briefcase size={12} /> 1. Dados do Contrato e Contatos
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 bg-slate-50/50 border border-slate-100 rounded-xl p-4 print:bg-white print:border-slate-200">
+                    <div className="space-y-2">
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Razão Social do Cliente</span>
+                        <span className="font-bold text-slate-800 text-[11px]">{client.razaoSocial || client.nomeFantasia || '-'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">CNPJ / CPF</span>
+                        <span className="font-bold text-slate-700 text-[11px]">{client.cnpj || client.cpf || '-'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Endereço de Implantação</span>
+                        <span className="font-semibold text-slate-600 block leading-tight mt-0.5">{client.endereco || '-'}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Início da Vigência</span>
+                          <span className="font-bold text-slate-700">{formattedDataInicio}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Prazo de Vigência</span>
+                          <span className="font-bold text-slate-700">{formattedVigencia}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Proposta Comercial Associada</span>
+                        <span className="font-bold text-slate-700">{FPVNum} (Rev {FPVRev})</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Gestor Comercial (Vendedor)</span>
+                        <span className="font-bold text-slate-700 block">{vendedor.nome || 'Não especificado'}</span>
+                        <span className="text-[9px] text-slate-400 font-bold block">{vendedor.email || ''}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção 2: Escopo Técnico e Itens */}
+                <div className="print-section space-y-2.5">
+                  <h3 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-1 flex items-center gap-1.5">
+                    <FileText size={12} /> 2. Escopo Técnico da FPV
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block mb-1">Objeto / Escopo Técnico</span>
+                      <p className="bg-slate-50/50 border border-slate-100 rounded-xl p-3.5 mt-1 text-slate-600 font-medium whitespace-pre-line leading-relaxed print:bg-white print:border-slate-200">
+                        {meta.escopoTecnico || meta.objetoProposta || 'Não especificado no contrato.'}
+                      </p>
+                    </div>
+
+                    {/* Itens Inclusos / Excluídos Lado a Lado */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block mb-1.5">Itens Inclusos</span>
+                        <div className="border border-emerald-100 rounded-xl overflow-hidden print:border-slate-200">
+                          <table className="w-full text-left text-xs border-collapse">
+                            <thead>
+                              <tr className="bg-emerald-50 text-emerald-800 uppercase text-[8px] font-bold select-none tracking-wider text-center border-b border-emerald-100 print:bg-slate-50 print:text-slate-800 print:border-slate-200">
+                                <th className="px-3 py-1.5 font-extrabold text-left">Descrição</th>
+                              </tr>
+                            </thead>
+                            <tbody className="font-semibold text-slate-700">
+                              {(meta.itensInclusosExcluidos || []).filter((item: any) => item.incluso).map((item: any) => (
+                                <tr key={item.id} className="border-b border-slate-100/50 print:border-slate-200">
+                                  <td className="px-3 py-2 text-slate-800 text-[11px] font-medium">
+                                    ✓ {item.descricao}
+                                  </td>
+                                </tr>
+                              ))}
+                              {(meta.itensInclusosExcluidos || []).filter((item: any) => item.incluso).length === 0 && (
+                                <tr>
+                                  <td className="px-3 py-3 text-center text-slate-400 italic font-medium bg-white">
+                                    Nenhum item incluso listado.
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block mb-1.5">Itens Excluídos</span>
+                        <div className="border border-red-100 rounded-xl overflow-hidden print:border-slate-200">
+                          <table className="w-full text-left text-xs border-collapse">
+                            <thead>
+                              <tr className="bg-red-50/60 text-red-800 uppercase text-[8px] font-bold select-none tracking-wider text-center border-b border-red-100 print:bg-slate-50 print:text-slate-800 print:border-slate-200">
+                                <th className="px-3 py-1.5 font-extrabold text-left">Descrição</th>
+                              </tr>
+                            </thead>
+                            <tbody className="font-semibold text-slate-700">
+                              {(meta.itensInclusosExcluidos || []).filter((item: any) => !item.incluso).map((item: any) => (
+                                <tr key={item.id} className="border-b border-slate-100/50 print:border-slate-200">
+                                  <td className="px-3 py-2 text-slate-800 text-[11px] font-medium">
+                                    ✗ {item.descricao}
+                                  </td>
+                                </tr>
+                              ))}
+                              {(meta.itensInclusosExcluidos || []).filter((item: any) => !item.incluso).length === 0 && (
+                                <tr>
+                                  <td className="px-3 py-3 text-center text-slate-400 italic font-medium bg-white">
+                                    Nenhum item excluso listado.
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção 3: Detalhamento Financeiro e Faturamento */}
+                <div className="print-section space-y-2.5">
+                  <h3 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-1 flex items-center gap-1.5">
+                    <DollarSign size={12} /> 3. Detalhamento Financeiro e Faturamento
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 bg-slate-50/50 border border-slate-100 rounded-xl p-4 print:bg-white print:border-slate-200">
+                    <div className="space-y-2">
+                      <div className="border-b border-slate-100 pb-2 print:border-slate-200">
+                        <span className="text-[9px] text-[#1B4D3E] font-extrabold uppercase tracking-wide block">Valor Mensal do Contrato</span>
+                        <span className="font-black text-slate-850 text-sm">R$ {valorMensalStr || '0,00'}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Data Faturamento</span>
+                          <span className="font-bold text-slate-700">{dataFaturamento || '-'}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Prazo de Pagamento</span>
+                          <span className="font-bold text-slate-700">{prazoPagamento || '-'}</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Período Medição</span>
+                          <span className="font-semibold text-slate-600 text-[10px] leading-tight block mt-0.5">
+                            {periodoMedicaoInicio && periodoMedicaoFim ? `${periodoMedicaoInicio} a ${periodoMedicaoFim}` : '-'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Efetiva Pagamento</span>
+                          <span className="font-bold text-slate-700">{dataPagamento || '-'}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Documentos Mensais Exigidos</span>
+                        <span className="font-semibold text-slate-600 block text-[10px] leading-tight mt-0.5">{documentacoesMensais || '-'}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2 border-l border-slate-100 pl-4 print:border-slate-200">
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Razão Social (Faturamento)</span>
+                        <span className="font-bold text-slate-700 block leading-tight mt-0.5">{faturamentoRazaoSocial || client.razaoSocial || '-'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">CNPJ (Faturamento)</span>
+                        <span className="font-bold text-slate-700">{faturamentoCnpj || client.cnpj || '-'}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Inscrição Estadual</span>
+                          <span className="font-bold text-slate-700">{faturamentoInscricaoEstadual || '-'}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Inscrição Municipal</span>
+                          <span className="font-bold text-slate-700">{faturamentoInscricaoMunicipal || '-'}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">E-mail para Envio de NF</span>
+                        <span className="font-bold text-slate-700 block">{faturamentoEmail || '-'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wide block">Endereço de Faturamento</span>
+                        <span className="font-semibold text-slate-500 block leading-tight text-[10px] mt-0.5">{faturamentoEndereco || '-'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção 4: Dimensionamento Operacional (Quadro Efetivo) */}
+                <div className="print-section space-y-2.5">
+                  <h3 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-1 flex items-center gap-1.5">
+                    <Users size={12} /> 4. Dimensionamento do Quadro Operacional (Mão de Obra)
+                  </h3>
+                  <div className="border border-slate-205 rounded-xl overflow-hidden bg-white print:border-slate-200">
+                    <table className="w-full text-xs select-text table-fixed mt-0 border-collapse">
+                      <colgroup>
+                        <col style={{ width: '6%' }} />
+                        <col style={{ width: '30%' }} />
+                        <col style={{ width: '10%' }} />
+                        <col style={{ width: '12%' }} />
+                        <col style={{ width: '12%' }} />
+                        <col style={{ width: '12%' }} />
+                        <col style={{ width: '18%' }} />
+                      </colgroup>
+                      <thead>
+                        <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[8px] font-bold select-none tracking-wider text-center border-none">
+                          <th className="py-2 px-1 text-center w-10 border-r border-white/10 last:border-r-0">Item</th>
+                          <th className="py-2 px-3 text-left border-r border-white/10 last:border-r-0">Função / Cargo</th>
+                          <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0">Qtd</th>
+                          <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0">Escala</th>
+                          <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0">Entrada</th>
+                          <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0">Saída</th>
+                          <th className="py-2 px-3 text-left border-r border-white/10 last:border-r-0">Dias da Semana</th>
+                        </tr>
+                      </thead>
+                      <tbody className="font-semibold text-slate-700">
+                        {funcionarios.map((emp, index) => (
+                          <tr key={emp.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-100/80 transition-colors">
+                            <td className="py-2 px-1 text-center font-bold text-slate-400 select-none text-[10px] border-r border-slate-200/50 last:border-r-0">
+                              {index + 1}
+                            </td>
+                            <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-slate-800 text-[11px] font-bold">
+                              {emp.funcao || 'Não especificada'}
+                            </td>
+                            <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-center font-black text-slate-800 text-[11px]">
+                              {emp.quantidade || 0}
+                            </td>
+                            <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-center text-[11px]">
+                              {emp.escala}
+                            </td>
+                            <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-center text-[11px]">
+                              {emp.horarioEntrada || '08:00'}
+                            </td>
+                            <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-center text-[11px]">
+                              {emp.horarioSaida || '17:00'}
+                            </td>
+                            <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-[10px] text-slate-600 font-medium">
+                              {emp.diasSemana || 'Segunda a Sexta'}
+                            </td>
+                          </tr>
+                        ))}
+                        {funcionarios.length === 0 && (
+                          <tr>
+                            <td colSpan={7} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white">
+                              Nenhum funcionário cadastrado.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Seção 5: Recursos de Equipamentos e Materiais */}
+                <div className="print-section grid grid-cols-2 gap-4">
+                  
+                  {/* Tabela Equipamentos */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider block flex items-center gap-1.5 border-b border-slate-100 pb-1">
+                      <Wrench size={12} /> 5. Relação de Máquinas / Equipamentos
+                    </span>
+                    <div className="border border-slate-200 rounded-xl overflow-hidden bg-white print:border-slate-200">
+                      <table className="w-full text-xs select-text border-collapse">
+                        <thead>
+                          <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[8px] font-bold select-none tracking-wider text-center border-none">
+                            <th className="py-2 px-1 text-center w-10 border-r border-white/10 last:border-r-0">Item</th>
+                            <th className="py-2 px-3 text-left border-r border-white/10 last:border-r-0">Nome do Equipamento</th>
+                            <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0 w-16">Qtd</th>
+                            <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0 w-20">Alocação</th>
+                          </tr>
+                        </thead>
+                        <tbody className="font-semibold text-slate-700">
+                          {equipamentos.map((eq, index) => (
+                            <tr key={eq.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-100/80 transition-colors">
+                              <td className="py-2 px-1 text-center font-bold text-slate-400 select-none text-[10px] border-r border-slate-200/50 last:border-r-0">
+                                {index + 1}
+                              </td>
+                              <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-slate-800">
+                                <div className="space-y-0.5">
+                                  <div className="text-[11px] font-bold text-slate-800">{eq.nome}</div>
+                                  {eq.observacao && <div className="text-[8.5px] text-slate-450 italic font-semibold">{eq.observacao}</div>}
+                                </div>
+                              </td>
+                              <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-center font-black text-slate-800 text-[11px]">
+                                {eq.quantidade || 0}
+                              </td>
+                              <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-center text-[10px] uppercase font-bold text-slate-500">
+                                {eq.tipo === 'PROPRIO' ? 'Próprio' : 'Locado'}
+                              </td>
+                            </tr>
+                          ))}
+                          {equipamentos.length === 0 && (
+                            <tr>
+                              <td colSpan={4} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white">
+                                Nenhum equipamento listado.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Tabela Materiais */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider block flex items-center gap-1.5 border-b border-slate-100 pb-1">
+                      <Package size={12} /> 6. Relação de Materiais e Insumos
+                    </span>
+                    <div className="border border-slate-200 rounded-xl overflow-hidden bg-white print:border-slate-200">
+                      <table className="w-full text-xs select-text border-collapse">
+                        <thead>
+                          <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[8px] font-bold select-none tracking-wider text-center border-none">
+                            <th className="py-2 px-1 text-center w-10 border-r border-white/10 last:border-r-0">Item</th>
+                            <th className="py-2 px-3 text-left border-r border-white/10 last:border-r-0">Nome do Material</th>
+                            <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0 w-16">Qtd</th>
+                            <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0 w-16">Unid</th>
+                          </tr>
+                        </thead>
+                        <tbody className="font-semibold text-slate-700">
+                          {materiais.map((mat, index) => (
+                            <tr key={mat.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-100/80 transition-colors">
+                              <td className="py-2 px-1 text-center font-bold text-slate-400 select-none text-[10px] border-r border-slate-200/50 last:border-r-0">
+                                {index + 1}
+                              </td>
+                              <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-slate-800">
+                                <div className="space-y-0.5">
+                                  <div className="text-[11px] font-bold text-slate-800">{mat.nome}</div>
+                                  {mat.observacao && <div className="text-[8.5px] text-slate-450 italic font-semibold">{mat.observacao}</div>}
+                                </div>
+                              </td>
+                              <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-center font-black text-slate-800 text-[11px]">
+                                {mat.quantidade || 0}
+                              </td>
+                              <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-center text-[10px] uppercase font-bold text-slate-500">
+                                {mat.unidade || 'UN'}
+                              </td>
+                            </tr>
+                          ))}
+                          {materiais.length === 0 && (
+                            <tr>
+                              <td colSpan={4} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white">
+                                Nenhum material listado.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção 6: Cronograma de Ações de Implantação */}
+                <div className="print-section space-y-2.5">
+                  <h3 className="text-[10px] font-black text-[#1B4D3E] uppercase tracking-wider border-b border-slate-100 pb-1 flex items-center gap-1.5">
+                    <ListTodo size={12} /> 7. Ações de Planejamento e Implantação do Serviço
+                  </h3>
+                  <div className="border border-slate-200 rounded-xl overflow-hidden bg-white print:border-slate-200">
+                    <table className="w-full text-xs select-text table-fixed mt-0 border-collapse">
+                      <colgroup>
+                        <col style={{ width: '6%' }} />
+                        <col style={{ width: '56%' }} />
+                        <col style={{ width: '14%' }} />
+                        <col style={{ width: '12%' }} />
+                        <col style={{ width: '12%' }} />
+                      </colgroup>
+                      <thead>
+                        <tr className="bg-[#1B4D3E] text-slate-100 uppercase text-[8px] font-bold select-none tracking-wider text-center border-none">
+                          <th className="py-2 px-1 text-center w-10 border-r border-white/10 last:border-r-0">Item</th>
+                          <th className="py-2 px-3 text-left border-r border-white/10 last:border-r-0">Descrição da Ação / Área</th>
+                          <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0">Responsável</th>
+                          <th className="py-2 px-3 text-center border-r border-white/10 last:border-r-0">Prazo</th>
+                          <th className="py-2 px-1.5 text-center border-r border-white/10 last:border-r-0">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="font-semibold text-slate-700">
+                        {todasAcoes.map((action: any, index: number) => {
+                          let actionColorClass = 'text-blue-600 bg-blue-50 border-blue-200';
+                          if (action.status === 'CONCLUIDA') {
+                            actionColorClass = 'text-emerald-700 bg-emerald-50 border-emerald-300';
+                          } else {
+                            const isOverdue = action.dataLimite && new Date(action.dataLimite) < new Date();
+                            if (isOverdue) actionColorClass = 'text-red-700 bg-red-50 border-red-300';
+                          }
+                          return (
+                            <tr key={action.id} className="hover:bg-slate-50/50 bg-white border-b border-slate-100/80 transition-colors">
+                              <td className="py-2 px-1 text-center font-bold text-slate-400 select-none text-[10px] border-r border-slate-200/50 last:border-r-0">
+                                {index + 1}
+                              </td>
+                              <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-slate-800 text-[11px]">
+                                <div className="space-y-0.5">
+                                  <div className="font-bold text-slate-800">{action.descricao}</div>
+                                  <div className="text-[8px] text-[#1B4D3E]/80 font-black uppercase tracking-wider">Área: {action.secaoTitulo}</div>
+                                </div>
+                              </td>
+                              <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-center font-semibold text-slate-700 text-[11px]">
+                                {action.responsavelNome}
+                              </td>
+                              <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-center text-[10px] font-bold text-slate-650">
+                                {action.dataLimite ? new Date(action.dataLimite).toLocaleDateString('pt-BR') : '-'}
+                              </td>
+                              <td className="px-3 py-1.5 border-r border-slate-200/50 last:border-r-0 text-center">
+                                <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase border select-none whitespace-nowrap ${actionColorClass}`}>
+                                  {action.status === 'CONCLUIDA' ? 'Concluída' : (action.dataLimite && new Date(action.dataLimite) < new Date() ? 'Atrasada' : 'Pendente')}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        {todasAcoes.length === 0 && (
+                          <tr>
+                            <td colSpan={5} className="px-6 py-6 text-center text-slate-400 italic font-medium bg-white">
+                              Nenhuma ação de implantação cadastrada no Planejador.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Seção 7: Aprovação e Liberação Física (Assinaturas) */}
+                <div className="print-section pt-8 space-y-6">
+                  <div className="text-center space-y-1.5">
+                    <p className="text-[10px] text-slate-500 font-extrabold uppercase tracking-widest">
+                      TERMO DE LIBERAÇÃO DE IMPLANTAÇÃO
+                    </p>
+                    <p className="text-xs text-slate-600 font-medium max-w-xl mx-auto leading-relaxed">
+                      Declaramos para os devidos fins que o Planejamento de Implantação do Contrato (PIC) acima detalhado está devidamente revisado, validado e com recursos alocados, estando **liberada a implantação física e o início das operações** no cliente na data convencionada.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-6 pt-6 text-[10px] font-bold text-slate-700">
+                    <div className="space-y-4 text-center">
+                      <div className="border-t border-slate-350 pt-2 flex flex-col items-center">
+                        <span className="font-black text-slate-800">Implantação / Operações</span>
+                        <span className="text-[9px] text-slate-450 font-bold uppercase tracking-wider mt-0.5">Responsável Técnico</span>
+                      </div>
+                    </div>
+                    <div className="space-y-4 text-center">
+                      <div className="border-t border-slate-350 pt-2 flex flex-col items-center">
+                        <span className="font-black text-slate-850">{vendedor.nome || 'Gestor Comercial'}</span>
+                        <span className="text-[9px] text-slate-450 font-bold uppercase tracking-wider mt-0.5">Responsável Comercial</span>
+                      </div>
+                    </div>
+                    <div className="space-y-4 text-center">
+                      <div className="border-t border-slate-350 pt-2 flex flex-col items-center">
+                        <span className="font-black text-slate-800">____ / ____ / ________</span>
+                        <span className="text-[9px] text-slate-450 font-bold uppercase tracking-wider mt-0.5">Data de Liberação</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
             </div>
           )}
 
