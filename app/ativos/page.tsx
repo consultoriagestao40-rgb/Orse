@@ -1869,7 +1869,15 @@ export default function AtivosPage() {
                             </div>
                           ))}
                           {colOrdens.length === 0 && (
-                            <div className="py-12 text-center text-slate-350 italic text-[9px]">Sem ordens de serviço.</div>
+                            <div 
+                              onClick={() => openOsModal()}
+                              className="border border-dashed border-slate-300 hover:border-[#1B4D3E]/40 rounded-lg py-10 flex flex-col items-center justify-center gap-2 flex-1 cursor-pointer transition-all hover:bg-white/50 group/empty"
+                            >
+                              <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-505 flex items-center justify-center group-hover/empty:bg-[#1B4D3E]/10 group-hover/empty:text-[#1B4D3E] transition-colors">
+                                <Plus size={16} />
+                              </div>
+                              <p className="text-[10px] text-slate-450 font-bold uppercase tracking-wider group-hover/empty:text-[#1B4D3E] transition-colors">Sem ordens</p>
+                            </div>
                           )}
                         </div>
                       </div>
