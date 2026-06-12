@@ -46,7 +46,8 @@ import {
   Plus,
   LogOut,
   Target,
-  ChevronDown
+  ChevronDown,
+  Wrench
 } from 'lucide-react';
 
 const tailwindColorMap: { [key: string]: string } = {
@@ -1294,6 +1295,15 @@ export default function MobileCRM() {
           <PlusCircle size={18} className="text-slate-400" />
           <span className="text-[8px] uppercase tracking-wider">Novo Lead</span>
         </button>
+
+        {/* Tab Área do Técnico (Mobile Link) */}
+        <a
+          href="/ativos/tecnico"
+          className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent text-slate-400 font-bold no-underline"
+        >
+          <Wrench size={18} className="text-slate-400" />
+          <span className="text-[8px] uppercase tracking-wider">Técnico</span>
+        </a>
 
         {/* Tab Chat Interno */}
         <button
