@@ -1483,19 +1483,33 @@ export default function GestaoEntregasPage() {
                             </div>
                           ) : null}
 
-                          {/* Assinatura do Entregador */}
-                          {ent.assinaturaEntregador && (
-                            <div className="bg-slate-50 border border-slate-150 p-4 rounded-2xl flex flex-col items-center gap-2 text-center">
-                              <p className="text-[9px] font-black text-slate-455 uppercase tracking-wider leading-none">Entregador Responsável</p>
-                              <div className="w-full bg-white border border-slate-200 rounded-xl h-24 overflow-hidden relative flex items-center justify-center select-none">
-                                <img src={ent.assinaturaEntregador} alt="Assinatura Entregador" className="max-h-full max-w-full object-contain" />
+                          {/* Entregador Responsável */}
+                          {ent.entregadorResponsavel && (() => {
+                            const driverUser = usuarios.find(u => 
+                              u.email === ent.entregadorEmail || 
+                              u.nome === ent.entregadorResponsavel
+                            );
+                            const avatarUrl = driverUser?.avatarUrl;
+
+                            return (
+                              <div className="bg-slate-50 border border-slate-150 p-4 rounded-2xl flex flex-col items-center justify-center gap-4 text-center min-h-[160px]">
+                                <p className="text-[9px] font-black text-slate-455 uppercase tracking-wider leading-none">Entregador Responsável</p>
+                                
+                                {avatarUrl ? (
+                                  <img src={avatarUrl} alt="" className="w-12 h-12 rounded-full object-cover border border-slate-200 shrink-0" />
+                                ) : (
+                                  <div className="w-12 h-12 bg-[#1B4D3E]/10 text-[#1B4D3E] rounded-full flex items-center justify-center font-black text-sm uppercase border border-[#1B4D3E]/15">
+                                    {ent.entregadorResponsavel.substring(0, 2)}
+                                  </div>
+                                )}
+
+                                <div className="text-xs">
+                                  <p className="font-extrabold text-slate-850 uppercase truncate max-w-[180px]">{ent.entregadorResponsavel}</p>
+                                  <p className="text-[9.5px] text-slate-500 mt-1 font-bold uppercase">{driverUser?.cargo || 'Entregador'}</p>
+                                </div>
                               </div>
-                              <div className="text-xs">
-                                <p className="font-extrabold text-slate-850 uppercase truncate max-w-[180px]">{ent.entregadorResponsavel}</p>
-                                <p className="text-[9.5px] text-slate-500 mt-1 font-bold uppercase">Entregador</p>
-                              </div>
-                            </div>
-                          )}
+                            );
+                          })()}
                         </div>
                       </div>
                     )}
