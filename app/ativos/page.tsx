@@ -754,8 +754,13 @@ export default function AtivosPage() {
       'Deseja excluir esta Ordem de Serviço?',
       async () => {
         setLoading(true);
-        await deleteOrdemServicoAtivo(id);
-        await loadData();
+        const res = await deleteOrdemServicoAtivo(id);
+        if (res.success) {
+          await loadData();
+          showAlert('OS Excluída', 'Ordem de serviço excluída com sucesso.', 'success');
+        } else {
+          showAlert('Erro ao Excluir', res.error || 'Erro ao excluir OS', 'error');
+        }
         setLoading(false);
       }
     );
