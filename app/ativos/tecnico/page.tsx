@@ -647,17 +647,17 @@ export default function TecnicoPage() {
     setSaving(true);
     try {
       const res = await updateOrdemServicoAtivo(osId, { 
-        status: 'CANCELADA',
-        observacao: `Cancelada pelo técnico. Motivo: ${motivo}`
+        status: 'VALIDACAO',
+        observacao: `Cancelamento solicitado pelo técnico. Motivo: ${motivo}`
       });
       if (res.success) {
         await loadTechnicianData();
-        showAlert('success', 'OS Cancelada com Sucesso', 'A ordem de serviço foi cancelada.');
+        showAlert('success', 'Cancelamento Solicitado', 'A solicitação de cancelamento foi enviada para validação do gestor.');
       } else {
-        showAlert('error', 'Falha ao Cancelar', res.error || 'Não foi possível cancelar a OS.');
+        showAlert('error', 'Falha ao Solicitar', res.error || 'Não foi possível solicitar o cancelamento.');
       }
     } catch (err: any) {
-      showAlert('error', 'Erro', err.message || 'Erro ao cancelar OS.');
+      showAlert('error', 'Erro', err.message || 'Erro ao solicitar cancelamento.');
     }
     setSaving(false);
   };

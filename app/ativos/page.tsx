@@ -1679,8 +1679,11 @@ export default function AtivosPage() {
                         statusColor = 'bg-amber-50 text-amber-700 border-amber-200';
                         statusText = 'Em atendimento';
                       } else if (os.status === 'VALIDACAO') {
-                        statusColor = 'bg-purple-50 text-purple-700 border-purple-200';
-                        statusText = 'Em Validação';
+                        const isCancelReq = os.observacao?.includes('Cancelamento solicitado') || os.observacao?.includes('Cancelada pelo técnico');
+                        statusColor = isCancelReq 
+                          ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' 
+                          : 'bg-purple-50 text-purple-700 border-purple-200';
+                        statusText = isCancelReq ? 'Sol. Cancelamento' : 'Em Validação';
                       } else if (os.status === 'CANCELADA') {
                         statusColor = 'bg-red-50 text-red-700 border-red-200';
                         statusText = 'Cancelada';
@@ -1968,6 +1971,11 @@ export default function AtivosPage() {
                                   {os.status === 'PROGRAMADO' && os.ordemExecucao && (
                                     <span className="text-[9px] font-black bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 whitespace-nowrap" title="Ordem na Fila">
                                       #{os.ordemExecucao}
+                                    </span>
+                                  )}
+                                  {os.status === 'VALIDACAO' && (os.observacao?.includes('Cancelamento solicitado') || os.observacao?.includes('Cancelada pelo técnico')) && (
+                                    <span className="text-[9px] font-black bg-red-50 text-red-700 border border-red-200 rounded px-1.5 py-0.5 whitespace-nowrap animate-pulse" title="Solicitação de Cancelamento">
+                                      Sol. Cancelamento
                                     </span>
                                   )}
                                   {os.status === 'EM_DESLOCAMENTO' && (
@@ -2645,37 +2653,83 @@ export default function AtivosPage() {
 
                 {(!osForm.id || activeOsTab === 'details') && (
                   <div className="space-y-4">
-                    {osForm.id && ordens.find(o => o.id === osForm.id)?.status === 'VALIDACAO' && (
-                      <div className="bg-purple-50/70 border border-purple-200/80 rounded-2xl p-4 space-y-3">
-                        <div className="flex gap-2">
-                          <ShieldAlert className="text-purple-600 shrink-0 mt-0.5" size={16} />
-                          <div className="text-left space-y-1">
-                            <h4 className="text-xs font-black text-purple-900 uppercase tracking-tight">OS aguardando validação</h4>
-                            <p className="text-[10.5px] font-semibold text-purple-700 leading-relaxed">
-                              O técnico concluiu o atendimento em campo e enviou o relatório, fotos e assinatura do cliente para sua validação.
-                            </p>
+                    {osForm.id && (() => {
+                      const currentOsItem = ordens.find(o => o.id === osForm.id);
+                      if (!currentOsItem || currentOsItem.status !== 'VALIDACAO') return null;
+                      
+                      const isCancelRequest = currentOsItem.observacao?.includes('Cancelamento solicitado') || currentOsItem.observacao?.includes('Cancelada pelo técnico');
+                      
+                      if (isCancelRequest) {
+                        return (
+                          <div className="bg-red-50/70 border border-red-200/80 rounded-2xl p-4 space-y-3">
+                            <div className="flex gap-2">
+                              <ShieldAlert className="text-red-650 shrink-0 mt-0.5" size={16} />
+                              <div className="text-left space-y-1">
+                                <h4 className="text-xs font-black text-red-900 uppercase tracking-tight">Solicitação de Cancelamento da OS</h4>
+                                <p className="text-[10.5px] font-semibold text-red-755 leading-relaxed">
+                                  O técnico solicitou o cancelamento desta ordem de serviço em campo.
+                                </p>
+                                {currentOsItem.observacao && (
+                                  <p className="text-[10.5px] font-bold text-red-800 bg-red-100/50 p-2 rounded-lg mt-1 select-text">
+                                    {currentOsItem.observacao}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex gap-2 pt-1">
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateOsStatus(osForm.id, 'CANCELADA')}
+                                disabled={updatingOsId === osForm.id}
+                                className="flex-1 py-2 px-3 bg-red-600 hover:bg-red-750 text-white rounded-xl text-[10.5px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                              >
+                                <CheckCircle size={13} className="stroke-[2.5]" /> Confirmar Cancelamento
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateOsStatus(osForm.id, 'EM_ANDAMENTO')}
+                                disabled={updatingOsId === osForm.id}
+                                className="flex-1 py-2 px-3 bg-white border border-red-200 hover:bg-red-50 text-red-600 rounded-xl text-[10.5px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                              >
+                                <XCircle size={13} className="stroke-[2.5]" /> Recusar Cancelamento
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <div className="bg-purple-50/70 border border-purple-200/80 rounded-2xl p-4 space-y-3">
+                          <div className="flex gap-2">
+                            <ShieldAlert className="text-purple-650 shrink-0 mt-0.5" size={16} />
+                            <div className="text-left space-y-1">
+                              <h4 className="text-xs font-black text-purple-900 uppercase tracking-tight">OS aguardando validação</h4>
+                              <p className="text-[10.5px] font-semibold text-purple-755 leading-relaxed">
+                                O técnico concluiu o atendimento em campo e enviou o relatório, fotos e assinatura do cliente para sua validação.
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateOsStatus(osForm.id, 'CONCLUIDA')}
+                              disabled={updatingOsId === osForm.id}
+                              className="flex-1 py-2 px-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10.5px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                            >
+                              <CheckCircle size={13} className="stroke-[2.5]" /> Validar & Concluir
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateOsStatus(osForm.id, 'EM_ANDAMENTO')}
+                              disabled={updatingOsId === osForm.id}
+                              className="flex-1 py-2 px-3 bg-white border border-purple-200 hover:bg-purple-50 text-purple-600 rounded-xl text-[10.5px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                            >
+                              <XCircle size={13} className="stroke-[2.5]" /> Recusar & Retornar
+                            </button>
                           </div>
                         </div>
-                        <div className="flex gap-2 pt-1">
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateOsStatus(osForm.id, 'CONCLUIDA')}
-                            disabled={updatingOsId === osForm.id}
-                            className="flex-1 py-2 px-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10.5px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-50"
-                          >
-                            <CheckCircle size={13} className="stroke-[2.5]" /> Validar & Concluir
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateOsStatus(osForm.id, 'EM_ANDAMENTO')}
-                            disabled={updatingOsId === osForm.id}
-                            className="flex-1 py-2 px-3 bg-white border border-purple-200 hover:bg-purple-50 text-purple-600 rounded-xl text-[10.5px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
-                          >
-                            <XCircle size={13} className="stroke-[2.5]" /> Recusar & Retornar
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo de Serviço *</label>
