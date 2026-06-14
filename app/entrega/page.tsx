@@ -1686,19 +1686,38 @@ export default function GestaoEntregasPage() {
               </header>
               
               <div className="p-6 overflow-y-auto flex-1 space-y-4">
-                <div className="space-y-1 text-left">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Selecione o Entregador</label>
-                  <select
-                    value={selectedRouteEntregador}
-                    onChange={(e) => setSelectedRouteEntregador(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
-                    disabled={routeSaving}
-                  >
-                    <option value="">Selecione um Entregador...</option>
+                <div className="space-y-2 text-left">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Selecione o Entregador</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
                     {entregadorList.map(u => (
-                      <option key={u.id} value={u.email}>{u.nome}</option>
+                      <button
+                        key={u.id}
+                        type="button"
+                        onClick={() => setSelectedRouteEntregador(u.email)}
+                        className={`w-full flex items-center gap-3 p-2 border rounded-xl text-left transition-all cursor-pointer ${
+                          selectedRouteEntregador === u.email 
+                            ? 'border-[#1B4D3E] bg-slate-50 ring-2 ring-[#1B4D3E]/10' 
+                            : 'border-slate-200 hover:bg-slate-50'
+                        }`}
+                        disabled={routeSaving}
+                      >
+                        {u.avatarUrl ? (
+                          <img src={u.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-slate-200 shrink-0" />
+                        ) : (
+                          <div className="w-7 h-7 bg-[#1B4D3E]/10 text-[#1B4D3E] rounded-full flex items-center justify-center font-black text-[10px] uppercase shrink-0 border border-[#1B4D3E]/15">
+                            {u.nome.substring(0, 2)}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-xs font-extrabold text-slate-800 uppercase truncate leading-none">{u.nome}</p>
+                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-1">{u.cargo || 'Entregador'}</p>
+                        </div>
+                      </button>
                     ))}
-                  </select>
+                    {entregadorList.length === 0 && (
+                      <p className="text-xs text-slate-400 italic text-center py-4 col-span-2">Nenhum entregador cadastrado.</p>
+                    )}
+                  </div>
                 </div>
 
                 {selectedRouteEntregador ? (
