@@ -895,6 +895,69 @@ export default function AtivosPage() {
     setUpdatingOsId(null);
   };
 
+  const handleRecuseCancel = async (osId: string) => {
+    const os = ordens.find(o => o.id === osId);
+    if (!os) return;
+
+    let targetStatus = 'EM_ANDAMENTO'; // fallback
+    if (os.historico) {
+      try {
+        const history = JSON.parse(os.historico);
+        if (Array.isArray(history)) {
+          // Loop backwards to find the status prior to VALIDACAO
+          for (let i = history.length - 1; i >= 0; i--) {
+            const item = history[i];
+            if (item && typeof item.acao === 'string') {
+              const match = item.acao.match(/Status alterado de (\w+) para VALIDACAO/);
+              if (match && match[1]) {
+                const statusCandidate = match[1];
+                if (['PROGRAMADO', 'EM_DESLOCAMENTO', 'EM_ANDAMENTO'].includes(statusCandidate)) {
+                  targetStatus = statusCandidate;
+                  break;
+                }
+              } else {
+                const generalMatch = item.acao.match(/Status alterado de (\w+) para/);
+                if (generalMatch && generalMatch[1]) {
+                  const statusCandidate = generalMatch[1];
+                  if (['PROGRAMADO', 'EM_DESLOCAMENTO', 'EM_ANDAMENTO'].includes(statusCandidate)) {
+                    targetStatus = statusCandidate;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Erro ao fazer parse do historico:", e);
+      }
+    }
+
+    setUpdatingOsId(osId);
+    
+    // Atualização otimista
+    setOrdens(prev => prev.map(o => o.id === osId ? { ...o, status: targetStatus, observacaoAtendimento: '' } : o));
+    setOsForm(prev => prev.id === osId ? { ...prev, status: targetStatus, observacaoAtendimento: '' } : prev);
+    
+    const res = await updateOrdemServicoAtivo(osId, { 
+      status: targetStatus, 
+      observacaoAtendimento: '' 
+    });
+    
+    if (res.success) {
+      await loadData(true);
+      showAlert('Cancelamento Recusado', `A solicitação de cancelamento foi recusada. A OS retornou para o status ${targetStatus}.`, 'success');
+    } else {
+      await loadData(true);
+      const realOs = ordens.find(o => o.id === osId);
+      if (realOs) {
+        setOsForm(prev => prev.id === osId ? { ...prev, status: realOs.status } : prev);
+      }
+      showAlert('Erro ao Recusar', res.error || 'Erro ao recusar o cancelamento', 'error');
+    }
+    setUpdatingOsId(null);
+  };
+
   const handleConfirmAssignTecnico = async () => {
     if (!osToAssignTecnico) return;
     if (!selectedTecnicoForAssign) {
@@ -1679,7 +1742,7 @@ export default function AtivosPage() {
                         statusColor = 'bg-amber-50 text-amber-700 border-amber-200';
                         statusText = 'Em atendimento';
                       } else if (os.status === 'VALIDACAO') {
-                        const isCancelReq = os.observacao?.includes('Cancelamento solicitado') || os.observacao?.includes('Cancelada pelo técnico');
+                        const isCancelReq = os.observacao?.includes('Cancelamento solicitado') || os.observacao?.includes('Cancelada pelo técnico') || os.observacaoAtendimento?.includes('Cancelamento solicitado') || os.observacaoAtendimento?.includes('Cancelada pelo técnico');
                         statusColor = isCancelReq 
                           ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' 
                           : 'bg-purple-50 text-purple-700 border-purple-200';
@@ -1973,7 +2036,7 @@ export default function AtivosPage() {
                                       #{os.ordemExecucao}
                                     </span>
                                   )}
-                                  {os.status === 'VALIDACAO' && (os.observacao?.includes('Cancelamento solicitado') || os.observacao?.includes('Cancelada pelo técnico')) && (
+                                  {os.status === 'VALIDACAO' && (os.observacao?.includes('Cancelamento solicitado') || os.observacao?.includes('Cancelada pelo técnico') || os.observacaoAtendimento?.includes('Cancelamento solicitado') || os.observacaoAtendimento?.includes('Cancelada pelo técnico')) && (
                                     <span className="text-[9px] font-black bg-red-50 text-red-700 border border-red-200 rounded px-1.5 py-0.5 whitespace-nowrap animate-pulse" title="Solicitação de Cancelamento">
                                       Sol. Cancelamento
                                     </span>
@@ -2657,7 +2720,7 @@ export default function AtivosPage() {
                       const currentOsItem = ordens.find(o => o.id === osForm.id);
                       if (!currentOsItem || currentOsItem.status !== 'VALIDACAO') return null;
                       
-                      const isCancelRequest = currentOsItem.observacao?.includes('Cancelamento solicitado') || currentOsItem.observacao?.includes('Cancelada pelo técnico');
+                      const isCancelRequest = currentOsItem.observacao?.includes('Cancelamento solicitado') || currentOsItem.observacao?.includes('Cancelada pelo técnico') || currentOsItem.observacaoAtendimento?.includes('Cancelamento solicitado') || currentOsItem.observacaoAtendimento?.includes('Cancelada pelo técnico');
                       
                       if (isCancelRequest) {
                         return (
@@ -2669,9 +2732,9 @@ export default function AtivosPage() {
                                 <p className="text-[10.5px] font-semibold text-red-755 leading-relaxed">
                                   O técnico solicitou o cancelamento desta ordem de serviço em campo.
                                 </p>
-                                {currentOsItem.observacao && (
+                                {(currentOsItem.observacaoAtendimento || currentOsItem.observacao) && (
                                   <p className="text-[10.5px] font-bold text-red-800 bg-red-100/50 p-2 rounded-lg mt-1 select-text">
-                                    {currentOsItem.observacao}
+                                    {currentOsItem.observacaoAtendimento || currentOsItem.observacao}
                                   </p>
                                 )}
                               </div>
@@ -2687,7 +2750,7 @@ export default function AtivosPage() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleUpdateOsStatus(osForm.id, 'EM_ANDAMENTO')}
+                                onClick={() => handleRecuseCancel(osForm.id)}
                                 disabled={updatingOsId === osForm.id}
                                 className="flex-1 py-2 px-3 bg-white border border-red-200 hover:bg-red-50 text-red-600 rounded-xl text-[10.5px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                               >

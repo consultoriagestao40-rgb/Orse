@@ -648,7 +648,7 @@ export default function TecnicoPage() {
     try {
       const res = await updateOrdemServicoAtivo(osId, { 
         status: 'VALIDACAO',
-        observacao: `Cancelamento solicitado pelo técnico. Motivo: ${motivo}`
+        observacaoAtendimento: `Cancelamento solicitado pelo técnico. Motivo: ${motivo}`
       });
       if (res.success) {
         await loadTechnicianData();
