@@ -916,12 +916,12 @@ export default function GestaoEntregasPage() {
       .sort((a, b) => b.volume - a.volume)
       .slice(0, 5);
 
-    // 10. Evolução mensal do volume de entregas (últimos 12 meses)
+    // 10. Evolução mensal do volume de entregas (12 meses do ano vigente)
     const monthlyVolume: Record<string, { volume: number; valor: number }> = {};
     const now = new Date();
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const currentYear = now.getFullYear();
+    for (let m = 0; m < 12; m++) {
+      const key = `${currentYear}-${String(m + 1).padStart(2, '0')}`;
       monthlyVolume[key] = { volume: 0, valor: 0 };
     }
 
@@ -1934,7 +1934,7 @@ export default function GestaoEntregasPage() {
                   <div>
                     <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
                       <DollarSign size={16} className="text-[#1B4D3E] stroke-[2.5]" />
-                      Valor & Volume por Mês (12 meses)
+                      Valor & Volume por Mês (Ano Vigente)
                     </h3>
                     <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Faturamento acumulado e quantidade de entregas</p>
                   </div>
@@ -2057,7 +2057,7 @@ export default function GestaoEntregasPage() {
                   <div>
                     <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
                       <BarChart3 size={16} className="text-[#1B4D3E] stroke-[2.5]" />
-                      Ticket Médio por Mês (12 meses)
+                      Ticket Médio por Mês (Ano Vigente)
                     </h3>
                     <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Histórico do ticket médio por entrega realizada</p>
                   </div>
