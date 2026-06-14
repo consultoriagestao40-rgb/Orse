@@ -2593,89 +2593,82 @@ export default function AtivosPage() {
                       })()}
                     </header>
 
-                    <div className="py-4 w-full flex justify-center items-center relative min-h-[140px]">
-                      {(() => {
-                        const val = Math.min(10, Math.max(0, slaMedioDias));
-                        // Angle from -90deg (0 days) to +90deg (10+ days)
-                        const needleAngle = -90 + (val / 10) * 180;
-                        return (
-                          <div className="relative w-[180px] h-[100px] flex items-center justify-center overflow-visible">
-                            <svg viewBox="0 0 200 120" className="w-full h-full overflow-visible select-none">
-                              <defs>
-                                <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                  <stop offset="0%" stopColor="#10B981" />   {/* Emerald */}
-                                  <stop offset="45%" stopColor="#F59E0B" />  {/* Amber */}
-                                  <stop offset="75%" stopColor="#EF4444" />  {/* Red */}
-                                  <stop offset="100%" stopColor="#B91C1C" /> {/* Dark Red */}
-                                </linearGradient>
-                                <filter id="needleShadow" x="-20%" y="-20%" width="140%" height="140%">
-                                  <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" floodOpacity="0.25"/>
-                                </filter>
-                              </defs>
-                              {/* Background track */}
-                              <path 
-                                d="M 20 110 A 80 80 0 0 1 180 110" 
-                                fill="none" 
-                                stroke="#F1F5F9" 
-                                strokeWidth="16" 
-                                strokeLinecap="round" 
+                    <div className="py-2 w-full flex flex-col justify-center items-center select-none gap-3">
+                      <div className="relative w-[180px] h-[100px] flex items-center justify-center overflow-visible">
+                        <svg viewBox="0 0 200 115" className="w-full h-full overflow-visible select-none">
+                          <defs>
+                            <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                              <stop offset="0%" stopColor="#10B981" />   {/* Emerald */}
+                              <stop offset="45%" stopColor="#F59E0B" />  {/* Amber */}
+                              <stop offset="75%" stopColor="#EF4444" />  {/* Red */}
+                              <stop offset="100%" stopColor="#B91C1C" /> {/* Dark Red */}
+                            </linearGradient>
+                            <filter id="needleShadow" x="-20%" y="-20%" width="140%" height="140%">
+                              <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" floodOpacity="0.25"/>
+                            </filter>
+                          </defs>
+                          {/* Background track */}
+                          <path 
+                            d="M 20 110 A 80 80 0 0 1 180 110" 
+                            fill="none" 
+                            stroke="#F1F5F9" 
+                            strokeWidth="16" 
+                            strokeLinecap="round" 
+                          />
+                          {/* Colored gradient track */}
+                          <path 
+                            d="M 20 110 A 80 80 0 0 1 180 110" 
+                            fill="none" 
+                            stroke="url(#gaugeGradient)" 
+                            strokeWidth="16" 
+                            strokeLinecap="round" 
+                          />
+                          
+                          {/* Ticks */}
+                          {[0, 2, 4, 6, 8, 10].map((tick) => {
+                            const angle = -90 + (tick / 10) * 180;
+                            const angleRad = (angle * Math.PI) / 180;
+                            const x1 = 100 + 80 * Math.cos(angleRad);
+                            const y1 = 110 + 80 * Math.sin(angleRad);
+                            const x2 = 100 + 90 * Math.cos(angleRad);
+                            const y2 = 110 + 90 * Math.sin(angleRad);
+                            return (
+                              <line 
+                                key={tick}
+                                x1={x1} 
+                                y1={y1} 
+                                x2={x2} 
+                                y2={y2} 
+                                stroke="#FFFFFF" 
+                                strokeWidth="2.5" 
                               />
-                              {/* Colored gradient track */}
-                              <path 
-                                d="M 20 110 A 80 80 0 0 1 180 110" 
-                                fill="none" 
-                                stroke="url(#gaugeGradient)" 
-                                strokeWidth="16" 
-                                strokeLinecap="round" 
-                              />
-                              
-                              {/* Ticks */}
-                              {[0, 2, 4, 6, 8, 10].map((tick) => {
-                                const angle = -90 + (tick / 10) * 180;
-                                const angleRad = (angle * Math.PI) / 180;
-                                const x1 = 100 + 80 * Math.cos(angleRad);
-                                const y1 = 110 + 80 * Math.sin(angleRad);
-                                const x2 = 100 + 90 * Math.cos(angleRad);
-                                const y2 = 110 + 90 * Math.sin(angleRad);
-                                return (
-                                  <line 
-                                    key={tick}
-                                    x1={x1} 
-                                    y1={y1} 
-                                    x2={x2} 
-                                    y2={y2} 
-                                    stroke="#FFFFFF" 
-                                    strokeWidth="2.5" 
-                                  />
-                                );
-                              })}
+                            );
+                          })}
 
-                              {/* Needle */}
-                              <g style={{ 
-                                transform: `rotate(${needleAngle}deg)`, 
-                                transformOrigin: '100px 110px', 
-                                transition: 'transform 1.8s cubic-bezier(0.34, 1.56, 0.64, 1)' 
-                              }}
-                                filter="url(#needleShadow)"
-                              >
-                                <path 
-                                  d="M 96 110 L 99.2 15 L 100.8 15 L 104 110 Z" 
-                                  fill="#1E293B" 
-                                />
-                                <circle cx="100" cy="110" r="10" fill="#1E293B" />
-                                <circle cx="100" cy="110" r="4" fill="#FFFFFF" />
-                              </g>
-                            </svg>
-                          </div>
-                        );
-                      })()}
+                          {/* Needle */}
+                          <g style={{ 
+                            transform: `rotate(${needleAngle}deg)`, 
+                            transformOrigin: '100px 110px', 
+                            transition: 'transform 1.8s cubic-bezier(0.34, 1.56, 0.64, 1)' 
+                          }}
+                            filter="url(#needleShadow)"
+                          >
+                            <path 
+                              d="M 96 110 L 99.2 15 L 100.8 15 L 104 110 Z" 
+                              fill="#1E293B" 
+                            />
+                            <circle cx="100" cy="110" r="10" fill="#1E293B" />
+                            <circle cx="100" cy="110" r="4" fill="#FFFFFF" />
+                          </g>
+                        </svg>
+                      </div>
                       
                       {/* Centered days indicator */}
-                      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-center select-none">
-                        <span className="text-3xl font-black text-slate-800 leading-none drop-shadow-xs animate-pulse">
-                          {slaMedioDias > 0 ? `${slaMedioDias.toFixed(1)}` : 'N/A'}
+                      <div className="text-center select-none">
+                        <span className="text-3xl font-black text-slate-800 leading-none">
+                          {slaMedioDias.toFixed(1)}
                         </span>
-                        <p className="text-[8.5px] font-black text-slate-400 uppercase tracking-widest mt-1">Dias de SLA</p>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Dias de SLA</p>
                       </div>
                     </div>
                   </div>
