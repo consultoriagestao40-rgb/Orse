@@ -1099,7 +1099,7 @@ export default function GestaoEntregasPage() {
           {/* Card 1: Total Programadas */}
           <div 
             onClick={() => setModalMetricsOpen('programadas')}
-            className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs hover:border-blue-300 active:scale-[0.98] transition-all duration-300 cursor-pointer"
+            className="bg-white border border-slate-200 rounded-2xl p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs hover:border-blue-300 active:scale-[0.98] transition-all duration-300 cursor-pointer"
           >
             <div className="space-y-1.5 text-left">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Programadas Hoje</span>
@@ -1114,7 +1114,7 @@ export default function GestaoEntregasPage() {
           {/* Card 2: Realizadas */}
           <div 
             onClick={() => setModalMetricsOpen('realizadas')}
-            className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs hover:border-emerald-300 active:scale-[0.98] transition-all duration-300 cursor-pointer"
+            className="bg-white border border-slate-200 rounded-2xl p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs hover:border-emerald-300 active:scale-[0.98] transition-all duration-300 cursor-pointer"
           >
             <div className="space-y-1.5 text-left">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Realizadas Hoje</span>
@@ -1131,7 +1131,7 @@ export default function GestaoEntregasPage() {
           {/* Card 3: Atrasadas */}
           <div 
             onClick={() => setModalMetricsOpen('atrasadas')}
-            className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs hover:border-rose-300 active:scale-[0.98] transition-all duration-300 cursor-pointer"
+            className="bg-white border border-slate-200 rounded-2xl p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs hover:border-rose-300 active:scale-[0.98] transition-all duration-300 cursor-pointer"
           >
             <div className="space-y-1.5 text-left">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Entregas Atrasadas</span>
@@ -1152,7 +1152,7 @@ export default function GestaoEntregasPage() {
           {/* Card 4: Faturamento/Valor */}
           <div 
             onClick={() => setModalMetricsOpen('valores')}
-            className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs hover:border-amber-300 active:scale-[0.98] transition-all duration-300 cursor-pointer"
+            className="bg-white border border-slate-200 rounded-2xl p-6 flex items-center justify-between shadow-2xs group hover:shadow-xs hover:border-amber-300 active:scale-[0.98] transition-all duration-300 cursor-pointer"
           >
             <div className="space-y-1.5 text-left">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Valor em Rota</span>
@@ -1170,7 +1170,7 @@ export default function GestaoEntregasPage() {
 
         {/* Barra de Filtros e Pesquisa */}
         <section className={viewMode === 'kanban' ? 'px-8 pt-8 pb-3 space-y-4' : 'px-8 py-6 space-y-4'}>
-          <div className="bg-white border border-slate-200 rounded-[2rem] p-5 shadow-2xs flex flex-col lg:flex-row items-center gap-4 select-none">
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs flex flex-col lg:flex-row items-center gap-4 select-none">
             <div className="relative flex-1 w-full group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4D3E] transition-colors" size={16} />
               <input 
@@ -1235,7 +1235,7 @@ export default function GestaoEntregasPage() {
             </div>
           ) : viewMode === 'lista' ? (
             /* TABELA / LISTA */
-            <div className="bg-white border border-slate-200 rounded-[2rem] overflow-hidden shadow-2xs select-none">
+            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs select-none">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-[9px] font-black text-slate-450 uppercase tracking-widest">
@@ -1643,7 +1643,7 @@ export default function GestaoEntregasPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 select-none">
               
               {/* Card 1: Faturamento Total */}
-              <div className="bg-white border border-slate-200 rounded-[1.8rem] p-5 shadow-2xs group hover:shadow-xs hover:border-emerald-350 transition-all duration-300">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-emerald-350 transition-all duration-300">
                 <div className="space-y-1">
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">Valores Concluídos</span>
                   <p className="text-lg font-black text-emerald-600 truncate mt-1">
@@ -1656,7 +1656,7 @@ export default function GestaoEntregasPage() {
               </div>
 
               {/* Card 2: Ticket Médio */}
-              <div className="bg-white border border-slate-200 rounded-[1.8rem] p-5 shadow-2xs group hover:shadow-xs hover:border-blue-350 transition-all duration-300">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-blue-350 transition-all duration-300">
                 <div className="space-y-1">
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">Ticket Médio</span>
                   <p className="text-lg font-black text-slate-800 truncate mt-1">
@@ -1667,7 +1667,7 @@ export default function GestaoEntregasPage() {
               </div>
 
               {/* Card 3: Média Diária */}
-              <div className="bg-white border border-slate-200 rounded-[1.8rem] p-5 shadow-2xs group hover:shadow-xs hover:border-cyan-350 transition-all duration-300">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-cyan-350 transition-all duration-300">
                 <div className="space-y-1">
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">Média Entregas/Dia</span>
                   <p className="text-lg font-black text-slate-800 truncate mt-1">
@@ -1678,7 +1678,7 @@ export default function GestaoEntregasPage() {
               </div>
 
               {/* Card 4: SLA de Entregas */}
-              <div className="bg-white border border-slate-200 rounded-[1.8rem] p-5 shadow-2xs group hover:shadow-xs hover:border-purple-350 transition-all duration-300">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-purple-350 transition-all duration-300">
                 <div className="space-y-1">
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">SLA de Entregas</span>
                   <p className={`text-lg font-black mt-1 ${kpis.slaPercentual >= 90 ? 'text-emerald-600' : kpis.slaPercentual >= 75 ? 'text-amber-600' : 'text-rose-600'}`}>
@@ -1689,7 +1689,7 @@ export default function GestaoEntregasPage() {
               </div>
 
               {/* Card 5: KM Rodados */}
-              <div className="bg-white border border-slate-200 rounded-[1.8rem] p-5 shadow-2xs group hover:shadow-xs hover:border-amber-350 transition-all duration-300">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-amber-350 transition-all duration-300">
                 <div className="space-y-1">
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">KM Rodados</span>
                   <p className="text-lg font-black text-slate-800 truncate mt-1">
@@ -1700,7 +1700,7 @@ export default function GestaoEntregasPage() {
               </div>
 
               {/* Card 6: Tempo Médio */}
-              <div className="bg-white border border-slate-200 rounded-[1.8rem] p-5 shadow-2xs group hover:shadow-xs hover:border-indigo-350 transition-all duration-300">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-indigo-350 transition-all duration-300">
                 <div className="space-y-1">
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">Tempo Médio/Rota</span>
                   <p className="text-lg font-black text-slate-800 truncate mt-1">
@@ -1718,7 +1718,7 @@ export default function GestaoEntregasPage() {
               <div className="space-y-8">
                 
                 {/* Ranking de Entregadores */}
-                <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs">
                   <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-5 flex items-center gap-2 select-none">
                     <Users size={16} className="text-[#1B4D3E] stroke-[2.5]" />
                     Performance & Horas dos Entregadores
@@ -1768,7 +1768,7 @@ export default function GestaoEntregasPage() {
                 </div>
 
                 {/* Cidades de Maior Volume */}
-                <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs">
                   <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-5 flex items-center gap-2 select-none">
                     <MapPin size={16} className="text-[#1B4D3E] stroke-[2.5]" />
                     Cidades com Maior Volume de Entregas
@@ -1806,7 +1806,7 @@ export default function GestaoEntregasPage() {
                 </div>
 
                 {/* Volume de Entregas por Segmento */}
-                <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs">
                   <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-5 flex items-center gap-2 select-none">
                     <BarChart3 size={16} className="text-[#1B4D3E] stroke-[2.5]" />
                     Volume de Entregas por Segmento
@@ -1854,7 +1854,7 @@ export default function GestaoEntregasPage() {
               <div className="space-y-8">
                 
                 {/* Ranking de Clientes */}
-                <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs">
                   <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-5 flex items-center gap-2 select-none">
                     <DollarSign size={16} className="text-[#1B4D3E] stroke-[2.5]" />
                     Clientes que mais Compram (Faturamento / Volume)
@@ -1895,7 +1895,7 @@ export default function GestaoEntregasPage() {
                 </div>
 
                 {/* Resumo de Entregas Atrasadas */}
-                <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs">
                   <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-5 flex items-center gap-2 select-none">
                     <ShieldAlert size={16} className="text-rose-600 stroke-[2.5] animate-pulse" />
                     Detalhamento de Entregas Atrasadas ({kpis.atrasadasCount})
@@ -1958,7 +1958,7 @@ export default function GestaoEntregasPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 text-left">
               
               {/* Gráfico 1: Valor & Volume das Entregas por Mês */}
-              <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6 select-none">
                   <div>
                     <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
@@ -2128,7 +2128,7 @@ export default function GestaoEntregasPage() {
               </div>
 
               {/* Gráfico 2: Ticket Médio Mensal (Ano Vigente) */}
-              <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6 select-none">
                   <div>
                     <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
@@ -2277,7 +2277,7 @@ export default function GestaoEntregasPage() {
 
         return (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 max-w-xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
               <header className="bg-slate-50 border-b border-slate-150 px-8 py-5 flex justify-between items-center select-none shrink-0">
                 <div className="space-y-0.5">
                   <h3 className="text-sm font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
@@ -3308,7 +3308,7 @@ export default function GestaoEntregasPage() {
 
         return (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-            <div className="bg-white rounded-[2rem] shadow-2xl border border-slate-100 max-w-5xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-5xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
               <header className="bg-slate-50 border-b border-slate-150 px-8 py-5 flex justify-between items-center select-none shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 bg-white border border-slate-200 rounded-xl flex items-center justify-center shadow-xs">
