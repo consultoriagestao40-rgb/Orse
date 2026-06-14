@@ -2775,17 +2775,17 @@ export default function AtivosPage() {
 
                 {/* SEÇÃO 2: PARQUE DE ATIVOS & CURVA DE MANUTENÇÃO */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Bloco Parque de Ativos */}
+                  {/* Card 1: Status do Parque de Ativos */}
                   <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-6 shadow-xs hover:shadow-sm transition-all duration-300">
                     <header className="flex justify-between items-center border-b border-slate-100 pb-3">
                       <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
-                        <Boxes size={16} className="stroke-[2.5]" /> Parque de Ativos & Categorias
+                        <Boxes size={16} className="stroke-[2.5]" /> Status do Parque de Ativos
                       </h3>
                     </header>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                       {/* Donut Chart Status */}
-                      <div className="flex flex-col items-center justify-center relative bg-slate-50/40 rounded-2xl p-4 border border-slate-100">
+                      <div className="flex flex-col items-center justify-center relative bg-slate-50/40 rounded-2xl p-5 border border-slate-100">
                         <div className="w-[150px] h-[150px] relative flex items-center justify-center">
                           <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90 select-none">
                             {totalAtivos === 0 ? (
@@ -2818,8 +2818,8 @@ export default function AtivosPage() {
                                 const activeItem = statusList.find(s => s.status === hoveredKpiStatus);
                                 return (
                                   <>
-                                    <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest truncate max-w-[100px]">{activeItem?.label}</span>
-                                    <span className="text-xl font-black text-slate-850 leading-none mt-0.5">{activeItem?.count}</span>
+                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest truncate max-w-[100px]">{activeItem?.label}</span>
+                                    <span className="text-xl font-black text-slate-800 leading-none mt-0.5">{activeItem?.count}</span>
                                     <span className="text-[9px] font-bold text-slate-500 mt-0.5">({activeItem?.pct.toFixed(1)}%)</span>
                                   </>
                                 );
@@ -2832,67 +2832,79 @@ export default function AtivosPage() {
                             )}
                           </div>
                         </div>
-
-                        {/* Legenda Customizada */}
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-4 w-full select-none">
-                          {statusList.map(item => {
-                            const isHovered = hoveredKpiStatus === item.status;
-                            return (
-                              <div 
-                                key={item.status} 
-                                className={`flex items-center gap-1.5 p-1 rounded-lg transition-all duration-200 ${isHovered ? 'bg-slate-100/80 scale-102' : ''}`}
-                                onMouseEnter={() => setHoveredKpiStatus(item.status)}
-                                onMouseLeave={() => setHoveredKpiStatus(null)}
-                              >
-                                <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: item.color }}></span>
-                                <span className="text-[9px] font-bold text-slate-655 truncate uppercase leading-none">
-                                  {item.label}: <strong className="text-slate-850 font-black">{item.count}</strong>
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
                       </div>
 
-                      {/* Categorias Principais */}
-                      <div className="space-y-3.5 max-h-[190px] overflow-y-auto pr-1">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block border-b border-slate-100 pb-1.5 select-none">Categorias Principais</span>
-                        {Object.entries(ativosPorCategoria).length === 0 ? (
-                          <p className="text-[10.5px] font-bold text-slate-400 text-center py-10">Nenhum ativo cadastrado.</p>
-                        ) : (
-                          Object.entries(ativosPorCategoria)
-                            .sort((a, b) => b[1] - a[1])
-                            .slice(0, 4)
-                            .map(([catName, count]) => {
-                              const pct = totalAtivos > 0 ? (count / totalAtivos) * 100 : 0;
-                              return (
-                                <div key={catName} className="space-y-1">
-                                  <div className="flex justify-between text-[10px] font-bold text-slate-655 uppercase">
-                                    <span className="truncate max-w-[130px] font-extrabold text-slate-800">{catName}</span>
-                                    <span className="font-black text-slate-700">{count} ({pct.toFixed(0)}%)</span>
-                                  </div>
-                                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-50">
-                                    <div className="h-full bg-teal-650 rounded-full transition-all duration-500" style={{ width: `${pct}%` }}></div>
-                                  </div>
-                                </div>
-                              );
-                            })
-                        )}
+                      {/* Legenda Customizada (Lista Vertical Completa) */}
+                      <div className="flex flex-col gap-2.5 w-full select-none">
+                        {statusList.map(item => {
+                          const isHovered = hoveredKpiStatus === item.status;
+                          return (
+                            <div 
+                              key={item.status} 
+                              className={`flex items-center justify-between p-2 rounded-xl transition-all duration-200 ${isHovered ? 'bg-slate-100/80 scale-[1.02]' : 'hover:bg-slate-50/50'}`}
+                              onMouseEnter={() => setHoveredKpiStatus(item.status)}
+                              onMouseLeave={() => setHoveredKpiStatus(null)}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span className="w-3 h-3 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: item.color }}></span>
+                                <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider truncate">
+                                  {item.label}
+                                </span>
+                              </div>
+                              <span className="text-[11px] font-black text-slate-800 leading-none shrink-0 ml-2">
+                                {item.count} <span className="text-slate-400 font-bold ml-1">({item.pct.toFixed(1)}%)</span>
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
 
-                  {/* Bloco Atendimentos & Curva */}
+                  {/* Card 2: Categorias Principais */}
                   <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-6 shadow-xs hover:shadow-sm transition-all duration-300">
                     <header className="flex justify-between items-center border-b border-slate-100 pb-3">
                       <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
-                        <Wrench size={16} className="stroke-[2.5]" /> Serviços & Curva de Manutenção
+                        <Layers size={16} className="stroke-[2.5]" /> Categorias Principais
+                      </h3>
+                    </header>
+
+                    <div className="space-y-4 select-text">
+                      {Object.entries(ativosPorCategoria).length === 0 ? (
+                        <p className="text-xs font-bold text-slate-400 text-center py-12">Nenhum ativo cadastrado.</p>
+                      ) : (
+                        Object.entries(ativosPorCategoria)
+                          .sort((a, b) => b[1] - a[1])
+                          .slice(0, 5)
+                          .map(([catName, count]) => {
+                            const pct = totalAtivos > 0 ? (count / totalAtivos) * 100 : 0;
+                            return (
+                              <div key={catName} className="space-y-1.5 group">
+                                <div className="flex justify-between items-center text-[10.5px] font-bold text-slate-600 uppercase">
+                                  <span className="truncate max-w-[200px] font-extrabold text-slate-750 group-hover:text-slate-900 transition-colors">{catName}</span>
+                                  <span className="font-black text-[#1B4D3E] bg-[#1B4D3E]/5 px-2 py-0.5 rounded border border-[#1b4d3e]/10 text-[10px] select-none">{count} ({pct.toFixed(1)}%)</span>
+                                </div>
+                                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-50">
+                                  <div className="h-full bg-gradient-to-r from-[#1B4D3E] to-[#34D399] rounded-full transition-all duration-500 origin-left" style={{ width: `${pct}%` }}></div>
+                                </div>
+                              </div>
+                            );
+                          })
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Card 3: Tipos de Serviços */}
+                  <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-6 shadow-xs hover:shadow-sm transition-all duration-300">
+                    <header className="flex justify-between items-center border-b border-slate-100 pb-3">
+                      <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                        <Wrench size={16} className="stroke-[2.5]" /> Distribuição por Tipo de OS
                       </h3>
                     </header>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                       {/* Donut Chart OS Types */}
-                      <div className="flex flex-col items-center justify-center relative bg-slate-50/40 rounded-2xl p-4 border border-slate-100">
+                      <div className="flex flex-col items-center justify-center relative bg-slate-50/40 rounded-2xl p-5 border border-slate-100">
                         <div className="w-[150px] h-[150px] relative flex items-center justify-center">
                           <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90 select-none">
                             {totalOs === 0 ? (
@@ -2927,8 +2939,8 @@ export default function AtivosPage() {
                                 const isBaseAtivos = ['INSTALACAO', 'TROCA', 'RETIRADA'].includes(activeItem?.tipo || '');
                                 return (
                                   <>
-                                    <span className="text-[7.5px] font-black text-slate-405 uppercase tracking-widest truncate max-w-[100px]">{activeItem?.label}</span>
-                                    <span className="text-xl font-black text-slate-850 leading-none mt-0.5">{activeItem?.count}</span>
+                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest truncate max-w-[100px]">{activeItem?.label}</span>
+                                    <span className="text-xl font-black text-slate-800 leading-none mt-0.5">{activeItem?.count}</span>
                                     <span className="text-[8px] font-bold text-slate-500 mt-0.5">({(displayPct || 0).toFixed((displayPct || 0) < 1 && (displayPct || 0) > 0 ? 2 : 1)}% {isBaseAtivos ? 'da base' : 'das OSs'})</span>
                                   </>
                                 );
@@ -2941,160 +2953,167 @@ export default function AtivosPage() {
                             )}
                           </div>
                         </div>
-
-                        {/* Legenda Customizada (Lista Vertical) */}
-                        <div className="flex flex-col gap-1.5 mt-4 w-full select-none border-b border-slate-200/50 pb-3.5">
-                          {osTypeList.map(item => {
-                            const isHovered = hoveredKpiOsType === item.tipo;
-                            const displayPct = ['INSTALACAO', 'TROCA', 'RETIRADA'].includes(item.tipo) ? item.pctBaseAtivos : item.pct;
-                            const isBaseAtivos = ['INSTALACAO', 'TROCA', 'RETIRADA'].includes(item.tipo);
-                            return (
-                              <div 
-                                key={item.tipo} 
-                                className={`flex items-center justify-between p-1.5 rounded-xl transition-all duration-200 ${isHovered ? 'bg-slate-100/80 scale-102' : ''}`}
-                                onMouseEnter={() => setHoveredKpiOsType(item.tipo)}
-                                onMouseLeave={() => setHoveredKpiOsType(null)}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: item.color }}></span>
-                                  <span className="text-[9.5px] font-extrabold text-slate-600 uppercase leading-none">
-                                    {item.label}
-                                  </span>
-                                </div>
-                                <span className="text-[10px] font-black text-slate-800 leading-none">
-                                  {item.count} <span className="text-slate-400 font-bold ml-1">({displayPct.toFixed(1)}% {isBaseAtivos ? 'da base' : 'das OSs'})</span>
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        <div className="text-[8px] text-slate-400 font-bold leading-normal select-none px-1 py-1 w-full text-center">
-                          * Percentuais de Instalações, Trocas e Encerramentos calculados com base no Total de Ativos ({totalAtivos}). Manutenções calculadas sobre o Total de OS ({totalOs}).
-                        </div>
                       </div>
 
-                      {/* Curva de Manutenção */}
-                      <div className="space-y-4">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block border-b border-slate-100 pb-1.5 select-none">Curva de Manutenção</span>
-                        <div className="relative pt-2 h-[115px] w-full flex items-center justify-center">
-                          {(() => {
-                            const chartPoints = last6Months.map((m, idx) => {
-                              const x = 25 + idx * 40;
-                              const y = 90 - (m.count / maxMaintenanceCount) * 70;
-                              return { x, y, label: m.label, count: m.count };
-                            });
+                      {/* Legenda Customizada (Lista Vertical Completa) */}
+                      <div className="flex flex-col gap-2.5 w-full select-none">
+                        {osTypeList.map(item => {
+                          const isHovered = hoveredKpiOsType === item.tipo;
+                          const displayPct = ['INSTALACAO', 'TROCA', 'RETIRADA'].includes(item.tipo) ? item.pctBaseAtivos : item.pct;
+                          const isBaseAtivos = ['INSTALACAO', 'TROCA', 'RETIRADA'].includes(item.tipo);
+                          return (
+                            <div 
+                              key={item.tipo} 
+                              className={`flex items-center justify-between p-2 rounded-xl transition-all duration-200 ${isHovered ? 'bg-slate-100/80 scale-[1.02]' : 'hover:bg-slate-50/50'}`}
+                              onMouseEnter={() => setHoveredKpiOsType(item.tipo)}
+                              onMouseLeave={() => setHoveredKpiOsType(null)}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span className="w-3 h-3 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: item.color }}></span>
+                                <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider truncate">
+                                  {item.label}
+                                </span>
+                              </div>
+                              <span className="text-[11px] font-black text-slate-800 leading-none shrink-0 ml-2">
+                                {item.count} <span className="text-slate-400 font-bold ml-1">({displayPct.toFixed(1)}% {isBaseAtivos ? 'da base' : 'das OSs'})</span>
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
 
-                            // Calculate smooth Bezier path
-                            let linePathD = '';
-                            if (chartPoints.length > 0) {
-                              linePathD = `M ${chartPoints[0].x} ${chartPoints[0].y}`;
-                              for (let i = 0; i < chartPoints.length - 1; i++) {
-                                const p0 = chartPoints[i];
-                                const p1 = chartPoints[i + 1];
-                                const cp1x = p0.x + (p1.x - p0.x) / 3;
-                                const cp1y = p0.y;
-                                const cp2x = p0.x + 2 * (p1.x - p0.x) / 3;
-                                const cp2y = p1.y;
-                                linePathD += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p1.x} ${p1.y}`;
-                              }
+                    <div className="text-[9px] text-slate-400 font-medium leading-relaxed select-none border-t border-slate-100 pt-3 text-center">
+                      * Percentuais de Instalações, Trocas e Encerramentos calculados com base no Total de Ativos ({totalAtivos}). Manutenções calculadas sobre o Total de OS ({totalOs}).
+                    </div>
+                  </div>
+
+                  {/* Card 4: Curva de Manutenção */}
+                  <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-6 shadow-xs hover:shadow-sm transition-all duration-300">
+                    <header className="flex justify-between items-center border-b border-slate-100 pb-3">
+                      <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                        <TrendingUp size={16} className="stroke-[2.5]" /> Curva de Manutenção (6 Meses)
+                      </h3>
+                    </header>
+
+                    <div className="space-y-4">
+                      <div className="relative pt-2 h-[155px] w-full flex items-center justify-center">
+                        {(() => {
+                          const chartPoints = last6Months.map((m, idx) => {
+                            const x = 25 + idx * 40;
+                            const y = 130 - (m.count / maxMaintenanceCount) * 110;
+                            return { x, y, label: m.label, count: m.count };
+                          });
+
+                          // Calculate smooth Bezier path
+                          let linePathD = '';
+                          if (chartPoints.length > 0) {
+                            linePathD = `M ${chartPoints[0].x} ${chartPoints[0].y}`;
+                            for (let i = 0; i < chartPoints.length - 1; i++) {
+                              const p0 = chartPoints[i];
+                              const p1 = chartPoints[i + 1];
+                              const cp1x = p0.x + (p1.x - p0.x) / 3;
+                              const cp1y = p0.y;
+                              const cp2x = p0.x + 2 * (p1.x - p0.x) / 3;
+                              const cp2y = p1.y;
+                              linePathD += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p1.x} ${p1.y}`;
                             }
-                            const areaPathD = linePathD 
-                              ? `${linePathD} L ${chartPoints[chartPoints.length - 1].x} 90 L ${chartPoints[0].x} 90 Z`
-                              : '';
+                          }
+                          const areaPathD = linePathD 
+                            ? `${linePathD} L ${chartPoints[chartPoints.length - 1].x} 130 L ${chartPoints[0].x} 130 Z`
+                            : '';
 
-                            return (
-                              <svg viewBox="0 0 250 110" className="w-full h-full overflow-visible select-none">
-                                <defs>
-                                  <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                    <stop offset="0%" stopColor="#1B4D3E" stopOpacity="0.4" />
-                                    <stop offset="100%" stopColor="#1B4D3E" stopOpacity="0.0" />
-                                  </linearGradient>
-                                  <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" stopColor="#1B4D3E" />
-                                    <stop offset="100%" stopColor="#34D399" />
-                                  </linearGradient>
-                                </defs>
-                                {/* Grid lines */}
-                                <line x1="20" y1="90" x2="235" y2="90" stroke="#F1F5F9" strokeWidth="1.5" />
-                                <line x1="20" y1="55" x2="235" y2="55" stroke="#F8FAFC" strokeWidth="1" strokeDasharray="3 3" />
-                                <line x1="20" y1="20" x2="235" y2="20" stroke="#F8FAFC" strokeWidth="1" strokeDasharray="3 3" />
-                                
-                                {/* Area */}
-                                {areaPathD && <path d={areaPathD} fill="url(#areaGradient)" />}
-                                {/* Line */}
-                                {linePathD && (
-                                  <path 
-                                    d={linePathD} 
-                                    fill="none" 
-                                    stroke="url(#lineGradient)" 
-                                    strokeWidth="3" 
-                                    strokeLinecap="round" 
-                                    strokeLinejoin="round" 
-                                  />
-                                )}
-                                
-                                {/* Dots & Labels */}
-                                {chartPoints.map((p, idx) => {
-                                  const isHovered = hoveredKpiMonthIndex === idx;
-                                  return (
-                                    <g 
-                                      key={idx} 
-                                      className="cursor-pointer"
-                                      onMouseEnter={() => setHoveredKpiMonthIndex(idx)}
-                                      onMouseLeave={() => setHoveredKpiMonthIndex(null)}
+                          return (
+                            <svg viewBox="0 0 250 150" className="w-full h-full overflow-visible select-none">
+                              <defs>
+                                <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                  <stop offset="0%" stopColor="#1B4D3E" stopOpacity="0.4" />
+                                  <stop offset="100%" stopColor="#1B4D3E" stopOpacity="0.0" />
+                                </linearGradient>
+                                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                  <stop offset="0%" stopColor="#1B4D3E" />
+                                  <stop offset="100%" stopColor="#34D399" />
+                                </linearGradient>
+                              </defs>
+                              {/* Grid lines */}
+                              <line x1="20" y1="130" x2="235" y2="130" stroke="#F1F5F9" strokeWidth="1.5" />
+                              <line x1="20" y1="75" x2="235" y2="75" stroke="#F8FAFC" strokeWidth="1" strokeDasharray="3 3" />
+                              <line x1="20" y1="20" x2="235" y2="20" stroke="#F8FAFC" strokeWidth="1" strokeDasharray="3 3" />
+                              
+                              {/* Area */}
+                              {areaPathD && <path d={areaPathD} fill="url(#areaGradient)" />}
+                              {/* Line */}
+                              {linePathD && (
+                                <path 
+                                  d={linePathD} 
+                                  fill="none" 
+                                  stroke="url(#lineGradient)" 
+                                  strokeWidth="3" 
+                                  strokeLinecap="round" 
+                                  strokeLinejoin="round" 
+                                />
+                              )}
+                              
+                              {/* Dots & Labels */}
+                              {chartPoints.map((p, idx) => {
+                                const isHovered = hoveredKpiMonthIndex === idx;
+                                return (
+                                  <g 
+                                    key={idx} 
+                                    className="cursor-pointer"
+                                    onMouseEnter={() => setHoveredKpiMonthIndex(idx)}
+                                    onMouseLeave={() => setHoveredKpiMonthIndex(null)}
+                                  >
+                                    {/* Outer glowing pulse on hover */}
+                                    {isHovered && (
+                                      <circle cx={p.x} cy={p.y} r="8" fill="#1B4D3E" fillOpacity="0.15" />
+                                    )}
+                                    <circle 
+                                      cx={p.x} 
+                                      cy={p.y} 
+                                      r={isHovered ? 5.5 : 4} 
+                                      fill="#FFFFFF" 
+                                      stroke="#1B4D3E" 
+                                      strokeWidth={isHovered ? 3.5 : 2.5} 
+                                      className="transition-all duration-200"
+                                    />
+                                    
+                                    {/* Axis Label */}
+                                    <text 
+                                      x={p.x} 
+                                      y="145" 
+                                      textAnchor="middle" 
+                                      fill={isHovered ? "#1B4D3E" : "#94A3B8"} 
+                                      className="text-[8.5px] font-black uppercase transition-colors duration-200"
                                     >
-                                      {/* Outer glowing pulse on hover */}
-                                      {isHovered && (
-                                        <circle cx={p.x} cy={p.y} r="8" fill="#1B4D3E" fillOpacity="0.15" />
-                                      )}
-                                      <circle 
-                                        cx={p.x} 
-                                        cy={p.y} 
-                                        r={isHovered ? 5.5 : 4} 
-                                        fill="#FFFFFF" 
-                                        stroke="#1B4D3E" 
-                                        strokeWidth={isHovered ? 3.5 : 2.5} 
-                                        className="transition-all duration-200"
-                                      />
-                                      
-                                      {/* Axis Label */}
-                                      <text 
-                                        x={p.x} 
-                                        y="105" 
-                                        textAnchor="middle" 
-                                        fill={isHovered ? "#1B4D3E" : "#94A3B8"} 
-                                        className="text-[8.5px] font-black uppercase transition-colors duration-200"
-                                      >
-                                        {p.label}
-                                      </text>
-                                    </g>
-                                  );
-                                })}
-                              </svg>
-                            );
-                          })()}
+                                      {p.label}
+                                    </text>
+                                  </g>
+                                );
+                              })}
+                            </svg>
+                          );
+                        })()}
 
-                          {/* Absolute HTML Tooltip */}
-                          {hoveredKpiMonthIndex !== null && (
-                            (() => {
-                              const p = last6Months[hoveredKpiMonthIndex];
-                              const leftPercent = 10 + hoveredKpiMonthIndex * 16;
-                              return (
-                                <div 
-                                  className="absolute bg-slate-800 text-white text-[9.5px] font-black px-2.5 py-1 rounded-lg shadow-md pointer-events-none animate-fade-in whitespace-nowrap"
-                                  style={{ 
-                                    left: `${leftPercent}%`, 
-                                    bottom: '65px',
-                                    transform: 'translateX(-50%)' 
-                                  }}
-                                >
-                                  {p.count} {p.count === 1 ? 'Manutenção' : 'Manutenções'}
-                                </div>
-                              );
-                            })()
-                          )}
-                        </div>
+                        {/* Absolute HTML Tooltip */}
+                        {hoveredKpiMonthIndex !== null && (
+                          (() => {
+                            const p = last6Months[hoveredKpiMonthIndex];
+                            const leftPercent = 10 + hoveredKpiMonthIndex * 16;
+                            return (
+                              <div 
+                                className="absolute bg-slate-800 text-white text-[9.5px] font-black px-2.5 py-1 rounded-lg shadow-md pointer-events-none animate-fade-in whitespace-nowrap"
+                                style={{ 
+                                  left: `${leftPercent}%`, 
+                                  bottom: '90px',
+                                  transform: 'translateX(-50%)' 
+                                }}
+                              >
+                                {p.count} {p.count === 1 ? 'Manutenção' : 'Manutenções'}
+                              </div>
+                            );
+                          })()
+                        )}
                       </div>
                     </div>
                   </div>
