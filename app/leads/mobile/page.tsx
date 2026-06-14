@@ -48,7 +48,8 @@ import {
   LogOut,
   Target,
   ChevronDown,
-  Wrench
+  Wrench,
+  Truck
 } from 'lucide-react';
 
 const tailwindColorMap: { [key: string]: string } = {
@@ -221,9 +222,15 @@ export default function MobileCRM() {
         if (user) {
           setCurrentUser(user);
           const isTech = user.cargo?.toLowerCase().includes('tecnico') || user.cargo?.toLowerCase().includes('técnico');
+          const isDeliv = user.cargo?.toLowerCase().includes('entregador') || 
+                          user.cargo?.toLowerCase().includes('entrega') || 
+                          user.cargo?.toLowerCase().includes('motoboy') || 
+                          user.cargo?.toLowerCase().includes('motorista');
           const isGest = user.role === 'ADMIN' || user.role === 'MANAGER';
           if (isTech && !isGest) {
             router.push('/ativos/tecnico');
+          } else if (isDeliv && !isGest) {
+            router.push('/entrega/entregador');
           }
         } else {
           router.push('/login');
@@ -681,6 +688,28 @@ export default function MobileCRM() {
       
       {/* HEADER PREMIUM STICKY */}
       <header className="sticky top-0 bg-gradient-to-r from-slate-900 to-slate-950 text-white z-40 shadow-md p-4 shrink-0 select-none">
+        {isGestor && (
+          <div className="flex justify-around items-center bg-white/[0.03] border border-white/5 rounded-2xl p-1 mb-3">
+            <button
+              onClick={() => router.push('/leads/mobile')}
+              className="flex-1 flex items-center justify-center gap-1 bg-[#1B4D3E] text-white border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all cursor-pointer"
+            >
+              <Building size={11} /> CRM
+            </button>
+            <button
+              onClick={() => router.push('/ativos/tecnico')}
+              className="flex-1 flex items-center justify-center gap-1 bg-transparent text-slate-400 border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all hover:text-white cursor-pointer"
+            >
+              <Wrench size={11} /> Técnico
+            </button>
+            <button
+              onClick={() => router.push('/entrega/entregador')}
+              className="flex-1 flex items-center justify-center gap-1 bg-transparent text-slate-400 border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all hover:text-white cursor-pointer"
+            >
+              <Truck size={11} /> Entrega
+            </button>
+          </div>
+        )}
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2">
             <button 
@@ -1324,16 +1353,7 @@ export default function MobileCRM() {
           </>
         )}
 
-        {/* Tab Área do Técnico (Mobile Link) */}
-        <a
-          href="/ativos/tecnico"
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl active:scale-95 transition-all bg-transparent font-bold no-underline ${
-            isSomenteTecnico ? 'text-[#1B4D3E] font-black' : 'text-slate-400'
-          }`}
-        >
-          <Wrench size={18} className={isSomenteTecnico ? 'text-[#1B4D3E]' : 'text-slate-400'} />
-          <span className="text-[8px] uppercase tracking-wider">Técnico</span>
-        </a>
+
 
         {!isSomenteTecnico && (
           /* Tab Chat Interno */

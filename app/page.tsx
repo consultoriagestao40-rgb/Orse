@@ -6,7 +6,8 @@ import LandingPage from '@/components/LandingPage';
 import { 
   BarChart2, TrendingUp, Users, Clock, DollarSign, 
   ArrowUpRight, Award, Briefcase, Activity, Percent, Filter, 
-  Calendar, CheckCircle, Edit2, Check, Target
+  Calendar, CheckCircle, Edit2, Check, Target,
+  Building, Wrench, Truck, Smartphone, LogOut
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getKPIs, getLoggedUser } from '@/app/propostas/actions';
@@ -1111,6 +1112,8 @@ function RadarComercialDashboard() {
 export default function Page() {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [showMobileHub, setShowMobileHub] = useState(false);
+  const [loggedUser, setLoggedUser] = useState<any>(null);
 
   useEffect(() => {
     fetch('/api/auth/session')
@@ -1125,26 +1128,55 @@ export default function Page() {
             return;
           }
 
-          // Se for dispositivo móvel, redireciona qualquer usuário logado para a Área do Técnico (a menos que tenha optado pelo modo desktop)
-          const isDesktopMode = typeof window !== 'undefined' && sessionStorage.getItem('sb_mobile_mode') === 'desktop';
-          const isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-          if (isMobile && !isDesktopMode) {
-            router.push('/ativos/tecnico');
-            return;
+          // Busca dados completos do usuário logado
+          let user: any = null;
+          try {
+            user = await getLoggedUser();
+            setLoggedUser(user);
+          } catch (err) {
+            console.error('Erro ao obter usuário logado:', err);
           }
 
-          // Checa se o usuário logado é técnico e redireciona (caso esteja no desktop)
-          try {
-            const loggedUser = await getLoggedUser();
-            if (loggedUser) {
-              const cargoLower = loggedUser.cargo?.toLowerCase() || '';
-              if (cargoLower.includes('tecnico') || cargoLower.includes('técnico')) {
+          const isDesktopMode = typeof window !== 'undefined' && sessionStorage.getItem('sb_mobile_mode') === 'desktop';
+          const isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+          if (isMobile && !isDesktopMode) {
+            if (user) {
+              const role = user.role;
+              const cargo = user.cargo?.toLowerCase() || '';
+
+              const isGestor = role === 'ADMIN' || role === 'MANAGER';
+              const isTecnico = cargo.includes('tecnico') || cargo.includes('técnico');
+              const isEntregador = cargo.includes('entregador') || cargo.includes('entrega') || cargo.includes('motoboy') || cargo.includes('motorista');
+
+              if (isGestor) {
+                setShowMobileHub(true);
+                setIsLoggedIn(true);
+                return;
+              } else if (isTecnico) {
                 router.push('/ativos/tecnico');
                 return;
+              } else if (isEntregador) {
+                router.push('/entrega/entregador');
+                return;
+              } else {
+                // Vendedor / Outros usuários comuns
+                router.push('/leads/mobile');
+                return;
               }
+            } else {
+              router.push('/leads/mobile');
+              return;
             }
-          } catch (err) {
-            console.error('Erro ao verificar cargo do usuário:', err);
+          }
+
+          // Checa se o usuário logado é técnico e redireciona no desktop
+          if (user) {
+            const cargoLower = user.cargo?.toLowerCase() || '';
+            if (cargoLower.includes('tecnico') || cargoLower.includes('técnico')) {
+              router.push('/ativos/tecnico');
+              return;
+            }
           }
 
           setIsLoggedIn(true);
@@ -1174,6 +1206,144 @@ export default function Page() {
   }
 
   if (isLoggedIn) {
+    if (showMobileHub) {
+      return (
+        <div className="min-h-screen bg-[#0B0F19] text-white flex flex-col justify-between p-6 relative overflow-hidden font-sans select-none">
+          {/* Fundo com gradiente e blur premium */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-25 z-0">
+            <div className="w-[450px] h-[450px] bg-gradient-to-r from-[#1B4D3E] to-[#10B981] rounded-full blur-[120px] animate-pulse" />
+          </div>
+
+          {/* Topo / Header do Hub */}
+          <div className="relative z-10 w-full max-w-md mx-auto pt-6 flex flex-col items-center">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-10 h-10 bg-[#1B4D3E]/30 rounded-2xl border border-[#10B981]/40 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.15)]">
+                <TrendingUp className="text-[#10B981]" size={22} />
+              </div>
+              <span className="text-lg font-black tracking-widest uppercase bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                SmartBidHub
+              </span>
+            </div>
+            <p className="text-[10px] text-emerald-400 uppercase font-black tracking-[0.25em] mb-8">
+              Painel Multisseletor
+            </p>
+
+            {/* Identificação do Usuário */}
+            <div className="w-full bg-white/[0.03] border border-white/5 rounded-3xl p-4 flex items-center gap-3.5 backdrop-blur-md mb-8">
+              {loggedUser?.avatarUrl ? (
+                <img 
+                  src={loggedUser.avatarUrl} 
+                  alt={loggedUser.nome} 
+                  className="w-11 h-11 rounded-full object-cover border border-white/10 shadow-md"
+                />
+              ) : (
+                <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#1B4D3E] to-[#10B981] text-white flex items-center justify-center font-black text-sm border border-white/10 shadow-md">
+                  {loggedUser?.nome ? loggedUser.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'G'}
+                </div>
+              )}
+              <div className="text-left">
+                <h3 className="text-sm font-black uppercase text-white tracking-wide leading-tight">
+                  {loggedUser?.nome || 'Carregando Gestor...'}
+                </h3>
+                <span className="text-[9px] text-[#10B981] uppercase font-black tracking-widest block leading-none mt-1">
+                  {loggedUser?.cargo || 'Administrador'}
+                </span>
+              </div>
+            </div>
+
+            {/* Grid de Cards de Navegação */}
+            <div className="w-full space-y-4">
+              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-left pl-1 mb-1">
+                Selecione a área para acessar
+              </h4>
+
+              {/* CARD 1: CRM */}
+              <button
+                onClick={() => router.push('/leads/mobile')}
+                className="w-full text-left bg-gradient-to-r from-slate-900 to-slate-950 hover:from-[#0F241F] hover:to-[#0A1714] border border-white/5 hover:border-emerald-500/20 active:scale-[0.98] transition-all rounded-3xl p-5 flex items-center justify-between group cursor-pointer backdrop-blur-md"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-[#10B981] group-hover:scale-110 transition-transform">
+                    <Building size={24} className="stroke-[2]" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black uppercase text-white tracking-wide">
+                      CRM Comercial
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mt-0.5">
+                      Funil de vendas, leads e chat de equipe
+                    </p>
+                  </div>
+                </div>
+                <ArrowUpRight size={18} className="text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              </button>
+
+              {/* CARD 2: Área do Técnico */}
+              <button
+                onClick={() => router.push('/ativos/tecnico')}
+                className="w-full text-left bg-gradient-to-r from-slate-900 to-slate-950 hover:from-[#0E1E2C] hover:to-[#0A141F] border border-white/5 hover:border-blue-500/20 active:scale-[0.98] transition-all rounded-3xl p-5 flex items-center justify-between group cursor-pointer backdrop-blur-md"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+                    <Wrench size={24} className="stroke-[2]" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black uppercase text-white tracking-wide">
+                      Área do Técnico
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mt-0.5">
+                      Chamados, ordens de serviço e ativos
+                    </p>
+                  </div>
+                </div>
+                <ArrowUpRight size={18} className="text-slate-500 group-hover:text-blue-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              </button>
+
+              {/* CARD 3: Entrega */}
+              <button
+                onClick={() => router.push('/entrega/entregador')}
+                className="w-full text-left bg-gradient-to-r from-slate-900 to-slate-950 hover:from-[#241710] hover:to-[#170E0A] border border-white/5 hover:border-amber-500/20 active:scale-[0.98] transition-all rounded-3xl p-5 flex items-center justify-between group cursor-pointer backdrop-blur-md"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+                    <Truck size={24} className="stroke-[2]" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black uppercase text-white tracking-wide">
+                      Controle de Entregas
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mt-0.5">
+                      Roteiros de entregador, rotas e recibos
+                    </p>
+                  </div>
+                </div>
+                <ArrowUpRight size={18} className="text-slate-500 group-hover:text-amber-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              </button>
+            </div>
+          </div>
+
+          {/* Rodapé com Logout e opção de forçar versão desktop */}
+          <div className="relative z-10 w-full max-w-md mx-auto pt-6 border-t border-white/5 flex justify-between items-center text-xs text-slate-500 select-none pb-2">
+            <button
+              onClick={() => {
+                sessionStorage.setItem('sb_mobile_mode', 'desktop');
+                window.location.reload();
+              }}
+              className="bg-transparent border-none text-[10px] font-black uppercase tracking-wider text-slate-550 hover:text-white cursor-pointer"
+            >
+              Versão Desktop
+            </button>
+
+            <a
+              href="/api/auth/logout"
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-red-950/20 hover:bg-red-950/40 text-red-400 border border-red-900/30 rounded-2xl transition-all cursor-pointer font-black uppercase text-[9px] tracking-widest no-underline"
+            >
+              <LogOut size={12} /> Sair da Conta
+            </a>
+          </div>
+        </div>
+      );
+    }
     return <RadarComercialDashboard />;
   }
 

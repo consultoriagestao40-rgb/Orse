@@ -5,14 +5,16 @@ import {
   Wrench, ArrowLeft, Play, CheckCircle, Camera, Trash2, Lock,
   RotateCcw, Save, X, ClipboardList, MapPin, User, FileText,
   Calendar, Check, LogOut, Loader2, Car, Navigation, Volume2,
-  Building, Target, PlusCircle, MessageSquare, ShieldAlert
+  Building, Target, PlusCircle, MessageSquare, ShieldAlert, Truck
 } from 'lucide-react';
 import { 
   getTecnicoOrdens, updateOrdemServicoAtivo, getLoggedTenantInfo 
 } from '../actions';
 import { getLoggedUser } from '@/app/propostas/actions';
+import { useRouter } from 'next/navigation';
 
 export default function TecnicoPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [ordens, setOrdens] = useState<any[]>([]);
@@ -261,6 +263,21 @@ export default function TecnicoPage() {
       }
       if (loggedUser) {
         setCurrentUser(loggedUser);
+        const isTech = loggedUser.cargo?.toLowerCase().includes('tecnico') || loggedUser.cargo?.toLowerCase().includes('técnico');
+        const isDeliv = loggedUser.cargo?.toLowerCase().includes('entregador') || 
+                        loggedUser.cargo?.toLowerCase().includes('entrega') || 
+                        loggedUser.cargo?.toLowerCase().includes('motoboy') || 
+                        loggedUser.cargo?.toLowerCase().includes('motorista');
+        const isGest = loggedUser.role === 'ADMIN' || loggedUser.role === 'MANAGER';
+        if (!isGest) {
+          if (isDeliv) {
+            router.push('/entrega/entregador');
+            return;
+          } else if (!isTech) {
+            router.push('/leads/mobile');
+            return;
+          }
+        }
       }
       if (tenantRes.success) {
         setTenant(tenantRes.tenant);
@@ -669,33 +686,57 @@ export default function TecnicoPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans select-none pb-24">
       {/* HEADER PREMIUM */}
-      <header className="sticky top-0 bg-[#1B4D3E] text-white z-40 px-4 py-3.5 flex items-center justify-between shadow-md select-none">
-        <div className="flex items-center gap-3 min-w-0">
-          {currentUser?.avatarUrl ? (
-            <img 
-              src={currentUser.avatarUrl} 
-              alt={currentUser.nome} 
-              className="w-10 h-10 rounded-full object-cover border border-white/20 shadow-xs shrink-0"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-white/10 text-white border border-white/20 flex items-center justify-center font-black text-sm shrink-0">
-              {currentUser?.iniciais || 'T'}
-            </div>
-          )}
-          <div className="min-w-0">
-            <span className="text-xs font-black uppercase block text-white leading-tight truncate">{currentUser?.nome || 'Carregando...'}</span>
-            <span className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest block leading-none mt-0.5">{currentUser?.cargo || 'Técnico'}</span>
+      <header className="sticky top-0 bg-[#1B4D3E] text-white z-40 px-4 py-3 flex flex-col gap-3 shadow-md select-none">
+        {isGestor && (
+          <div className="flex justify-around items-center bg-white/[0.03] border border-white/5 rounded-2xl p-1">
+            <button
+              onClick={() => router.push('/leads/mobile')}
+              className="flex-1 flex items-center justify-center gap-1 bg-transparent text-slate-400 border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all hover:text-white cursor-pointer"
+            >
+              <Building size={11} /> CRM
+            </button>
+            <button
+              onClick={() => router.push('/ativos/tecnico')}
+              className="flex-1 flex items-center justify-center gap-1 bg-[#1A3D33] text-white border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all cursor-pointer"
+            >
+              <Wrench size={11} /> Técnico
+            </button>
+            <button
+              onClick={() => router.push('/entrega/entregador')}
+              className="flex-1 flex items-center justify-center gap-1 bg-transparent text-slate-400 border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all hover:text-white cursor-pointer"
+            >
+              <Truck size={11} /> Entrega
+            </button>
           </div>
-        </div>
+        )}
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-3 min-w-0">
+            {currentUser?.avatarUrl ? (
+              <img 
+                src={currentUser.avatarUrl} 
+                alt={currentUser.nome} 
+                className="w-10 h-10 rounded-full object-cover border border-white/20 shadow-xs shrink-0"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-white/10 text-white border border-white/20 flex items-center justify-center font-black text-sm shrink-0">
+                {currentUser?.nome ? currentUser.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'T'}
+              </div>
+            )}
+            <div className="min-w-0">
+              <span className="text-xs font-black uppercase block text-white leading-tight truncate">{currentUser?.nome || 'Carregando...'}</span>
+              <span className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest block leading-none mt-0.5">{currentUser?.cargo || 'Técnico'}</span>
+            </div>
+          </div>
 
-        <div className="flex items-center gap-3 shrink-0">
-          <a 
-            href="/api/auth/logout"
-            className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 transition-all rounded-xl cursor-pointer flex items-center justify-center text-white"
-            title="Sair da Conta (Logout)"
-          >
-            <LogOut size={16} />
-          </a>
+          <div className="flex items-center gap-3 shrink-0">
+            <a 
+              href="/api/auth/logout"
+              className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 transition-all rounded-xl cursor-pointer flex items-center justify-center text-white"
+              title="Sair da Conta (Logout)"
+            >
+              <LogOut size={16} />
+            </a>
+          </div>
         </div>
       </header>
 

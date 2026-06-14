@@ -11,8 +11,10 @@ import {
   getEntregadorEntregas, updateEntrega 
 } from '../actions';
 import { getLoggedUser } from '@/app/propostas/actions';
+import { useRouter } from 'next/navigation';
 
 export default function EntregadorPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [entregas, setEntregas] = useState<any[]>([]);
@@ -253,6 +255,21 @@ export default function EntregadorPage() {
       }
       if (loggedUser) {
         setCurrentUser(loggedUser);
+        const isTech = loggedUser.cargo?.toLowerCase().includes('tecnico') || loggedUser.cargo?.toLowerCase().includes('técnico');
+        const isDeliv = loggedUser.cargo?.toLowerCase().includes('entregador') || 
+                        loggedUser.cargo?.toLowerCase().includes('entrega') || 
+                        loggedUser.cargo?.toLowerCase().includes('motoboy') || 
+                        loggedUser.cargo?.toLowerCase().includes('motorista');
+        const isGest = loggedUser.role === 'ADMIN' || loggedUser.role === 'MANAGER';
+        if (!isGest) {
+          if (isTech) {
+            router.push('/ativos/tecnico');
+            return;
+          } else if (!isDeliv) {
+            router.push('/leads/mobile');
+            return;
+          }
+        }
       }
     } catch (err) {
       console.error(err);
@@ -648,30 +665,56 @@ export default function EntregadorPage() {
     return true; // não é a primeira
   };
 
+  const isGestor = currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER';
+
   return (
     <div className="min-h-screen bg-slate-900 text-white font-sans flex flex-col relative select-none">
       
       {/* Header Fixo Mobile */}
-      <header className="sticky top-0 bg-slate-950/90 backdrop-blur-md px-5 py-4 flex justify-between items-center border-b border-white/5 z-40">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 bg-slate-800 rounded-xl flex items-center justify-center text-[#10B981] border border-white/5 shrink-0">
-            <Truck size={18} className="stroke-[2.5]" />
+      <header className="sticky top-0 bg-slate-950/90 backdrop-blur-md px-5 py-3 flex flex-col gap-3 border-b border-white/5 z-40">
+        {isGestor && (
+          <div className="flex justify-around items-center bg-white/[0.03] border border-white/5 rounded-2xl p-1">
+            <button
+              onClick={() => router.push('/leads/mobile')}
+              className="flex-1 flex items-center justify-center gap-1 bg-transparent text-slate-400 border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all hover:text-white cursor-pointer"
+            >
+              <Building size={11} /> CRM
+            </button>
+            <button
+              onClick={() => router.push('/ativos/tecnico')}
+              className="flex-1 flex items-center justify-center gap-1 bg-transparent text-slate-400 border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all hover:text-white cursor-pointer"
+            >
+              <Wrench size={11} /> Técnico
+            </button>
+            <button
+              onClick={() => router.push('/entrega/entregador')}
+              className="flex-1 flex items-center justify-center gap-1 bg-[#10B981] text-slate-950 border-none py-1.5 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all cursor-pointer"
+            >
+              <Truck size={11} /> Entrega
+            </button>
           </div>
-          <div className="min-w-0 text-left">
-            <h1 className="text-sm font-black tracking-wide truncate">
-              {currentUser?.nome || 'Entregador'}
-            </h1>
-            <p className="text-[9px] text-[#10B981] font-bold uppercase tracking-widest mt-0.5 leading-none">Área do Entregador</p>
+        )}
+        <div className="flex justify-between items-center w-full">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 bg-slate-800 rounded-xl flex items-center justify-center text-[#10B981] border border-white/5 shrink-0">
+              <Truck size={18} className="stroke-[2.5]" />
+            </div>
+            <div className="min-w-0 text-left">
+              <h1 className="text-sm font-black tracking-wide truncate">
+                {currentUser?.nome || 'Entregador'}
+              </h1>
+              <p className="text-[9px] text-[#10B981] font-bold uppercase tracking-widest mt-0.5 leading-none">Área do Entregador</p>
+            </div>
           </div>
-        </div>
 
-        <button 
-          onClick={handleLogout}
-          className="p-2.5 bg-red-950/30 hover:bg-red-950/60 text-red-400 border border-red-900/30 rounded-xl transition-all cursor-pointer flex items-center justify-center active:scale-[0.95]"
-          title="Sair da Conta"
-        >
-          <LogOut size={16} className="stroke-[2.5]" />
-        </button>
+          <button 
+            onClick={handleLogout}
+            className="p-2.5 bg-red-950/30 hover:bg-red-950/60 text-red-400 border border-red-900/30 rounded-xl transition-all cursor-pointer flex items-center justify-center active:scale-[0.95]"
+            title="Sair da Conta"
+          >
+            <LogOut size={16} className="stroke-[2.5]" />
+          </button>
+        </div>
       </header>
 
       {/* Alertas flutuantes no celular */}
