@@ -594,7 +594,10 @@ export async function getOrdensServicoAtivo() {
       include: {
         client: true,
         contratoComodato: {
-          include: { empresaEmissora: true }
+          include: { 
+            empresaEmissora: true,
+            itens: true
+          }
         },
         ativo: { include: { categoria: true } },
         ativoDestino: { include: { categoria: true } }
@@ -1099,7 +1102,11 @@ export async function getTecnicoOrdens() {
       },
       include: {
         client: true,
-        contratoComodato: true,
+        contratoComodato: {
+          include: {
+            itens: true
+          }
+        },
         ativo: true,
         ativoDestino: true
       }

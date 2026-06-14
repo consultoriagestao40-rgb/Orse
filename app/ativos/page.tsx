@@ -85,6 +85,16 @@ export default function AtivosPage() {
   // OS Signature Modal
   const [modalSignatureOpen, setModalSignatureOpen] = useState(false);
   const [selectedOsForSignature, setSelectedOsForSignature] = useState<any>(null);
+  const [nomeAssinanteWeb, setNomeAssinanteWeb] = useState('');
+  const [cpfAssinanteWeb, setCpfAssinanteWeb] = useState('');
+
+  // Canvas Refs for OS Signature (Client & Technician)
+  const canvasClienteRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasTecnicoRef = useRef<HTMLCanvasElement | null>(null);
+  const isDrawingClienteRef = useRef(false);
+  const isDrawingTecnicoRef = useRef(false);
+  const [hasDrawnCliente, setHasDrawnCliente] = useState(false);
+  const [hasDrawnTecnico, setHasDrawnTecnico] = useState(false);
 
   // Contracts View Settings
   const [contratosViewMode, setContratosViewMode] = useState<ViewMode>('lista');
@@ -690,8 +700,142 @@ export default function AtivosPage() {
     setSaving(false);
   };
 
+  useEffect(() => {
+    const canvasCliente = canvasClienteRef.current;
+    const canvasTecnico = canvasTecnicoRef.current;
+
+    const preventDefaultTouch = (e: TouchEvent) => {
+      if (e.target === canvasCliente || e.target === canvasTecnico) {
+        e.preventDefault();
+      }
+    };
+
+    if (canvasCliente) {
+      canvasCliente.addEventListener('touchstart', preventDefaultTouch, { passive: false });
+      canvasCliente.addEventListener('touchmove', preventDefaultTouch, { passive: false });
+    }
+    if (canvasTecnico) {
+      canvasTecnico.addEventListener('touchstart', preventDefaultTouch, { passive: false });
+      canvasTecnico.addEventListener('touchmove', preventDefaultTouch, { passive: false });
+    }
+
+    return () => {
+      if (canvasCliente) {
+        canvasCliente.removeEventListener('touchstart', preventDefaultTouch);
+        canvasCliente.removeEventListener('touchmove', preventDefaultTouch);
+      }
+      if (canvasTecnico) {
+        canvasTecnico.removeEventListener('touchstart', preventDefaultTouch);
+        canvasTecnico.removeEventListener('touchmove', preventDefaultTouch);
+      }
+    };
+  }, [modalSignatureOpen]);
+
+  const getCoordinatesWeb = (e: any, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    let clientX = 0;
+    let clientY = 0;
+    if (e.touches && e.touches[0]) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    const x = ((clientX - rect.left) / rect.width) * canvas.width;
+    const y = ((clientY - rect.top) / rect.height) * canvas.height;
+    return { x, y };
+  };
+
+  // CLIENT CANVAS DRAWING HANDLERS
+  const startDrawingCliente = (e: any) => {
+    const canvas = canvasClienteRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const coords = getCoordinatesWeb(e, canvas);
+    ctx.beginPath();
+    ctx.moveTo(coords.x, coords.y);
+    ctx.strokeStyle = '#1b4d3e';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    isDrawingClienteRef.current = true;
+  };
+
+  const drawCliente = (e: any) => {
+    if (!isDrawingClienteRef.current) return;
+    const canvas = canvasClienteRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const coords = getCoordinatesWeb(e, canvas);
+    ctx.lineTo(coords.x, coords.y);
+    ctx.stroke();
+    setHasDrawnCliente(true);
+  };
+
+  const stopDrawingCliente = () => {
+    isDrawingClienteRef.current = false;
+  };
+
+  const clearCanvasCliente = () => {
+    const canvas = canvasClienteRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setHasDrawnCliente(false);
+  };
+
+  // TECHNICIAN CANVAS DRAWING HANDLERS
+  const startDrawingTecnico = (e: any) => {
+    const canvas = canvasTecnicoRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const coords = getCoordinatesWeb(e, canvas);
+    ctx.beginPath();
+    ctx.moveTo(coords.x, coords.y);
+    ctx.strokeStyle = '#1b4d3e';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    isDrawingTecnicoRef.current = true;
+  };
+
+  const drawTecnico = (e: any) => {
+    if (!isDrawingTecnicoRef.current) return;
+    const canvas = canvasTecnicoRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const coords = getCoordinatesWeb(e, canvas);
+    ctx.lineTo(coords.x, coords.y);
+    ctx.stroke();
+    setHasDrawnTecnico(true);
+  };
+
+  const stopDrawingTecnico = () => {
+    isDrawingTecnicoRef.current = false;
+  };
+
+  const clearCanvasTecnico = () => {
+    const canvas = canvasTecnicoRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setHasDrawnTecnico(false);
+  };
+
   const handleConcludeOs = async (osId: string) => {
-    setSelectedOsForSignature(ordens.find(o => o.id === osId));
+    const os = ordens.find(o => o.id === osId);
+    setSelectedOsForSignature(os);
+    setNomeAssinanteWeb(os?.client?.contato || '');
+    setCpfAssinanteWeb(os?.client?.cnpj || '');
+    setHasDrawnCliente(false);
+    setHasDrawnTecnico(false);
     setModalSignatureOpen(true);
   };
 
@@ -779,14 +923,31 @@ export default function AtivosPage() {
     setModalAssignTecnicoOpen(true);
   };
 
-  const handleSaveSignature = async (base64Signature: string) => {
+  const handleSaveSignature = async () => {
     if (!selectedOsForSignature) return;
+    const canvasCliente = canvasClienteRef.current;
+    const canvasTecnico = canvasTecnicoRef.current;
+    if (!canvasCliente || !canvasTecnico) return;
+    if (!hasDrawnCliente) {
+      return showAlert('Assinatura Requerida', 'Por favor, colete a assinatura do Cliente.', 'warning');
+    }
+    if (!hasDrawnTecnico) {
+      return showAlert('Assinatura Requerida', 'Por favor, colete a assinatura do Técnico.', 'warning');
+    }
+    if (!nomeAssinanteWeb.trim()) {
+      return showAlert('Campo Obrigatório', 'Por favor, informe o Nome do Assinante.', 'warning');
+    }
+
     setSaving(true);
+    const base64Cliente = canvasCliente.toDataURL('image/png');
+    const base64Tecnico = canvasTecnico.toDataURL('image/png');
+
     const res = await updateOrdemServicoAtivo(selectedOsForSignature.id, {
       status: 'CONCLUIDA',
-      assinaturaCliente: base64Signature,
-      nomeAssinante: selectedOsForSignature.client?.contato || 'Responsável',
-      cpfAssinante: selectedOsForSignature.client?.cnpj || 'Sem Documento'
+      assinaturaCliente: base64Cliente,
+      assinaturaTecnico: base64Tecnico,
+      nomeAssinante: nomeAssinanteWeb,
+      cpfAssinante: cpfAssinanteWeb || 'Sem Documento'
     });
     setSaving(false);
     setModalSignatureOpen(false);
@@ -2938,28 +3099,122 @@ export default function AtivosPage() {
             ─────────────────────────────────────────────────────────────────── */}
         {modalSignatureOpen && (
           <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-xs">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 animate-fade-in text-left">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 animate-fade-in text-left">
               <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none">
                 <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
                   <FileImage size={16} className="stroke-[2.5]" />
-                  Assinatura de Recebimento da OS
+                  Assinaturas de Recebimento da OS
                 </h3>
                 <button onClick={() => setModalSignatureOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"><X size={18} /></button>
               </header>
-              <div className="p-6 space-y-4">
+              <div className="p-6 space-y-4 max-h-[85vh] overflow-y-auto">
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Declaração</label>
-                  <p className="text-[11px] text-slate-500 leading-relaxed font-bold bg-slate-50 border border-slate-200/50 rounded-xl p-3.5">
+                  <p className="text-[11px] text-slate-500 leading-relaxed font-bold bg-slate-50 border border-slate-200/50 rounded-xl p-3">
                     Eu, como responsável do cliente comodatário, declaro ter acompanhado o atendimento técnico e atesto o perfeito estado de conservação/funcionamento dos equipamentos listados nesta OS.
                   </p>
                 </div>
-                
+
+                {/* Nome e CPF do Assinante */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Nome do Assinante *</label>
+                    <input
+                      type="text"
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
+                      placeholder="Nome do cliente"
+                      value={nomeAssinanteWeb}
+                      onChange={(e) => setNomeAssinanteWeb(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">CPF/Documento</label>
+                    <input
+                      type="text"
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E]"
+                      placeholder="CPF ou documento"
+                      value={cpfAssinanteWeb}
+                      onChange={(e) => setCpfAssinanteWeb(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* Canvas de Assinatura do Cliente */}
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Assine na área abaixo *</label>
-                  <SignaturePad 
-                    onSave={(dataUrl) => handleSaveSignature(dataUrl)}
-                    onCancel={() => setModalSignatureOpen(false)}
-                  />
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Assinatura do Cliente *</label>
+                    <button
+                      type="button"
+                      onClick={clearCanvasCliente}
+                      className="text-[9px] font-black text-red-500 hover:text-red-700 uppercase flex items-center gap-0.5 cursor-pointer"
+                    >
+                      <RotateCcw size={10} /> Limpar
+                    </button>
+                  </div>
+                  <div className="border border-slate-250 rounded-2xl overflow-hidden bg-slate-50">
+                    <canvas
+                      ref={canvasClienteRef}
+                      width={480}
+                      height={120}
+                      onMouseDown={startDrawingCliente}
+                      onMouseMove={drawCliente}
+                      onMouseUp={stopDrawingCliente}
+                      onMouseLeave={stopDrawingCliente}
+                      onTouchStart={startDrawingCliente}
+                      onTouchMove={drawCliente}
+                      onTouchEnd={stopDrawingCliente}
+                      className="w-full h-[120px] cursor-crosshair touch-none bg-slate-50 block"
+                    />
+                  </div>
+                </div>
+
+                {/* Canvas de Assinatura do Técnico */}
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Assinatura do Técnico *</label>
+                    <button
+                      type="button"
+                      onClick={clearCanvasTecnico}
+                      className="text-[9px] font-black text-red-500 hover:text-red-700 uppercase flex items-center gap-0.5 cursor-pointer"
+                    >
+                      <RotateCcw size={10} /> Limpar
+                    </button>
+                  </div>
+                  <div className="border border-slate-250 rounded-2xl overflow-hidden bg-slate-50">
+                    <canvas
+                      ref={canvasTecnicoRef}
+                      width={480}
+                      height={120}
+                      onMouseDown={startDrawingTecnico}
+                      onMouseMove={drawTecnico}
+                      onMouseUp={stopDrawingTecnico}
+                      onMouseLeave={stopDrawingTecnico}
+                      onTouchStart={startDrawingTecnico}
+                      onTouchMove={drawTecnico}
+                      onTouchEnd={stopDrawingTecnico}
+                      className="w-full h-[120px] cursor-crosshair touch-none bg-slate-50 block"
+                    />
+                  </div>
+                </div>
+
+                {/* Footer Buttons */}
+                <div className="flex gap-2 justify-end select-none shrink-0 pt-3 border-t border-slate-100">
+                  <button 
+                    type="button" 
+                    onClick={() => setModalSignatureOpen(false)} 
+                    className="px-4 py-2 border border-slate-200 text-slate-500 rounded-xl text-xs font-black uppercase hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="button" 
+                    disabled={saving || !hasDrawnCliente || !hasDrawnTecnico || !nomeAssinanteWeb.trim()}
+                    onClick={handleSaveSignature} 
+                    className="px-5 py-2 bg-[#1B4D3E] disabled:opacity-40 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-[#13382D] cursor-pointer shadow-xs transition-colors flex items-center gap-2"
+                  >
+                    {saving && <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>}
+                    {saving ? 'Gravando...' : 'Concluir e Gravar Assinaturas'}
+                  </button>
                 </div>
               </div>
             </div>
@@ -3333,14 +3588,29 @@ export default function AtivosPage() {
                       <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Descrição</span>
                       <span className="text-[11px] font-black text-slate-800 uppercase">{selectedOsForPdf.tipo === 'INSTALACAO' ? 'INSTALAÇÃO DE COMODATOS' : selectedOsForPdf.tipo === 'RETIRADA' ? 'RETIRADA DE COMODATOS' : selectedOsForPdf.tipo === 'TROCA' ? 'TROCA DE COMODATOS' : 'MANUTENÇÃO DE COMODATOS'}</span>
                     </div>
-                    <div className="text-center">
-                      <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Quantidade</span>
-                      <span className="text-[11px]">0.000</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Valor Previsto</span>
-                      <span className="text-[11px] text-slate-850 font-black">R$ 0.00</span>
-                    </div>
+                    {(() => {
+                      const contratoItem = selectedOsForPdf.contratoComodato?.itens?.find(
+                        (it: any) => it.ativoId === selectedOsForPdf.ativoId || (selectedOsForPdf.ativoDestinoId && it.ativoId === selectedOsForPdf.ativoDestinoId)
+                      );
+                      const quantidade = (contratoItem && contratoItem.quantidade > 0) ? contratoItem.quantidade : 1;
+                      const valorUnitario = (contratoItem && contratoItem.valorUnitario > 0) ? contratoItem.valorUnitario : (selectedOsForPdf.ativo?.valor || 0);
+                      const valorTotal = quantidade * valorUnitario;
+                      
+                      return (
+                        <>
+                          <div className="text-center">
+                            <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Quantidade</span>
+                            <span className="text-[11px]">{Number(quantidade).toFixed(3)}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider leading-none">Valor Previsto</span>
+                            <span className="text-[11px] text-slate-850 font-black">
+                              {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            </span>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   <div className="space-y-1">

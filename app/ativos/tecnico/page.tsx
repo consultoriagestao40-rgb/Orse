@@ -834,6 +834,19 @@ export default function TecnicoPage() {
                       <span className="uppercase font-black truncate max-w-[180px]">{os.ativoDestino.descricao}</span>
                     </div>
                   )}
+                  <div className="flex justify-between border-t border-slate-200/50 pt-1 mt-1">
+                    <span className="text-slate-400 font-extrabold uppercase">Qtd / Vlr Previsto:</span>
+                    <span className="text-slate-850">
+                      {(() => {
+                        const contratoItem = os.contratoComodato?.itens?.find(
+                          (it: any) => it.ativoId === os.ativoId || (os.ativoDestinoId && it.ativoId === os.ativoDestinoId)
+                        );
+                        const qty = (contratoItem && contratoItem.quantidade > 0) ? contratoItem.quantidade : 1;
+                        const val = (contratoItem && contratoItem.valorUnitario > 0) ? contratoItem.valorUnitario : (os.ativo?.valor || 0);
+                        return `${Number(qty).toFixed(3)} | ${(qty * val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+                      })()}
+                    </span>
+                  </div>
                   {os.dataPrevista && (
                     <div className="flex justify-between border-t border-slate-200/50 pt-1 mt-1">
                       <span className="text-slate-400 font-extrabold uppercase">Data Prevista:</span>
@@ -968,11 +981,40 @@ export default function TecnicoPage() {
           {/* Modal Body - Strict width mapping and horizontal lock */}
           <div className="flex-1 p-4 w-full max-w-md mx-auto space-y-5 pb-8 text-left overflow-x-hidden">
             {/* Context Summary card */}
-            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-150 text-xs font-bold text-slate-700 space-y-1.5">
-              <span className="text-[9px] font-black uppercase tracking-widest text-[#1B4D3E] block">Cliente</span>
-              <div className="text-slate-850 uppercase text-xs font-extrabold">{activeOsForFinalize.client.nomeFantasia}</div>
-              <div className="text-[10px] text-slate-400 font-extrabold flex items-center gap-1 leading-snug">
-                <MapPin size={9} /> {activeOsForFinalize.client.endereco}
+            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-150 text-xs font-bold text-slate-700 space-y-2.5">
+              <div className="space-y-1">
+                <span className="text-[9px] font-black uppercase tracking-widest text-[#1B4D3E] block">Cliente</span>
+                <div className="text-slate-850 uppercase text-xs font-extrabold">{activeOsForFinalize.client.nomeFantasia}</div>
+                <div className="text-[10px] text-slate-400 font-extrabold flex items-center gap-1 leading-snug">
+                  <MapPin size={9} /> {activeOsForFinalize.client.endereco}
+                </div>
+              </div>
+              <div className="border-t border-slate-200/60 pt-2 grid grid-cols-2 gap-2 text-[10px]">
+                <div>
+                  <span className="text-slate-400 font-extrabold uppercase block leading-none">Quantidade</span>
+                  <span className="text-slate-850 font-black">
+                    {(() => {
+                      const contratoItem = activeOsForFinalize.contratoComodato?.itens?.find(
+                        (it: any) => it.ativoId === activeOsForFinalize.ativoId || (activeOsForFinalize.ativoDestinoId && it.ativoId === activeOsForFinalize.ativoDestinoId)
+                      );
+                      const qty = (contratoItem && contratoItem.quantidade > 0) ? contratoItem.quantidade : 1;
+                      return Number(qty).toFixed(3);
+                    })()}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-extrabold uppercase block leading-none">Valor Previsto</span>
+                  <span className="text-slate-850 font-black">
+                    {(() => {
+                      const contratoItem = activeOsForFinalize.contratoComodato?.itens?.find(
+                        (it: any) => it.ativoId === activeOsForFinalize.ativoId || (activeOsForFinalize.ativoDestinoId && it.ativoId === activeOsForFinalize.ativoDestinoId)
+                      );
+                      const qty = (contratoItem && contratoItem.quantidade > 0) ? contratoItem.quantidade : 1;
+                      const val = (contratoItem && contratoItem.valorUnitario > 0) ? contratoItem.valorUnitario : (activeOsForFinalize.ativo?.valor || 0);
+                      return (qty * val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    })()}
+                  </span>
+                </div>
               </div>
             </div>
 
