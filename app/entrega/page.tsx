@@ -1949,7 +1949,7 @@ export default function GestaoEntregasPage() {
 
                   {/* Grid Lines Horizontais */}
                   {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
-                    const y = 10 + ratio * 160;
+                    const y = 35 + ratio * 145;
                     const maxVal = Math.max(...kpis.monthlyData.map(d => d.valor), 1000);
                     const val = Math.round(maxVal * (1 - ratio));
                     const formattedVal = val >= 1000 
@@ -1968,12 +1968,12 @@ export default function GestaoEntregasPage() {
                     const maxVal = Math.max(...kpis.monthlyData.map(d => d.valor), 1000);
                     const points = kpis.monthlyData.map((d, i) => {
                       const x = 60 + (i / (kpis.monthlyData.length - 1)) * 510;
-                      const y = 170 - (d.valor / maxVal) * 160;
+                      const y = 180 - (d.valor / maxVal) * 145;
                       return { x, y, val: d.valor, label: d.label };
                     });
 
                     const linePath = points.map(p => `${p.x},${p.y}`).join(' ');
-                    const areaPath = `60,170 ${linePath} 570,170`;
+                    const areaPath = `60,180 ${linePath} 570,180`;
 
                     return (
                       <>
@@ -1982,21 +1982,21 @@ export default function GestaoEntregasPage() {
 
                         {points.map((p, i) => (
                           <g key={i} className="group/point">
-                            <circle cx={p.x} cy={p.y} r="5" fill="#FFFFFF" stroke="#1B4D3E" strokeWidth="3" className="hover:scale-125 transition-transform duration-200 cursor-pointer" />
+                            <circle cx={p.x} cy={p.y} r="5.5" fill="#FFFFFF" stroke="#1B4D3E" strokeWidth="3" className="cursor-pointer" />
                             
                             {/* Valor flutuante acima do ponto */}
-                            <text x={p.x} y={p.y - 10} textAnchor="middle" className="fill-[#1B4D3E] font-black text-[10px] font-sans">
+                            <text x={p.x} y={p.y - 12} textAnchor="middle" className="fill-[#1B4D3E] font-black text-[10px] font-sans">
                               {p.val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
                             </text>
                             
-                            <text x={p.x} y="192" textAnchor="middle" className="fill-slate-400 font-bold text-[9px] uppercase tracking-wider">{p.label}</text>
+                            <text x={p.x} y="202" textAnchor="middle" className="fill-slate-400 font-bold text-[9px] uppercase tracking-wider">{p.label}</text>
                           </g>
                         ))}
                       </>
                     );
                   })()}
 
-                  <line x1="55" y1="170" x2="590" y2="170" stroke="#E2E8F0" strokeWidth="1.5" />
+                  <line x1="55" y1="180" x2="590" y2="180" stroke="#E2E8F0" strokeWidth="1.5" />
                 </svg>
               </div>
             </div>
