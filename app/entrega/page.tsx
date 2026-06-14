@@ -2051,82 +2051,82 @@ export default function GestaoEntregasPage() {
                 </div>
               </div>
 
-              {/* Gráfico 2: Ticket Médio Mensal (Horizontal) */}
-              <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs flex flex-col justify-between">
+              {/* Gráfico 2: Ticket Médio Mensal (Ano Vigente) */}
+              <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6 select-none">
                   <div>
                     <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
                       <BarChart3 size={16} className="text-[#1B4D3E] stroke-[2.5]" />
                       Ticket Médio por Mês (Ano Vigente)
                     </h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Histórico do ticket médio por entrega realizada</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Evolução do valor médio por entrega realizada</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="w-3.5 h-2 bg-[#1B4D3E]/30 rounded inline-block" />
+                    <span className="w-2.5 h-2.5 bg-[#1B4D3E] rounded-full inline-block" />
                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Ticket Médio (R$)</span>
                   </div>
                 </div>
 
                 {/* SVG Chart Container */}
-                <div className="h-64 w-full relative animate-in fade-in duration-300">
-                  <svg className="w-full h-full" viewBox="0 0 600 290" preserveAspectRatio="none">
-                    {/* Grid Lines Verticais */}
-                    {[0.25, 0.5, 0.75, 1].map((ratio, idx) => {
-                      const x = 70 + ratio * 440;
+                <div className="h-64 w-full relative">
+                  <svg className="w-full h-full" viewBox="0 0 600 220" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="ticketAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#1B4D3E" stopOpacity="0.25" />
+                        <stop offset="100%" stopColor="#1B4D3E" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+
+                    {/* Grid Lines Horizontais */}
+                    {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
+                      const y = 35 + ratio * 145;
                       const maxTicket = Math.max(...kpis.monthlyData.map(d => d.ticketMedio), 100);
-                      const val = Math.round(maxTicket * ratio);
+                      const val = Math.round(maxTicket * (1 - ratio));
                       const formattedVal = val >= 1000 
                         ? `R$ ${(val / 1000).toFixed(1)}k` 
                         : `R$ ${val}`;
                       return (
                         <g key={idx} className="opacity-30">
-                          <line x1={x} y1="10" x2={x} y2="250" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="4 4" />
-                          <text x={x} y="265" textAnchor="middle" className="fill-slate-400 font-bold text-[8.5px] font-sans">{formattedVal}</text>
+                          <line x1="55" y1={y} x2="590" y2={y} stroke="#CBD5E1" strokeWidth="1" strokeDasharray="4 4" />
+                          <text x="45" y={y + 4} textAnchor="end" className="fill-slate-400 font-bold text-[9px] font-sans">{formattedVal}</text>
                         </g>
                       );
                     })}
 
-                    {/* Baseline Vertical */}
-                    <line x1="70" y1="10" x2="70" y2="250" stroke="#E2E8F0" strokeWidth="1.5" />
-
-                    {/* Barras Horizontais */}
+                    {/* Caminhos da Linha e Área */}
                     {(() => {
                       const maxTicket = Math.max(...kpis.monthlyData.map(d => d.ticketMedio), 100);
-                      return kpis.monthlyData.map((d, i) => {
-                        const y = 15 + i * 19;
-                        const barWidth = (d.ticketMedio / maxTicket) * 440;
-                        return (
-                          <g key={i}>
-                            {/* Label do Mês */}
-                            <text x="15" y={y + 9} textAnchor="start" className="fill-slate-400 font-bold text-[8.5px] uppercase tracking-wider">{d.label}</text>
-                            
-                            {/* Barra Horizontal */}
-                            {d.ticketMedio > 0 ? (
-                              <>
-                                <rect
-                                  x="70"
-                                  y={y}
-                                  width={barWidth}
-                                  height="11"
-                                  fill="#1B4D3E"
-                                  fillOpacity="0.15"
-                                  rx="3"
-                                  ry="3"
-                                />
-                                {/* Valor flutuante à direita da barra */}
-                                <text x={70 + barWidth + 8} y={y + 8.5} textAnchor="start" className="fill-[#1B4D3E] font-black text-[8.5px] font-sans">
-                                  {d.ticketMedio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
-                                </text>
-                              </>
-                            ) : (
-                              <text x="78" y={y + 8.5} textAnchor="start" className="fill-slate-350 font-bold text-[8px] italic">
-                                R$ 0
-                              </text>
-                            )}
-                          </g>
-                        );
+                      const points = kpis.monthlyData.map((d, i) => {
+                        const x = 60 + (i / (kpis.monthlyData.length - 1)) * 510;
+                        const y = 180 - (d.ticketMedio / maxTicket) * 145;
+                        return { x, y, val: d.ticketMedio, label: d.label };
                       });
+
+                      const linePath = points.map(p => `${p.x},${p.y}`).join(' ');
+                      const areaPath = `60,180 ${linePath} 570,180`;
+
+                      return (
+                        <>
+                          <polygon points={areaPath} fill="url(#ticketAreaGradient)" />
+                          <polyline points={linePath} fill="none" stroke="#1B4D3E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+                          {points.map((p, i) => (
+                            <g key={i} className="group/point">
+                              <circle cx={p.x} cy={p.y} r="4.5" fill="#FFFFFF" stroke="#1B4D3E" strokeWidth="2.5" className="cursor-pointer" />
+                              
+                              {/* Valor flutuante acima do ponto (sem prefixo R$ para evitar colisão) */}
+                              <text x={p.x} y={p.y - 10} textAnchor="middle" className="fill-[#1B4D3E] font-black text-[9px] font-sans">
+                                {p.val > 0 ? p.val.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) : ""}
+                              </text>
+                              
+                              <text x={p.x} y="202" textAnchor="middle" className="fill-slate-400 font-bold text-[8.5px] uppercase tracking-wider">{p.label}</text>
+                            </g>
+                          ))}
+                        </>
+                      );
                     })()}
+
+                    <line x1="55" y1="180" x2="590" y2="180" stroke="#E2E8F0" strokeWidth="1.5" />
                   </svg>
                 </div>
               </div>
