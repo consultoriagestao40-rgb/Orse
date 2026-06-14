@@ -1679,99 +1679,7 @@ export default function GestaoEntregasPage() {
 
             </div>
 
-            {/* Evolução Mensal do Volume de Vendas */}
-            <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6 select-none">
-                <div>
-                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                    <DollarSign size={16} className="text-[#1B4D3E] stroke-[2.5]" />
-                    Evolução Mensal do Volume de Vendas
-                  </h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Faturamento acumulado dos últimos 6 meses</p>
-                </div>
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 bg-[#1B4D3E] rounded-full inline-block" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Faturamento (R$)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 bg-blue-500 rounded-full inline-block" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Qtd. Entregas</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* SVG Chart Container */}
-              <div className="h-64 w-full relative">
-                <svg className="w-full h-full" viewBox="0 0 600 220" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#1B4D3E" stopOpacity="0.25" />
-                      <stop offset="100%" stopColor="#1B4D3E" stopOpacity="0.0" />
-                    </linearGradient>
-                  </defs>
-
-                  {/* Grid Lines Horizontais */}
-                  {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
-                    const y = 10 + ratio * 160;
-                    const maxVal = Math.max(...kpis.monthlyData.map(d => d.valor), 1000);
-                    const val = Math.round(maxVal * (1 - ratio));
-                    const formattedVal = val >= 1000 
-                      ? `R$ ${(val / 1000).toFixed(0)}k` 
-                      : `R$ ${val}`;
-                    return (
-                      <g key={idx} className="opacity-30">
-                        <line x1="55" y1={y} x2="590" y2={y} stroke="#CBD5E1" strokeWidth="1" strokeDasharray="4 4" />
-                        <text x="45" y={y + 4} textAnchor="end" className="fill-slate-400 font-bold text-[9px] font-sans">{formattedVal}</text>
-                      </g>
-                    );
-                  })}
-
-                  {/* Caminhos da Linha e Área */}
-                  {(() => {
-                    const maxVal = Math.max(...kpis.monthlyData.map(d => d.valor), 1000);
-                    const points = kpis.monthlyData.map((d, i) => {
-                      const x = 60 + (i / (kpis.monthlyData.length - 1)) * 510;
-                      const y = 170 - (d.valor / maxVal) * 160;
-                      return { x, y, val: d.valor, volume: d.volume, label: d.label };
-                    });
-
-                    const linePath = points.map(p => `${p.x},${p.y}`).join(' ');
-                    const areaPath = `60,170 ${linePath} 570,170`;
-
-                    return (
-                      <>
-                        <polygon points={areaPath} fill="url(#areaGradient)" />
-                        <polyline points={linePath} fill="none" stroke="#1B4D3E" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-
-                        {points.map((p, i) => (
-                          <g key={i} className="group/point">
-                            <circle cx={p.x} cy={p.y} r="5" fill="#FFFFFF" stroke="#1B4D3E" strokeWidth="3" className="hover:scale-125 transition-transform duration-200 cursor-pointer" />
-                            
-                            {/* Valor flutuante acima do ponto */}
-                            <text x={p.x} y={p.y - 10} textAnchor="middle" className="fill-slate-800 font-black text-[9px] font-sans">
-                              {p.val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
-                            </text>
-
-                            {/* Rótulo secundário (volume de entregas) abaixo do ponto */}
-                            <text x={p.x} y={p.y + 16} textAnchor="middle" className="fill-blue-600 font-extrabold text-[8px] font-sans">
-                              ({p.volume} ent.)
-                            </text>
-                            
-                            <text x={p.x} y="192" textAnchor="middle" className="fill-slate-400 font-bold text-[9px] uppercase tracking-wider">{p.label}</text>
-                          </g>
-                        ))}
-                      </>
-                    );
-                  })()}
-
-                  <line x1="55" y1="170" x2="590" y2="170" stroke="#E2E8F0" strokeWidth="1.5" />
-                </svg>
-              </div>
             </div>
-
-            {/* Linha 2: Rankings e Gráficos */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 text-left">
               
               {/* Esquerda: Entregadores & Cidades */}
               <div className="space-y-8">
@@ -2010,8 +1918,86 @@ export default function GestaoEntregasPage() {
                   </div>
                 </div>
 
+            </div>
+
+            {/* Faturamento Mensal das Entregas */}
+            <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xs">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6 select-none">
+                <div>
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                    <DollarSign size={16} className="text-[#1B4D3E] stroke-[2.5]" />
+                    Valor das Entregas por Mês (Faturamento)
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Total faturado em entregas nos últimos 6 meses</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-[#1B4D3E] rounded-full inline-block" />
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Faturamento (R$)</span>
+                </div>
               </div>
 
+              {/* SVG Chart Container */}
+              <div className="h-64 w-full relative">
+                <svg className="w-full h-full" viewBox="0 0 600 220" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#1B4D3E" stopOpacity="0.25" />
+                      <stop offset="100%" stopColor="#1B4D3E" stopOpacity="0.0" />
+                    </linearGradient>
+                  </defs>
+
+                  {/* Grid Lines Horizontais */}
+                  {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
+                    const y = 10 + ratio * 160;
+                    const maxVal = Math.max(...kpis.monthlyData.map(d => d.valor), 1000);
+                    const val = Math.round(maxVal * (1 - ratio));
+                    const formattedVal = val >= 1000 
+                      ? `R$ ${(val / 1000).toFixed(0)}k` 
+                      : `R$ ${val}`;
+                    return (
+                      <g key={idx} className="opacity-30">
+                        <line x1="55" y1={y} x2="590" y2={y} stroke="#CBD5E1" strokeWidth="1" strokeDasharray="4 4" />
+                        <text x="45" y={y + 4} textAnchor="end" className="fill-slate-400 font-bold text-[9px] font-sans">{formattedVal}</text>
+                      </g>
+                    );
+                  })}
+
+                  {/* Caminhos da Linha e Área */}
+                  {(() => {
+                    const maxVal = Math.max(...kpis.monthlyData.map(d => d.valor), 1000);
+                    const points = kpis.monthlyData.map((d, i) => {
+                      const x = 60 + (i / (kpis.monthlyData.length - 1)) * 510;
+                      const y = 170 - (d.valor / maxVal) * 160;
+                      return { x, y, val: d.valor, label: d.label };
+                    });
+
+                    const linePath = points.map(p => `${p.x},${p.y}`).join(' ');
+                    const areaPath = `60,170 ${linePath} 570,170`;
+
+                    return (
+                      <>
+                        <polygon points={areaPath} fill="url(#areaGradient)" />
+                        <polyline points={linePath} fill="none" stroke="#1B4D3E" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+
+                        {points.map((p, i) => (
+                          <g key={i} className="group/point">
+                            <circle cx={p.x} cy={p.y} r="5" fill="#FFFFFF" stroke="#1B4D3E" strokeWidth="3" className="hover:scale-125 transition-transform duration-200 cursor-pointer" />
+                            
+                            {/* Valor flutuante acima do ponto */}
+                            <text x={p.x} y={p.y - 10} textAnchor="middle" className="fill-[#1B4D3E] font-black text-[10px] font-sans">
+                              {p.val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+                            </text>
+                            
+                            <text x={p.x} y="192" textAnchor="middle" className="fill-slate-400 font-bold text-[9px] uppercase tracking-wider">{p.label}</text>
+                          </g>
+                        ))}
+                      </>
+                    );
+                  })()}
+
+                  <line x1="55" y1="170" x2="590" y2="170" stroke="#E2E8F0" strokeWidth="1.5" />
+                </svg>
+              </div>
             </div>
           </div>
         )}
