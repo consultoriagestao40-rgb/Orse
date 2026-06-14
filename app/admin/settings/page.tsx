@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import { 
   Settings as SettingsIcon, Layers, CalendarDays, Ruler, Plus, Trash2, 
   Save, X, Tag, Edit2, Target, Briefcase, MessageSquare, CreditCard, CheckCircle2, Lock, Smartphone, RefreshCw, Palette, Image,
-  Eye, EyeOff, HelpCircle
+  Eye, EyeOff, HelpCircle, Clock
 } from 'lucide-react';
 import { 
   getPropostaStatuses, createPropostaStatus, deletePropostaStatus, getLoggedUser,
@@ -26,7 +26,7 @@ import {
   updateCategoria, toggleCategoria,
   updateTipoServico, toggleTipoServico,
   updateSegmento, toggleSegmento,
-  getFaqsPadrao, createFaqPadrao, updateFaqPadrao, deleteFaqPadrao
+  getFaqsPadrao, createFaqPadrao, updateFaqPadrao, deleteFaqPadrao, updateUserTimezone
 } from './actions';
 import { getEmpresasEmissoras, createEmpresaEmissora, updateEmpresaEmissora, deleteEmpresaEmissora } from './empresas-actions';
 import { 
@@ -39,7 +39,7 @@ import {
   changeTenantLogo, changeTenantTheme
 } from '@/app/admin/empresas/actions';
 
-type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas' | 'whatsapp' | 'faturamento' | 'marca' | 'faq';
+type Tab = 'status' | 'escalas' | 'unidades' | 'categorias' | 'tipos' | 'segmentos' | 'metas' | 'empresas' | 'whatsapp' | 'faturamento' | 'marca' | 'faq' | 'preferencias';
 
 const menuGroups = [
   {
@@ -52,6 +52,7 @@ const menuGroups = [
       { id: 'tipos', label: 'Tipos de Serviço', icon: SettingsIcon, roles: ['ADMIN', 'MANAGER', 'USER'] },
       { id: 'segmentos', label: 'Segmentos de Cliente', icon: Target, roles: ['ADMIN', 'MANAGER', 'USER'] },
       { id: 'faq', label: 'Perguntas Frequentes (FAQ)', icon: HelpCircle, roles: ['ADMIN', 'MANAGER', 'USER'] },
+      { id: 'preferencias', label: 'Fuso Horário & Preferências', icon: Clock, roles: ['ADMIN', 'MANAGER', 'USER'] },
     ]
   },
   {
@@ -191,6 +192,8 @@ export default function SettingsPage() {
   const [hasAccess, setHasAccess] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<Tab>('status');
   const [loading, setLoading] = useState(true);
+  const [userTimezone, setUserTimezone] = useState('America/Sao_Paulo');
+  const [timezoneSaveLoading, setTimezoneSaveLoading] = useState(false);
 
   // Status
   const [statuses, setStatuses] = useState<any[]>([]);
@@ -258,6 +261,24 @@ export default function SettingsPage() {
       setThemeColor(billingInfo.primaryColor);
     }
   }, [billingInfo]);
+
+  const handleSaveTimezone = async () => {
+    setTimezoneSaveLoading(true);
+    try {
+      const res = await updateUserTimezone(userTimezone);
+      if (res.success) {
+        localStorage.setItem('sb_user_timezone', userTimezone);
+        alert('Preferências de fuso horário atualizadas com sucesso!');
+        window.location.reload();
+      } else {
+        alert('Erro ao salvar fuso horário: ' + res.error);
+      }
+    } catch (err: any) {
+      alert('Erro inesperado: ' + err.message);
+    } finally {
+      setTimezoneSaveLoading(false);
+    }
+  };
 
   const handleSaveThemeColor = async () => {
     setThemeColorSaveLoading(true);
@@ -733,6 +754,7 @@ export default function SettingsPage() {
         if (user) {
           setUserRole(user.role || 'USER');
           setHasAccess(true);
+          setUserTimezone(user.timezone || 'America/Sao_Paulo');
         } else {
           // Sem usuário logado → login
           window.location.href = '/login';
@@ -2518,6 +2540,55 @@ export default function SettingsPage() {
                       </button>
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'preferencias' && (
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs space-y-8 relative overflow-hidden">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-[#1B4D3E] bg-[#1B4D3E]/8 px-3 py-1 rounded-full">
+                      Minhas Preferências
+                    </span>
+                    <h2 className="text-xl font-black text-slate-800 tracking-tight mt-2 font-display">Fuso Horário do Usuário</h2>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                      Configure o fuso horário para exibição correta dos horários de mensagens e atividades no sistema
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-slate-100 space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Fuso Horário Padrão</label>
+                    <select
+                      value={userTimezone}
+                      onChange={(e) => setUserTimezone(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm font-bold outline-none focus:border-[#1B4D3E] transition-all focus:bg-white text-slate-700"
+                    >
+                      <option value="America/Sao_Paulo">Horário de Brasília (DF, SP, RJ, PR, MG, RS, SC, etc. - UTC-3)</option>
+                      <option value="America/Cuiaba">Mato Grosso (MT - UTC-4)</option>
+                      <option value="America/Campo_Grande">Mato Grosso do Sul (MS - UTC-4)</option>
+                      <option value="America/Manaus">Amazonas / Roraima / Rondônia (AM, RR, RO - UTC-4)</option>
+                      <option value="America/Rio_Branco">Acre (AC - UTC-5)</option>
+                      <option value="America/Belem">Pará / Amapá / Tocantins (PA, AP, TO - UTC-3)</option>
+                      <option value="America/Fortaleza">Bahia / Ceará / Pernambuco / Alagoas / etc. (UTC-3)</option>
+                      <option value="America/Noronha">Fernando de Noronha (UTC-2)</option>
+                    </select>
+                  </div>
+
+                  <p className="text-[10px] text-slate-500 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    💡 **Dica:** O fuso horário selecionado acima será usado para formatar todos os horários e datas nas conversas do WhatsApp do CRM, no aplicativo móvel do técnico, nas timelines e nos relatórios de atividades para o seu usuário logado.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveTimezone}
+                    disabled={timezoneSaveLoading}
+                    className="w-full bg-[#1B4D3E] hover:bg-emerald-950 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#1B4D3E]/20 transition-all cursor-pointer text-center disabled:opacity-50 active:scale-[0.98] border-none"
+                  >
+                    {timezoneSaveLoading ? 'Salvando Preferências...' : 'Salvar Preferências'}
+                  </button>
                 </div>
               </div>
             )}

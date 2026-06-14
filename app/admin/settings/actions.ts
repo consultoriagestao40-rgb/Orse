@@ -359,4 +359,54 @@ export async function deleteFaqPadrao(id: string) {
   }
 }
 
+export async function updateUserTimezone(timezone: string) {
+  try {
+    const { getLoggedUser } = await import('@/app/propostas/actions');
+    const user = await getLoggedUser();
+    if (!user) {
+      return { success: false, error: 'Usuário não autenticado.' };
+    }
+
+    // Atualiza no banco
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: { timezone }
+    });
+
+    // Atualiza o cookie de sessão no servidor
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    const sbUser = cookieStore.get('sb_user')?.value;
+    if (sbUser) {
+      let data: any = null;
+      let cleaned = sbUser.trim();
+      if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+        cleaned = cleaned.slice(1, -1);
+      }
+      try {
+        data = JSON.parse(decodeURIComponent(cleaned));
+      } catch {
+        data = JSON.parse(sbUser);
+      }
+      if (data) {
+        data.timezone = timezone;
+        cookieStore.set('sb_user', JSON.stringify(data), {
+          path: '/',
+          maxAge: 60 * 60 * 24 * 7,
+          secure: true,
+          sameSite: 'lax'
+        });
+      }
+    }
+
+    revalidatePath('/admin/settings');
+    revalidatePath('/');
+    return { success: true, user: updatedUser };
+  } catch (error: any) {
+    console.error('Erro ao atualizar fuso horário:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+
 

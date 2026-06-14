@@ -26,6 +26,7 @@ import {
 import { getLoggedUser } from '@/app/propostas/actions';
 import { getSegmentos } from '@/app/admin/settings/actions';
 import UserSelectPopover from '@/components/UserSelectPopover';
+import { formatTimeBrasilia } from '@/lib/timezone';
 import { 
   Phone, 
   MessageCircle, 
@@ -1152,7 +1153,7 @@ export default function MobileCRM() {
                             
                             <div className="absolute bottom-1 right-2 flex items-center gap-1 text-[8px] font-bold text-slate-400 select-none">
                               <span>
-                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {formatTimeBrasilia(msg.createdAt)}
                               </span>
                               {isMe && (
                                 <span className={`font-black ${showDoubleCheck ? 'text-blue-500' : 'text-slate-400'}`}>
@@ -1246,7 +1247,7 @@ export default function MobileCRM() {
                               <h4 className="text-xs md:text-sm font-bold text-slate-800 truncate">{u.nome}</h4>
                               {u.lastMessage && (
                                 <span className="text-[8px] text-slate-400 font-semibold ml-1">
-                                  {new Date(u.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  {formatTimeBrasilia(u.lastMessage.createdAt)}
                                 </span>
                               )}
                             </div>

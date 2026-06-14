@@ -7,12 +7,13 @@ import { getSmtpAccounts } from '@/app/emails/actions';
 import { MessageSquare, Paperclip, Calendar, Users, Send, Download, Plus, X, Trash2, MapPin, Navigation, Mail, Phone, Map, MessageCircle, CheckCircle2, AlertCircle, Info, RefreshCw, FileText, Mic, Trash, Clock, Sparkles, Search, ExternalLink, Edit2 } from 'lucide-react';
 import WhatsAppChat from './WhatsAppChat';
 import EmailTab from './EmailTab';
+import { formatDateTimeBrasilia, parseDateUTC, getUserTimezone } from '@/lib/timezone';
 
 
 const safeDate = (val: any, time = false) => {
   if (!val) return 'Data Inválida';
-  const d = new Date(val);
-  return isNaN(d.getTime()) ? 'Data Inválida' : (time ? d.toLocaleString() : d.toLocaleDateString());
+  const d = parseDateUTC(val);
+  return isNaN(d.getTime()) ? 'Data Inválida' : (time ? formatDateTimeBrasilia(val) : d.toLocaleDateString('pt-BR', { timeZone: getUserTimezone() }));
 };
 
 const getInitials = (name: any) => {
@@ -1415,7 +1416,7 @@ export default function LeadDetailsTabs({ lead }: { lead: any }) {
                     const isCompleted = a.status === 'CONCLUIDA';
                     const dateObj = new Date(a.dataInicio);
                     const dateFormatted = !isNaN(dateObj.getTime()) 
-                      ? dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+                      ? formatDateTimeBrasilia(a.dataInicio) 
                       : 'Data Inválida';
 
                     return (

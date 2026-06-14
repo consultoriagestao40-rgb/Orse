@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getWhatsAppMessages, sendWhatsAppMessage, sendWhatsAppMedia, markWhatsAppMessagesAsRead } from '../whatsapp-actions';
 import { Send, MessageSquare, Paperclip, Smile, X, Download, FileText, Mic, Trash, RefreshCw } from 'lucide-react';
+import { formatTimeBrasilia } from '@/lib/timezone';
 
 interface WhatsAppChatProps {
   leadId: string;
@@ -838,7 +839,7 @@ export default function WhatsAppChat({ leadId, leadPhone }: WhatsAppChatProps) {
                 >
                   {renderMessageContent(msg.texto)}
                   <div className={`text-[10px] mt-1 flex items-center justify-end gap-1 ${isOutbound ? 'text-emerald-700/60' : 'text-slate-400'}`}>
-                    <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span>{formatTimeBrasilia(msg.createdAt)}</span>
                     {isOutbound && (
                       <span className="text-[14px] leading-none select-none font-bold ml-1">
                         {msg.status === 'READ' ? (

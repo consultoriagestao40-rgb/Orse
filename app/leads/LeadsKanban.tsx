@@ -9,11 +9,12 @@ import LeadDetailsTabs from './components/LeadDetailsTabs';
 import PipelineMetrics from './components/PipelineMetrics';
 import WhatsAppChat from './components/WhatsAppChat';
 import UserSelectPopover from '@/components/UserSelectPopover';
+import { parseDateUTC, formatTimeBrasilia, getUserTimezone } from '@/lib/timezone';
 
 const safeDate = (val: any) => {
   if (!val) return 'Data Inválida';
-  const d = new Date(val);
-  return isNaN(d.getTime()) ? 'Data Inválida' : d.toLocaleDateString();
+  const d = parseDateUTC(val);
+  return isNaN(d.getTime()) ? 'Data Inválida' : d.toLocaleDateString('pt-BR', { timeZone: getUserTimezone() });
 };
 
 const getInitials = (name: any) => {
@@ -3711,14 +3712,16 @@ export default function LeadsKanban() {
                                 {lead.nomeFantasia}
                               </h4>
                               {lead.latestMsg && (() => {
-                                const msgDate = new Date(lead.latestMsg.createdAt);
+                                const msgDate = parseDateUTC(lead.latestMsg.createdAt);
                                 if (isNaN(msgDate.getTime())) return null;
-                                const isToday = msgDate.toDateString() === new Date().toDateString();
+                                const msgDateStr = msgDate.toLocaleDateString('pt-BR', { timeZone: getUserTimezone() });
+                                const todayStr = new Date().toLocaleDateString('pt-BR', { timeZone: getUserTimezone() });
+                                const isToday = msgDateStr === todayStr;
                                 return (
                                   <span className="text-[10px] text-slate-400 shrink-0 font-medium ml-1">
                                     {isToday 
-                                      ? msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                      : msgDate.toLocaleDateString([], { day: '2-digit', month: '2-digit' })
+                                      ? formatTimeBrasilia(lead.latestMsg.createdAt)
+                                      : msgDate.toLocaleDateString('pt-BR', { timeZone: getUserTimezone(), day: '2-digit', month: '2-digit' })
                                     }
                                   </span>
                                 );
