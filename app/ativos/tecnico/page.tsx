@@ -5,7 +5,7 @@ import {
   Wrench, ArrowLeft, Play, CheckCircle, Camera, Trash2, Lock,
   RotateCcw, Save, X, ClipboardList, MapPin, User, FileText,
   Calendar, Check, LogOut, Loader2, Car, Navigation, Volume2,
-  Building, Target, PlusCircle, MessageSquare
+  Building, Target, PlusCircle, MessageSquare, ShieldAlert
 } from 'lucide-react';
 import { 
   getTecnicoOrdens, updateOrdemServicoAtivo, getLoggedTenantInfo 
@@ -847,6 +847,18 @@ export default function TecnicoPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Refusal Warning */}
+                {os.observacaoAtendimento && os.observacaoAtendimento.startsWith("Motivo da recusa do cancelamento:") && (
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-black text-red-600 uppercase tracking-widest flex items-center gap-1.5 animate-pulse">
+                      <ShieldAlert size={12} className="shrink-0 text-red-650" /> Cancelamento Recusado pelo Gestor
+                    </span>
+                    <p className="text-[10.5px] font-bold text-red-700 leading-relaxed bg-red-50/70 rounded-xl p-3 border border-red-200/60 select-text">
+                      {os.observacaoAtendimento.replace("Motivo da recusa do cancelamento:", "").trim()}
+                    </p>
+                  </div>
+                )}
 
                 {/* Instructions */}
                 {os.instrucoes && (

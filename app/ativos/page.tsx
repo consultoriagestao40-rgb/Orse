@@ -899,6 +899,15 @@ export default function AtivosPage() {
     const os = ordens.find(o => o.id === osId);
     if (!os) return;
 
+    const motivo = prompt('Informe a justificativa para recusar o cancelamento (obrigatório para o técnico):');
+    if (motivo === null) return;
+    if (!motivo.trim()) {
+      showAlert('Justificativa Obrigatória', 'Você precisa informar um motivo/justificativa para recusar o cancelamento.', 'warning');
+      return;
+    }
+
+    const observacaoAtendimentoRefusao = `Motivo da recusa do cancelamento: ${motivo.trim()}`;
+
     let targetStatus = 'EM_ANDAMENTO'; // fallback
     if (os.historico) {
       try {
@@ -936,12 +945,12 @@ export default function AtivosPage() {
     setUpdatingOsId(osId);
     
     // Atualização otimista
-    setOrdens(prev => prev.map(o => o.id === osId ? { ...o, status: targetStatus, observacaoAtendimento: '' } : o));
-    setOsForm(prev => prev.id === osId ? { ...prev, status: targetStatus, observacaoAtendimento: '' } : prev);
+    setOrdens(prev => prev.map(o => o.id === osId ? { ...o, status: targetStatus, observacaoAtendimento: observacaoAtendimentoRefusao } : o));
+    setOsForm(prev => prev.id === osId ? { ...prev, status: targetStatus, observacaoAtendimento: observacaoAtendimentoRefusao } : prev);
     
     const res = await updateOrdemServicoAtivo(osId, { 
       status: targetStatus, 
-      observacaoAtendimento: '' 
+      observacaoAtendimento: observacaoAtendimentoRefusao 
     });
     
     if (res.success) {
