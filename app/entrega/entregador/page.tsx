@@ -764,6 +764,18 @@ export default function EntregadorPage() {
       {/* Lista de Entregas Ativas do Roteiro */}
       <main className="flex-1 p-5 space-y-4 overflow-y-auto">
         
+        <div className="flex justify-between items-center px-1">
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+            <ClipboardList size={13} /> Fila de Entregas do Seu Roteiro
+          </span>
+          <button 
+            onClick={loadEntregadorData}
+            className="text-[9px] font-black text-[#10B981] uppercase hover:underline cursor-pointer"
+          >
+            Atualizar
+          </button>
+        </div>
+
         {loading ? (
           <div className="flex flex-col items-center justify-center py-32 gap-3 text-slate-500 select-none">
             <Loader2 size={32} className="animate-spin text-[#10B981] stroke-[2.5]" />
@@ -783,7 +795,6 @@ export default function EntregadorPage() {
           </div>
         ) : (
           <div className="space-y-3.5">
-            <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 text-left">Fila de Entregas do Seu Roteiro</h2>
             
             {entregas.map((ent, idx) => {
               const isBlocked = isEntregaBlocked(ent);
