@@ -5,6 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import { ArrowLeft, Save, Building2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getClientes, createCliente, updateCliente } from '../../actions';
+import { getSegmentos } from '@/app/admin/settings/actions';
 
 export default function ClienteEditPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -20,23 +21,43 @@ export default function ClienteEditPage({ params }: { params: Promise<{ id: stri
     endereco: '',
     contato: '',
     contatoCargo: '',
+    segmento: '',
   });
 
-  const [loading, setLoading] = useState(!isNew);
+  const [segmentos, setSegmentos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!isNew) {
-      async function load() {
-        const data = await getClientes();
-        const item = data.find((c: any) => c.id === id);
-        if (item) {
-          setFormData(item);
+    async function load() {
+      try {
+        const segmentsData = await getSegmentos();
+        setSegmentos(segmentsData || []);
+
+        if (!isNew) {
+          const data = await getClientes();
+          const item = data.find((c: any) => c.id === id);
+          if (item) {
+            setFormData({
+              nomeFantasia: item.nomeFantasia || '',
+              razaoSocial: item.razaoSocial || '',
+              cnpj: item.cnpj || '',
+              email: item.email || '',
+              whatsapp: item.whatsapp || '',
+              endereco: item.endereco || '',
+              contato: item.contato || '',
+              contatoCargo: item.contatoCargo || '',
+              segmento: item.segmento || '',
+            });
+          }
         }
+      } catch (err) {
+        console.error("Erro ao carregar dados:", err);
+      } finally {
         setLoading(false);
       }
-      load();
     }
+    load();
   }, [id, isNew]);
 
   const handleSave = async () => {
@@ -197,6 +218,20 @@ export default function ClienteEditPage({ params }: { params: Promise<{ id: stri
                 className="w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all"
                 placeholder="Ex: Comprador / Gerente Financeiro"
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">SEGMENTO DO CLIENTE</label>
+              <select 
+                value={formData.segmento || ''}
+                onChange={(e) => setFormData({...formData, segmento: e.target.value})}
+                className="w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all cursor-pointer"
+              >
+                <option value="">Selecione um segmento...</option>
+                {segmentos.map((s: any) => (
+                  <option key={s.id} value={s.nome}>{s.nome}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

@@ -114,7 +114,14 @@ export default function ClientesPage() {
                             <FileText size={18} />
                           </div>
                           <div>
-                            <p className="font-bold text-slate-900 text-sm uppercase">{cliente.nomeFantasia || 'SEM NOME'}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-bold text-slate-900 text-sm uppercase">{cliente.nomeFantasia || 'SEM NOME'}</p>
+                              {cliente.segmento && (
+                                <span className="bg-[#1B4D3E]/10 text-[#1B4D3E] text-[8px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
+                                  {cliente.segmento}
+                                </span>
+                              )}
+                            </div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
                               ID: {cliente.id.slice(-6).toUpperCase()}
                             </p>
