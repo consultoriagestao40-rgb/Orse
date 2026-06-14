@@ -8,7 +8,7 @@ import {
   Calendar, Printer, LayoutGrid, Kanban, 
   Tags, Info, Users, ShieldCheck, Check, 
   MessageSquare, User, FileImage, Layers, ChevronRight, ChevronUp, ChevronDown, FileCheck, CheckCircle,
-  DollarSign, TrendingUp, Navigation, MapPin, History, Shield, UserCheck, Car, ShieldAlert, XCircle
+  DollarSign, TrendingUp, Navigation, MapPin, History, Shield, UserCheck, Car, ShieldAlert, XCircle, BarChart3
 } from 'lucide-react';
 
 import { 
@@ -24,12 +24,19 @@ import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
 import { getAllUsers } from '@/app/leads/actions';
 import { getLoggedUser } from '@/app/propostas/actions';
 
-type ActiveTab = 'ativos' | 'templates' | 'contratos' | 'ordens';
+type ActiveTab = 'ativos' | 'templates' | 'contratos' | 'ordens' | 'kpis';
 type ViewMode = 'lista' | 'kanban' | 'agrupado';
 type GroupBy = 'segmento' | 'categoria';
 
 export default function AtivosPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('ativos');
+  
+  // KPIs State
+  const [selectedKpiMonth, setSelectedKpiMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [selectedKpiTecnico, setSelectedKpiTecnico] = useState('');
   
   // Data State
   const [ativos, setAtivos] = useState<any[]>([]);
@@ -1192,18 +1199,20 @@ export default function AtivosPage() {
 
           {/* NAVEGAÇÃO DE SUB-ABAS */}
           <nav className="flex gap-6 border-b border-slate-200">
-            {(['ativos', 'contratos', 'ordens'] as ActiveTab[]).map(tab => {
+            {(['ativos', 'contratos', 'ordens', 'kpis'] as ActiveTab[]).map(tab => {
               const labels = {
                 ativos: '1. Parque de Ativos',
                 templates: '',
                 contratos: '2. Contratos de Comodato',
-                ordens: '3. Ordens de Serviço (OS)'
+                ordens: '3. Ordens de Serviço (OS)',
+                kpis: '4. KPIs & Métricas'
               };
               const icons = {
                 ativos: Boxes,
                 templates: FileText,
                 contratos: FileCheck,
-                ordens: Wrench
+                ordens: Wrench,
+                kpis: BarChart3
               };
               const Icon = icons[tab];
               const isActive = activeTab === tab;
@@ -1295,112 +1304,113 @@ export default function AtivosPage() {
           )}
 
           {/* BARRA DE FILTROS E BUSCA */}
-          <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center bg-white p-4 border border-slate-200 rounded-2xl shadow-xs gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-              <input 
-                type="text" 
-                placeholder="Buscar por descrição, código ou detalhes..." 
-                className="w-full bg-slate-50/50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 outline-none font-bold uppercase transition-all"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+          {activeTab !== 'kpis' && (
+            <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center bg-white p-4 border border-slate-200 rounded-2xl shadow-xs gap-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input 
+                  type="text" 
+                  placeholder="Buscar por descrição, código ou detalhes..." 
+                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs focus:border-[#1B4D3E] focus:ring-2 focus:ring-[#1B4D3E]/10 outline-none font-bold uppercase transition-all"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
 
-            {/* Configurações Extra de Filtro exclusivas da aba Contratos */}
-            {activeTab === 'contratos' && (
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
-                  <button 
-                    onClick={() => setContratosViewMode('lista')}
-                    className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors ${contratosViewMode === 'lista' ? 'bg-[#1B4D3E] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
-                  >
-                    <LayoutGrid size={12} /> Lista
-                  </button>
-                  <button 
-                    onClick={() => setContratosViewMode('kanban')}
-                    className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors ${contratosViewMode === 'kanban' ? 'bg-[#1B4D3E] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
-                  >
-                    <Kanban size={12} /> Kanban
-                  </button>
-                  <button 
-                    onClick={() => setContratosViewMode('agrupado')}
-                    className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors ${contratosViewMode === 'agrupado' ? 'bg-[#1B4D3E] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
-                  >
-                    <Layers size={12} /> Agrupados
-                  </button>
+              {/* Configurações Extra de Filtro exclusivas da aba Contratos */}
+              {activeTab === 'contratos' && (
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+                    <button 
+                      onClick={() => setContratosViewMode('lista')}
+                      className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors ${contratosViewMode === 'lista' ? 'bg-[#1B4D3E] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+                    >
+                      <LayoutGrid size={12} /> Lista
+                    </button>
+                    <button 
+                      onClick={() => setContratosViewMode('kanban')}
+                      className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors ${contratosViewMode === 'kanban' ? 'bg-[#1B4D3E] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+                    >
+                      <Kanban size={12} /> Kanban
+                    </button>
+                    <button 
+                      onClick={() => setContratosViewMode('agrupado')}
+                      className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors ${contratosViewMode === 'agrupado' ? 'bg-[#1B4D3E] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+                    >
+                      <Layers size={12} /> Agrupados
+                    </button>
+                  </div>
+
+                  {contratosViewMode === 'agrupado' && (
+                    <select
+                      value={contratosGroupBy}
+                      onChange={(e) => setContratosGroupBy(e.target.value as GroupBy)}
+                      className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-600 outline-none focus:border-[#1B4D3E] cursor-pointer"
+                    >
+                      <option value="segmento">Por Segmento de Cliente</option>
+                      <option value="categoria">Por Categoria de Ativo</option>
+                    </select>
+                  )}
                 </div>
+              )}
 
-                {contratosViewMode === 'agrupado' && (
+              {/* Configurações Extra de Filtro exclusivas da aba Ordens de Serviço */}
+              {activeTab === 'ordens' && (
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+                    <button 
+                      onClick={() => setOsViewMode('lista')}
+                      className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors ${osViewMode === 'lista' ? 'bg-[#1B4D3E] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+                    >
+                      <LayoutGrid size={12} /> Lista
+                    </button>
+                    <button 
+                      onClick={() => setOsViewMode('kanban')}
+                      className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors ${osViewMode === 'kanban' ? 'bg-[#1B4D3E] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+                    >
+                      <Kanban size={12} /> Kanban
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === 'ativos' && (
+                <div className="flex items-center gap-3">
                   <select
-                    value={contratosGroupBy}
-                    onChange={(e) => setContratosGroupBy(e.target.value as GroupBy)}
-                    className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-600 outline-none focus:border-[#1B4D3E] cursor-pointer"
+                    value={filterCategoria}
+                    onChange={(e) => setFilterCategoria(e.target.value)}
+                    className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-slate-500 outline-none focus:border-[#1B4D3E] cursor-pointer max-w-[180px] truncate"
                   >
-                    <option value="segmento">Por Segmento de Cliente</option>
-                    <option value="categoria">Por Categoria de Ativo</option>
+                    <option value="">TODAS AS CATEGORIAS</option>
+                    {categorias.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.nome.toUpperCase()}</option>
+                    ))}
                   </select>
-                )}
-              </div>
-            )}
 
-            {/* Configurações Extra de Filtro exclusivas da aba Ordens de Serviço */}
-            {activeTab === 'ordens' && (
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
-                  <button 
-                    onClick={() => setOsViewMode('lista')}
-                    className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors ${osViewMode === 'lista' ? 'bg-[#1B4D3E] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-slate-500 outline-none focus:border-[#1B4D3E] cursor-pointer"
                   >
-                    <LayoutGrid size={12} /> Lista
-                  </button>
-                  <button 
-                    onClick={() => setOsViewMode('kanban')}
-                    className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors ${osViewMode === 'kanban' ? 'bg-[#1B4D3E] text-white' : 'text-slate-500 hover:bg-slate-100'}`}
-                  >
-                    <Kanban size={12} /> Kanban
-                  </button>
+                    <option value="">TODOS OS STATUS</option>
+                    <option value="DISPONIVEL">DISPONÍVEL</option>
+                    <option value="COMODATO">COMODATO</option>
+                    <option value="MANUTENCAO">MANUTENÇÃO</option>
+                    <option value="BAIXADO">BAIXADO</option>
+                  </select>
                 </div>
+              )}
+              
+              <div className="text-right flex items-center gap-2 self-end md:self-auto select-none">
+                <span className="text-[9px] font-extrabold text-slate-400 uppercase leading-none block">Total Carregado</span>
+                <span className="text-sm font-black text-[#1B4D3E] bg-[#1B4D3E]/8 border border-[#1B4D3E]/15 rounded-lg px-2.5 py-1">
+                  {activeTab === 'ativos' && filteredAtivos.length}
+                  {activeTab === 'contratos' && filteredContratos.length}
+                  {activeTab === 'ordens' && filteredOrdens.length}
+                </span>
               </div>
-            )}
-            
-            {activeTab === 'ativos' && (
-              <div className="flex items-center gap-3">
-                <select
-                  value={filterCategoria}
-                  onChange={(e) => setFilterCategoria(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-slate-500 outline-none focus:border-[#1B4D3E] cursor-pointer max-w-[180px] truncate"
-                >
-                  <option value="">TODAS AS CATEGORIAS</option>
-                  {categorias.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.nome.toUpperCase()}</option>
-                  ))}
-                </select>
-
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-slate-500 outline-none focus:border-[#1B4D3E] cursor-pointer"
-                >
-                  <option value="">TODOS OS STATUS</option>
-                  <option value="DISPONIVEL">DISPONÍVEL</option>
-                  <option value="COMODATO">COMODATO</option>
-                  <option value="MANUTENCAO">MANUTENÇÃO</option>
-                  <option value="BAIXADO">BAIXADO</option>
-                </select>
-              </div>
-            )}
-            
-            <div className="text-right flex items-center gap-2 self-end md:self-auto select-none">
-              <span className="text-[9px] font-extrabold text-slate-400 uppercase leading-none block">Total Carregado</span>
-              <span className="text-sm font-black text-[#1B4D3E] bg-[#1B4D3E]/8 border border-[#1B4D3E]/15 rounded-lg px-2.5 py-1">
-                {activeTab === 'ativos' && filteredAtivos.length}
-                {activeTab === 'contratos' && filteredContratos.length}
-                {activeTab === 'ordens' && filteredOrdens.length}
-              </span>
             </div>
-          </div>
-          </div>
+          )}
 
           {/* ───────────────────────────────────────────────────────────────────
               ABA 1: PARQUE DE ATIVOS E CATEGORIAS
@@ -2164,6 +2174,523 @@ export default function AtivosPage() {
               </div>
             </div>
           )}
+
+          {activeTab === 'kpis' && (() => {
+            const totalAtivos = ativos.length;
+            const alocadosAtivos = ativos.filter(a => a.status === 'COMODATO').length;
+            const alocadosPercent = totalAtivos > 0 ? (alocadosAtivos / totalAtivos) * 100 : 0;
+
+            const filteredKpiOrdens = ordens.filter(os => {
+              if (!os.createdAt) return false;
+              const osDate = new Date(os.createdAt);
+              const osYearMonth = `${osDate.getFullYear()}-${String(osDate.getMonth() + 1).padStart(2, '0')}`;
+              
+              if (selectedKpiMonth && osYearMonth !== selectedKpiMonth) return false;
+              if (selectedKpiTecnico && os.tecnicoEmail !== selectedKpiTecnico) return false;
+              return true;
+            });
+
+            const totalOs = filteredKpiOrdens.length;
+            const uniqueClients = new Set(filteredKpiOrdens.map(os => os.clientId));
+            const totalClientesAtendidos = uniqueClients.size;
+
+            const completedKpiOrdens = filteredKpiOrdens.filter(os => os.status === 'CONCLUIDA' && os.dataExecucao && os.createdAt);
+            let slaMedioDias = 0;
+            if (completedKpiOrdens.length > 0) {
+              const totalSlaMs = completedKpiOrdens.reduce((acc, os) => {
+                const diff = new Date(os.dataExecucao).getTime() - new Date(os.createdAt).getTime();
+                return acc + diff;
+              }, 0);
+              slaMedioDias = totalSlaMs / (1000 * 60 * 60 * 24) / completedKpiOrdens.length;
+            }
+
+            const ativosPorCategoria = ativos.reduce((acc, a) => {
+              const catName = a.categoria?.nome || 'Sem Categoria';
+              acc[catName] = (acc[catName] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>);
+
+            const statusLabels: Record<string, string> = {
+              DISPONIVEL: 'Disponível',
+              COMODATO: 'Comodato (Alocado)',
+              MANUTENCAO: 'Manutenção',
+              BAIXADO: 'Baixado'
+            };
+            const statusColors: Record<string, string> = {
+              DISPONIVEL: 'bg-emerald-500',
+              COMODATO: 'bg-blue-500',
+              MANUTENCAO: 'bg-amber-500',
+              BAIXADO: 'bg-slate-400'
+            };
+            const ativosPorStatus = ativos.reduce((acc, a) => {
+              acc[a.status] = (acc[a.status] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>);
+
+            const osTypesLabel: Record<string, string> = {
+              INSTALACAO: 'Instalação',
+              RETIRADA: 'Retirada',
+              TROCA: 'Troca',
+              MANUTENCAO: 'Manutenção'
+            };
+            const osPorTipo = filteredKpiOrdens.reduce((acc, os) => {
+              acc[os.tipo] = (acc[os.tipo] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>);
+
+            const clientCounts = filteredKpiOrdens.reduce((acc, os) => {
+              const name = os.client?.nomeFantasia || 'Cliente Desconhecido';
+              acc[name] = (acc[name] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>);
+            const rankingClientes = Object.entries(clientCounts)
+              .map(([name, count]) => ({ name, count }))
+              .sort((a, b) => b.count - a.count)
+              .slice(0, 5);
+
+            const assetCounts = filteredKpiOrdens.reduce((acc, os) => {
+              const desc = os.ativo?.descricao || 'Equipamento Desconhecido';
+              acc[desc] = (acc[desc] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>);
+            const rankingAtivos = Object.entries(assetCounts)
+              .map(([name, count]) => ({ name, count }))
+              .sort((a, b) => b.count - a.count)
+              .slice(0, 5);
+
+            const last6Months = Array.from({ length: 6 }).map((_, i) => {
+              const d = new Date();
+              d.setMonth(d.getMonth() - i);
+              return {
+                label: d.toLocaleDateString('pt-BR', { month: 'short' }).toUpperCase(),
+                yearMonth: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+                count: 0
+              };
+            }).reverse();
+
+            ordens.forEach(os => {
+              if (os.tipo === 'MANUTENCAO' && os.status === 'CONCLUIDA' && os.dataExecucao) {
+                const execDate = new Date(os.dataExecucao);
+                const execYearMonth = `${execDate.getFullYear()}-${String(execDate.getMonth() + 1).padStart(2, '0')}`;
+                const entry = last6Months.find(m => m.yearMonth === execYearMonth);
+                if (entry) entry.count += 1;
+              }
+            });
+            const maxMaintenanceCount = Math.max(...last6Months.map(m => m.count), 1);
+
+            const techList = usuarios.filter(u => {
+              const isTechCargo = u.cargo?.toLowerCase().includes('tecnico') || u.cargo?.toLowerCase().includes('técnico');
+              const hasAssignedOs = ordens.some(os => os.tecnicoEmail === u.email);
+              return isTechCargo || hasAssignedOs;
+            });
+
+            const techStats = techList.map(tech => {
+              const techOrdens = filteredKpiOrdens.filter(os => os.tecnicoEmail === tech.email);
+              const totalTechOs = techOrdens.length;
+              
+              const deslocamentoMin = techOrdens.reduce((acc, os) => acc + (os.tempoRealizadoRota || 0), 0);
+              const atendimentoMin = techOrdens.reduce((acc, os) => {
+                if (os.status === 'CONCLUIDA' && os.dataExecucao && os.atendimentoIniciadoEm) {
+                  const diff = new Date(os.dataExecucao).getTime() - new Date(os.atendimentoIniciadoEm).getTime();
+                  return acc + Math.max(0, diff / 60000);
+                }
+                return acc;
+              }, 0);
+
+              const tempoTotalMin = deslocamentoMin + atendimentoMin;
+              const tempoTotalHoras = tempoTotalMin / 60;
+              const kmRodados = techOrdens.reduce((acc, os) => acc + (os.distanciaRealizadaRota || 0), 0);
+              const percentAlocacao = (tempoTotalHoras / 176) * 100;
+
+              return {
+                id: tech.id,
+                nome: tech.nome,
+                cargo: tech.cargo || 'Técnico',
+                avatarUrl: tech.avatarUrl,
+                email: tech.email,
+                totalTechOs,
+                deslocamentoMin,
+                atendimentoMin,
+                tempoTotalMin,
+                tempoTotalHoras,
+                kmRodados,
+                percentAlocacao
+              };
+            }).filter(t => t.totalTechOs > 0 || t.kmRodados > 0);
+
+            const totalKmRodados = techStats.reduce((acc, t) => acc + t.kmRodados, 0);
+            const totalHoursTech = techStats.reduce((acc, t) => acc + t.tempoTotalHoras, 0);
+
+            return (
+              <div className="space-y-6">
+                {/* FILTROS BAR */}
+                <div className="flex flex-wrap gap-4 items-center justify-between bg-slate-50 border border-slate-200 rounded-2xl p-4 select-none">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="text-[#1B4D3E]" size={18} />
+                    <span className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider">Filtros de Período & Operação</span>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Período:</span>
+                      <input
+                        type="month"
+                        value={selectedKpiMonth}
+                        onChange={(e) => setSelectedKpiMonth(e.target.value)}
+                        className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Técnico:</span>
+                      <select
+                        value={selectedKpiTecnico}
+                        onChange={(e) => setSelectedKpiTecnico(e.target.value)}
+                        className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] cursor-pointer"
+                      >
+                        <option value="">Todos os Técnicos</option>
+                        {techList.map(u => (
+                          <option key={u.id} value={u.email}>{u.nome}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* METRIC CARDS ROW */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                  {/* Card 1: Total Ativos */}
+                  <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-205">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-650 flex items-center justify-center shrink-0">
+                      <Boxes size={18} className="stroke-[2.5]" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total de Ativos</p>
+                      <h4 className="text-xl font-black text-slate-800 leading-none">{totalAtivos}</h4>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Alocados */}
+                  <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-205">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-750 flex items-center justify-center shrink-0">
+                      <FileCheck size={18} className="stroke-[2.5]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Ativos Alocados</p>
+                      <div className="flex items-baseline gap-1.5">
+                        <h4 className="text-xl font-black text-slate-800 leading-none">{alocadosAtivos}</h4>
+                        <span className="text-[10px] font-bold text-blue-600">({alocadosPercent.toFixed(1)}%)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Total OS */}
+                  <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-205">
+                    <div className="w-10 h-10 rounded-xl bg-[#1B4D3E]/5 text-[#1B4D3E] flex items-center justify-center shrink-0">
+                      <Wrench size={18} className="stroke-[2.5]" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total de OSs</p>
+                      <h4 className="text-xl font-black text-slate-800 leading-none">{totalOs}</h4>
+                    </div>
+                  </div>
+
+                  {/* Card 4: Clientes Atendidos */}
+                  <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-205">
+                    <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-750 flex items-center justify-center shrink-0">
+                      <Users size={18} className="stroke-[2.5]" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Clientes Atendidos</p>
+                      <h4 className="text-xl font-black text-slate-800 leading-none">{totalClientesAtendidos}</h4>
+                    </div>
+                  </div>
+
+                  {/* Card 5: SLA Médio */}
+                  <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 shadow-xs flex items-center gap-4 hover:shadow-sm transition-all duration-205">
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+                      <Calendar size={18} className="stroke-[2.5]" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">SLA Médio (Dias)</p>
+                      <h4 className="text-xl font-black text-slate-800 leading-none">
+                        {slaMedioDias > 0 ? `${slaMedioDias.toFixed(1)} d` : 'N/A'}
+                      </h4>
+                    </div>
+                  </div>
+                </div>
+
+                {/* GRID DE ANÁLISE OPERACIONAL */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Bloco Ativos */}
+                  <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-6">
+                    <header className="flex justify-between items-center border-b border-slate-100 pb-3">
+                      <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                        <Boxes size={16} className="stroke-[2.5]" /> Distribuição do Parque de Ativos
+                      </h3>
+                    </header>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Status do Ativo</span>
+                        <div className="space-y-2.5">
+                          {Object.entries(statusLabels).map(([status, label]) => {
+                            const count = ativosPorStatus[status] || 0;
+                            const pct = totalAtivos > 0 ? (count / totalAtivos) * 100 : 0;
+                            return (
+                              <div key={status} className="space-y-1">
+                                <div className="flex justify-between text-[10.5px] font-bold text-slate-650">
+                                  <span>{label}</span>
+                                  <span>{count} ({pct.toFixed(0)}%)</span>
+                                </div>
+                                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                  <div className={`h-full ${statusColors[status] || 'bg-slate-500'} rounded-full`} style={{ width: `${pct}%` }}></div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Categorias Principais</span>
+                        <div className="space-y-2.5 max-h-[190px] overflow-y-auto pr-1">
+                          {Object.entries(ativosPorCategoria).length === 0 ? (
+                            <p className="text-[11px] font-bold text-slate-400 text-center py-6">Nenhum ativo cadastrado.</p>
+                          ) : (
+                            Object.entries(ativosPorCategoria)
+                              .sort((a, b) => b[1] - a[1])
+                              .slice(0, 4)
+                              .map(([catName, count]) => {
+                                const pct = totalAtivos > 0 ? (count / totalAtivos) * 100 : 0;
+                                return (
+                                  <div key={catName} className="space-y-1">
+                                    <div className="flex justify-between text-[10.5px] font-bold text-slate-650">
+                                      <span className="truncate max-w-[130px]">{catName}</span>
+                                      <span>{count} ({pct.toFixed(0)}%)</span>
+                                    </div>
+                                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                      <div className="h-full bg-teal-600 rounded-full" style={{ width: `${pct}%` }}></div>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bloco OS */}
+                  <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-6">
+                    <header className="flex justify-between items-center border-b border-slate-100 pb-3">
+                      <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                        <Wrench size={16} className="stroke-[2.5]" /> Atendimentos e Curva de Manutenção
+                      </h3>
+                    </header>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Serviços por Tipo</span>
+                        <div className="space-y-2.5">
+                          {Object.entries(osTypesLabel).map(([tipo, label]) => {
+                            const count = osPorTipo[tipo] || 0;
+                            const pct = totalOs > 0 ? (count / totalOs) * 100 : 0;
+                            return (
+                              <div key={tipo} className="space-y-1">
+                                <div className="flex justify-between text-[10.5px] font-bold text-slate-650">
+                                  <span>{label}</span>
+                                  <span>{count}</span>
+                                </div>
+                                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                  <div className="h-full bg-[#1B4D3E] rounded-full" style={{ width: `${pct}%` }}></div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 flex flex-col justify-between">
+                        <div>
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Curva de Manutenção (Últimos 6 Meses)</span>
+                          <div className="flex items-end justify-between h-[110px] gap-2 pt-2 px-1">
+                            {last6Months.map(m => {
+                              const barHeight = (m.count / maxMaintenanceCount) * 80;
+                              return (
+                                <div key={m.label} className="flex flex-col items-center flex-1 group relative">
+                                  <div className="absolute -top-6 bg-slate-800 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-xs opacity-0 group-hover:opacity-100 transition-opacity select-none z-10">
+                                    {m.count} {m.count === 1 ? 'OS' : 'OSs'}
+                                  </div>
+                                  <div 
+                                    className="w-full bg-[#1B4D3E]/20 hover:bg-[#1B4D3E]/80 rounded-t-md transition-all duration-350 cursor-pointer"
+                                    style={{ height: `${barHeight + 5}px` }}
+                                  ></div>
+                                  <span className="text-[8px] font-black text-slate-400 mt-2 truncate max-w-[40px] block leading-none">{m.label}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* GRID DE RANKINGS */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Ranking Clientes */}
+                  <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4">
+                    <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
+                      <Users size={16} className="stroke-[2.5]" /> Clientes com Maior Volume de Atendimentos
+                    </h3>
+                    <div className="divide-y divide-slate-100 select-text">
+                      {rankingClientes.length === 0 ? (
+                        <p className="text-[11px] font-bold text-slate-400 text-center py-8">Nenhum atendimento registrado no período.</p>
+                      ) : (
+                        rankingClientes.map((item, idx) => (
+                          <div key={item.name} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0 font-semibold text-xs">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="w-5 h-5 rounded-full bg-slate-100 text-[10px] font-black flex items-center justify-center text-slate-650 shrink-0 border border-slate-200/50">
+                                #{idx + 1}
+                              </span>
+                              <span className="text-slate-800 font-extrabold truncate max-w-[240px] uppercase">{item.name}</span>
+                            </div>
+                            <span className="text-slate-650 font-black shrink-0 bg-slate-100 px-2.5 py-0.5 rounded-lg border border-slate-200/50 text-[10.5px]">
+                              {item.count} {item.count === 1 ? 'OS' : 'OSs'}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Ranking Ativos */}
+                  <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4">
+                    <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
+                      <Boxes size={16} className="stroke-[2.5]" /> Equipamentos com Maior Volume de Atendimentos
+                    </h3>
+                    <div className="divide-y divide-slate-100 select-text">
+                      {rankingAtivos.length === 0 ? (
+                        <p className="text-[11px] font-bold text-slate-400 text-center py-8">Nenhum equipamento atendido no período.</p>
+                      ) : (
+                        rankingAtivos.map((item, idx) => (
+                          <div key={item.name} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0 font-semibold text-xs">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="w-5 h-5 rounded-full bg-slate-100 text-[10px] font-black flex items-center justify-center text-slate-650 shrink-0 border border-slate-200/50">
+                                #{idx + 1}
+                              </span>
+                              <span className="text-slate-800 font-extrabold truncate max-w-[240px] uppercase">{item.name}</span>
+                            </div>
+                            <span className="text-[#1B4D3E] font-black shrink-0 bg-[#1B4D3E]/5 px-2.5 py-0.5 rounded-lg border border-[#1b4d3e]/10 text-[10.5px]">
+                              {item.count} {item.count === 1 ? 'OS' : 'OSs'}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* TABELA OPERACIONAL DOS TÉCNICOS */}
+                <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4">
+                  <header className="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                      <Users size={16} className="stroke-[2.5]" /> Produtividade e Utilização dos Técnicos
+                    </h3>
+                    <div className="flex items-center gap-4 text-[10px] font-black text-slate-400 uppercase tracking-widest select-none">
+                      <span>Total Km: <strong className="text-slate-700">{totalKmRodados.toFixed(1)} km</strong></span>
+                      <span>Total Horas: <strong className="text-slate-700">{totalHoursTech.toFixed(1)}h</strong></span>
+                    </div>
+                  </header>
+
+                  <div className="overflow-x-auto min-h-0 border border-slate-200 rounded-2xl">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-[#1B4D3E] text-white text-[10px] font-black uppercase tracking-wider border-b border-[#1B4D3E]">
+                          <th className="px-5 py-3 border-r border-white/10">Técnico</th>
+                          <th className="px-5 py-3 border-r border-white/10 text-center">Ordens (OS)</th>
+                          <th className="px-5 py-3 border-r border-white/10 text-center">Deslocamento</th>
+                          <th className="px-5 py-3 border-r border-white/10 text-center">Atendimento Local</th>
+                          <th className="px-5 py-3 border-r border-white/10 text-center">Tempo Total</th>
+                          <th className="px-5 py-3 border-r border-white/10 text-center">Distância Rodada</th>
+                          <th className="px-5 py-3 text-center">Horas Alocadas / Mês</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 font-semibold text-xs text-slate-700 select-text">
+                        {techStats.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} className="px-5 py-8 text-center text-slate-400 font-bold">
+                              Nenhum dado operacional para os técnicos neste período.
+                            </td>
+                          </tr>
+                        ) : (
+                          techStats.map(tech => {
+                            const formatTime = (totalMin: number) => {
+                              const hrs = Math.floor(totalMin / 60);
+                              const mins = Math.round(totalMin % 60);
+                              return hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+                            };
+
+                            const initial = tech.nome ? tech.nome.substring(0, 1).toUpperCase() : '?';
+
+                            return (
+                              <tr key={tech.id} className="hover:bg-slate-50 transition-colors">
+                                <td className="px-5 py-3 border-r border-slate-150">
+                                  <div className="flex items-center gap-3">
+                                    {tech.avatarUrl ? (
+                                      <img src={tech.avatarUrl} alt={tech.nome} className="w-8 h-8 rounded-full border border-slate-200 object-cover shrink-0" />
+                                    ) : (
+                                      <div className="w-8 h-8 rounded-full bg-[#1B4D3E]/10 border border-[#1b4d3e]/20 text-[#1B4D3E] flex items-center justify-center text-xs font-black shrink-0">
+                                        {initial}
+                                      </div>
+                                    )}
+                                    <div className="min-w-0">
+                                      <h4 className="font-extrabold text-slate-800 leading-tight uppercase truncate max-w-[140px]">{tech.nome}</h4>
+                                      <p className="text-[9px] text-slate-450 leading-none font-bold uppercase">{tech.cargo}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-5 py-3 border-r border-slate-150 text-center font-black">
+                                  {tech.totalTechOs}
+                                </td>
+                                <td className="px-5 py-3 border-r border-slate-150 text-center text-cyan-600 font-bold">
+                                  {formatTime(tech.deslocamentoMin)}
+                                </td>
+                                <td className="px-5 py-3 border-r border-slate-150 text-center text-amber-600 font-bold">
+                                  {formatTime(tech.atendimentoMin)}
+                                </td>
+                                <td className="px-5 py-3 border-r border-slate-150 text-center text-slate-850 font-black">
+                                  {formatTime(tech.tempoTotalMin)}
+                                </td>
+                                <td className="px-5 py-3 border-r border-slate-150 text-center text-emerald-600 font-bold">
+                                  {tech.kmRodados.toFixed(1)} km
+                                </td>
+                                <td className="px-5 py-3">
+                                  <div className="space-y-1">
+                                    <div className="flex justify-between items-center text-[10px] font-black text-slate-700">
+                                      <span>{tech.tempoTotalHoras.toFixed(1)}h / 176h</span>
+                                      <span className={tech.percentAlocacao > 100 ? 'text-rose-600 font-black' : tech.percentAlocacao > 80 ? 'text-amber-600 font-black' : 'text-emerald-700 font-black'}>
+                                        {tech.percentAlocacao.toFixed(1)}%
+                                      </span>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                      <div 
+                                        className={`h-full rounded-full ${tech.percentAlocacao > 100 ? 'bg-rose-600' : tech.percentAlocacao > 80 ? 'bg-amber-500' : 'bg-emerald-600'}`} 
+                                        style={{ width: `${Math.min(100, tech.percentAlocacao)}%` }}
+                                      ></div>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
         </div>
 
