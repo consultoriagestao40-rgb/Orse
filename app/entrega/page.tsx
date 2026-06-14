@@ -1,0 +1,2070 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Sidebar from '@/components/Sidebar';
+import { 
+  Plus, Search, Edit2, Trash2, X, Save, 
+  Truck, ClipboardList, Calendar, Printer, 
+  LayoutGrid, Kanban, Users, ShieldCheck, Check, 
+  User, FileImage, ChevronRight, ChevronUp, ChevronDown, CheckCircle,
+  DollarSign, Navigation, MapPin, History, Shield, UserCheck, Car, ShieldAlert, XCircle
+} from 'lucide-react';
+
+import { 
+  getEntregas, createEntrega, updateEntrega, deleteEntrega,
+  otimizarRotaEntregador, reordenarEntregasManual 
+} from './actions';
+import { getClientes, createCliente } from '@/app/clientes/actions';
+import { getAllUsers } from '@/app/leads/actions';
+import { getLoggedUser } from '@/app/propostas/actions';
+import { formatDateTimeBrasilia, formatTimeBrasilia } from '@/lib/timezone';
+
+type ViewMode = 'lista' | 'kanban';
+
+export default function GestaoEntregasPage() {
+  const [viewMode, setViewMode] = useState<ViewMode>('kanban');
+  
+  // Data State
+  const [entregas, setEntregas] = useState<any[]>([]);
+  const [clientes, setClientes] = useState<any[]>([]);
+  const [usuarios, setUsuarios] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  
+  // Loading & UI State
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [updatingEntregaId, setUpdatingEntregaId] = useState<string | null>(null);
+  const [modalTrackEntrega, setModalTrackEntrega] = useState<any | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterCliente, setFilterCliente] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  
+  // Modals & Forms State
+  const [modalEntregaOpen, setModalEntregaOpen] = useState(false);
+  const [modalAssignEntregadorOpen, setModalAssignEntregadorOpen] = useState(false);
+  const [modalManageRoutesOpen, setModalManageRoutesOpen] = useState(false);
+  const [modalQuickClienteOpen, setModalQuickClienteOpen] = useState(false);
+  const [activeDetailsTab, setActiveDetailsTab] = useState<'details' | 'history'>('details');
+  
+  // Selection and Assignments
+  const [entregaToAssign, setEntregaToAssign] = useState<any>(null);
+  const [selectedEntregadorForAssign, setSelectedEntregadorForAssign] = useState('');
+  const [targetStatusForAssign, setTargetStatusForAssign] = useState<string>('PROGRAMADO');
+  const [selectedRouteEntregador, setSelectedRouteEntregador] = useState('');
+  const [routeSaving, setRouteSaving] = useState(false);
+
+  // Alertas e Confirmações Personalizados
+  const [customAlert, setCustomAlert] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    type: 'info'
+  });
+
+  const [customConfirm, setCustomConfirm] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
+
+  // Forms Data
+  const [entregaForm, setEntregaForm] = useState({
+    id: '',
+    numeroNf: '',
+    valor: '',
+    clientId: '',
+    observacao: '',
+    status: 'BACKLOG',
+    entregadorResponsavel: '',
+    entregadorEmail: '',
+    dataProgramada: ''
+  });
+
+  const [quickClienteForm, setQuickClienteForm] = useState({
+    nomeFantasia: '',
+    razaoSocial: '',
+    cnpj: '',
+    endereco: '',
+    whatsapp: '',
+    contato: '',
+    segmento: ''
+  });
+
+  useEffect(() => {
+    loadData();
+
+    const interval = setInterval(() => {
+      loadEntregasSilently();
+    }, 20000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (!modalTrackEntrega) return;
+    
+    const interval = setInterval(async () => {
+      await loadEntregasSilently();
+    }, 15000);
+    
+    return () => clearInterval(interval);
+  }, [modalTrackEntrega]);
+
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    setCustomAlert({ open: true, title, message, type });
+  };
+
+  const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setCustomConfirm({ open: true, title, message, onConfirm });
+  };
+
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const [entregasRes, clientesRes, usersRes, currentUserRes] = await Promise.all([
+        getEntregas(),
+        getClientes(),
+        getAllUsers(),
+        getLoggedUser()
+      ]);
+
+      if (entregasRes.success && entregasRes.entregas) {
+        setEntregas(entregasRes.entregas);
+      }
+      if (Array.isArray(clientesRes)) {
+        setClientes(clientesRes);
+      }
+      if (usersRes.success && usersRes.users) {
+        setUsuarios(usersRes.users);
+      }
+      if (currentUserRes) {
+        setCurrentUser(currentUserRes);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar dados de entregas:", err);
+      showAlert('Erro ao Carregar', 'Ocorreu um erro ao buscar os dados das entregas. Tente recarregar a página.', 'error');
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  };
+
+  const loadEntregasSilently = async () => {
+    try {
+      const res = await getEntregas();
+      if (res.success && res.entregas) {
+        setEntregas(res.entregas);
+      }
+    } catch (err) {
+      console.error("Erro ao atualizar entregas em background:", err);
+    }
+  };
+
+  const handleCreateOrUpdateEntrega = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!entregaForm.clientId) {
+      showAlert('Campo Obrigatório', 'Selecione o cliente da entrega.', 'warning');
+      return;
+    }
+    if (!entregaForm.numeroNf) {
+      showAlert('Campo Obrigatório', 'Preencha o número da Nota Fiscal.', 'warning');
+      return;
+    }
+    if (!entregaForm.valor || isNaN(Number(entregaForm.valor))) {
+      showAlert('Valor Inválido', 'Insira um valor numérico válido para a entrega.', 'warning');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      if (entregaForm.id) {
+        // Update
+        const payload: any = {
+          clientId: entregaForm.clientId,
+          numeroNf: entregaForm.numeroNf,
+          valor: Number(entregaForm.valor),
+          observacao: entregaForm.observacao,
+          status: entregaForm.status
+        };
+
+        if (entregaForm.status === 'PROGRAMADO') {
+          payload.dataProgramada = entregaForm.dataProgramada ? new Date(entregaForm.dataProgramada).toISOString() : null;
+          payload.entregadorResponsavel = entregaForm.entregadorResponsavel || null;
+          payload.entregadorEmail = entregaForm.entregadorEmail || null;
+        }
+
+        const res = await updateEntrega(entregaForm.id, payload);
+        if (res.success) {
+          setModalEntregaOpen(false);
+          showAlert('Sucesso', 'Entrega atualizada com sucesso!', 'success');
+          loadData(true);
+        } else {
+          showAlert('Erro ao Salvar', res.error || 'Não foi possível atualizar a entrega', 'error');
+        }
+      } else {
+        // Create
+        const res = await createEntrega({
+          clientId: entregaForm.clientId,
+          numeroNf: entregaForm.numeroNf,
+          valor: Number(entregaForm.valor),
+          observacao: entregaForm.observacao
+        });
+        if (res.success) {
+          setModalEntregaOpen(false);
+          showAlert('Sucesso', 'Entrega registrada e adicionada ao Backlog!', 'success');
+          loadData(true);
+        } else {
+          showAlert('Erro ao Criar', res.error || 'Não foi possível registrar a entrega', 'error');
+        }
+      }
+    } catch (err: any) {
+      showAlert('Erro', err.message || 'Erro de comunicação.', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleQuickCreateCliente = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickClienteForm.nomeFantasia.trim()) {
+      showAlert('Campo Obrigatório', 'Insira o nome fantasia do cliente.', 'warning');
+      return;
+    }
+    if (!quickClienteForm.endereco.trim()) {
+      showAlert('Campo Obrigatório', 'O endereço é obrigatório para o cálculo inteligente de rotas.', 'warning');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const res = await createCliente(quickClienteForm);
+      if (res.success && res.data) {
+        // Adiciona localmente na lista e seleciona no select de Nova Entrega
+        const novo = res.data;
+        setClientes(prev => [...prev, novo].sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)));
+        setEntregaForm(prev => ({ ...prev, clientId: novo.id }));
+        setModalQuickClienteOpen(false);
+        // Reset form
+        setQuickClienteForm({
+          nomeFantasia: '',
+          razaoSocial: '',
+          cnpj: '',
+          endereco: '',
+          whatsapp: '',
+          contato: '',
+          segmento: ''
+        });
+        showAlert('Cliente Cadastrado', `Cliente ${novo.nomeFantasia} cadastrado com sucesso!`, 'success');
+      } else {
+        showAlert('Erro', res.error || 'Erro ao cadastrar cliente rápido.', 'error');
+      }
+    } catch (err: any) {
+      showAlert('Erro', err.message || 'Erro ao realizar cadastro.', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteEntrega = async (id: string) => {
+    showConfirm(
+      'Confirmar Exclusão',
+      'Tem certeza de que deseja excluir esta entrega permanentemente do sistema?',
+      async () => {
+        setSaving(true);
+        try {
+          const res = await deleteEntrega(id);
+          if (res.success) {
+            setModalEntregaOpen(false);
+            showAlert('Excluído', 'A entrega foi removida com sucesso.', 'success');
+            loadData(true);
+          } else {
+            showAlert('Erro ao Excluir', res.error || 'Não foi possível remover a entrega', 'error');
+          }
+        } catch (err: any) {
+          showAlert('Erro', err.message || 'Erro de comunicação.', 'error');
+        } finally {
+          setSaving(false);
+        }
+      }
+    );
+  };
+
+  const handleUpdateEntregaStatus = async (entregaId: string, newStatus: string) => {
+    const ent = entregas.find(e => e.id === entregaId);
+    
+    // Se for aprovação direta no Kanban
+    if (newStatus === 'ENTREGUE' && ent?.status !== 'VALIDACAO') {
+      handleConcludeEntregaDirectly(entregaId);
+      return;
+    }
+
+    // Se transicionar para Programado, obriga a selecionar Entregador
+    if (newStatus === 'PROGRAMADO' || newStatus === 'EM_DESLOCAMENTO' || newStatus === 'ENTREGA') {
+      const hasEntregador = ent?.entregadorEmail && ent.entregadorEmail.trim() !== '' && ent?.entregadorResponsavel && ent.entregadorResponsavel.trim() !== '';
+      if (!hasEntregador) {
+        setEntregaToAssign(ent);
+        setSelectedEntregadorForAssign('');
+        setTargetStatusForAssign(newStatus);
+        setModalAssignEntregadorOpen(true);
+        return;
+      }
+    }
+
+    setUpdatingEntregaId(entregaId);
+    // Atualização otimista
+    setEntregas(prev => prev.map(e => e.id === entregaId ? { ...e, status: newStatus } : e));
+    if (entregaForm.id === entregaId) {
+      setEntregaForm(prev => ({ ...prev, status: newStatus }));
+    }
+
+    try {
+      const res = await updateEntrega(entregaId, { status: newStatus });
+      if (res.success) {
+        loadData(true);
+      } else {
+        loadData(true);
+        showAlert('Erro ao Mudar Status', res.error || 'Não foi possível atualizar o status', 'error');
+      }
+    } catch (err) {
+      loadData(true);
+    } finally {
+      setUpdatingEntregaId(null);
+    }
+  };
+
+  const handleConcludeEntregaDirectly = (id: string) => {
+    showConfirm(
+      'Validar & Concluir Entrega',
+      'Confirma que esta entrega foi realizada com sucesso no cliente? O status será alterado para Entregue.',
+      async () => {
+        setUpdatingEntregaId(id);
+        try {
+          const res = await updateEntrega(id, { status: 'ENTREGUE' });
+          if (res.success) {
+            showAlert('Sucesso', 'Entrega validada e concluída!', 'success');
+            loadData(true);
+            if (entregaForm.id === id) {
+              setEntregaForm(prev => ({ ...prev, status: 'ENTREGUE' }));
+            }
+          } else {
+            showAlert('Erro', res.error || 'Não foi possível concluir a entrega.', 'error');
+          }
+        } catch (err: any) {
+          showAlert('Erro', err.message || 'Erro de comunicação.', 'error');
+        } finally {
+          setUpdatingEntregaId(null);
+        }
+      }
+    );
+  };
+
+  const handleConfirmAssignEntregador = async () => {
+    if (!selectedEntregadorForAssign) {
+      showAlert('Atenção', 'Selecione um entregador da equipe.', 'warning');
+      return;
+    }
+    const entregador = usuarios.find(u => u.email === selectedEntregadorForAssign);
+    if (!entregador) return;
+
+    setSaving(true);
+    try {
+      const payload: any = {
+        status: targetStatusForAssign,
+        entregadorEmail: entregador.email,
+        entregadorResponsavel: entregador.nome,
+        dataProgramada: new Date().toISOString()
+      };
+
+      const res = await updateEntrega(entregaToAssign.id, payload);
+      if (res.success) {
+        setModalAssignEntregadorOpen(false);
+        showAlert('Atribuído com Sucesso', `Entrega programada para o entregador ${entregador.nome}`, 'success');
+        loadData(true);
+        if (entregaForm.id === entregaToAssign.id) {
+          setEntregaForm(prev => ({
+            ...prev,
+            status: targetStatusForAssign,
+            entregadorEmail: entregador.email,
+            entregadorResponsavel: entregador.nome,
+            dataProgramada: new Date().toISOString().substring(0, 16)
+          }));
+        }
+      } else {
+        showAlert('Erro ao Salvar', res.error || 'Não foi possível atribuir a entrega', 'error');
+      }
+    } catch (err: any) {
+      showAlert('Erro', err.message || 'Erro de comunicação.', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRecuseCancel = async (id: string) => {
+    const ent = entregas.find(e => e.id === id);
+    if (!ent) return;
+
+    const motivo = prompt('Informe a justificativa para recusar o cancelamento (obrigatório para o entregador visualizar):');
+    if (motivo === null) return;
+    if (!motivo.trim()) {
+      showAlert('Justificativa Obrigatória', 'Você precisa informar um motivo para recusar o cancelamento.', 'warning');
+      return;
+    }
+
+    const observacaoEntregaRecusa = `Motivo da recusa do cancelamento: ${motivo.trim()}`;
+    let targetStatus = 'PROGRAMADO'; // fallback seguro
+
+    if (ent.historico) {
+      try {
+        const history = JSON.parse(ent.historico);
+        if (Array.isArray(history)) {
+          for (let i = history.length - 1; i >= 0; i--) {
+            const item = history[i];
+            if (item && typeof item.acao === 'string') {
+              const match = item.acao.match(/Status alterado de (\w+) para VALIDACAO/);
+              if (match && match[1]) {
+                const statusCandidate = match[1];
+                if (['PROGRAMADO', 'EM_DESLOCAMENTO', 'ENTREGA'].includes(statusCandidate)) {
+                  targetStatus = statusCandidate;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Erro ao ler histórico:", e);
+      }
+    }
+
+    setUpdatingEntregaId(id);
+    setEntregas(prev => prev.map(e => e.id === id ? { ...e, status: targetStatus, observacaoEntrega: observacaoEntregaRecusa } : e));
+    if (entregaForm.id === id) {
+      setEntregaForm(prev => ({ ...prev, status: targetStatus, observacaoEntrega: observacaoEntregaRecusa }));
+    }
+
+    try {
+      const res = await updateEntrega(id, { 
+        status: targetStatus, 
+        observacaoEntrega: observacaoEntregaRecusa 
+      });
+      if (res.success) {
+        showAlert('Cancelamento Recusado', `A solicitação foi recusada. A entrega retornou para o status ${targetStatus}.`, 'success');
+        loadData(true);
+      } else {
+        loadData(true);
+        showAlert('Erro', res.error || 'Não foi possível recusar o cancelamento.', 'error');
+      }
+    } catch (err: any) {
+      loadData(true);
+    } finally {
+      setUpdatingEntregaId(null);
+    }
+  };
+
+  const handleConfirmCancel = async (id: string) => {
+    showConfirm(
+      'Confirmar Cancelamento',
+      'Confirma o cancelamento definitivo desta entrega? O status será alterado para Cancelada.',
+      async () => {
+        setUpdatingEntregaId(id);
+        try {
+          const res = await updateEntrega(id, { status: 'CANCELADA' });
+          if (res.success) {
+            showAlert('Cancelada', 'A entrega foi movida para Cancelada.', 'success');
+            loadData(true);
+            if (entregaForm.id === id) {
+              setEntregaForm(prev => ({ ...prev, status: 'CANCELADA' }));
+            }
+          } else {
+            showAlert('Erro', res.error || 'Não foi possível cancelar a entrega.', 'error');
+          }
+        } catch (err: any) {
+          showAlert('Erro', err.message || 'Erro de comunicação.', 'error');
+        } finally {
+          setUpdatingEntregaId(null);
+        }
+      }
+    );
+  };
+
+  const handleReassignEntregador = (ent: any) => {
+    setEntregaToAssign(ent);
+    setSelectedEntregadorForAssign(ent.entregadorEmail || '');
+    setTargetStatusForAssign(ent.status);
+    setModalAssignEntregadorOpen(true);
+  };
+
+  const openEntregaModal = (ent?: any) => {
+    setActiveDetailsTab('details');
+    if (ent) {
+      setEntregaForm({
+        id: ent.id,
+        numeroNf: ent.numeroNf,
+        valor: String(ent.valor),
+        clientId: ent.clientId,
+        observacao: ent.observacao || '',
+        status: ent.status,
+        entregadorResponsavel: ent.entregadorResponsavel || '',
+        entregadorEmail: ent.entregadorEmail || '',
+        dataProgramada: ent.dataProgramada ? new Date(ent.dataProgramada).toISOString().substring(0, 16) : ''
+      });
+    } else {
+      setEntregaForm({
+        id: '',
+        numeroNf: '',
+        valor: '',
+        clientId: '',
+        observacao: '',
+        status: 'BACKLOG',
+        entregadorResponsavel: '',
+        entregadorEmail: '',
+        dataProgramada: ''
+      });
+    }
+    setModalEntregaOpen(true);
+  };
+
+  // Roteamento
+  const handleOptimizeRoute = async () => {
+    if (!selectedRouteEntregador) {
+      showAlert('Atenção', 'Selecione um entregador para otimizar.', 'warning');
+      return;
+    }
+
+    setRouteSaving(true);
+    try {
+      const res = await otimizarRotaEntregador(selectedRouteEntregador);
+      if (res.success) {
+        showAlert('Rota Otimizada', 'O menor trajeto foi calculado com inteligência OSRM Trip TSP!', 'success');
+        loadData(true);
+      } else {
+        showAlert('Erro ao Otimizar', res.error || 'Não foi possível otimizar a rota.', 'error');
+      }
+    } catch (err: any) {
+      showAlert('Erro', err.message || 'Erro de comunicação.', 'error');
+    } finally {
+      setRouteSaving(false);
+    }
+  };
+
+  const handleMoveRouteOrder = async (entId: string, direction: 'up' | 'down', sortedList: any[]) => {
+    const idx = sortedList.findIndex(e => e.id === entId);
+    if (idx === -1) return;
+    if (direction === 'up' && idx === 0) return;
+    if (direction === 'down' && idx === sortedList.length - 1) return;
+
+    const newList = [...sortedList];
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    const temp = newList[idx];
+    newList[idx] = newList[targetIdx];
+    newList[targetIdx] = temp;
+
+    setRouteSaving(true);
+    try {
+      const ids = newList.map(e => e.id);
+      const res = await reordenarEntregasManual(selectedRouteEntregador, ids);
+      if (res.success) {
+        loadData(true);
+      } else {
+        showAlert('Erro', res.error || 'Erro ao ordenar manualmente.', 'error');
+      }
+    } catch (err: any) {
+      showAlert('Erro', err.message || 'Erro ao salvar reordenação.', 'error');
+    } finally {
+      setRouteSaving(false);
+    }
+  };
+
+  const openRouteManagerModal = () => {
+    setSelectedRouteEntregador('');
+    setModalManageRoutesOpen(true);
+  };
+
+  // Filters logic
+  const filteredEntregas = entregas.filter(ent => {
+    const matchSearch = 
+      ent.numeroNf.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      ent.client.nomeFantasia.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (ent.entregadorResponsavel && ent.entregadorResponsavel.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (ent.observacao && ent.observacao.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchCliente = filterCliente ? ent.clientId === filterCliente : true;
+    const matchStatus = filterStatus ? ent.status === filterStatus : true;
+
+    return matchSearch && matchCliente && matchStatus;
+  });
+
+  // Entregadores list
+  const entregadorList = usuarios.filter(u => {
+    const isCargo = (u.cargo || '').toLowerCase();
+    const hasAssigned = entregas.some(e => e.entregadorEmail === u.email);
+    return isCargo.includes('entregador') || isCargo.includes('entrega') || isCargo.includes('motoboy') || isCargo.includes('motorista') || hasAssigned;
+  });
+
+  return (
+    <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
+      <Sidebar />
+      
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto relative no-print">
+        {/* Header Superior */}
+        <header className="bg-white border-b border-slate-200 px-8 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sticky top-0 z-30 select-none">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+              <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg shrink-0">
+                <Truck size={18} className="stroke-[2.5] text-emerald-400" />
+              </div>
+              Controle de Entregas
+            </h1>
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest leading-none">Módulo de Logística Integrada</p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            {/* Seletor Visualização */}
+            <div className="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200 shadow-2xs">
+              <button 
+                onClick={() => setViewMode('kanban')}
+                className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all rounded-lg ${viewMode === 'kanban' ? 'bg-[#1B4D3E] text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                title="Visualização Kanban"
+              >
+                <Kanban size={13} /> Kanban
+              </button>
+              <button 
+                onClick={() => setViewMode('lista')}
+                className={`px-3 py-2 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all rounded-lg ${viewMode === 'lista' ? 'bg-[#1B4D3E] text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                title="Visualização em Lista"
+              >
+                <ClipboardList size={13} /> Lista
+              </button>
+            </div>
+
+            {/* Ações */}
+            <button
+              onClick={openRouteManagerModal}
+              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-2xs"
+            >
+              <Navigation size={13} className="stroke-[2.5]" />
+              Gerenciar Rotas
+            </button>
+            
+            <button
+              onClick={() => openEntregaModal()}
+              className="px-4 py-2.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-[#1B4D3E]/10 transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus size={14} className="stroke-[3]" />
+              Nova Entrega
+            </button>
+          </div>
+        </header>
+
+        {/* Barra de Filtros e Pesquisa */}
+        <section className={viewMode === 'kanban' ? 'px-8 pt-8 pb-3 space-y-4' : 'px-8 py-6 space-y-4'}>
+          <div className="bg-white border border-slate-200 rounded-[2rem] p-5 shadow-2xs flex flex-col lg:flex-row items-center gap-4 select-none">
+            <div className="relative flex-1 w-full group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4D3E] transition-colors" size={16} />
+              <input 
+                type="text" 
+                placeholder="Pesquisar por NF, cliente, entregador ou observações..."
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 pl-11 pr-4 outline-none focus:border-[#1B4D3E] focus:ring-4 focus:ring-[#1B4D3E]/5 transition-all text-xs font-bold text-slate-700"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-650 cursor-pointer">
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 w-full lg:w-auto shrink-0">
+              <select
+                value={filterCliente}
+                onChange={(e) => setFilterCliente(e.target.value)}
+                className="w-full lg:w-56 px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] cursor-pointer uppercase"
+              >
+                <option value="">Todos os Clientes</option>
+                {clientes.map(c => (
+                  <option key={c.id} value={c.id}>{c.nomeFantasia}</option>
+                ))}
+              </select>
+
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full lg:w-48 px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] cursor-pointer uppercase"
+              >
+                <option value="">Todos os Status</option>
+                <option value="BACKLOG">Backlog</option>
+                <option value="PROGRAMADO">Programado</option>
+                <option value="EM_DESLOCAMENTO">Em Rota</option>
+                <option value="ENTREGA">Entrega Local</option>
+                <option value="VALIDACAO">Em Validação</option>
+                <option value="ENTREGUE">Entregue</option>
+                <option value="CANCELADA">Cancelada</option>
+              </select>
+
+              {(searchTerm || filterCliente || filterStatus) && (
+                <button
+                  onClick={() => { setSearchTerm(''); setFilterCliente(''); setFilterStatus(''); }}
+                  className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] font-black uppercase tracking-wider rounded-2xl transition-colors cursor-pointer w-full lg:w-auto"
+                >
+                  Limpar
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Conteúdo Principal */}
+        <section className="flex-1 px-8 pb-8">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-32 gap-3 text-slate-400 select-none">
+              <div className="w-10 h-10 border-3 border-[#1B4D3E]/20 border-t-[#1B4D3E] rounded-full animate-spin"></div>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-500 animate-pulse">Carregando Entregas...</p>
+            </div>
+          ) : viewMode === 'lista' ? (
+            /* TABELA / LISTA */
+            <div className="bg-white border border-slate-200 rounded-[2rem] overflow-hidden shadow-2xs select-none">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-[9px] font-black text-slate-450 uppercase tracking-widest">
+                    <th className="py-4 pl-6">Código / NF</th>
+                    <th className="py-4">Cliente</th>
+                    <th className="py-4">Valor</th>
+                    <th className="py-4">Entregador</th>
+                    <th className="py-4">Status</th>
+                    <th className="py-4 pr-6 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-650">
+                  {filteredEntregas.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-16 text-center text-slate-400">
+                        Nenhuma entrega encontrada para os filtros aplicados.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredEntregas.map(ent => {
+                      const tech = usuarios.find(u => u.email === ent.entregadorEmail);
+                      
+                      const badgeMap: Record<string, string> = {
+                        BACKLOG: 'bg-slate-100 text-slate-600 border-slate-200/80',
+                        PROGRAMADO: 'bg-blue-50 text-blue-700 border-blue-200',
+                        EM_DESLOCAMENTO: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+                        ENTREGA: 'bg-amber-50 text-amber-800 border-amber-250',
+                        VALIDACAO: 'bg-purple-50 text-purple-700 border-purple-200',
+                        ENTREGUE: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                        CANCELADA: 'bg-red-50 text-red-700 border-red-200'
+                      };
+
+                      const labelMap: Record<string, string> = {
+                        BACKLOG: 'Backlog',
+                        PROGRAMADO: 'Programado',
+                        EM_DESLOCAMENTO: 'Em Rota',
+                        ENTREGA: 'Entrega Local',
+                        VALIDACAO: 'Em Validação',
+                        ENTREGUE: 'Entregue',
+                        CANCELADA: 'Cancelada'
+                      };
+
+                      return (
+                        <tr 
+                          key={ent.id} 
+                          className="hover:bg-slate-50/50 transition-colors cursor-pointer group"
+                          onClick={() => openEntregaModal(ent)}
+                        >
+                          <td className="py-4.5 pl-6 font-mono font-black text-slate-900">
+                            <span className="bg-slate-100 border border-slate-200/60 rounded px-1.5 py-0.5 mr-2">
+                              #{String(ent.codigo).padStart(3, '0')}
+                            </span>
+                            NF {ent.numeroNf}
+                          </td>
+                          <td className="py-4.5 font-extrabold uppercase text-slate-800 max-w-[200px] truncate" title={ent.client.nomeFantasia}>
+                            {ent.client.nomeFantasia}
+                          </td>
+                          <td className="py-4.5 font-black text-slate-800">
+                            {ent.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </td>
+                          <td className="py-4.5">
+                            {ent.entregadorResponsavel ? (
+                              <div className="flex items-center gap-2">
+                                {tech?.avatarUrl ? (
+                                  <img src={tech.avatarUrl} alt="" className="w-5.5 h-5.5 rounded-full object-cover border border-slate-200 shrink-0" />
+                                ) : (
+                                  <div className="w-5.5 h-5.5 bg-[#1B4D3E]/10 text-[#1B4D3E] rounded-full flex items-center justify-center font-black text-[9px] uppercase shrink-0">
+                                    {ent.entregadorResponsavel.substring(0, 2)}
+                                  </div>
+                                )}
+                                <span className="font-extrabold uppercase text-slate-700">{ent.entregadorResponsavel}</span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 italic">Não atribuído</span>
+                            )}
+                          </td>
+                          <td className="py-4.5">
+                            <span className={`px-2 py-1 border text-[9.5px] font-black uppercase tracking-wider rounded-md ${badgeMap[ent.status]}`}>
+                              {labelMap[ent.status]}
+                            </span>
+                          </td>
+                          <td className="py-4.5 pr-6 text-right">
+                            <div className="flex justify-end items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                              {ent.status === 'EM_DESLOCAMENTO' && (
+                                <button
+                                  type="button"
+                                  onClick={() => setModalTrackEntrega(ent)}
+                                  className="p-2 bg-cyan-50 hover:bg-cyan-100 text-cyan-600 border border-cyan-200 rounded-xl transition-all cursor-pointer flex items-center"
+                                  title="Rastrear Rota"
+                                >
+                                  <Car size={13} className="stroke-[2.5]" />
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => openEntregaModal(ent)}
+                                className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-xl transition-all cursor-pointer"
+                                title="Visualizar Detalhes"
+                              >
+                                <Edit2 size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteEntrega(ent.id)}
+                                className="p-2 bg-red-50 hover:bg-red-100 text-red-500 border border-red-100 rounded-xl transition-all cursor-pointer"
+                                title="Excluir Entrega"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            /* KANBAN CONTÍGUOESTILO TASKS */
+            <div className="pb-6 select-none bg-slate-50 pl-2 pr-1">
+              <div className="flex gap-[3px] min-w-max">
+                {(['BACKLOG', 'PROGRAMADO', 'EM_DESLOCAMENTO', 'ENTREGA', 'VALIDACAO', 'ENTREGUE', 'CANCELADA'] as const).map((colStatus, idx) => {
+                  const colEntregas = filteredEntregas.filter(e => e.status === colStatus);
+                  const isFirst = idx === 0;
+                  const isLast = idx === 6;
+
+                  const titleMap = {
+                    BACKLOG: 'Backlog',
+                    PROGRAMADO: 'Programado',
+                    EM_DESLOCAMENTO: 'Em Rota',
+                    ENTREGA: 'Entrega Local',
+                    VALIDACAO: 'Em Validação',
+                    ENTREGUE: 'Entregue',
+                    CANCELADA: 'Cancelada'
+                  };
+
+                  const configMap = {
+                    BACKLOG: { hex: '#64748B', contrast: 'white', bg: 'rgba(100, 116, 139, 0.06)', border: 'rgba(100, 116, 139, 0.18)' },
+                    PROGRAMADO: { hex: '#3B82F6', contrast: 'white', bg: 'rgba(59, 130, 246, 0.06)', border: 'rgba(59, 130, 246, 0.18)' },
+                    EM_DESLOCAMENTO: { hex: '#06B6D4', contrast: 'white', bg: 'rgba(6, 182, 212, 0.06)', border: 'rgba(6, 182, 212, 0.18)' },
+                    ENTREGA: { hex: '#F59E0B', contrast: 'black', bg: 'rgba(245, 158, 11, 0.12)', border: 'rgba(245, 158, 11, 0.35)' },
+                    VALIDACAO: { hex: '#A855F7', contrast: 'white', bg: 'rgba(168, 85, 247, 0.06)', border: 'rgba(168, 85, 247, 0.18)' },
+                    ENTREGUE: { hex: '#10B981', contrast: 'white', bg: 'rgba(16, 185, 129, 0.06)', border: 'rgba(16, 185, 129, 0.18)' },
+                    CANCELADA: { hex: '#EF4444', contrast: 'white', bg: 'rgba(239, 68, 68, 0.06)', border: 'rgba(239, 68, 68, 0.18)' }
+                  };
+
+                  const conf = configMap[colStatus];
+                  const resolvedHex = conf.hex;
+                  const contrast = conf.contrast;
+                  const bgRgba = conf.bg;
+                  const borderRgba = conf.border;
+
+                  return (
+                    <div 
+                      key={colStatus} 
+                      className="flex flex-col flex-shrink-0"
+                      style={{ width: '274px' }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        const entId = e.dataTransfer.getData('text/plain');
+                        handleUpdateEntregaStatus(entId, colStatus);
+                      }}
+                    >
+                      {/* Column Header Sticky */}
+                      <div className="sticky top-0 select-none z-10 bg-slate-50" style={{ zIndex: 20 + (7 - idx) }}>
+                        <div className="relative h-[52px] shrink-0 w-full pointer-events-auto">
+                          <svg 
+                            className={`absolute inset-0 h-full transition-all duration-200 overflow-visible ${isLast ? 'w-[274px]' : 'w-[282px]'}`}
+                            viewBox={isLast ? "0 0 274 52" : "0 0 282 52"}
+                            preserveAspectRatio="none"
+                            style={{ color: resolvedHex }}
+                          >
+                            <path 
+                              d={isFirst 
+                                ? "M 8,0 L 274,0 L 282,26 L 274,52 L 0,52 L 0,8 A 8,8 0 0,1 8,0 Z" 
+                                : isLast 
+                                  ? "M 0,0 L 266,0 A 8,8 0 0,1 274,8 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                                  : "M 0,0 L 274,0 L 282,26 L 274,52 L 0,52 L 8,26 L 0,0 Z"
+                              }
+                              fill="currentColor" 
+                              stroke={contrast === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.08)'}
+                              strokeWidth="1"
+                            />
+                          </svg>
+                          <div 
+                            className={`relative z-10 flex items-center justify-between h-full ${isFirst ? 'pl-4 pr-7' : 'pl-7 pr-7'}`}
+                            style={{ color: contrast === 'white' ? '#ffffff' : '#0f172a' }}
+                          >
+                            <div className="flex flex-col min-w-0 justify-center">
+                              <h3 className="font-black uppercase tracking-wider text-[11px] truncate max-w-[150px] leading-none">
+                                {titleMap[colStatus]}
+                              </h3>
+                              <span className="text-[10px] font-bold mt-1 opacity-90 truncate select-none leading-none">
+                                {colEntregas.length} {colEntregas.length === 1 ? 'entrega' : 'entregas'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Cards list */}
+                      <div
+                        className="px-[4px] py-3 rounded-b-2xl rounded-t-none"
+                        style={{
+                          width: '274px',
+                          minWidth: '274px',
+                          maxWidth: '274px',
+                          marginLeft: '0px',
+                          backgroundColor: bgRgba,
+                          borderColor: borderRgba,
+                          borderWidth: '0 1px 1px 1px',
+                          borderStyle: 'solid',
+                          height: 'calc(100vh - 52px)',
+                          overflowY: 'auto',
+                        }}
+                      >
+                        <div className="flex flex-col gap-2.5">
+                          {colEntregas.map(ent => (
+                            <div 
+                              key={ent.id} 
+                              className={`relative bg-white border border-slate-200 hover:border-[#1B4D3E]/30 rounded-xl p-3 shadow-xs space-y-2 hover:shadow-sm transition-all text-left cursor-pointer ${
+                                updatingEntregaId === ent.id ? 'opacity-65 pointer-events-none select-none' : ''
+                              }`}
+                              draggable={updatingEntregaId !== ent.id}
+                              onDragStart={(e) => {
+                                e.dataTransfer.setData('text/plain', ent.id);
+                              }}
+                              onClick={() => openEntregaModal(ent)}
+                            >
+                              {updatingEntregaId === ent.id && (
+                                <div className="absolute inset-0 bg-white/50 backdrop-blur-xs flex items-center justify-center rounded-xl z-20">
+                                  <div className="w-5.5 h-5.5 border-2 border-[#1B4D3E]/20 border-t-[#1B4D3E] rounded-full animate-spin"></div>
+                                </div>
+                              )}
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-mono text-[9px] font-black text-slate-700 bg-slate-100 border border-slate-200/80 rounded px-1.5 py-0.5 whitespace-nowrap">
+                                    NF № {ent.numeroNf}
+                                  </span>
+                                  {ent.status === 'PROGRAMADO' && ent.ordemExecucao && (
+                                    <span className="text-[9px] font-black bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 whitespace-nowrap" title="Ordem na Fila">
+                                      #{ent.ordemExecucao}
+                                    </span>
+                                  )}
+                                  {ent.status === 'VALIDACAO' && ent.observacaoEntrega?.includes('Cancelamento solicitado') && (
+                                    <span className="text-[9px] font-black bg-red-50 text-red-700 border border-red-200 rounded px-1.5 py-0.5 whitespace-nowrap animate-pulse">
+                                      Sol. Cancelamento
+                                    </span>
+                                  )}
+                                  {ent.status === 'EM_DESLOCAMENTO' && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); setModalTrackEntrega(ent); }}
+                                      className="p-1 text-cyan-600 hover:bg-cyan-50 rounded-md animate-pulse cursor-pointer flex items-center"
+                                      title="Rastrear Entregador em Tempo Real"
+                                    >
+                                      <Car size={11} className="stroke-[2.5]" />
+                                    </button>
+                                  )}
+                                </div>
+                                <span className="text-[10px] text-slate-700 font-extrabold">
+                                  {ent.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+                                </span>
+                              </div>
+                              <div className="space-y-0.5">
+                                <h4 className="text-[10px] font-extrabold text-slate-800 uppercase leading-tight truncate" title={ent.client.nomeFantasia}>{ent.client.nomeFantasia}</h4>
+                                <p className="text-[9.5px] text-slate-500 truncate font-semibold uppercase" title={ent.client.endereco}>{ent.client.endereco || 'Sem endereço'}</p>
+                              </div>
+                              
+                              <div className="bg-slate-50/60 rounded-lg p-2 border border-slate-100/50 text-[9.5px] space-y-2">
+                                {ent.entregadorResponsavel ? (() => {
+                                  const tech = usuarios.find(u => u.email === ent.entregadorEmail);
+                                  return (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleReassignEntregador(ent);
+                                      }}
+                                      className="w-full flex items-center gap-2 p-1 bg-white hover:bg-blue-50/40 border border-slate-150 hover:border-blue-200 rounded-lg text-left transition-all group/tech cursor-pointer"
+                                      title="Clique para alterar o entregador"
+                                    >
+                                      {tech?.avatarUrl ? (
+                                        <img 
+                                          src={tech.avatarUrl} 
+                                          alt={ent.entregadorResponsavel} 
+                                          className="w-5.5 h-5.5 rounded-full object-cover border border-slate-200 shrink-0" 
+                                        />
+                                      ) : (
+                                        <div className="w-5.5 h-5.5 bg-[#1B4D3E]/10 text-[#1B4D3E] rounded-full flex items-center justify-center font-black text-[9px] uppercase shrink-0 border border-[#1B4D3E]/15">
+                                          {ent.entregadorResponsavel.substring(0, 2)}
+                                        </div>
+                                      )}
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider leading-none">Entregador</p>
+                                        <p className="text-[9.5px] font-extrabold text-slate-700 uppercase truncate mt-0.5 group-hover/tech:text-blue-600 transition-colors">
+                                          {ent.entregadorResponsavel}
+                                        </p>
+                                      </div>
+                                      <div className="text-slate-300 group-hover/tech:text-blue-500 transition-colors shrink-0 pr-0.5">
+                                        <Users size={9} className="stroke-[2.5]" />
+                                      </div>
+                                    </button>
+                                  );
+                                })() : (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleReassignEntregador(ent);
+                                    }}
+                                    className="w-full flex items-center justify-center gap-1.5 p-1 bg-amber-50 hover:bg-amber-100 border border-dashed border-amber-300 text-amber-800 rounded-lg text-left transition-all cursor-pointer"
+                                    title="Atribuir Entregador"
+                                  >
+                                    <Users size={10} className="stroke-[2.5]" />
+                                    <span className="text-[9px] font-black uppercase tracking-wider">Atribuir Entregador</span>
+                                  </button>
+                                )}
+
+                                {ent.status === 'EM_DESLOCAMENTO' && ent.tempoEstimadoRota !== null && (
+                                  <div className="text-[9.5px] px-1 flex justify-between items-center text-cyan-600 bg-cyan-50/40 p-1 rounded border border-cyan-100/60">
+                                    <span className="font-extrabold">Est. Rota:</span>
+                                    <span className="font-black">{Math.round(ent.tempoEstimadoRota)} min ({ent.distanciaEstimadaRota?.toFixed(1)} km)</span>
+                                  </div>
+                                )}
+
+                                {(ent.status === 'ENTREGA' || ent.status === 'VALIDACAO' || ent.status === 'ENTREGUE') && ent.tempoRealizadoRota !== null && (
+                                  <div className={`text-[9.5px] px-1 flex justify-between items-center p-1 rounded border ${
+                                    ent.desvioRota 
+                                      ? 'text-rose-600 bg-rose-50/40 border-rose-100/60 animate-pulse' 
+                                      : 'text-emerald-700 bg-emerald-50/40 border-emerald-100/60'
+                                  }`}>
+                                    <span className="font-extrabold flex items-center gap-0.5">
+                                      {ent.desvioRota ? '⚠️ Rota (Desvio):' : '✓ Rota Realizada:'}
+                                    </span>
+                                    <span className="font-black">
+                                      {Math.round(ent.tempoRealizadoRota)} min ({ent.distanciaRealizadaRota?.toFixed(1)} km)
+                                    </span>
+                                  </div>
+                                )}
+
+                                {ent.dataProgramada && (
+                                  <div className="text-slate-500 font-bold px-1 flex justify-between items-center">
+                                    <span className="text-slate-400 font-extrabold font-semibold">Agendado:</span>
+                                    <span className="text-slate-700 font-extrabold">{new Date(ent.dataProgramada).toLocaleDateString('pt-BR')}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                          {colEntregas.length === 0 && (
+                            <div 
+                              onClick={() => openEntregaModal()}
+                              className="border border-dashed border-slate-300 hover:border-[#1B4D3E]/40 rounded-lg py-10 flex flex-col items-center justify-center gap-2 flex-1 cursor-pointer transition-all hover:bg-white/50 group/empty"
+                            >
+                              <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center group-hover/empty:bg-[#1B4D3E]/10 group-hover/empty:text-[#1B4D3E] transition-colors">
+                                <Plus size={16} />
+                              </div>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider group-hover/empty:text-[#1B4D3E] transition-colors">Sem entregas</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </section>
+      </main>
+
+      {/* ───────────────────────────────────────────────────────────────────
+          MODAL DE DETALHES / CADASTRO DE ENTREGA
+          ─────────────────────────────────────────────────────────────────── */}
+      {modalEntregaOpen && (() => {
+        const ent = entregas.find(e => e.id === entregaForm.id);
+        const hasId = !!entregaForm.id;
+        
+        let historicoArray: any[] = [];
+        if (ent && ent.historico) {
+          try {
+            historicoArray = JSON.parse(ent.historico);
+          } catch (e) {}
+        }
+
+        return (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 max-w-xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+              <header className="bg-slate-50 border-b border-slate-150 px-8 py-5 flex justify-between items-center select-none shrink-0">
+                <div className="space-y-0.5">
+                  <h3 className="text-sm font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
+                    <Truck size={16} className="stroke-[2.5]" />
+                    {hasId ? `Editar Entrega № ${String(ent?.codigo).padStart(3, '0')}` : 'Registrar Nova Entrega'}
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">
+                    {hasId ? 'Atualização de Notas Fiscais e Histórico' : 'Registrar NF e Inserir no Backlog'}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setModalEntregaOpen(false)} 
+                  className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                  disabled={saving}
+                >
+                  <X size={20} />
+                </button>
+              </header>
+
+              {/* Banner de Validação / Cancelamento para Gestores */}
+              {hasId && ent?.status === 'VALIDACAO' && (
+                <div className="shrink-0 select-none">
+                  {ent.observacaoEntrega?.includes('Cancelamento solicitado') ? (
+                    <div className="bg-red-50 border-y border-red-200 px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div className="space-y-1">
+                        <h4 className="text-[11px] font-black uppercase tracking-wider text-red-800 flex items-center gap-1.5 leading-none">
+                          <ShieldAlert size={14} className="stroke-[2.5]" />
+                          Solicitação de Cancelamento
+                        </h4>
+                        <p className="text-xs text-red-650 font-semibold leading-relaxed">
+                          O entregador solicitou o cancelamento desta entrega. Justificativa:<br />
+                          <span className="italic font-bold">"{ent.observacaoEntrega.replace('Cancelamento solicitado: ', '')}"</span>
+                        </p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => handleRecuseCancel(ent.id)}
+                          className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-700 rounded-xl transition-all cursor-pointer"
+                        >
+                          Recusar
+                        </button>
+                        <button
+                          onClick={() => handleConfirmCancel(ent.id)}
+                          className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer shadow-xs"
+                        >
+                          Confirmar Cancelamento
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-purple-50 border-y border-purple-250 px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div className="space-y-1">
+                        <h4 className="text-[11px] font-black uppercase tracking-wider text-purple-800 flex items-center gap-1.5 leading-none">
+                          <ShieldCheck size={14} className="stroke-[2.5]" />
+                          Validação de Conclusão de Entrega
+                        </h4>
+                        <p className="text-xs text-purple-650 font-semibold leading-relaxed">
+                          Esta entrega foi concluída em campo pelo entregador e aguarda sua conferência.
+                        </p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => handleRecuseCancel(ent.id)}
+                          className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-700 rounded-xl transition-all cursor-pointer"
+                        >
+                          Recusar
+                        </button>
+                        <button
+                          onClick={() => handleConcludeEntregaDirectly(ent.id)}
+                          className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer shadow-xs"
+                        >
+                          Validar & Concluir
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tabs navigation for existing OS */}
+              {hasId && (
+                <div className="bg-slate-50 border-b border-slate-100 flex px-8 shrink-0 select-none">
+                  <button
+                    type="button"
+                    onClick={() => setActiveDetailsTab('details')}
+                    className={`py-3.5 text-[10px] font-black uppercase tracking-widest border-b-2 px-4 transition-all cursor-pointer ${activeDetailsTab === 'details' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                  >
+                    Detalhes & Cadastro
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveDetailsTab('history')}
+                    className={`py-3.5 text-[10px] font-black uppercase tracking-widest border-b-2 px-4 transition-all cursor-pointer ${activeDetailsTab === 'history' ? 'border-[#1B4D3E] text-[#1B4D3E]' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                  >
+                    Histórico & Trajeto
+                  </button>
+                </div>
+              )}
+
+              <form onSubmit={handleCreateOrUpdateEntrega} className="flex-1 overflow-y-auto p-8 space-y-6 text-left">
+                {activeDetailsTab === 'details' ? (
+                  <>
+                    {/* Status Dropdown (apenas para edição) */}
+                    {hasId && (
+                      <div className="space-y-2 select-none">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Status do Ciclo da Entrega</label>
+                        <select
+                          value={entregaForm.status}
+                          onChange={(e) => handleUpdateEntregaStatus(ent?.id, e.target.value)}
+                          className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-black text-slate-800 outline-none focus:border-[#1B4D3E] cursor-pointer uppercase transition-all"
+                          disabled={updatingEntregaId === ent?.id || saving}
+                        >
+                          <option value="BACKLOG">Backlog (Aberto)</option>
+                          <option value="PROGRAMADO">Programado</option>
+                          <option value="EM_DESLOCAMENTO">Em Rota (Deslocamento)</option>
+                          <option value="ENTREGA">Entrega Local</option>
+                          <option value="VALIDACAO">Aguardando Validação</option>
+                          <option value="ENTREGUE">Entregue (Concluído)</option>
+                          <option value="CANCELADA">Cancelada</option>
+                        </select>
+                      </div>
+                    )}
+
+                    {/* Cliente e Atalho "+" */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center select-none">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cliente Destinatário</label>
+                        <button
+                          type="button"
+                          onClick={() => setModalQuickClienteOpen(true)}
+                          className="text-[9.5px] font-black text-[#1B4D3E] hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          <Plus size={12} className="stroke-[2.5]" /> Novo Cliente
+                        </button>
+                      </div>
+                      <select
+                        value={entregaForm.clientId}
+                        onChange={(e) => setEntregaForm(prev => ({ ...prev, clientId: e.target.value }))}
+                        className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-850 outline-none focus:border-[#1B4D3E] cursor-pointer uppercase"
+                        disabled={saving}
+                      >
+                        <option value="">Selecione o Cliente...</option>
+                        {clientes.map(c => (
+                          <option key={c.id} value={c.id}>{c.nomeFantasia}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Nota Fiscal e Valor da Entrega */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Número da NF</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: 001234"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-4 outline-none focus:border-[#1B4D3E] text-xs font-bold text-slate-800"
+                          value={entregaForm.numeroNf}
+                          onChange={(e) => setEntregaForm(prev => ({ ...prev, numeroNf: e.target.value }))}
+                          disabled={saving}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Valor da Entrega (R$)</label>
+                        <div className="relative group">
+                          <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1B4D3E] transition-colors" size={16} />
+                          <input
+                            type="text"
+                            placeholder="0,00"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-11 pr-4 outline-none focus:border-[#1B4D3E] text-xs font-bold text-slate-800"
+                            value={entregaForm.valor}
+                            onChange={(e) => setEntregaForm(prev => ({ ...prev, valor: e.target.value }))}
+                            disabled={saving}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Data Programada & Entregador (Se Programado em diante) */}
+                    {(entregaForm.status !== 'BACKLOG') && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 bg-slate-50/50 p-4 border border-slate-200/60 rounded-2xl select-none">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Data Programada</label>
+                          <input
+                            type="datetime-local"
+                            className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 outline-none focus:border-[#1B4D3E] text-xs font-bold text-slate-800 cursor-pointer"
+                            value={entregaForm.dataProgramada}
+                            onChange={(e) => setEntregaForm(prev => ({ ...prev, dataProgramada: e.target.value }))}
+                            disabled={saving}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Entregador Responsável</label>
+                          <select
+                            value={entregaForm.entregadorEmail}
+                            onChange={(e) => {
+                              const tech = usuarios.find(u => u.email === e.target.value);
+                              setEntregaForm(prev => ({
+                                ...prev,
+                                entregadorEmail: e.target.value,
+                                entregadorResponsavel: tech ? tech.nome : ''
+                              }));
+                            }}
+                            className="w-full bg-white border border-slate-200 rounded-xl py-2.5 px-3.5 outline-none focus:border-[#1B4D3E] text-xs font-bold text-slate-800 cursor-pointer uppercase"
+                            disabled={saving}
+                          >
+                            <option value="">Selecione...</option>
+                            {entregadorList.map(u => (
+                              <option key={u.id} value={u.email}>{u.nome}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Observações */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Observações do Gestor</label>
+                      <textarea
+                        rows={3}
+                        placeholder="Instruções de entrega, detalhes de endereço ou contatos adicionais..."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-4 outline-none focus:border-[#1B4D3E] text-xs font-bold text-slate-800"
+                        value={entregaForm.observacao}
+                        onChange={(e) => setEntregaForm(prev => ({ ...prev, observacao: e.target.value }))}
+                        disabled={saving}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  /* TIMELINE & GEOLOCATION AUDITING */
+                  <div className="space-y-6 select-none text-left">
+                    {/* Resumo do Trajeto GPS */}
+                    {ent && (ent.tempoRealizadoRota !== null || ent.distanciaRealizadaRota !== null || ent.desvioRota) && (
+                      <div className={`p-4 border rounded-2xl space-y-3 animate-in fade-in duration-200 ${
+                        ent.desvioRota 
+                          ? 'bg-rose-50 border-rose-200 text-rose-800' 
+                          : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      }`}>
+                        <h4 className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 leading-none">
+                          <Navigation size={14} className="stroke-[2.5]" />
+                          Auditoria de Rota de Entrega (GPS)
+                        </h4>
+                        
+                        <div className="grid grid-cols-2 gap-4 text-xs font-semibold">
+                          <div className="space-y-1">
+                            <p className="text-[9px] font-black opacity-60 uppercase tracking-wider leading-none">Tempo de Trânsito</p>
+                            <p className="font-extrabold">
+                              Realizado: {ent.tempoRealizadoRota ? `${Math.round(ent.tempoRealizadoRota)} min` : '-'}
+                              {ent.tempoEstimadoRota ? ` (Estimado: ${Math.round(ent.tempoEstimadoRota)} min)` : ''}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[9px] font-black opacity-60 uppercase tracking-wider leading-none">Distância Percorrida</p>
+                            <p className="font-extrabold">
+                              Realizado: {ent.distanciaRealizadaRota ? `${ent.distanciaRealizadaRota.toFixed(1)} km` : '-'}
+                              {ent.distanciaEstimadaRota ? ` (Estimado: ${ent.distanciaEstimadaRota.toFixed(1)} km)` : ''}
+                            </p>
+                          </div>
+                        </div>
+
+                        {ent.desvioRota && (
+                          <div className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1 pt-1.5 border-t border-rose-150 animate-pulse">
+                            ⚠️ Alerta: Trajeto excedeu em +25% a rota sugerida no mapa.
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Timeline do histórico */}
+                    <div className="space-y-4">
+                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ciclo de Vida da Entrega</h4>
+                      <div className="border-l border-slate-150 pl-4 space-y-5 ml-2 relative">
+                        {historicoArray.map((h, i) => (
+                          <div key={i} className="relative space-y-1 text-xs">
+                            {/* Marcador */}
+                            <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full border-2 border-white bg-slate-400 shadow-sm"></div>
+                            
+                            <p className="text-[9.5px] font-black text-slate-400 leading-none">
+                              {formatDateTimeBrasilia(h.data)}
+                            </p>
+                            <p className="text-slate-800 font-extrabold leading-tight">
+                              {h.acao}
+                            </p>
+                            <p className="text-[9.5px] text-[#1B4D3E] font-black uppercase tracking-wider">
+                              Por: {h.usuario}
+                            </p>
+                          </div>
+                        ))}
+                        
+                        {historicoArray.length === 0 && (
+                          <p className="text-xs text-slate-400 italic">Sem eventos de histórico registrados.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Exibição de Assinaturas e Fotos Coletadas */}
+                    {ent && (ent.assinaturaRecebedor || ent.assinaturaEntregador || ent.fotosEntrega) && (
+                      <div className="border-t border-slate-100 pt-6 space-y-5">
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Evidências de Encerramento</h4>
+                        
+                        {/* Fotos coletadas */}
+                        {ent.fotosEntrega && (() => {
+                          try {
+                            const fotos = JSON.parse(ent.fotosEntrega);
+                            if (Array.isArray(fotos) && fotos.length > 0) {
+                              return (
+                                <div className="space-y-2">
+                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider ml-1">Fotos On-Site ({fotos.length})</p>
+                                  <div className="grid grid-cols-3 gap-2 bg-slate-50 p-3 border border-slate-150 rounded-2xl">
+                                    {fotos.map((f, i) => (
+                                      <div key={i} className="relative aspect-square border border-slate-200 rounded-lg overflow-hidden bg-slate-900 group">
+                                        <img src={f} alt={`Evidência ${i+1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200" />
+                                        <a href={f} download={`Entrega_${ent.codigo}_Foto_${i+1}.jpg`} className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[9px] font-black uppercase tracking-wider cursor-pointer select-none">
+                                          Baixar
+                                        </a>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            }
+                          } catch (e) {}
+                          return null;
+                        })()}
+
+                        {/* Assinaturas Digitais */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {/* Assinatura do Recebedor */}
+                          {ent.assinaturaRecebedor ? (
+                            <div className="bg-slate-50 border border-slate-150 p-4 rounded-2xl flex flex-col items-center gap-2 text-center">
+                              <p className="text-[9px] font-black text-slate-450 uppercase tracking-wider leading-none">Recebedor On-Site</p>
+                              <div className="w-full bg-white border border-slate-200 rounded-xl h-24 overflow-hidden relative flex items-center justify-center select-none">
+                                <img src={ent.assinaturaRecebedor} alt="Assinatura Recebedor" className="max-h-full max-w-full object-contain" />
+                              </div>
+                              <div className="text-xs">
+                                <p className="font-extrabold text-slate-800 uppercase leading-none truncate max-w-[180px]">{ent.nomeRecebedor || 'Não informado'}</p>
+                                <p className="text-[10px] text-slate-500 mt-1 font-semibold">Doc: {ent.documentoRecebedor || 'Não informado'}</p>
+                              </div>
+                            </div>
+                          ) : ent.nomeRecebedor === 'CLIENTE AUSENTE' ? (
+                            <div className="bg-amber-50 border border-amber-250 p-4 rounded-2xl flex flex-col items-center justify-center gap-1.5 text-center">
+                              <ShieldAlert size={20} className="text-amber-600 animate-pulse" />
+                              <p className="text-[9px] font-black text-amber-800 uppercase tracking-wider leading-none">Recebedor Ausente</p>
+                              <p className="text-[10px] text-amber-700 font-bold max-w-[160px] leading-relaxed">
+                                Entrega finalizada com a opção de destinatário ausente em campo.
+                              </p>
+                            </div>
+                          ) : null}
+
+                          {/* Assinatura do Entregador */}
+                          {ent.assinaturaEntregador && (
+                            <div className="bg-slate-50 border border-slate-150 p-4 rounded-2xl flex flex-col items-center gap-2 text-center">
+                              <p className="text-[9px] font-black text-slate-455 uppercase tracking-wider leading-none">Entregador Responsável</p>
+                              <div className="w-full bg-white border border-slate-200 rounded-xl h-24 overflow-hidden relative flex items-center justify-center select-none">
+                                <img src={ent.assinaturaEntregador} alt="Assinatura Entregador" className="max-h-full max-w-full object-contain" />
+                              </div>
+                              <div className="text-xs">
+                                <p className="font-extrabold text-slate-850 uppercase truncate max-w-[180px]">{ent.entregadorResponsavel}</p>
+                                <p className="text-[9.5px] text-slate-500 mt-1 font-bold uppercase">Entregador</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Footer Modal Controles */}
+                <footer className="pt-6 border-t border-slate-100 flex justify-between items-center gap-3 shrink-0 select-none">
+                  {hasId ? (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteEntrega(entregaForm.id)}
+                      className="px-4 py-3 bg-red-50 hover:bg-red-100 text-red-500 text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center gap-1 border border-red-100"
+                      disabled={saving}
+                    >
+                      <Trash2 size={13} /> Excluir
+                    </button>
+                  ) : (
+                    <div />
+                  )}
+                  
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setModalEntregaOpen(false)}
+                      className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest rounded-xl transition-colors cursor-pointer"
+                      disabled={saving}
+                    >
+                      Fechar
+                    </button>
+                    {activeDetailsTab === 'details' && (
+                      <button
+                        type="submit"
+                        className="px-6 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-[#1B4D3E]/10 transition-all cursor-pointer flex items-center gap-1.5"
+                        disabled={saving}
+                      >
+                        {saving ? (
+                          <>
+                            <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                            Salvando...
+                          </>
+                        ) : (
+                          <>
+                            <Save size={13} className="stroke-[2.5]" />
+                            Gravar
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </footer>
+              </form>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ───────────────────────────────────────────────────────────────────
+          MODAL DE ATRIBUIÇÃO DE ENTREGADOR E AGENDAMENTO
+          ─────────────────────────────────────────────────────────────────── */}
+      {modalAssignEntregadorOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-sm w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 select-none">
+            <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none">
+              <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
+                <Users size={16} className="stroke-[2.5]" />
+                Atribuição de Entrega
+              </h3>
+              <button 
+                onClick={() => setModalAssignEntregadorOpen(false)} 
+                className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                disabled={saving}
+              >
+                <X size={18} />
+              </button>
+            </header>
+            
+            <div className="p-6 space-y-4 text-left">
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-1">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider leading-none">Cliente / NF</p>
+                <p className="text-xs text-slate-800 font-extrabold uppercase truncate">{entregaToAssign?.client.nomeFantasia}</p>
+                <p className="text-[10px] text-slate-500 font-bold leading-none">NF № {entregaToAssign?.numeroNf}</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Selecione o Entregador</label>
+                <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-1">
+                  {entregadorList.map(u => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => setSelectedEntregadorForAssign(u.email)}
+                      className={`w-full flex items-center gap-3 p-2 border rounded-xl text-left transition-all cursor-pointer ${
+                        selectedEntregadorForAssign === u.email 
+                          ? 'border-[#1B4D3E] bg-slate-50 ring-2 ring-[#1B4D3E]/10' 
+                          : 'border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      {u.avatarUrl ? (
+                        <img src={u.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-slate-200 shrink-0" />
+                      ) : (
+                        <div className="w-7 h-7 bg-[#1B4D3E]/10 text-[#1B4D3E] rounded-full flex items-center justify-center font-black text-[10px] uppercase shrink-0 border border-[#1B4D3E]/15">
+                          {u.nome.substring(0, 2)}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-xs font-extrabold text-slate-800 uppercase truncate leading-none">{u.nome}</p>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-1">{u.cargo || 'Entregador'}</p>
+                      </div>
+                    </button>
+                  ))}
+                  {entregadorList.length === 0 && (
+                    <p className="text-xs text-slate-400 italic text-center py-4">Nenhum entregador cadastrado.</p>
+                  )}
+                </div>
+              </div>
+
+              <footer className="pt-3 flex gap-3 border-t border-slate-100">
+                <button 
+                  onClick={() => setModalAssignEntregadorOpen(false)}
+                  className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer"
+                  disabled={saving}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleConfirmAssignEntregador}
+                  className="flex-1 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-[#1B4D3E]/10 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                      Agendando...
+                    </>
+                  ) : (
+                    <>
+                      <Check size={13} className="stroke-[3]" />
+                      Salvar
+                    </>
+                  )}
+                </button>
+              </footer>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────────────
+          MODAL DE GERENCIAMENTO E INTELIGÊNCIA DE ROTAS
+          ─────────────────────────────────────────────────────────────────── */}
+      {modalManageRoutesOpen && (() => {
+        const entUser = usuarios.find(u => u.email === selectedRouteEntregador);
+        const entName = entUser?.nome || '';
+        
+        const entList = entregas.filter(e => 
+          (e.entregadorEmail === selectedRouteEntregador || (!e.entregadorEmail && e.entregadorResponsavel === entName)) &&
+          e.status === 'PROGRAMADO'
+        );
+        
+        const entSorted = [...entList].sort((a, b) => (a.ordemExecucao ?? 9999) - (b.ordemExecucao ?? 9999));
+        
+        return (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh] select-none">
+              <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none shrink-0">
+                <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                  <Navigation size={16} className="stroke-[2.5] text-[#1B4D3E]" />
+                  Sequenciador & Inteligência de Rotas
+                </h3>
+                <button 
+                  onClick={() => setModalManageRoutesOpen(false)} 
+                  className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                  disabled={routeSaving}
+                >
+                  <X size={18} />
+                </button>
+              </header>
+              
+              <div className="p-6 overflow-y-auto flex-1 space-y-4">
+                <div className="space-y-1 text-left">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Selecione o Entregador</label>
+                  <select
+                    value={selectedRouteEntregador}
+                    onChange={(e) => setSelectedRouteEntregador(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
+                    disabled={routeSaving}
+                  >
+                    <option value="">Selecione um Entregador...</option>
+                    {entregadorList.map(u => (
+                      <option key={u.id} value={u.email}>{u.nome}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {selectedRouteEntregador ? (
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fila de Entregas Programadas ({entSorted.length})</h4>
+                      {entSorted.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={handleOptimizeRoute}
+                          className="px-3 py-1.5 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-[9.5px] font-black uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+                          disabled={routeSaving}
+                        >
+                          {routeSaving ? (
+                            <>
+                              <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                              Otimizando...
+                            </>
+                          ) : (
+                            <>
+                              ⚡ Otimizar Rota (OSRM)
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="border border-slate-150 rounded-2xl overflow-hidden divide-y divide-slate-100 bg-slate-50/50">
+                      {entSorted.map((ent, idx) => (
+                        <div key={ent.id} className="p-3 bg-white flex items-center justify-between gap-3 hover:bg-slate-50/30 transition-colors">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="w-6 h-6 bg-slate-100 border border-slate-200 text-slate-600 rounded-full flex items-center justify-center font-black text-[10px]">
+                              {idx + 1}
+                            </span>
+                            <div className="min-w-0 text-left">
+                              <p className="text-xs font-extrabold text-slate-800 uppercase truncate leading-none">
+                                {ent.client.nomeFantasia}
+                              </p>
+                              <p className="text-[9.5px] text-slate-450 truncate mt-1 leading-none">
+                                NF: {ent.numeroNf} • {ent.client.endereco || 'Sem endereço'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleMoveRouteOrder(ent.id, 'up', entSorted)}
+                              className="p-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-500 hover:text-slate-800 disabled:opacity-40 cursor-pointer"
+                              disabled={idx === 0 || routeSaving}
+                            >
+                              <ChevronUp size={13} className="stroke-[3]" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMoveRouteOrder(ent.id, 'down', entSorted)}
+                              className="p-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-500 hover:text-slate-800 disabled:opacity-40 cursor-pointer"
+                              disabled={idx === entSorted.length - 1 || routeSaving}
+                            >
+                              <ChevronDown size={13} className="stroke-[3]" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
+                      {entSorted.length === 0 && (
+                        <p className="text-xs text-slate-400 italic text-center py-8 bg-white">
+                          Nenhuma entrega programada ativa para este entregador.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-16 text-center text-slate-450 border border-dashed border-slate-200 rounded-2xl bg-slate-50/20">
+                    Selecione um entregador para sequenciar seu itinerário de entregas.
+                  </div>
+                )}
+              </div>
+
+              <footer className="p-6 border-t border-slate-100 flex justify-end shrink-0">
+                <button 
+                  onClick={() => setModalManageRoutesOpen(false)}
+                  className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest rounded-xl transition-colors cursor-pointer"
+                  disabled={routeSaving}
+                >
+                  Concluir
+                </button>
+              </footer>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ───────────────────────────────────────────────────────────────────
+          MODAL DE RASTREAMENTO GPS EM TEMPO REAL
+          ─────────────────────────────────────────────────────────────────── */}
+      {modalTrackEntrega && (() => {
+        const ent = entregas.find(e => e.id === modalTrackEntrega.id) || modalTrackEntrega;
+        const lat = ent.latitudeAtual || ent.latitudePartida;
+        const lng = ent.longitudeAtual || ent.longitudePartida;
+        const hasPosition = lat && lng;
+        
+        return (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 select-none">
+              <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none">
+                <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                  <Car size={16} className="stroke-[2.5] text-cyan-600 animate-bounce" />
+                  Rastreamento da Entrega
+                </h3>
+                <button 
+                  onClick={() => setModalTrackEntrega(null)} 
+                  className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </header>
+              
+              <div className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4 bg-slate-50 rounded-2xl p-4 border border-slate-100 text-xs font-semibold text-slate-650">
+                  <div className="space-y-1 text-left">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider leading-none">Entregador</p>
+                    <p className="text-slate-800 font-extrabold uppercase truncate">{ent.entregadorResponsavel || 'Não Atribuído'}</p>
+                    <p className="text-[9.5px] text-slate-500 truncate">{ent.entregadorEmail}</p>
+                  </div>
+                  <div className="space-y-1 text-right">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider leading-none">Cliente / NF</p>
+                    <p className="text-slate-800 font-extrabold uppercase truncate" title={ent.client.nomeFantasia}>{ent.client.nomeFantasia}</p>
+                    <p className="text-[9.5px] text-slate-500 uppercase truncate">NF: {ent.numeroNf}</p>
+                  </div>
+                </div>
+
+                <div className="relative border border-slate-200 rounded-2xl overflow-hidden bg-slate-50">
+                  {hasPosition ? (
+                    <iframe 
+                      width="100%" 
+                      height="340" 
+                      style={{ border: 0 }}
+                      loading="lazy" 
+                      allowFullScreen 
+                      src={`https://maps.google.com/maps?q=${lat},${lng}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
+                    />
+                  ) : (
+                    <div className="h-[340px] flex flex-col items-center justify-center gap-3 text-slate-400 p-8 text-center">
+                      <MapPin size={32} className="stroke-[1.5] text-slate-300 animate-pulse" />
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-wider text-slate-700">Aguardando coordenadas...</p>
+                        <p className="text-[10px] text-slate-450 mt-1">O entregador está em rota mas o aparelho ainda não enviou o sinal de GPS.</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {hasPosition && (
+                    <div className="absolute bottom-3 left-3 bg-slate-900/85 text-white text-[8px] font-black tracking-widest uppercase px-2 py-1 rounded-md flex items-center gap-1.5 select-none backdrop-blur-xs">
+                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span>
+                      <span>Sinal GPS ativo</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 px-1 select-none">
+                  <div className="text-left">
+                    <span>Partida: </span>
+                    <span className="text-slate-700 font-extrabold">
+                      {ent.deslocamentoIniciadoEm ? new Date(ent.deslocamentoIniciadoEm).toLocaleTimeString('pt-BR') : '-'}
+                    </span>
+                  </div>
+                  {ent.ultimaAtualizacaoLocalizacao && (
+                    <div className="flex items-center gap-1 text-[#1B4D3E] font-extrabold">
+                      <span>Último Sinal: </span>
+                      <span>{new Date(ent.ultimaAtualizacaoLocalizacao).toLocaleTimeString('pt-BR')}</span>
+                    </div>
+                  )}
+                </div>
+                
+                <footer className="pt-2 flex gap-3 border-t border-slate-100 select-none">
+                  <button 
+                    onClick={() => setModalTrackEntrega(null)}
+                    className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer"
+                  >
+                    Fechar Painel
+                  </button>
+                  {hasPosition && (
+                    <a 
+                      href={`https://www.google.com/maps/dir/?api=1&origin=${ent.latitudePartida},${ent.longitudePartida}&destination=${encodeURIComponent(ent.client.endereco || '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 text-center shadow-xs"
+                    >
+                      <Car size={13} /> Ver no Maps
+                    </a>
+                  )}
+                </footer>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ───────────────────────────────────────────────────────────────────
+          MODAL CADASTRO RÁPIDO DE CLIENTE (Inline)
+          ─────────────────────────────────────────────────────────────────── */}
+      {modalQuickClienteOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh] select-none">
+            <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none shrink-0">
+              <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-1.5">
+                <Plus size={16} className="stroke-[2.5]" />
+                Cadastrar Cliente Rápido
+              </h3>
+              <button 
+                onClick={() => setModalQuickClienteOpen(false)} 
+                className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                disabled={saving}
+              >
+                <X size={18} />
+              </button>
+            </header>
+            
+            <form onSubmit={handleQuickCreateCliente} className="p-6 space-y-4 overflow-y-auto text-left flex-1">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Fantasia (Obrigatório)</label>
+                <input
+                  type="text"
+                  placeholder="Nome comercial do cliente"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 outline-none focus:border-[#1B4D3E] text-xs font-bold text-slate-800"
+                  value={quickClienteForm.nomeFantasia}
+                  onChange={(e) => setQuickClienteForm(prev => ({ ...prev, nomeFantasia: e.target.value }))}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Endereço Completo (Obrigatório)</label>
+                <input
+                  type="text"
+                  placeholder="Rua, Número, Bairro, Cidade - UF"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 outline-none focus:border-[#1B4D3E] text-xs font-bold text-slate-800"
+                  value={quickClienteForm.endereco}
+                  onChange={(e) => setQuickClienteForm(prev => ({ ...prev, endereco: e.target.value }))}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">WhatsApp</label>
+                  <input
+                    type="text"
+                    placeholder="(00) 00000-0000"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 outline-none focus:border-[#1B4D3E] text-xs font-bold text-slate-800"
+                    value={quickClienteForm.whatsapp}
+                    onChange={(e) => setQuickClienteForm(prev => ({ ...prev, whatsapp: e.target.value }))}
+                    disabled={saving}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">CNPJ</label>
+                  <input
+                    type="text"
+                    placeholder="00.000.000/0000-00"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 outline-none focus:border-[#1B4D3E] text-xs font-bold text-slate-800"
+                    value={quickClienteForm.cnpj}
+                    onChange={(e) => setQuickClienteForm(prev => ({ ...prev, cnpj: e.target.value }))}
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Razão Social</label>
+                  <input
+                    type="text"
+                    placeholder="Razão Social Ltda"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 outline-none focus:border-[#1B4D3E] text-xs font-bold text-slate-800"
+                    value={quickClienteForm.razaoSocial}
+                    onChange={(e) => setQuickClienteForm(prev => ({ ...prev, razaoSocial: e.target.value }))}
+                    disabled={saving}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Segmento</label>
+                  <input
+                    type="text"
+                    placeholder="Alimentício, TI, etc."
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 outline-none focus:border-[#1B4D3E] text-xs font-bold text-slate-800"
+                    value={quickClienteForm.segmento}
+                    onChange={(e) => setQuickClienteForm(prev => ({ ...prev, segmento: e.target.value }))}
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+
+              <footer className="pt-3 flex gap-3 border-t border-slate-100 shrink-0">
+                <button 
+                  type="button"
+                  onClick={() => setModalQuickClienteOpen(false)}
+                  className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer text-center"
+                  disabled={saving}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 py-3 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-[#1B4D3E]/10 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                      Cadastrando...
+                    </>
+                  ) : (
+                    <>
+                      <Check size={13} className="stroke-[3]" />
+                      Salvar Cliente
+                    </>
+                  )}
+                </button>
+              </footer>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE ALERTA PREMIUM */}
+      {customAlert.open && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[300] flex items-center justify-center p-4 select-none">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-8 text-center space-y-6">
+              <div className="mx-auto w-16 h-16 rounded-xl flex items-center justify-center border shadow-lg shadow-slate-100 animate-bounce">
+                {customAlert.type === 'error' && <Shield className="text-red-500" size={32} />}
+                {customAlert.type === 'warning' && <Shield className="text-amber-500" size={32} />}
+                {customAlert.type === 'success' && <UserCheck className="text-emerald-500" size={32} />}
+                {customAlert.type === 'info' && <Users className="text-blue-500" size={32} />}
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{customAlert.title}</h3>
+                <p className="text-sm text-slate-500 font-bold leading-relaxed whitespace-pre-line">{customAlert.message}</p>
+              </div>
+              <button 
+                onClick={() => setCustomAlert(prev => ({ ...prev, open: false }))}
+                className="w-full py-4 bg-[#1B4D3E] hover:bg-[#13382D] text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-[#1B4D3E]/10 cursor-pointer"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMAÇÃO PREMIUM */}
+      {customConfirm.open && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[300] flex items-center justify-center p-4 select-none">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-8 text-center space-y-6">
+              <div className="mx-auto w-16 h-16 rounded-xl flex items-center justify-center border border-amber-250 bg-amber-50 shadow-lg shadow-amber-100 animate-pulse text-amber-600">
+                <ShieldAlert size={32} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{customConfirm.title}</h3>
+                <p className="text-sm text-slate-500 font-bold leading-relaxed">{customConfirm.message}</p>
+              </div>
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setCustomConfirm(prev => ({ ...prev, open: false }))}
+                  className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-500 text-xs font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer"
+                  disabled={saving}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={() => {
+                    setCustomConfirm(prev => ({ ...prev, open: false }));
+                    customConfirm.onConfirm();
+                  }}
+                  className="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-red-600/10 cursor-pointer"
+                  disabled={saving}
+                >
+                  Confirmar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

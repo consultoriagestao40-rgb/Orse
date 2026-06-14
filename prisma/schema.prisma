@@ -62,6 +62,7 @@ model Tenant {
   contratosComodato         ContratoComodato[]
   ordensServicoAtivo        OrdemServicoAtivo[]
   empresasEmissoras         EmpresaEmissora[]
+  entregas                  Entrega[]
 }
 
 model EmpresaEmissora {
@@ -144,6 +145,7 @@ model Client {
   documentosProposta DocumentoProposta[] @relation("ClientToDocumento")
   contratosComodato   ContratoComodato[]
   ordensServicoAtivo  OrdemServicoAtivo[]
+  entregas            Entrega[]
   tenantId     String?
   tenant       Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
@@ -1204,4 +1206,47 @@ model OrdemServicoAtivo {
   tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
+}
+
+model Entrega {
+  id                            String            @id @default(cuid())
+  codigo                        Int               @unique @default(autoincrement())
+  numeroNf                      String
+  valor                         Float
+  status                        String            @default("BACKLOG") // BACKLOG, PROGRAMADO, EM_DESLOCAMENTO, ENTREGA, VALIDACAO, ENTREGUE, CANCELADA
+  clientId                      String
+  client                        Client            @relation(fields: [clientId], references: [id])
+  observacao                    String?           @db.Text
+  entregadorResponsavel         String?
+  entregadorEmail               String?
+  dataProgramada                DateTime?
+  dataExecucao                  DateTime?
+  dataEmissao                   DateTime          @default(now())
+  deslocamentoIniciadoEm        DateTime?
+  entregaIniciadaEm             DateTime?
+  latitudePartida               Float?
+  longitudePartida              Float?
+  latitudeChegada               Float?
+  longitudeChegada              Float?
+  observacaoEntrega             String?           @db.Text
+  fotosEntrega                  String?           @db.Text
+  assinaturaRecebedor           String?           @db.Text
+  assinaturaEntregador          String?           @db.Text
+  nomeRecebedor                 String?
+  documentoRecebedor            String?
+  historico                     String?           @db.Text
+  latitudeAtual                 Float?
+  longitudeAtual                Float?
+  ultimaAtualizacaoLocalizacao  DateTime?
+  tempoEstimadoRota             Float?
+  distanciaEstimadaRota         Float?
+  tempoRealizadoRota            Float?
+  distanciaRealizadaRota        Float?
+  desvioRota                    Boolean?          @default(false)
+  caminhoGps                    String?           @db.Text
+  ordemExecucao                 Int?              @default(0)
+  tenantId                      String?
+  tenant                        Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt                     DateTime          @default(now())
+  updatedAt                     DateTime          @updatedAt
 }

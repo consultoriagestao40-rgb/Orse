@@ -2,7 +2,7 @@
  
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone, MessageCircle, MessageSquare, UserCog, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes } from 'lucide-react';
+import { Home, Settings, Users, BarChart2, Briefcase, PlusCircle, ShoppingCart, ShieldCheck, ChevronLeft, ChevronRight, FileText, Presentation, Target, Search, Calendar, Mail, Bell, Clock, Wrench, Lock, KeyRound, CheckCircle2, X, Smartphone, MessageCircle, MessageSquare, UserCog, Send, Menu, ClipboardList, CheckSquare, ClipboardCheck, Boxes, Truck } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions';
 import { checkCurrentTenantActive, getTenantTrialStatus, updateTenantContactAction } from '@/app/admin/empresas/actions';
@@ -30,8 +30,19 @@ const Sidebar = () => {
       
       if (!isDesktopMode) {
         const isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (isMobile && !pathname.startsWith('/ativos/tecnico')) {
-          router.push('/ativos/tecnico');
+        if (isMobile && !pathname.startsWith('/ativos/tecnico') && !pathname.startsWith('/entrega/entregador')) {
+          let targetPath = '/ativos/tecnico';
+          try {
+            const cookie = document.cookie.split('; ').find(row => row.startsWith('sb_user='));
+            if (cookie) {
+              const parsed = JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+              const cargo = (parsed.cargo || '').toLowerCase();
+              if (cargo.includes('entregador') || cargo.includes('entrega') || cargo.includes('motoboy') || cargo.includes('motorista')) {
+                targetPath = '/entrega/entregador';
+              }
+            }
+          } catch (e) {}
+          router.push(targetPath);
         }
       }
     }
@@ -983,6 +994,8 @@ const Sidebar = () => {
     { icon: Users, label: 'Clientes', href: '/clientes', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Boxes, label: 'Gestão de Ativos', href: '/ativos', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: Wrench, label: 'Área do Técnico', href: '/ativos/tecnico', roles: ['ADMIN', 'MANAGER', 'USER'] },
+    { icon: Truck, label: 'Gestão de Entregas', href: '/entrega', roles: ['ADMIN', 'MANAGER', 'USER'] },
+    { icon: Smartphone, label: 'Área do Entregador', href: '/entrega/entregador', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: ShieldCheck, label: 'Usuários e Permissões', href: '/admin/usuarios', roles: ['ADMIN'] },
     { icon: ShoppingCart, label: 'Produtos e Insumos', href: '/produtos', roles: ['ADMIN', 'MANAGER', 'USER'] },
     { icon: ShieldCheck, label: 'EPIs e Uniformes', href: '/epis', roles: ['ADMIN', 'MANAGER', 'USER'] },
@@ -1017,7 +1030,7 @@ const Sidebar = () => {
           if (item.href === '/admin/empresas' || item.roles.includes('SUPER_ADMIN')) {
             return false;
           }
-          if (item.href === '/ativos/tecnico' && !isMobile) {
+          if ((item.href === '/ativos/tecnico' || item.href === '/entrega/entregador') && !isMobile) {
             return false;
           }
           return item.roles.includes(user?.role || 'USER');
@@ -1051,7 +1064,7 @@ const Sidebar = () => {
             if (item.href === '/admin/empresas' || item.roles.includes('SUPER_ADMIN')) {
               return false;
             }
-            if (item.href === '/ativos/tecnico' && !isMobile) {
+            if ((item.href === '/ativos/tecnico' || item.href === '/entrega/entregador') && !isMobile) {
               return false;
             }
             return item.roles.includes(user?.role || 'USER');
