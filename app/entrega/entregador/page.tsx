@@ -5,7 +5,7 @@ import {
   Truck, ArrowLeft, Play, CheckCircle, Camera, Trash2, Lock,
   RotateCcw, Save, X, ClipboardList, MapPin, User, FileText,
   Calendar, Check, LogOut, Loader2, Car, Navigation, Volume2,
-  Building, Target, PlusCircle, MessageSquare, ShieldAlert
+  Building, Target, PlusCircle, MessageSquare, ShieldAlert, Wrench
 } from 'lucide-react';
 import { 
   getEntregadorEntregas, updateEntrega 
