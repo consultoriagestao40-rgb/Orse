@@ -2257,15 +2257,15 @@ export default function AtivosPage() {
             ─────────────────────────────────────────────────────────────────── */}
         {modalOsOpen && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 animate-fade-in text-left">
-              <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 animate-fade-in text-left flex flex-col max-h-[90vh]">
+              <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none shrink-0">
                 <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
                   <Wrench size={16} className="stroke-[2.5]" />
                   {osForm.id ? 'Editar Ordem de Serviço (OS)' : 'Abrir Ordem de Serviço (OS)'}
                 </h3>
                 <button onClick={() => setModalOsOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"><X size={18} /></button>
               </header>
-              <div className="p-6 space-y-4">
+              <div className="p-6 pb-2 space-y-4 overflow-y-auto flex-1 min-h-0">
                 {osForm.id && (
                   <div className="flex border-b border-slate-150 mb-4 select-none">
                     <button
@@ -2534,38 +2534,38 @@ export default function AtivosPage() {
                     </div>
                   );
                 })()}
-
-                 <footer className="pt-4 flex gap-3 border-t border-slate-100">
-                  {osForm.id && activeOsTab === 'details' && (() => {
-                    const currentOs = ordens.find(o => o.id === osForm.id);
-                    return currentOs ? (
-                      <button 
-                        type="button"
-                        onClick={() => { setSelectedOsForPdf(currentOs); setModalOsPdfOpen(true); }}
-                        className="py-3 px-4 text-xs font-black text-slate-550 hover:bg-emerald-50 hover:text-[#1B4D3E] border border-slate-200 hover:border-emerald-250 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
-                        title="Ver OS (PDF)"
-                      >
-                        <Printer size={14} className="stroke-[2.5]" /> PDF
-                      </button>
-                    ) : null;
-                  })()}
-                  <button 
-                    type="button"
-                    onClick={() => setModalOsOpen(false)}
-                    className="flex-1 py-3 text-xs font-black text-slate-500 uppercase hover:bg-slate-50 rounded-xl transition-all cursor-pointer"
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={handleSaveOs}
-                    disabled={saving}
-                    className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
-                  >
-                    <Save size={14} /> {saving ? 'Salvando...' : (osForm.id ? 'Salvar Alterações' : 'Gravar Ordem de Serviço')}
-                  </button>
-                </footer>
               </div>
+
+              <footer className="p-6 pt-4 flex gap-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
+                {osForm.id && activeOsTab === 'details' && (() => {
+                  const currentOs = ordens.find(o => o.id === osForm.id);
+                  return currentOs ? (
+                    <button 
+                      type="button"
+                      onClick={() => { setSelectedOsForPdf(currentOs); setModalOsPdfOpen(true); }}
+                      className="py-3 px-4 text-xs font-black text-slate-550 hover:bg-emerald-50 hover:text-[#1B4D3E] border border-slate-200 hover:border-emerald-250 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+                      title="Ver OS (PDF)"
+                    >
+                      <Printer size={14} className="stroke-[2.5]" /> PDF
+                    </button>
+                  ) : null;
+                })()}
+                <button 
+                  type="button"
+                  onClick={() => setModalOsOpen(false)}
+                  className="flex-1 py-3 text-xs font-black text-slate-500 uppercase hover:bg-slate-50 rounded-xl transition-all cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="button"
+                  onClick={handleSaveOs}
+                  disabled={saving}
+                  className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+                >
+                  <Save size={14} /> {saving ? 'Salvando...' : (osForm.id ? 'Salvar Alterações' : 'Gravar Ordem de Serviço')}
+                </button>
+              </footer>
             </div>
           </div>
         )}
