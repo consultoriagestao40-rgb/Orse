@@ -50,6 +50,7 @@ export default function GestaoEntregasPage() {
   const [entregaToAssign, setEntregaToAssign] = useState<any>(null);
   const [selectedEntregadorForAssign, setSelectedEntregadorForAssign] = useState('');
   const [targetStatusForAssign, setTargetStatusForAssign] = useState<string>('PROGRAMADO');
+  const [dataProgramadaForAssign, setDataProgramadaForAssign] = useState('');
   const [selectedRouteEntregador, setSelectedRouteEntregador] = useState('');
   const [routeSaving, setRouteSaving] = useState(false);
 
@@ -315,6 +316,13 @@ export default function GestaoEntregasPage() {
         setEntregaToAssign(ent);
         setSelectedEntregadorForAssign('');
         setTargetStatusForAssign(newStatus);
+        
+        // Define data programada para a atribuição (timezone local para input datetime-local)
+        const now = new Date();
+        const tzOffset = now.getTimezoneOffset() * 60000;
+        const localISOTime = (new Date(now.getTime() - tzOffset)).toISOString().slice(0, 16);
+        setDataProgramadaForAssign(ent.dataProgramada ? new Date(ent.dataProgramada).toISOString().slice(0, 16) : localISOTime);
+        
         setModalAssignEntregadorOpen(true);
         return;
       }
@@ -382,7 +390,7 @@ export default function GestaoEntregasPage() {
         status: targetStatusForAssign,
         entregadorEmail: entregador.email,
         entregadorResponsavel: entregador.nome,
-        dataProgramada: new Date().toISOString()
+        dataProgramada: dataProgramadaForAssign ? new Date(dataProgramadaForAssign).toISOString() : new Date().toISOString()
       };
 
       const res = await updateEntrega(entregaToAssign.id, payload);
@@ -396,7 +404,7 @@ export default function GestaoEntregasPage() {
             status: targetStatusForAssign,
             entregadorEmail: entregador.email,
             entregadorResponsavel: entregador.nome,
-            dataProgramada: new Date().toISOString().substring(0, 16)
+            dataProgramada: dataProgramadaForAssign ? dataProgramadaForAssign : new Date().toISOString().substring(0, 16)
           }));
         }
       } else {
@@ -501,6 +509,13 @@ export default function GestaoEntregasPage() {
     setEntregaToAssign(ent);
     setSelectedEntregadorForAssign(ent.entregadorEmail || '');
     setTargetStatusForAssign(ent.status);
+    
+    // Define data programada para a atribuição
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    const localISOTime = (new Date(now.getTime() - tzOffset)).toISOString().slice(0, 16);
+    setDataProgramadaForAssign(ent.dataProgramada ? new Date(ent.dataProgramada).toISOString().slice(0, 16) : localISOTime);
+    
     setModalAssignEntregadorOpen(true);
   };
 
@@ -604,12 +619,8 @@ export default function GestaoEntregasPage() {
     return matchSearch && matchCliente && matchStatus;
   });
 
-  // Entregadores list
-  const entregadorList = usuarios.filter(u => {
-    const isCargo = (u.cargo || '').toLowerCase();
-    const hasAssigned = entregas.some(e => e.entregadorEmail === u.email);
-    return isCargo.includes('entregador') || isCargo.includes('entrega') || isCargo.includes('motoboy') || isCargo.includes('motorista') || hasAssigned;
-  });
+  // Entregadores list (todos os usuários têm acesso a entregas)
+  const entregadorList = usuarios;
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
@@ -1600,6 +1611,16 @@ export default function GestaoEntregasPage() {
                     <p className="text-xs text-slate-400 italic text-center py-4">Nenhum entregador cadastrado.</p>
                   )}
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Data Programada da Entrega</label>
+                <input
+                  type="datetime-local"
+                  value={dataProgramadaForAssign}
+                  onChange={(e) => setDataProgramadaForAssign(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] cursor-pointer"
+                />
               </div>
 
               <footer className="pt-3 flex gap-3 border-t border-slate-100">
