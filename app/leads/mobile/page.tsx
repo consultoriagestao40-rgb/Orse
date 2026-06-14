@@ -710,21 +710,50 @@ export default function MobileCRM() {
             </button>
           </div>
         )}
-        <div className="flex justify-between items-center mb-3">
+        <div className="flex justify-between items-center mb-3.5 w-full">
+          <div className="flex items-center gap-3 min-w-0">
+            {currentUser?.avatarUrl ? (
+              <img 
+                src={currentUser.avatarUrl} 
+                alt={currentUser.nome} 
+                className="w-10 h-10 rounded-full object-cover border border-white/20 shadow-xs shrink-0"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-white/10 text-white border border-white/20 flex items-center justify-center font-black text-sm shrink-0">
+                {currentUser?.nome ? currentUser.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() : 'V'}
+              </div>
+            )}
+            <div className="min-w-0 text-left">
+              <span className="text-xs font-black uppercase block text-white leading-tight truncate">{currentUser?.nome || 'Carregando...'}</span>
+              <span className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest block leading-none mt-0.5">{currentUser?.cargo || 'Vendedor'}</span>
+            </div>
+          </div>
+
+          <a 
+            href="/api/auth/logout"
+            className="p-2 bg-white/10 hover:bg-white/20 active:scale-95 transition-all rounded-xl cursor-pointer flex items-center justify-center text-white"
+            title="Sair da Conta (Logout)"
+          >
+            <LogOut size={16} />
+          </a>
+        </div>
+
+        {/* Pipeline Selector Line */}
+        <div className="flex items-center justify-between gap-3 mt-3.5">
           <div className="flex items-center gap-2">
             <button 
               onClick={() => router.push('/leads')}
-              className="p-1 text-slate-400 hover:text-white rounded-lg active:scale-95 bg-transparent border-none"
+              className="p-1.5 bg-slate-800/40 border border-slate-800/60 text-slate-450 hover:text-white rounded-xl active:scale-95 cursor-pointer flex items-center justify-center"
             >
-              <ArrowLeft size={18} />
+              <ArrowLeft size={16} />
             </button>
             <div className="relative">
               <button 
                 onClick={() => setIsPipelineDropdownOpen(!isPipelineDropdownOpen)}
-                className="flex items-center gap-1.5 text-sm font-black tracking-tight uppercase text-white hover:text-emerald-450 bg-transparent border-none p-0 cursor-pointer text-left"
+                className="flex items-center gap-1.5 text-xs font-black tracking-tight uppercase text-white hover:text-emerald-450 bg-slate-800/40 border border-slate-800/60 px-3.5 py-2 rounded-xl cursor-pointer text-left"
               >
                 <span>{pipelines.find(p => p.id === activePipelineId)?.nome || 'SmartBid'}</span>
-                <ChevronDown size={14} className="text-slate-400" />
+                <ChevronDown size={12} className="text-slate-450" />
               </button>
 
               {isPipelineDropdownOpen && (
@@ -745,6 +774,7 @@ export default function MobileCRM() {
                             setActivePipelineId(p.id);
                             localStorage.setItem('orse_active_pipeline_id', p.id);
                             setIsPipelineDropdownOpen(false);
+                            loadCRMData(p.id);
                           }}
                           className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors ${
                             p.id === activePipelineId
@@ -761,59 +791,11 @@ export default function MobileCRM() {
               )}
             </div>
           </div>
-          
-          <div className="flex items-center gap-2 relative">
-            <div 
-              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-              className="flex items-center gap-1.5 bg-slate-800/40 pl-2 pr-1.5 py-1 rounded-xl border border-slate-800/60 max-w-[100px] sm:max-w-none cursor-pointer active:scale-95 transition-all select-none"
-            >
-              <span className="text-[10px] font-black text-slate-300 truncate max-w-[50px] sm:max-w-none">{currentUser?.nome.split(' ')[0]}</span>
-              {currentUser?.avatarUrl ? (
-                <img 
-                  src={currentUser.avatarUrl} 
-                  alt={currentUser.nome} 
-                  className="w-7 h-7 rounded-full border border-slate-700 object-cover"
-                />
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-slate-700 text-white flex items-center justify-center text-[9px] font-black uppercase font-mono font-bold">
-                  {currentUser?.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
-                </div>
-              )}
-            </div>
-
-            {isProfileMenuOpen && (
-              <>
-                <div 
-                  className="fixed inset-0 z-45 bg-transparent" 
-                  onClick={() => setIsProfileMenuOpen(false)}
-                />
-                <div className="absolute right-0 top-full mt-2 w-28 bg-slate-950 border border-slate-800 rounded-xl shadow-xl p-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150 select-none">
-                  <button
-                    onClick={async () => {
-                      setIsProfileMenuOpen(false);
-                      if (confirm("Deseja realmente sair do SmartBid?")) {
-                        try {
-                          await fetch('/api/auth/logout', { method: 'POST' });
-                          window.location.href = '/login';
-                        } catch (err) {
-                          console.error(err);
-                        }
-                      }
-                    }}
-                    className="w-full flex items-center justify-between px-2.5 py-2 text-rose-455 hover:text-white hover:bg-rose-500/10 rounded-lg text-[10px] font-black uppercase tracking-wider border-none bg-transparent cursor-pointer transition-colors active:scale-95"
-                  >
-                    <span>Sair</span>
-                    <LogOut size={12} className="stroke-[2.5]" />
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
         </div>
 
         {/* Dynamic Search Bar (Only shown on CRM tab) */}
         {activeTab === 'crm' && (
-          <div className="relative mt-2">
+          <div className="relative mt-2.5">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
             <input
               type="text"

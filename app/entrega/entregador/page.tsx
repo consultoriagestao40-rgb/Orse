@@ -696,14 +696,24 @@ export default function EntregadorPage() {
         )}
         <div className="flex justify-between items-center w-full">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 bg-slate-800 rounded-xl flex items-center justify-center text-[#10B981] border border-white/5 shrink-0">
-              <Truck size={18} className="stroke-[2.5]" />
-            </div>
+            {currentUser?.avatarUrl ? (
+              <img 
+                src={currentUser.avatarUrl} 
+                alt={currentUser.nome} 
+                className="w-10 h-10 rounded-full object-cover border border-white/20 shadow-xs shrink-0"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-white/10 text-white border border-white/20 flex items-center justify-center font-black text-sm shrink-0">
+                {currentUser?.nome ? currentUser.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() : 'E'}
+              </div>
+            )}
             <div className="min-w-0 text-left">
-              <h1 className="text-sm font-black tracking-wide truncate">
+              <h1 className="text-xs font-black uppercase block text-white leading-tight truncate">
                 {currentUser?.nome || 'Entregador'}
               </h1>
-              <p className="text-[9px] text-[#10B981] font-bold uppercase tracking-widest mt-0.5 leading-none">Área do Entregador</p>
+              <p className="text-[9px] text-[#10B981] font-bold uppercase tracking-widest mt-0.5 leading-none">
+                {currentUser?.cargo || 'Entregador'}
+              </p>
             </div>
           </div>
 
