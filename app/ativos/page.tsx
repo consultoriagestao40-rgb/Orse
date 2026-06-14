@@ -51,6 +51,7 @@ export default function AtivosPage() {
   const [modalAtivoOpen, setModalAtivoOpen] = useState(false);
   const [modalCategoriaOpen, setModalCategoriaOpen] = useState(false);
   const [modalTemplateOpen, setModalTemplateOpen] = useState(false);
+  const [modalListTemplatesOpen, setModalListTemplatesOpen] = useState(false);
   const [modalContratoOpen, setModalContratoOpen] = useState(false);
   const [modalOsOpen, setModalOsOpen] = useState(false);
   
@@ -830,21 +831,21 @@ export default function AtivosPage() {
                 </button>
               </div>
             )}
-            {activeTab === 'templates' && (
-              <button 
-                onClick={() => openTemplateModal()}
-                className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer shrink-0"
-              >
-                <Plus size={16} /> Novo Template
-              </button>
-            )}
             {activeTab === 'contratos' && (
-              <button 
-                onClick={() => openContratoModal()}
-                className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer shrink-0"
-              >
-                <Plus size={16} /> Novo Contrato de Comodato
-              </button>
+              <div className="flex gap-2 shrink-0">
+                <button 
+                  onClick={() => setModalListTemplatesOpen(true)}
+                  className="border border-[#1B4D3E] text-[#1B4D3E] hover:bg-emerald-50/50 font-black py-2.5 px-5 rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <FileText size={14} className="stroke-[2.5]" /> Minutas Padrão
+                </button>
+                <button 
+                  onClick={() => openContratoModal()}
+                  className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                >
+                  <Plus size={16} /> Novo Contrato de Comodato
+                </button>
+              </div>
             )}
             {activeTab === 'ordens' && (
               <button 
@@ -858,12 +859,12 @@ export default function AtivosPage() {
 
           {/* NAVEGAÇÃO DE SUB-ABAS */}
           <nav className="flex gap-6 border-b border-slate-200">
-            {(['ativos', 'templates', 'contratos', 'ordens'] as ActiveTab[]).map(tab => {
+            {(['ativos', 'contratos', 'ordens'] as ActiveTab[]).map(tab => {
               const labels = {
                 ativos: '1. Parque de Ativos',
-                templates: '2. Minutas Padrão',
-                contratos: '3. Contratos de Comodato',
-                ordens: '4. Ordens de Serviço (OS)'
+                templates: '',
+                contratos: '2. Contratos de Comodato',
+                ordens: '3. Ordens de Serviço (OS)'
               };
               const icons = {
                 ativos: Boxes,
@@ -1061,7 +1062,6 @@ export default function AtivosPage() {
               <span className="text-[9px] font-extrabold text-slate-400 uppercase leading-none block">Total Carregado</span>
               <span className="text-sm font-black text-[#1B4D3E] bg-[#1B4D3E]/8 border border-[#1B4D3E]/15 rounded-lg px-2.5 py-1">
                 {activeTab === 'ativos' && filteredAtivos.length}
-                {activeTab === 'templates' && templates.length}
                 {activeTab === 'contratos' && filteredContratos.length}
                 {activeTab === 'ordens' && filteredOrdens.length}
               </span>
@@ -1145,47 +1145,6 @@ export default function AtivosPage() {
             </div>
           )}
 
-          {/* ───────────────────────────────────────────────────────────────────
-              ABA 2: MINUTAS PADRÕES (TEMPLATES)
-              ─────────────────────────────────────────────────────────────────── */}
-          {activeTab === 'templates' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {loading && templates.length === 0 ? (
-                <div className="col-span-full py-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Carregando minutas padrão...</div>
-              ) : templates.length === 0 ? (
-                <div className="col-span-full bg-white border border-slate-200 rounded-2xl p-20 text-center text-slate-400 italic">Nenhum template de comodato cadastrado. Crie um para preencher os contratos com facilidade.</div>
-              ) : (
-                templates.map(tpl => (
-                  <div key={tpl.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
-                    <div>
-                      <div className="flex justify-between items-start">
-                        <div className="w-10 h-10 bg-[#1B4D3E]/10 border border-[#1B4D3E]/20 text-[#1B4D3E] rounded-xl flex items-center justify-center shrink-0">
-                          <FileText size={20} className="stroke-[2.5]" />
-                        </div>
-                        <div className="flex gap-1">
-                          <button onClick={() => openTemplateModal(tpl)} className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg" title="Editar"><Edit2 size={13} /></button>
-                          <button onClick={() => handleDeleteTemplate(tpl.id)} className="p-1.5 text-slate-450 hover:text-red-500 hover:bg-red-50 rounded-lg" title="Excluir"><Trash2 size={13} /></button>
-                        </div>
-                      </div>
-                      <div className="mt-4">
-                        <h4 className="text-xs font-black text-slate-800 uppercase tracking-wide">{tpl.nome}</h4>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">{tpl.clausulas.length} Cláusulas Estruturadas</p>
-                      </div>
-                      <div className="mt-4 bg-slate-50 border border-slate-100 rounded-xl p-3 text-[10.5px] text-slate-500 italic max-h-[140px] overflow-hidden leading-relaxed">
-                        {(tpl.clausulas[0]?.texto || '').substring(0, 180)}...
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => openTemplateModal(tpl)}
-                      className="mt-5 w-full py-2 bg-slate-50 border border-slate-200/80 hover:bg-slate-100/60 text-slate-600 text-[10px] font-black uppercase tracking-wider rounded-xl transition-colors cursor-pointer"
-                    >
-                      Editar Cláusulas
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
 
           {/* ───────────────────────────────────────────────────────────────────
               ABA 3: GESTÃO DE CONTRATOS DE COMODATO
@@ -2727,6 +2686,79 @@ export default function AtivosPage() {
                   />
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ───────────────────────────────────────────────────────────────────
+            MODAL LISTAGEM DE TEMPLATE MINUTA (MINUTAS PADRÃO)
+            ─────────────────────────────────────────────────────────────────── */}
+        {modalListTemplatesOpen && (
+          <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4 backdrop-blur-xs">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden border border-slate-100 animate-fade-in text-left">
+              <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none shrink-0">
+                <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                  <FileText size={16} className="stroke-[2.5]" />
+                  Modelos de Minutas Padrão
+                </h3>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => openTemplateModal()}
+                    className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2 px-4 rounded-xl text-[10px] uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                  >
+                    <Plus size={12} /> Nova Minuta Padrão
+                  </button>
+                  <button onClick={() => setModalListTemplatesOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"><X size={18} /></button>
+                </div>
+              </header>
+              <div className="p-6 flex-1 overflow-y-auto bg-slate-50/50">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {loading && templates.length === 0 ? (
+                    <div className="col-span-full py-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Carregando minutas padrão...</div>
+                  ) : templates.length === 0 ? (
+                    <div className="col-span-full bg-white border border-slate-200 rounded-2xl p-20 text-center text-slate-400 italic">
+                      Nenhum template de comodato cadastrado. Crie um para preencher os contratos com facilidade.
+                    </div>
+                  ) : (
+                    templates.map(tpl => (
+                      <div key={tpl.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div>
+                          <div className="flex justify-between items-start">
+                            <div className="w-10 h-10 bg-[#1B4D3E]/10 border border-[#1B4D3E]/20 text-[#1B4D3E] rounded-xl flex items-center justify-center shrink-0">
+                              <FileText size={20} className="stroke-[2.5]" />
+                            </div>
+                            <div className="flex gap-1">
+                              <button onClick={() => openTemplateModal(tpl)} className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg" title="Editar"><Edit2 size={13} /></button>
+                              <button onClick={() => handleDeleteTemplate(tpl.id)} className="p-1.5 text-slate-450 hover:text-red-500 hover:bg-red-50 rounded-lg" title="Excluir"><Trash2 size={13} /></button>
+                            </div>
+                          </div>
+                          <div className="mt-4">
+                            <h4 className="text-xs font-black text-slate-800 uppercase tracking-wide">{tpl.nome}</h4>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">{tpl.clausulas.length} Cláusulas Estruturadas</p>
+                          </div>
+                          <div className="mt-4 bg-slate-50 border border-slate-100 rounded-xl p-3 text-[10.5px] text-slate-500 italic max-h-[140px] overflow-hidden leading-relaxed">
+                            {(tpl.clausulas[0]?.texto || '').substring(0, 180)}...
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => openTemplateModal(tpl)}
+                          className="mt-5 w-full py-2 bg-slate-50 border border-slate-200/80 hover:bg-slate-100/60 text-slate-600 text-[10px] font-black uppercase tracking-wider rounded-xl transition-colors cursor-pointer"
+                        >
+                          Editar Cláusulas
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+              <footer className="bg-slate-50 border-t border-slate-150 px-6 py-4 flex justify-end items-center select-none shrink-0">
+                <button 
+                  onClick={() => setModalListTemplatesOpen(false)}
+                  className="py-2.5 px-6 border border-slate-250 hover:bg-slate-100 text-slate-600 text-xs font-black uppercase tracking-wider rounded-xl transition-colors cursor-pointer"
+                >
+                  Fechar
+                </button>
+              </footer>
             </div>
           </div>
         )}
