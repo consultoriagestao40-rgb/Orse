@@ -7,7 +7,7 @@ import {
   Truck, ClipboardList, Calendar, Printer, 
   LayoutGrid, Kanban, Users, ShieldCheck, Check, 
   User, FileImage, ChevronRight, ChevronUp, ChevronDown, CheckCircle,
-  DollarSign, Navigation, MapPin, History, Shield, UserCheck, Car, ShieldAlert, XCircle
+  DollarSign, Navigation, MapPin, History, Shield, UserCheck, Car, ShieldAlert, XCircle, BarChart3
 } from 'lucide-react';
 
 import { 
@@ -920,29 +920,35 @@ export default function GestaoEntregasPage() {
           </div>
         </header>
 
-        {/* Seleção de Abas Principais */}
-        <div className="bg-white border-b border-slate-200 px-8 flex items-center gap-6 select-none shrink-0">
-          <button
-            onClick={() => setActiveTab('gestao')}
-            className={`pb-3.5 pt-3 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all cursor-pointer ${
-              activeTab === 'gestao' 
-                ? 'border-[#1B4D3E] text-[#1B4D3E]' 
-                : 'border-transparent text-slate-400 hover:text-slate-650'
-            }`}
-          >
-            Gestão Operacional
-          </button>
-          <button
-            onClick={() => setActiveTab('kpis')}
-            className={`pb-3.5 pt-3 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all cursor-pointer ${
-              activeTab === 'kpis' 
-                ? 'border-[#1B4D3E] text-[#1B4D3E]' 
-                : 'border-transparent text-slate-400 hover:text-slate-650'
-            }`}
-          >
-            Métricas & KPIs de Performance
-          </button>
-        </div>
+        {/* NAVEGAÇÃO DE SUB-ABAS (Igual ao módulo de Ativos) */}
+        <nav className="flex gap-6 border-b border-slate-200 bg-white px-8 shrink-0 select-none">
+          {(['gestao', 'kpis'] as const).map(tab => {
+            const labels = {
+              gestao: '1. Gestão de Entregas',
+              kpis: '2. KPIs & Métricas'
+            };
+            const icons = {
+              gestao: Truck,
+              kpis: BarChart3
+            };
+            const Icon = icons[tab];
+            const isActive = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => { setActiveTab(tab); setSearchTerm(''); }}
+                className={`py-3.5 border-b-2 font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all duration-200 cursor-pointer ${
+                  isActive 
+                    ? 'border-[#1B4D3E] text-[#1B4D3E]' 
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Icon size={14} className={isActive ? 'text-[#1B4D3E]' : 'text-slate-400'} />
+                {labels[tab]}
+              </button>
+            );
+          })}
+        </nav>
 
         {activeTab === 'gestao' && (
           <>
