@@ -27,10 +27,15 @@ export default function TecnicoPage() {
   const [nomeAssinante, setNomeAssinante] = useState('');
   const [cpfAssinante, setCpfAssinante] = useState('');
 
-  // Canvas Drawing Ref
+  // Canvas Drawing Ref (Cliente)
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawingRef = useRef(false);
   const [hasDrawn, setHasDrawn] = useState(false);
+
+  // Canvas Drawing Ref (Técnico)
+  const canvasTecnicoRef = useRef<HTMLCanvasElement | null>(null);
+  const isDrawingTecnicoRef = useRef(false);
+  const [hasDrawnTecnico, setHasDrawnTecnico] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -41,22 +46,33 @@ export default function TecnicoPage() {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const canvasTecnico = canvasTecnicoRef.current;
 
     const preventDefaultTouch = (e: TouchEvent) => {
-      // Prevent scrolling/bouncing only when dragging inside the canvas
-      if (e.target === canvas) {
+      // Prevent scrolling/bouncing only when dragging inside either canvas
+      if (e.target === canvas || e.target === canvasTecnico) {
         e.preventDefault();
       }
     };
 
-    // Use native event listeners with passive: false to successfully call preventDefault() on mobile
-    canvas.addEventListener('touchstart', preventDefaultTouch, { passive: false });
-    canvas.addEventListener('touchmove', preventDefaultTouch, { passive: false });
+    if (canvas) {
+      canvas.addEventListener('touchstart', preventDefaultTouch, { passive: false });
+      canvas.addEventListener('touchmove', preventDefaultTouch, { passive: false });
+    }
+    if (canvasTecnico) {
+      canvasTecnico.addEventListener('touchstart', preventDefaultTouch, { passive: false });
+      canvasTecnico.addEventListener('touchmove', preventDefaultTouch, { passive: false });
+    }
 
     return () => {
-      canvas.removeEventListener('touchstart', preventDefaultTouch);
-      canvas.removeEventListener('touchmove', preventDefaultTouch);
+      if (canvas) {
+        canvas.removeEventListener('touchstart', preventDefaultTouch);
+        canvas.removeEventListener('touchmove', preventDefaultTouch);
+      }
+      if (canvasTecnico) {
+        canvasTecnico.removeEventListener('touchstart', preventDefaultTouch);
+        canvasTecnico.removeEventListener('touchmove', preventDefaultTouch);
+      }
     };
   }, [activeOsForFinalize]);
 
@@ -366,6 +382,7 @@ export default function TecnicoPage() {
     setNomeAssinante(os.client?.contato || '');
     setCpfAssinante('');
     setHasDrawn(false);
+    setHasDrawnTecnico(false);
     
     // Auto-scroll to top and block background scroll
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -378,9 +395,7 @@ export default function TecnicoPage() {
   };
 
   // Canvas event handlers
-  const getCoordinates = (e: any) => {
-    if (!canvasRef.current) return { x: 0, y: 0 };
-    const canvas = canvasRef.current;
+  const getCoordinates = (e: any, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect();
     
     let clientX = 0;
@@ -401,6 +416,7 @@ export default function TecnicoPage() {
     return { x, y };
   };
 
+  // ─── CLIENT DRAWING HANDLERS ───
   const startDrawing = (e: any) => {
     e.preventDefault();
     const canvas = canvasRef.current;
@@ -408,7 +424,7 @@ export default function TecnicoPage() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const coords = getCoordinates(e);
+    const coords = getCoordinates(e, canvas);
     ctx.beginPath();
     ctx.moveTo(coords.x, coords.y);
     isDrawingRef.current = true;
@@ -422,7 +438,7 @@ export default function TecnicoPage() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const coords = getCoordinates(e);
+    const coords = getCoordinates(e, canvas);
     ctx.lineTo(coords.x, coords.y);
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = 2.5;
@@ -443,6 +459,51 @@ export default function TecnicoPage() {
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     setHasDrawn(false);
+  };
+
+  // ─── TECHNICIAN DRAWING HANDLERS ───
+  const startDrawingTecnico = (e: any) => {
+    e.preventDefault();
+    const canvas = canvasTecnicoRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const coords = getCoordinates(e, canvas);
+    ctx.beginPath();
+    ctx.moveTo(coords.x, coords.y);
+    isDrawingTecnicoRef.current = true;
+  };
+
+  const drawTecnico = (e: any) => {
+    if (!isDrawingTecnicoRef.current) return;
+    e.preventDefault();
+    const canvas = canvasTecnicoRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const coords = getCoordinates(e, canvas);
+    ctx.lineTo(coords.x, coords.y);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+    setHasDrawnTecnico(true);
+  };
+
+  const stopDrawingTecnico = () => {
+    isDrawingTecnicoRef.current = false;
+  };
+
+  const clearCanvasTecnico = () => {
+    const canvas = canvasTecnicoRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setHasDrawnTecnico(false);
   };
 
   // Handle Photo Upload and Base64 Conversion with Client-Side Compression
@@ -513,10 +574,15 @@ export default function TecnicoPage() {
     if (!hasDrawn) {
       return showAlert('warning', 'Assinatura Obrigatória', 'O cliente precisa assinar no campo indicado.');
     }
+    if (!hasDrawnTecnico) {
+      return showAlert('warning', 'Assinatura Obrigatória', 'Você (técnico) precisa assinar no campo indicado.');
+    }
 
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const canvasTecnico = canvasTecnicoRef.current;
+    if (!canvas || !canvasTecnico) return;
     const base64Signature = canvas.toDataURL('image/png');
+    const base64SignatureTecnico = canvasTecnico.toDataURL('image/png');
 
     setSaving(true);
     try {
@@ -525,6 +591,7 @@ export default function TecnicoPage() {
         observacaoAtendimento: relato,
         fotosAtendimento: JSON.stringify(fotos),
         assinaturaCliente: base64Signature,
+        assinaturaTecnico: base64SignatureTecnico,
         nomeAssinante: nomeAssinante,
         cpfAssinante: cpfAssinante
       });
@@ -988,6 +1055,38 @@ export default function TecnicoPage() {
               </div>
               <div className="text-center text-[9px] font-bold text-slate-400 uppercase tracking-widest select-none">
                 Colete a assinatura do responsável tocando na tela acima
+              </div>
+            </div>
+
+            {/* Technician signature canvas block */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center">
+                <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest">Assinatura Digital do Técnico *</label>
+                <button
+                  onClick={clearCanvasTecnico}
+                  className="text-[9px] font-black text-red-500 hover:text-red-700 uppercase flex items-center gap-0.5 cursor-pointer"
+                >
+                  <RotateCcw size={10} /> Limpar
+                </button>
+              </div>
+              
+              <div className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 select-none touch-none w-full">
+                <canvas
+                  ref={canvasTecnicoRef}
+                  width={340}
+                  height={140}
+                  className="w-full bg-slate-50 cursor-crosshair touch-none block"
+                  onMouseDown={startDrawingTecnico}
+                  onMouseMove={drawTecnico}
+                  onMouseUp={stopDrawingTecnico}
+                  onMouseLeave={stopDrawingTecnico}
+                  onTouchStart={startDrawingTecnico}
+                  onTouchMove={drawTecnico}
+                  onTouchEnd={stopDrawingTecnico}
+                />
+              </div>
+              <div className="text-center text-[9px] font-bold text-slate-400 uppercase tracking-widest select-none">
+                Sua assinatura (técnico) tocando na tela acima
               </div>
             </div>
 

@@ -1185,6 +1185,7 @@ model OrdemServicoAtivo {
   observacaoAtendimento String?        @db.Text
   fotosAtendimento   String?           @db.Text // JSON string containing base64 images
   assinaturaCliente  String?           @db.Text // Base64 signature drawing
+  assinaturaTecnico  String?           @db.Text // Base64 technician signature drawing
   nomeAssinante      String?
   cpfAssinante       String?
   historico          String?           @db.Text // JSON string tracking lifecycle history events

@@ -731,6 +731,7 @@ export async function updateOrdemServicoAtivo(id: string, data: {
   observacaoAtendimento?: string;
   fotosAtendimento?: string;
   assinaturaCliente?: string;
+  assinaturaTecnico?: string;
   nomeAssinante?: string;
   cpfAssinante?: string;
   tipo?: string;
@@ -779,6 +780,7 @@ export async function updateOrdemServicoAtivo(id: string, data: {
     if (data.observacaoAtendimento !== undefined) updateData.observacaoAtendimento = data.observacaoAtendimento;
     if (data.fotosAtendimento !== undefined) updateData.fotosAtendimento = data.fotosAtendimento;
     if (data.assinaturaCliente !== undefined) updateData.assinaturaCliente = data.assinaturaCliente;
+    if (data.assinaturaTecnico !== undefined) updateData.assinaturaTecnico = data.assinaturaTecnico;
     if (data.nomeAssinante !== undefined) updateData.nomeAssinante = data.nomeAssinante;
     if (data.cpfAssinante !== undefined) updateData.cpfAssinante = data.cpfAssinante;
     if (data.tipo !== undefined) updateData.tipo = data.tipo;

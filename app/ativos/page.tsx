@@ -3513,38 +3513,63 @@ export default function AtivosPage() {
               {/* Rodapé de Assinatura Física ou Digital */}
               <div className="pt-10 select-none">
                 <div className="grid grid-cols-2 gap-12 text-[10.5px] font-bold text-slate-700 text-center">
-                  <div className="space-y-4">
-                    <div className="border-t border-slate-350 pt-2 flex flex-col items-center">
+                  
+                  {/* Coluna 1: Técnico Responsável */}
+                  <div className="flex flex-col items-center justify-between h-[120px]">
+                    {/* Assinatura do Técnico (Acima da Linha) */}
+                    <div className="flex-1 flex items-end justify-center pb-2 w-full min-h-[55px]">
+                      {selectedOsForPdf.assinaturaTecnico ? (
+                        <img 
+                          src={selectedOsForPdf.assinaturaTecnico} 
+                          alt="Assinatura Técnico" 
+                          className="max-h-[55px] object-contain"
+                        />
+                      ) : (
+                        <span className="text-slate-300 italic text-[10px]">_____________________________________</span>
+                      )}
+                    </div>
+                    {/* Linha e Labels (Abaixo da Linha) */}
+                    <div className="border-t border-slate-350 pt-1.5 w-full flex flex-col items-center">
+                      {selectedOsForPdf.assinaturaTecnico && (
+                        <span className="text-[8.5px] text-[#2563EB] font-black uppercase flex items-center gap-0.5 mb-0.5"><CheckCircle size={9} /> Técnico Autenticado</span>
+                      )}
                       <span className="font-black text-slate-800">Técnico Responsável</span>
                       <span className="text-[9px] text-slate-450 uppercase mt-0.5">{selectedOsForPdf.tecnicoResponsavel || 'Não Informado'}</span>
                     </div>
                   </div>
-                  <div className="space-y-4">
-                    <div className="border-t border-slate-350 pt-2 flex flex-col items-center">
+
+                  {/* Coluna 2: Cliente */}
+                  <div className="flex flex-col items-center justify-between h-[120px]">
+                    {/* Assinatura do Cliente (Acima da Linha) */}
+                    <div className="flex-1 flex items-end justify-center pb-2 w-full min-h-[55px]">
                       {selectedOsForPdf.assinaturaCliente ? (
-                        <div className="flex flex-col items-center">
-                          <img 
-                            src={selectedOsForPdf.assinaturaCliente} 
-                            alt="Assinatura Cliente" 
-                            className="max-h-[60px] object-contain mb-1"
-                          />
-                          <span className="text-[9px] text-emerald-600 font-black uppercase flex items-center gap-1"><CheckCircle size={10} /> Assinado Digitalmente</span>
+                        <img 
+                          src={selectedOsForPdf.assinaturaCliente} 
+                          alt="Assinatura Cliente" 
+                          className="max-h-[55px] object-contain"
+                        />
+                      ) : (
+                        <span className="text-slate-300 italic text-[10px]">_____________________________________</span>
+                      )}
+                    </div>
+                    {/* Linha e Labels (Abaixo da Linha) */}
+                    <div className="border-t border-slate-350 pt-1.5 w-full flex flex-col items-center">
+                      {selectedOsForPdf.assinaturaCliente && (
+                        <div className="flex flex-col items-center mb-0.5">
+                          <span className="text-[8.5px] text-[#2563EB] font-black uppercase flex items-center gap-0.5"><CheckCircle size={9} /> Assinado Digitalmente</span>
                           {selectedOsForPdf.nomeAssinante && (
-                            <span className="text-[8.5px] text-slate-500 font-bold mt-0.5">Nome: {selectedOsForPdf.nomeAssinante}</span>
+                            <span className="text-[8px] text-slate-500 font-bold mt-0.5 leading-none">Nome: {selectedOsForPdf.nomeAssinante}</span>
                           )}
                           {selectedOsForPdf.cpfAssinante && (
-                            <span className="text-[8.5px] text-slate-500 font-bold">CPF: {selectedOsForPdf.cpfAssinante}</span>
+                            <span className="text-[8px] text-slate-500 font-bold leading-none">CPF: {selectedOsForPdf.cpfAssinante}</span>
                           )}
                         </div>
-                      ) : (
-                        <div className="h-[60px] flex items-end justify-center w-full">
-                          <span className="text-slate-300 italic text-[10px]">_____________________________________</span>
-                        </div>
                       )}
-                      <span className="font-black text-slate-800 mt-1">Cliente</span>
+                      <span className="font-black text-slate-800">Cliente</span>
                       <span className="text-[9px] text-slate-450 uppercase mt-0.5">{selectedOsForPdf.client.nomeFantasia}</span>
                     </div>
                   </div>
+
                 </div>
               </div>
 
