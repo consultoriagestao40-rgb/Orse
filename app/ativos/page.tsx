@@ -43,6 +43,7 @@ export default function AtivosPage() {
   // Loading & UI State
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [updatingOsId, setUpdatingOsId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategoria, setFilterCategoria] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -666,6 +667,8 @@ export default function AtivosPage() {
       }
     }
     
+    setUpdatingOsId(osId);
+    
     // Atualização otimista imediata no estado React para evitar lag visual
     setOrdens(prev => prev.map(o => o.id === osId ? { ...o, status: newStatus } : o));
     setOsForm(prev => prev.id === osId ? { ...prev, status: newStatus } : prev);
@@ -681,6 +684,7 @@ export default function AtivosPage() {
       }
       showAlert('Erro ao Atualizar', res.error || 'Erro ao atualizar status da OS', 'error');
     }
+    setUpdatingOsId(null);
   };
 
   const handleConfirmAssignTecnico = async () => {
@@ -1518,9 +1522,16 @@ export default function AtivosPage() {
                             )}
                           </td>
                           <td className="px-6 py-3.5 text-center">
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border select-none ${statusColor}`}>
-                              {statusText}
-                            </span>
+                            {updatingOsId === os.id ? (
+                              <div className="flex items-center justify-center gap-1.5 text-slate-400 font-extrabold text-[10px] uppercase select-none">
+                                <div className="w-3.5 h-3.5 border-2 border-slate-200 border-t-slate-500 rounded-full animate-spin"></div>
+                                <span>Gravando...</span>
+                              </div>
+                            ) : (
+                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border select-none ${statusColor}`}>
+                                {statusText}
+                              </span>
+                            )}
                           </td>
                           <td className="px-6 py-3.5">
                             <div className="flex items-center justify-center gap-1.5">
@@ -1667,13 +1678,20 @@ export default function AtivosPage() {
                           {colOrdens.map(os => (
                             <div 
                               key={os.id} 
-                              className="bg-white border border-slate-200 hover:border-[#1B4D3E]/30 rounded-xl p-3 shadow-xs space-y-2 hover:shadow-sm transition-all text-left cursor-pointer"
-                              draggable={true}
+                              className={`relative bg-white border border-slate-200 hover:border-[#1B4D3E]/30 rounded-xl p-3 shadow-xs space-y-2 hover:shadow-sm transition-all text-left cursor-pointer ${
+                                updatingOsId === os.id ? 'opacity-65 pointer-events-none select-none' : ''
+                              }`}
+                              draggable={updatingOsId !== os.id}
                               onDragStart={(e) => {
                                 e.dataTransfer.setData('text/plain', os.id);
                               }}
                               onClick={() => openOsModal(os)}
                             >
+                              {updatingOsId === os.id && (
+                                <div className="absolute inset-0 bg-white/50 backdrop-blur-xs flex items-center justify-center rounded-xl z-20">
+                                  <div className="w-5.5 h-5.5 border-2 border-[#1B4D3E]/20 border-t-[#1B4D3E] rounded-full animate-spin"></div>
+                                </div>
+                              )}
                               <div className="flex justify-between items-center">
                                 <span className="font-mono text-[9px] font-black text-slate-700 bg-slate-100 border border-slate-200/80 rounded px-1.5 py-0.5 whitespace-nowrap">
                                   OS № {String(os.codigo).padStart(3, '0')}
@@ -1902,7 +1920,12 @@ export default function AtivosPage() {
                     disabled={saving}
                     className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
                   >
-                    <Save size={14} /> {saving ? 'Salvando...' : 'Gravar Equipamento'}
+                    {saving ? (
+                      <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                      <Save size={14} />
+                    )}
+                    {saving ? 'Gravando...' : 'Gravar Equipamento'}
                   </button>
                 </footer>
               </div>
@@ -1947,7 +1970,12 @@ export default function AtivosPage() {
                     disabled={saving}
                     className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
                   >
-                    <Save size={14} /> {saving ? 'Salvando...' : 'Gravar Categoria'}
+                    {saving ? (
+                      <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                      <Save size={14} />
+                    )}
+                    {saving ? 'Gravando...' : 'Gravar Categoria'}
                   </button>
                 </footer>
               </div>
@@ -2035,7 +2063,12 @@ export default function AtivosPage() {
                   disabled={saving}
                   className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
                 >
-                  <Save size={14} /> {saving ? 'Salvando...' : 'Gravar Template de Minuta'}
+                  {saving ? (
+                    <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <Save size={14} />
+                  )}
+                  {saving ? 'Gravando...' : 'Gravar Template de Minuta'}
                 </button>
               </footer>
             </div>
@@ -2250,7 +2283,12 @@ export default function AtivosPage() {
                   disabled={saving}
                   className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
                 >
-                  <Save size={14} /> {saving ? 'Salvando...' : 'Gerar Contrato de Comodato'}
+                  {saving ? (
+                    <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <Save size={14} />
+                  )}
+                  {saving ? 'Gravando...' : 'Gerar Contrato de Comodato'}
                 </button>
               </footer>
             </div>
@@ -2398,10 +2436,19 @@ export default function AtivosPage() {
 
                     {osForm.id && (
                       <div className="space-y-1">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Status da Ordem de Serviço</label>
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Status da Ordem de Serviço</label>
+                          {updatingOsId === osForm.id && (
+                            <div className="flex items-center gap-1 text-[9px] font-extrabold text-[#1B4D3E] uppercase animate-pulse">
+                              <div className="w-3 h-3 border-2 border-[#1B4D3E]/20 border-t-[#1B4D3E] rounded-full animate-spin"></div>
+                              <span>Salvando...</span>
+                            </div>
+                          )}
+                        </div>
                         <select
-                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                           value={osForm.status || 'PENDENTE'}
+                          disabled={updatingOsId === osForm.id}
                           onChange={(e) => handleUpdateOsStatus(osForm.id, e.target.value)}
                         >
                           <option value="PENDENTE">Backlog</option>
@@ -2580,7 +2627,12 @@ export default function AtivosPage() {
                   disabled={saving}
                   className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
                 >
-                  <Save size={14} /> {saving ? 'Salvando...' : (osForm.id ? 'Salvar Alterações' : 'Gravar Ordem de Serviço')}
+                  {saving ? (
+                    <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <Save size={14} />
+                  )}
+                  {saving ? 'Gravando...' : (osForm.id ? 'Salvar Alterações' : 'Gravar Ordem de Serviço')}
                 </button>
               </footer>
             </div>
@@ -2676,7 +2728,12 @@ export default function AtivosPage() {
                     disabled={saving}
                     className="flex-[2] bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] cursor-pointer"
                   >
-                    <Save size={14} /> Atribuir e Programar
+                    {saving ? (
+                      <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                      <Save size={14} />
+                    )}
+                    {saving ? 'Gravando...' : 'Atribuir e Programar'}
                   </button>
                 </footer>
               </div>
