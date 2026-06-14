@@ -302,7 +302,7 @@ export default function TecnicoPage() {
         showAlert('success', 'Rota Iniciada!', 'Status alterado para Em Deslocamento. Abrindo o GPS...');
         
         const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${location.latitude},${location.longitude}&destination=${encodeURIComponent(clientAddress)}`;
-        window.open(mapsUrl, '_blank');
+        window.location.href = mapsUrl;
       } else {
         showAlert('error', 'Falha ao Iniciar Rota', res.error || 'Erro ao atualizar dados.');
       }
@@ -324,7 +324,7 @@ export default function TecnicoPage() {
     } else {
       mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest)}`;
     }
-    window.open(mapsUrl, '_blank');
+    window.location.href = mapsUrl;
   };
 
   const handleStartService = async (osId: string) => {
