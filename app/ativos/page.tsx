@@ -2408,32 +2408,21 @@ export default function AtivosPage() {
                     <span className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider">Filtros de Período & Operação</span>
                   </div>
                   <div className="flex flex-wrap items-center gap-4">
-                    {/* Segmented Period Buttons */}
-                    <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200/85">
-                      {[
-                        { id: '7d', label: '7 Dias' },
-                        { id: '14d', label: '14 Dias' },
-                        { id: '28d', label: '28 Dias' },
-                        { id: 'mes', label: 'Este Mês' },
-                        { id: 'ano', label: 'Este Ano' },
-                        { id: 'custom', label: 'Personalizado' }
-                      ].map((p) => {
-                        const isActive = selectedKpiPeriodType === p.id;
-                        return (
-                          <button
-                            key={p.id}
-                            type="button"
-                            onClick={() => setSelectedKpiPeriodType(p.id as any)}
-                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 cursor-pointer ${
-                              isActive 
-                                ? 'bg-[#1B4D3E] text-white shadow-xs' 
-                                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/50'
-                            }`}
-                          >
-                            {p.label}
-                          </button>
-                        );
-                      })}
+                    {/* Dropdown Period Selector */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Período:</span>
+                      <select
+                        value={selectedKpiPeriodType}
+                        onChange={(e) => setSelectedKpiPeriodType(e.target.value as any)}
+                        className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] cursor-pointer"
+                      >
+                        <option value="7d">Últimos 7 Dias</option>
+                        <option value="14d">Últimos 14 Dias</option>
+                        <option value="28d">Últimos 28 Dias</option>
+                        <option value="mes">Este Mês</option>
+                        <option value="ano">Este Ano</option>
+                        <option value="custom">Personalizado</option>
+                      </select>
                     </div>
 
                     {/* Navigation for Month */}
