@@ -559,7 +559,11 @@ export default function EntregadorPage() {
   const handleSendToValidation = async () => {
     if (!activeEntregaForFinalize) return;
 
-    if (!destinatarioAusente) {
+    if (destinatarioAusente) {
+      if (fotos.length === 0) {
+        return showAlert('warning', 'Foto Obrigatória', 'Para entrega sem recebedor, você deve tirar pelo menos uma foto da entrega.');
+      }
+    } else {
       if (!nomeRecebedor.trim()) {
         return showAlert('warning', 'Recebedor Obrigatório', 'Informe o nome de quem está recebendo a entrega.');
       }
@@ -568,27 +572,38 @@ export default function EntregadorPage() {
       }
     }
 
-    if (!hasDrawnEntregador) {
-      return showAlert('warning', 'Assinatura Obrigatória', 'Você (entregador) precisa assinar na tela.');
-    }
-
     const canvasRecebedor = canvasRecebedorRef.current;
-    const canvasEntregador = canvasEntregadorRef.current;
-    if (!canvasEntregador) return;
-
     const base64RecebedorSig = (!destinatarioAusente && canvasRecebedor) ? canvasRecebedor.toDataURL('image/png') : null;
-    const base64EntregadorSig = canvasEntregador.toDataURL('image/png');
 
     setSaving(true);
     try {
+      let latitudeChegada = activeEntregaForFinalize.latitudeChegada;
+      let longitudeChegada = activeEntregaForFinalize.longitudeChegada;
+      let entregaIniciadaEm = activeEntregaForFinalize.entregaIniciadaEm;
+
+      // Se o fluxo pulou o "Cheguei", captura a geolocalização de chegada na finalização
+      if (activeEntregaForFinalize.status === 'EM_DESLOCAMENTO') {
+        try {
+          const location = await getGPSLocation();
+          latitudeChegada = location.latitude;
+          longitudeChegada = location.longitude;
+          entregaIniciadaEm = new Date().toISOString();
+        } catch (gpsErr) {
+          console.warn('Erro ao obter GPS de chegada para finalização:', gpsErr);
+        }
+      }
+
       const payload: any = {
         status: 'VALIDACAO',
         observacaoEntrega: observacaoEntrega,
         fotosEntrega: JSON.stringify(fotos),
-        assinaturaEntregador: base64EntregadorSig,
-        nomeRecebedor: destinatarioAusente ? 'CLIENTE AUSENTE' : nomeRecebedor,
+        assinaturaEntregador: 'SISTEMA',
+        nomeRecebedor: destinatarioAusente ? 'SEM RECEBEDOR' : nomeRecebedor,
         documentoRecebedor: destinatarioAusente ? null : documentoRecebedor,
-        assinaturaRecebedor: base64RecebedorSig
+        assinaturaRecebedor: base64RecebedorSig,
+        latitudeChegada,
+        longitudeChegada,
+        entregaIniciadaEm
       };
 
       const res = await updateEntrega(activeEntregaForFinalize.id, payload);
@@ -852,11 +867,11 @@ export default function EntregadorPage() {
                         {isDeslocamento && (
                           <div className="flex flex-col gap-2">
                             <button
-                              onClick={() => handleStartService(ent.id)}
-                              className="w-full py-4 bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-black text-[10.5px] font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-amber-500/10 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                              onClick={() => handleOpenFinalize(ent)}
+                              className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-[10.5px] font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-600/10 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                               disabled={saving}
                             >
-                              <MapPin size={13} fill="black" className="shrink-0" /> Cheguei / Registrar Entrega
+                              <CheckCircle size={13} fill="white" className="shrink-0" /> Entregar
                             </button>
                             <button
                               onClick={() => handleOpenRouteAgain(ent)}
@@ -874,7 +889,7 @@ export default function EntregadorPage() {
                             className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-[10.5px] font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-600/10 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                             disabled={saving}
                           >
-                            <CheckCircle size={13} fill="white" className="shrink-0" /> Coletar Assinatura & Finalizar
+                            <CheckCircle size={13} fill="white" className="shrink-0" /> Entregar
                           </button>
                         )}
 
@@ -972,8 +987,8 @@ export default function EntregadorPage() {
               {/* Destinatário Ausente Checkbox */}
               <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-4 flex items-center justify-between select-none">
                 <div className="text-left space-y-0.5">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-200">Destinatário Ausente</h4>
-                  <p className="text-[10px] text-slate-500 font-semibold leading-none">Marque se não houver ninguém para receber e assinar</p>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-200">Entrega sem Recebedor</h4>
+                  <p className="text-[10px] text-slate-500 font-semibold leading-none">Marque se entregar sem recebedor (foto obrigatória)</p>
                 </div>
                 <input 
                   type="checkbox"
@@ -1045,39 +1060,6 @@ export default function EntregadorPage() {
                   </div>
                 </div>
               )}
-
-              {/* Assinatura do Entregador */}
-              <div className="space-y-2 select-none">
-                <div className="flex justify-between items-center">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sua Assinatura (Entregador - Obrigatória)</label>
-                  {hasDrawnEntregador && (
-                    <button 
-                      type="button" 
-                      onClick={clearCanvasEntregador}
-                      className="text-[9.5px] font-black text-[#10B981] hover:underline flex items-center gap-1 cursor-pointer"
-                      disabled={saving}
-                    >
-                      <RotateCcw size={11} /> Limpar
-                    </button>
-                  )}
-                </div>
-
-                <div className="border border-white/10 bg-white rounded-2xl h-36 relative overflow-hidden flex shrink-0">
-                  <canvas
-                    ref={canvasEntregadorRef}
-                    width={460}
-                    height={144}
-                    onMouseDown={startDrawingEntregador}
-                    onMouseMove={drawEntregador}
-                    onMouseUp={stopDrawingEntregador}
-                    onMouseLeave={stopDrawingEntregador}
-                    onTouchStart={startDrawingEntregador}
-                    onTouchMove={drawEntregador}
-                    onTouchEnd={stopDrawingEntregador}
-                    className="w-full h-full block cursor-crosshair bg-white"
-                  />
-                </div>
-              </div>
 
               {/* Observações */}
               <div className="space-y-2">
