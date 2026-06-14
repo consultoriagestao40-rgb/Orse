@@ -2291,10 +2291,10 @@ export default function AtivosPage() {
             }, {} as Record<string, number>);
 
             const osTypesLabel: Record<string, string> = {
-              INSTALACAO: 'Instalação',
-              RETIRADA: 'Retirada',
-              TROCA: 'Troca',
-              MANUTENCAO: 'Manutenção'
+              INSTALACAO: 'Novas Instalações',
+              RETIRADA: 'Encerramentos',
+              TROCA: 'Trocas',
+              MANUTENCAO: 'Manutenções'
             };
             const osPorTipo = filteredKpiOrdens.reduce((acc, os) => {
               acc[os.tipo] = (acc[os.tipo] || 0) + 1;
@@ -2411,7 +2411,8 @@ export default function AtivosPage() {
             const osTypeList = Object.entries(osTypesLabel).map(([tipo, label]) => {
               const count = osPorTipo[tipo] || 0;
               const pct = totalOs > 0 ? (count / totalOs) * 100 : 0;
-              return { tipo, label, count, pct, color: osTypeHexColors[tipo] || '#94A3B8' };
+              const pctBaseAtivos = totalAtivos > 0 ? (count / totalAtivos) * 100 : 0;
+              return { tipo, label, count, pct, pctBaseAtivos, color: osTypeHexColors[tipo] || '#94A3B8' };
             });
 
             let accumulatedOsPercent = 0;
@@ -2871,11 +2872,12 @@ export default function AtivosPage() {
                             {hoveredKpiOsType ? (
                               (() => {
                                 const activeItem = osTypeList.find(o => o.tipo === hoveredKpiOsType);
+                                const displayPct = activeItem?.tipo === 'RETIRADA' ? activeItem.pctBaseAtivos : activeItem?.pct || 0;
                                 return (
                                   <>
                                     <span className="text-[7.5px] font-black text-slate-405 uppercase tracking-widest truncate max-w-[100px]">{activeItem?.label}</span>
                                     <span className="text-xl font-black text-slate-850 leading-none mt-0.5">{activeItem?.count}</span>
-                                    <span className="text-[9px] font-bold text-slate-500 mt-0.5">({activeItem?.pct.toFixed(1)}%)</span>
+                                    <span className="text-[9px] font-bold text-slate-500 mt-0.5">({displayPct.toFixed(displayPct < 1 && displayPct > 0 ? 2 : 1)}%)</span>
                                   </>
                                 );
                               })()
@@ -2892,6 +2894,7 @@ export default function AtivosPage() {
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-4 w-full select-none">
                           {osTypeList.map(item => {
                             const isHovered = hoveredKpiOsType === item.tipo;
+                            const displayPct = item.tipo === 'RETIRADA' ? item.pctBaseAtivos : item.pct;
                             return (
                               <div 
                                 key={item.tipo} 
@@ -2902,6 +2905,7 @@ export default function AtivosPage() {
                                 <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: item.color }}></span>
                                 <span className="text-[9px] font-bold text-slate-655 truncate uppercase leading-none">
                                   {item.label}: <strong className="text-slate-850 font-black">{item.count}</strong>
+                                  <span className="text-slate-400 font-bold ml-1">({displayPct.toFixed(displayPct < 1 && displayPct > 0 ? 2 : 1)}%)</span>
                                 </span>
                               </div>
                             );
