@@ -2247,11 +2247,15 @@ export default function AtivosPage() {
             const completedKpiOrdens = filteredKpiOrdens.filter(os => os.status === 'CONCLUIDA' && os.dataExecucao && os.createdAt);
             let slaMedioDias = 0;
             if (completedKpiOrdens.length > 0) {
-              const totalSlaMs = completedKpiOrdens.reduce((acc, os) => {
-                const diff = new Date(os.dataExecucao).getTime() - new Date(os.createdAt).getTime();
-                return acc + diff;
+              const totalSlaDays = completedKpiOrdens.reduce((acc, os) => {
+                const d1 = new Date(os.createdAt);
+                const d2 = new Date(os.dataExecucao);
+                const date1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
+                const date2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
+                const diffDays = Math.floor((date2 - date1) / (1000 * 60 * 60 * 24)) + 1;
+                return acc + diffDays;
               }, 0);
-              slaMedioDias = totalSlaMs / (1000 * 60 * 60 * 24) / completedKpiOrdens.length;
+              slaMedioDias = totalSlaDays / completedKpiOrdens.length;
             }
             const needleAngle = Math.min(Math.max(-90 + (slaMedioDias / 10) * 180, -90), 90);
 
@@ -2692,37 +2696,12 @@ export default function AtivosPage() {
                       
                       {/* Centered days indicator */}
                       <div className="text-center select-none">
-                        {(() => {
-                          let slaValorExibicao = "0.0";
-                          let slaUnidadeExibicao = "Dias de SLA";
-
-                          if (slaMedioDias > 0) {
-                            if (slaMedioDias >= 1) {
-                              slaValorExibicao = slaMedioDias.toFixed(1);
-                              slaUnidadeExibicao = slaMedioDias === 1 ? "Dia de SLA" : "Dias de SLA";
-                            } else {
-                              const slaMedioHoras = slaMedioDias * 24;
-                              if (slaMedioHoras >= 1) {
-                                slaValorExibicao = slaMedioHoras.toFixed(1);
-                                slaUnidadeExibicao = slaMedioHoras === 1 ? "Hora de SLA" : "Horas de SLA";
-                              } else {
-                                const slaMedioMinutos = slaMedioHoras * 60;
-                                slaValorExibicao = Math.round(slaMedioMinutos).toString();
-                                slaUnidadeExibicao = Math.round(slaMedioMinutos) === 1 ? "Minuto de SLA" : "Minutos de SLA";
-                              }
-                            }
-                          }
-                          return (
-                            <>
-                              <span className="text-3xl font-black text-slate-800 leading-none">
-                                {slaValorExibicao}
-                              </span>
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">
-                                {slaUnidadeExibicao}
-                              </p>
-                            </>
-                          );
-                        })()}
+                        <span className="text-3xl font-black text-slate-800 leading-none">
+                          {slaMedioDias > 0 ? slaMedioDias.toFixed(1) : '0.0'}
+                        </span>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                          {slaMedioDias === 1 ? 'Dia de SLA' : 'Dias de SLA'}
+                        </p>
                       </div>
                     </div>
                   </div>
