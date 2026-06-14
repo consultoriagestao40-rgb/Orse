@@ -2306,7 +2306,35 @@ export default function AtivosPage() {
               const percentAlocacao = (tempoTotalHoras / 176) * 100;
 
               return {
-                    let accumulatedStatusPercent = 0;
+                ...tech,
+                totalTechOs,
+                deslocamentoMin,
+                atendimentoMin,
+                tempoTotalMin,
+                tempoTotalHoras,
+                kmRodados,
+                percentAlocacao
+              };
+            });
+
+            const totalKmRodados = techStats.reduce((acc, t) => acc + t.kmRodados, 0);
+            const totalHoursTech = techStats.reduce((acc, t) => acc + t.tempoTotalHoras, 0);
+
+            // Custom variables for Donut charts (Status and OS Types)
+            const statusHexColors: Record<string, string> = {
+              DISPONIVEL: '#10B981', // emerald-500
+              COMODATO: '#3B82F6', // blue-500
+              MANUTENCAO: '#F59E0B', // amber-500
+              BAIXADO: '#94A3B8' // slate-400
+            };
+
+            const statusList = Object.entries(statusLabels).map(([status, label]) => {
+              const count = ativosPorStatus[status] || 0;
+              const pct = totalAtivos > 0 ? (count / totalAtivos) * 100 : 0;
+              return { status, label, count, pct, color: statusHexColors[status] || '#94A3B8' };
+            });
+
+            let accumulatedStatusPercent = 0;
             const statusSlices = statusList.map(item => {
               const startAngle = -90 + (accumulatedStatusPercent / 100) * 360;
               const strokeDashArray = `${(item.pct / 100) * 238.76} 238.76`;
