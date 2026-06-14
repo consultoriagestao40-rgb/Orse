@@ -7,7 +7,7 @@ import {
   Boxes, FileText, ClipboardList, Wrench, 
   Calendar, Printer, LayoutGrid, Kanban, 
   Tags, Info, Users, ShieldCheck, Check, 
-  MessageSquare, User, FileImage, Layers, ChevronRight, FileCheck, CheckCircle,
+  MessageSquare, User, FileImage, Layers, ChevronRight, ChevronUp, ChevronDown, FileCheck, CheckCircle,
   DollarSign, TrendingUp, Navigation, MapPin, History, Shield, UserCheck, Car
 } from 'lucide-react';
 
@@ -17,7 +17,7 @@ import {
   getTemplatesComodato, createTemplateComodato, updateTemplateComodato, deleteTemplateComodato,
   getContratosComodato, createContratoComodato, updateContratoComodato, updateContratoComodatoStatus, deleteContratoComodato,
   getOrdensServicoAtivo, createOrdemServicoAtivo, updateOrdemServicoAtivo, deleteOrdemServicoAtivo,
-  getLoggedTenantInfo
+  getLoggedTenantInfo, otimizarRotaTecnico, reordenarOrdensServicoManual
 } from './actions';
 import { getClientes } from '@/app/clientes/actions';
 import { getEmpresasEmissoras } from '@/app/admin/settings/empresas-actions';
@@ -65,6 +65,11 @@ export default function AtivosPage() {
 
   // OS edit tab selection (details vs history/lifecycle log)
   const [activeOsTab, setActiveOsTab] = useState<'details' | 'history'>('details');
+
+  // Route Management Modal State
+  const [modalManageRoutesOpen, setModalManageRoutesOpen] = useState(false);
+  const [selectedRouteTecnico, setSelectedRouteTecnico] = useState('');
+  const [routeSaving, setRouteSaving] = useState(false);
 
   const formatDuration = (start: any, end: any) => {
     if (!start || !end) return null;
@@ -236,6 +241,31 @@ export default function AtivosPage() {
       console.error(err);
     }
     if (!silent) setLoading(false);
+  // ─── ROUTE MANAGEMENT HANDLERS ───
+  const handleOptimizeRoute = async (email: string) => {
+    if (!email) return;
+    setRouteSaving(true);
+    const res = await otimizarRotaTecnico(email);
+    if (res.success) {
+      await loadData(true);
+      showAlert('Rota Otimizada', 'A sequência de atendimento foi otimizada com base no menor caminho geográfico (OSRM).', 'success');
+    } else {
+      showAlert('Erro ao Otimizar', res.error || 'Erro desconhecido', 'error');
+    }
+    setRouteSaving(false);
+  };
+
+  const handleManualReorder = async (email: string, osIdsOrdered: string[]) => {
+    if (!email) return;
+    setRouteSaving(true);
+    const res = await reordenarOrdensServicoManual(email, osIdsOrdered);
+    if (res.success) {
+      await loadData(true);
+      showAlert('Fila Atualizada', 'A sequência de execução do técnico foi atualizada com sucesso.', 'success');
+    } else {
+      showAlert('Erro ao Reordenar', res.error || 'Erro desconhecido', 'error');
+    }
+    setRouteSaving(false);
   };
 
   // -----------------------------------------------------------------------------
@@ -886,12 +916,23 @@ export default function AtivosPage() {
               </div>
             )}
             {activeTab === 'ordens' && (
-              <button 
-                onClick={() => openOsModal()}
-                className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer shrink-0"
-              >
-                <Plus size={16} /> Abrir Ordem de Serviço
-              </button>
+              <div className="flex gap-2 shrink-0">
+                <button 
+                  onClick={() => {
+                    setSelectedRouteTecnico('');
+                    setModalManageRoutesOpen(true);
+                  }}
+                  className="border border-[#1B4D3E] text-[#1B4D3E] hover:bg-emerald-50/50 font-black py-2.5 px-5 rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <Navigation size={14} className="stroke-[2.5]" /> Gerenciar Rotas
+                </button>
+                <button 
+                  onClick={() => openOsModal()}
+                  className="bg-[#1B4D3E] hover:bg-[#13382D] text-white font-black py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                >
+                  <Plus size={16} /> Abrir Ordem de Serviço
+                </button>
+              </div>
             )}
           </header>
 
@@ -1470,9 +1511,16 @@ export default function AtivosPage() {
                           className="hover:bg-slate-50 transition-colors cursor-pointer group"
                         >
                           <td className="px-6 py-3.5 text-center">
-                            <span className="font-mono bg-slate-100 border border-slate-200/80 rounded-lg px-2.5 py-0.5 text-[10px] font-black text-slate-700 whitespace-nowrap">
-                              OS № {String(os.codigo).padStart(3, '0')}
-                            </span>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <span className="font-mono bg-slate-100 border border-slate-200/80 rounded-lg px-2.5 py-0.5 text-[10px] font-black text-slate-700 whitespace-nowrap">
+                                OS № {String(os.codigo).padStart(3, '0')}
+                              </span>
+                              {os.status === 'PROGRAMADO' && os.ordemExecucao && (
+                                <span className="text-[9px] font-black bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 whitespace-nowrap" title="Ordem na Fila">
+                                  #{os.ordemExecucao}
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-3.5 text-xs text-slate-800 font-extrabold uppercase min-w-[360px]">
                             <div>{os.client.nomeFantasia}</div>
@@ -1735,6 +1783,11 @@ export default function AtivosPage() {
                                   <span className="font-mono text-[9px] font-black text-slate-700 bg-slate-100 border border-slate-200/80 rounded px-1.5 py-0.5 whitespace-nowrap">
                                     OS № {String(os.codigo).padStart(3, '0')}
                                   </span>
+                                  {os.status === 'PROGRAMADO' && os.ordemExecucao && (
+                                    <span className="text-[9px] font-black bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 whitespace-nowrap" title="Ordem na Fila">
+                                      #{os.ordemExecucao}
+                                    </span>
+                                  )}
                                   {os.status === 'EM_DESLOCAMENTO' && (
                                     <button
                                       type="button"
@@ -3593,6 +3646,169 @@ export default function AtivosPage() {
           </div>
         </div>
       )}
+
+      {/* ───────────────────────────────────────────────────────────────────
+          MODAL DE GERENCIAMENTO DE ROTAS DOS TÉCNICOS
+          ─────────────────────────────────────────────────────────────────── */}
+      {modalManageRoutesOpen && (() => {
+        const techUser = usuarios.find(u => u.email === selectedRouteTecnico);
+        const techName = techUser?.nome || '';
+        
+        const techOrdens = ordens.filter(o => 
+          (o.tecnicoEmail === selectedRouteTecnico || (!o.tecnicoEmail && o.tecnicoResponsavel === techName)) &&
+          o.status === 'PROGRAMADO'
+        );
+        
+        const techOrdensSorted = [...techOrdens].sort((a, b) => (a.ordemExecucao ?? 9999) - (b.ordemExecucao ?? 9999));
+        
+        return (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+              <header className="bg-slate-50 border-b border-slate-150 px-6 py-4 flex justify-between items-center select-none shrink-0">
+                <h3 className="text-xs font-black text-[#1B4D3E] uppercase tracking-wider flex items-center gap-2">
+                  <Navigation size={16} className="stroke-[2.5] text-[#1B4D3E]" />
+                  Sequenciador & Inteligência de Rotas
+                </h3>
+                <button 
+                  onClick={() => setModalManageRoutesOpen(false)} 
+                  className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </header>
+              
+              <div className="p-6 overflow-y-auto flex-1 space-y-4">
+                <div className="space-y-1 text-left">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Selecione o Técnico Responsável</label>
+                  <select
+                    value={selectedRouteTecnico}
+                    onChange={(e) => setSelectedRouteTecnico(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#1B4D3E] uppercase cursor-pointer"
+                  >
+                    <option value="">Selecione um Técnico...</option>
+                    {usuarios.map(u => (
+                      <option key={u.id} value={u.email}>{u.nome} ({u.email})</option>
+                    ))}
+                  </select>
+                </div>
+
+                {selectedRouteTecnico ? (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center select-none">
+                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                        Fila de OSs Programadas ({techOrdensSorted.length})
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => handleOptimizeRoute(selectedRouteTecnico)}
+                        disabled={routeSaving || techOrdensSorted.length <= 1}
+                        className="bg-[#1B4D3E] hover:bg-[#13382D] disabled:opacity-40 text-white font-black py-2 px-3.5 rounded-xl text-[10px] uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                      >
+                        {routeSaving ? (
+                          <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                          <TrendingUp size={12} className="stroke-[2.5]" />
+                        )}
+                        Otimizar Rota (OSRM)
+                      </button>
+                    </div>
+
+                    {techOrdensSorted.length === 0 ? (
+                      <p className="text-xs text-slate-450 italic text-center py-8 bg-slate-50 rounded-2xl border border-slate-150">
+                        Nenhuma ordem de serviço programada para este técnico.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {techOrdensSorted.map((os, idx) => (
+                          <div 
+                            key={os.id}
+                            className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 hover:border-slate-350 transition-colors shadow-2xs"
+                          >
+                            <div className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 font-black text-xs flex items-center justify-center shrink-0 select-none">
+                              #{idx + 1}
+                            </div>
+                            
+                            <div className="flex-1 min-w-0 text-left">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-[9px] font-black text-slate-700 bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5 whitespace-nowrap">
+                                  OS № {String(os.codigo).padStart(3, '0')}
+                                </span>
+                                <span className="text-[9px] text-[#1B4D3E] font-black uppercase tracking-wider">{os.tipo}</span>
+                              </div>
+                              <h5 className="text-[11px] font-black text-slate-800 uppercase truncate mt-1">{os.client?.nomeFantasia}</h5>
+                              <p className="text-[9.5px] font-semibold text-slate-500 truncate flex items-center gap-1 mt-0.5">
+                                <MapPin size={9} /> {os.client?.endereco || 'Sem endereço'}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0 select-none">
+                              <button
+                                type="button"
+                                onClick={() => handleManualReorder(selectedRouteTecnico, [
+                                  os.id, 
+                                  ...techOrdensSorted.map(o => o.id).filter(id => id !== os.id)
+                                ])}
+                                disabled={routeSaving || idx === 0}
+                                className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 disabled:opacity-30 rounded-lg border border-slate-200 transition-colors cursor-pointer"
+                                title="Mover para o Topo"
+                              >
+                                <ChevronUp size={12} className="stroke-[2.5] border-b border-slate-400 pb-0.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const ids = techOrdensSorted.map(o => o.id);
+                                  const temp = ids[idx];
+                                  ids[idx] = ids[idx - 1];
+                                  ids[idx - 1] = temp;
+                                  handleManualReorder(selectedRouteTecnico, ids);
+                                }}
+                                disabled={routeSaving || idx === 0}
+                                className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-650 disabled:opacity-30 rounded-lg border border-slate-200 transition-colors cursor-pointer"
+                                title="Subir"
+                              >
+                                <ChevronUp size={12} className="stroke-[2.5]" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const ids = techOrdensSorted.map(o => o.id);
+                                  const temp = ids[idx];
+                                  ids[idx] = ids[idx + 1];
+                                  ids[idx + 1] = temp;
+                                  handleManualReorder(selectedRouteTecnico, ids);
+                                }}
+                                disabled={routeSaving || idx === techOrdensSorted.length - 1}
+                                className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-650 disabled:opacity-30 rounded-lg border border-slate-200 transition-colors cursor-pointer"
+                                title="Descer"
+                              >
+                                <ChevronDown size={12} className="stroke-[2.5]" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-450 italic text-center py-8 select-none">
+                    Selecione um técnico responsável acima para gerenciar ou otimizar a sua rota.
+                  </p>
+                )}
+              </div>
+              
+              <footer className="bg-slate-50 border-t border-slate-150 px-6 py-4 flex justify-end shrink-0 select-none">
+                <button
+                  onClick={() => setModalManageRoutesOpen(false)}
+                  className="px-5 py-2.5 bg-slate-200 hover:bg-slate-350 text-slate-700 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                >
+                  Fechar
+                </button>
+              </footer>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* MODAL DE CONFIRMAÇÃO PREMIUM */}
       {customConfirm.open && (

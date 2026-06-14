@@ -1035,6 +1035,20 @@ export async function updateOrdemServicoAtivo(id: string, data: {
       }
     }
 
+    // Auto-Optimize route if OS is programmed or changed
+    const techEmail = os.tecnicoEmail;
+    if (techEmail) {
+      if (os.status === 'PROGRAMADO') {
+        await otimizarRotaTecnico(techEmail);
+      }
+      if ((data.status !== undefined && data.status !== currentOs.status) && (currentOs.status === 'PROGRAMADO' || os.status === 'EM_ANDAMENTO' || os.status === 'VALIDACAO' || os.status === 'CONCLUIDA' || os.status === 'CANCELADA')) {
+        await otimizarRotaTecnico(techEmail);
+      }
+    }
+    if (data.tecnicoEmail !== undefined && currentOs.tecnicoEmail && data.tecnicoEmail !== currentOs.tecnicoEmail) {
+      await otimizarRotaTecnico(currentOs.tecnicoEmail);
+    }
+
     revalidatePath('/ativos');
     return { success: true, os };
   } catch (error: any) {
@@ -1086,10 +1100,190 @@ export async function getTecnicoOrdens() {
         contratoComodato: true,
         ativo: true,
         ativoDestino: true
-      },
-      orderBy: { dataPrevista: 'asc' }
+      }
     });
-    return { success: true, ordens };
+
+    const sortedOrdens = ordens.sort((a, b) => {
+      const getRank = (status: string) => {
+        if (status === 'EM_ANDAMENTO') return 1;
+        if (status === 'EM_DESLOCAMENTO') return 2;
+        if (status === 'PROGRAMADO') return 3;
+        return 4;
+      };
+      const rankA = getRank(a.status);
+      const rankB = getRank(b.status);
+      if (rankA !== rankB) return rankA - rankB;
+      
+      if (a.status === 'PROGRAMADO') {
+        const ordA = a.ordemExecucao ?? 9999;
+        const ordB = b.ordemExecucao ?? 9999;
+        return ordA - ordB;
+      }
+      return 0;
+    });
+
+    return { success: true, ordens: sortedOrdens };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function otimizarRotaTecnico(tecnicoEmail: string) {
+  try {
+    const user = await checkAuth();
+    if (!tecnicoEmail) {
+      return { success: false, error: "E-mail do técnico não fornecido." };
+    }
+
+    // Fetch all programmed OSs for this tech
+    const ordens = await prisma.ordemServicoAtivo.findMany({
+      where: {
+        tenantId: user.tenantId,
+        tecnicoEmail,
+        status: 'PROGRAMADO'
+      },
+      include: { client: true }
+    });
+
+    if (ordens.length === 0) {
+      return { success: true };
+    }
+
+    if (ordens.length === 1) {
+      await prisma.ordemServicoAtivo.update({
+        where: { id: ordens[0].id },
+        data: { ordemExecucao: 1 }
+      });
+      revalidatePath('/ativos');
+      return { success: true };
+    }
+
+    // Find starting point (last known position of tech)
+    const lastKnownOs = await prisma.ordemServicoAtivo.findFirst({
+      where: {
+        tenantId: user.tenantId,
+        tecnicoEmail,
+        latitudeAtual: { not: null },
+        longitudeAtual: { not: null }
+      },
+      orderBy: { ultimaAtualizacaoLocalizacao: 'desc' }
+    });
+
+    let startLat = lastKnownOs?.latitudeAtual || null;
+    let startLon = lastKnownOs?.longitudeAtual || null;
+
+    // Geocode client destinations
+    const locations = await Promise.all(
+      ordens.map(async (os) => {
+        const address = os.client?.endereco;
+        if (!address) return null;
+        const geo = await geocodeAddress(address);
+        if (geo) {
+          return { osId: os.id, lat: geo.lat, lon: geo.lon };
+        }
+        return null;
+      })
+    );
+
+    const validLocations = locations.filter((l): l is { osId: string; lat: number; lon: number } => l !== null);
+
+    // If starting point is missing, default to the first valid client coordinate
+    if ((!startLat || !startLon) && validLocations.length > 0) {
+      startLat = validLocations[0].lat;
+      startLon = validLocations[0].lon;
+    }
+
+    let optimizedIds: string[] = [];
+
+    if (validLocations.length > 0 && startLat && startLon) {
+      try {
+        // Attempt OSRM Trip optimization
+        const url = `http://router.project-osrm.org/trip/v1/driving/${startLon},${startLat};${validLocations.map(l => `${l.lon},${l.lat}`).join(';')}?source=first&destination=any&roundtrip=false`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const result = await res.json();
+          if (result.code === 'Ok' && result.waypoints) {
+            // Map waypoint index to OS ID
+            const mapped = result.waypoints.slice(1).map((wp: any, idx: number) => {
+              return {
+                osId: validLocations[idx].osId,
+                visitOrder: wp.waypoint_index
+              };
+            });
+            // Sort by visit order ascending
+            mapped.sort((a: any, b: any) => a.visitOrder - b.visitOrder);
+            optimizedIds = mapped.map((m: any) => m.osId);
+          }
+        }
+      } catch (e) {
+        console.error("OSRM Trip optimization failed, using local nearest neighbor fallback:", e);
+      }
+
+      // Local Nearest Neighbor Heuristic Fallback
+      if (optimizedIds.length === 0) {
+        let currentLat = startLat;
+        let currentLon = startLon;
+        const remaining = [...validLocations];
+        while (remaining.length > 0) {
+          let nearestIdx = 0;
+          let minDistance = Infinity;
+          for (let i = 0; i < remaining.length; i++) {
+            const dist = calculateHaversineDistance(currentLat, currentLon, remaining[i].lat, remaining[i].lon);
+            if (dist < minDistance) {
+              minDistance = dist;
+              nearestIdx = i;
+            }
+          }
+          const nearest = remaining.splice(nearestIdx, 1)[0];
+          optimizedIds.push(nearest.osId);
+          currentLat = nearest.lat;
+          currentLon = nearest.lon;
+        }
+      }
+    }
+
+    // Append any OSs that could not be geocoded to the end of the list
+    const unGeocodedIds = ordens
+      .filter(o => !optimizedIds.includes(o.id))
+      .map(o => o.id);
+
+    const finalOrder = [...optimizedIds, ...unGeocodedIds];
+
+    // Update ordemExecucao in DB
+    await Promise.all(
+      finalOrder.map((id, index) => 
+        prisma.ordemServicoAtivo.update({
+          where: { id },
+          data: { ordemExecucao: index + 1 }
+        })
+      )
+    );
+
+    revalidatePath('/ativos');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function reordenarOrdensServicoManual(tecnicoEmail: string, osIdsOrdenadas: string[]) {
+  try {
+    const user = await checkAuth();
+    if (!tecnicoEmail) {
+      return { success: false, error: "E-mail do técnico não fornecido." };
+    }
+
+    await Promise.all(
+      osIdsOrdenadas.map((id, index) => 
+        prisma.ordemServicoAtivo.update({
+          where: { id, tenantId: user.tenantId, tecnicoEmail },
+          data: { ordemExecucao: index + 1 }
+        })
+      )
+    );
+
+    revalidatePath('/ativos');
+    return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

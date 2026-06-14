@@ -1197,6 +1197,7 @@ model OrdemServicoAtivo {
   distanciaRealizadaRota       Float?
   desvioRota                   Boolean?          @default(false)
   caminhoGps                   String?           @db.Text
+  ordemExecucao                Int?              @default(0)
   tenantId           String?
   tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdAt          DateTime          @default(now())

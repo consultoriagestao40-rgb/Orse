@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { 
-  Wrench, ArrowLeft, Play, CheckCircle, Camera, Trash2, 
+  Wrench, ArrowLeft, Play, CheckCircle, Camera, Trash2, Lock,
   RotateCcw, Save, X, ClipboardList, MapPin, User, FileText,
   Calendar, Check, LogOut, Loader2, Briefcase, Car, Navigation, Volume2
 } from 'lucide-react';
@@ -718,6 +718,10 @@ export default function TecnicoPage() {
           const isTransit = os.status === 'EM_DESLOCAMENTO';
           const isProgress = os.status === 'EM_ANDAMENTO';
           
+          const hasActiveOs = ordens.some(o => o.status === 'EM_DESLOCAMENTO' || o.status === 'EM_ANDAMENTO');
+          const firstPendingOs = ordens.find(o => o.status === 'PROGRAMADO');
+          const isLocked = isPending && (hasActiveOs || (firstPendingOs && os.id !== firstPendingOs.id));
+          
           let statusText = 'Programada';
           let statusStyle = 'bg-blue-50 text-blue-700 border-blue-200';
           if (isTransit) {
@@ -786,17 +790,23 @@ export default function TecnicoPage() {
               <footer className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex flex-col gap-2 select-none">
                 {isPending && (
                   <div className="flex flex-col gap-2 w-full">
-                    <button
-                      onClick={() => handleStartRoute(os.id, os.client?.endereco || '')}
-                      disabled={saving}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
-                    >
-                      <Navigation size={13} fill="white" className="shrink-0" /> Iniciar Rota (Google Maps)
-                    </button>
+                    {isLocked ? (
+                      <div className="w-full bg-slate-100 text-slate-400 border border-slate-200 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 select-none">
+                        <Lock size={13} className="shrink-0" /> Aguardando OS Anterior na Fila
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleStartRoute(os.id, os.client?.endereco || '')}
+                        disabled={saving}
+                        className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
+                      >
+                        <Navigation size={13} fill="white" className="shrink-0" /> Iniciar Rota (Google Maps)
+                      </button>
+                    )}
                     <button
                       onClick={() => handleCancelOs(os.id)}
-                      disabled={saving}
-                      className="w-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      disabled={saving || isLocked}
+                      className="w-full bg-red-50 hover:bg-red-100 disabled:opacity-40 disabled:hover:bg-red-50 disabled:text-red-300 disabled:border-red-100 text-red-700 border border-red-200 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                     >
                       <X size={12} className="shrink-0" /> Cancelar Ordem de Serviço (OS)
                     </button>
