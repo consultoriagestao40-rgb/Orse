@@ -2873,11 +2873,12 @@ export default function AtivosPage() {
                               (() => {
                                 const activeItem = osTypeList.find(o => o.tipo === hoveredKpiOsType);
                                 const displayPct = ['INSTALACAO', 'TROCA', 'RETIRADA'].includes(activeItem?.tipo || '') ? activeItem?.pctBaseAtivos : activeItem?.pct || 0;
+                                const isBaseAtivos = ['INSTALACAO', 'TROCA', 'RETIRADA'].includes(activeItem?.tipo || '');
                                 return (
                                   <>
                                     <span className="text-[7.5px] font-black text-slate-405 uppercase tracking-widest truncate max-w-[100px]">{activeItem?.label}</span>
                                     <span className="text-xl font-black text-slate-850 leading-none mt-0.5">{activeItem?.count}</span>
-                                    <span className="text-[9px] font-bold text-slate-500 mt-0.5">({(displayPct || 0).toFixed((displayPct || 0) < 1 && (displayPct || 0) > 0 ? 2 : 1)}%)</span>
+                                    <span className="text-[8px] font-bold text-slate-500 mt-0.5">({(displayPct || 0).toFixed((displayPct || 0) < 1 && (displayPct || 0) > 0 ? 2 : 1)}% {isBaseAtivos ? 'da base' : 'das OSs'})</span>
                                   </>
                                 );
                               })()
@@ -2895,6 +2896,7 @@ export default function AtivosPage() {
                           {osTypeList.map(item => {
                             const isHovered = hoveredKpiOsType === item.tipo;
                             const displayPct = ['INSTALACAO', 'TROCA', 'RETIRADA'].includes(item.tipo) ? item.pctBaseAtivos : item.pct;
+                            const isBaseAtivos = ['INSTALACAO', 'TROCA', 'RETIRADA'].includes(item.tipo);
                             return (
                               <div 
                                 key={item.tipo} 
@@ -2909,11 +2911,15 @@ export default function AtivosPage() {
                                   </span>
                                 </div>
                                 <span className="text-[10px] font-black text-slate-800 leading-none">
-                                  {item.count} <span className="text-slate-400 font-bold ml-1">({displayPct.toFixed(1)}%)</span>
+                                  {item.count} <span className="text-slate-400 font-bold ml-1">({displayPct.toFixed(1)}% {isBaseAtivos ? 'da base' : 'das OSs'})</span>
                                 </span>
                               </div>
                             );
                           })}
+                        </div>
+
+                        <div className="text-[7.5px] text-slate-400 font-bold leading-normal select-none px-1 py-0.5 border-b border-slate-100/50 w-full">
+                          * Percentuais de Instalações, Trocas e Encerramentos calculados com base no Total de Ativos ({totalAtivos}). Manutenções calculadas sobre o Total de OS ({totalOs}).
                         </div>
 
                         {/* Indicadores de Crescimento, Troca & Encerramento em Relação aos Ativos */}
@@ -2928,7 +2934,7 @@ export default function AtivosPage() {
                                 return `${pctCrescimento.toFixed(1)}%`;
                               })()}
                             </span>
-                            <span className="text-[6px] font-bold text-slate-400 uppercase tracking-tight block mt-0.5">Novas Inst./Ativos</span>
+                            <span className="text-[6px] font-bold text-slate-400 uppercase tracking-tight block mt-0.5">Instaladas/Total Ativos</span>
                           </div>
 
                           {/* % Troca */}
@@ -2941,7 +2947,7 @@ export default function AtivosPage() {
                                 return `${pctTroca.toFixed(1)}%`;
                               })()}
                             </span>
-                            <span className="text-[6px] font-bold text-slate-400 uppercase tracking-tight block mt-0.5">Trocas/Ativos</span>
+                            <span className="text-[6px] font-bold text-slate-400 uppercase tracking-tight block mt-0.5">Trocas/Total Ativos</span>
                           </div>
 
                           {/* % Encerramento */}
@@ -2954,7 +2960,7 @@ export default function AtivosPage() {
                                 return `${pctEncerramento.toFixed(1)}%`;
                               })()}
                             </span>
-                            <span className="text-[6px] font-bold text-slate-400 uppercase tracking-tight block mt-0.5">Retiradas/Ativos</span>
+                            <span className="text-[6px] font-bold text-slate-400 uppercase tracking-tight block mt-0.5">Retiradas/Total Ativos</span>
                           </div>
                         </div>
                       </div>
