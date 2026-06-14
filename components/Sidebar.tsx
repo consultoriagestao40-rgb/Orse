@@ -41,6 +41,18 @@ const Sidebar = () => {
   const [isTenantBlocked, setIsTenantBlocked] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const checkMobile = () => {
+        setIsMobile(window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+      };
+      checkMobile();
+      window.addEventListener('resize', checkMobile);
+      return () => window.removeEventListener('resize', checkMobile);
+    }
+  }, []);
 
   useEffect(() => {
     setIsMobileOpen(false);
@@ -1005,6 +1017,9 @@ const Sidebar = () => {
           if (item.href === '/admin/empresas' || item.roles.includes('SUPER_ADMIN')) {
             return false;
           }
+          if (item.href === '/ativos/tecnico' && !isMobile) {
+            return false;
+          }
           return item.roles.includes(user?.role || 'USER');
         }
       });
@@ -1036,6 +1051,9 @@ const Sidebar = () => {
             if (item.href === '/admin/empresas' || item.roles.includes('SUPER_ADMIN')) {
               return false;
             }
+            if (item.href === '/ativos/tecnico' && !isMobile) {
+              return false;
+            }
             return item.roles.includes(user?.role || 'USER');
           }
         });
@@ -1061,7 +1079,7 @@ const Sidebar = () => {
       }
     }
     setOrderedItems(baseItems);
-  }, [user?.email, user?.role, isSaaSArea, pathname]);
+  }, [user?.email, user?.role, isSaaSArea, pathname, isMobile]);
 
   // Manipuladores de Drag & Drop
   const handleDragStart = (e: React.DragEvent, index: number) => {
