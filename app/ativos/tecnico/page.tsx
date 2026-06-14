@@ -290,25 +290,32 @@ export default function TecnicoPage() {
     
     try {
       const location = await getGPSLocation();
-      const res = await updateOrdemServicoAtivo(osId, {
+      
+      // Abre o Google Maps IMEDIATAMENTE após obter o GPS, sem esperar chamadas de rede/banco de dados
+      // Isso impede que o Chrome no Android encare a navegação como assíncrona e bloqueie o redirecionamento nativo
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${location.latitude},${location.longitude}&destination=${encodeURIComponent(clientAddress)}`;
+      window.location.href = mapsUrl;
+      
+      // Atualiza o banco de dados e recarrega os dados em background de forma assíncrona
+      updateOrdemServicoAtivo(osId, {
         status: 'EM_DESLOCAMENTO',
         latitudePartida: location.latitude,
         longitudePartida: location.longitude,
         rotaIniciadaEm: new Date().toISOString()
+      }).then((res) => {
+        if (res.success) {
+          loadTechnicianData();
+        } else {
+          showAlert('error', 'Falha ao Iniciar Rota', res.error || 'Erro ao atualizar dados.');
+        }
+      }).catch((err) => {
+        console.error('Erro ao atualizar OS no banco de dados:', err);
+      }).finally(() => {
+        setSaving(false);
       });
       
-      if (res.success) {
-        await loadTechnicianData();
-        showAlert('success', 'Rota Iniciada!', 'Status alterado para Em Deslocamento. Abrindo o GPS...');
-        
-        const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${location.latitude},${location.longitude}&destination=${encodeURIComponent(clientAddress)}`;
-        window.location.href = mapsUrl;
-      } else {
-        showAlert('error', 'Falha ao Iniciar Rota', res.error || 'Erro ao atualizar dados.');
-      }
     } catch (err: any) {
       showAlert('error', 'GPS Obrigatório', err.message || 'É necessário permitir o acesso ao GPS para iniciar a rota.');
-    } finally {
       setSaving(false);
     }
   };
