@@ -21,6 +21,24 @@ import { formatDateTimeBrasilia, formatTimeBrasilia } from '@/lib/timezone';
 
 type ViewMode = 'lista' | 'kanban';
 
+// Helpers para Velocímetros/Gauges SVG
+const getSpeedometerPath = (cx: number, cy: number, r: number, percent: number) => {
+  const p = Math.max(0, Math.min(100, percent));
+  if (p <= 0) return "";
+  const theta = Math.PI * (1 - p / 100);
+  const x = cx + r * Math.cos(theta);
+  const y = cy - r * Math.sin(theta);
+  return `M ${cx - r},${cy} A ${r},${r} 0 0,1 ${x.toFixed(2)},${y.toFixed(2)}`;
+};
+
+const getNeedleCoordinates = (cx: number, cy: number, r: number, percent: number) => {
+  const p = Math.max(0, Math.min(100, percent));
+  const theta = Math.PI * (1 - p / 100);
+  const x = cx + r * Math.cos(theta);
+  const y = cy - r * Math.sin(theta);
+  return { x: Number(x.toFixed(2)), y: Number(y.toFixed(2)) };
+};
+
 export default function GestaoEntregasPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   
@@ -1643,70 +1661,205 @@ export default function GestaoEntregasPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 select-none">
               
               {/* Card 1: Faturamento Total */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-emerald-350 transition-all duration-300">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-emerald-350 transition-all duration-300 flex flex-col items-center justify-between text-center min-h-[160px]">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">Valores Concluídos</span>
+                {(() => {
+                  const pct = kpis.totalValoresGeral > 0 ? (kpis.totalValoresEntregues / kpis.totalValoresGeral) * 100 : 0;
+                  return (
+                    <div className="h-14 w-full flex items-center justify-center my-2 select-none">
+                      <svg className="w-24 h-12" viewBox="0 0 100 50">
+                        <path d="M 10,48 A 38,38 0 0,1 90,48" fill="none" stroke="#F1F5F9" strokeWidth="6" strokeLinecap="round" />
+                        {pct > 0 && (
+                          <path d={getSpeedometerPath(50, 48, 38, pct)} fill="none" stroke="#10B981" strokeWidth="6" strokeLinecap="round" />
+                        )}
+                        {(() => {
+                          const coord = getNeedleCoordinates(50, 48, 30, pct);
+                          return (
+                            <>
+                              <line x1="50" y1="48" x2={coord.x} y2={coord.y} stroke="#059669" strokeWidth="2.5" strokeLinecap="round" />
+                              <circle cx="50" cy="48" r="3.5" fill="#047857" />
+                            </>
+                          );
+                        })()}
+                      </svg>
+                    </div>
+                  );
+                })()}
                 <div className="space-y-1">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">Valores Concluídos</span>
-                  <p className="text-lg font-black text-emerald-600 truncate mt-1">
+                  <p className="text-[15px] font-black text-emerald-600 truncate mt-1">
                     {kpis.totalValoresEntregues.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
                   </p>
                   <span className="text-[8.5px] text-slate-455 font-bold block leading-none">
-                    Geral: {kpis.totalValoresGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+                    Meta: {kpis.totalValoresGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
                   </span>
                 </div>
               </div>
 
               {/* Card 2: Ticket Médio */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-blue-350 transition-all duration-300">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-blue-350 transition-all duration-300 flex flex-col items-center justify-between text-center min-h-[160px]">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">Ticket Médio</span>
+                {(() => {
+                  const pct = (kpis.ticketMedio / 1000) * 100;
+                  return (
+                    <div className="h-14 w-full flex items-center justify-center my-2 select-none">
+                      <svg className="w-24 h-12" viewBox="0 0 100 50">
+                        <path d="M 10,48 A 38,38 0 0,1 90,48" fill="none" stroke="#F1F5F9" strokeWidth="6" strokeLinecap="round" />
+                        {pct > 0 && (
+                          <path d={getSpeedometerPath(50, 48, 38, pct)} fill="none" stroke="#3B82F6" strokeWidth="6" strokeLinecap="round" />
+                        )}
+                        {(() => {
+                          const coord = getNeedleCoordinates(50, 48, 30, pct);
+                          return (
+                            <>
+                              <line x1="50" y1="48" x2={coord.x} y2={coord.y} stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" />
+                              <circle cx="50" cy="48" r="3.5" fill="#1D4ED8" />
+                            </>
+                          );
+                        })()}
+                      </svg>
+                    </div>
+                  );
+                })()}
                 <div className="space-y-1">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">Ticket Médio</span>
-                  <p className="text-lg font-black text-slate-800 truncate mt-1">
+                  <p className="text-[15px] font-black text-slate-800 truncate mt-1">
                     {kpis.ticketMedio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
                   </p>
-                  <span className="text-[8.5px] text-slate-455 font-bold block leading-none">Média por entrega ativa</span>
+                  <span className="text-[8.5px] text-slate-455 font-bold block leading-none">Meta: R$ 1.000</span>
                 </div>
               </div>
 
               {/* Card 3: Média Diária */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-cyan-350 transition-all duration-300">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-cyan-350 transition-all duration-300 flex flex-col items-center justify-between text-center min-h-[160px]">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">Média Entregas/Dia</span>
+                {(() => {
+                  const pct = (kpis.mediaEntregasDia / 10) * 100;
+                  return (
+                    <div className="h-14 w-full flex items-center justify-center my-2 select-none">
+                      <svg className="w-24 h-12" viewBox="0 0 100 50">
+                        <path d="M 10,48 A 38,38 0 0,1 90,48" fill="none" stroke="#F1F5F9" strokeWidth="6" strokeLinecap="round" />
+                        {pct > 0 && (
+                          <path d={getSpeedometerPath(50, 48, 38, pct)} fill="none" stroke="#06B6D4" strokeWidth="6" strokeLinecap="round" />
+                        )}
+                        {(() => {
+                          const coord = getNeedleCoordinates(50, 48, 30, pct);
+                          return (
+                            <>
+                              <line x1="50" y1="48" x2={coord.x} y2={coord.y} stroke="#0891B2" strokeWidth="2.5" strokeLinecap="round" />
+                              <circle cx="50" cy="48" r="3.5" fill="#0E7490" />
+                            </>
+                          );
+                        })()}
+                      </svg>
+                    </div>
+                  );
+                })()}
                 <div className="space-y-1">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">Média Entregas/Dia</span>
-                  <p className="text-lg font-black text-slate-800 truncate mt-1">
+                  <p className="text-[15px] font-black text-slate-800 truncate mt-1">
                     {kpis.mediaEntregasDia.toFixed(1)}
                   </p>
-                  <span className="text-[8.5px] text-slate-455 font-bold block leading-none">Entregas por dia programado</span>
+                  <span className="text-[8.5px] text-slate-455 font-bold block leading-none">Meta: 10 / dia</span>
                 </div>
               </div>
 
               {/* Card 4: SLA de Entregas */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-purple-350 transition-all duration-300">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-purple-350 transition-all duration-300 flex flex-col items-center justify-between text-center min-h-[160px]">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">SLA de Entregas</span>
+                {(() => {
+                  const pct = kpis.slaPercentual;
+                  const strokeColor = pct >= 90 ? '#10B981' : pct >= 75 ? '#F59E0B' : '#EF4444';
+                  const needleColor = pct >= 90 ? '#059669' : pct >= 75 ? '#D97706' : '#DC2626';
+                  const capColor = pct >= 90 ? '#047857' : pct >= 75 ? '#B45309' : '#B91C1C';
+                  return (
+                    <div className="h-14 w-full flex items-center justify-center my-2 select-none">
+                      <svg className="w-24 h-12" viewBox="0 0 100 50">
+                        <path d="M 10,48 A 38,38 0 0,1 90,48" fill="none" stroke="#F1F5F9" strokeWidth="6" strokeLinecap="round" />
+                        {pct > 0 && (
+                          <path d={getSpeedometerPath(50, 48, 38, pct)} fill="none" stroke={strokeColor} strokeWidth="6" strokeLinecap="round" />
+                        )}
+                        {(() => {
+                          const coord = getNeedleCoordinates(50, 48, 30, pct);
+                          return (
+                            <>
+                              <line x1="50" y1="48" x2={coord.x} y2={coord.y} stroke={needleColor} strokeWidth="2.5" strokeLinecap="round" />
+                              <circle cx="50" cy="48" r="3.5" fill={capColor} />
+                            </>
+                          );
+                        })()}
+                      </svg>
+                    </div>
+                  );
+                })()}
                 <div className="space-y-1">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">SLA de Entregas</span>
-                  <p className={`text-lg font-black mt-1 ${kpis.slaPercentual >= 90 ? 'text-emerald-600' : kpis.slaPercentual >= 75 ? 'text-amber-600' : 'text-rose-600'}`}>
+                  <p className={`text-[15px] font-black mt-1 ${kpis.slaPercentual >= 90 ? 'text-emerald-600' : kpis.slaPercentual >= 75 ? 'text-amber-600' : 'text-rose-600'}`}>
                     {kpis.slaPercentual.toFixed(1)}%
                   </p>
-                  <span className="text-[8.5px] text-slate-455 font-bold block leading-none">Entregas no prazo programado</span>
+                  <span className="text-[8.5px] text-slate-455 font-bold block leading-none">Meta: &gt;= 90%</span>
                 </div>
               </div>
 
               {/* Card 5: KM Rodados */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-amber-350 transition-all duration-300">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-amber-350 transition-all duration-300 flex flex-col items-center justify-between text-center min-h-[160px]">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">KM Rodados</span>
+                {(() => {
+                  const pct = (kpis.totalKmRodados / 150) * 100;
+                  return (
+                    <div className="h-14 w-full flex items-center justify-center my-2 select-none">
+                      <svg className="w-24 h-12" viewBox="0 0 100 50">
+                        <path d="M 10,48 A 38,38 0 0,1 90,48" fill="none" stroke="#F1F5F9" strokeWidth="6" strokeLinecap="round" />
+                        {pct > 0 && (
+                          <path d={getSpeedometerPath(50, 48, 38, pct)} fill="none" stroke="#F59E0B" strokeWidth="6" strokeLinecap="round" />
+                        )}
+                        {(() => {
+                          const coord = getNeedleCoordinates(50, 48, 30, pct);
+                          return (
+                            <>
+                              <line x1="50" y1="48" x2={coord.x} y2={coord.y} stroke="#D97706" strokeWidth="2.5" strokeLinecap="round" />
+                              <circle cx="50" cy="48" r="3.5" fill="#B45309" />
+                            </>
+                          );
+                        })()}
+                      </svg>
+                    </div>
+                  );
+                })()}
                 <div className="space-y-1">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">KM Rodados</span>
-                  <p className="text-lg font-black text-slate-800 truncate mt-1">
+                  <p className="text-[15px] font-black text-slate-800 truncate mt-1">
                     {kpis.totalKmRodados.toFixed(1)} km
                   </p>
-                  <span className="text-[8.5px] text-slate-455 font-bold block leading-none">Total acumulado em rotas</span>
+                  <span className="text-[8.5px] text-slate-455 font-bold block leading-none">Ref: 150 km</span>
                 </div>
               </div>
 
               {/* Card 6: Tempo Médio */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-indigo-350 transition-all duration-300">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs group hover:shadow-xs hover:border-indigo-350 transition-all duration-300 flex flex-col items-center justify-between text-center min-h-[160px]">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">Tempo Médio/Rota</span>
+                {(() => {
+                  const pct = (kpis.tempoMedioEntrega / 180) * 100;
+                  return (
+                    <div className="h-14 w-full flex items-center justify-center my-2 select-none">
+                      <svg className="w-24 h-12" viewBox="0 0 100 50">
+                        <path d="M 10,48 A 38,38 0 0,1 90,48" fill="none" stroke="#F1F5F9" strokeWidth="6" strokeLinecap="round" />
+                        {pct > 0 && (
+                          <path d={getSpeedometerPath(50, 48, 38, pct)} fill="none" stroke="#6366F1" strokeWidth="6" strokeLinecap="round" />
+                        )}
+                        {(() => {
+                          const coord = getNeedleCoordinates(50, 48, 30, pct);
+                          return (
+                            <>
+                              <line x1="50" y1="48" x2={coord.x} y2={coord.y} stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" />
+                              <circle cx="50" cy="48" r="3.5" fill="#4338CA" />
+                            </>
+                          );
+                        })()}
+                      </svg>
+                    </div>
+                  );
+                })()}
                 <div className="space-y-1">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">Tempo Médio/Rota</span>
-                  <p className="text-lg font-black text-slate-800 truncate mt-1">
+                  <p className="text-[15px] font-black text-slate-800 truncate mt-1">
                     {kpis.tempoMedioEntrega.toFixed(0)} min
                   </p>
-                  <span className="text-[8.5px] text-slate-455 font-bold block leading-none">Média de duração das entregas</span>
+                  <span className="text-[8.5px] text-slate-455 font-bold block leading-none">Lim: 180 min</span>
                 </div>
               </div>
 
