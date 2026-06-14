@@ -241,6 +241,8 @@ export default function AtivosPage() {
       console.error(err);
     }
     if (!silent) setLoading(false);
+  };
+
   // ─── ROUTE MANAGEMENT HANDLERS ───
   const handleOptimizeRoute = async (email: string) => {
     if (!email) return;
